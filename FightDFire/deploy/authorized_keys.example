@@ -1,0 +1,1 @@
+command="/opt/fightdfire/deploy.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA...replace-with-generated-public-key... github-actions-deploy
