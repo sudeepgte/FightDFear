@@ -1,6 +1,0 @@
-package in.sp.main.Entities;
-
-public enum UserType {
-    USER, ADMIN, VOLUNTEER, CENTRE, DOCTOR, STYLIST, SALON, PROVIDER, SELLER, ENTREPRENEUR, INVESTOR
-}
-

@@ -199,8 +199,8 @@
     <div class="booking-card-white">
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">
-            <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : 'Specialized Treatment'}</span>
-            <h1 class="item-title">${type == 'SERVICE' ? item.name : item.serviceName}</h1>
+            <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : 'Special Deal & Offer')}</span>
+            <h1 class="item-title">${type == 'SERVICE' ? item.name : (type == 'TREATMENT' ? item.serviceName : item.title)}</h1>
             
             <div class="salon-tag">
                 <i class="bi bi-geo-alt-fill"></i>
@@ -213,16 +213,16 @@
                         ${item.description}
                     </c:when>
                     <c:otherwise>
-                        A deeply nourishing facial specially designed for dry skin. This treatment helps restore moisture, improve skin texture, and give a natural glow. It includes cleansing, exfoliation, hydrating mask, and gentle massage to rejuvenate dull and dehydrated skin.
+                        A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.
                     </c:otherwise>
                 </c:choose>
             </div>
 
             <div class="mt-auto">
                 <div class="price-chip">
-                    <span>₹${item.price}</span>
+                    <span>₹${type == 'OFFER' ? (item.discountedPrice > 0 ? item.discountedPrice : item.originalPrice) : item.price}</span>
                     <small>|</small>
-                    <small>${type == 'SERVICE' ? item.durationMinutes : item.duration} MIN</small>
+                    <small>${type == 'SERVICE' ? item.durationMinutes : (type == 'TREATMENT' ? item.duration : 'DEAL')} MIN</small>
                 </div>
             </div>
         </div>
@@ -244,8 +244,11 @@
                     <c:when test="${type == 'SERVICE'}">
                         <input type="hidden" name="serviceId" value="${item.id}" />
                     </c:when>
-                    <c:otherwise>
+                    <c:when test="${type == 'TREATMENT'}">
                         <input type="hidden" name="treatmentId" value="${item.id}" />
+                    </c:when>
+                    <c:otherwise>
+                        <input type="hidden" name="offerId" value="${item.id}" />
                     </c:otherwise>
                 </c:choose>
 

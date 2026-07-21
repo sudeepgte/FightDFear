@@ -41,10 +41,14 @@ public class BookingController {
     @Autowired
     private TreatmentRepository treatmentRepository;
  
+    @Autowired
+    private OfferRepository offerRepository;
+
     // Show booking form
     @GetMapping("/new")
     public String showBookingForm(@RequestParam(required = false) Long serviceId,
                                   @RequestParam(required = false) Long treatmentId,
+                                  @RequestParam(required = false) Long offerId,
                                   HttpSession session,
                                   Model model) {
  
@@ -53,26 +57,32 @@ public class BookingController {
  
         if (serviceId != null) {
             Service1 service = serviceRepository.findById(serviceId).orElse(null);
-            if (service == null) return "redirect:/services";
+            if (service == null) return "redirect:/user/salons";
             model.addAttribute("item", service);
             model.addAttribute("type", "SERVICE");
         } else if (treatmentId != null) {
             Treatment treatment = treatmentRepository.findById(treatmentId).orElse(null);
-            if (treatment == null) return "redirect:/treatments";
+            if (treatment == null) return "redirect:/user/salons";
             model.addAttribute("item", treatment);
             model.addAttribute("type", "TREATMENT");
+        } else if (offerId != null) {
+            Offer offer = offerRepository.findById(offerId).orElse(null);
+            if (offer == null) return "redirect:/user/salons";
+            model.addAttribute("item", offer);
+            model.addAttribute("type", "OFFER");
         } else {
-            return "redirect:/";
+            return "redirect:/user/salons";
         }
  
         model.addAttribute("user", loggedUser);
-        return "user/bookingForm"; // Single JSP for both
+        return "user/bookingForm"; // Single JSP for all
     }
  
     // Handle booking submission
     @PostMapping("/new")
     public String createBooking(@RequestParam(required = false) Long serviceId,
                                 @RequestParam(required = false) Long treatmentId,
+                                @RequestParam(required = false) Long offerId,
                                 @RequestParam String bookingType,
                                 @RequestParam(required = false) String address,
                                 @RequestParam(required = false) String notes,
@@ -96,16 +106,21 @@ public class BookingController {
        
         if (serviceId != null) {
             Service1 service = serviceRepository.findById(serviceId).orElse(null);
-            if (service == null) return "redirect:/services";
+            if (service == null) return "redirect:/user/salons";
             booking.setSalon(service.getSalon());
             booking.setService(service);
             booking.setPrice(service.getPrice());
         } else if (treatmentId != null) {
             Treatment treatment = treatmentRepository.findById(treatmentId).orElse(null);
-            if (treatment == null) return "redirect:/treatments";
+            if (treatment == null) return "redirect:/user/salons";
             booking.setSalon(treatment.getSalon());
             booking.setTreatment(treatment);
             booking.setPrice(treatment.getPrice());
+        } else if (offerId != null) {
+            Offer offer = offerRepository.findById(offerId).orElse(null);
+            if (offer == null) return "redirect:/user/salons";
+            booking.setSalon(offer.getSalon());
+            booking.setPrice(offer.getDiscountedPrice() > 0 ? offer.getDiscountedPrice() : offer.getOriginalPrice());
         }
  
         if ("DOOR".equalsIgnoreCase(bookingType)) {

@@ -3,975 +3,741 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-   <meta charset="utf-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-			<title>Fight D Fear</title>
-		<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${salon.name} — Salon Services & Booking | Fight D Fear</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-			<link href="https://fonts.googleapis.com/css?family=Prata&display=swap" rel="stylesheet">
-			<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/open-iconic-bootstrap.min.css">
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/animate.css">
+    <style>
+        :root {
+            --brand-primary: #f43f5e;
+            --brand-primary-hover: #e11d48;
+            --brand-purple: #4c1d95;
+            --brand-dark: #0f172a;
+            --bg-soft: #fdf2f8;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #f1f5f9;
+        }
 
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.carousel.min.css">
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.theme.default.min.css">
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/magnific-popup.css">
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #fffcfd 0%, #fdf2f8 50%, #f5f3ff 100%);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
 
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/aos.css">
+        /* ===== NAVIGATION BAR ===== */
+        .fdf-navbar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(244, 63, 94, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+            padding: 12px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+        .fdf-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+        .nav-btn-link {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .nav-btn-link:hover {
+            color: var(--brand-primary);
+            background: rgba(244, 63, 94, 0.08);
+        }
+        .btn-action-primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+            color: #fff !important;
+            font-weight: 700;
+            padding: 9px 22px;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 6px 18px rgba(244, 63, 94, 0.25);
+            transition: all 0.3s ease;
+        }
+        .btn-action-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.35);
+        }
 
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/ionicons.min.css">
+        /* ===== SALON HERO HEADER ===== */
+        .salon-hero-card {
+            background: #ffffff;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            margin-top: 30px;
+            margin-bottom: 40px;
+        }
+        .salon-hero-img-wrap {
+            height: 380px;
+            position: relative;
+            overflow: hidden;
+        }
+        .salon-hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .salon-hero-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            color: #ffffff;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 30px;
+            letter-spacing: 0.5px;
+        }
+        .salon-details-panel {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .salon-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+        .salon-location-tag {
+            color: var(--brand-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .rating-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff8e6;
+            color: #d97706;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 1px solid #fef3c7;
+            margin-bottom: 20px;
+        }
+        .meta-info-list p {
+            margin-bottom: 8px;
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+        .meta-info-list strong {
+            color: var(--text-dark);
+        }
 
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/bootstrap-datepicker.css">
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/jquery.timepicker.css">
+        /* ===== QUICK STATS RIBBON ===== */
+        .quick-stats-bar {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+            margin-bottom: 40px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: var(--brand-primary);
+            margin: 0;
+        }
+        .stat-item p {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
+        /* ===== SECTION ANCHOR TABS ===== */
+        .section-tabs {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .section-tab-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        .section-tab-btn:hover, .section-tab-btn.active {
+            background: var(--brand-primary);
+            color: #white;
+            border-color: var(--brand-primary);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
+        }
 
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/flaticon.css">
-						<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/icomoon.css">
-				<link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/style.css">
-						<!-- Icons & CSS -->
-						<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-						<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-						<link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-						<link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
-						<link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-			
-			<!-- 🎨 Custom CSS -->
-			<style>
-			/* Purple navbar */
-#ftco-navbar {
-  background-color: #6a0dad !important; /* purple */
-}
+        /* ===== CARD DESIGNS ===== */
+        .section-heading-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            color: var(--text-dark);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-/* Brand text */
-#ftco-navbar .navbar-brand,
-#ftco-navbar .navbar-brand span {
-  color: #ffffff !important;
-}
+        .service-card {
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.3);
+        }
+        .service-card-img {
+            height: 220px;
+            width: 100%;
+            object-fit: cover;
+        }
+        .service-card-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .service-cat-badge {
+            background: rgba(244, 63, 94, 0.08);
+            color: var(--brand-primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            align-self: flex-start;
+            margin-bottom: 10px;
+        }
+        .service-name {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+        .service-meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid #f8fafc;
+        }
+        .price-text {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+        }
+        .duration-chip {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
 
-/* Nav links */
-#ftco-navbar .nav-link {
-  color: #ffffff !important;
-}
+        /* ===== OFFER CARDS ===== */
+        .offer-card {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            color: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(30, 27, 75, 0.2);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .offer-discount-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--brand-primary);
+            color: #white;
+            font-weight: 900;
+            font-size: 0.9rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            box-shadow: 0 6px 15px rgba(244, 63, 94, 0.4);
+        }
+        .offer-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            margin-bottom: 10px;
+        }
+        .offer-desc {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
 
-/* Hover & active */
-#ftco-navbar .nav-link:hover,
-#ftco-navbar .nav-item.active .nav-link {
-  color: #ffd6ff !important; /* light purple/white */
-}
+        /* ===== STYLIST CARDS ===== */
+        .stylist-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+        .stylist-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        }
+        .stylist-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 16px;
+            border: 4px solid #fff5f8;
+            box-shadow: 0 8px 20px rgba(244, 63, 94, 0.15);
+        }
 
-/* Toggler icon (mobile) */
-#ftco-navbar .navbar-toggler {
-  border-color: #ffffff;
-}
+        /* ===== FOOTER ===== */
+        .footer-glow {
+            background: var(--brand-dark);
+            color: #ffffff;
+            padding: 60px 0 30px;
+            margin-top: 80px;
+        }
+        .footer-glow a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-glow a:hover {
+            color: var(--brand-primary);
+        }
+    </style>
+</head>
+<body>
 
-#ftco-navbar .navbar-toggler-icon,
-#ftco-navbar .oi-menu {
-  color: #ffffff;
-}
-			
-			.hero-section::before {
-			    content: "";
-			    position: absolute;
-			    top: 0; left: 0;
-			    width: 100%;
-			    height: 100%;
-			    background: rgba(255, 215, 0, 0.35); /* 💛 Light golden transparent overlay */
-			    z-index: 1;
-			}
+    <!-- ===== TOP NAVBAR ===== -->
+    <nav class="fdf-navbar">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="${pageContext.request.contextPath}/users/dashboard" class="fdf-brand">
+                <i class="bi bi-shield-heart-fill me-1"></i> Fight D Fear
+            </a>
 
-			.hero-section .container {
-			    position: relative;
-			    z-index: 2;
-			    padding-top: 100px;
-			}
+            <div class="d-none d-md-flex align-items-center gap-2">
+                <a href="${pageContext.request.contextPath}/user/salons" class="nav-btn-link"><i class="bi bi-shop me-1"></i> All Salons</a>
+                <a href="${pageContext.request.contextPath}/user/salon/viewServicesForUser" class="nav-btn-link"><i class="bi bi-scissors me-1"></i> Services</a>
+                <a href="${pageContext.request.contextPath}/booking/myBookings" class="nav-btn-link"><i class="bi bi-calendar-check me-1"></i> My Bookings</a>
+                <a href="${pageContext.request.contextPath}/users/wallet" class="nav-btn-link"><i class="bi bi-wallet2 me-1"></i> Wallet</a>
+            </div>
 
-			.hero-section h1 {
-			    font-size: 2.8rem;
-			    font-weight: 700;
-			    margin-bottom: 20px;
-			    font-family: 'Playfair Display', serif;
-			    color: #fff;
-			}
-
-			.hero-section p {
-			    font-size: 1.2rem;
-			    color: #f8f9fa;
-			    margin-bottom: 35px;
-			    max-width: 650px;
-			    margin-left: auto;
-			    margin-right: auto;
-			}
-
-			.hero-section a.btn-primary {
-			    background-color: #e6b800;  /* ✨ Soft gold */
-			    border-color: #e6b800;
-			    transition: 0.3s;
-			}
-
-			.hero-section a.btn-primary:hover {
-			    background-color: #f1c232;  /* Slightly brighter on hover */
-			    border-color: #f1c232;
-			}
-
-			.hero-section a.btn-outline-light:hover {
-			    background-color: #fff;
-			    color: #e6b800 !important;
-			}
-			/* ✨ Increase only nav item font size */
-			#ftco-navbar .nav-link {
-			  font-size: 1.2rem !important;  /* Slightly larger font */
-			  font-weight: 300;              /* Make text a bit bolder */
-			  letter-spacing: 0.5px;         /* Add spacing for cleaner look */
-			  padding: 10px 18px !important; /* Slightly larger clickable area */
-			  transition: all 0.3s ease;
-			}
-	
-	/* --- Layout --- */
-	/* --- Salon Header Section --- */
-/* --- Salon Header Layout --- */
-.salon-header-section {
-    width: 100%;
-    margin-top: 80px;
-    margin-bottom: 40px;
-}
-
-.salon-header {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 25px rgba(0,0,0,0.1);
-}
-
-/* --- Left Image Side --- */
-.salon-image-side {
-    height: 420px;              /* ✅ fixed height */
-    overflow: hidden;
-}
-
-.salon-img {
-    width: 100%;                /* ✅ full width */
-    height: 100%;               /* ✅ full height */
-    object-fit: cover;          /* ✅ crop correctly */
-    display: block;
-}
-
-/* --- Right Content Side --- */
-.salon-details-side {
-    background-color: #fafafa;
-    display: flex;
-    align-items: center;
-}
-
-.salon-details {
-    padding: 40px;
-}
-
-/* --- Responsive (Mobile) --- */
-@media (max-width: 768px) {
-    .salon-image-side {
-        height: 260px;          /* ✅ smaller image on mobile */
-    }
-
-    .salon-details {
-        padding: 25px;
-    }
-}
-
-
-	    .salon-details-side {
-	        padding: 25px;
-	    }
-	    
-
-	    .salon-name {
-	        font-size: 1.6rem;
-	    }
-	}
-	.rating-stars i {
-    color: #ffc107;
-    font-size: 1.2rem;
-}
-	
-	</style>
-
-  </head>
-  <body>
-	<header id="header" class="header d-flex align-items-center sticky-top">
-	  <div class="container-fluid container-xl d-flex align-items-center">
-	    <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto"><h1>Fight D Fear</h1></a>
-	    <nav id="navmenu" class="navmenu">
-	      <ul>
-	        <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
-	        <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-	        <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-            <li><a href="${pageContext.request.contextPath}/users/dashboard" class="btn-dashboard"><i class="fas fa-th-large me-2"></i> Back to Dashboard</a></li>
-            <li class="nav-profile">
-                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="d-flex align-items-center">
-                    <img src="${pageContext.request.contextPath}${not empty user.profilePhoto ? user.profilePhoto : '/images/default-profile.png'}" 
-                         alt="Profile" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover; border: 2px solid var(--brand-pink);">
-                    <span class="ms-2 d-none d-lg-inline text-white">${user.fullName}</span>
+            <div class="d-flex align-items-center gap-2">
+                <a href="${pageContext.request.contextPath}/users/dashboard" class="btn-action-primary">
+                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
                 </a>
-            </li>
-	      </ul>
-	      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-	    </nav>
-	    <a class="btn-getstarted" href="${pageContext.request.contextPath}/logout">Logout</a>
-	  </div>
-	</header>
-		    <!-- END nav -->
-			<section class="hero-wrap js-fullheight" style="background-image: url('${pageContext.request.contextPath}/beauty/images/bg_1.jpg')" data-stellar-background-ratio="0.5">
-			     <div class="overlay"></div>
-			     <div class="container">
-			       <div class="row no-gutters slider-text js-fullheight align-items-center justify-content-center">
-			         <div class="col-md-10 ftco-animate text-center">
-			         	<div class="icon">
-			          	<span class="flaticon-lotus"></span>
-			         	</div>
-			           <h1>${salon.name}</h1>
-			           <div class="row justify-content-center">
-			            <div class="col-md-7 mb-3">
-			            	<p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-			            </div>
-			          </div>
-			           <p>
-			           	<a href="${pageContext.request.contextPath}/contact" class="btn btn-primary p-3 px-5 py-4 mr-md-2">Get in Touch</a>
-			           	<a href="${pageContext.request.contextPath}/contact" class="btn btn-outline-primary p-3 px-5 py-4 ml-md-2">Contact</a>
-			           </p>
-			         </div>
-			       </div>
-			     </div>
-			   </section>
-				
-			   <!-- 🔹 Salon Header Section -->
-			  <section class="salon-header-section">
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
-        <div class="row salon-header">
+        <!-- ===== SALON HERO HEADER ===== -->
+        <div class="salon-hero-card">
+            <div class="row g-0">
+                <!-- Left Image -->
+                <div class="col-lg-6 salon-hero-img-wrap">
+                    <span class="salon-hero-badge"><i class="bi bi-check-circle-fill me-1 text-success"></i> Verified Salon</span>
+                    <c:choose>
+                        <c:when test="${not empty salon.profileImageUrl}">
+                            <img src="${pageContext.request.contextPath}/${salon.profileImageUrl.startsWith('/') ? salon.profileImageUrl.substring(1) : salon.profileImageUrl}"
+                                 class="salon-hero-img" alt="${salon.name}"
+                                 onerror="this.src='${pageContext.request.contextPath}/beauty/images/default-salon.jpg';">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/beauty/images/default-salon.jpg"
+                                 class="salon-hero-img" alt="${salon.name}">
+                        </c:otherwise>
+                    </c:choose>
+                </div>
 
-            <!-- LEFT IMAGE -->
-            <div class="col-md-6 salon-image-side">
-                <c:choose>
-                    <c:when test="${not empty salon.profileImageUrl}">
-                        <img src="${pageContext.request.contextPath}/${salon.profileImageUrl.startsWith('/') ? salon.profileImageUrl.substring(1) : salon.profileImageUrl}"
-                             class="salon-img"
-                             alt="Salon Image"
-                             onerror="this.src='${pageContext.request.contextPath}/beauty/images/default-salon.jpg';">
-                    </c:when>
-                    <c:otherwise>
-                        <img src="${pageContext.request.contextPath}/beauty/images/default-salon.jpg"
-                             class="salon-img"
-                             alt="Default Salon">
-                    </c:otherwise>
-                </c:choose>
-            </div>
+                <!-- Right Details -->
+                <div class="col-lg-6 salon-details-panel">
+                    <h1 class="salon-title">${salon.name}</h1>
+                    
+                    <div class="salon-location-tag">
+                        <i class="bi bi-geo-alt-fill fs-5"></i>
+                        <span>${salon.address}, ${salon.city}, ${salon.state} - ${salon.pincode}</span>
+                    </div>
 
-            <!-- RIGHT DETAILS -->
-            <div class="col-md-6 salon-details-side">
-                <div class="salon-details">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="rating-chip m-0">
+                            <i class="bi bi-star-fill"></i>
+                            <span><fmt:formatNumber value="${averageRating}" maxFractionDigits="1"/> / 5.0</span>
+                        </div>
+                        <span class="text-muted small">(${not empty salon.reviews ? salon.reviews.size() : 0} Reviews)</span>
+                    </div>
 
-                    <h2 class="salon-name">
-                        <c:out value="${salon.name}"/>
-                    </h2>
+                    <div class="meta-info-list mb-4">
+                        <p><i class="bi bi-telephone-fill me-2 text-rose"></i> <strong>Phone:</strong> ${salon.phone}</p>
+                        <p><i class="bi bi-envelope-fill me-2 text-rose"></i> <strong>Email:</strong> ${salon.email}</p>
+                        <c:if test="${not empty salon.website}">
+                            <p><i class="bi bi-globe me-2 text-rose"></i> <strong>Website:</strong> <a href="${salon.website}" target="_blank" class="text-decoration-none">${salon.website}</a></p>
+                        </c:if>
+                        <p><i class="bi bi-clock-fill me-2 text-rose"></i> <strong>Availability:</strong> ${salon.availabilityHours}</p>
+                        <c:if test="${not empty salon.bio}">
+                            <p class="mt-2 text-dark"><strong>About:</strong> ${salon.bio}</p>
+                        </c:if>
+                    </div>
 
-                    <p>
-                        <strong>Address:</strong>
-                        <c:out value="${salon.address}"/>,
-                        <c:out value="${salon.city}"/>,
-                        <c:out value="${salon.state}"/> -
-                        <c:out value="${salon.pincode}"/>
-                    </p>
-
-                    <p>
-                        <strong>Phone:</strong> <c:out value="${salon.phone}"/> |
-                        <strong>Email:</strong> <c:out value="${salon.email}"/>
-                    </p>
-
-                    <p>
-                        <strong>Website:</strong>
-                        <a href="${salon.website}" target="_blank">
-                            <c:out value="${salon.website}"/>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="${pageContext.request.contextPath}/salon/reviews?id=${salon.id}#addReview" class="btn btn-outline-danger rounded-pill px-4">
+                            <i class="bi bi-pen me-1"></i> Rate Us
                         </a>
-                    </p>
-
-                    <p><strong>Availability:</strong> <c:out value="${salon.availabilityHours}"/></p>
-
-                    <p>
-                        <strong>⭐ Rating:</strong>
-                        <fmt:formatNumber value="${averageRating}" maxFractionDigits="1"/> / 5
-                        <span class="rating-stars">
-                            <c:forEach begin="1" end="5" var="i">
-                                <i class="bi ${i <= averageRating ? 'bi-star-fill' : 'bi-star'}"></i>
-                            </c:forEach>
-                        </span>
-                    </p>
-
-                    <c:if test="${not empty salon.bio}">
-                        <p><strong>About:</strong> <c:out value="${salon.bio}"/></p>
-                    </c:if>
-
+                        <a href="${pageContext.request.contextPath}/salon/reviews?id=${salon.id}" class="btn btn-light rounded-pill px-4 border">
+                            <i class="bi bi-star me-1"></i> View Reviews
+                        </a>
+                        <a href="tel:${salon.phone}" class="btn btn-primary-custom btn-action-primary ms-auto">
+                            <i class="bi bi-telephone-out me-1"></i> Contact Salon
+                        </a>
+                    </div>
                 </div>
             </div>
-</div>
-			           <div class="my-3">
-        <a href="${pageContext.request.contextPath}/salon/reviews?id=${salon.id}" class="btn btn-primary w-100 mb-2">
-            <i class="bi bi-eye"></i> View All Reviews
-        </a>
-        <a href="${pageContext.request.contextPath}/salon/reviews?id=${salon.id}#addReview" class="btn btn-outline-dark w-100">
-            <i class="bi bi-pen"></i> Rate Us
-        </a>
-   
         </div>
-    </div>
-</section>
 
-
-			   <!-- 💅 Salon Services Section -->
-			   <section class="ftco-section ftco-no-pt ftco-no-pb">
-			     <div class="container-fluid px-5 position-relative">
-					<!-- Section Header -->
-					<div class="text-center mb-5">
-					  <h3 class="text-primary mb-2">Available Salon Services</h3>
-					  <p class="text-muted mx-auto" style="max-width: 600px;">
-					    Discover our top salon services  expert care, relaxing treatments, and flawless beauty in every visit.
-					  </p>
-
-					</div>
-
-
-			       <!-- Scrollable Card Container -->
-			      <div id="servicesContainer"
-     class="d-flex pb-4"
-     style="scroll-behavior:smooth; overflow-x:auto; overflow-y:hidden; gap:40px; padding:10px 0;">
-			      
-			         <c:if test="${not empty serviceList}">
-			           <c:forEach var="service" items="${serviceList}">
-			         
-			            <div class="card flex-shrink-0 shadow-sm border-0 rounded-3"
-     style="width: 260px; cursor:pointer;"
-     data-bs-toggle="modal"
-     data-bs-target="#serviceModal"
-     data-service-id="${service.id}"
-     onclick="showServiceDetails('${service.name}', '${service.category}', '${service.price}', '${service.durationMinutes}', '${service.ingredients}', '${service.allergenInfo}', '${pageContext.request.contextPath}${service.photoUrl}', '${service.salon.name}', '${service.id}')">
-			            
-			               <c:choose>
-			                 <c:when test="${not empty service.photoUrl}">
-			                   <img src="${pageContext.request.contextPath}${service.photoUrl}" alt="${service.name}" class="card-img-top rounded-top" style="height:260px; object-fit:cover;">
-			                 </c:when>
-			                 <c:otherwise>
-			                   <img src="https://via.placeholder.com/260x260" alt="Default Service" class="card-img-top rounded-top" style="height:260px; object-fit:cover;">
-			                 </c:otherwise>
-			               </c:choose>
-
-			               <div class="card-body text-center">
-			                 <h6 class="card-title text-primary mb-1"><c:out value="${service.name}"/></h6>
-			                 <p class="mb-1"><strong>Category:</strong> <c:out value="${service.category}"/></p>
-			                 <p class="mb-1"><strong>Price:</strong> ₹<fmt:formatNumber value="${service.price}" type="number"/></p>
-			                 <p class="mb-0"><strong>Duration:</strong> <c:out value="${service.durationMinutes}"/> mins</p>
-			                 <p class="mt-3">
-  <a href="${pageContext.request.contextPath}/booking/new?serviceId=${service.id}" 
-     class="btn btn-primary btn-sm">
-     Book Now
-  </a>
-</p>
-			               </div>
-			             </div>
-			           </c:forEach>
-			         </c:if>
-
-			         <c:if test="${empty serviceList}">
-			           <p class="text-muted mt-3 ms-3">No services available right now.</p>
-			         </c:if>
-			       </div>
-				   <!-- 🔹 Service Detail Modal (Larger Version) -->
-				   <div class="modal fade" id="serviceModal" tabindex="-1" aria-labelledby="serviceModalLabel" aria-hidden="true">
-				     <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- changed to xl for bigger size -->
-				       <div class="modal-content border-0 shadow-lg rounded-4">
-				         <div class="modal-header bg-light">
-				           <h4 class="modal-title text-primary fw-semibold" id="serviceModalLabel">Service Details</h4>
-				           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				         </div>
-
-				         <div class="modal-body py-4 px-4">
-				           <div class="row g-4 align-items-center">
-				             <!-- Left: Image -->
-				             <div class="col-md-6">
-				               <img id="modalImage" src="" class="img-fluid rounded-3 shadow-sm"
-				                    alt="Service Image"
-				                    style="height: 400px; width: 100%; object-fit: cover;">
-				             </div>
-
-				             <!-- Right: Details -->
-				             <div class="col-md-6">
-				               <h3 id="modalName" class="text-primary mb-3 fw-bold"></h3>
-				               <p class="mb-2"><strong>Category:</strong> <span id="modalCategory"></span></p>
-				               <p class="mb-2"><strong>Price:</strong> &#8377;<span id="modalPrice"></span></p>
-				               <p class="mb-2"><strong>Duration:</strong> <span id="modalDuration"></span> mins</p>
-				               <p class="mb-3"><strong>Salon:</strong> <span id="modalSalon"></span></p>
-				               <hr>
-				               <p><strong>Ingredients:</strong> <span id="modalIngredients"></span></p>
-				               <p><strong>Allergen Info:</strong> <span id="modalAllergens"></span></p>
-				             </div>
-				           </div>
-				         </div>
-
-				         <div class="modal-footer border-0 pt-0 pb-4 px-4">
-				           <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
-				          <a id="bookNowLink" 
-   data-base-url="${pageContext.request.contextPath}/booking/new"
-   href="#" 
-   class="btn btn-primary px-4">
-   Book Now
-</a>
-				          
-				         </div>
-				       </div>
-				     </div>
-				   </div>
-
-			       <!-- 🔹 Scroll Arrows -->
-			       <button id="scrollLeft" 
-			               class="btn btn-light rounded-circle shadow position-absolute top-50 start-0 translate-middle-y" 
-			               style="width:45px; height:45px; z-index:10;">
-			         <i class="bi bi-chevron-left"></i>
-			       </button>
-			       <button id="scrollRight" 
-			               class="btn btn-light rounded-circle shadow position-absolute top-50 end-0 translate-middle-y" 
-			               style="width:45px; height:45px; z-index:10;">
-			         <i class="bi bi-chevron-right"></i>
-			       </button>
-			     </div>
-			   </section>
-
-			   <!-- 🔹 JS -->
-			   <script>
-			     const container = document.getElementById('servicesContainer');
-			     const scrollLeftBtn = document.getElementById('scrollLeft');
-			     const scrollRightBtn = document.getElementById('scrollRight');
-			     let scrollSpeed = 0;
-
-			     // Manual button scroll
-			     scrollLeftBtn.onclick = () => container.scrollBy({ left: -300, behavior: 'smooth' });
-			     scrollRightBtn.onclick = () => container.scrollBy({ left: 300, behavior: 'smooth' });
-
-			     // Auto scroll on hover edges
-			     document.addEventListener('mousemove', (e) => {
-			       const rect = container.getBoundingClientRect();
-			       const edge = 150; // distance from left/right to trigger scroll
-			       if (e.clientX < rect.left + edge) {
-			         scrollSpeed = -3;
-			       } else if (e.clientX > rect.right - edge) {
-			         scrollSpeed = 3;
-			       } else {
-			         scrollSpeed = 0;
-			       }
-			     });
-
-			
-			     function showServiceDetails(name, category, price, duration, ingredients, allergens, photoUrl, salonName, serviceId) {
-			       document.getElementById("modalName").textContent = name;
-			       document.getElementById("modalCategory").textContent = category;
-			       document.getElementById("modalPrice").textContent = price;
-			       document.getElementById("modalDuration").textContent = duration;
-			       document.getElementById("modalIngredients").textContent = ingredients;
-			       document.getElementById("modalAllergens").textContent = allergens;
-			       document.getElementById("modalSalon").textContent = salonName;
-			       document.getElementById("modalImage").src = photoUrl || "https://via.placeholder.com/400x400";
-
-			       // 🔹 Set the correct booking link dynamically
-			       const bookNow = document.getElementById("bookNowLink");
-			       bookNow.href = `${window.location.origin}${bookNow.getAttribute("data-base-url")}?serviceId=${serviceId}`;
-			     }
-			     
-				 </script>
-
-
-    <!-- Dynamic Treatments Section -->
-    <c:if test="${not empty treatmentList}">
-    <section class="ftco-section">
-        <div class="container-fluid px-md-5">
-            <div class="row justify-content-center mb-5 pb-3">
-                <div class="col-md-12 heading-section text-center">
-                    <h3 class="subheading">Services</h3>
-                    <h2 class="mb-1">Treatments</h2>
+        <!-- ===== QUICK STATS RIBBON ===== -->
+        <div class="quick-stats-bar">
+            <div class="row g-3">
+                <div class="col-3 stat-item">
+                    <h3>${not empty serviceList ? serviceList.size() : 0}</h3>
+                    <p>Services</p>
+                </div>
+                <div class="col-3 stat-item border-start">
+                    <h3>${not empty treatmentList ? treatmentList.size() : 0}</h3>
+                    <p>Treatments</p>
+                </div>
+                <div class="col-3 stat-item border-start">
+                    <h3>${not empty offerList ? offerList.size() : 0}</h3>
+                    <p>Special Deals</p>
+                </div>
+                <div class="col-3 stat-item border-start">
+                    <h3>${not empty stylists ? stylists.size() : 0}</h3>
+                    <p>Stylists</p>
                 </div>
             </div>
-            <div class="row">
-                <c:forEach var="treatment" items="${treatmentList}">
-                <div class="col-lg-3 col-md-4 d-flex align-items-stretch mb-4">
-                    <div class="treatment w-100 text-center border p-3 py-4 bg-white rounded shadow-sm">
-                        <div class="icon d-flex justify-content-center align-items-center mb-3 text-primary">
-                            <i class="bi bi-stars" style="font-size: 2rem;"></i>
+        </div>
+
+        <!-- ===== ANCHOR TABS ===== -->
+        <div class="section-tabs">
+            <a href="#services-section" class="section-tab-btn active"><i class="bi bi-scissors me-1"></i> Services (${not empty serviceList ? serviceList.size() : 0})</a>
+            <c:if test="${not empty treatmentList}">
+                <a href="#treatments-section" class="section-tab-btn"><i class="bi bi-stars me-1"></i> Treatments (${treatmentList.size()})</a>
+            </c:if>
+            <c:if test="${not empty offerList}">
+                <a href="#offers-section" class="section-tab-btn"><i class="bi bi-percent me-1"></i> Offers & Deals (${offerList.size()})</a>
+            </c:if>
+            <c:if test="${not empty stylists}">
+                <a href="#stylists-section" class="section-tab-btn"><i class="bi bi-people me-1"></i> Experts (${stylists.size()})</a>
+            </c:if>
+        </div>
+
+        <!-- ===== 1. SERVICES SECTION ===== -->
+        <section id="services-section" class="mb-5">
+            <h2 class="section-heading-title">
+                <i class="bi bi-scissors text-rose"></i> Available Services
+            </h2>
+
+            <c:choose>
+                <c:when test="${not empty serviceList}">
+                    <div class="row g-4">
+                        <c:forEach var="service" items="${serviceList}">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="service-card">
+                                    <c:choose>
+                                        <c:when test="${not empty service.photoUrl}">
+                                            <img src="${pageContext.request.contextPath}${service.photoUrl}" alt="${service.name}" class="service-card-img" onerror="this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500';">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500" alt="${service.name}" class="service-card-img">
+                                        </c:otherwise>
+                                    </c:choose>
+                                    
+                                    <div class="service-card-body">
+                                        <span class="service-cat-badge">${service.category}</span>
+                                        <h3 class="service-name">${service.name}</h3>
+                                        
+                                        <c:if test="${not empty service.ingredients}">
+                                            <p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i> ${service.ingredients}</p>
+                                        </c:if>
+
+                                        <div class="service-meta-row">
+                                            <div>
+                                                <span class="price-text">₹<fmt:formatNumber value="${service.price}" type="number"/></span>
+                                                <span class="duration-chip d-block"><i class="bi bi-clock me-1"></i> ${service.durationMinutes} mins</span>
+                                            </div>
+
+                                            <div class="d-flex gap-2">
+                                                <button class="btn btn-outline-secondary btn-sm rounded-circle"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#serviceModal"
+                                                        onclick="showServiceModal('${service.name}', '${service.category}', '${service.price}', '${service.durationMinutes}', '${service.ingredients}', '${service.allergenInfo}', '${pageContext.request.contextPath}${service.photoUrl}', '${service.salon.name}', '${service.id}')"
+                                                        title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <a href="${pageContext.request.contextPath}/booking/new?serviceId=${service.id}" class="btn btn-action-primary btn-sm px-3">
+                                                    Book Now
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="text-center py-5 bg-white rounded-4 border">
+                        <i class="bi bi-calendar-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No active services listed for this salon currently.</p>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </section>
+
+        <!-- ===== 2. SPECIAL TREATMENTS SECTION ===== -->
+        <c:if test="${not empty treatmentList}">
+            <section id="treatments-section" class="mb-5">
+                <h2 class="section-heading-title">
+                    <i class="bi bi-stars text-rose"></i> Specialized Treatments
+                </h2>
+
+                <div class="row g-4">
+                    <c:forEach var="treatment" items="${treatmentList}">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="service-card p-4">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div class="bg-soft-pink text-rose rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-sparkles fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="m-0 fw-bold fs-5">${treatment.serviceName}</h4>
+                                        <span class="text-muted small"><i class="bi bi-clock me-1"></i> ${treatment.duration} mins</span>
+                                    </div>
+                                </div>
+
+                                <p class="text-muted small mb-4 flex-grow-1">${treatment.description}</p>
+
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top">
+                                    <span class="price-text">₹<fmt:formatNumber value="${treatment.price}"/></span>
+                                    <a href="${pageContext.request.contextPath}/booking/new?treatmentId=${treatment.id}" class="btn btn-action-primary btn-sm px-4">
+                                        Book Treatment
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="text mt-2">
-                            <h3 class="text-dark"><c:out value="${treatment.serviceName}"/></h3>
-                            <p class="text-muted"><c:out value="${treatment.description}"/></p>
-                            <p class="mb-0"><strong class="text-primary">₹<fmt:formatNumber value="${treatment.price}"/></strong> | <c:out value="${treatment.duration}"/> min</p>
-                            <a href="${pageContext.request.contextPath}/booking/new?treatmentId=${treatment.id}" class="btn btn-primary btn-sm mt-3">Book Now</a>
+                    </c:forEach>
+                </div>
+            </section>
+        </c:if>
+
+        <!-- ===== 3. SPECIAL OFFERS & DEALS ===== -->
+        <c:if test="${not empty offerList}">
+            <section id="offers-section" class="mb-5">
+                <h2 class="section-heading-title">
+                    <i class="bi bi-percent text-rose"></i> Exclusive Deals & Offers
+                </h2>
+
+                <div class="row g-4">
+                    <c:forEach var="offer" items="${offerList}">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="offer-card">
+                                <span class="offer-discount-badge">-${offer.discountPercent}% OFF</span>
+                                
+                                <div>
+                                    <h3 class="offer-title">${offer.title}</h3>
+                                    <p class="offer-desc">${offer.description}</p>
+                                </div>
+
+                                <div>
+                                    <div class="mb-3">
+                                        <span class="fs-4 fw-bold text-warning">₹<fmt:formatNumber value="${offer.discountedPrice > 0 ? offer.discountedPrice : offer.originalPrice}" maxFractionDigits="0"/></span>
+                                        <c:if test="${offer.originalPrice > 0}">
+                                            <span class="text-white-50 text-decoration-line-through ms-2">₹<fmt:formatNumber value="${offer.originalPrice}" maxFractionDigits="0"/></span>
+                                        </c:if>
+                                    </div>
+                                    <a href="${pageContext.request.contextPath}/salon/book?offerId=${offer.id}" class="btn btn-light rounded-pill w-100 fw-bold py-2 text-dark">
+                                        Claim & Book Offer
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </c:forEach>
                 </div>
-                </c:forEach>
-            </div>
-        </div>
-    </section>
-    </c:if>
+            </section>
+        </c:if>
 
-    <!-- Dynamic Offers Section -->
-    <c:if test="${not empty offerList}">
-    <section class="ftco-section bg-light">
-        <div class="container-fluid px-md-5">
-            <div class="row justify-content-center mb-5 pb-3">
-                <div class="col-md-12 heading-section text-center">
-                    <h3 class="subheading">Deals</h3>
-                    <h2 class="mb-1">Special Offers</h2>
-                </div>
-            </div>
-            <div class="row">
-                <c:forEach var="offer" items="${offerList}">
-                <div class="col-lg-4 col-md-6 d-flex align-items-stretch mb-4">
-                    <div class="card w-100 text-center shadow-sm border-0 p-3 py-4">
-                        <div class="card-body mt-2">
-                            <h3 class="text-primary fw-bold"><c:out value="${offer.title}"/></h3>
-                            <p class="text-muted"><c:out value="${offer.description}"/></p>
-                            <p class="mb-2 text-success fw-bold">Discount: <c:out value="${offer.discountPercent}"/>%</p>
-                            <a href="${pageContext.request.contextPath}/salon/book?offerId=${offer.id}" class="btn btn-outline-primary mt-3">Book Offer</a>
+        <!-- ===== 4. MEET OUR STYLISTS ===== -->
+        <c:if test="${not empty stylists}">
+            <section id="stylists-section" class="mb-5">
+                <h2 class="section-heading-title">
+                    <i class="bi bi-people text-rose"></i> Expert Hair & Beauty Stylists
+                </h2>
+
+                <div class="row g-4">
+                    <c:forEach var="stylist" items="${stylists}">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="stylist-card">
+                                <c:choose>
+                                    <c:when test="${not empty stylist.profileImage}">
+                                        <img src="${pageContext.request.contextPath}${stylist.profileImage.startsWith('/') ? stylist.profileImage : '/'.concat(stylist.profileImage)}"
+                                             alt="${stylist.firstName}" class="stylist-avatar"
+                                             onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" alt="${stylist.firstName}" class="stylist-avatar">
+                                    </c:otherwise>
+                                </c:choose>
+
+                                <h4 class="fw-bold mb-1">${stylist.firstName} ${stylist.lastName}</h4>
+                                <p class="text-rose font-weight-bold small mb-2">${stylist.specialization}</p>
+
+                                <div class="d-flex align-items-center justify-content-center gap-3 text-muted small mb-3">
+                                    <span><i class="bi bi-briefcase me-1"></i> ${stylist.experienceInYears} Years Exp</span>
+                                    <c:if test="${stylist.rating != null && stylist.rating > 0}">
+                                        <span><i class="bi bi-star-fill text-warning me-1"></i> <fmt:formatNumber value="${stylist.rating}" maxFractionDigits="1"/></span>
+                                    </c:if>
+                                </div>
+
+                                <a href="${pageContext.request.contextPath}/user/stylist/view?id=${stylist.id}" class="btn btn-outline-danger btn-sm rounded-pill px-4 w-100">
+                                    View Profile & Schedule
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    </c:forEach>
                 </div>
-                </c:forEach>
-            </div>
-        </div>
-    </section>
-    </c:if>
-
-	  <section class="ftco-section bg-light">
-	    <div class="container">
-	      <div class="row justify-content-center mb-5 pb-3">
-	        <div class="col-md-7 heading-section ftco-animate text-center">
-	          <h3 class="subheading">Our Stylists</h3>
-	          <h2 class="mb-1">Meet Our Experts</h2>
-	        </div>
-	      </div>
-
-	      <c:if test="${not empty stylists}">
-	        <div class="row">
-	          <c:forEach var="stylist" items="${stylists}">
-	            <div class="col-md-4 ftco-animate d-flex">
-	              <div class="block-7 text-center d-flex flex-column justify-content-between w-100">
-	                
-	                <div>
-	                  <div class="mb-4">
-	                    <img src="${pageContext.request.contextPath}${stylist.profileImage != null ? stylist.profileImage : 'images/default-stylist.jpg'}" 
-	                         alt="${stylist.firstName}" 
-	                         class="img-fluid rounded mb-3" 
-	                         style="width:100%; height:300px; object-fit:cover; border-radius:10px;">
-	                  </div>
-
-	                  <h2 class="heading">
-	                    <c:out value="${stylist.firstName}" /> <c:out value="${stylist.lastName}" />
-	                  </h2>
-	                  <span class="excerpt d-block mb-2">
-	                    <c:out value="${stylist.specialization}" />
-	                  </span>
-
-	                  <ul class="pricing-text mb-4">
-	                    <li><strong>Experience:</strong> <fmt:formatNumber value="${stylist.experienceInYears}" /> Years</li>
-	                    <c:if test="${stylist.rating != null}">
-	                      <li><strong>Rating:</strong> <fmt:formatNumber value="${stylist.rating}" maxFractionDigits="1" /> </li>
-	                    </c:if>
-	                    
-	                  </ul>
-	                </div>
-
-	               <!-- <a href="${pageContext.request.contextPath}/user/stylist/view?id=${stylist.id}" 
-	                   class="btn btn-primary d-block px-3 py-3 mt-auto">View Profile</a>-->
-	              </div>
-	            </div>
-	          </c:forEach>
-	        </div>
-	      </c:if>
-
-	      <c:if test="${empty stylists}">
-	        <p class="text-center text-muted">No stylists available for this salon.</p>
-	      </c:if>
-
-	    </div>
-	  </section>
-
-	  
-
-    <section class="ftco-section testimony-section">
-      <div class="container">
-        <div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-10 heading-section ftco-animate text-center">
-            <h3 class="subheading">Testimony</h3>
-            <h2 class="mb-1">Successful Stories</h2>
-          </div>
-        </div>
-        <div class="row ftco-animate">
-          <div class="col-md-12">
-            <div class="carousel-testimony owl-carousel">
-              <div class="item">
-                <div class="testimony-wrap p-4 pb-5">
-                  <div class="text">
-                  	<div class="line pl-5">
-	                    <p class="mb-4 pb-1">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-	                    <span class="quote d-flex align-items-center justify-content-center">
-	                      <i class="icon-quote-left"></i>
-	                    </span>
-	                  </div>
-                    <div class="d-flex align-items-center">
-                    	<div class="user-img" style="background-image: url(${pageContext.request.contextPath}/beauty/images/person_1.jpg)">
-		                  </div>
-		                  <div class="ml-4">
-		                  	<p class="name">Gabby Smith</p>
-		                    <span class="position">Customer</span>
-		                  </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap p-4 pb-5">
-                  <div class="text">
-                    <div class="line pl-5">
-	                    <p class="mb-4 pb-1">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-	                    <span class="quote d-flex align-items-center justify-content-center">
-	                      <i class="icon-quote-left"></i>
-	                    </span>
-	                  </div>
-
-                    <div class="d-flex align-items-center">
-                    	<div class="user-img" style="background-image: url(${pageContext.request.contextPath}/beauty/images/person_2.jpg)">
-		                  </div>
-		                  <div class="ml-4">
-		                  	<p class="name">Floyd Weather</p>
-		                    <span class="position">Customer</span>
-		                  </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap p-4 pb-5">
-                  <div class="text">
-                    <div class="line pl-5">
-	                    <p class="mb-4 pb-1">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-	                    <span class="quote d-flex align-items-center justify-content-center">
-	                      <i class="icon-quote-left"></i>
-	                    </span>
-	                  </div>
-
-                    <div class="d-flex align-items-center">
-                    	<div class="user-img" style="background-image: url(${pageContext.request.contextPath}/beauty/images/person_3.jpg)">
-		                  </div>
-		                  <div class="ml-4">
-		                  	<p class="name">James Dee</p>
-		                    <span class="position">Customer</span>
-		                  </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap p-4 pb-5">
-                  <div class="text">
-                    <div class="line pl-5">
-	                    <p class="mb-4 pb-1">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-	                    <span class="quote d-flex align-items-center justify-content-center">
-	                      <i class="icon-quote-left"></i>
-	                    </span>
-	                  </div>
-
-                    <div class="d-flex align-items-center">
-                    	<div class="user-img" style="background-image: url(${pageContext.request.contextPath}/beauty/images/person_4.jpg)">
-		                  </div>
-		                  <div class="ml-4">
-		                  	<p class="name">Lance Roger</p>
-		                    <span class="position">Customer</span>
-		                  </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="item">
-                <div class="testimony-wrap p-4 pb-5">
-                  <div class="text">
-                    <div class="line pl-5">
-	                    <p class="mb-4 pb-1">Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.</p>
-	                    <span class="quote d-flex align-items-center justify-content-center">
-	                      <i class="icon-quote-left"></i>
-	                    </span>
-	                  </div>
-
-                    <div class="d-flex align-items-center">
-                    	<div class="user-img" style="background-image: url(${pageContext.request.contextPath}/beauty/images/person_2.jpg)">
-		                  </div>
-		                  <div class="ml-4">
-		                  	<p class="name">Kenny Bufer</p>
-		                    <span class="position">Customer</span>
-		                  </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="ftco-counter img" id="section-counter" style="background-image: url(${pageContext.request.contextPath}/beauty/images/bg_3.jpg);" data-stellar-background-ratio="0.5">
-			<div class="overlay"></div>
-      <div class="container">
-        <div class="row justify-content-center">
-        	<div class="col-md-10">
-        		<div class="row">
-		          <div class="col-md-6 col-lg-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		              	<strong class="number" data-number="2560">0</strong>
-		              	<span>Happy Customers</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-6 col-lg-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		              	<strong class="number" data-number="60">0</strong>
-		              	<span>Treatments</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-6 col-lg-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		              	<strong class="number" data-number="50">0</strong>
-		              	<span>Years of Experience</span>
-		              </div>
-		            </div>
-		          </div>
-		          <div class="col-md-6 col-lg-3 d-flex justify-content-center counter-wrap ftco-animate">
-		            <div class="block-18 text-center">
-		              <div class="text">
-		              	<strong class="number" data-number="100">0</strong>
-		              	<span>Lesson Conducted</span>
-		              </div>
-		            </div>
-		          </div>
-		        </div>
-		      </div>
-        </div>
-      </div>
-    </section>
-
-	<section class="ftco-section bg-light">
-	  <div class="container">
-	    <div class="row justify-content-center mb-5 pb-3">
-	      <div class="col-md-7 heading-section ftco-animate text-center">
-	        <h3 class="subheading">Pricing Tables</h3>
-	        <h2 class="mb-1">Pricing Treatments</h2>
-	      </div>
-	    </div>
-	    <div class="row">
-	        <div class="col-md-4 ftco-animate">
-	          <div class="block-7">
-	            <div class="text-center">
-	            <h2 class="heading">Year Card</h2>
-	            <span class="price"><sup>$</sup> <span class="number">449</span></span>
-	            <span class="excerpt d-block">For 1 Year</span>
-	            
-	            <h3 class="heading-2 my-4">Enjoy All The Features</h3>
-	            
-	            <ul class="pricing-text mb-5">
-	              <li>Face Treatments</li>
-	              <li>Nail Treatments</li>
-	              <li>Medical Treatments</li>
-	              <li>Hair Removal</li>
-	            </ul>
-
-	            <a href="#" class="btn btn-primary d-block px-2 py-4">Get Started</a>
-	            </div>
-	          </div>
-	        </div>
-	        <div class="col-md-4 ftco-animate">
-	          <div class="block-7">
-	            <div class="text-center">
-	            <h2 class="heading">Monthly Card</h2>
-	            <span class="price"><sup>$</sup> <span class="number">200</span></span>
-	            <span class="excerpt d-block">For 1 Month</span>
-	            
-	            <h3 class="heading-2 my-4">Enjoy All The Features</h3>
-	            
-	            <ul class="pricing-text mb-5">
-	              <li>Face Treatments</li>
-	              <li>Nail Treatments</li>
-	              <li>Medical Treatments</li>
-	              <li>Hair Removal</li>
-	            </ul>
-
-	            <a href="#" class="btn btn-primary d-block px-2 py-4">Get Started</a>
-	            </div>
-	          </div>
-	        </div>
-	        <div class="col-md-4 ftco-animate">
-	          <div class="block-7">
-	            <div class="text-center">
-	            <h2 class="heading">Weekly Card</h2>
-	            <span class="price"><sup>$</sup> <span class="number">85</span></span>
-	            <span class="excerpt d-block">For 1 Week</span>
-	            
-	            <h3 class="heading-2 my-4">Enjoy All The Features</h3>
-	            
-	            <ul class="pricing-text mb-5">
-	              <li>Face Treatments</li>
-	              <li>Nail Treatments</li>
-	              <li>Medical Treatments</li>
-	              <li>Hair Removal</li>
-	            </ul>
-
-	            <a href="#" class="btn btn-primary d-block px-2 py-4">Get Started</a>
-	            </div>
-	          </div>
-	        </div>
-	      </div>
-	  </div>
-	</section>
-
-		<section class="ftco-gallery ftco-section">
-    	<div class="container">
-    		<div class="row justify-content-center mb-5 pb-3">
-          <div class="col-md-7 heading-section ftco-animate text-center">
-            <h3 class="subheading">Salon Gallery</h3>
-            <h2 class="mb-1">See the salon view</h2>
-          </div>
-        </div>
-    		<div class="row">
-					<div class="col-md-3 ftco-animate">
-						<a href="${pageContext.request.contextPath}/beauty/images/gallery-1.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(/beauty/images/salon1.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-3 ftco-animate">
-						<a href="${pageContext.request.contextPath}/beauty/images/gallery-2.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(/beauty/images/haircut.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-3 ftco-animate">
-						<a href="${pageContext.request.contextPath}/beauty/images/gallery-3.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(/beauty/images/salon2.jpg);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-					<div class="col-md-3 ftco-animate">
-						<a href="${pageContext.request.contextPath}/beauty/images/gallery-4.jpg" class="gallery image-popup img d-flex align-items-center" style="background-image: url(/beauty/images/model2.jpg!d);">
-							<div class="icon mb-4 d-flex align-items-center justify-content-center">
-    						<span class="icon-instagram"></span>
-    					</div>
-						</a>
-					</div>
-        </div>
-    	</div>
-    </section>
-
-		
-
-   <!-- 🌸 Footer -->
-			  	<footer id="footer" class="footer position-relative">
-
-   
-
-    <div class="container footer-top">
-      <div class="row gy-4">
-        <div class="col-lg-4 col-md-6 footer-about">
-          <a href="${pageContext.request.contextPath}/index/templates" class="d-flex align-items-center">
-            Fight D Fear
-          </a>
-             
-  <div class="pt-3">
-    <p class="fw-semibold">Our Values</p>
-    <p>Awareness • Safety • Equality • Empowerment</p>
-    <p class="mt-2">Building a safer tomorrow, together.</p>
-  </div>
-</div>
-        <div class="col-lg-2 col-md-3 footer-links">
-          <h4>Useful Links</h4>
-          <ul>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates">Home</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates#services">Services</a></li>
-             <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
-              </ul>
-        
-</a>
-        </div>
-
-      <div class="col-lg-2 col-md-3 footer-links">
-  <h4>Our Services</h4>
-  <ul>
-    <li><i class="bi bi-chevron-right"></i> <a href="#">Emergency Assistance</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="#">Safety Education</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="#">Self-defense Training</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="#">Community Support</a></li>
-  </ul>
-</div>
-
-<div class="col-lg-4 col-md-12">
-  <h4>Follow Us</h4>
-  <p>Stay connected with us for safety updates, resources, and tips. Empower yourself and others!</p>
-  <div class="social-links d-flex">
-    <a href=""><i class="bi bi-twitter"></i></a>
-    <a href=""><i class="bi bi-facebook"></i></a>
-    <a href=""><i class="bi bi-instagram"></i></a>
-    <a href=""><i class="bi bi-linkedin"></i></a>
-  </div>
-</div>
-
-
-      </div>
+            </section>
+        </c:if>
     </div>
 
-    <div class="container copyright text-center mt-4">
-      <p>© Copyright <strong class="px-1 sitename">Fight D Fear</strong> All Rights Reserved</p>
-      <div class="credits">
-        <!-- All the links in the footer should remain intact. -->
-        <!-- You can delete the links only if you've purchased the pro version. -->
-        <!-- Licensing information: https://bootstrapmade.com/license/ -->
-        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-       <!--  Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> -->
-      </div>
+    <!-- ===== SERVICE DETAILS MODAL ===== -->
+    <div class="modal fade" id="serviceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden">
+                <div class="modal-header bg-soft-pink border-0">
+                    <h5 class="modal-title fw-bold text-dark" id="modalName">Service Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <img id="modalImage" src="" class="img-fluid rounded-3 shadow-sm w-100" style="height: 260px; object-fit: cover;" alt="Service">
+                        </div>
+                        <div class="col-md-7">
+                            <span id="modalCategory" class="service-cat-badge mb-2">Category</span>
+                            <h3 id="modalTitle" class="fw-bold text-dark mb-2"></h3>
+                            <p class="text-muted mb-3"><i class="bi bi-shop me-1"></i> <span id="modalSalon"></span></p>
+                            
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <span class="price-text fs-3">₹<span id="modalPrice"></span></span>
+                                <span class="duration-chip"><i class="bi bi-clock me-1"></i> <span id="modalDuration"></span> mins</span>
+                            </div>
+
+                            <hr>
+
+                            <p class="small text-muted mb-1"><strong>Ingredients:</strong> <span id="modalIngredients">N/A</span></p>
+                            <p class="small text-muted mb-0"><strong>Allergen Info:</strong> <span id="modalAllergens">None</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    <a id="modalBookBtn" href="#" class="btn btn-action-primary px-4">Book Service Now</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-  </footer>
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer-glow">
+        <div class="container text-center">
+            <p class="fw-bold fs-5 mb-2">Fight D Fear — Women Safety & Wellness Marketplace</p>
+            <p class="text-muted small mb-4">Empowering women with verified salon services, safety assurance, and seamless bookings.</p>
+            <p class="text-muted small m-0">© <%= java.time.Year.now().getValue() %> Fight D Fear. All Rights Reserved.</p>
+        </div>
+    </footer>
 
-
-  <!-- loader -->
-  <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
-
-
- <!-- Scripts -->
- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
- 
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery-migrate-3.0.1.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/popper.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/bootstrap.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.easing.1.3.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.waypoints.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.stellar.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/owl.carousel.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.magnific-popup.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/aos.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.animateNumber.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/bootstrap-datepicker.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.timepicker.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/scrollax.min.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
-					  	<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
-
-					  </body>
-					  </html>
-
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showServiceModal(name, category, price, duration, ingredients, allergens, photoUrl, salonName, serviceId) {
+            document.getElementById("modalName").textContent = name;
+            document.getElementById("modalTitle").textContent = name;
+            document.getElementById("modalCategory").textContent = category;
+            document.getElementById("modalPrice").textContent = price;
+            document.getElementById("modalDuration").textContent = duration;
+            document.getElementById("modalIngredients").textContent = ingredients || "Standard Salon Quality Products";
+            document.getElementById("modalAllergens").textContent = allergens || "None reported";
+            document.getElementById("modalSalon").textContent = salonName;
+            document.getElementById("modalImage").src = photoUrl || "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500";
+            document.getElementById("modalBookBtn").href = "${pageContext.request.contextPath}/booking/new?serviceId=" + serviceId;
+        }
+    </script>
+</body>
+</html>

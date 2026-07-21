@@ -184,8 +184,7 @@
       filter: blur(2px) brightness(0.65) saturate(1.25);
     }
     .hero-video-side.right-side .hero-video-bg-blurred-el {
-      transform: scaleX(-1); /* Flips/mirrors the right-side video so particles glow on both side margins symmetrically! */
-      object-position: 10% center;
+      object-position: 90% center;
     }
     .hero-video-bg {
       position: absolute;
@@ -1312,21 +1311,24 @@
     <!-- Blurred Background Video - Left Side -->
     <div class="hero-video-side left-side">
       <video id="heroVideoBgLeft" class="hero-video-bg-blurred-el" autoplay muted loop playsinline preload="auto">
-        <source src="${pageContext.request.contextPath}/assets/video/hero-video.mp4" type="video/mp4">
+        <source src="${pageContext.request.contextPath}/uploads/Hero-Section.mp4" type="video/mp4">
+        <source src="${pageContext.request.contextPath}/assets/video/Hero-Section.mp4" type="video/mp4">
       </video>
     </div>
 
     <!-- Blurred Background Video - Right Side (Mirrored) -->
     <div class="hero-video-side right-side">
       <video id="heroVideoBgRight" class="hero-video-bg-blurred-el" autoplay muted loop playsinline preload="auto">
-        <source src="${pageContext.request.contextPath}/assets/video/hero-video.mp4" type="video/mp4">
+        <source src="${pageContext.request.contextPath}/uploads/Hero-Section.mp4" type="video/mp4">
+        <source src="${pageContext.request.contextPath}/assets/video/Hero-Section.mp4" type="video/mp4">
       </video>
     </div>
 
     <!-- Sharp Foreground Video (shows full portrait figure without crop) -->
     <video id="heroVideo" class="hero-video-bg" autoplay muted loop playsinline preload="auto"
       onerror="this.style.display='none'; if(document.getElementById('heroVideoBgLeft')) document.getElementById('heroVideoBgLeft').style.display='none'; if(document.getElementById('heroVideoBgRight')) document.getElementById('heroVideoBgRight').style.display='none'; document.getElementById('heroVideoFallback').style.display='block';">
-      <source src="${pageContext.request.contextPath}/assets/video/hero-video.mp4" type="video/mp4">
+      <source src="${pageContext.request.contextPath}/uploads/Hero-Section.mp4" type="video/mp4">
+      <source src="${pageContext.request.contextPath}/assets/video/Hero-Section.mp4" type="video/mp4">
     </video>
     <!-- Fallback image if video missing -->
     <div id="heroVideoFallback" style="display:none; position:absolute; inset:0; background: url('${pageContext.request.contextPath}/assets/images/img6.jpg') center/cover no-repeat; z-index:0;"></div>

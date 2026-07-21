@@ -450,6 +450,6 @@ public class BeautyServiceController {
 	public String viewAllServicesForUser(Model model) {
 	    List<Service1> serviceList = serviceService.getAllServicesWithSalonDetails();
 	    model.addAttribute("serviceList", serviceList);
-	    return "user/view-service"; // JSP name
+	    return "user/view-services"; // JSP name
 	}
 }
