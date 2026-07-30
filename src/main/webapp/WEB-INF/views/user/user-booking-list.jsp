@@ -224,7 +224,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -236,7 +236,7 @@
         <div class="glow-header">
             <div class="top-bar">
                 <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
                 </a>
                 <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
                     <i class="bi bi-heart-pulse"></i> Medical Appointments

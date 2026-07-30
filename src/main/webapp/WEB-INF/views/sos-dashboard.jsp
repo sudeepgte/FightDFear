@@ -824,12 +824,10 @@
     <!-- Top Nav -->
     <nav class="top-nav">
         <div class="brand"><i class="bi bi-shield-exclamation"></i> SOS Emergency</div>
-    </nav>
-    <div class="dashboard-bar container-fluid container-xl d-flex justify-content-end">
-        <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
-            Dashboard <i class="bi bi-arrow-right"></i>
+        <a href="${pageContext.request.contextPath}/users/dashboard" class="back-btn">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
         </a>
-    </div>
+    </nav>
 
     <!-- Toast -->
     <div class="toast-notification" id="toast"></div>

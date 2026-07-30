@@ -205,8 +205,10 @@
 			      <c:forEach var="f" items="${followers}">
 			        <div class="col-md-3 col-sm-6">
 			          <div class="user-card text-center shadow-sm p-3 bg-white rounded">
-			            <img src="${f.profilePhoto}" alt="${f.fullName}" class="rounded-circle mb-3" width="90" height="90">
-			            <h5>${f.fullName}</h5>
+			            <a href="${pageContext.request.contextPath}/users/profile/${f.id}" class="text-decoration-none text-dark">
+			              <img src="${pageContext.request.contextPath}${f.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/images/default-avatar.png'" alt="${f.fullName}" class="rounded-circle mb-3" width="90" height="90" style="object-fit:cover;">
+			              <h5>${f.fullName}</h5>
+			            </a>
 			            <a href="${pageContext.request.contextPath}/chat/window/${f.id}" class="btn btn-outline-primary btn-sm mt-2">💬 Chat</a>
 			          </div>
 			        </div>
@@ -237,8 +239,10 @@
 			      <c:forEach var="req" items="${followRequests}">
 			        <div class="col-md-3 col-sm-6">
 			          <div class="user-card text-center shadow-sm p-3 bg-white rounded">
-			            <img src="${req.profilePhoto}" alt="${req.fullName}" class="rounded-circle mb-3" width="90" height="90">
-			            <h5>${req.fullName}</h5>
+			            <a href="${pageContext.request.contextPath}/users/profile/${req.id}" class="text-decoration-none text-dark">
+			              <img src="${pageContext.request.contextPath}${req.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/images/default-avatar.png'" alt="${req.fullName}" class="rounded-circle mb-3" width="90" height="90" style="object-fit:cover;">
+			              <h5>${req.fullName}</h5>
+			            </a>
 			            <div class="d-flex justify-content-center gap-2 mt-2">
 			              <form action="${pageContext.request.contextPath}/users/acceptRequest/${req.id}" method="post">
 			                <button type="submit" class="btn btn-success btn-sm">Accept</button>

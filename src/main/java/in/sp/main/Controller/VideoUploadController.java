@@ -521,7 +521,7 @@ public class VideoUploadController {
         return "video_comments"; // JSP name
 
     }
-    @PostMapping("/video/like")
+    @PostMapping({"/like", "/video/like"})
     @ResponseBody
     public Map<String, Object> likeVideo(
             @RequestParam Long videoId,

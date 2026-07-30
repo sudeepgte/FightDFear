@@ -298,9 +298,14 @@
 <!-- Top Nav -->
 <nav class="top-nav">
     <div class="brand"><i class="bi bi-person-lines-fill"></i> Emergency Contacts</div>
-    <a href="${pageContext.request.contextPath}/sos/dashboard" class="back-btn">
-        <i class="bi bi-arrow-left"></i> SOS Dashboard
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="${pageContext.request.contextPath}/users/dashboard" class="back-btn">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+        <a href="${pageContext.request.contextPath}/sos/dashboard" class="back-btn">
+            <i class="bi bi-shield-exclamation"></i> SOS Dashboard
+        </a>
+    </div>
 </nav>
 
 <div class="page-container">
@@ -310,6 +315,19 @@
         <h1>🛡️ My Emergency Contacts</h1>
         <p>These contacts will be <strong>emailed</strong> and <strong>auto-called</strong> when you trigger an SOS alert.</p>
     </div>
+
+    <c:if test="${not empty error}">
+        <div class="alert-banner" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>${error}</div>
+        </div>
+    </c:if>
+    <c:if test="${not empty success}">
+        <div class="alert-banner" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>${success}</div>
+        </div>
+    </c:if>
 
     <!-- Alert if no personal contacts -->
     <c:if test="${empty contacts or contacts.size() <= 2}">
@@ -414,8 +432,10 @@
     </c:if>
 
     <!-- Add Contact Form -->
+    <c:if test="${canAddContact}">
     <div class="add-form-card">
         <h3><i class="bi bi-plus-circle-fill"></i> Add Emergency Contact</h3>
+        <p class="text-muted small mb-3">${personalContactCount} of ${maxPersonalContacts} personal contacts added.</p>
         <form action="${pageContext.request.contextPath}/users/${userId}/emergency-contacts" method="post">
             <div class="form-row">
                 <div class="form-group">
@@ -429,7 +449,7 @@
             </div>
             <div class="form-group">
                 <label>Phone Number</label>
-                <input type="tel" name="phone" placeholder="+91 9876543210" required>
+                <input type="tel" name="phone" placeholder="10-digit mobile number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
             </div>
             <div class="form-group">
                 <label>Email Address</label>
@@ -440,6 +460,13 @@
             </button>
         </form>
     </div>
+    </c:if>
+    <c:if test="${not canAddContact}">
+        <div class="alert-banner">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>You have reached the maximum of ${maxPersonalContacts} personal emergency contacts. Remove one to add another.</div>
+        </div>
+    </c:if>
 
     <!-- Info -->
     <div class="info-card">

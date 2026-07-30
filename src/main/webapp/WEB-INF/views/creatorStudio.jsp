@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -325,7 +326,7 @@
             <!-- STUDIO TAB NAVIGATION -->
             <ul class="nav nav-pills" id="studioTab" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabContent" type="button"><i class="fa-solid fa-photo-film me-2"></i>My Content</button>
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabMyContent" type="button"><i class="fa-solid fa-photo-film me-2"></i>My Content</button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMonetize" type="button"><i class="fa-solid fa-coins me-2"></i>Monetization Center</button>
@@ -341,7 +342,7 @@
             <div class="tab-content">
                 
                 <!-- TAB 1: MY CONTENT & DRAFTS -->
-                <div class="tab-pane fade show active" id="tabContent">
+                <div class="tab-pane fade show active" id="tabMyContent">
                     <div class="row">
                         <!-- Published Uploads -->
                         <div class="col-12 mb-4">
@@ -368,12 +369,16 @@
                                                 <c:forEach var="post" items="${published}">
                                                     <tr>
                                                         <td>
+                                                            <c:set var="postVideoPath" value="${post.videoPath}" />
+                                                            <c:set var="postThumbPath" value="${not empty post.thumbnailPath ? post.thumbnailPath : post.videoPath}" />
+                                                            <c:set var="postVideoUrl" value="${fn:startsWith(postVideoPath, 'http') ? postVideoPath : pageContext.request.contextPath.concat(postVideoPath)}" />
+                                                            <c:set var="postThumbUrl" value="${fn:startsWith(postThumbPath, 'http') ? postThumbPath : pageContext.request.contextPath.concat(postThumbPath)}" />
                                                             <c:choose>
                                                                 <c:when test="${post.fileType eq 'VIDEO'}">
-                                                                    <video src="${post.videoPath}" class="draft-thumb" muted></video>
+                                                                    <video src="${postVideoUrl}" poster="${postThumbUrl}" class="draft-thumb" muted></video>
                                                                 </c:when>
                                                                 <c:otherwise>
-                                                                    <img src="${post.videoPath}" class="draft-thumb" alt="thumb">
+                                                                    <img src="${postThumbUrl}" class="draft-thumb" alt="thumb">
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
@@ -435,12 +440,16 @@
                                                 <c:forEach var="draft" items="${drafts}">
                                                     <tr>
                                                         <td>
+                                                            <c:set var="draftVideoPath" value="${draft.videoPath}" />
+                                                            <c:set var="draftThumbPath" value="${not empty draft.thumbnailPath ? draft.thumbnailPath : draft.videoPath}" />
+                                                            <c:set var="draftVideoUrl" value="${fn:startsWith(draftVideoPath, 'http') ? draftVideoPath : pageContext.request.contextPath.concat(draftVideoPath)}" />
+                                                            <c:set var="draftThumbUrl" value="${fn:startsWith(draftThumbPath, 'http') ? draftThumbPath : pageContext.request.contextPath.concat(draftThumbPath)}" />
                                                             <c:choose>
                                                                 <c:when test="${draft.fileType eq 'VIDEO'}">
-                                                                    <video src="${draft.videoPath}" class="draft-thumb" muted></video>
+                                                                    <video src="${draftVideoUrl}" poster="${draftThumbUrl}" class="draft-thumb" muted></video>
                                                                 </c:when>
                                                                 <c:otherwise>
-                                                                    <img src="${draft.videoPath}" class="draft-thumb" alt="thumb">
+                                                                    <img src="${draftThumbUrl}" class="draft-thumb" alt="thumb">
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
@@ -850,6 +859,20 @@
             }
         });
     }
+</script>
+
+<script>
+    document.querySelectorAll('#studioTab button[data-bs-toggle="tab"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var target = this.getAttribute('data-bs-target');
+            document.querySelectorAll('#studioTab .nav-link').forEach(function(l) { l.classList.remove('active'); });
+            document.querySelectorAll('.tab-content > .tab-pane').forEach(function(p) { p.classList.remove('show', 'active'); });
+            this.classList.add('active');
+            var pane = document.querySelector(target);
+            if (pane) { pane.classList.add('show', 'active'); }
+        });
+    });
 </script>
 
 </body>

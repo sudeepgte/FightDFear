@@ -15,11 +15,16 @@ import in.sp.main.Entities.MartialArtsCenter;
 import in.sp.main.Entities.MartialArtsType;
 import in.sp.main.Entities.Slot;
 import in.sp.main.Entities.MartialArtsBatch;
+import in.sp.main.Entities.OnlineClass;
+import in.sp.main.Entities.Attendance;
 import in.sp.main.Repository.EnrollmentRepository;
 import in.sp.main.Repository.MartialArtsBatchRepository;
 import in.sp.main.Repository.MartialArtsCenterRepository;
 import in.sp.main.Repository.MartialArtsTypeRepository;
 import in.sp.main.Repository.SlotRepository;
+import in.sp.main.Repository.AttendanceRepository;
+import in.sp.main.Repository.OnlineClassRepository;
+import in.sp.main.Repository.TrainingSessionRepository;
 import jakarta.servlet.ServletContext;
 
 @Service
@@ -39,6 +44,15 @@ public class MartialArtsCenterService {
 
     @Autowired
     private MartialArtsBatchRepository batchRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private OnlineClassRepository onlineClassRepository;
+
+    @Autowired
+    private TrainingSessionRepository trainingSessionRepository;
 
     @Autowired
     private ServletContext servletContext;
@@ -112,12 +126,7 @@ public class MartialArtsCenterService {
     // ================== Reject a center ==================
     @Transactional
     public boolean rejectCenter(Long id) {
-        if (centerRepository.existsById(id)) {
-            enrollmentRepository.deleteByCenterId(id);
-            centerRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        return deleteCenter(id);
     }
 
     // ================== Get centers by approval ==================
@@ -207,12 +216,25 @@ public class MartialArtsCenterService {
     // ================== Delete center ==================
     @Transactional
     public boolean deleteCenter(Long id) {
-        if (centerRepository.existsById(id)) {
-            enrollmentRepository.deleteByCenterId(id);
-            centerRepository.deleteById(id);
-            return true;
+        if (!centerRepository.existsById(id)) {
+            return false;
         }
-        return false;
+
+        for (OnlineClass onlineClass : onlineClassRepository.findByCenterId(id)) {
+            attendanceRepository.deleteAll(attendanceRepository.findByOnlineClass(onlineClass));
+            onlineClassRepository.delete(onlineClass);
+        }
+
+        for (MartialArtsBatch batch : batchRepository.findByCenterId(id)) {
+            attendanceRepository.deleteAll(attendanceRepository.findByBatch(batch));
+            trainingSessionRepository.deleteAll(trainingSessionRepository.findByBatch(batch));
+            batchRepository.delete(batch);
+        }
+
+        attendanceRepository.deleteAll(attendanceRepository.findByCenter_Id(id));
+        enrollmentRepository.deleteByCenterId(id);
+        centerRepository.deleteById(id);
+        return true;
     }
 
     // ================== Get enrollments ==================

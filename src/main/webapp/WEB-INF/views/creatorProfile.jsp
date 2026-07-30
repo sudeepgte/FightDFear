@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,11 +251,11 @@
 
                             <!-- User Follower Count Metrics -->
                             <div class="d-flex justify-content-center justify-content-md-start gap-4 mb-4">
-                                <div class="stat-box">
+                                <div class="stat-box" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal" title="View followers">
                                     <span class="stat-value">${followersCount}</span>
                                     <span class="stat-label">Followers</span>
                                 </div>
-                                <div class="stat-box">
+                                <div class="stat-box" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal" title="View following">
                                     <span class="stat-value">${followingCount}</span>
                                     <span class="stat-label">Following</span>
                                 </div>
@@ -278,11 +279,9 @@
                                     </button>
 
                                     <!-- Subscribe Tier -->
-                                    <c:if test="${creator.creatorSubscriptionPrice > 0}">
-                                        <button class="btn btn-warning rounded-pill px-4 py-2 text-dark font-weight-bold" onclick="subscribeCreator(${creator.id})">
-                                            <i class="fa-solid fa-star me-2"></i>${isSubscribed ? 'Subscribed' : 'Subscribe (Rs. '.concat(creator.creatorSubscriptionPrice).concat('/mo)')}
-                                        </button>
-                                    </c:if>
+                                    <button class="btn btn-warning rounded-pill px-4 py-2 text-dark font-weight-bold" onclick="subscribeCreator(${creator.id})">
+                                        <i class="fa-solid fa-star me-2"></i>${isSubscribed ? 'Subscribed' : 'Subscribe (Rs. '.concat(subscriptionPrice).concat('/mo)')}
+                                    </button>
 
                                     <!-- Block User Action -->
                                     <button class="btn btn-outline-secondary rounded-pill px-3 py-2 btn-sm" onclick="blockUser(${creator.id})">
@@ -346,23 +345,30 @@
                                             </c:otherwise>
                                         </c:choose>
 
+                                        <c:set var="videoMediaPath" value="${video.videoPath}" />
+                                        <c:set var="videoThumbPath" value="${not empty video.thumbnailPath ? video.thumbnailPath : video.videoPath}" />
+                                        <c:set var="videoMediaUrl" value="${fn:startsWith(videoMediaPath, 'http') ? videoMediaPath : pageContext.request.contextPath.concat(videoMediaPath)}" />
+                                        <c:set var="videoThumbUrl" value="${fn:startsWith(videoThumbPath, 'http') ? videoThumbPath : pageContext.request.contextPath.concat(videoThumbPath)}" />
                                         <c:choose>
                                             <c:when test="${video.fileType eq 'VIDEO'}">
-                                                <video src="${video.videoPath}" preload="metadata"></video>
+                                                <video src="${videoMediaUrl}" poster="${videoThumbUrl}" controls playsinline preload="metadata"></video>
                                                 <i class="fa-solid fa-circle-play text-white position-absolute" style="font-size: 32px; opacity: 0.8;"></i>
                                             </c:when>
                                             <c:otherwise>
-                                                <img src="${video.videoPath}" alt="thumb">
+                                                <img src="${videoThumbUrl}" alt="thumb">
                                             </c:otherwise>
                                         </c:choose>
                                     </div>
-                                    <div class="grid-info">
-                                        <h6 class="grid-title">${video.title}</h6>
-                                        <div class="d-flex justify-content-between text-muted text-xs">
-                                            <span><i class="fa-solid fa-heart text-danger me-1"></i>${video.likeCount}</span>
-                                            <span><i class="fa-solid fa-eye me-1"></i>${video.viewCount} Views</span>
+                                        <div class="grid-info">
+                                            <h6 class="grid-title">${video.title}</h6>
+                                            <div class="d-flex justify-content-between text-muted text-xs">
+                                                <span><i class="fa-solid fa-heart text-danger me-1"></i>${video.likeCount}</span>
+                                                <span><i class="fa-solid fa-eye me-1"></i>${video.viewCount} Views</span>
+                                            </div>
+                                            <c:if test="${video.paidContent && video.price != null && video.price > 0}">
+                                                <div class="text-warning fw-bold small mt-1">Course Price: Rs. ${video.price}</div>
+                                            </c:if>
                                         </div>
-                                    </div>
                                 </div>
                             </c:forEach>
                         </div>
@@ -385,7 +391,9 @@
                                                     <button class="btn btn-warning btn-xs rounded-pill text-dark font-weight-bold px-3 py-1" onclick="unlockCourse(${video.id}, ${video.price})">Unlock Now</button>
                                                 </div>
                                             </c:if>
-                                            <video src="${video.videoPath}"></video>
+                                            <c:set var="paidVideoPath" value="${video.videoPath}" />
+                                            <c:set var="paidVideoUrl" value="${fn:startsWith(paidVideoPath, 'http') ? paidVideoPath : pageContext.request.contextPath.concat(paidVideoPath)}" />
+                                            <video src="${paidVideoUrl}"></video>
                                         </div>
                                         <div class="grid-info">
                                             <h6 class="grid-title">${video.title}</h6>
@@ -436,6 +444,42 @@
 
     </div>
 
+    <!-- Followers Modal -->
+    <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Followers</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <c:forEach var="f" items="${followersList}">
+                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-dark">
+                            <img src="${pageContext.request.contextPath}${f.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png'" width="40" height="40" class="rounded-circle" style="object-fit:cover;">
+                            <span>${f.fullName}</span>
+                        </a>
+                    </c:forEach>
+                    <c:if test="${empty followersList}"><p class="text-muted mb-0">No followers yet.</p></c:if>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Following Modal -->
+    <div class="modal fade" id="followingModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Following</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <c:forEach var="f" items="${followingList}">
+                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-dark">
+                            <img src="${pageContext.request.contextPath}${f.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png'" width="40" height="40" class="rounded-circle" style="object-fit:cover;">
+                            <span>${f.fullName}</span>
+                        </a>
+                    </c:forEach>
+                    <c:if test="${empty followingList}"><p class="text-muted mb-0">Not following anyone yet.</p></c:if>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TIPPING MODAL -->
     <div class="modal fade" id="tipModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -450,7 +494,7 @@
                     </p>
                     <div class="mb-3">
                         <label class="form-label text-white">Amount (Rs.)</label>
-                        <input type="number" id="tipAmount" class="form-control" placeholder="e.g. 50" min="5" value="50">
+                        <input type="number" id="tipAmount" class="form-control" placeholder="e.g. 50" min="5" max="99999" step="1" value="50" oninput="if(this.value.length>5)this.value=this.value.slice(0,5);">
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-white">Encouragement Message</label>
@@ -492,7 +536,11 @@
         }
 
         function submitTip() {
-            const amount = document.getElementById('tipAmount').value;
+            const amount = parseFloat(document.getElementById('tipAmount').value);
+            if (isNaN(amount) || amount < 5 || amount > 99999) {
+                alert('Tip amount must be between Rs. 5 and Rs. 99,999.');
+                return;
+            }
             const message = document.getElementById('tipMessage').value;
 
             if (amount <= 0) {

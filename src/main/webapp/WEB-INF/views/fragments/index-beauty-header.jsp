@@ -24,15 +24,18 @@
     </nav>
     <a class="btn-qna" href="${pageContext.request.contextPath}/qna">Q&amp;A</a>
     <c:choose>
-      <c:when test="${not empty sessionScope.user || not empty sessionScope.loggedProvider || not empty sessionScope.loggedCentre || not empty sessionScope.loggedDoctor || not empty sessionScope.loggedSalon || not empty sessionScope.loggedStylist || not empty sessionScope.loggedSeller || not empty sessionScope.admin}">
+        <c:when test="${not empty sessionScope.user || not empty sessionScope.loggedProvider || not empty sessionScope.loggedCentre || not empty sessionScope.loggedDoctor || not empty sessionScope.loggedSalon || not empty sessionScope.loggedStylist || not empty sessionScope.loggedSeller || not empty sessionScope.admin}">
         <c:set var="dashboardUrl" value="${pageContext.request.contextPath}/users/dashboard" />
-        <c:if test="${not empty sessionScope.loggedProvider}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/marketplace/provider/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.loggedCentre}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/centres/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.loggedDoctor}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/doctors/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.loggedSalon}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/salons/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.loggedStylist}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/stylists/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.loggedSeller}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/women-products/seller/dashboard" /></c:if>
-        <c:if test="${not empty sessionScope.admin}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/admin/adminDashboard" /></c:if>
+        <c:if test="${not empty sessionScope.user}">
+          <c:set var="dashboardUrl" value="${pageContext.request.contextPath}/users/dashboard" />
+        </c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedProvider}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/marketplace/provider/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedCentre}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/centres/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedDoctor}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/doctors/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedSalon}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/salons/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedStylist}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/stylists/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.loggedSeller}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/women-products/seller/dashboard" /></c:if>
+        <c:if test="${empty sessionScope.user and not empty sessionScope.admin}"><c:set var="dashboardUrl" value="${pageContext.request.contextPath}/admin/adminDashboard" /></c:if>
         <a class="btn-getstarted" href="${dashboardUrl}">My Dashboard</a>
       </c:when>
       <c:otherwise>

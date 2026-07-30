@@ -375,7 +375,7 @@
                         <!-- Unlock Price -->
                         <div class="mb-3" id="priceFieldGroup" style="display: none; padding-left: 20px;">
                             <label class="form-label">Unlock Price (Rs.)</label>
-                            <input type="number" step="1" min="10" name="price" class="form-control" placeholder="e.g. 199" style="max-width: 200px;">
+                            <input type="number" step="1" min="10" max="99999" name="price" class="form-control" placeholder="e.g. 199" style="max-width: 200px;">
                         </div>
 
                         <!-- Affiliate Link -->
@@ -444,8 +444,8 @@
     });
 
     // Format adjustments
-    document.getElementById('uploadType').addEventListener('change', function() {
-        const format = this.value;
+    function applyUploadFormatRules() {
+        const format = document.getElementById('uploadType').value;
         const thumbGroup = document.getElementById('thumbGroup');
         const titleGroup = document.getElementById('titleGroup');
         const locHashGroup = document.getElementById('locHashGroup');
@@ -453,6 +453,7 @@
         const monetGroup = document.getElementById('monetizationGroup');
         const catGroup = document.getElementById('catGroup');
         const fileInput = document.getElementById('fileInput');
+        const dropSub = document.getElementById('dropzoneSub');
 
         if (format === 'STORY') {
             thumbGroup.style.display = 'none';
@@ -463,6 +464,8 @@
             document.getElementById('descLabel').innerText = 'Story Caption';
             document.getElementById('dropzoneIcon').className = 'fa-solid fa-camera upload-icon';
             document.getElementById('titleInput').required = false;
+            fileInput.accept = 'video/mp4,image/jpeg,image/png,image/webp';
+            dropSub.innerText = 'MP4 video or JPG/PNG/WEBP image accepted';
         } else if (format === 'IMAGE') {
             thumbGroup.style.display = 'none';
             titleGroup.style.display = 'block';
@@ -472,7 +475,9 @@
             document.getElementById('descLabel').innerText = 'Post Caption';
             document.getElementById('dropzoneIcon').className = 'fa-solid fa-image upload-icon';
             document.getElementById('titleInput').required = true;
-        } else { // Reels / Long Videos
+            fileInput.accept = 'image/jpeg,image/png,image/webp';
+            dropSub.innerText = 'Only JPG, PNG, or WEBP image files accepted';
+        } else {
             thumbGroup.style.display = 'block';
             titleGroup.style.display = 'block';
             locHashGroup.style.display = 'flex';
@@ -481,8 +486,13 @@
             document.getElementById('descLabel').innerText = 'Video Description';
             document.getElementById('dropzoneIcon').className = 'fa-solid fa-circle-play upload-icon';
             document.getElementById('titleInput').required = true;
+            fileInput.accept = 'video/mp4,.mp4';
+            dropSub.innerText = 'Only MP4 video files accepted for reels and educational videos';
         }
-    });
+    }
+
+    document.getElementById('uploadType').addEventListener('change', applyUploadFormatRules);
+    applyUploadFormatRules();
 
     function handleFileSelected(input) {
         const filePreview = document.getElementById('filePreview');
@@ -509,6 +519,21 @@
 
     // Intercept upload to show AI safety scan animation
     document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const format = document.getElementById('uploadType').value;
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) return;
+        const name = file.name.toLowerCase();
+        const isVideo = format === 'REEL' || format === 'LONG_VIDEO';
+        if (isVideo && !name.endsWith('.mp4')) {
+            e.preventDefault();
+            alert('Videos must be uploaded in MP4 format only.');
+            return;
+        }
+        if (format === 'IMAGE' && !/\.(jpg|jpeg|png|webp)$/.test(name)) {
+            e.preventDefault();
+            alert('Images must be JPG, PNG, or WEBP format.');
+            return;
+        }
         document.getElementById('scanOverlay').style.display = 'flex';
     });
 </script>

@@ -181,6 +181,28 @@
             filter: brightness(1.1);
         }
 
+        .chat-toast {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 280px;
+            background: #fff;
+            border: 1px solid var(--fdf-border);
+            border-left: 4px solid var(--brand-pink);
+            border-radius: 12px;
+            padding: 14px 16px;
+            box-shadow: var(--shadow-lg);
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        .chat-toast.show { display: block; }
+        .chat-toast a { color: var(--brand-purple); font-weight: 700; text-decoration: none; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
         @media (max-width: 768px) {
             .glow-header { padding-top: 30px; padding-bottom: 20px; }
             .top-bar {
@@ -266,7 +288,15 @@
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->
 
+<div id="chatToast" class="chat-toast" role="alert">
+    <div class="fw-bold mb-1"><i class="bi bi-chat-dots-fill text-primary me-1"></i> New Message</div>
+    <div id="chatToastBody" class="small text-muted mb-2"></div>
+    <a id="chatToastLink" href="#">Open Chat →</a>
+</div>
+
 <!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/vendor/aos/aos.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
@@ -277,6 +307,35 @@
         easing: 'ease-in-out',
         once: true
     });
+
+    (function initChatNotifications() {
+        const currentUserId = ${sessionScope.user.id};
+        const ctx = '${pageContext.request.contextPath}';
+        let toastTimer = null;
+
+        function showChatToast(msg) {
+            const toast = document.getElementById('chatToast');
+            const senderName = msg.sender && msg.sender.fullName ? msg.sender.fullName : 'Someone';
+            const preview = msg.message ? msg.message.substring(0, 80) : 'Sent you a message';
+            document.getElementById('chatToastBody').textContent = senderName + ': ' + preview;
+            document.getElementById('chatToastLink').href = ctx + '/chat/window/' + msg.sender.id;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 8000);
+        }
+
+        const socket = new SockJS(ctx + '/ws-chat');
+        const stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+        stompClient.connect({}, function () {
+            stompClient.subscribe('/topic/messages/' + currentUserId, function (response) {
+                const msg = JSON.parse(response.body);
+                if (Number(msg.sender.id) !== Number(currentUserId)) {
+                    showChatToast(msg);
+                }
+            });
+        });
+    })();
 </script>
 
 </body>

@@ -19,6 +19,16 @@ public class HomeController {
 		return "index";
 	}
 
+	@RequestMapping("/map")
+	public String mapPage() {
+		return "redirect:/heatmap";
+	}
+
+	@RequestMapping("/features")
+	public String featuresPage() {
+		return "redirect:/features.jsp";
+	}
+
 	@RequestMapping("/heatmap")
 	public String heatMapPage(Model model) {
 		return "heatmap";

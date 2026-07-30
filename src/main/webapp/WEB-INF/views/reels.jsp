@@ -779,7 +779,10 @@
 
     <!-- Comments -->
     <div class="comment-box" id="comment-box-${video.id}">
-      <h5>Comments</h5>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="m-0">Comments</h5>
+        <button type="button" class="btn-close btn-close-white" onclick="toggleComments(${video.id})" aria-label="Close comments"></button>
+      </div>
 
       <div id="comments-${video.id}">
   <c:forEach var="comment" items="${video.comments}">

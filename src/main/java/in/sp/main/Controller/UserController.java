@@ -2,7 +2,12 @@ package in.sp.main.Controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +43,9 @@ import in.sp.main.Repository.StylistServiceRepository;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Repository.VideoUploadRepository;
 import in.sp.main.Repository.BroadcastMessageRepository;
+import in.sp.main.Repository.DangerPointRepository;
 import in.sp.main.Entities.BroadcastMessage;
+import in.sp.main.Entities.DangerPoint;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.MartialArtsCenterService;
 import in.sp.main.Service.ServiceService;
@@ -115,6 +122,12 @@ public class UserController {
 
     @Autowired
     private in.sp.main.Repository.FitnessReviewRepository fitnessReviewRepository;
+
+    @Autowired
+    private DangerPointRepository dangerPointRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @GetMapping("/training-journey")
     public String showTrainingJourney(HttpSession session, Model model) {
@@ -259,6 +272,7 @@ public class UserController {
     public String createUser(@ModelAttribute("user") User user,
                              @RequestParam(value = "image", required = false) MultipartFile image,
                              @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
+                             @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
                              HttpServletRequest request,
                              Model model,
                              RedirectAttributes redirectAttributes) {
@@ -267,19 +281,29 @@ public class UserController {
                 user = new User();
             }
 
+            final long maxFileSize = 5L * 1024 * 1024;
+
             // Save profile photo if uploaded
             if (image != null && !image.isEmpty()) {
+                if (image.getSize() > maxFileSize) {
+                    model.addAttribute("error", "Profile photo must be 5 MB or smaller.");
+                    return "user";
+                }
                 String profilePhotoUrl = fileUploadService.saveFile(image);
                 user.setProfilePhoto(profilePhotoUrl);
             }
 
             // Save identity document (mandatory)
             if (identityDoc != null && !identityDoc.isEmpty()) {
+                if (identityDoc.getSize() > maxFileSize) {
+                    model.addAttribute("error", "Identity document must be 5 MB or smaller.");
+                    return "user";
+                }
                 String identityDocUrl = fileUploadService.saveFile(identityDoc);
                 user.setIdentityDocument(identityDocUrl);
             } else {
                 model.addAttribute("error", "Please upload your identity document.");
-                return "user"; // return to the registration page
+                return "user";
             }
 
             // In some multipart setups, @ModelAttribute binding can arrive empty.
@@ -308,16 +332,8 @@ public class UserController {
                         java.time.LocalDate birthDate = java.time.LocalDate.parse(user.getDob());
                         int calculatedAge = java.time.Period.between(birthDate, java.time.LocalDate.now()).getYears();
                         user.setAge(calculatedAge);
-                    } catch (Exception e) {
-                        String ageParam = request.getParameter("age");
-                        if (ageParam != null && !ageParam.isEmpty()) {
-                            try { user.setAge(Integer.parseInt(ageParam)); } catch (NumberFormatException ex) {}
-                        }
-                    }
-                } else if (user.getAge() == null) {
-                    String ageParam = request.getParameter("age");
-                    if (ageParam != null && !ageParam.isEmpty()) {
-                        try { user.setAge(Integer.parseInt(ageParam)); } catch (NumberFormatException e) {}
+                    } catch (Exception ignored) {
+                        // dob validation below will reject invalid values
                     }
                 }
                 if (user.getGender() == null) {
@@ -333,19 +349,51 @@ public class UserController {
                 return "user";
             }
 
+            String normalizedEmail = user.getEmail().trim().toLowerCase();
+            if (!normalizedEmail.matches("^[a-zA-Z0-9._+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$")) {
+                model.addAttribute("error", "Please enter a valid email address.");
+                return "user";
+            }
+
+            if (user.getFullName() != null) {
+                String name = user.getFullName().trim();
+                if (name.length() < 3 || name.length() > 20) {
+                    model.addAttribute("error", "Username must be between 3 and 20 characters.");
+                    return "user";
+                }
+                user.setFullName(name);
+            }
+
             if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
                 model.addAttribute("error", "Password is required.");
                 return "user";
             }
 
-            // Date of Birth Validation
-            if (user.getDob() != null && !user.getDob().isEmpty()) {
-                LocalDate dob = LocalDate.parse(user.getDob());
-                if (dob.isAfter(LocalDate.now())) {
-                    model.addAttribute("error", "Date of Birth cannot be in the future.");
-                    return "user";
-                }
+            if (confirmPassword == null || !user.getPassword().equals(confirmPassword)) {
+                model.addAttribute("error", "Password and Confirm Password do not match.");
+                return "user";
             }
+
+            // Date of Birth Validation — always derive age from DOB (never trust tampered age field)
+            if (user.getDob() == null || user.getDob().isEmpty()) {
+                model.addAttribute("error", "Date of Birth is required.");
+                return "user";
+            }
+            LocalDate dob = LocalDate.parse(user.getDob());
+            if (dob.isAfter(LocalDate.now())) {
+                model.addAttribute("error", "Date of Birth cannot be in the future.");
+                return "user";
+            }
+            if (dob.isBefore(LocalDate.now().minusYears(100))) {
+                model.addAttribute("error", "Age must be between 18 and 100 years.");
+                return "user";
+            }
+            int calculatedAge = java.time.Period.between(dob, LocalDate.now()).getYears();
+            if (calculatedAge < 18 || calculatedAge > 100) {
+                model.addAttribute("error", "Age must be between 18 and 100 years.");
+                return "user";
+            }
+            user.setAge(calculatedAge);
 
             // Phone validation
             if (user.getPhoneNumber() == null || !user.getPhoneNumber().trim().matches("^\\d{10}$")) {
@@ -354,14 +402,14 @@ public class UserController {
             }
 
             String rawPassword = user.getPassword().trim();
-            if (!rawPassword.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$")) {
+            if (!rawPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
                 model.addAttribute("error",
-                        "Password must be at least 6 characters long and include a number and special character");
+                        "Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.");
                 return "user";
             }
 
             // Store BCrypt password for security (login supports legacy plain-text too).
-            user.setEmail(user.getEmail().trim().toLowerCase());
+            user.setEmail(normalizedEmail);
             user.setPassword(passwordService.encode(rawPassword));
 
             // Check duplicate email
@@ -418,18 +466,8 @@ public class UserController {
         
         List<Videoupload> videos = videoRepository.findByUserId(userId);
 
-        int totalCoins = 0;
-
-        
-        for (Videoupload v : videos) {
-            int score = v.getViewCount()
-                       + (v.getLikeCount() * 5)
-                       ;
-            totalCoins += score;
-        }
         model.addAttribute("user", user);
         model.addAttribute("completionPercentage", completionPercentage);
-        model.addAttribute("coins", totalCoins);
         
         // Instagram-style counts
         model.addAttribute("postsCount", videos.size());
@@ -572,6 +610,50 @@ public class UserController {
                 .collect(java.util.stream.Collectors.toList());
         model.addAttribute("activeSubscriptions", activeSubs);
 
+        List<User> allUsers = userRepository.findAll();
+        int age17to30 = 0;
+        int age31to50 = 0;
+        int age51plus = 0;
+        for (User u : allUsers) {
+            if (u.getAge() == null) {
+                continue;
+            }
+            if (u.getAge() >= 17 && u.getAge() <= 30) {
+                age17to30++;
+            } else if (u.getAge() >= 31 && u.getAge() <= 50) {
+                age31to50++;
+            } else if (u.getAge() >= 51) {
+                age51plus++;
+            }
+        }
+        int demoTotal = age17to30 + age31to50 + age51plus;
+        model.addAttribute("demoAge17to30Count", age17to30);
+        model.addAttribute("demoAge31to50Count", age31to50);
+        model.addAttribute("demoAge51PlusCount", age51plus);
+        model.addAttribute("demoAge17to30Pct", demoTotal == 0 ? 0 : Math.round(100f * age17to30 / demoTotal));
+        model.addAttribute("demoAge31to50Pct", demoTotal == 0 ? 0 : Math.round(100f * age31to50 / demoTotal));
+        model.addAttribute("demoAge51PlusPct", demoTotal == 0 ? 0 : Math.round(100f * age51plus / demoTotal));
+
+        List<DangerPoint> mapPoints = dangerPointRepository.findTop500ByVerifiedOrderByCreatedAtDesc(true);
+        if (mapPoints.isEmpty()) {
+            mapPoints = dangerPointRepository.findTop500ByOrderByCreatedAtDesc();
+        }
+        List<Map<String, Object>> dangerMapData = new ArrayList<>();
+        for (DangerPoint p : mapPoints) {
+            Map<String, Object> point = new HashMap<>();
+            point.put("lat", p.getLatitude());
+            point.put("lng", p.getLongitude());
+            point.put("category", p.getCategory());
+            point.put("note", p.getNote());
+            dangerMapData.add(point);
+        }
+        try {
+            model.addAttribute("dangerMapPointsJson", objectMapper.writeValueAsString(dangerMapData));
+        } catch (Exception ex) {
+            model.addAttribute("dangerMapPointsJson", "[]");
+        }
+        model.addAttribute("dangerMapPointCount", dangerMapData.size());
+
         return "userDashboard";
     }
 
@@ -601,7 +683,7 @@ public class UserController {
                              @RequestParam("email") String email,
                              @RequestParam("phone") String phone,
                              @RequestParam("address") String address,
-                             @RequestParam("age") Integer age,
+                             @RequestParam("dob") String dob,
                              @RequestParam("gender") String gender,
                              @RequestParam(value = "isPrivate", defaultValue = "false") boolean isPrivate,
                              @RequestParam(value = "identityFile", required = false) MultipartFile identityFile,
@@ -616,11 +698,25 @@ public class UserController {
             return "redirect:/users/update/" + id;
         }
 
+        if (dob == null || dob.isBlank()) {
+            return "redirect:/users/update/" + id;
+        }
+
+        LocalDate birthDate = LocalDate.parse(dob);
+        if (birthDate.isAfter(LocalDate.now()) || birthDate.isBefore(LocalDate.now().minusYears(100))) {
+            return "redirect:/users/update/" + id;
+        }
+        int calculatedAge = java.time.Period.between(birthDate, LocalDate.now()).getYears();
+        if (calculatedAge < 18 || calculatedAge > 100) {
+            return "redirect:/users/update/" + id;
+        }
+
         existingUser.setFullName(name);
         existingUser.setEmail(email);
         existingUser.setPhoneNumber(phone);
         existingUser.setHomeAddress(address);
-        existingUser.setAge(age);
+        existingUser.setDob(dob);
+        existingUser.setAge(calculatedAge);
         existingUser.setPrivate(isPrivate);
 
         try {

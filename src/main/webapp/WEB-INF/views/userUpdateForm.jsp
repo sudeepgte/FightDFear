@@ -329,12 +329,21 @@
             <div class="row g-3 mb-0">
                 <div class="col-6">
                     <div class="field-group">
-                        <label class="form-label" for="age">Age</label>
-                        <input type="number" id="age" name="age" class="form-control"
-                               value="${user.age}" placeholder="Age" min="1" max="120" required>
+                        <label class="form-label" for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control"
+                               value="${user.dob}" required>
                     </div>
                 </div>
                 <div class="col-6">
+                    <div class="field-group">
+                        <label class="form-label" for="ageDisplay">Age</label>
+                        <input type="number" id="ageDisplay" class="form-control"
+                               value="${user.age}" placeholder="Auto from DOB" min="18" max="100" readonly tabindex="-1">
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-0">
+                <div class="col-12">
                     <div class="field-group">
                         <label class="form-label" for="gender">Gender</label>
                         <select name="gender" id="gender" class="form-control" required>
@@ -385,6 +394,34 @@
         <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="btn-ghost" id="btn-cancel">Cancel</a>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dob = document.getElementById('dob');
+    var ageDisplay = document.getElementById('ageDisplay');
+    if (!dob || !ageDisplay) return;
+
+    var today = new Date();
+    var maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    var minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+    var fmt = function(d) { return d.toISOString().split('T')[0]; };
+    dob.setAttribute('max', fmt(maxDob));
+    dob.setAttribute('min', fmt(minDob));
+
+    function syncAge() {
+        if (!dob.value) return;
+        var birthDate = new Date(dob.value + 'T00:00:00');
+        var now = new Date();
+        var computedAge = now.getFullYear() - birthDate.getFullYear();
+        var m = now.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) computedAge--;
+        ageDisplay.value = computedAge;
+    }
+
+    dob.addEventListener('change', syncAge);
+    syncAge();
+});
+</script>
 
 </body>
 </html>

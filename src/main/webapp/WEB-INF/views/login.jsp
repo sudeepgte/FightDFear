@@ -406,6 +406,12 @@
                     ${error}
                 </div>
             </c:if>
+            <c:if test="${not empty success}">
+                <div class="error-alert" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;">
+                    <i class="bi bi-check-circle"></i>
+                    ${success}
+                </div>
+            </c:if>
 
             <form action="${pageContext.request.contextPath}/login" method="post">
 

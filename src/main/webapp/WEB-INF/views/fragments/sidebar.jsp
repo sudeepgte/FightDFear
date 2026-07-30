@@ -23,9 +23,16 @@
         top: 80px; 
         bottom: 0;
         overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
         border-top-right-radius: 40px;
         padding-top: 20px;
         box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+    }
+
+    #sidebar-wrapper .list-group {
+        padding-bottom: 80px;
     }
     
     #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
@@ -208,7 +215,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         var content = document.getElementById("page-content-wrapper");
-        if(content && !document.getElementById("global-back-btn")) {
+        if(content && !document.getElementById("global-back-btn") && content.dataset.skipGlobalBack !== "true") {
             var backBtn = document.createElement("div");
             backBtn.id = "global-back-btn";
             backBtn.style.marginBottom = "20px";

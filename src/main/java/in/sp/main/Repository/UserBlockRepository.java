@@ -12,4 +12,5 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, Long> {
     boolean existsByUser_IdAndBlockedUser_Id(Long userId, Long blockedUserId);
     List<UserBlock> findByUser_Id(Long userId);
     Optional<UserBlock> findByUser_IdAndBlockedUser_Id(Long userId, Long blockedUserId);
+    List<UserBlock> findByBlockedUser_Id(Long blockedUserId);
 }

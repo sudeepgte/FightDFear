@@ -54,6 +54,9 @@ public class AdminController {
     private UserRepository userRepository;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private FitnessTrainerRepository fitnessTrainerRepository;
 
     @Autowired
@@ -179,41 +182,53 @@ public class AdminController {
     }
 
     /**
-     * Admin creation is not public. Only an already-authenticated admin may open this form.
-     * Unauthenticated requests are sent to login (registration is closed).
+     * Public admin registration form (separate from user registration at /users/register).
      */
     @RequestMapping(value = "/registerAdmin", method = GET)
-    public String showRegisterPage(HttpSession session, RedirectAttributes redirectAttributes) {
-        if (session.getAttribute("admin") == null) {
-            redirectAttributes.addFlashAttribute("error", "Admin registration is closed. Sign in with an existing admin account.");
-            return "redirect:/admin/loginAdmin";
-        }
+    public String showRegisterPage(Model model, @ModelAttribute("error") String error,
+                                   @ModelAttribute("success") String success) {
+        model.addAttribute("error", error);
+        model.addAttribute("success", success);
         return "adminRegister";
     }
 
     /**
-     * Creates a new admin. Requires an existing admin session — public self-registration is disabled.
+     * Creates a new admin account.
      */
     @RequestMapping(value = "/registerAdmin", method = POST)
     public String registerAdmin(@RequestParam String name,
                                 @RequestParam String email,
                                 @RequestParam String password,
-                                HttpSession session,
+                                @RequestParam(required = false) String confirmPassword,
                                 RedirectAttributes redirectAttributes) {
-        if (session.getAttribute("admin") == null) {
-            redirectAttributes.addFlashAttribute("error", "Admin registration is closed.");
-            return "redirect:/admin/loginAdmin";
-        }
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email and Password are required!");
             return "redirect:/admin/registerAdmin";
         }
-        Admin admin = new Admin(name, email, password);
-        if (adminService.registerAdmin(admin)) {
-            redirectAttributes.addFlashAttribute("successMessage", "Admin registered successfully.");
-            return "redirect:/admin/list";
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Email already exists!");
+        if (name == null || name.trim().length() < 3 || name.trim().length() > 20) {
+            redirectAttributes.addFlashAttribute("error", "Admin username must be between 3 and 20 characters.");
+            return "redirect:/admin/registerAdmin";
+        }
+        if (confirmPassword == null || !password.equals(confirmPassword)) {
+            redirectAttributes.addFlashAttribute("error", "Password and Confirm Password do not match.");
+            return "redirect:/admin/registerAdmin";
+        }
+        if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.");
+            return "redirect:/admin/registerAdmin";
+        }
+        Admin admin = new Admin(name.trim(), email.trim().toLowerCase(), password);
+        try {
+            if (adminService.registerAdmin(admin)) {
+                redirectAttributes.addFlashAttribute("success", "Admin registered successfully. Please sign in.");
+                return "redirect:/admin/loginAdmin";
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Email already exists!");
+                return "redirect:/admin/registerAdmin";
+            }
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
             return "redirect:/admin/registerAdmin";
         }
     }
@@ -742,7 +757,7 @@ public class AdminController {
         } else {
             // Include pending and verified users for approval workflow
             model.addAttribute("pendingUsers", userRepository.findByVerificationStatus(VerificationStatus.PENDING));
-            model.addAttribute("verifiedUsers", userRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
+            model.addAttribute("verifiedUsers", userRepository.findByVerificationStatusAndBannedFalse(VerificationStatus.VERIFIED));
             model.addAttribute("rejectedUsers", userRepository.findByVerificationStatus(VerificationStatus.REJECTED));
             model.addAttribute("bannedUsers",  userRepository.findByBanned(true));
         }
@@ -791,8 +806,12 @@ public class AdminController {
     @PostMapping("/users/{id}/delete")
     public String deleteUser(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        userRepository.deleteById(id);
-        ra.addFlashAttribute("message", "User deleted permanently.");
+        try {
+            userService.deleteUser(id);
+            ra.addFlashAttribute("message", "User deleted permanently.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", "Unable to delete user. Remove related records first or try again.");
+        }
         return "redirect:/admin/users";
     }
 

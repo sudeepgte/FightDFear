@@ -390,12 +390,27 @@
     .dashboard-btn:hover i {
         transform: translateX(5px);
     }
+    .profile-back-btn {
+        background: #fff;
+        color: var(--primary-purple) !important;
+        border: 2px solid var(--primary-purple);
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: all 0.25s ease;
+    }
+    .profile-back-btn:hover {
+        background: rgba(30, 27, 75, 0.08);
+        color: var(--primary-purple) !important;
+        border-color: var(--brand-pink);
+        transform: translateY(-1px);
+    }
 </style>
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
 
 <div class="dashboard-bar container-fluid container-xl d-flex justify-content-end">
     <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
@@ -414,7 +429,7 @@
     <!-- 📊 Account Summary Integrated Here -->
     <div class="text-center text-white px-3">
         <div class="coin-box d-inline-block mb-3 shadow-sm" style="background: rgba(255, 215, 0, 0.2); border: 1px solid var(--primary-gold); color: #fff;">
-            🪙 <span style="font-size: 20px;"><strong>${coins}</strong></span> Coins Earned
+            🪙 <span style="font-size: 20px;"><strong>${user.rewardPoints != null ? user.rewardPoints : 0}</strong></span> Coins Earned
         </div>
         <h4 class="text-white mb-2" style="font-weight: 700;">Account Overview</h4>
         <p class="small mb-3" style="opacity: 0.8;">Manage your safety profile and contacts below.</p>
@@ -491,9 +506,6 @@
 
 					             <!-- 🔘 Action Buttons -->
 					             <div class="mt-4 d-flex flex-wrap gap-3">
-					               <a href="${pageContext.request.contextPath}/users/dashboard" class="btn btn-outline-dark px-4 py-2 fw-bold text-dark border-dark">
-					                 <i class="fas fa-home me-2"></i> Back to Dashboard
-					               </a>
 					               <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn btn-primary px-4 py-2 text-white">
 					                 <i class="fas fa-user-edit me-2"></i> Edit
 					               </a>

@@ -11,6 +11,7 @@ import in.sp.main.Entities.EmergencyContact;
 import in.sp.main.Entities.User;
 import in.sp.main.Service.EmergencyContactService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -27,20 +28,33 @@ public class EmergencyContactController {
     }
 
     @RequestMapping(method = GET)
-    public String getEmergencyContacts(@PathVariable Long userId, Model model, HttpSession session) {
+    public String getEmergencyContacts(@PathVariable Long userId, Model model, HttpSession session,
+                                       @ModelAttribute("error") String error,
+                                       @ModelAttribute("success") String success) {
         if (!owns(session, userId)) return "redirect:/login";
         List<EmergencyContact> contacts = emergencyContactService.getEmergencyContactsByUserId(userId);
         model.addAttribute("contacts", contacts);
         model.addAttribute("userId", userId);
+        model.addAttribute("personalContactCount", emergencyContactService.countPersonalContacts(userId));
+        model.addAttribute("maxPersonalContacts", 5);
+        model.addAttribute("canAddContact", emergencyContactService.canAddPersonalContact(userId));
+        model.addAttribute("error", error);
+        model.addAttribute("success", success);
         return "emergency-contact";
     }
 
     @RequestMapping(method = POST)
     public String addEmergencyContact(@PathVariable Long userId,
                                       @ModelAttribute EmergencyContact contact,
-                                      HttpSession session) {
+                                      HttpSession session,
+                                      RedirectAttributes redirectAttributes) {
         if (!owns(session, userId)) return "redirect:/login";
-        emergencyContactService.createEmergencyContact(userId, contact);
+        try {
+            emergencyContactService.createEmergencyContact(userId, contact);
+            redirectAttributes.addFlashAttribute("success", "Emergency contact added.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
         return "redirect:/users/" + userId + "/emergency-contacts";
     }
 

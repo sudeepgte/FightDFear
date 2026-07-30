@@ -106,8 +106,16 @@
             font-family: inherit; font-weight: 500;
         }
         .fdf-input:focus { border-color: var(--brand-pink); background: #fff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
+        .password-input-wrap { position: relative; }
+        .password-input-wrap .fdf-input { padding-right: 48px; }
+        .password-toggle-btn {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            border: none; background: transparent; color: #64748b; cursor: pointer;
+            width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+            z-index: 2;
+        }
 
-        .btn-fdf-login { 
+        .btn-fdf-login {
             width: 100%; padding: 18px; background: var(--gradient-primary); color: #fff; 
             border: none; border-radius: 18px; font-size: 1.1rem; font-weight: 800; 
             cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px;
@@ -200,9 +208,12 @@
                     </div>
                     <div class="fdf-form-group">
                         <label>Password</label>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper password-input-wrap">
                             <i class="bi bi-lock"></i>
-                            <input type="password" name="password" class="fdf-input" placeholder="••••••••" required>
+                            <input type="password" name="password" id="adminPassword" class="fdf-input" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle-btn" data-toggle-password="adminPassword" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -210,10 +221,34 @@
                         Sign In <i class="bi bi-arrow-right"></i>
                     </button>
                 </form>
+
+                <p class="register-link" style="margin-top: 24px; text-align: center; font-size: 0.95rem;">
+                    Need an admin account?
+                    <a href="${pageContext.request.contextPath}/admin/registerAdmin">Register here</a>
+                </p>
                 
             </div>
         </div>
     </div>
+    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
+    <script>
+    (function () {
+      document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-toggle-password');
+          var input = document.getElementById(id);
+          if (!input) return;
+          var show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          var icon = btn.querySelector('i');
+          if (icon) {
+            icon.classList.toggle('bi-eye', !show);
+            icon.classList.toggle('bi-eye-slash', show);
+          }
+        });
+      });
+    })();
+    </script>
 </body>
 </html>
 

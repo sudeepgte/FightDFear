@@ -557,7 +557,9 @@
                 <div class="meta">
 
                     <span class="badge bg-light text-dark badge-pill">
-                        Reported Videos: <span id="reportedVideos">-</span>
+                        <a href="${pageContext.request.contextPath}/admin/reported-videos" class="text-dark text-decoration-none">
+                            Reported Videos: <span id="reportedVideos">-</span>
+                        </a>
                     </span>
                     <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
                 </div>

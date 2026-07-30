@@ -161,6 +161,11 @@
         display: flex;
         flex-direction: column;
         gap: 25px;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .right-col .panel-new {
+        overflow: hidden;
     }
     
     /* 4 Stat Cards */
@@ -296,6 +301,20 @@
     #dangerMap {
         border-radius: 12px;
         z-index: 1;
+        min-height: 280px;
+        height: 280px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background: #e2e8f0;
+    }
+    .map-panel-wrap {
+        overflow: visible !important;
+    }
+    .map-panel-wrap .leaflet-container {
+        height: 100% !important;
+        width: 100% !important;
+        border-radius: 12px;
     }
     
     @media (max-width: 1200px) {
@@ -512,15 +531,15 @@
                         <div class="mt-3 w-100">
                             <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
                                 <span><i class="bi bi-circle-fill icon-blue me-2" style="font-size:10px;"></i> 17 - 30 Years old</span>
-                                <span class="fw-bold text-dark">62%</span>
+                                <span class="fw-bold text-dark">${demoAge17to30Pct}%</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
                                 <span><i class="bi bi-circle-fill icon-orange me-2" style="font-size:10px;"></i> 31 - 50 Years old</span>
-                                <span class="fw-bold text-dark">33%</span>
+                                <span class="fw-bold text-dark">${demoAge31to50Pct}%</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small text-muted">
                                 <span><i class="bi bi-circle-fill icon-yellow me-2" style="font-size:10px;"></i> >= 50 Years old</span>
-                                <span class="fw-bold text-dark">10%</span>
+                                <span class="fw-bold text-dark">${demoAge51PlusPct}%</span>
                             </div>
                         </div>
                     </div>
@@ -781,16 +800,17 @@
                 <!-- Bottom Grid -->
                 <div class="bottom-grid">
                     <!-- Map -->
-                    <div class="panel-new d-flex flex-column">
+                    <div class="panel-new d-flex flex-column map-panel-wrap">
                         <div class="panel-header-flex">
                             <h3 class="panel-title">Community Safety Map</h3>
                             <div class="d-flex align-items-center gap-2 border rounded px-3 py-1 bg-light text-muted" style="font-size:0.8rem;">
-                                <i class="bi bi-geo-alt"></i> Live Data
+                                <i class="bi bi-geo-alt"></i> ${dangerMapPointCount != null ? dangerMapPointCount : 0} reports
                             </div>
                         </div>
-                        <div id="dangerMap" style="height:250px; width:100%; background:#eee; flex:1;"></div>
+                        <div id="dangerMap"></div>
                         <div class="mt-3 text-muted small">
-                            <i class="bi bi-info-circle me-1"></i> Showing current safety reports.
+                            <i class="bi bi-info-circle me-1"></i> Showing verified safety reports across the community.
+                            <a href="${pageContext.request.contextPath}/heatmap" class="ms-1">Open full map</a>
                         </div>
                     </div>
                     
@@ -832,7 +852,7 @@
                      <h3 class="panel-title mb-3"><i class="bi bi-shield-fill-check text-primary me-2"></i> Safety Toolbox</h3>
                      <div class="row g-2">
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/map" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/heatmap" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-map text-primary fs-3 mb-2"></i>
                                  <span class="fw-bold small">Danger Map</span>
                              </a>
@@ -956,12 +976,20 @@
         var pieCanvas = document.getElementById('pieChart');
         if (pieCanvas) {
             var ctxPie = pieCanvas.getContext('2d');
+            var demoData = [
+                ${demoAge17to30Count == null ? 0 : demoAge17to30Count},
+                ${demoAge31to50Count == null ? 0 : demoAge31to50Count},
+                ${demoAge51PlusCount == null ? 0 : demoAge51PlusCount}
+            ];
+            if (demoData.reduce(function(a, b) { return a + b; }, 0) === 0) {
+                demoData = [1, 1, 1];
+            }
             new Chart(ctxPie, {
                 type: 'pie',
                 data: {
                     labels: ['17-30 Years', '31-50 Years', '>=50 Years'],
                     datasets: [{
-                        data: [62, 33, 10],
+                        data: demoData,
                         backgroundColor: ['#3b82f6', '#f97316', '#eab308'],
                         borderWidth: 0,
                         hoverOffset: 4
@@ -1007,11 +1035,48 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        if(document.getElementById('dangerMap')) {
-            var map = L.map('dangerMap').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+        var mapEl = document.getElementById('dangerMap');
+        if (!mapEl || typeof L === 'undefined') return;
+
+        var points = [];
+        try {
+            points = ${empty dangerMapPointsJson ? '[]' : dangerMapPointsJson};
+        } catch (e) {
+            points = [];
+        }
+
+        var map = L.map('dangerMap', { scrollWheelZoom: false }).setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        function refreshMapSize() {
+            map.invalidateSize(true);
+        }
+        setTimeout(refreshMapSize, 100);
+        setTimeout(refreshMapSize, 500);
+        window.addEventListener('resize', refreshMapSize);
+
+        if (Array.isArray(points) && points.length > 0) {
+            var latLngs = [];
+            points.forEach(function(p) {
+                var lat = p.lat != null ? p.lat : p.latitude;
+                var lng = p.lng != null ? p.lng : p.longitude;
+                if (lat == null || lng == null) return;
+                latLngs.push([lat, lng]);
+                L.circleMarker([lat, lng], {
+                    radius: 7,
+                    color: '#ef4444',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.75
+                }).addTo(map).bindPopup(p.note || p.category || 'Safety report');
+            });
+            if (latLngs.length > 0) {
+                map.fitBounds(L.latLngBounds(latLngs).pad(0.2));
+            }
+        } else {
+            L.marker([20.5937, 78.9629]).addTo(map).bindPopup('No reports yet — map is ready for live safety data.');
         }
     });
 </script>

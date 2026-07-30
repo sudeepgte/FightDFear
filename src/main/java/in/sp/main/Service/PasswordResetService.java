@@ -87,12 +87,15 @@ public class PasswordResetService {
                 .queryParam("type", userType.name())
                 .build()
                 .toUriString();
-        String messageBody = "Click to reset your password: " + resetUrl;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
         message.setSubject("Password Reset Request");
-        message.setText(messageBody);
+        message.setText("You requested a password reset for your Fight D Fear account.\n\n"
+                + "Reset your password using this link:\n"
+                + resetUrl + "\n\n"
+                + "This link expires in " + EXPIRATION_TIME + " minutes.\n"
+                + "If you did not request this, you can ignore this email.");
         mailSender.send(message);
     }
 
