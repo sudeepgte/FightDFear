@@ -30,10 +30,15 @@ public class SecurityConfig {
             "/login",
             "/login/**",
             "/auth/**",
+            "/api/auth/**",
+            "/api/glow/provider/register/**",
+            "/api/martial-arts/centre/register",
+            "/api/martial-arts/centre/register-lite",
+            "/api/martial-arts/centre/login",
+            "/api/martial-arts/admin/login",
             "/users/register",
             "/users/register/**",
             "/admin/loginAdmin",
-            "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
             "/doctors/register",
@@ -57,8 +62,7 @@ public class SecurityConfig {
             "/uploads/**",
             "/siren.mp3",
             "/*.mp3",
-            "/ws-chat/**",
-            "/ws-sos/**",
+            "/sos/respond",
             "/entrepreneur/login",
             "/entrepreneur/register",
             "/entrepreneur/register/**",
@@ -97,7 +101,17 @@ public class SecurityConfig {
                 .invalidateHttpSession(true)
                 .permitAll()
             )
-            .exceptionHandling(e -> e.authenticationEntryPoint(new org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint("/login")))
+            .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
+                String path = request.getRequestURI();
+                if (path != null && path.startsWith("/api/")) {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
+                } else {
+                    response.sendRedirect("/login");
+                }
+            }))
+            .cors(c -> {})
             .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }

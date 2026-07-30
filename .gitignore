@@ -34,3 +34,5 @@ build/
 *.mp4
 uploads/
 .env
+**/application-local.properties
+**/application-local.yml

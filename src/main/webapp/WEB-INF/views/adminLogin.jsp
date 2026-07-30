@@ -211,9 +211,6 @@
                     </button>
                 </form>
                 
-                <div class="register-link">
-                    New Administrator? <a href="${pageContext.request.contextPath}/admin/registerAdmin">Request Access</a>
-                </div>
             </div>
         </div>
     </div>

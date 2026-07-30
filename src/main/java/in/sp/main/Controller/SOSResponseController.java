@@ -1,5 +1,6 @@
 package in.sp.main.Controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,11 +8,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import in.sp.main.Entities.User;
 import in.sp.main.Service.SosService;
+import jakarta.servlet.http.HttpSession;
 
 /**
- * Webhook controller for handling SOS responses from contacts
- * Contacts click accept/reject links in SMS/Email
+ * Contact response links (token) + authenticated SOS status/cancel/history APIs.
  */
 @Controller
 @RequestMapping("/sos")
@@ -21,7 +23,7 @@ public class SOSResponseController {
     private SosService sosService;
 
     /**
-     * Handle accept/reject response from SMS/Email link
+     * Public tokenized link from SMS/Email — must stay unauthenticated.
      * URL: /sos/respond?token=xxx&action=accept
      */
     @GetMapping("/respond")
@@ -30,51 +32,62 @@ public class SOSResponseController {
             @RequestParam String action,
             @RequestParam(required = false, defaultValue = "") String message,
             Model model) {
-        
-        Map<String, Object> result = sosService.handleContactResponse(token, action, message);
-        
+
+        if (!"accept".equalsIgnoreCase(action) && !"reject".equalsIgnoreCase(action)) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "Invalid action");
+            return "sos-response-page";
+        }
+
+        Map<String, Object> result = sosService.handleContactResponse(token, action.toLowerCase(), message);
+
         model.addAttribute("success", result.get("success"));
         model.addAttribute("message", result.get("message"));
         model.addAttribute("contactName", result.get("contactName"));
         model.addAttribute("action", result.get("action"));
-        
+
         return "sos-response-page";
     }
 
-    /**
-     * REST API: Get SOS status (for real-time polling)
-     */
     @GetMapping("/status/{sosId}")
     @ResponseBody
-    public Map<String, Object> getSOSStatus(@PathVariable Long sosId) {
-        return sosService.getSOSStatus(sosId);
+    public Map<String, Object> getSOSStatus(@PathVariable Long sosId, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Login required");
+            return error;
+        }
+        return sosService.getSOSStatusForUser(sosId, user.getId());
     }
 
-    /**
-     * REST API: Cancel SOS
-     */
     @PostMapping("/cancel/{sosId}")
     @ResponseBody
-    public Map<String, Object> cancelSOS(
-            @PathVariable Long sosId,
-            @RequestParam Long userId) {
-        
-        boolean cancelled = sosService.cancelSOS(sosId, userId);
-        
-        Map<String, Object> response = new java.util.HashMap<>();
+    public Map<String, Object> cancelSOS(@PathVariable Long sosId, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "Login required");
+            return response;
+        }
+
+        boolean cancelled = sosService.cancelSOS(sosId, user.getId());
         response.put("success", cancelled);
         response.put("message", cancelled ? "SOS cancelled successfully" : "Could not cancel SOS");
         return response;
     }
 
-    /**
-     * REST API: Get user's SOS history
-     */
     @GetMapping("/history")
     @ResponseBody
-    public Map<String, Object> getSOSHistory(@RequestParam Long userId) {
-        Map<String, Object> response = new java.util.HashMap<>();
-        response.put("history", sosService.getUserSOSHistory(userId));
+    public Map<String, Object> getSOSHistory(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.put("error", "Login required");
+            return response;
+        }
+        response.put("history", sosService.getUserSOSHistory(user.getId()));
         return response;
     }
 }

@@ -31,12 +31,29 @@ public class SosActivationController {
         if (user == null) {
             return "redirect:/login";
         }
-        
+
+        // Only nearby / responding volunteers (or the victim) may open victim SOS details
+        Long nearby = sosService.getActiveNearbySosId(user.getId());
+        java.util.Optional<in.sp.main.Entities.SOSRequest> own = sosService.getActiveSOSForUser(user.getId());
+        boolean allowed = (nearby != null && nearby.equals(sosId))
+                || (own.isPresent() && own.get().getId().equals(sosId));
+        if (!allowed) {
+            // Also allow if this volunteer already has a response record for the SOS
+            Map<String, Object> detailsProbe = sosService.getSOSRequestDetails(sosId);
+            if (detailsProbe == null) {
+                return "redirect:/users/dashboard";
+            }
+            boolean responded = sosService.hasVolunteerResponded(sosId, user.getId());
+            if (!responded) {
+                return "redirect:/users/dashboard";
+            }
+        }
+
         Map<String, Object> sosDetails = sosService.getSOSRequestDetails(sosId);
         if (sosDetails == null) {
             return "redirect:/users/dashboard";
         }
-        
+
         model.addAttribute("sos", sosDetails);
         model.addAttribute("user", user);
         return "volunteer-help-dashboard";
@@ -82,6 +99,11 @@ public class SosActivationController {
             Map<String, Object> error = new HashMap<>();
             error.put("error", "User not logged in");
             return ResponseEntity.status(401).body(error);
+        }
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Invalid coordinates");
+            return ResponseEntity.badRequest().body(error);
         }
 
         Map<String, Object> result = sosService.triggerSOS(user.getId(), latitude, longitude);

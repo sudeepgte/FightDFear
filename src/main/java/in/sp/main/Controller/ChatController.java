@@ -38,13 +38,25 @@ public class ChatController {
     @Autowired
     private in.sp.main.Service.UserFollowService followService;
 
-    // WebRTC Signaling
+    // WebRTC Signaling — sender from authenticated principal only
     @MessageMapping("/webrtc.signal")
-    public void handleWebRTCSignal(@Payload Map<String, Object> signal) {
-        Object receiverId = signal.get("receiverId");
-        if (receiverId != null) {
-            messagingTemplate.convertAndSend("/topic/calls/" + receiverId, signal);
+    public void handleWebRTCSignal(@Payload Map<String, Object> signal,
+                                   org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor) {
+        if (accessor.getUser() == null) {
+            return;
         }
+        String email = accessor.getUser().getName();
+        User sender = userRepo.findByEmail(email).orElse(null);
+        if (sender == null) {
+            return;
+        }
+        Object receiverId = signal.get("receiverId");
+        if (receiverId == null) {
+            return;
+        }
+        signal.put("fromId", sender.getId());
+        signal.put("fromName", sender.getFullName());
+        messagingTemplate.convertAndSend("/topic/calls/" + receiverId, signal);
     }
 
     // Show all users to start chat
@@ -69,6 +81,9 @@ public class ChatController {
 
         User receiver = userRepo.findById(receiverId).orElse(null);
         if (receiver == null) return "redirect:/chat/users";
+        if (!followService.getFriends(sender.getId()).stream().anyMatch(f -> f.getId().equals(receiverId))) {
+            return "redirect:/chat/users";
+        }
 
         chatService.markAsRead(receiverId, sender.getId());
         List<ChatMessage> messages = chatService.getChatHistory(sender, receiver);

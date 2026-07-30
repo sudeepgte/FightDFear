@@ -223,17 +223,27 @@
                 <c:when test="${not empty pending}">
                   <c:forEach var="v" items="${pending}">
                       <tr>
-                          <td class="fw-bold">${v.name}</td>
+                          <td class="fw-bold">${v.fullName}</td>
                           <td>${v.email}</td>
                           <td>
-                              <a href="${pageContext.request.contextPath}${v.govtIdPath}" target="_blank" class="btn-view-media">
-                                <i class="fas fa-id-card me-1"></i> View ID
-                              </a>
+                              <c:choose>
+                                <c:when test="${not empty v.identityDocument && (v.identityDocument.startsWith('/') || v.identityDocument.startsWith('http'))}">
+                                  <a href="${pageContext.request.contextPath}${v.identityDocument}" target="_blank" class="btn-view-media">
+                                    <i class="fas fa-id-card me-1"></i> View ID
+                                  </a>
+                                </c:when>
+                                <c:when test="${not empty v.identityDocument}">
+                                  <span class="small text-muted">${v.identityDocument}</span>
+                                </c:when>
+                                <c:otherwise>
+                                  <span class="small text-muted">Not provided</span>
+                                </c:otherwise>
+                              </c:choose>
                           </td>
                           <td>
                               <div class="d-flex justify-content-center align-items-center gap-2">
                                 <form action="${pageContext.request.contextPath}/admin/approve-suggestion/${v.id}" method="post" class="m-0 d-flex gap-2">
-                                    <input type="password" name="password" class="password-input" placeholder="Set Password" required>
+                                    <input type="password" name="password" class="password-input" placeholder="Set Password" required minlength="6">
                                     <button type="submit" class="btn-approve"><i class="fas fa-check me-1"></i> Approve</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/admin/reject-suggestion/${v.id}" method="post" class="m-0">
@@ -277,7 +287,7 @@
                 <c:when test="${not empty approved}">
                   <c:forEach var="v" items="${approved}">
                       <tr>
-                          <td class="fw-bold">${v.name}</td>
+                          <td class="fw-bold">${v.fullName}</td>
                           <td>${v.email}</td>
                           <td><span class="badge-status status-APPROVED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span></td>
                       </tr>
@@ -315,7 +325,7 @@
                 <c:when test="${not empty rejected}">
                   <c:forEach var="v" items="${rejected}">
                       <tr>
-                          <td class="fw-bold">${v.name}</td>
+                          <td class="fw-bold">${v.fullName}</td>
                           <td>${v.email}</td>
                           <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span></td>
                       </tr>

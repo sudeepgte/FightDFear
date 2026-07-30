@@ -68,6 +68,9 @@ public class MarketplaceController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
     // ==============================
     // Provider registration + login
     // ==============================
@@ -103,7 +106,7 @@ public class MarketplaceController {
             p.setFullName(fullName);
             p.setEmail(email.trim().toLowerCase());
             p.setPhone(phone);
-            p.setPassword(password);
+            p.setPassword(passwordService.encode(password));
             
             // Robust category parsing
             try {
@@ -151,7 +154,11 @@ public class MarketplaceController {
             return "marketplace/provider-login";
         }
         ServiceProvider p = pOpt.get();
-        if (!p.getPassword().equals(password)) {
+        boolean ok = passwordService.matchesAndUpgrade(password, p.getPassword(), hashed -> {
+            p.setPassword(hashed);
+            providerRepo.save(p);
+        });
+        if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "marketplace/provider-login";
         }
@@ -408,19 +415,14 @@ public class MarketplaceController {
         return "marketplace/payment";
     }
 
+    /**
+     * Fake "confirm paid" without Razorpay — disabled. Use /payment/create-order + /payment/verify.
+     */
     @PostMapping("/payment/confirm")
-    public String confirmPayment(@RequestParam Long enrollmentId, HttpSession session, RedirectAttributes redirectAttributes) {
-        User u = (User) session.getAttribute("user");
-        if (u == null) return "redirect:/login";
-
-        MarketplaceEnrollment e = enrollmentRepo.findById(enrollmentId).orElse(null);
-        if (e == null || !e.getUser().getId().equals(u.getId())) return "redirect:/marketplace";
-
-        e.setPaymentStatus("PAID");
-        enrollmentRepo.save(e);
-
-        redirectAttributes.addFlashAttribute("message", "Payment successful! Enrolled.");
-        return "redirect:/marketplace/my-classes";
+    public String confirmPayment(HttpSession session, RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("user") == null) return "redirect:/login";
+        redirectAttributes.addFlashAttribute("error", "Direct payment confirmation is disabled. Complete payment via Razorpay.");
+        return "redirect:/marketplace";
     }
 
     @GetMapping("/my-classes")
@@ -545,20 +547,13 @@ public class MarketplaceController {
         return "redirect:/marketplace/worker-bookings";
     }
 
+    /**
+     * Fake worker payment without Razorpay — disabled. Use /payment/create-order + /payment/verify with type WORKER_BOOKING.
+     */
     @PostMapping("/worker-booking/{id}/pay")
     public String payWorkerBooking(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
-        User u = (User) session.getAttribute("user");
-        if (u == null) return "redirect:/login";
-
-        Optional<in.sp.main.Entities.WorkerBooking> bOpt = workerBookingRepo.findById(id);
-        if (bOpt.isPresent()) {
-            in.sp.main.Entities.WorkerBooking booking = bOpt.get();
-            if (booking.getClient().getId().equals(u.getId()) && booking.getStatus().equals("ACCEPTED")) {
-                booking.setStatus("PAID");
-                workerBookingRepo.save(booking);
-                redirectAttributes.addFlashAttribute("success", "Payment successful!");
-            }
-        }
+        if (session.getAttribute("user") == null) return "redirect:/login";
+        redirectAttributes.addFlashAttribute("error", "Direct worker payment is disabled. Complete payment via Razorpay.");
         return "redirect:/user/bookings";
     }
 

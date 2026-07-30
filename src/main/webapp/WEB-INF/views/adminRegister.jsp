@@ -232,10 +232,10 @@
                    pattern="(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}" 
                    title="At least 6 characters, including a number and a special character" 
                    required>
-            <button type="submit" class="btn-primary">Register</button>
+            <button type="submit" class="btn-primary">Create Admin</button>
         </form>
         <div class="mt-3">
-            <a href="${pageContext.request.contextPath}/admin/loginAdmin">Already have an account? Login →</a>
+            <a href="${pageContext.request.contextPath}/admin/adminDashboard">← Back to Admin Dashboard</a>
         </div>
     </div>
 </div>

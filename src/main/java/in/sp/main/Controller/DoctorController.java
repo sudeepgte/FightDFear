@@ -50,6 +50,9 @@ public class DoctorController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
     // ==============================
     // Doctor Registration + Login
     // ==============================
@@ -127,7 +130,7 @@ public class DoctorController {
             d.setFullName(fullName);
             d.setEmail(email.trim().toLowerCase());
             d.setPhone(phone);
-            d.setPassword(password);
+            d.setPassword(passwordService.encode(password));
             d.setGender(Gender.valueOf(gender));
             d.setProfilePhotoPath(profilePhotoPath);
 
@@ -198,7 +201,11 @@ public class DoctorController {
             return "doctor/doctor-login";
         }
         Doctor d = dOpt.get();
-        if (!d.getPassword().equals(password)) {
+        boolean ok = passwordService.matchesAndUpgrade(password, d.getPassword(), hashed -> {
+            d.setPassword(hashed);
+            doctorRepo.save(d);
+        });
+        if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "doctor/doctor-login";
         }
@@ -500,6 +507,9 @@ public class DoctorController {
             model.addAttribute("targetUserId", u.getId());
             model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(u, target));
         } else if (d != null) {
+            if (!d.getId().equals(doctorId)) {
+                return "redirect:/doctors/dashboard";
+            }
             model.addAttribute("currentUser", "Dr. " + d.getFullName());
             model.addAttribute("currentId", d.getId());
             model.addAttribute("senderType", "DOCTOR");
@@ -542,9 +552,12 @@ public class DoctorController {
             User u = (User) session.getAttribute("user");
             if (u == null) return "NOT_LOGGED_IN";
             msg.setUser(u);
+            msg.setSenderType("USER");
         } else {
             Doctor d = (Doctor) session.getAttribute("loggedDoctor");
             if (d == null) return "NOT_LOGGED_IN";
+            if (!d.getId().equals(doctorId)) return "ACCESS_DENIED";
+            msg.setSenderType("DOCTOR");
             if (userId != null) {
                 User targetUser = userRepo.findById(userId).orElse(null);
                 msg.setUser(targetUser);

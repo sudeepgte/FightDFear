@@ -178,29 +178,40 @@ public class AdminController {
         return "adminMartialManagement";
     }
 
-   
+    /**
+     * Admin creation is not public. Only an already-authenticated admin may open this form.
+     * Unauthenticated requests are sent to login (registration is closed).
+     */
     @RequestMapping(value = "/registerAdmin", method = GET)
-    public String showRegisterPage(HttpSession session) {
-        if (session.getAttribute("admin") != null) {
-            return "redirect:/admin/adminDashboard";
+    public String showRegisterPage(HttpSession session, RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            redirectAttributes.addFlashAttribute("error", "Admin registration is closed. Sign in with an existing admin account.");
+            return "redirect:/admin/loginAdmin";
         }
         return "adminRegister";
     }
 
-   
+    /**
+     * Creates a new admin. Requires an existing admin session — public self-registration is disabled.
+     */
     @RequestMapping(value = "/registerAdmin", method = POST)
     public String registerAdmin(@RequestParam String name,
                                 @RequestParam String email,
                                 @RequestParam String password,
+                                HttpSession session,
                                 RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            redirectAttributes.addFlashAttribute("error", "Admin registration is closed.");
+            return "redirect:/admin/loginAdmin";
+        }
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email and Password are required!");
             return "redirect:/admin/registerAdmin";
         }
         Admin admin = new Admin(name, email, password);
         if (adminService.registerAdmin(admin)) {
-            redirectAttributes.addFlashAttribute("success", "Admin registered successfully! Please login.");
-            return "redirect:/admin/loginAdmin";
+            redirectAttributes.addFlashAttribute("successMessage", "Admin registered successfully.");
+            return "redirect:/admin/list";
         } else {
             redirectAttributes.addFlashAttribute("error", "Email already exists!");
             return "redirect:/admin/registerAdmin";
@@ -637,19 +648,63 @@ public class AdminController {
         return "adminVolunteerManagement";
     }
 
-    // Purpose: admin page for reviewing volunteer suggestions.
-    // The suggestion entity/repository is not yet implemented, so we supply empty lists
-    // to prevent the 404 Whitelabel Error from the dashboard link.
+    @Autowired
+    private PasswordService passwordService;
+
+    // Purpose: admin reviews pending users as volunteer suggestions (same User verificationStatus gate).
     @GetMapping("/pending-suggestions")
     public String viewPendingSuggestions(Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
-        // Provide empty lists so the JSP c:if blocks render gracefully.
-        model.addAttribute("pending",  java.util.Collections.emptyList());
-        model.addAttribute("approved", java.util.Collections.emptyList());
-        model.addAttribute("rejected", java.util.Collections.emptyList());
+        List<User> pending = new ArrayList<>(userRepository.findByVerificationStatus(VerificationStatus.PENDING));
+        pending.addAll(userRepository.findByVerificationStatusIsNull());
+        model.addAttribute("pending", pending);
+        model.addAttribute("approved", userRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
+        model.addAttribute("rejected", userRepository.findByVerificationStatus(VerificationStatus.REJECTED));
         return "adminPendingVolunteerSuggestions";
+    }
+
+    @PostMapping("/approve-suggestion/{id}")
+    public String approveSuggestion(@PathVariable Long id,
+                                    @RequestParam("password") String password,
+                                    HttpSession session,
+                                    RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        User u = userRepository.findById(id).orElse(null);
+        if (u == null) {
+            redirectAttributes.addFlashAttribute("error", "Volunteer not found.");
+            return "redirect:/admin/pending-suggestions";
+        }
+        if (password == null || password.trim().length() < 6) {
+            redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters.");
+            return "redirect:/admin/pending-suggestions";
+        }
+        u.setPassword(passwordService.encode(password.trim()));
+        u.setVerificationStatus(VerificationStatus.VERIFIED);
+        userRepository.save(u);
+        redirectAttributes.addFlashAttribute("message", "Volunteer approved and password set.");
+        return "redirect:/admin/pending-suggestions";
+    }
+
+    @PostMapping("/reject-suggestion/{id}")
+    public String rejectSuggestion(@PathVariable Long id,
+                                   HttpSession session,
+                                   RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        User u = userRepository.findById(id).orElse(null);
+        if (u == null) {
+            redirectAttributes.addFlashAttribute("error", "Volunteer not found.");
+            return "redirect:/admin/pending-suggestions";
+        }
+        u.setVerificationStatus(VerificationStatus.REJECTED);
+        userRepository.save(u);
+        redirectAttributes.addFlashAttribute("message", "Volunteer suggestion rejected.");
+        return "redirect:/admin/pending-suggestions";
     }
 
     // Purpose: admin rejects a volunteer — called from approvedVolunteers.jsp and

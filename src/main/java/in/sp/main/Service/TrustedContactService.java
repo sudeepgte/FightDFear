@@ -42,6 +42,12 @@ public class TrustedContactService {
             TrustedContact existingContact = existingContactOpt.get();
             existingContact.setName(contact.getName());
             existingContact.setPhone(contact.getPhone());
+            existingContact.setEmail(contact.getEmail());
+            existingContact.setRelation(contact.getRelation());
+            existingContact.setPrimary(contact.isPrimary());
+            existingContact.setCanReceiveSMS(contact.isCanReceiveSMS());
+            existingContact.setCanReceiveEmail(contact.isCanReceiveEmail());
+            existingContact.setCanReceiveCall(contact.isCanReceiveCall());
             return trustedContactRepository.save(existingContact);
         }
         return null; // Return null or throw exception if contact not found

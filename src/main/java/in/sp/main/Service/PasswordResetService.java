@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import in.sp.main.Entities.Admin;
@@ -44,7 +43,7 @@ public class PasswordResetService {
     @Autowired private WomenProductSellerRepository sellerRepository;
     @Autowired private PasswordResetTokenRepository tokenRepository;
     @Autowired private JavaMailSender mailSender;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private PasswordService passwordService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -113,7 +112,7 @@ public class PasswordResetService {
         PasswordResetToken resetToken = tokenOpt.get();
         String email = resetToken.getEmail();
         UserType userType = resetToken.getUserType();
-        String encodedPassword = passwordEncoder.encode(newPassword);
+        String encodedPassword = passwordService.encode(newPassword);
 
         switch (userType) {
             case USER:

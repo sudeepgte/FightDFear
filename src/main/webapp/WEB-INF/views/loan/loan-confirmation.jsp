@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,6 +60,7 @@
         .btn-home:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(124, 45, 94, 0.4);
+            color: white;
         }
     </style>
 </head>
@@ -71,9 +73,12 @@
                 <i class="fas fa-check"></i>
             </div>
             <h1 class="text-dark mb-3">Application Submitted!</h1>
-            <p class="text-muted mb-4">
-                Thank you for applying for the loan! Your application has been successfully submitted. We will review your application and get back to you soon.
+            <p class="text-muted mb-2">
+                Thank you for applying. Your application has been saved and will be reviewed soon.
             </p>
+            <c:if test="${not empty applicationId}">
+                <p class="fw-bold mb-4" style="color: var(--f-purple);">Reference ID: #${applicationId}</p>
+            </c:if>
             <a href="${pageContext.request.contextPath}/loan" class="btn-home btn-lg">
                 <i class="fas fa-home me-2"></i> Back to Loan Hub
             </a>

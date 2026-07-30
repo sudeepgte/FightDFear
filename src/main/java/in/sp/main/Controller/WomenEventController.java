@@ -40,6 +40,9 @@ public class WomenEventController {
     private EventHostRepository eventHostRepository;
 
     @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
+    @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
     @Autowired
@@ -401,7 +404,7 @@ public class WomenEventController {
         host.setFullName(fullName);
         host.setEmail(email.trim().toLowerCase());
         host.setPhone(phone);
-        host.setPassword(password);
+        host.setPassword(passwordService.encode(password));
         host.setOrganizerName(organizerName);
         host.setOrganizerType(organizerType);
         host.setHostContact(hostContact);
@@ -429,7 +432,11 @@ public class WomenEventController {
             return "women-events/host-login";
         }
         EventHost host = hostOpt.get();
-        if (!host.getPassword().equals(password)) {
+        boolean ok = passwordService.matchesAndUpgrade(password, host.getPassword(), hashed -> {
+            host.setPassword(hashed);
+            eventHostRepository.save(host);
+        });
+        if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "women-events/host-login";
         }

@@ -116,37 +116,46 @@ public class ContactController {
     }
 
     @MessageMapping("/chat.send")
-    public void send(@Payload ChatMessage chatMessage) {
-        in.sp.main.Entities.User sender = userRepo.findById(chatMessage.getSender().getId()).orElse(null);
-        in.sp.main.Entities.User receiver = userRepo.findById(chatMessage.getReceiver().getId()).orElse(null);
-
-        if (sender != null && receiver != null) {
-            chatMessage.setSender(sender);
-            chatMessage.setReceiver(receiver);
-            chatMessage.setTimestamp(LocalDateTime.now());
-            chatMessage.setReadStatus(false);
-
-            chatService.save(chatMessage);
-
-            java.util.Map<String, Object> payload = new java.util.HashMap<>();
-            payload.put("id", chatMessage.getId());
-            payload.put("message", chatMessage.getMessage());
-            payload.put("videoUrl", chatMessage.getVideoUrl());
-            payload.put("timestamp", chatMessage.getTimestamp().toString());
-
-            java.util.Map<String, Object> senderMap = new java.util.HashMap<>();
-            senderMap.put("id", sender.getId());
-            senderMap.put("fullName", sender.getFullName());
-            payload.put("sender", senderMap);
-
-            java.util.Map<String, Object> receiverMap = new java.util.HashMap<>();
-            receiverMap.put("id", receiver.getId());
-            receiverMap.put("fullName", receiver.getFullName());
-            payload.put("receiver", receiverMap);
-
-            messagingTemplate.convertAndSend("/topic/messages/" + receiver.getId(), payload);
-            messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), payload);
+    public void send(@Payload ChatMessage chatMessage,
+                     org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor) {
+        if (accessor.getUser() == null) {
+            return;
         }
+        String email = accessor.getUser().getName();
+        in.sp.main.Entities.User sender = userRepo.findByEmail(email).orElse(null);
+        if (sender == null || chatMessage.getReceiver() == null || chatMessage.getReceiver().getId() == null) {
+            return;
+        }
+        in.sp.main.Entities.User receiver = userRepo.findById(chatMessage.getReceiver().getId()).orElse(null);
+        if (receiver == null) {
+            return;
+        }
+
+        chatMessage.setSender(sender);
+        chatMessage.setReceiver(receiver);
+        chatMessage.setTimestamp(LocalDateTime.now());
+        chatMessage.setReadStatus(false);
+
+        chatService.save(chatMessage);
+
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("id", chatMessage.getId());
+        payload.put("message", chatMessage.getMessage());
+        payload.put("videoUrl", chatMessage.getVideoUrl());
+        payload.put("timestamp", chatMessage.getTimestamp().toString());
+
+        java.util.Map<String, Object> senderMap = new java.util.HashMap<>();
+        senderMap.put("id", sender.getId());
+        senderMap.put("fullName", sender.getFullName());
+        payload.put("sender", senderMap);
+
+        java.util.Map<String, Object> receiverMap = new java.util.HashMap<>();
+        receiverMap.put("id", receiver.getId());
+        receiverMap.put("fullName", receiver.getFullName());
+        payload.put("receiver", receiverMap);
+
+        messagingTemplate.convertAndSend("/topic/messages/" + receiver.getId(), payload);
+        messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), payload);
     }
 }
 

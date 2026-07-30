@@ -49,6 +49,11 @@ public class SOSAudioController {
             response.put("message", "SOS request not found");
             return ResponseEntity.status(404).body(response);
         }
+        if (sosRequest.getUser() == null || !sosRequest.getUser().getId().equals(user.getId())) {
+            response.put("success", false);
+            response.put("message", "Access denied");
+            return ResponseEntity.status(403).body(response);
+        }
 
         try {
             // Ensure directory exists

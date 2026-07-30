@@ -45,6 +45,9 @@ public class MartialArtsCenterService {
     @Autowired
     private FileUploadService fileUploadService;  
 
+    @Autowired
+    private PasswordService passwordService;
+
     // ================== Register a new center ==================
     @Transactional
     public void register(MartialArtsCenter center,
@@ -76,6 +79,10 @@ public class MartialArtsCenterService {
         }
 
         // Needs admin approval
+        if (center.getPassword() != null && !center.getPassword().isBlank()
+                && !passwordService.isBcryptEncoded(center.getPassword())) {
+            center.setPassword(passwordService.encode(center.getPassword()));
+        }
         center.setApproved(false);
         centerRepository.save(center);
 
@@ -252,7 +259,14 @@ public class MartialArtsCenterService {
         existingCenter.setEmail(updatedCenter.getEmail());
         existingCenter.setPhoneNumber(updatedCenter.getPhoneNumber());
         existingCenter.setLocation(updatedCenter.getLocation());
-        existingCenter.setPassword(updatedCenter.getPassword());
+        String newPassword = updatedCenter.getPassword();
+        if (newPassword != null && !newPassword.isBlank()) {
+            if (!passwordService.isBcryptEncoded(newPassword)) {
+                existingCenter.setPassword(passwordService.encode(newPassword));
+            } else {
+                existingCenter.setPassword(newPassword);
+            }
+        }
         existingCenter.setAbout(updatedCenter.getAbout());
         existingCenter.setHowWeTeach(updatedCenter.getHowWeTeach());
         existingCenter.setWhatWeOffer(updatedCenter.getWhatWeOffer());

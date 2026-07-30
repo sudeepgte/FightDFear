@@ -5,7 +5,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Pattern;
 
 @Entity
 @Table(name = "admin")
@@ -16,10 +15,7 @@ public class Admin {
 
     private String name;
     private String email;
-    @Pattern(
-    	    regexp = "^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$",
-    	    message = "Password must be at least 6 characters long and include a number and special character"
-    	)
+    /** Stored as BCrypt — do not put plaintext @Pattern here (breaks login upgrade). */
     private String password;
     private String profilePhoto;
 

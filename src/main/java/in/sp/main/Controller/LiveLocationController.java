@@ -43,17 +43,12 @@ public class LiveLocationController {
         Map<String, Object> response = new HashMap<>();
 
         User user = (User) session.getAttribute("user");
-        Long userId;
-
-        if (user != null) {
-            userId = user.getId();
-        } else if (payload.containsKey("userId")) {
-            userId = Long.parseLong(payload.get("userId").toString());
-        } else {
+        if (user == null) {
             response.put("success", false);
             response.put("message", "Not logged in");
             return ResponseEntity.status(401).body(response);
         }
+        Long userId = user.getId();
 
         Double latitude = Double.parseDouble(payload.get("latitude").toString());
         Double longitude = Double.parseDouble(payload.get("longitude").toString());

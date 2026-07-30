@@ -31,6 +31,9 @@ public class PanicController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private in.sp.main.Service.SMSService smsService;
+
     // ✅ 1. Display Panic Button Page
     @RequestMapping(method = RequestMethod.GET)
     public String showPanicPage() {
@@ -125,24 +128,25 @@ public class PanicController {
         panicLog.setNotifiedContacts(notifiedContacts);
         panicLogRepository.save(panicLog);
 
-        // 3. Send email to each emergency contact with location
+        // 3. Notify each emergency contact (email + SMS)
         String mapsLink = "https://www.google.com/maps?q=" + latitude + "," + longitude;
         int emailsSent = 0;
+        int smsSent = 0;
 
         for (EmergencyContact contact : contacts) {
             if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
                 try {
-                    String emailBody = "🚨 PANIC ALERT 🚨\n\n"
+                    String emailBody = "PANIC ALERT\n\n"
                         + userName + " has triggered a PANIC alert!\n\n"
-                        + "📍 Live Location: " + mapsLink + "\n\n"
-                        + "📞 Contact: " + (user != null && user.getPhoneNumber() != null ? user.getPhoneNumber() : "N/A") + "\n\n"
-                        + "⏰ Time: " + LocalDateTime.now() + "\n\n"
+                        + "Live Location: " + mapsLink + "\n\n"
+                        + "Contact: " + (user != null && user.getPhoneNumber() != null ? user.getPhoneNumber() : "N/A") + "\n\n"
+                        + "Time: " + LocalDateTime.now() + "\n\n"
                         + "Please respond immediately and check on their safety.\n\n"
                         + "This is an automated emergency alert from Fight D Fear Women Safety App.";
 
                     emailService.sendEmail(
                         contact.getEmail(),
-                        "🚨 PANIC ALERT - " + userName + " needs your help!",
+                        "PANIC ALERT - " + userName + " needs your help!",
                         emailBody
                     );
                     emailsSent++;
@@ -150,13 +154,22 @@ public class PanicController {
                     System.err.println("Failed to email contact: " + contact.getEmail() + " - " + e.getMessage());
                 }
             }
+            if (contact.getPhone() != null && !contact.getPhone().isBlank()) {
+                String smsBody = "PANIC ALERT: " + userName + " needs help. Location: " + mapsLink;
+                if (smsService.sendSMS(contact.getPhone(), smsBody)) {
+                    smsSent++;
+                }
+            }
         }
 
-        System.out.println("🚨 PANIC ALERT: " + userName + " | Location: " + mapsLink + " | Emails sent: " + emailsSent);
+        System.out.println("PANIC ALERT: " + userName + " | Location: " + mapsLink
+                + " | Emails: " + emailsSent + " | SMS: " + smsSent);
 
         response.put("success", true);
-        response.put("message", "Panic alert sent! " + emailsSent + " contact(s) notified via email.");
+        response.put("message", "Panic alert sent! " + emailsSent + " email(s), " + smsSent + " SMS.");
         response.put("emailsSent", emailsSent);
+        response.put("smsSent", smsSent);
+        response.put("smsConfigured", smsService.isConfigured());
         response.put("totalContacts", contacts.size());
         return ResponseEntity.ok(response);
     }

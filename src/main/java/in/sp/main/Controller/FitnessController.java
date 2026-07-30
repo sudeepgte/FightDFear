@@ -41,6 +41,9 @@ public class FitnessController {
     private FileUploadService fileUploadService;
 
     @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
+    @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
     private final String[] FITNESS_CATEGORIES = {
@@ -276,6 +279,10 @@ public class FitnessController {
             redirectAttributes.addFlashAttribute("error", "Booking record not found.");
             return "redirect:/fitness/bookings";
         }
+        if (booking.getUser() == null || !booking.getUser().getId().equals(currentUser.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Access denied.");
+            return "redirect:/fitness/bookings";
+        }
 
         if ("PAID".equals(booking.getPaymentStatus())) {
             // Refund wallet
@@ -359,7 +366,7 @@ public class FitnessController {
             trainer.setFullName(fullName);
             trainer.setEmail(email.trim().toLowerCase());
             trainer.setPhone(phone);
-            trainer.setPassword(password); // Simple storage
+            trainer.setPassword(passwordService.encode(password));
             trainer.setExperience(experience);
             trainer.setAvailableTimings(availableTimings);
             trainer.setSessionFees(sessionFees);
@@ -399,30 +406,36 @@ public class FitnessController {
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         Optional<FitnessTrainer> opt = fitnessTrainerRepository.findByEmail(email.trim().toLowerCase());
-        if (opt.isPresent() && opt.get().getPassword().equals(password)) {
+        if (opt.isPresent()) {
             FitnessTrainer trainer = opt.get();
-            if (trainer.getVerificationStatus() == VerificationStatus.PENDING) {
-                redirectAttributes.addFlashAttribute("error", "Your account is pending verification by admin.");
-                return "redirect:/fitness/trainer/login";
-            } else if (trainer.getVerificationStatus() == VerificationStatus.REJECTED) {
-                redirectAttributes.addFlashAttribute("error", "Your certification credentials were rejected.");
-                return "redirect:/fitness/trainer/login";
-            } else if (trainer.isSuspended()) {
-                redirectAttributes.addFlashAttribute("error", "Your trainer account has been suspended.");
-                return "redirect:/fitness/trainer/login";
+            boolean ok = passwordService.matchesAndUpgrade(password, trainer.getPassword(), hashed -> {
+                trainer.setPassword(hashed);
+                fitnessTrainerRepository.save(trainer);
+            });
+            if (ok) {
+                if (trainer.getVerificationStatus() == VerificationStatus.PENDING) {
+                    redirectAttributes.addFlashAttribute("error", "Your account is pending verification by admin.");
+                    return "redirect:/fitness/trainer/login";
+                } else if (trainer.getVerificationStatus() == VerificationStatus.REJECTED) {
+                    redirectAttributes.addFlashAttribute("error", "Your certification credentials were rejected.");
+                    return "redirect:/fitness/trainer/login";
+                } else if (trainer.isSuspended()) {
+                    redirectAttributes.addFlashAttribute("error", "Your trainer account has been suspended.");
+                    return "redirect:/fitness/trainer/login";
+                }
+
+                session.setAttribute("loggedTrainer", trainer);
+
+                // Generate JWT and add to response
+                String token = jwtUtil.generateToken(trainer.getEmail(), "TRAINER");
+                jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
+                cookie.setPath("/");
+                cookie.setHttpOnly(true);
+                cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+                response.addCookie(cookie);
+
+                return "redirect:/fitness/trainer/dashboard";
             }
-
-            session.setAttribute("loggedTrainer", trainer);
-
-            // Generate JWT and add to response
-            String token = jwtUtil.generateToken(trainer.getEmail(), "TRAINER");
-            jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
-            cookie.setPath("/");
-            cookie.setHttpOnly(true);
-            cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
-            response.addCookie(cookie);
-
-            return "redirect:/fitness/trainer/dashboard";
         }
 
         redirectAttributes.addFlashAttribute("error", "Invalid credentials!");

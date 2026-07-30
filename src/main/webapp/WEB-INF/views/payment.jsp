@@ -228,27 +228,13 @@
 <body>
     <div class="container">
         <h2 class="text-center my-4">Make Payment</h2>
-        <form id="paymentForm">
-            <div class="mb-3">
-                <label class="form-label">Amount</label>
-                <input type="number" class="form-control" id="amount" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Pay Now</button>
-        </form>
+        <div class="alert alert-warning text-center">
+            Direct payments are disabled. Complete checkout through Razorpay from the booking or enrollment page.
+        </div>
+        <p class="text-center">
+            <a class="btn btn-primary" href="${pageContext.request.contextPath}/">Back to Home</a>
+        </p>
     </div>
-
-    <script>
-        document.getElementById("paymentForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let amount = document.getElementById("amount").value;
-            
-            fetch("/payment/pay", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: amount })
-            }).then(res => res.text()).then(alert);
-        });
-    </script>
 </body>
 </html>
 

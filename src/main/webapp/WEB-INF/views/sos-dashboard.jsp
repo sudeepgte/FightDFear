@@ -1277,7 +1277,7 @@
 
             // If SOS was already triggered, cancel it on server
             if (currentSosId) {
-                fetch(contextPath + '/sos/cancel/' + currentSosId + '?userId=' + userId, { method: 'POST' })
+                fetch(contextPath + '/sos/cancel/' + currentSosId, { method: 'POST' })
                     .then(r => r.json())
                     .then(data => {
                         showToast(data.message || 'SOS cancelled');

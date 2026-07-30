@@ -17,6 +17,7 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, Long> 
 	    List<Group> findGroupsByUserId(@Param("userId") Long userId);
 
 	 boolean existsByGroupIdAndUserId(Long groupId, Long userId);
+	 java.util.Optional<GroupMember> findByGroupIdAndUserId(Long groupId, Long userId);
 	 void deleteByGroupIdAndUserId(Long groupId, Long userId);
 
 }

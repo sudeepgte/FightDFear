@@ -38,6 +38,9 @@ public class SalonController {
     private FileUploadService fileUploadService;
     
     @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+    
+    @Autowired
     private StylistRepository stylistRepository;
     
     @Autowired
@@ -78,7 +81,7 @@ public class SalonController {
             Salon salon = new Salon();
             salon.setName(name);
             salon.setUsername(username); // store username
-            salon.setPassword(password); // store password
+            salon.setPassword(passwordService.encode(password));
             salon.setHygieneCertificateUrl(hygieneCertificateUrl);
             salon.setBio(bio);
             salon.setAvailabilityHours(availabilityHours);
@@ -112,7 +115,10 @@ public class SalonController {
         if (salonOpt.isPresent()) {
             Salon salon = salonOpt.get();
 
-            if (salon.getPassword().equals(password)) {
+            if (passwordService.matchesAndUpgrade(password, salon.getPassword(), hashed -> {
+                salon.setPassword(hashed);
+                salonRepository.save(salon);
+            })) {
                 if (!salon.isApproved()) {
                     model.addAttribute("error", "Your account is pending admin approval. Please wait for the physical business audit.");
                     return "salon/salon-login";
@@ -311,7 +317,7 @@ public class SalonController {
      stylist.setFirstName(firstName);
      stylist.setLastName(lastName);
      stylist.setEmail(email);
-     stylist.setPassword(password);
+     stylist.setPassword(passwordService.encode(password));
      stylist.setSpecialization(specialization);
      stylist.setExperienceInYears(experienceInYears);
      stylist.setContactNumber(contactNumber);

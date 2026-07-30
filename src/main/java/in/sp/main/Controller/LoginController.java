@@ -13,7 +13,7 @@ import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Service.UserService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import in.sp.main.Service.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +26,7 @@ public class LoginController {
     private UserService userService;
     
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
 
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
@@ -65,9 +65,10 @@ public class LoginController {
 
         boolean ok = false;
         if (user != null && user.getPassword() != null) {
-            // Support both legacy plain-text passwords and BCrypt passwords.
-            ok = passwordEncoder.matches(rawPassword, user.getPassword())
-                    || user.getPassword().equals(rawPassword);
+            ok = passwordService.matchesAndUpgrade(rawPassword, user.getPassword(), hashed -> {
+                user.setPassword(hashed);
+                userService.createUser(user); // save upgrade
+            });
         }
 
         if (ok) {

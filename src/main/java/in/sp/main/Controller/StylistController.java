@@ -39,6 +39,9 @@ public class StylistController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
 
     // ==============================
     // 1️⃣ Stylist Registration (self-register)
@@ -55,6 +58,7 @@ public class StylistController {
             model.addAttribute("error", "Email already registered. Choose another.");
             return "stylist/stylist-register";
         }
+        stylist.setPassword(passwordService.encode(stylist.getPassword()));
         stylist.setAvailable(true);
         stylist.setRating(0.0);
         stylist.setIsIndependent(true); // Self-registered stylist
@@ -81,7 +85,10 @@ public class StylistController {
         Optional<Stylist> stylistOpt = stylistRepository.findByEmail(email);
         if (stylistOpt.isPresent()) {
             Stylist stylist = stylistOpt.get();
-            if (stylist.getPassword().equals(password)) {
+            if (passwordService.matchesAndUpgrade(password, stylist.getPassword(), hashed -> {
+                stylist.setPassword(hashed);
+                stylistRepository.save(stylist);
+            })) {
                 if (!stylist.isApproved()) {
                     model.addAttribute("error", "Your account is pending admin approval. Access denied.");
                     return "stylist/stylist-login";
@@ -153,6 +160,9 @@ public class StylistController {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isPresent()) {
             Booking booking = bookingOpt.get();
+            if (booking.getStylist() == null || !booking.getStylist().getId().equals(stylist.getId())) {
+                return "redirect:/stylists/dashboard";
+            }
             booking.setStatus(BookingStatus.CONFIRMED);
             bookingRepository.save(booking);
         }
@@ -168,6 +178,9 @@ public class StylistController {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isPresent()) {
             Booking booking = bookingOpt.get();
+            if (booking.getStylist() == null || !booking.getStylist().getId().equals(stylist.getId())) {
+                return "redirect:/stylists/dashboard";
+            }
             booking.setStatus(BookingStatus.REJECTED);
             bookingRepository.save(booking);
         }
@@ -180,8 +193,10 @@ public class StylistController {
         if (stylist == null) return "redirect:/stylists/login";
 
         bookingRepository.findById(bookingId).ifPresent(booking -> {
-            booking.setStatus(BookingStatus.COMPLETED);
-            bookingRepository.save(booking);
+            if (booking.getStylist() != null && booking.getStylist().getId().equals(stylist.getId())) {
+                booking.setStatus(BookingStatus.COMPLETED);
+                bookingRepository.save(booking);
+            }
         });
 
         // Reload all bookings after completion

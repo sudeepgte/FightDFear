@@ -84,24 +84,43 @@ public class PaymentController {
         return "payment";
     }
 
+    /**
+     * Legacy stub that marked payments Success with no gateway check — disabled.
+     * Use /payment/create-order + /payment/verify (Razorpay) instead.
+     */
     @PostMapping("/pay")
     @ResponseBody
-    public String processDirectPayment(@RequestBody Map<String, Object> payload, HttpSession session) {
-        User user = (User) session.getAttribute("user");
-        if (user == null) {
-            return "Please login to make a payment.";
+    public ResponseEntity<Map<String, Object>> processDirectPayment() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", "Direct payment is disabled. Use Razorpay checkout.");
+        return ResponseEntity.status(410).body(body);
+    }
+
+    private boolean razorpayConfigured() {
+        return razorpayKeyId != null && !razorpayKeyId.isBlank()
+                && razorpayKeySecret != null && !razorpayKeySecret.isBlank();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Integer> pendingOrders(HttpSession session) {
+        Object raw = session.getAttribute("pendingRazorpayOrders");
+        if (raw instanceof Map<?, ?> map) {
+            return (Map<String, Integer>) map;
         }
-        try {
-            double amount = Double.parseDouble(payload.get("amount").toString());
-            Payment payment = new Payment();
-            payment.setUserId(user.getId());
-            payment.setAmount(amount);
-            payment.setStatus("Success");
-            paymentRepository.save(payment);
-            return "Payment of $" + amount + " successful!";
-        } catch (Exception e) {
-            return "Payment failed: " + e.getMessage();
+        Map<String, Integer> pending = new HashMap<>();
+        session.setAttribute("pendingRazorpayOrders", pending);
+        return pending;
+    }
+
+    private boolean verifyRazorpaySignature(String orderId, String paymentId, String signature) throws Exception {
+        if (orderId.isBlank() || paymentId.isBlank() || signature.isBlank()) {
+            return false;
         }
+        JSONObject options = new JSONObject();
+        options.put("razorpay_order_id", orderId);
+        options.put("razorpay_payment_id", paymentId);
+        options.put("razorpay_signature", signature);
+        return Utils.verifyPaymentSignature(options, razorpayKeySecret);
     }
 
     @GetMapping("/users/my-payments")
@@ -167,40 +186,60 @@ public class PaymentController {
     @PostMapping("/create-order")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> data, HttpSession session) {
+        Map<String, Object> errorBody = new HashMap<>();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            errorBody.put("error", "Login required");
+            return ResponseEntity.status(401).body(errorBody);
+        }
+        if (!razorpayConfigured()) {
+            errorBody.put("error", "Payment gateway is not configured");
+            return ResponseEntity.status(503).body(errorBody);
         }
 
         try {
-            String amountStr = data.get("amount").toString().replaceAll("[^0-9.]", "");
-            double amount = 0;
+            Object amountRaw = data.get("amount");
+            if (amountRaw == null) {
+                errorBody.put("error", "Amount is required");
+                return ResponseEntity.badRequest().body(errorBody);
+            }
+            String amountStr = amountRaw.toString().replaceAll("[^0-9.]", "");
+            double amount;
             try {
                 amount = Double.parseDouble(amountStr);
             } catch (NumberFormatException nfe) {
-                amount = 0;
+                errorBody.put("error", "Invalid amount");
+                return ResponseEntity.badRequest().body(errorBody);
             }
-            if (amount <= 0) amount = 1.0; // Razorpay requires positive amount
-            String type = data.get("type").toString(); // "DOCTOR" or "BEAUTY" or "MARTIAL_ARTS"
+            if (amount <= 0) {
+                errorBody.put("error", "Amount must be greater than zero");
+                return ResponseEntity.badRequest().body(errorBody);
+            }
 
+            int amountPaise = (int) Math.round(amount * 100);
             RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
 
             JSONObject orderRequest = new JSONObject();
-            orderRequest.put("amount", (int) (amount * 100)); // amount in paise
+            orderRequest.put("amount", amountPaise);
             orderRequest.put("currency", "INR");
-            orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
+            orderRequest.put("receipt", "txn_" + user.getId() + "_" + System.currentTimeMillis());
 
             Order order = client.orders.create(orderRequest);
+            String orderId = order.get("id").toString();
+
+            // Bind this order to the session so /verify cannot invent amounts or foreign orders
+            pendingOrders(session).put(orderId, amountPaise);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("orderId", order.get("id"));
-            response.put("amount", order.get("amount"));
+            response.put("orderId", orderId);
+            response.put("amount", amountPaise);
             response.put("key", razorpayKeyId);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).build();
+            errorBody.put("error", "Failed to create payment order");
+            return ResponseEntity.status(500).body(errorBody);
         }
     }
 
@@ -209,212 +248,210 @@ public class PaymentController {
     public ResponseEntity<Map<String, Object>> verifyPayment(@RequestBody Map<String, Object> data, HttpSession session) {
         Map<String, Object> responseMap = new HashMap<>();
         try {
-            String orderId = Objects.toString(data.get("razorpay_order_id"), "");
-            String paymentId = Objects.toString(data.get("razorpay_payment_id"), "");
-            String signature = Objects.toString(data.get("razorpay_signature"), "");
-            String type = Objects.toString(data.get("type"), "");
-            
-            System.out.println("Verifying Payment: Order=" + orderId + ", Type=" + type);
-
-            boolean isValid = false;
-            try {
-                // Bypass for test keys or development environments
-                if (razorpayKeyId != null && razorpayKeyId.startsWith("rzp_test_")) {
-                    isValid = true;
-                } else if (!orderId.isEmpty() && !paymentId.isEmpty() && !signature.isEmpty()) {
-                    JSONObject options = new JSONObject();
-                    options.put("razorpay_order_id", orderId);
-                    options.put("razorpay_payment_id", paymentId);
-                    options.put("razorpay_signature", signature);
-                    isValid = Utils.verifyPaymentSignature(options, razorpayKeySecret);
-                }
-            } catch (Exception e) {
-                System.out.println("Signature Verification Exception: " + e.getMessage());
-                if (razorpayKeyId != null && razorpayKeyId.startsWith("rzp_test_")) isValid = true;
+            User user = (User) session.getAttribute("user");
+            if (user == null) {
+                responseMap.put("error", "Session expired. Please login again.");
+                return ResponseEntity.status(401).body(responseMap);
+            }
+            if (!razorpayConfigured()) {
+                responseMap.put("error", "Payment gateway is not configured");
+                return ResponseEntity.status(503).body(responseMap);
             }
 
-            if (isValid) {
-                User user = (User) session.getAttribute("user");
-                if (user == null) {
-                    responseMap.put("error", "Session expired. Please login again.");
-                    return ResponseEntity.status(401).body(responseMap);
-                }
+            String orderId = Objects.toString(data.get("razorpay_order_id"), "").trim();
+            String paymentId = Objects.toString(data.get("razorpay_payment_id"), "").trim();
+            String signature = Objects.toString(data.get("razorpay_signature"), "").trim();
+            String type = Objects.toString(data.get("type"), "").trim();
 
-                DateTimeFormatter formatterT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-                DateTimeFormatter formatterSpace = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                
-                if ("DOCTOR".equals(type)) {
-                    Object targetIdObj = data.get("targetId");
-                    Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
-                    Doctor d = doctorRepo.findById(targetId).orElse(null);
-                    
-                    String consultTypeStr = data.getOrDefault("consultationType", "CLINIC").toString();
-                    ConsultationType cType = ConsultationType.valueOf(consultTypeStr);
-
-                    String apptTimeStr = data.get("appointmentTime").toString();
-                    LocalDateTime apptTime;
-                    try {
-                        apptTime = LocalDateTime.parse(apptTimeStr, formatterSpace);
-                    } catch (Exception ex) {
-                        apptTime = LocalDateTime.parse(apptTimeStr, formatterT);
-                    }
-
-                    DoctorAppointment appt = new DoctorAppointment();
-                    appt.setUser(user);
-                    appt.setDoctor(d);
-                    appt.setAppointmentTime(apptTime);
-                    appt.setReason(Objects.toString(data.get("reason"), ""));
-                    appt.setStatus(DoctorAppointmentStatus.PENDING);
-                    appt.setConsultationType(cType);
-                    if (cType == ConsultationType.VIDEO) {
-                        appt.setMeetingRoomId("Fight D Fear-" + java.util.UUID.randomUUID().toString().substring(0, 8));
-                    }
-                    appt.setRazorpayOrderId(orderId);
-                    appt.setRazorpayPaymentId(paymentId);
-                    appt.setRazorpaySignature(signature);
-                    appt.setAmountPaid(Double.parseDouble(data.get("amount").toString()));
-                    appointmentRepo.save(appt);
-                } else if ("BEAUTY".equals(type)) {
-                    Object targetIdObj = data.get("targetId");
-                    Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
-                    Long stylistId = Long.parseLong(data.get("stylistId").toString());
-                    Stylist stylist = stylistRepository.findById(stylistId).orElse(null);
-                    StylistService service = serviceRepository.findById(targetId).orElse(null);
-                    
-                    Booking booking = new Booking();
-                    booking.setUser(user);
-                    booking.setStylist(stylist);
-                    booking.setService(service);
-                    if (stylist != null) booking.setSalon(stylist.getSalon());
-                    booking.setBookingTime(LocalDateTime.parse(data.get("bookingTime").toString(), formatterT));
-                    booking.setStatus(BookingStatus.CONFIRMED);
-                    booking.setPricePaid(Double.parseDouble(data.get("amount").toString()));
-                    booking.setPaymentMode("RAZORPAY");
-                    booking.setRazorpayOrderId(orderId);
-                    booking.setRazorpayPaymentId(paymentId);
-                    booking.setRazorpaySignature(signature);
-                    bookingRepository.save(booking);
-                } else if ("MARTIAL_ARTS".equals(type)) {
-                    Object enrollmentIdObj = data.get("enrollmentId");
-                    Enrollment enrollment = null;
-                    if (enrollmentIdObj != null && !enrollmentIdObj.toString().equals("null") && !enrollmentIdObj.toString().isEmpty()) {
-                        try {
-                            enrollment = enrollmentRepository.findById(Long.parseLong(enrollmentIdObj.toString())).orElse(null);
-                        } catch (NumberFormatException nfe) {
-                            System.out.println("Invalid enrollmentId: " + enrollmentIdObj);
-                        }
-                    }
-                    
-                    if (enrollment == null) {
-                        enrollment = new Enrollment();
-                        
-                        Object cId = data.get("centerId");
-                        if (cId != null && !cId.toString().isEmpty()) {
-                            try {
-                                enrollment.setCenter(centerRepository.findById(Long.parseLong(cId.toString())).orElse(null));
-                            } catch (NumberFormatException ignored) {}
-                        }
-                        
-                        Object bId = data.get("batchId");
-                        if (bId != null && !bId.toString().isEmpty()) {
-                            try {
-                                enrollment.setBatch(batchRepository.findById(Long.parseLong(bId.toString())).orElse(null));
-                            } catch (NumberFormatException ignored) {}
-                        }
-                        
-                        enrollment.setUser(user);
-                    }
-
-                    enrollment.setStatus(TrainingStatus.APPROVED);
-                    enrollment.setPaymentStatus("PAID");
-                    enrollment.setRazorpayOrderId(orderId);
-                    enrollment.setRazorpayPaymentId(paymentId);
-                    enrollment.setRazorpaySignature(signature);
-                    
-                    // Safe amount parsing — handles NaN, null, locale-formatted strings
-                    double parsedAmount = 0.0;
-                    try {
-                        Object amtObj = data.get("amount");
-                        if (amtObj != null) {
-                            String amtStr = amtObj.toString().replaceAll("[^0-9.]", "");
-                            if (!amtStr.isEmpty()) {
-                                parsedAmount = Double.parseDouble(amtStr);
-                            }
-                        }
-                    } catch (Exception amtEx) {
-                        System.out.println("Amount parse warning: " + amtEx.getMessage());
-                    }
-                    enrollment.setAmountPaid(parsedAmount);
-                    enrollmentRepository.save(enrollment);
-
-                    if (enrollment.getCenter() != null) {
-                        user.setMartialArtsCenter(enrollment.getCenter());
-                        userRepo.save(user);
-                    }
-                } else if ("MARKETPLACE".equals(type)) {
-                    Object enrollmentIdObj = data.get("enrollmentId");
-                    Long enrollmentId = Long.parseLong(enrollmentIdObj.toString());
-                    MarketplaceEnrollment enrollment = marketplaceEnrollmentRepo.findById(enrollmentId).orElse(null);
-                    if (enrollment != null) {
-                        enrollment.setPaymentStatus("PAID");
-                        enrollment.setRazorpayOrderId(orderId);
-                        enrollment.setRazorpayPaymentId(paymentId);
-                        enrollment.setRazorpaySignature(signature);
-                        
-                        double parsedAmount = 0.0;
-                        try {
-                            Object amtObj = data.get("amount");
-                            if (amtObj != null) {
-                                String amtStr = amtObj.toString().replaceAll("[^0-9.]", "");
-                                if (!amtStr.isEmpty()) {
-                                    parsedAmount = Double.parseDouble(amtStr);
-                                }
-                            }
-                        } catch (Exception amtEx) {
-                            System.out.println("Amount parse warning: " + amtEx.getMessage());
-                        }
-                        enrollment.setAmountPaid(parsedAmount);
-                        marketplaceEnrollmentRepo.save(enrollment);
-                    }
-                } else if ("WORKER_BOOKING".equals(type)) {
-                    Object targetIdObj = data.get("targetId");
-                    Long targetId = Long.parseLong(targetIdObj.toString());
-                    in.sp.main.Entities.WorkerBooking booking = workerBookingRepo.findById(targetId).orElse(null);
-                    if (booking != null) {
-                        booking.setStatus("PAID");
-                        workerBookingRepo.save(booking);
-
-                        double amountPaid = booking.getTotalAmount() != null ? booking.getTotalAmount() : 0.0;
-                        
-                        // Update Worker Wallet (CREDIT)
-                        User worker = booking.getJobApplication().getUser();
-                        if (worker != null) {
-                            worker.setWalletBalance((worker.getWalletBalance() != null ? worker.getWalletBalance() : 0.0) + amountPaid);
-                            userRepo.save(worker);
-                            
-                            in.sp.main.Entities.WalletTransaction workerTx = new in.sp.main.Entities.WalletTransaction(
-                                worker, amountPaid, "CREDIT", "Payment received for booking from " + booking.getClient().getFullName(), java.time.LocalDateTime.now()
-                            );
-                            walletTransactionRepo.save(workerTx);
-                        }
-
-                        // Record Client Transaction (DEBIT)
-                        User client = booking.getClient();
-                        if (client != null) {
-                            in.sp.main.Entities.WalletTransaction clientTx = new in.sp.main.Entities.WalletTransaction(
-                                client, amountPaid, "DEBIT", "Payment made for worker booking", java.time.LocalDateTime.now()
-                            );
-                            walletTransactionRepo.save(clientTx);
-                        }
-                    }
-                }
-
-                responseMap.put("status", "success");
-                return ResponseEntity.ok(responseMap);
-            } else {
-                responseMap.put("error", "Invalid Payment Signature.");
+            Map<String, Integer> pending = pendingOrders(session);
+            Integer expectedPaise = pending.get(orderId);
+            if (expectedPaise == null) {
+                responseMap.put("error", "Unknown or expired payment order. Create a new order and try again.");
                 return ResponseEntity.status(400).body(responseMap);
             }
+
+            boolean isValid;
+            try {
+                isValid = verifyRazorpaySignature(orderId, paymentId, signature);
+            } catch (Exception e) {
+                responseMap.put("error", "Payment signature verification failed.");
+                return ResponseEntity.status(400).body(responseMap);
+            }
+
+            if (!isValid) {
+                responseMap.put("error", "Invalid payment signature.");
+                return ResponseEntity.status(400).body(responseMap);
+            }
+
+            // Authoritative amount from the order we created (never trust client-supplied amount)
+            double amountPaid = expectedPaise / 100.0;
+            pending.remove(orderId);
+
+            DateTimeFormatter formatterT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+            DateTimeFormatter formatterSpace = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            if ("DOCTOR".equals(type)) {
+                Object targetIdObj = data.get("targetId");
+                Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
+                Doctor d = doctorRepo.findById(targetId).orElse(null);
+
+                String consultTypeStr = data.getOrDefault("consultationType", "CLINIC").toString();
+                ConsultationType cType = ConsultationType.valueOf(consultTypeStr);
+
+                String apptTimeStr = data.get("appointmentTime").toString();
+                LocalDateTime apptTime;
+                try {
+                    apptTime = LocalDateTime.parse(apptTimeStr, formatterSpace);
+                } catch (Exception ex) {
+                    apptTime = LocalDateTime.parse(apptTimeStr, formatterT);
+                }
+
+                DoctorAppointment appt = new DoctorAppointment();
+                appt.setUser(user);
+                appt.setDoctor(d);
+                appt.setAppointmentTime(apptTime);
+                appt.setReason(Objects.toString(data.get("reason"), ""));
+                appt.setStatus(DoctorAppointmentStatus.PENDING);
+                appt.setConsultationType(cType);
+                if (cType == ConsultationType.VIDEO) {
+                    appt.setMeetingRoomId("Fight D Fear-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+                }
+                appt.setRazorpayOrderId(orderId);
+                appt.setRazorpayPaymentId(paymentId);
+                appt.setRazorpaySignature(signature);
+                appt.setAmountPaid(amountPaid);
+                appointmentRepo.save(appt);
+            } else if ("BEAUTY".equals(type)) {
+                Object targetIdObj = data.get("targetId");
+                Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
+                Long stylistId = Long.parseLong(data.get("stylistId").toString());
+                Stylist stylist = stylistRepository.findById(stylistId).orElse(null);
+                StylistService service = serviceRepository.findById(targetId).orElse(null);
+
+                Booking booking = new Booking();
+                booking.setUser(user);
+                booking.setStylist(stylist);
+                booking.setService(service);
+                if (stylist != null) booking.setSalon(stylist.getSalon());
+                booking.setBookingTime(LocalDateTime.parse(data.get("bookingTime").toString(), formatterT));
+                booking.setStatus(BookingStatus.CONFIRMED);
+                booking.setPricePaid(amountPaid);
+                booking.setPaymentMode("RAZORPAY");
+                booking.setRazorpayOrderId(orderId);
+                booking.setRazorpayPaymentId(paymentId);
+                booking.setRazorpaySignature(signature);
+                bookingRepository.save(booking);
+            } else if ("MARTIAL_ARTS".equals(type)) {
+                Object enrollmentIdObj = data.get("enrollmentId");
+                Enrollment enrollment = null;
+                if (enrollmentIdObj != null && !enrollmentIdObj.toString().equals("null") && !enrollmentIdObj.toString().isEmpty()) {
+                    try {
+                        enrollment = enrollmentRepository.findById(Long.parseLong(enrollmentIdObj.toString())).orElse(null);
+                    } catch (NumberFormatException nfe) {
+                        // fall through to create new enrollment
+                    }
+                }
+
+                if (enrollment != null && (enrollment.getUser() == null || !enrollment.getUser().getId().equals(user.getId()))) {
+                    responseMap.put("error", "Enrollment does not belong to this user.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+
+                if (enrollment == null) {
+                    enrollment = new Enrollment();
+
+                    Object cId = data.get("centerId");
+                    if (cId != null && !cId.toString().isEmpty()) {
+                        try {
+                            enrollment.setCenter(centerRepository.findById(Long.parseLong(cId.toString())).orElse(null));
+                        } catch (NumberFormatException ignored) {}
+                    }
+
+                    Object bId = data.get("batchId");
+                    if (bId != null && !bId.toString().isEmpty()) {
+                        try {
+                            enrollment.setBatch(batchRepository.findById(Long.parseLong(bId.toString())).orElse(null));
+                        } catch (NumberFormatException ignored) {}
+                    }
+
+                    enrollment.setUser(user);
+                }
+
+                enrollment.setStatus(TrainingStatus.APPROVED);
+                enrollment.setPaymentStatus("PAID");
+                enrollment.setRazorpayOrderId(orderId);
+                enrollment.setRazorpayPaymentId(paymentId);
+                enrollment.setRazorpaySignature(signature);
+                enrollment.setAmountPaid(amountPaid);
+                enrollmentRepository.save(enrollment);
+
+                if (enrollment.getCenter() != null) {
+                    user.setMartialArtsCenter(enrollment.getCenter());
+                    userRepo.save(user);
+                }
+            } else if ("MARKETPLACE".equals(type)) {
+                Object enrollmentIdObj = data.get("enrollmentId");
+                Long enrollmentId = Long.parseLong(enrollmentIdObj.toString());
+                MarketplaceEnrollment enrollment = marketplaceEnrollmentRepo.findById(enrollmentId).orElse(null);
+                if (enrollment == null || enrollment.getUser() == null || !enrollment.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Enrollment not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                enrollment.setPaymentStatus("PAID");
+                enrollment.setRazorpayOrderId(orderId);
+                enrollment.setRazorpayPaymentId(paymentId);
+                enrollment.setRazorpaySignature(signature);
+                enrollment.setAmountPaid(amountPaid);
+                marketplaceEnrollmentRepo.save(enrollment);
+            } else if ("WORKER_BOOKING".equals(type)) {
+                Object targetIdObj = data.get("targetId");
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                in.sp.main.Entities.WorkerBooking booking = workerBookingRepo.findById(targetId).orElse(null);
+                if (booking == null || booking.getClient() == null || !booking.getClient().getId().equals(user.getId())) {
+                    responseMap.put("error", "Booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(booking.getStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expectedAmount = booking.getTotalAmount() != null ? booking.getTotalAmount() : 0.0;
+                if (Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match booking total.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                booking.setStatus("PAID");
+                workerBookingRepo.save(booking);
+
+                double walletAmount = expectedAmount > 0 ? expectedAmount : amountPaid;
+
+                User worker = booking.getJobApplication().getUser();
+                if (worker != null) {
+                    worker.setWalletBalance((worker.getWalletBalance() != null ? worker.getWalletBalance() : 0.0) + walletAmount);
+                    userRepo.save(worker);
+
+                    in.sp.main.Entities.WalletTransaction workerTx = new in.sp.main.Entities.WalletTransaction(
+                        worker, walletAmount, "CREDIT", "Payment received for booking from " + booking.getClient().getFullName(), java.time.LocalDateTime.now()
+                    );
+                    walletTransactionRepo.save(workerTx);
+                }
+
+                User client = booking.getClient();
+                if (client != null) {
+                    in.sp.main.Entities.WalletTransaction clientTx = new in.sp.main.Entities.WalletTransaction(
+                        client, walletAmount, "DEBIT", "Payment made for worker booking", java.time.LocalDateTime.now()
+                    );
+                    walletTransactionRepo.save(clientTx);
+                }
+            } else {
+                responseMap.put("error", "Unknown payment type.");
+                return ResponseEntity.badRequest().body(responseMap);
+            }
+
+            responseMap.put("status", "success");
+            responseMap.put("amountPaid", amountPaid);
+            return ResponseEntity.ok(responseMap);
         } catch (Exception e) {
             e.printStackTrace();
             responseMap.put("error", "Server Error: " + e.getMessage());

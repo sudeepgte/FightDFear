@@ -1,0 +1,11 @@
+package in.sp.main.Repository;
+
+import in.sp.main.Entities.LoanApplication;
+import in.sp.main.Entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface LoanApplicationRepository extends JpaRepository<LoanApplication, Long> {
+    List<LoanApplication> findByUserOrderBySubmittedAtDesc(User user);
+}

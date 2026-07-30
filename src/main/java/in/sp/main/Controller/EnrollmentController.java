@@ -51,7 +51,11 @@ public class EnrollmentController {
     private AttendanceRepository attendanceRepository;
 
     @RequestMapping(value = "/listEnrollments/{userId}", method = GET)
-    public String listEnrollments(@PathVariable Long userId, Model model) {
+    public String listEnrollments(@PathVariable Long userId, Model model, HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null || !currentUser.getId().equals(userId)) {
+            return "redirect:/login";
+        }
         List<Enrollment> enrollments = enrollservice.getUserEnrollments(userId);
 
         if (enrollments.isEmpty()) {
@@ -232,11 +236,17 @@ public class EnrollmentController {
     }
 
     @RequestMapping(value = "/enroll", method = POST)
-    public String enroll(@RequestParam("userId") Long userId,
-                         @RequestParam("centerId") Long centerId,
+    public String enroll(@RequestParam("centerId") Long centerId,
                          @RequestParam("batchId") Long batchId,
                          @RequestParam(value = "preferredDays", required = false) String[] preferredDays,
-                         Model model) {
+                         Model model,
+                         HttpSession session) {
+
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        Long userId = currentUser.getId();
 
         MartialArtsBatch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new RuntimeException("Batch not found"));
@@ -246,11 +256,6 @@ public class EnrollmentController {
         enrollment.setCenter(centreService.getCenterById(centerId));
         enrollment.setBatch(batch);
         enrollment.setStatus(TrainingStatus.PENDING);
-        
-        // Map batch details to enrollment for legacy compatibility
-        // If your system needs these fields populated:
-        // enrollment.setMartialArtsType(...); 
-        // enrollment.setSelectedSlot(...);
 
         enrollmentRepository.save(enrollment);
         User user = userservice.getUserById(userId);
@@ -266,7 +271,10 @@ public class EnrollmentController {
     }
 
     @RequestMapping(value = "/updateStatus/{enrollmentId}", method = GET)
-    public String showUpdateStatusForm(@PathVariable Long enrollmentId, Model model) {
+    public String showUpdateStatusForm(@PathVariable Long enrollmentId, Model model, HttpSession session) {
+        if (session.getAttribute("loggedCentre") == null && session.getAttribute("admin") == null) {
+            return "redirect:/centres/login";
+        }
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
         model.addAttribute("enrollment", enrollment);
@@ -275,9 +283,19 @@ public class EnrollmentController {
 
     @RequestMapping(value = "/updateStatus", method = POST)
     public String updateStatus(@RequestParam("enrollmentId") Long enrollmentId,
-                               @RequestParam("trainingStatus") TrainingStatus status, Model model) {
+                               @RequestParam("trainingStatus") TrainingStatus status,
+                               Model model,
+                               HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null && session.getAttribute("admin") == null) {
+            return "redirect:/centres/login";
+        }
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+        if (centre != null && (enrollment.getCenter() == null
+                || !enrollment.getCenter().getId().equals(centre.getId()))) {
+            return "redirect:/centres/dashboard1";
+        }
         enrollment.setStatus(status);
 
         if (status == TrainingStatus.COMPLETED) {
@@ -302,8 +320,15 @@ public class EnrollmentController {
 
     @RequestMapping(value = "/downloadCertificate/{enrollmentId}", method = GET)
     public ResponseEntity<FileSystemResource> downloadCertificate(@PathVariable Long enrollmentId, HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new RuntimeException("Enrollment not found"));
+        if (enrollment.getUser() == null || !enrollment.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(403).build();
+        }
         String certificatePath = enrollment.getCertificateDetails();
 
         if (certificatePath == null || certificatePath.isEmpty()) {
@@ -351,7 +376,12 @@ public class EnrollmentController {
 
     @GetMapping("/getUserEnrollmentsJson/{userId}")
     @ResponseBody
-    public java.util.List<java.util.Map<String, Object>> getUserEnrollmentsJson(@PathVariable Long userId) {
+    public java.util.List<java.util.Map<String, Object>> getUserEnrollmentsJson(@PathVariable Long userId,
+                                                                                 HttpSession session) {
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null || !currentUser.getId().equals(userId)) {
+            return java.util.Collections.emptyList();
+        }
         List<Enrollment> list = enrollservice.getUserEnrollments(userId);
         java.util.List<java.util.Map<String, Object>> result = new ArrayList<>();
         java.time.LocalDateTime now = java.time.LocalDateTime.now();

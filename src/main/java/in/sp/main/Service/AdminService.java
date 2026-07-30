@@ -16,35 +16,47 @@ public class AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
-  
+    @Autowired
+    private PasswordService passwordService;
+
     public boolean registerAdmin(Admin admin) {
-		/*
-		 * if (adminRepository.findByEmail(admin.getEmail()).isPresent()) { throw new
-		 * RuntimeException("Email already exists"); }
-		 */
     	 Optional<Admin> existing = adminRepository.findByEmail(admin.getEmail());
     	    if (existing.isEmpty()) {
+    	        String raw = admin.getPassword();
+    	        if (raw == null || !raw.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$")) {
+    	            throw new IllegalArgumentException(
+    	                    "Password must be at least 6 characters long and include a number and special character");
+    	        }
+    	        admin.setPassword(passwordService.encode(raw));
     	        adminRepository.save(admin);
     	        return true;
     	    }
         return false;
     }
 
-  
     public Admin loginAdmin(String email, String password) {
         Optional<Admin> opt = adminRepository.findByEmail(email);
         if (opt.isEmpty()) return null;
         Admin admin = opt.get();
-        return (admin.getPassword() != null && admin.getPassword().equals(password))
-                ? admin
-                : null;
+        boolean ok = passwordService.matchesAndUpgrade(password, admin.getPassword(), hashed -> {
+            admin.setPassword(hashed);
+            adminRepository.save(admin);
+        });
+        return ok ? admin : null;
     }
- // Update Admin
+
     public Admin updateAdmin(int id, Admin updatedAdmin) {
         return adminRepository.findById(id).map(admin -> {
             admin.setName(updatedAdmin.getName());
             admin.setEmail(updatedAdmin.getEmail());
-            admin.setPassword(updatedAdmin.getPassword());
+            String newPassword = updatedAdmin.getPassword();
+            if (newPassword != null && !newPassword.isBlank()) {
+                if (!passwordService.isBcryptEncoded(newPassword)) {
+                    admin.setPassword(passwordService.encode(newPassword));
+                } else {
+                    admin.setPassword(newPassword);
+                }
+            }
             if (updatedAdmin.getProfilePhoto() != null) {
                 admin.setProfilePhoto(updatedAdmin.getProfilePhoto());
             }
@@ -52,7 +64,6 @@ public class AdminService {
         }).orElseThrow(() -> new RuntimeException("Admin not found with id: " + id));
     }
 
-    // Delete Admin
     public void deleteAdmin(int id) {
         if (adminRepository.existsById(id)) {
             adminRepository.deleteById(id);
@@ -61,15 +72,11 @@ public class AdminService {
         }
     }
 
-
 	public List<Admin> findAllAdmins() {
-		// TODO Auto-generated method stub
 		return adminRepository.findAll();
 	}
 
-
 	public Optional<Admin> findById(int id) {
-	
 		return adminRepository.findById(id);
 	}
 }

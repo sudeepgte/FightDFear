@@ -1,0 +1,185 @@
+package in.sp.main.Controller;
+
+import in.sp.main.Config.JwtUtil;
+import in.sp.main.Entities.Gender;
+import in.sp.main.Entities.User;
+import in.sp.main.Entities.VerificationStatus;
+import in.sp.main.Repository.UserRepository;
+import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * JSON auth for native / Flutter clients. Returns a Bearer JWT (not cookie-only).
+ */
+@RestController
+@RequestMapping("/api/auth")
+public class MobileAuthController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordService passwordService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @PostMapping("/register")
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> body) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        if (body == null) {
+            response.put("success", false);
+            response.put("error", "Request body is required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        String email = trim(body.get("email"));
+        String password = body.get("password") == null ? "" : body.get("password");
+        String fullName = trim(body.get("fullName"));
+        String phone = trim(body.get("phoneNumber"));
+        String homeAddress = trim(body.get("homeAddress"));
+        String dob = trim(body.get("dob"));
+        String genderRaw = trim(body.get("gender"));
+
+        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || phone.isEmpty()) {
+            response.put("success", false);
+            response.put("error", "fullName, email, phoneNumber and password are required");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (!phone.matches("^\\d{10}$")) {
+            response.put("success", false);
+            response.put("error", "Phone number must be exactly 10 digits");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (!password.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$")) {
+            response.put("success", false);
+            response.put("error", "Password must be at least 6 characters and include a number and special character");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        String normEmail = email.toLowerCase();
+        if (userRepository.findByEmail(normEmail).isPresent()) {
+            response.put("success", false);
+            response.put("error", "Email already registered. Please sign in.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+
+        User user = new User();
+        user.setEmail(normEmail);
+        user.setFullName(fullName);
+        user.setPhoneNumber(phone);
+        user.setHomeAddress(homeAddress.isEmpty() ? null : homeAddress);
+        user.setPassword(passwordService.encode(password));
+        user.setVerificationStatus(VerificationStatus.PENDING);
+        user.setIdentityDocument("mobile-pending");
+
+        if (!dob.isEmpty()) {
+            try {
+                LocalDate birthDate = LocalDate.parse(dob);
+                if (birthDate.isAfter(LocalDate.now())) {
+                    response.put("success", false);
+                    response.put("error", "Date of birth cannot be in the future");
+                    return ResponseEntity.badRequest().body(response);
+                }
+                user.setDob(dob);
+                user.setAge(Period.between(birthDate, LocalDate.now()).getYears());
+            } catch (Exception e) {
+                response.put("success", false);
+                response.put("error", "dob must be YYYY-MM-DD");
+                return ResponseEntity.badRequest().body(response);
+            }
+        }
+        if (!genderRaw.isEmpty()) {
+            try {
+                user.setGender(Gender.valueOf(genderRaw.toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                response.put("success", false);
+                response.put("error", "gender must be MALE, FEMALE, or OTHER");
+                return ResponseEntity.badRequest().body(response);
+            }
+        }
+
+        userService.createUser(user);
+        response.put("success", true);
+        response.put("message", "Registration successful. Wait for admin verification before signing in.");
+        response.put("userId", user.getId());
+        response.put("email", user.getEmail());
+        response.put("status", VerificationStatus.PENDING.name());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    private static String trim(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        String email = body == null ? null : body.get("email");
+        String password = body == null ? null : body.get("password");
+
+        String normEmail = email == null ? "" : email.trim().toLowerCase();
+        String rawPassword = password == null ? "" : password;
+
+        if (normEmail.isEmpty() || rawPassword.isEmpty()) {
+            response.put("success", false);
+            response.put("error", "Email and password are required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        User user = userService.findByUsername(normEmail);
+        boolean ok = false;
+        if (user != null && user.getPassword() != null) {
+            ok = passwordService.matchesAndUpgrade(rawPassword, user.getPassword(), hashed -> {
+                user.setPassword(hashed);
+                userService.createUser(user);
+            });
+        }
+
+        if (!ok) {
+            response.put("success", false);
+            response.put("error", "Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        VerificationStatus status = user.getVerificationStatus();
+        if (status == null || status == VerificationStatus.PENDING) {
+            response.put("success", false);
+            response.put("error", "Account pending admin verification");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+        if (status == VerificationStatus.REJECTED) {
+            response.put("success", false);
+            response.put("error", "Account rejected by admin");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+        if (user.isBanned()) {
+            response.put("success", false);
+            response.put("error", "Account banned");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        String token = jwtUtil.generateToken(user.getEmail(), "USER");
+        response.put("success", true);
+        response.put("token", token);
+        response.put("tokenType", "Bearer");
+        response.put("userId", user.getId());
+        response.put("email", user.getEmail());
+        response.put("name", user.getFullName());
+        response.put("phone", user.getPhoneNumber());
+        response.put("status", status.name());
+        return ResponseEntity.ok(response);
+    }
+}

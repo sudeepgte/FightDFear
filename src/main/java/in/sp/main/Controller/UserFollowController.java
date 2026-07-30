@@ -475,6 +475,9 @@ public class UserFollowController {
 
         Group group = grouprepo.findById(groupId).orElse(null);
         if (group == null) return "redirect:/users/search";
+        if (!groupMemberRepo.existsByGroupIdAndUserId(groupId, sender.getId())) {
+            return "redirect:/users/search";
+        }
 
         ChatMessage msg = new ChatMessage();
         msg.setSender(sender);
@@ -500,6 +503,11 @@ public class UserFollowController {
 
         if (group == null || user == null)
             return "redirect:/users/search";
+
+        GroupMember currentMember = groupMemberRepo.findByGroupIdAndUserId(groupId, currentUser.getId()).orElse(null);
+        if (currentMember == null || !currentMember.isAdmin()) {
+            return "redirect:/users/groups/chat/" + groupId;
+        }
 
         // Prevent duplicate members
         boolean alreadyMember = groupMemberRepo

@@ -64,6 +64,9 @@ public class MartialArtsCenterController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Autowired
+    private in.sp.main.Service.PasswordService passwordService;
+
     public MartialArtsCenterController(MartialArtsCenterService centreService, ObjectMapper objectMapper) {
         this.centreService = centreService;
         this.objectMapper = objectMapper;
@@ -318,7 +321,11 @@ public class MartialArtsCenterController {
             return "redirect:/centres/registerCentre";
         }
         MartialArtsCenter center = centerOpt.get();
-        if (center.getPassword() == null || !center.getPassword().equals(password)) {
+        boolean ok = passwordService.matchesAndUpgrade(password, center.getPassword(), hashed -> {
+            center.setPassword(hashed);
+            centreRepository.save(center);
+        });
+        if (!ok) {
             redirectAttributes.addFlashAttribute("error", "Invalid email or password.");
             return "redirect:/centres/login";
         }

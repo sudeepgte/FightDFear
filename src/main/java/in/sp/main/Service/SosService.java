@@ -83,15 +83,40 @@ public class SosService {
      */
     public Map<String, Object> triggerSOS(Long userId, double userLat, double userLon) {
         try {
+            if (userLat < -90 || userLat > 90 || userLon < -180 || userLon > 180) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid coordinates");
+                errorResponse.put("contactsNotified", 0);
+                return errorResponse;
+            }
+
             Optional<User> userOpt = userRepository.findById(userId);
             User user = userOpt.orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Harden: one active SOS at a time — return existing instead of flooding contacts
+            Optional<SOSRequest> existing = getActiveSOSForUser(userId);
+            if (existing.isPresent()) {
+                SOSRequest active = existing.get();
+                Map<String, Object> already = new HashMap<>();
+                already.put("sosId", active.getId());
+                already.put("status", active.getStatus().toString());
+                already.put("contactsNotified", active.getTotalContactsNotified());
+                already.put("volunteersAlerted", active.getVolunteersAlerted());
+                already.put("autoCallPhone", active.getAutoCallPhone());
+                already.put("mapsLink", active.getGoogleMapsLink());
+                already.put("smsConfigured", smsService.isConfigured());
+                already.put("message", "SOS already active. Contacts were already notified.");
+                already.put("alreadyActive", true);
+                return already;
+            }
+
             String userName = user.getFullName();
             if (userName == null || userName.isEmpty()) userName = user.getEmail();
             if (userName == null || userName.isEmpty()) userName = "User #" + userId;
             String userPhone = user.getPhoneNumber() != null ? user.getPhoneNumber() : "Unknown Number";
 
-            System.out.println("🚨 SOS Triggered by: " + userName + " (ID: " + userId + ")");
-            System.out.println("📍 Location: " + userLat + ", " + userLon);
+            System.out.println("SOS Triggered by: " + userName + " (ID: " + userId + ")");
+            System.out.println("Location: " + userLat + ", " + userLon);
 
             // Create SOS Request
             SOSRequest sosRequest = new SOSRequest();
@@ -330,12 +355,14 @@ public class SosService {
         response.put("volunteersAlerted", volunteersAlerted);
         response.put("autoCallPhone", autoCallPhone);
         response.put("mapsLink", savedRequest.getGoogleMapsLink());
+        response.put("smsConfigured", smsService.isConfigured());
         response.put("message", "SOS activated! " + totalContacts + " contacts and " + volunteersAlerted + " nearby volunteers notified.");
 
-        System.out.println("🚨 SOS #" + savedRequest.getId() + " triggered by " + userName);
-        System.out.println("📱 Contacts notified: " + totalContacts);
-        System.out.println("🤝 Volunteers alerted: " + volunteersAlerted);
-        System.out.println("📞 Auto-call: " + autoCallPhone);
+        System.out.println("SOS #" + savedRequest.getId() + " triggered by " + userName);
+        System.out.println("Contacts notified: " + totalContacts);
+        System.out.println("Volunteers alerted: " + volunteersAlerted);
+        System.out.println("Auto-call: " + autoCallPhone);
+        System.out.println("SMS configured: " + smsService.isConfigured());
 
         return response;
         } catch (Exception e) {
@@ -414,6 +441,20 @@ public class SosService {
     }
 
     /**
+     * Whether a volunteer has already responded to this SOS.
+     */
+    public boolean hasVolunteerResponded(Long sosId, Long volunteerId) {
+        Optional<SOSRequest> sosOpt = sosRequestRepository.findById(sosId);
+        Optional<User> volunteerOpt = userRepository.findById(volunteerId);
+        if (sosOpt.isEmpty() || volunteerOpt.isEmpty()) {
+            return false;
+        }
+        return volunteerSOSResponseRepository
+                .findBySosRequestAndVolunteer(sosOpt.get(), volunteerOpt.get())
+                .isPresent();
+    }
+
+    /**
      * Find active SOS for a user
      */
     public Optional<SOSRequest> getActiveSOSForUser(Long userId) {
@@ -425,6 +466,25 @@ public class SosService {
         if (active.isPresent()) return active;
         
         return sosRequestRepository.findTopByUserAndStatusOrderByActivatedAtDesc(user, SOSRequest.SOSStatus.ACCEPTED);
+    }
+
+    /**
+     * Get real-time SOS status for user dashboard (ownership required).
+     */
+    public Map<String, Object> getSOSStatusForUser(Long sosId, Long userId) {
+        Optional<SOSRequest> sosOpt = sosRequestRepository.findById(sosId);
+        if (sosOpt.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "SOS not found");
+            return error;
+        }
+        SOSRequest sos = sosOpt.get();
+        if (sos.getUser() == null || !sos.getUser().getId().equals(userId)) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Access denied");
+            return error;
+        }
+        return getSOSStatus(sosId);
     }
 
     /**

@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,6 +61,7 @@
         .btn-submit:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(124, 45, 94, 0.4);
+            color: white;
         }
         
         .back-btn {
@@ -85,43 +87,51 @@
                 <h1>Apply for Loan</h1>
                 <p class="text-muted mt-2">Fill out the form below to apply for a loan</p>
             </div>
+
+            <c:if test="${not empty error}">
+                <div class="alert alert-danger">${error}</div>
+            </c:if>
             
-            <form>
+            <form method="post" action="${pageContext.request.contextPath}/loan/application">
                 <div class="mb-4">
                     <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" placeholder="Enter your full name">
+                    <input type="text" name="fullName" class="form-control" required
+                           value="${user.fullName}" placeholder="Enter your full name">
                 </div>
                 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" placeholder="Enter your email">
+                        <input type="email" name="email" class="form-control" required
+                               value="${user.email}" placeholder="Enter your email">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control" placeholder="Enter your phone number">
+                        <input type="tel" name="phoneNumber" class="form-control"
+                               value="${user.phoneNumber}" placeholder="Enter your phone number">
                     </div>
                 </div>
                 
                 <div class="mb-4">
                     <label class="form-label">Address</label>
-                    <textarea class="form-control" rows="3" placeholder="Enter your address"></textarea>
+                    <textarea name="address" class="form-control" rows="3" placeholder="Enter your address">${user.homeAddress}</textarea>
                 </div>
                 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Aadhaar Number</label>
-                        <input type="text" class="form-control" placeholder="Enter Aadhaar number">
+                        <input type="text" name="aadhaarNumber" class="form-control" placeholder="Enter Aadhaar number">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">PAN Number</label>
-                        <input type="text" class="form-control" placeholder="Enter PAN number">
+                        <input type="text" name="panNumber" class="form-control" placeholder="Enter PAN number">
                     </div>
                 </div>
                 
                 <div class="mb-4">
                     <label class="form-label">Select Loan Type</label>
-                    <select class="form-control">
+                    <select name="loanType" class="form-control" required>
+                        <option value="">Choose loan type</option>
                         <option>Business Loan</option>
                         <option>Mudra Loan</option>
                         <option>Education Loan</option>
@@ -135,29 +145,29 @@
                 
                 <div class="mb-4">
                     <label class="form-label">Occupation</label>
-                    <input type="text" class="form-control" placeholder="Enter your occupation">
+                    <input type="text" name="occupation" class="form-control" placeholder="Enter your occupation">
                 </div>
                 
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <label class="form-label">Annual Income</label>
-                        <input type="number" class="form-control" placeholder="Enter your annual income">
+                        <input type="number" name="annualIncome" step="0.01" min="0" class="form-control" placeholder="Enter your annual income">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Loan Amount Required</label>
-                        <input type="number" class="form-control" placeholder="Enter amount in INR">
+                        <input type="number" name="loanAmount" step="0.01" min="1" class="form-control" required placeholder="Enter amount in INR">
                     </div>
                 </div>
                 
                 <div class="mb-4">
                     <label class="form-label">Purpose of Loan</label>
-                    <textarea class="form-control" rows="5" placeholder="Describe the purpose of the loan"></textarea>
+                    <textarea name="purpose" class="form-control" rows="5" placeholder="Describe the purpose of the loan"></textarea>
                 </div>
                 
                 <div class="text-center">
-                    <a href="${pageContext.request.contextPath}/loan/confirmation" class="btn-submit btn-lg">
+                    <button type="submit" class="btn-submit btn-lg">
                         <i class="fas fa-paper-plane me-2"></i> Submit Application
-                    </a>
+                    </button>
                 </div>
             </form>
         </div>

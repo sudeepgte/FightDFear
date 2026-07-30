@@ -1,0 +1,389 @@
+package in.sp.main.Controller;
+
+import in.sp.main.Entities.User;
+import in.sp.main.Entities.WomenCartItem;
+import in.sp.main.Entities.WomenProduct;
+import in.sp.main.Entities.WomenProductOrder;
+import in.sp.main.Entities.WomenWishlistItem;
+import in.sp.main.Repository.WomenCartItemRepository;
+import in.sp.main.Repository.WomenProductOrderRepository;
+import in.sp.main.Repository.WomenProductRepository;
+import in.sp.main.Repository.WomenWishlistItemRepository;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Mobile JSON APIs for Women Products buyer flow.
+ */
+@RestController
+@RequestMapping("/api/women-products")
+public class MobileWomenProductController {
+
+    @Autowired
+    private WomenProductRepository productRepo;
+
+    @Autowired
+    private WomenCartItemRepository cartRepo;
+
+    @Autowired
+    private WomenWishlistItemRepository wishlistRepo;
+
+    @Autowired
+    private WomenProductOrderRepository orderRepo;
+
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> listProducts(
+            @RequestParam(value = "category", required = false) String category,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        List<WomenProduct> products = (category != null && !category.isBlank())
+                ? productRepo.findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(category)
+                : productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
+
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (WomenProduct p : products) {
+            Map<String, Object> dto = productDto(p);
+            dto.put("inWishlist", wishlistRepo.existsByUserAndProduct_Id(user, p.getId()));
+            Optional<WomenCartItem> c = cartRepo.findByUserAndProduct_Id(user, p.getId());
+            dto.put("inCart", c.isPresent());
+            dto.put("cartQty", c.map(WomenCartItem::getQuantity).orElse(0));
+            items.add(dto);
+        }
+
+        return ResponseEntity.ok(ok(Map.of(
+                "products", items,
+                "count", items.size()
+        )));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> productDetail(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        WomenProduct p = productRepo.findById(id).orElse(null);
+        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted()) {
+            return badRequest("Product not found.");
+        }
+
+        List<WomenProductOrder> reviews = orderRepo.findByProduct_IdOrderByOrderTimeDesc(id).stream()
+                .filter(o -> o.getRating() != null)
+                .toList();
+
+        double avgRating = reviews.stream().mapToInt(WomenProductOrder::getRating).average().orElse(0.0);
+        List<Map<String, Object>> reviewDtos = new ArrayList<>();
+        for (WomenProductOrder r : reviews) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("orderId", r.getId());
+            m.put("rating", r.getRating());
+            m.put("review", r.getReview());
+            m.put("userName", r.getUser() != null ? r.getUser().getFullName() : "User");
+            m.put("orderTime", r.getOrderTime() != null ? r.getOrderTime().toString() : null);
+            reviewDtos.add(m);
+        }
+
+        Map<String, Object> dto = productDto(p);
+        dto.put("inWishlist", wishlistRepo.existsByUserAndProduct_Id(user, id));
+        dto.put("inCart", cartRepo.findByUserAndProduct_Id(user, id).isPresent());
+        dto.put("reviews", reviewDtos);
+        dto.put("avgRating", avgRating);
+        dto.put("reviewCount", reviewDtos.size());
+        return ResponseEntity.ok(ok(Map.of("product", dto)));
+    }
+
+    @GetMapping("/cart")
+    public ResponseEntity<Map<String, Object>> cart(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<WomenCartItem> items = cartRepo.findByUser(user);
+        List<Map<String, Object>> out = new ArrayList<>();
+        double total = 0;
+        for (WomenCartItem i : items) {
+            WomenProduct p = i.getProduct();
+            if (p == null) continue;
+            double subtotal = (p.getPrice() == null ? 0 : p.getPrice()) * i.getQuantity();
+            total += subtotal;
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", i.getId());
+            row.put("quantity", i.getQuantity());
+            row.put("subtotal", subtotal);
+            row.put("product", productDto(p));
+            out.add(row);
+        }
+        return ResponseEntity.ok(ok(Map.of(
+                "items", out,
+                "count", out.size(),
+                "total", total
+        )));
+    }
+
+    @PostMapping("/cart/add")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> addToCart(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Long productId = asLong(body.get("productId"));
+        int quantity = asInt(body.get("quantity"), 1);
+        if (productId == null || quantity <= 0) return badRequest("productId and positive quantity are required.");
+
+        WomenProduct p = productRepo.findById(productId).orElse(null);
+        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted()) return badRequest("Product not found.");
+        if (p.getStock() != null && p.getStock() <= 0) return badRequest("Product is out of stock.");
+
+        WomenCartItem item = cartRepo.findByUserAndProduct_Id(user, productId).orElse(null);
+        if (item == null) {
+            item = new WomenCartItem();
+            item.setUser(user);
+            item.setProduct(p);
+            item.setQuantity(0);
+        }
+        int maxQty = p.getStock() == null ? 9999 : Math.max(1, p.getStock());
+        item.setQuantity(Math.min(maxQty, item.getQuantity() + quantity));
+        cartRepo.save(item);
+        return ResponseEntity.ok(ok(Map.of("message", "Added to cart.")));
+    }
+
+    @PostMapping("/cart/{id}/update")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateCart(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenCartItem item = cartRepo.findById(id).orElse(null);
+        if (item == null || item.getUser() == null || !item.getUser().getId().equals(user.getId())) {
+            return badRequest("Cart item not found.");
+        }
+        int quantity = asInt(body.get("quantity"), item.getQuantity());
+        if (quantity <= 0) {
+            cartRepo.deleteById(id);
+            return ResponseEntity.ok(ok(Map.of("message", "Removed from cart.")));
+        }
+        WomenProduct p = item.getProduct();
+        int maxQty = (p != null && p.getStock() != null) ? Math.max(1, p.getStock()) : 9999;
+        item.setQuantity(Math.min(quantity, maxQty));
+        cartRepo.save(item);
+        return ResponseEntity.ok(ok(Map.of("message", "Cart updated.")));
+    }
+
+    @PostMapping("/cart/{id}/remove")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> removeCart(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenCartItem item = cartRepo.findById(id).orElse(null);
+        if (item != null && item.getUser() != null && item.getUser().getId().equals(user.getId())) {
+            cartRepo.deleteById(id);
+        }
+        return ResponseEntity.ok(ok(Map.of("message", "Removed from cart.")));
+    }
+
+    @GetMapping("/wishlist")
+    public ResponseEntity<Map<String, Object>> wishlist(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<WomenWishlistItem> list = wishlistRepo.findByUser(user);
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (WomenWishlistItem w : list) {
+            if (w.getProduct() == null) continue;
+            out.add(productDto(w.getProduct()));
+        }
+        return ResponseEntity.ok(ok(Map.of("items", out, "count", out.size())));
+    }
+
+    @PostMapping("/wishlist/toggle")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> wishlistToggle(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Long productId = asLong(body.get("productId"));
+        if (productId == null) return badRequest("productId is required.");
+        if (wishlistRepo.existsByUserAndProduct_Id(user, productId)) {
+            wishlistRepo.deleteByUserAndProduct_Id(user, productId);
+            return ResponseEntity.ok(ok(Map.of("inWishlist", false)));
+        }
+        WomenProduct p = productRepo.findById(productId).orElse(null);
+        if (p == null || p.getDeleted()) return badRequest("Product not found.");
+        WomenWishlistItem w = new WomenWishlistItem();
+        w.setUser(user);
+        w.setProduct(p);
+        wishlistRepo.save(w);
+        return ResponseEntity.ok(ok(Map.of("inWishlist", true)));
+    }
+
+    @PostMapping("/checkout/place")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> placeOrder(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        String shippingAddress = str(body.get("shippingAddress"));
+        String paymentMethod = str(body.get("paymentMethod")).toUpperCase();
+        if (shippingAddress.isBlank()) return badRequest("shippingAddress is required.");
+        if (!"COD".equals(paymentMethod)) {
+            return badRequest("Only COD is enabled in mobile for now.");
+        }
+
+        List<WomenCartItem> items = cartRepo.findByUser(user);
+        if (items.isEmpty()) return badRequest("Cart is empty.");
+
+        List<Long> orderIds = new ArrayList<>();
+        for (WomenCartItem ci : items) {
+            WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
+            if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())) continue;
+            int stock = p.getStock() == null ? 0 : p.getStock();
+            if (stock <= 0) continue;
+            int qty = Math.min(ci.getQuantity(), stock);
+            if (qty <= 0) continue;
+
+            WomenProductOrder o = new WomenProductOrder();
+            o.setUser(user);
+            o.setProduct(p);
+            o.setSeller(p.getSeller());
+            o.setQuantity(qty);
+            o.setTotalPrice((p.getPrice() == null ? 0 : p.getPrice()) * qty);
+            o.setPaymentMethod("COD");
+            o.setShippingAddress(shippingAddress);
+            o.setStatus("PLACED");
+            orderRepo.save(o);
+            orderIds.add(o.getId());
+
+            p.setStock(Math.max(0, stock - qty));
+            productRepo.save(p);
+        }
+        cartRepo.deleteByUser(user);
+
+        if (orderIds.isEmpty()) return badRequest("Could not place order. Items are unavailable.");
+        return ResponseEntity.ok(ok(Map.of(
+                "message", "Order placed successfully.",
+                "orderIds", orderIds
+        )));
+    }
+
+    @GetMapping("/my-orders")
+    public ResponseEntity<Map<String, Object>> myOrders(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<WomenProductOrder> orders = orderRepo.findByUserOrderByOrderTimeDesc(user);
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (WomenProductOrder o : orders) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", o.getId());
+            row.put("quantity", o.getQuantity());
+            row.put("totalPrice", o.getTotalPrice());
+            row.put("paymentMethod", o.getPaymentMethod());
+            row.put("status", o.getStatus());
+            row.put("shippingAddress", o.getShippingAddress());
+            row.put("orderTime", o.getOrderTime() == null ? null : o.getOrderTime().toString());
+            row.put("rating", o.getRating());
+            row.put("review", o.getReview());
+            row.put("product", o.getProduct() == null ? null : productDto(o.getProduct()));
+            out.add(row);
+        }
+        return ResponseEntity.ok(ok(Map.of("orders", out, "count", out.size())));
+    }
+
+    @PostMapping("/orders/{id}/rate")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rateOrder(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenProductOrder o = orderRepo.findById(id).orElse(null);
+        if (o == null || o.getUser() == null || !o.getUser().getId().equals(user.getId())) {
+            return badRequest("Order not found.");
+        }
+        if (!"DELIVERED".equalsIgnoreCase(o.getStatus())) {
+            return badRequest("Only delivered orders can be rated.");
+        }
+        int rating = asInt(body.get("rating"), 0);
+        if (rating < 1 || rating > 5) return badRequest("rating must be between 1 and 5.");
+        o.setRating(rating);
+        o.setReview(str(body.get("review")));
+        orderRepo.save(o);
+        return ResponseEntity.ok(ok(Map.of("message", "Thanks for your review.")));
+    }
+
+    private static Map<String, Object> productDto(WomenProduct p) {
+        Map<String, Object> dto = new LinkedHashMap<>();
+        dto.put("id", p.getId());
+        dto.put("name", p.getName());
+        dto.put("brand", p.getBrand());
+        dto.put("description", p.getDescription());
+        dto.put("fullDescription", p.getFullDescription());
+        dto.put("price", p.getPrice());
+        dto.put("originalPrice", p.getOriginalPrice());
+        dto.put("offerBadge", p.getOfferBadge());
+        dto.put("stock", p.getStock());
+        dto.put("category", p.getCategory());
+        dto.put("weightSize", p.getWeightSize());
+        dto.put("manufacturer", p.getManufacturer());
+        dto.put("ingredients", p.getIngredients());
+        dto.put("benefits", p.getBenefits());
+        dto.put("usageInstructions", p.getUsageInstructions());
+        dto.put("tags", p.getTags());
+        dto.put("imagePath", p.getImagePath());
+        dto.put("additionalImagePaths", p.getAdditionalImagePaths());
+        dto.put("featured", p.getFeatured());
+        dto.put("sellerName", p.getSeller() != null ? p.getSeller().getBusinessName() : null);
+        return dto;
+    }
+
+    private static Map<String, Object> ok(Map<String, Object> data) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("success", true);
+        out.putAll(data);
+        return out;
+    }
+
+    private ResponseEntity<Map<String, Object>> unauthorized() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "success", false,
+                "error", "Login required"
+        ));
+    }
+
+    private ResponseEntity<Map<String, Object>> badRequest(String error) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "error", error
+        ));
+    }
+
+    private User requireUser(HttpSession session) {
+        if (session == null) return null;
+        Object u = session.getAttribute("user");
+        return u instanceof User ? (User) u : null;
+    }
+
+    private static Long asLong(Object v) {
+        if (v == null) return null;
+        if (v instanceof Number n) return n.longValue();
+        try { return Long.parseLong(v.toString().trim()); } catch (Exception e) { return null; }
+    }
+
+    private static int asInt(Object v, int fallback) {
+        if (v == null) return fallback;
+        if (v instanceof Number n) return n.intValue();
+        try { return Integer.parseInt(v.toString().trim()); } catch (Exception e) { return fallback; }
+    }
+
+    private static String str(Object v) {
+        return v == null ? "" : v.toString().trim();
+    }
+}

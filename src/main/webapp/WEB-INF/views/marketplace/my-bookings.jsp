@@ -203,10 +203,17 @@
                             <c:forEach var="b" items="${bookings}">
                                 <tr>
                                     <td>
-                                        <div class="fw-800 color-m-purple">${b.provider.fullName}</div>
+                                        <div class="fw-800 color-m-purple">
+                                            <c:choose>
+                                                <c:when test="${b.provider != null}">${b.provider.fullName}</c:when>
+                                                <c:otherwise>Unknown provider</c:otherwise>
+                                            </c:choose>
+                                        </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-light text-dark">${b.provider.category}</span>
+                                        <span class="badge bg-light text-dark">
+                                            <c:if test="${b.provider != null}">${b.provider.category}</c:if>
+                                        </span>
                                     </td>
                                     <td>
                                         <div class="small fw-600">${b.requestedTime}</div>
@@ -215,7 +222,7 @@
                                         <span class="status-pill status-${b.status}">${b.status}</span>
                                     </td>
                                     <td>
-                                        <c:if test="${b.status.name() == 'CONFIRMED'}">
+                                        <c:if test="${b.status == 'CONFIRMED' && b.provider != null}">
                                             <div class="d-flex gap-2">
                                                 <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openChat(${b.id}, '${b.provider.fullName}')">
                                                     <i class="bi bi-chat-dots-fill"></i> Chat
@@ -225,7 +232,7 @@
                                                 </button>
                                             </div>
                                         </c:if>
-                                        <c:if test="${b.status.name() != 'CONFIRMED'}">
+                                        <c:if test="${b.status != 'CONFIRMED' || b.provider == null}">
                                             <span class="text-muted small">Available when confirmed</span>
                                         </c:if>
                                     </td>
@@ -234,6 +241,9 @@
                         </tbody>
                     </table>
                 </div>
+            </c:if>
+        </div>
+
         <h4 class="fw-bold mt-5 mb-3" style="color: var(--m-purple);"><i class="fas fa-briefcase"></i> Booked Workers</h4>
         <div class="booking-card">
             <c:if test="${empty workerBookings}">
@@ -276,13 +286,17 @@
                                         <span class="status-pill status-${wb.status}">${wb.status}</span>
                                     </td>
                                     <td>
-                                        <c:if test="${wb.status == 'ACCEPTED' || wb.status == 'COMPLETED'}">
+                                        <c:if test="${wb.status == 'ACCEPTED'}">
                                             <div class="d-flex gap-2 align-items-center">
                                                 <a href="${pageContext.request.contextPath}/chat/window/${wb.jobApplication.user.id}" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-comment-dots"></i> Chat</a>
-                                                <form action="${pageContext.request.contextPath}/marketplace/worker-booking/${wb.id}/pay" method="POST" class="m-0">
-                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"><i class="fas fa-credit-card"></i> Pay</button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3"
+                                                        onclick="payWorkerBooking(${wb.id}, ${wb.totalAmount != null ? wb.totalAmount : 0})">
+                                                    <i class="fas fa-credit-card"></i> Pay
+                                                </button>
                                             </div>
+                                        </c:if>
+                                        <c:if test="${wb.status == 'PAID' || wb.status == 'COMPLETED'}">
+                                            <a href="${pageContext.request.contextPath}/chat/window/${wb.jobApplication.user.id}" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-comment-dots"></i> Chat</a>
                                         </c:if>
                                         <c:if test="${wb.status != 'ACCEPTED' && wb.status != 'PAID' && wb.status != 'COMPLETED'}">
                                             <span class="text-muted small">-</span>
@@ -350,10 +364,12 @@
         </div>
     </div>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         const ctx = '${pageContext.request.contextPath}';
         let stompClient = null;
+        let subscribedBookingIds = new Set();
         let currentBookingId = null;
         let localStream = null;
         let peerConnection = null;
@@ -369,25 +385,37 @@
             ] 
         };
 
-        function initWebSocket(bookingId) {
-            if (stompClient && currentBookingId === bookingId) return;
-            
-            // Allow multiple listeners or just ensure we don't disconnect if we need to listen for calls
-            // if (stompClient) stompClient.disconnect();
-            
-            currentBookingId = bookingId;
-
+        function ensureWebSocket(callback) {
+            if (stompClient && stompClient.connected) {
+                if (callback) callback();
+                return;
+            }
             const socket = new SockJS(ctx + '/ws-chat');
             const client = Stomp.over(socket);
             client.debug = null;
-
             client.connect({}, () => {
                 stompClient = client;
-                client.subscribe('/topic/marketplace-chat/' + bookingId, (payload) => {
+                if (callback) callback();
+            }, (err) => {
+                console.error('WebSocket connect failed', err);
+                alert('Live chat requires an active login session. Please refresh and try again.');
+            });
+        }
+
+        function subscribeBooking(bookingId) {
+            ensureWebSocket(() => {
+                if (subscribedBookingIds.has(bookingId)) return;
+                stompClient.subscribe('/topic/marketplace-chat/' + bookingId, (payload) => {
                     const msg = JSON.parse(payload.body);
                     handleIncomingMessage(msg, bookingId);
                 });
+                subscribedBookingIds.add(bookingId);
             });
+        }
+
+        function initWebSocket(bookingId) {
+            currentBookingId = bookingId;
+            subscribeBooking(bookingId);
         }
 
         function handleIncomingMessage(msg, bookingId) {
@@ -410,24 +438,30 @@
         function openChat(bookingId, partnerName) {
             document.getElementById('chatPartnerName').innerText = partnerName;
             document.getElementById('chatArea').innerHTML = '';
-            initWebSocket(bookingId);
+            currentBookingId = bookingId;
+            subscribeBooking(bookingId);
             
-            // Load history
             fetch(ctx + '/marketplace/chat-history/' + bookingId)
-                .then(res => res.json())
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to load chat');
+                    return res.json();
+                })
                 .then(history => {
-                    history.forEach(msg => {
+                    (history || []).forEach(msg => {
                         appendChatMessage(msg.content, msg.senderRole === 'USER' ? 'sent' : 'received');
                     });
                     new bootstrap.Modal(document.getElementById('chatModal')).show();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Could not load chat history.');
                 });
         }
 
-        // Initialize all confirmed bookings on load
         document.addEventListener('DOMContentLoaded', () => {
             <c:forEach var="b" items="${bookings}">
-                <c:if test="${b.status.name() == 'CONFIRMED'}">
-                    initWebSocket(${b.id});
+                <c:if test="${b.status == 'CONFIRMED'}">
+                    subscribeBooking(${b.id});
                 </c:if>
             </c:forEach>
         });
@@ -435,14 +469,14 @@
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const content = input.value.trim();
-            if (!content || !stompClient) return;
-
-            stompClient.send('/app/marketplace-chat/' + currentBookingId, {}, JSON.stringify({
-                type: 'CHAT',
-                content: content,
-                senderRole: 'USER'
-            }));
-            input.value = '';
+            if (!content || !currentBookingId) return;
+            ensureWebSocket(() => {
+                stompClient.send('/app/marketplace-chat/' + currentBookingId, {}, JSON.stringify({
+                    type: 'CHAT',
+                    content: content
+                }));
+                input.value = '';
+            });
         }
 
         function appendChatMessage(content, type) {
@@ -454,13 +488,64 @@
             area.scrollTop = area.scrollHeight;
         }
 
+        async function payWorkerBooking(bookingId, amount) {
+            if (!amount || amount <= 0) {
+                alert('Invalid payment amount.');
+                return;
+            }
+            try {
+                const res = await fetch(ctx + '/payment/create-order', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ amount: amount, type: 'WORKER_BOOKING' })
+                });
+                if (!res.ok) throw new Error('Order creation failed');
+                const order = await res.json();
+                const rzp = new Razorpay({
+                    key: order.key,
+                    amount: order.amount,
+                    currency: 'INR',
+                    name: 'Fight D Fear',
+                    description: 'Worker booking payment',
+                    order_id: order.orderId,
+                    handler: async function (response) {
+                        const verifyRes = await fetch(ctx + '/payment/verify', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                type: 'WORKER_BOOKING',
+                                targetId: bookingId
+                            })
+                        });
+                        if (verifyRes.ok) {
+                            window.location.reload();
+                        } else {
+                            alert('Payment verification failed.');
+                        }
+                    }
+                });
+                rzp.open();
+            } catch (e) {
+                console.error(e);
+                alert('Unable to start payment. Check Razorpay configuration.');
+            }
+        }
+
         async function startVideoCall(bookingId, partnerName) {
             document.getElementById('videoPartnerName').innerText = partnerName;
-            initWebSocket(bookingId);
+            currentBookingId = bookingId;
+            subscribeBooking(bookingId);
             const modal = new bootstrap.Modal(document.getElementById('videoModal'));
             modal.show();
 
             try {
+                await new Promise((resolve, reject) => {
+                    ensureWebSocket(() => resolve());
+                    setTimeout(() => reject(new Error('WebSocket timeout')), 8000);
+                });
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 document.getElementById('localVideo').srcObject = localStream;
                 
@@ -475,7 +560,7 @@
                 }));
             } catch (err) {
                 console.error('Call failed', err);
-                alert('Could not access camera/microphone. Please ensure you have granted permissions.');
+                alert('Could not start video call. Check camera permissions and login session.');
                 modal.hide();
             }
         }

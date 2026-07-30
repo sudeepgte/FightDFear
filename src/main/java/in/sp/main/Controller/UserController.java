@@ -46,7 +46,7 @@ import in.sp.main.Service.UserFollowService;
 import in.sp.main.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import in.sp.main.Service.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +69,7 @@ public class UserController {
     private FileUploadService fileUploadService;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private PasswordService passwordService;
     
     @Autowired
     private UserFollowService followService;
@@ -362,7 +362,7 @@ public class UserController {
 
             // Store BCrypt password for security (login supports legacy plain-text too).
             user.setEmail(user.getEmail().trim().toLowerCase());
-            user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setPassword(passwordService.encode(rawPassword));
 
             // Check duplicate email
             if (userRepository.findByEmail(user.getEmail()).isPresent()) {

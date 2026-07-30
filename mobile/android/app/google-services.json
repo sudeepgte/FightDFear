@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "418190344721",
+    "project_id": "kishordfire",
+    "storage_bucket": "kishordfire.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418190344721:android:9dd058be0203c76e3167b0",
+        "android_client_info": {
+          "package_name": "com.company.FightTheFear"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA218CgLv9Xy5yJR-0yYZIiFyTVDb2Exzs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"r
+}
