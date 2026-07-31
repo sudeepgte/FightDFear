@@ -256,9 +256,6 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
                 <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="top-btn">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                 </a>
@@ -488,19 +485,19 @@
                                 <div class="col-md-4">
                                     <div class="p-3 bg-white bg-opacity-10 rounded-4">
                                         <i class="fas fa-medal text-warning mb-2 fa-lg"></i>
-                                        <h6 class="mb-0 small">Belt Progress</h6>
+                                        <h6 class="mb-0 small text-white">Belt Progress</h6>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="p-3 bg-white bg-opacity-10 rounded-4">
                                         <i class="fas fa-chart-line text-info mb-2 fa-lg"></i>
-                                        <h6 class="mb-0 small">Skill Tracking</h6>
+                                        <h6 class="mb-0 small text-white">Skill Tracking</h6>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="p-3 bg-white bg-opacity-10 rounded-4">
                                         <i class="fas fa-calendar-check text-success mb-2 fa-lg"></i>
-                                        <h6 class="mb-0 small">Attendance</h6>
+                                        <h6 class="mb-0 small text-white">Attendance</h6>
                                     </div>
                                 </div>
                             </div>

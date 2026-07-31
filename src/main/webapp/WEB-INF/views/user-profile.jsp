@@ -38,25 +38,27 @@
         --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
     }
 
-    /* ===== Nav Item Theme Color (no box) ===== */
-    #navmenu ul li a[href*="/chat/users"],
-    #navmenu ul li a[href*="/user/bookings"],
-    #navmenu ul li a[href*="/users/wallet"] {
-        background: none !important;
-        color: #f43f5e !important;
-        padding: 5px 14px !important;
-        border-radius: 0 !important;
-        font-weight: 700 !important;
-        box-shadow: none !important;
-        letter-spacing: 0.3px;
-    }
-    #navmenu ul li a[href*="/chat/users"]:hover,
-    #navmenu ul li a[href*="/user/bookings"]:hover,
-    #navmenu ul li a[href*="/users/wallet"]:hover {
-        color: #1e1b4b !important;
-        background: none !important;
-        transform: none !important;
-        filter: none !important;
+    /* ===== Nav Item Theme Color (desktop only) ===== */
+    @media (min-width: 1200px) {
+        #navmenu ul li a[href*="/chat/users"],
+        #navmenu ul li a[href*="/user/bookings"],
+        #navmenu ul li a[href*="/users/wallet"] {
+            background: none !important;
+            color: #f43f5e !important;
+            padding: 5px 14px !important;
+            border-radius: 0 !important;
+            font-weight: 700 !important;
+            box-shadow: none !important;
+            letter-spacing: 0.3px;
+        }
+        #navmenu ul li a[href*="/chat/users"]:hover,
+        #navmenu ul li a[href*="/user/bookings"]:hover,
+        #navmenu ul li a[href*="/users/wallet"]:hover {
+            color: #1e1b4b !important;
+            background: none !important;
+            transform: none !important;
+            filter: none !important;
+        }
     }
 
 
@@ -305,17 +307,6 @@
             gap: 20px !important;
             justify-content: center !important;
         }
-        .dashboard-bar {
-            justify-content: center !important;
-            padding: 0 15px !important;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-        .dashboard-btn {
-            width: 100% !important;
-            justify-content: center !important;
-            padding: 12px 20px !important;
-        }
     }
 
     @media (max-width: 480px) {
@@ -355,41 +346,6 @@
         animation: shimmer 1.5s infinite;
         pointer-events: none;
     }
-    /* 9. Dashboard Button Styling */
-    .dashboard-bar {
-        position: relative;
-        z-index: 99;
-        margin-top: 10px;
-        padding-right: 15px;
-    }
-    .dashboard-btn {
-        background: var(--gradient-primary);
-        color: #fff !important;
-        padding: 10px 24px;
-        border-radius: 50px;
-        font-weight: 700;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        font-family: 'Raleway', sans-serif;
-        font-size: 0.95rem;
-        letter-spacing: 0.5px;
-    }
-    .dashboard-btn:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(124, 45, 94, 0.45);
-        color: #fff !important;
-    }
-    .dashboard-btn i {
-        font-size: 1.2rem;
-        transition: transform 0.3s ease;
-    }
-    .dashboard-btn:hover i {
-        transform: translateX(5px);
-    }
     .profile-back-btn {
         background: #fff;
         color: var(--primary-purple) !important;
@@ -398,12 +354,127 @@
         border-radius: 50px;
         font-weight: 700;
         transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
     }
     .profile-back-btn:hover {
         background: rgba(30, 27, 75, 0.08);
         color: var(--primary-purple) !important;
         border-color: var(--brand-pink);
         transform: translateY(-1px);
+    }
+
+    .profile-back-btn .back-label-short {
+        display: none;
+    }
+
+    /* Profile page mobile: sidebar + content layout */
+    @media (max-width: 768px) {
+        body {
+            overflow-x: hidden;
+        }
+
+        #wrapper {
+            flex-direction: column !important;
+            width: 100% !important;
+            margin-top: 68px !important;
+        }
+
+        #page-content-wrapper {
+            margin-left: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .profile-back-bar {
+            padding: 10px 12px 0 !important;
+            margin-bottom: 8px !important;
+        }
+
+        .profile-back-btn {
+            font-size: 14px;
+            padding: 10px 16px;
+        }
+
+        .user-split-section {
+            margin-top: 0 !important;
+        }
+
+        .user-split-section .container-fluid {
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .user-bg-left {
+            padding: 28px 16px !important;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .user-details-side {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .user-details {
+            padding: 18px 14px 24px !important;
+        }
+
+        .user-details li {
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .user-details .mt-4.d-flex.flex-wrap.gap-3 {
+            flex-direction: column;
+            gap: 10px !important;
+        }
+
+        .user-details .mt-4.d-flex.flex-wrap.gap-3 .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .instagram-stats {
+            justify-content: space-between !important;
+            gap: 8px !important;
+        }
+    }
+
+    @media (max-width: 430px) {
+        .profile-back-btn {
+            width: 100%;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .profile-back-btn .back-label-long {
+            display: none;
+        }
+
+        .profile-back-btn .back-label-short {
+            display: inline;
+        }
+
+        .user-bg-left img {
+            width: 110px !important;
+            height: 110px !important;
+        }
+
+        .user-details h2 {
+            font-size: 1.35rem;
+        }
+
+        .instagram-stats h5 {
+            font-size: 1rem;
+        }
+
+        .instagram-stats small {
+            font-size: 11px;
+        }
     }
 </style>
 <body>
@@ -412,11 +483,14 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
 
-<div class="dashboard-bar container-fluid container-xl d-flex justify-content-end">
-    <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
-        Dashboard <i class="bi bi-arrow-right"></i>
+<div class="profile-back-bar mb-3 px-3 px-md-4 pt-2">
+    <a href="${pageContext.request.contextPath}/users/dashboard" class="profile-back-btn">
+        <i class="bi bi-arrow-left"></i>
+        <span class="back-label-long">Back to Dashboard</span>
+        <span class="back-label-short">Back</span>
     </a>
 </div>
+
 <section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: transparent;">
 					     <div class="container-fluid p-0">
 					       <div class="row no-gutters align-items-stretch">

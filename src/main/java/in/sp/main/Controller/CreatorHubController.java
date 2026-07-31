@@ -732,6 +732,9 @@ public class CreatorHubController {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
+        currentUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+        session.setAttribute("user", currentUser);
+
         // Fetch user uploads (include drafts)
         List<Videoupload> myUploads = videoUploadRepository.findByUser_Id(currentUser.getId());
 
@@ -767,6 +770,7 @@ public class CreatorHubController {
         Double totalTipsAmount = tipsReceived.stream().mapToDouble(TipTransaction::getAmount).sum();
 
         model.addAttribute("user", currentUser);
+        model.addAttribute("isPrivateProfile", currentUser.isPrivate());
         model.addAttribute("drafts", drafts);
         model.addAttribute("published", published);
         model.addAttribute("totalViews", totalViews);
@@ -1306,7 +1310,13 @@ public class CreatorHubController {
                                       @RequestParam String campaignTitle,
                                       @RequestParam String description,
                                       @RequestParam Double payRate,
+                                      HttpSession session,
                                       RedirectAttributes redirectAttributes) {
+        Admin admin = (Admin) session.getAttribute("admin");
+        if (admin == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
         BrandCollaboration campaign = new BrandCollaboration();
         campaign.setBrandName(brandName);
         campaign.setCampaignTitle(campaignTitle);
@@ -1315,7 +1325,7 @@ public class CreatorHubController {
         campaign.setStatus("ACTIVE");
         brandCollaborationRepository.save(campaign);
 
-        redirectAttributes.addFlashAttribute("success", "Sponsorship Campaign created successfully!");
-        return "redirect:/creator-hub/admin";
+        redirectAttributes.addFlashAttribute("success", "Sponsorship campaign created successfully!");
+        return "redirect:/admin/adminDashboard?hubTab=campaign#creatorHubTabs";
     }
 }

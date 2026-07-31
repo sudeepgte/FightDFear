@@ -139,14 +139,35 @@
         .field-hint { font-size: 0.72rem; color: var(--fdf-muted); margin-top: 6px; line-height: 1.4; }
         .fdf-input { width: 100%; padding: 14px 18px; border: 2px solid var(--fdf-border); border-radius: 16px; background: #f8fafc; outline: none; transition: all 0.3s ease; font-family: inherit; font-weight: 500; }
         .fdf-input:focus { border-color: var(--brand-pink); background: #fff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
-        .password-input-wrap { position: relative; display: flex; align-items: center; }
-        .password-input-wrap .fdf-input { padding-right: 48px; }
-        .password-toggle-btn {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            border: none; background: transparent; color: #64748b; cursor: pointer;
-            padding: 0; width: 32px; height: 32px; font-size: 1.1rem;
-            display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+        .password-input-wrap { position: relative; width: 100%; }
+        .password-input-wrap .fdf-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding-right: 3rem;
+            line-height: 1.5;
+            min-height: 52px;
         }
+        .password-input-wrap input[type="password"]::-ms-reveal,
+        .password-input-wrap input[type="password"]::-ms-clear { display: none; }
+        .password-input-wrap input::-webkit-credentials-auto-fill-button,
+        .password-input-wrap input::-webkit-contacts-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+        .password-toggle-btn {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            border: none; background: transparent; color: #475569; cursor: pointer;
+            padding: 0; width: 36px; height: 36px;
+            display: inline-flex; align-items: center; justify-content: center;
+            z-index: 2;
+        }
+        .password-toggle-btn svg {
+            width: 20px; height: 20px; display: block; pointer-events: none;
+        }
+        .password-toggle-btn:hover,
+        .password-toggle-btn:focus { color: var(--brand-purple); outline: none; }
+        /* Open eye = password visible | Closed/slashed eye = password hidden */
+        .password-toggle-btn .icon-eye-show { display: none; }
+        .password-toggle-btn .icon-eye-hide { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-show { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-hide { display: none; }
 
         .btn-dr { padding: 14px 28px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; border: none; font-size: 1rem; width: 100%; }
         .btn-dr-next { background: var(--gradient-primary); color: #fff; box-shadow: 0 8px 20px rgba(124, 45, 94, 0.2); }
@@ -259,8 +280,21 @@
                             <label>Password <span class="required-star">*</span></label>
                             <div class="password-input-wrap">
                                 <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password">
-                                    <i class="bi bi-eye"></i>
+                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password" aria-pressed="false">
+                                    <span class="icon-eye-show" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </span>
+                                    <span class="icon-eye-hide" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                            <path d="M1 1l22 22"></path>
+                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                        </svg>
+                                    </span>
                                 </button>
                             </div>
                             <div class="field-hint"><strong>Password must be at least 8 characters.</strong> Also include uppercase, lowercase, a number, and a special character (!@#$%^&amp;*).</div>
@@ -270,8 +304,21 @@
                             <label>Confirm Password <span class="required-star">*</span></label>
                             <div class="password-input-wrap">
                                 <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword" aria-label="Show confirm password">
-                                    <i class="bi bi-eye"></i>
+                                <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                                    <span class="icon-eye-show" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </span>
+                                    <span class="icon-eye-hide" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                            <path d="M1 1l22 22"></path>
+                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                        </svg>
+                                    </span>
                                 </button>
                             </div>
                             <div class="error-feedback">Passwords do not match.</div>
@@ -460,23 +507,33 @@
             });
         });
     </script>
-    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
     <script>
     (function () {
-      document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var id = btn.getAttribute('data-toggle-password');
-          var input = document.getElementById(id);
-          if (!input) return;
-          var show = input.type === 'password';
-          input.type = show ? 'text' : 'password';
-          var icon = btn.querySelector('i');
-          if (icon) {
-            icon.classList.toggle('bi-eye', !show);
-            icon.classList.toggle('bi-eye-slash', show);
-          }
+        function setVisible(btn, show) {
+            var id = btn.getAttribute('data-toggle-password');
+            var input = document.getElementById(id);
+            if (!input) return;
+
+            input.type = show ? 'text' : 'password';
+            btn.classList.toggle('is-visible', show);
+            btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        }
+
+        document.querySelectorAll('.password-toggle-btn[data-toggle-password]').forEach(function (btn) {
+            btn.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = btn.getAttribute('data-toggle-password');
+                var input = document.getElementById(id);
+                if (!input) return;
+                setVisible(btn, input.type === 'password');
+                input.focus();
+            });
         });
-      });
     })();
     </script>
 </body>

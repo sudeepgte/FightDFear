@@ -362,7 +362,6 @@
 
   <div class="shop-header">
     <div class="top-bar">
-      <a href="${pageContext.request.contextPath}/" class="top-btn" style="margin-right: auto;"><i class="bi bi-house"></i> Home</a>
       <a href="${pageContext.request.contextPath}/women-products/wishlist" class="top-btn"><i class="bi bi-heart"></i> Wishlist</a>
       <a href="${pageContext.request.contextPath}/women-products/cart" class="top-btn"><i class="bi bi-cart3"></i> Cart</a>
       <a href="${pageContext.request.contextPath}/women-products/my-orders" class="top-btn"><i class="bi bi-box-seam"></i> Orders</a>
@@ -387,7 +386,6 @@
       <i class="bi bi-bag-heart"></i>
       <h2>The shop is quiet right now</h2>
       <p>We're curating new amazing products for you. Please check back soon!</p>
-      <a href="${pageContext.request.contextPath}/" class="btn top-btn mt-4" style="display:inline-flex;">Back to Home</a>
     </div>
   </c:if>
 

@@ -167,7 +167,23 @@
             background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
             color: #fff;
             border-color: transparent;
-            box-shadow: var(--neon-glow);
+        }
+
+        .category-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            min-width: 0;
+        }
+        .category-filter-row .cat-scroll-btn {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* ── FEED POSTS ── */
@@ -506,14 +522,35 @@
                 max-width: 100% !important;
                 padding-left: 15px !important;
                 padding-right: 15px !important;
-                margin-top: 40px !important;
+                margin-top: 12px !important;
+            }
+            #global-back-btn {
+                margin-bottom: 12px !important;
             }
         }
         @media (max-width: 576px) {
             .hub-container {
-                padding-left: 8px !important;
-                padding-right: 8px !important;
-                margin-top: 20px !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                margin-top: 8px !important;
+            }
+            .category-filter-row .cat-scroll-btn {
+                display: none !important;
+            }
+            .category-filter-row {
+                margin-bottom: 12px;
+            }
+            .category-pill {
+                padding: 7px 14px;
+                font-size: 12px;
+            }
+            .post-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .post-header .d-flex.align-items-center.gap-2 {
+                flex-wrap: wrap;
             }
             .post-card {
                 border-radius: 16px !important;
@@ -599,8 +636,8 @@
                 </div>
 
                 <!-- Category selector scroll -->
-                <div class="d-flex align-items-center mb-4">
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+                <div class="category-filter-row">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatLeft(this)">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
                     <div class="category-scroll flex-grow-1" style="margin-bottom: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
@@ -609,7 +646,7 @@
                             <a href="${pageContext.request.contextPath}/creator-hub?category=${cat}" class="category-pill ${selectedCategory eq cat ? 'active' : ''}">${cat}</a>
                         </c:forEach>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatRight(this)">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>

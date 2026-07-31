@@ -349,6 +349,14 @@
         background: rgba(123, 44, 191, 0.2);
         transform: scale(1.02);
     }
+    .reported-videos-link {
+        cursor: pointer;
+        padding: 6px 12px;
+    }
+    .reported-videos-link:hover {
+        background: #fff !important;
+        color: var(--primary-purple) !important;
+    }
 
     /* 10. Responsive touch target improvements for mobile */
     @media (max-width: 768px) {
@@ -556,11 +564,9 @@
                 </div>
                 <div class="meta">
 
-                    <span class="badge bg-light text-dark badge-pill">
-                        <a href="${pageContext.request.contextPath}/admin/reported-videos" class="text-dark text-decoration-none">
-                            Reported Videos: <span id="reportedVideos">-</span>
-                        </a>
-                    </span>
+                    <a href="${pageContext.request.contextPath}/admin/reported-videos" class="badge bg-light text-dark badge-pill text-decoration-none reported-videos-link" title="View reported videos">
+                        Reported Videos: <span id="reportedVideos">-</span>
+                    </a>
                     <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
                 </div>
             </div>
@@ -1797,6 +1803,44 @@
           }
       });
   }
+</script>
+
+<script>
+  (function activateCreatorHubTabFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const hubTab = params.get('hubTab');
+    const hash = window.location.hash;
+
+    function showCreatorHubTab(tabButtonId, paneId) {
+      const tabBtn = document.getElementById(tabButtonId);
+      const pane = document.getElementById(paneId);
+      if (!tabBtn || !pane) return;
+
+      document.querySelectorAll('#creatorHubTabs .nav-link').forEach(function(link) {
+        link.classList.remove('active');
+      });
+      document.querySelectorAll('#creatorHubTabContents .tab-pane').forEach(function(p) {
+        p.classList.remove('show', 'active');
+      });
+
+      tabBtn.classList.add('active');
+      pane.classList.add('show', 'active');
+
+      const section = document.getElementById('creatorHubTabs');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    if (hubTab === 'campaign') {
+      showCreatorHubTab('campaign-tab', 'campaignContent');
+    } else if (hash === '#creatorHubTabs') {
+      const section = document.getElementById('creatorHubTabs');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  })();
 </script>
 
 </body>

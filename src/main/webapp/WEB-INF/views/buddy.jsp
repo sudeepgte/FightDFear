@@ -207,9 +207,6 @@
       <h1 class="mb-1" style="font-weight: 800; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Buddy Mode</h1>
       <div class="muted">Find nearby verified users traveling to a similar destination. Stay safe together.</div>
     </div>
-    <a class="btn" style="border-radius: 50px; background: var(--gradient-primary); color: #fff; padding: 10px 25px; border: none; font-weight: 700; box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3);" href="${pageContext.request.contextPath}/users/dashboard">
-      <i class="fas fa-arrow-left me-2"></i> Dashboard
-    </a>
   </div>
 
   <div class="row">

@@ -388,9 +388,6 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
                 <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
                     <i class="bi bi-calendar-event"></i> My Appointments
                 </a>

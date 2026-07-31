@@ -87,13 +87,76 @@
             background-color: #b91c1c;
             transform: translateY(-1px);
         }
+
+        /* Admin layout */
+        .topbar {
+            background: var(--navy-dark);
+            color: #fff;
+            padding: 0 20px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 3px 16px rgba(30, 27, 75, 0.28);
+        }
+        .topbar .brand { font-size: 1.1rem; font-weight: 700; }
+        .topbar .btn-logout {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 7px;
+            padding: 5px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .layout { display: flex; min-height: calc(100vh - 58px); }
+        .sidebar {
+            width: 272px;
+            background: #fff;
+            border-right: 1px solid rgba(30, 27, 75, 0.12);
+            position: sticky;
+            top: 58px;
+            height: calc(100vh - 58px);
+            padding: 14px 12px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .brand { font-size: 0.9rem; font-weight: 700; color: var(--navy-dark); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
+        .navlink {
+            display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
+            color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
+        }
+        .navlink i { width: 20px; text-align: center; color: var(--navy-dark); font-size: 1rem; }
+        .navlink:hover { background: #f8fafc; color: var(--navy-dark); padding-left: 20px; }
+        .navlink.active { background: var(--navy-dark); color: #fff; font-weight: 600; }
+        .navlink.active i { color: #fff; }
+        .main { flex: 1; min-width: 0; padding: 28px 20px 48px; }
+        .mainInner { max-width: 1200px; margin: 0 auto; }
+        @media (max-width: 992px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; position: relative; top: 0; height: auto; }
+        }
     </style>
 </head>
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div class="topbar">
+    <span class="brand"><i class="bi bi-shield-check me-2"></i>Fight D Fear Admin</span>
+    <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
+</div>
 
-<div class="container">
+<div class="layout">
+    <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
+
+    <main class="main">
+        <div class="mainInner">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold" style="color: var(--navy-dark);"><i class="bi bi-shield-check-fill text-primary"></i> Platform Verification Desk</h2>
@@ -686,7 +749,6 @@
         </div>
 
     </div>
-</div>
 
     <!-- Entrepreneur Activity Modals -->
     <c:forEach var="e" items="${allEntrepreneurs}">
@@ -920,7 +982,8 @@
         </div>
     </c:forEach>
 
-    </div>
+        </div>
+    </main>
 </div>
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

@@ -102,7 +102,11 @@ public class QnAController {
 
     // Admin view all questions
     @RequestMapping(value = "/admin/questions", method = RequestMethod.GET)
-    public String adminViewAllQuestions(Model model) {
+    public String adminViewAllQuestions(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null && !"ADMIN".equals(session.getAttribute("userRole"))) {
+            return "redirect:/admin/loginAdmin";
+        }
+
         List<Question> questions = qnaService.getAllThreads();
 
         Map<Long, String> formattedTimestamps = new HashMap<>();
