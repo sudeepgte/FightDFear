@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
@@ -23,13 +24,17 @@ public class ServiceProvider {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "provider_category", length = 50)
+    @Column(name = "provider_category", length = 64)
     private ProviderCategory category;
 
-    // Purpose: short description shown to users (subjects taught, menu, languages).
+    // Purpose: service details from mobile registration (can be long).
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Purpose: city/area for search.
+    // Purpose: city/area / GPS maps link for search.
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String locationText;
 
     // Purpose: admin verification document.

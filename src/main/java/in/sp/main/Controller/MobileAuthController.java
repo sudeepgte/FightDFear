@@ -1,12 +1,14 @@
 package in.sp.main.Controller;
 
 import in.sp.main.Config.JwtUtil;
+import in.sp.main.Entities.EmergencyContact;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Service.UserService;
+import in.sp.main.Util.MobileValidation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,14 @@ public class MobileAuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> health() {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", true);
+        response.put("status", "ok");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> body) {
         Map<String, Object> response = new LinkedHashMap<>();
@@ -45,31 +55,42 @@ public class MobileAuthController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        String email = trim(body.get("email"));
+        String email = MobileValidation.normalizeEmail(body.get("email"));
         String password = body.get("password") == null ? "" : body.get("password");
-        String fullName = trim(body.get("fullName"));
-        String phone = trim(body.get("phoneNumber"));
-        String homeAddress = trim(body.get("homeAddress"));
-        String dob = trim(body.get("dob"));
-        String genderRaw = trim(body.get("gender"));
+        String fullName = MobileValidation.trim(body.get("fullName"));
+        String phone = MobileValidation.trim(body.get("phoneNumber"));
+        String homeAddress = MobileValidation.trim(body.get("homeAddress"));
+        String dob = MobileValidation.trim(body.get("dob"));
+        String genderRaw = MobileValidation.trim(body.get("gender"));
+        String emergencyContact = MobileValidation.trim(body.get("emergencyContact"));
+        String preferredLanguage = MobileValidation.trim(body.get("preferredLanguage"));
+        String profilePhoto = MobileValidation.trim(body.get("profilePhoto"));
 
-        if (email.isEmpty() || password.isEmpty() || fullName.isEmpty() || phone.isEmpty()) {
+        if (fullName.isEmpty()) {
             response.put("success", false);
-            response.put("error", "fullName, email, phoneNumber and password are required");
+            response.put("error", "fullName is required");
             return ResponseEntity.badRequest().body(response);
         }
-        if (!phone.matches("^\\d{10}$")) {
+        String emailErr = MobileValidation.requireEmail(email);
+        if (emailErr != null) {
             response.put("success", false);
-            response.put("error", "Phone number must be exactly 10 digits");
+            response.put("error", emailErr);
             return ResponseEntity.badRequest().body(response);
         }
-        if (!password.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$")) {
+        String phoneErr = MobileValidation.requirePhone(phone, true);
+        if (phoneErr != null) {
             response.put("success", false);
-            response.put("error", "Password must be at least 6 characters and include a number and special character");
+            response.put("error", phoneErr);
+            return ResponseEntity.badRequest().body(response);
+        }
+        String passErr = MobileValidation.requirePassword(password);
+        if (passErr != null) {
+            response.put("success", false);
+            response.put("error", passErr);
             return ResponseEntity.badRequest().body(response);
         }
 
-        String normEmail = email.toLowerCase();
+        String normEmail = email;
         if (userRepository.findByEmail(normEmail).isPresent()) {
             response.put("success", false);
             response.put("error", "Email already registered. Please sign in.");
@@ -83,7 +104,12 @@ public class MobileAuthController {
         user.setHomeAddress(homeAddress.isEmpty() ? null : homeAddress);
         user.setPassword(passwordService.encode(password));
         user.setVerificationStatus(VerificationStatus.PENDING);
-        user.setIdentityDocument("mobile-pending");
+        user.setIdentityDocument(preferredLanguage.isEmpty()
+                ? "mobile-pending"
+                : "mobile-pending|lang:" + preferredLanguage);
+        if (!profilePhoto.isEmpty()) {
+            user.setProfilePhoto(profilePhoto);
+        }
 
         if (!dob.isEmpty()) {
             try {
@@ -111,9 +137,20 @@ public class MobileAuthController {
             }
         }
 
+        if (!emergencyContact.isEmpty()) {
+            if (!emergencyContact.matches("^\\d{10}$")) {
+                response.put("success", false);
+                response.put("error", "Emergency contact must be exactly 10 digits");
+                return ResponseEntity.badRequest().body(response);
+            }
+            EmergencyContact ec = new EmergencyContact("Emergency", emergencyContact, "Emergency", null);
+            ec.setUser(user);
+            user.setEmergencyContacts(java.util.List.of(ec));
+        }
+
         userService.createUser(user);
         response.put("success", true);
-        response.put("message", "Registration successful. Wait for admin verification before signing in.");
+        response.put("message", "Registration successful. Your account is under admin verification. You will be able to log in once your account is approved.");
         response.put("userId", user.getId());
         response.put("email", user.getEmail());
         response.put("status", VerificationStatus.PENDING.name());

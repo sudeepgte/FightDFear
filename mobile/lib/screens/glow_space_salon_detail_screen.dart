@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../config/glow_catalog.dart';
 import '../services/auth_state.dart';
 import '../services/glow_space_service.dart';
 
@@ -174,20 +175,12 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
                       const SizedBox(height: 12),
                       if (s?['bio'] != null && '${s!['bio']}'.isNotEmpty) Text('${s['bio']}'),
                       const SizedBox(height: 16),
-                      const Text('Services', style: TextStyle(fontWeight: FontWeight.w700)),
+                      const Text('Services by category', style: TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       if (_services.isEmpty)
                         const Text('No services listed', style: TextStyle(color: GlowSpaceSalonDetailScreen.textGray))
                       else
-                        ..._services.map((x) => _bookableRow(
-                              title: x['name']?.toString() ?? 'Service',
-                              subtitle: '${x['category'] ?? ''} · ₹${x['price'] ?? 0}',
-                              onTap: () => _book(
-                                itemType: 'SERVICE',
-                                itemId: (x['id'] is int) ? x['id'] as int : int.parse('${x['id']}'),
-                                title: x['name']?.toString() ?? 'Service',
-                              ),
-                            )),
+                        ..._groupedServiceSections(),
                       const SizedBox(height: 14),
                       const Text('Treatments', style: TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
@@ -249,5 +242,38 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
         ],
       ),
     );
+  }
+
+  List<Widget> _groupedServiceSections() {
+    final grouped = <String, List<Map<String, dynamic>>>{};
+    for (final x in _services) {
+      final key = GlowCatalog.labelFor(x['category']?.toString());
+      grouped.putIfAbsent(key, () => []).add(x);
+    }
+    final out = <Widget>[];
+    for (final entry in grouped.entries) {
+      out.add(Padding(
+        padding: const EdgeInsets.only(top: 6, bottom: 6),
+        child: Row(
+          children: [
+            Icon(GlowCatalog.iconFor(entry.value.first['category']?.toString()), size: 18, color: GlowSpaceSalonDetailScreen.primary),
+            const SizedBox(width: 6),
+            Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w800)),
+          ],
+        ),
+      ));
+      for (final x in entry.value) {
+        out.add(_bookableRow(
+          title: x['name']?.toString() ?? 'Service',
+          subtitle: '₹${x['price'] ?? 0} · ${x['durationMinutes'] ?? 0} min',
+          onTap: () => _book(
+            itemType: 'SERVICE',
+            itemId: (x['id'] is int) ? x['id'] as int : int.parse('${x['id']}'),
+            title: x['name']?.toString() ?? 'Service',
+          ),
+        ));
+      }
+    }
+    return out;
   }
 }

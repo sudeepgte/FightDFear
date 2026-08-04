@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_state.dart';
 import '../services/women_products_service.dart';
+import '../widgets/detail_listing_card.dart';
 import 'women_product_detail_screen.dart';
 
 class WomenProductsScreen extends StatefulWidget {
@@ -26,14 +27,14 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   bool _loadingOrders = false;
   String? _error;
   String _category = '';
-  final _categories = const [
-    '',
-    'SKINCARE',
-    'HAIRCARE',
-    'HYGIENE',
-    'CLOTHING',
-    'ACCESSORIES',
-    'WELLNESS',
+  final _categoryOptions = const [
+    (value: '', label: 'All Products', icon: Icons.grid_view_rounded),
+    (value: 'SKINCARE', label: 'Skincare', icon: Icons.spa_outlined),
+    (value: 'HAIRCARE', label: 'Haircare', icon: Icons.content_cut),
+    (value: 'HYGIENE', label: 'Hygiene', icon: Icons.clean_hands_outlined),
+    (value: 'CLOTHING', label: 'Clothing', icon: Icons.checkroom_outlined),
+    (value: 'ACCESSORIES', label: 'Accessories', icon: Icons.watch_outlined),
+    (value: 'WELLNESS', label: 'Wellness', icon: Icons.favorite_outline),
   ];
 
   List<Map<String, dynamic>> _products = [];
@@ -212,26 +213,22 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   Widget _buildShop() {
     return Column(
       children: [
+        const SizedBox(height: 10),
+        CategoryPillBar(
+          options: _categoryOptions,
+          selected: _category,
+          onSelected: (v) async {
+            setState(() => _category = v);
+            await _loadProducts();
+          },
+        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _categories.map((c) {
-                final selected = c == _category;
-                final label = c.isEmpty ? 'All' : c;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(label),
-                    selected: selected,
-                    onSelected: (_) async {
-                      setState(() => _category = c);
-                      await _loadProducts();
-                    },
-                  ),
-                );
-              }).toList(),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Showing ${_products.length} products',
+              style: const TextStyle(color: WomenProductsScreen.textGray, fontSize: 13),
             ),
           ),
         ),
@@ -255,108 +252,70 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
                               Center(child: Text('No products found')),
                             ],
                           )
-                        : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(12, 6, 12, 20),
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                             itemCount: _products.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
                             itemBuilder: (context, i) {
                               final p = _products[i];
                               final id = p['id'] is int ? p['id'] as int : int.tryParse('${p['id']}');
                               final imageUrl = _mediaUrl(p['imagePath']?.toString());
                               final inWishlist = p['inWishlist'] == true;
                               final inCart = p['inCart'] == true;
-                              return Material(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(14),
-                                  onTap: id == null
-                                      ? null
-                                      : () async {
-                                          await Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => WomenProductDetailScreen(productId: id),
-                                            ),
-                                          );
-                                          await _loadProducts();
-                                          await _loadCart();
-                                        },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Row(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(10),
-                                          child: imageUrl.isEmpty
-                                              ? Container(
-                                                  width: 72,
-                                                  height: 72,
-                                                  color: const Color(0xFFFFE4E6),
-                                                  child: const Icon(Icons.shopping_bag_outlined),
-                                                )
-                                              : Image.network(
-                                                  imageUrl,
-                                                  width: 72,
-                                                  height: 72,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) => Container(
-                                                    width: 72,
-                                                    height: 72,
-                                                    color: const Color(0xFFFFE4E6),
-                                                    child: const Icon(Icons.shopping_bag_outlined),
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                p['name']?.toString() ?? 'Product',
-                                                style: const TextStyle(fontWeight: FontWeight.w700),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                p['brand']?.toString() ?? '',
-                                                style: const TextStyle(fontSize: 12, color: WomenProductsScreen.textGray),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '₹${((p['price'] is num) ? (p['price'] as num).toDouble() : 0).toStringAsFixed(0)}',
-                                                style: const TextStyle(
-                                                  color: WomenProductsScreen.primary,
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Row(
-                                                children: [
-                                                  if (id != null)
-                                                    IconButton(
-                                                      padding: EdgeInsets.zero,
-                                                      constraints: const BoxConstraints(),
-                                                      icon: Icon(
-                                                        inWishlist ? Icons.favorite : Icons.favorite_border,
-                                                        color: inWishlist ? Colors.red : WomenProductsScreen.textGray,
-                                                      ),
-                                                      onPressed: () => _toggleWishlist(id),
-                                                    ),
-                                                  const SizedBox(width: 10),
-                                                  if (id != null)
-                                                    OutlinedButton(
-                                                      onPressed: () => _addToCart(id),
-                                                      child: Text(inCart ? 'Add more' : 'Add to cart'),
-                                                    ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                              final price = (p['price'] is num) ? (p['price'] as num).toDouble() : 0.0;
+                              return DetailListingCard(
+                                title: p['name']?.toString() ?? 'Product',
+                                eyebrow: p['category']?.toString() ?? p['brand']?.toString() ?? 'Product',
+                                location: p['brand']?.toString(),
+                                photoUrl: imageUrl.isEmpty ? null : imageUrl,
+                                showMediaActions: true,
+                                showVideoAction: false,
+                                chatLabel: inWishlist ? 'Saved' : 'Wishlist',
+                                chatIcon: inWishlist ? Icons.favorite : Icons.favorite_border,
+                                callLabel: inCart ? 'Add more' : 'Cart',
+                                callIcon: Icons.shopping_cart_outlined,
+                                onChat: id == null ? null : () => _toggleWishlist(id),
+                                onCall: id == null ? null : () => _addToCart(id),
+                                tags: [
+                                  DetailTag(
+                                    label: '₹${price.toStringAsFixed(0)}',
+                                    icon: Icons.currency_rupee,
+                                    background: const Color(0xFFFFE4E6),
+                                    foreground: WomenProductsScreen.primary,
                                   ),
-                                ),
+                                  if (p['rating'] != null)
+                                    DetailTag(
+                                      label: '${p['rating']}',
+                                      icon: Icons.star,
+                                      background: const Color(0xFFFEF3C7),
+                                      foreground: const Color(0xFFB45309),
+                                    ),
+                                  if (inWishlist)
+                                    const DetailTag(
+                                      label: 'Wishlist',
+                                      icon: Icons.favorite,
+                                      background: Color(0xFFFFE4E6),
+                                      foreground: Color(0xFFBE123C),
+                                    ),
+                                  if (inCart)
+                                    const DetailTag(
+                                      label: 'In cart',
+                                      icon: Icons.shopping_cart_outlined,
+                                      background: Color(0xFFDCFCE7),
+                                      foreground: Color(0xFF166534),
+                                    ),
+                                ],
+                                primaryLabel: 'View Product & Buy',
+                                onPrimary: id == null
+                                    ? null
+                                    : () async {
+                                        await Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => WomenProductDetailScreen(productId: id),
+                                          ),
+                                        );
+                                        await _loadProducts();
+                                        await _loadCart();
+                                      },
                               );
                             },
                           ),

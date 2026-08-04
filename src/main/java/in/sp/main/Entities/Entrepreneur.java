@@ -30,7 +30,8 @@ public class Entrepreneur {
     private String businessCategory;
     private String businessLocation;
     
-    @Column(length = 2000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String businessDescription;
     
     private Double investmentNeeded;

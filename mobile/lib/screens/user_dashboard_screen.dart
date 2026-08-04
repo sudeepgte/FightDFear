@@ -19,6 +19,7 @@ import 'creator_hub_screen.dart';
 import 'video_feed_screen.dart';
 import 'wallet_screen.dart';
 import 'women_events_screen.dart';
+import 'women_marketplace_screen.dart';
 import 'women_products_screen.dart';
 
 /// Post-login user dashboard — mobile safety hub modeled on web userDashboard.jsp.
@@ -235,10 +236,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         title: 'Women Marketplace',
         icon: Icons.storefront_outlined,
         status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Marketplace',
-          kind: CatalogKind.marketplace,
-        )),
+        onTap: () => _pushScreen(const WomenMarketplaceScreen()),
       ),
       _DashboardModule(
         title: 'Financial Literacy Hub',
@@ -414,10 +412,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         title: 'Women Marketplace',
         icon: Icons.storefront_outlined,
         status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Marketplace',
-          kind: CatalogKind.marketplace,
-        )),
+        onTap: () => _pushScreen(const WomenMarketplaceScreen()),
       ),
       _SidebarNavItem(
         title: 'Financial Literacy Hub',

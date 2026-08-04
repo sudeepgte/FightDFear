@@ -115,15 +115,53 @@ class DoctorService {
 
   Future<Map<String, dynamic>> detail(int id) => _api.get('/api/doctors/$id');
 
-  Future<Map<String, dynamic>> book(int id, {String notes = ''}) =>
-      _api.post('/api/doctors/$id/appointments', body: {'notes': notes});
+  Future<Map<String, dynamic>> book(
+    int id, {
+    String notes = '',
+    String? appointmentTime,
+    String? consultationType,
+    String? reason,
+  }) =>
+      _api.post('/api/doctors/$id/appointments', body: {
+        'notes': notes,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+        if (appointmentTime != null && appointmentTime.isNotEmpty) 'appointmentTime': appointmentTime,
+        if (consultationType != null && consultationType.isNotEmpty) 'consultationType': consultationType,
+      });
 
   Future<Map<String, dynamic>> myAppointments() => _api.get('/api/doctors/appointments/me');
+
+  Future<Map<String, dynamic>> cancelAppointment(int id) =>
+      _api.post('/api/doctors/appointments/$id/cancel', body: {});
+
+  Future<Map<String, dynamic>> joinAppointment(int id, {bool audioOnly = false}) =>
+      _api.get('/api/doctors/appointments/$id/join?audioOnly=$audioOnly');
+
+  Future<Map<String, dynamic>> reviews(int doctorId) => _api.get('/api/doctors/$doctorId/reviews');
+
+  Future<Map<String, dynamic>> addReview(int doctorId, {required int rating, String comment = ''}) =>
+      _api.post('/api/doctors/$doctorId/reviews', body: {
+        'rating': rating,
+        'comment': comment,
+      });
+
+  Future<Map<String, dynamic>> chatHistory(int doctorId, {int? userId}) {
+    final q = userId == null ? '' : '?userId=$userId';
+    return _api.get('/api/doctors/$doctorId/chat$q');
+  }
+
+  Future<Map<String, dynamic>> sendChat(int doctorId, {required String message, int? userId}) =>
+      _api.post('/api/doctors/$doctorId/chat', body: {
+        'message': message,
+        if (userId != null) 'userId': userId,
+      });
 }
 
 class MarketplaceService {
   MarketplaceService(this._api);
   final ApiClient _api;
+
+  Future<Map<String, dynamic>> categories() => _api.get('/api/marketplace/categories');
 
   Future<Map<String, dynamic>> providers({String? category}) {
     final q = category == null || category.isEmpty ? '' : '?category=$category';
@@ -133,10 +171,62 @@ class MarketplaceService {
   Future<Map<String, dynamic>> providerDetail(int id) =>
       _api.get('/api/marketplace/providers/$id');
 
-  Future<Map<String, dynamic>> book(int id, {String note = ''}) =>
-      _api.post('/api/marketplace/providers/$id/bookings', body: {'note': note});
+  Future<Map<String, dynamic>> book(
+    int id, {
+    String note = '',
+    String? requestedTime,
+  }) =>
+      _api.post('/api/marketplace/providers/$id/bookings', body: {
+        'note': note,
+        if (requestedTime != null && requestedTime.isNotEmpty)
+          'requestedTime': requestedTime,
+      });
+
+  Future<Map<String, dynamic>> classDetail(int classId) =>
+      _api.get('/api/marketplace/classes/$classId');
+
+  Future<Map<String, dynamic>> enrollClass(int classId) =>
+      _api.post('/api/marketplace/classes/$classId/enroll', body: {});
+
+  Future<Map<String, dynamic>> myEnrollments() =>
+      _api.get('/api/marketplace/enrollments/me');
 
   Future<Map<String, dynamic>> myBookings() => _api.get('/api/marketplace/bookings/me');
+
+  Future<Map<String, dynamic>> applyJob({
+    required String category,
+    required String subCategory,
+    required double hourlyRate,
+    String note = '',
+  }) =>
+      _api.post('/api/marketplace/jobs/apply', body: {
+        'jobCategory': category,
+        'category': category,
+        'jobSubCategory': subCategory,
+        'subCategory': subCategory,
+        'hourlyRate': hourlyRate,
+        'note': note,
+      });
+
+  Future<Map<String, dynamic>> workers(String category) =>
+      _api.get('/api/marketplace/workers?category=${Uri.encodeComponent(category)}');
+
+  Future<Map<String, dynamic>> workerDetail(int workerAppId) =>
+      _api.get('/api/marketplace/workers/$workerAppId');
+
+  Future<Map<String, dynamic>> bookWorker(
+    int workerAppId, {
+    required String bookingDate,
+    required double totalAmount,
+    int? hours,
+    String note = '',
+  }) =>
+      _api.post('/api/marketplace/workers/$workerAppId/book', body: {
+        'bookingDate': bookingDate,
+        'totalAmount': totalAmount,
+        'note': note,
+        if (hours != null) 'hours': hours,
+      });
 }
 
 class FitnessService {
@@ -177,6 +267,9 @@ class JobBookingsService {
   Future<Map<String, dynamic>> workerBookings() => _api.get('/api/job-bookings/worker/me');
 
   Future<Map<String, dynamic>> clientBookings() => _api.get('/api/job-bookings/client/me');
+
+  Future<Map<String, dynamic>> updateStatus(int id, String status) =>
+      _api.patch('/api/job-bookings/$id/status', body: {'status': status});
 }
 
 class FinancialLiteracyService {

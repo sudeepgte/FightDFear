@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
+import '../config/glow_catalog.dart';
 import '../services/auth_state.dart';
+import '../services/glow_provider_auth_service.dart';
 import '../services/glow_space_service.dart';
+import '../widgets/detail_listing_card.dart';
+import 'glow_admin_screen.dart';
+import 'glow_provider_login_screen.dart';
 import 'glow_provider_signup_screen.dart';
+import 'glow_salon_dashboard_screen.dart';
 import 'glow_space_salon_detail_screen.dart';
 
 class GlowSpaceScreen extends StatefulWidget {
@@ -20,20 +27,29 @@ class GlowSpaceScreen extends StatefulWidget {
 class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     with SingleTickerProviderStateMixin {
   late final GlowSpaceService _api;
+  late final GlowProviderAuthService _providerAuth;
   late final TabController _tabs;
+  late final Razorpay _razorpay;
   bool _loading = true;
   bool _loadingBookings = false;
   String? _error;
   List<Map<String, dynamic>> _salons = [];
-  List<Map<String, dynamic>> _treatments = [];
+  List<Map<String, dynamic>> _liveServices = [];
   List<Map<String, dynamic>> _offers = [];
   List<Map<String, dynamic>> _bookings = [];
-  String _section = 'SALONS';
+  String _section = 'CATEGORIES';
+  String? _selectedCategory;
+  int? _pendingPayBookingId;
 
   @override
   void initState() {
     super.initState();
-    _api = GlowSpaceService(context.read<AuthState>().api);
+    final api = context.read<AuthState>().api;
+    _api = GlowSpaceService(api);
+    _providerAuth = GlowProviderAuthService(api);
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
     _tabs = TabController(length: 2, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
@@ -44,6 +60,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
 
   @override
   void dispose() {
+    _razorpay.clear();
     _tabs.dispose();
     super.dispose();
   }
@@ -62,12 +79,12 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     });
     try {
       final salonsRes = await _api.salons();
-      final treatmentsRes = await _api.treatments();
+      final servicesRes = await _api.services();
       final offersRes = await _api.offers();
       if (!mounted) return;
       if (salonsRes['success'] == true) {
         _salons = _toList(salonsRes['salons']);
-        _treatments = _toList(treatmentsRes['treatments']);
+        _liveServices = _toList(servicesRes['services']);
         _offers = _toList(offersRes['offers']);
       } else {
         _error = salonsRes['error']?.toString() ?? 'Could not load Glow Space';
@@ -93,6 +110,15 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   List<Map<String, dynamic>> _toList(dynamic raw) =>
       raw is List ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : <Map<String, dynamic>>[];
 
+  List<Map<String, dynamic>> get _filteredLiveServices {
+    if (_selectedCategory == null) return _liveServices;
+    return _liveServices.where((s) {
+      final code = s['category']?.toString().toUpperCase();
+      final mapped = GlowCatalog.byCode(code);
+      return mapped?.code == _selectedCategory;
+    }).toList();
+  }
+
   Future<void> _bookItem({
     required String itemType,
     required int itemId,
@@ -113,20 +139,14 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: dateCtrl,
-                  decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
-                ),
+                TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: timeCtrl,
-                  decoration: const InputDecoration(labelText: 'Time (HH:mm)'),
-                ),
+                TextField(controller: timeCtrl, decoration: const InputDecoration(labelText: 'Time (HH:mm)')),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: bookingType,
                   items: const [
-                    DropdownMenuItem(value: 'ONLINE', child: Text('Online at salon')),
+                    DropdownMenuItem(value: 'ONLINE', child: Text('At salon')),
                     DropdownMenuItem(value: 'DOOR', child: Text('Door service')),
                   ],
                   onChanged: (v) => setLocal(() => bookingType = v ?? 'ONLINE'),
@@ -134,17 +154,10 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                 ),
                 if (bookingType == 'DOOR') ...[
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: addressCtrl,
-                    maxLines: 2,
-                    decoration: const InputDecoration(labelText: 'Address'),
-                  ),
+                  TextField(controller: addressCtrl, maxLines: 2, decoration: const InputDecoration(labelText: 'Address')),
                 ],
                 const SizedBox(height: 8),
-                TextField(
-                  controller: notesCtrl,
-                  decoration: const InputDecoration(labelText: 'Notes (optional)'),
-                ),
+                TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)')),
               ],
             ),
           ),
@@ -168,9 +181,16 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     );
     if (!mounted) return;
     if (res['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking created')),
-      );
+      final paymentRequired = res['paymentRequired'] == true;
+      final bookingId = res['bookingId'] is int ? res['bookingId'] as int : int.tryParse('${res['bookingId']}');
+      final amount = (res['amount'] is num) ? (res['amount'] as num).toDouble() : 0.0;
+      if (paymentRequired && bookingId != null && amount > 0) {
+        await _startPayment(bookingId: bookingId, amount: amount);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message']?.toString() ?? 'Booking created')),
+        );
+      }
       _tabs.animateTo(1);
       await _loadBookings();
     } else {
@@ -178,6 +198,55 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         SnackBar(content: Text(res['error']?.toString() ?? 'Booking failed')),
       );
     }
+  }
+
+  Future<void> _startPayment({required int bookingId, required double amount}) async {
+    _pendingPayBookingId = bookingId;
+    final orderRes = await _api.createPaymentOrder(amount);
+    if (!mounted) return;
+    if (orderRes['orderId'] == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(orderRes['error']?.toString() ?? 'Payment gateway unavailable')),
+      );
+      return;
+    }
+    _razorpay.open({
+      'key': orderRes['key'],
+      'amount': orderRes['amount'],
+      'order_id': orderRes['orderId'],
+      'name': 'Fight D Fear',
+      'description': 'Glow Space Booking',
+    });
+  }
+
+  Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      final verify = await _api.verifyPayment({
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'GLOW_BOOKING',
+        'bookingId': _pendingPayBookingId,
+      });
+      if (!mounted) return;
+      if (verify['error'] != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(verify['error'].toString())));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment successful — booking confirmed')),
+        );
+        await _loadBookings();
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(response.message ?? 'Payment failed')),
+    );
   }
 
   @override
@@ -189,13 +258,36 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         foregroundColor: GlowSpaceScreen.navy,
         title: const Text('Glow Space', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
-          TextButton.icon(
+          IconButton(
+            tooltip: 'Admin Glow',
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const GlowAdminScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Salon portal',
+            icon: const Icon(Icons.storefront_outlined),
+            onPressed: () async {
+              if (await _providerAuth.isSalonLoggedIn()) {
+                if (!mounted) return;
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GlowSalonDashboardScreen()),
+                );
+              } else {
+                if (!mounted) return;
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen()),
+                );
+              }
+            },
+          ),
+          TextButton(
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const GlowProviderSignupScreen()),
             ),
-            icon: const Icon(Icons.store_mall_directory_outlined, size: 18),
-            label: const Text('Provider Sign up'),
             style: TextButton.styleFrom(foregroundColor: GlowSpaceScreen.primary),
+            child: const Text('Join'),
           ),
         ],
         bottom: TabBar(
@@ -221,36 +313,249 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
 
   Widget _buildExplore() {
     if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) return Center(child: Text(_error!, style: const TextStyle(color: Colors.red)));
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_error!, style: const TextStyle(color: Colors.red)),
+            TextButton(onPressed: _loadExplore, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Wrap(
-            spacing: 8,
-            children: [
-              _chipFilter('SALONS', 'Salons'),
-              _chipFilter('TREATMENTS', 'Treatments'),
-              _chipFilter('OFFERS', 'Offers'),
-            ],
-          ),
+        const SizedBox(height: 10),
+        CategoryPillBar(
+          options: const [
+            (value: 'CATEGORIES', label: 'Categories', icon: Icons.grid_view_rounded),
+            (value: 'SERVICES', label: 'Services', icon: Icons.spa_outlined),
+            (value: 'SALONS', label: 'Salons', icon: Icons.storefront_outlined),
+            (value: 'OFFERS', label: 'Offers', icon: Icons.local_offer_outlined),
+          ],
+          selected: _section,
+          onSelected: (v) => setState(() {
+            _section = v;
+            if (v == 'CATEGORIES') _selectedCategory = null;
+          }),
         ),
+        if (_section == 'SERVICES' || _selectedCategory != null) _categoryFilterChips(),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadExplore,
             color: GlowSpaceScreen.primary,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 20),
-              children: _section == 'SALONS'
-                  ? _salons.map(_salonTile).toList()
-                  : _section == 'TREATMENTS'
-                      ? _treatments.map(_treatmentTile).toList()
-                      : _offers.map(_offerTile).toList(),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: switch (_section) {
+                'CATEGORIES' => [_categoriesGrid()],
+                'SERVICES' => _serviceTiles(),
+                'SALONS' => _salons.map(_salonTile).toList(),
+                _ => _offers.map(_offerTile).toList(),
+              },
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _categoryFilterChips() {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ChoiceChip(
+              label: const Text('All'),
+              selected: _selectedCategory == null,
+              onSelected: (_) => setState(() => _selectedCategory = null),
+              selectedColor: GlowSpaceScreen.primary.withValues(alpha: 0.15),
+            ),
+          ),
+          ...GlowCatalog.categories.map((c) => Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ChoiceChip(
+                  avatar: Icon(c.icon, size: 16),
+                  label: Text(c.label),
+                  selected: _selectedCategory == c.code,
+                  onSelected: (_) => setState(() {
+                    _selectedCategory = c.code;
+                    _section = 'SERVICES';
+                  }),
+                  selectedColor: GlowSpaceScreen.primary.withValues(alpha: 0.15),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _categoriesGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'What Glow Space provides',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: GlowSpaceScreen.navy),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Browse hair, skin, spa, bridal and more — then book from verified salons.',
+          style: TextStyle(color: GlowSpaceScreen.textGray, height: 1.35),
+        ),
+        const SizedBox(height: 14),
+        ...GlowCatalog.categories.map((cat) {
+          final liveCount = _liveServices.where((s) {
+            final mapped = GlowCatalog.byCode(s['category']?.toString());
+            return mapped?.code == cat.code;
+          }).length;
+          return Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: Colors.grey.shade200),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => setState(() {
+                _selectedCategory = cat.code;
+                _section = 'SERVICES';
+              }),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: GlowSpaceScreen.primary.withValues(alpha: 0.12),
+                      child: Icon(cat.icon, color: GlowSpaceScreen.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(cat.label, style: const TextStyle(fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 2),
+                          Text(cat.description, style: const TextStyle(color: GlowSpaceScreen.textGray, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${cat.services.length} catalogue services · $liveCount bookable now',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: GlowSpaceScreen.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: GlowSpaceScreen.textGray),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  List<Widget> _serviceTiles() {
+    final cat = GlowCatalog.byCode(_selectedCategory);
+    final live = _filteredLiveServices;
+    final widgets = <Widget>[];
+
+    if (cat != null) {
+      widgets.add(Text(cat.label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: GlowSpaceScreen.navy)));
+      widgets.add(const SizedBox(height: 4));
+      widgets.add(Text(cat.description, style: const TextStyle(color: GlowSpaceScreen.textGray)));
+      widgets.add(const SizedBox(height: 12));
+    }
+
+    if (live.isNotEmpty) {
+      widgets.add(const Text('Bookable now', style: TextStyle(fontWeight: FontWeight.w700)));
+      widgets.add(const SizedBox(height: 8));
+      for (final s in live) {
+        widgets.add(_liveServiceTile(s));
+      }
+      widgets.add(const SizedBox(height: 16));
+    }
+
+    if (cat != null) {
+      widgets.add(const Text('Full service menu', style: TextStyle(fontWeight: FontWeight.w700)));
+      widgets.add(const SizedBox(height: 8));
+      for (final name in cat.services) {
+        final match = live.where((s) => (s['name']?.toString() ?? '').toLowerCase() == name.toLowerCase()).toList();
+        widgets.add(Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Colors.grey.shade200),
+          ),
+          child: ListTile(
+            title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(
+              match.isEmpty
+                  ? 'Available at Glow Space salons'
+                  : 'From ₹${match.first['price'] ?? 0} · ${match.first['salonName'] ?? 'Salon'}',
+            ),
+            trailing: match.isEmpty
+                ? TextButton(
+                    onPressed: () => setState(() => _section = 'SALONS'),
+                    child: const Text('Find salon'),
+                  )
+                : FilledButton(
+                    onPressed: () {
+                      final id = match.first['id'] is int
+                          ? match.first['id'] as int
+                          : int.tryParse('${match.first['id']}');
+                      if (id == null) return;
+                      _bookItem(itemType: 'SERVICE', itemId: id, title: name);
+                    },
+                    style: FilledButton.styleFrom(backgroundColor: GlowSpaceScreen.primary),
+                    child: const Text('Book'),
+                  ),
+          ),
+        ));
+      }
+    } else if (live.isEmpty) {
+      widgets.add(const Padding(
+        padding: EdgeInsets.only(top: 40),
+        child: Center(child: Text('No bookable services yet. Browse categories or salons.')),
+      ));
+    }
+
+    return widgets;
+  }
+
+  Widget _liveServiceTile(Map<String, dynamic> s) {
+    final id = s['id'] is int ? s['id'] as int : int.tryParse('${s['id']}');
+    return DetailListingCard(
+      title: s['name']?.toString() ?? 'Service',
+      eyebrow: GlowCatalog.labelFor(s['category']?.toString()),
+      location: s['salonName']?.toString(),
+      showMediaActions: false,
+      tags: [
+        DetailTag(
+          label: '₹${s['price'] ?? 0}',
+          icon: Icons.currency_rupee,
+          background: const Color(0xFFE0E7FF),
+          foreground: const Color(0xFF3730A3),
+        ),
+        if (s['durationMinutes'] != null)
+          DetailTag(label: '${s['durationMinutes']} min', icon: Icons.timer_outlined),
+      ],
+      primaryLabel: 'Book',
+      onPrimary: id == null
+          ? null
+          : () => _bookItem(
+                itemType: 'SERVICE',
+                itemId: id,
+                title: s['name']?.toString() ?? 'Service',
+              ),
     );
   }
 
@@ -301,8 +606,24 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                   children: [
                     _statusChip(b['status']?.toString() ?? 'PENDING'),
                     _statusChip(b['bookingType']?.toString() ?? 'ONLINE', color: Colors.indigo),
+                    if (b['price'] != null) _statusChip('₹${b['price']}', color: Colors.teal),
                   ],
                 ),
+                if (b['paymentRequired'] == true) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: () {
+                        final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+                        final amount = (b['price'] is num) ? (b['price'] as num).toDouble() : 0.0;
+                        if (id != null && amount > 0) _startPayment(bookingId: id, amount: amount);
+                      },
+                      style: FilledButton.styleFrom(backgroundColor: GlowSpaceScreen.primary),
+                      child: const Text('Pay now'),
+                    ),
+                  ),
+                ],
               ],
             ),
           );
@@ -314,101 +635,70 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   Widget _salonTile(Map<String, dynamic> s) {
     final id = s['id'] is int ? s['id'] as int : int.tryParse('${s['id']}');
     final image = _mediaUrl(s['profileImageUrl']?.toString());
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: image.isEmpty
-              ? Container(width: 48, height: 48, color: const Color(0xFFFFE4E6), child: const Icon(Icons.spa_outlined))
-              : Image.network(image, width: 48, height: 48, fit: BoxFit.cover),
-        ),
-        title: Text(s['name']?.toString() ?? 'Salon'),
-        subtitle: Text('${s['city'] ?? ''} ${s['state'] ?? ''}'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: id == null
-            ? null
-            : () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => GlowSpaceSalonDetailScreen(salonId: id)),
-                );
-                await _loadBookings();
-              },
-      ),
-    );
-  }
-
-  Widget _treatmentTile(Map<String, dynamic> t) {
-    final id = t['id'] is int ? t['id'] as int : int.tryParse('${t['id']}');
-    return _itemCard(
-      title: t['serviceName']?.toString() ?? 'Treatment',
-      subtitle: '${t['salonName'] ?? ''} · ₹${t['price'] ?? 0}',
-      onBook: id == null
+    final loc = [s['city'], s['state'], s['address']]
+        .where((e) => e != null && e.toString().trim().isNotEmpty)
+        .map((e) => e.toString())
+        .join(', ');
+    return DetailListingCard(
+      title: s['name']?.toString() ?? 'Salon',
+      eyebrow: 'Glow Space',
+      location: loc.isEmpty ? 'Location not set' : loc,
+      photoUrl: image.isEmpty ? null : image,
+      phone: s['phone']?.toString(),
+      tags: [
+        if (s['rating'] != null)
+          DetailTag(
+            label: '${s['rating']}',
+            icon: Icons.star,
+            background: const Color(0xFFFEF3C7),
+            foreground: const Color(0xFFB45309),
+          ),
+        if (s['availabilityHours'] != null)
+          DetailTag(label: '${s['availabilityHours']}', icon: Icons.access_time),
+      ],
+      primaryLabel: 'View & Book',
+      onPrimary: id == null
           ? null
-          : () => _bookItem(
-                itemType: 'TREATMENT',
-                itemId: id,
-                title: t['serviceName']?.toString() ?? 'Treatment',
-              ),
+          : () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => GlowSpaceSalonDetailScreen(salonId: id)),
+              );
+              await _loadBookings();
+            },
     );
   }
 
   Widget _offerTile(Map<String, dynamic> o) {
     final id = o['id'] is int ? o['id'] as int : int.tryParse('${o['id']}');
     final discount = o['discountPercent'];
-    return _itemCard(
+    return DetailListingCard(
       title: o['title']?.toString() ?? 'Offer',
-      subtitle: '${o['salonName'] ?? ''} · ${discount ?? 0}% off · ₹${o['discountedPrice'] ?? o['offerPrice'] ?? 0}',
-      onBook: id == null
+      eyebrow: 'Special Offer',
+      location: o['salonName']?.toString(),
+      showMediaActions: false,
+      tags: [
+        if (discount != null)
+          DetailTag(
+            label: '$discount% off',
+            icon: Icons.local_offer_outlined,
+            background: const Color(0xFFFFE4E6),
+            foreground: GlowSpaceScreen.primary,
+          ),
+        DetailTag(
+          label: '₹${o['discountedPrice'] ?? o['offerPrice'] ?? 0}',
+          icon: Icons.currency_rupee,
+          background: const Color(0xFFDCFCE7),
+          foreground: const Color(0xFF166534),
+        ),
+      ],
+      primaryLabel: 'Book offer',
+      onPrimary: id == null
           ? null
           : () => _bookItem(
                 itemType: 'OFFER',
                 itemId: id,
                 title: o['title']?.toString() ?? 'Offer',
               ),
-    );
-  }
-
-  Widget _itemCard({
-    required String title,
-    required String subtitle,
-    VoidCallback? onBook,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: GlowSpaceScreen.textGray)),
-              ],
-            ),
-          ),
-          FilledButton(
-            onPressed: onBook,
-            style: FilledButton.styleFrom(backgroundColor: GlowSpaceScreen.primary),
-            child: const Text('Book'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chipFilter(String key, String label) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: _section == key,
-      onSelected: (_) => setState(() => _section = key),
     );
   }
 

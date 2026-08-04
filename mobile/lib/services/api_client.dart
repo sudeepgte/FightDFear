@@ -10,6 +10,8 @@ class ApiClient {
   static const _tokenKey = 'auth_token';
   static const _centreTokenKey = 'centre_auth_token';
   static const _adminTokenKey = 'admin_auth_token';
+  static const _salonTokenKey = 'salon_auth_token';
+  static const _stylistTokenKey = 'stylist_auth_token';
   static const _timeout = Duration(seconds: 8);
   static const _uploadTimeout = Duration(seconds: 120);
 
@@ -58,15 +60,61 @@ class ApiClient {
     await prefs.remove(_adminTokenKey);
   }
 
+  Future<String?> getSalonToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_salonTokenKey);
+  }
+
+  Future<void> saveSalonToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_salonTokenKey, token);
+  }
+
+  Future<void> clearSalonToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_salonTokenKey);
+  }
+
+  Future<String?> getStylistToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_stylistTokenKey);
+  }
+
+  Future<void> saveStylistToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_stylistTokenKey, token);
+  }
+
+  Future<void> clearStylistToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_stylistTokenKey);
+  }
+
   Uri _uri(String path) => Uri.parse('$baseUrl$path');
 
-  Future<Map<String, String>> _headers({bool auth = true, bool centreAuth = false, bool adminAuth = false}) async {
+  Future<Map<String, String>> _headers({
+    bool auth = true,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
+  }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
     if (adminAuth) {
       final token = await getAdminToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (salonAuth) {
+      final token = await getSalonToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (stylistAuth) {
+      final token = await getStylistToken();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -117,24 +165,47 @@ class ApiClient {
     bool auth = true,
     bool centreAuth = false,
     bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
+    Duration? timeout,
   }) async {
     final res = await http
         .post(
           _uri(path),
-          headers: await _headers(auth: auth, centreAuth: centreAuth, adminAuth: adminAuth),
+          headers: await _headers(
+            auth: auth,
+            centreAuth: centreAuth,
+            adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
+          ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(_timeout);
+        .timeout(timeout ?? _timeout);
     return _decode(res);
   }
 
-  Future<Map<String, dynamic>> get(String path, {bool auth = true, bool centreAuth = false, bool adminAuth = false}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    bool auth = true,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
+    Duration? timeout,
+  }) async {
     final res = await http
         .get(
           _uri(path),
-          headers: await _headers(auth: auth, centreAuth: centreAuth, adminAuth: adminAuth),
+          headers: await _headers(
+            auth: auth,
+            centreAuth: centreAuth,
+            adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
+          ),
         )
-        .timeout(_timeout);
+        .timeout(timeout ?? _timeout);
     return _decode(res);
   }
 
@@ -164,11 +235,23 @@ class ApiClient {
     return _decode(res);
   }
 
-  Future<Map<String, dynamic>> delete(String path, {bool centreAuth = false, bool adminAuth = false}) async {
+  Future<Map<String, dynamic>> delete(
+    String path, {
+    bool centreAuth = false,
+    bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
+  }) async {
     final res = await http
         .delete(
           _uri(path),
-          headers: await _headers(auth: !centreAuth && !adminAuth, centreAuth: centreAuth, adminAuth: adminAuth),
+          headers: await _headers(
+            auth: !centreAuth && !adminAuth && !salonAuth && !stylistAuth,
+            centreAuth: centreAuth,
+            adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
+          ),
         )
         .timeout(_timeout);
     return _decode(res);

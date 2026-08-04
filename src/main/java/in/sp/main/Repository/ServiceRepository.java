@@ -23,6 +23,7 @@ public interface ServiceRepository extends JpaRepository<Service1, Long> {
     @Query("SELECT s FROM Service1 s JOIN FETCH s.salon")
     List<Service1> getAllServicesWithSalonDetails();
 	List<Service1> findBySalonIdAndCategory(Long salonId, ServiceCategory category);
+	List<Service1> findByCategory(ServiceCategory category);
 	void deleteByIdAndSalonId(Long id, Long id2);
 
  

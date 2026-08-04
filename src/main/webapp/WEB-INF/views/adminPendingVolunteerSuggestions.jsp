@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -203,6 +204,19 @@
         </div>
       </div>
 
+      <c:if test="${not empty message}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <c:out value="${message}"/>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
+      <c:if test="${not empty error}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <c:out value="${error}"/>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
+
       <!-- Pending Table -->
       <div class="card-table">
         <div class="card-table-header">
@@ -223,17 +237,22 @@
                 <c:when test="${not empty pending}">
                   <c:forEach var="v" items="${pending}">
                       <tr>
-                          <td class="fw-bold">${v.fullName}</td>
-                          <td>${v.email}</td>
+                          <td class="fw-bold"><c:out value="${v.fullName}"/></td>
+                          <td><c:out value="${v.email}"/></td>
                           <td>
                               <c:choose>
-                                <c:when test="${not empty v.identityDocument && (v.identityDocument.startsWith('/') || v.identityDocument.startsWith('http'))}">
-                                  <a href="${pageContext.request.contextPath}${v.identityDocument}" target="_blank" class="btn-view-media">
+                                <c:when test="${not empty v.identityDocument && (fn:startsWith(v.identityDocument, 'http://') || fn:startsWith(v.identityDocument, 'https://'))}">
+                                  <a href="<c:out value='${v.identityDocument}'/>" target="_blank" rel="noopener noreferrer" class="btn-view-media">
+                                    <i class="fas fa-id-card me-1"></i> View ID
+                                  </a>
+                                </c:when>
+                                <c:when test="${not empty v.identityDocument && fn:startsWith(v.identityDocument, '/')}">
+                                  <a href="${pageContext.request.contextPath}<c:out value='${v.identityDocument}'/>" target="_blank" rel="noopener noreferrer" class="btn-view-media">
                                     <i class="fas fa-id-card me-1"></i> View ID
                                   </a>
                                 </c:when>
                                 <c:when test="${not empty v.identityDocument}">
-                                  <span class="small text-muted">${v.identityDocument}</span>
+                                  <span class="small text-muted"><c:out value="${v.identityDocument}"/></span>
                                 </c:when>
                                 <c:otherwise>
                                   <span class="small text-muted">Not provided</span>
@@ -348,6 +367,7 @@
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 

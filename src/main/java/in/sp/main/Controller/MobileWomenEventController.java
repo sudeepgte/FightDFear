@@ -78,6 +78,7 @@ public class MobileWomenEventController {
         m.put("id", e.getId());
         m.put("name", e.getName());
         m.put("category", e.getCategory() == null ? null : e.getCategory().name());
+        m.put("categoryLabel", e.getCategory() == null ? null : e.getCategory().getDisplayName());
         m.put("description", e.getDescription());
         m.put("eventDate", e.getEventDate() == null ? null : e.getEventDate().toString());
         m.put("eventTime", e.getEventTime() == null ? null : e.getEventTime().toString());
@@ -85,8 +86,14 @@ public class MobileWomenEventController {
         m.put("city", e.getCity());
         m.put("entryFee", e.getEntryFee());
         m.put("free", e.isFree());
+        m.put("maxParticipants", e.getMaxParticipants());
+        m.put("capacity", e.getMaxParticipants());
         m.put("bannerImage", e.getBannerImage());
+        m.put("imagePath", e.getBannerImage());
+        m.put("bannerUrl", e.getBannerImage());
         m.put("featured", e.isFeatured());
+        m.put("status", e.getStatus());
+        m.put("organizerName", e.getOrganizerName());
         return m;
     }
 

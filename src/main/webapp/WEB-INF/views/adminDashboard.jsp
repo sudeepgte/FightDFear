@@ -697,9 +697,9 @@
                             <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin: 0;">
                                 <i class="bi bi-calendar-heart-fill"></i> Women Events Platform
                             </h6>
-                            <a href="${pageContext.request.contextPath}/women-events/admin/list"
+                            <a href="${pageContext.request.contextPath}/admin/pending-event-hosts"
                                class="btn btn-sm" style="background: #1e1b4b; color: #fff; border-radius: 20px; font-weight: 600;">
-                                Manage Events
+                                Approve Organizers / Events
                             </a>
                         </div>
                         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">

@@ -10,85 +10,411 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/doctors")
 public class MobileDoctorController {
 
+    private static final DateTimeFormatter FMT_SPACE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FMT_T = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
     @Autowired
     private DoctorRepository doctorRepo;
     @Autowired
     private DoctorAppointmentRepository appointmentRepo;
+    @Autowired
+    private DoctorReviewRepository reviewRepo;
+    @Autowired
+    private DoctorChatRepository chatRepo;
+    @Autowired
+    private UserRepository userRepo;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         List<Map<String, Object>> items = doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).stream()
-                .map(this::doctorDto).toList();
+                .map(d -> doctorDto(d, null))
+                .toList();
         return ResponseEntity.ok(ok(Map.of("doctors", items, "count", items.size())));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> detail(@PathVariable Long id, HttpSession session) {
-        if (requireUser(session) == null) return unauthorized();
-        Doctor d = doctorRepo.findById(id).orElse(null);
-        if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) return badRequest("Doctor not found");
-        return ResponseEntity.ok(ok(Map.of("doctor", doctorDto(d))));
-    }
-
-    @PostMapping("/{id}/appointments")
-    @Transactional
-    public ResponseEntity<Map<String, Object>> book(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Doctor d = doctorRepo.findById(id).orElse(null);
         if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) return badRequest("Doctor not found");
+        Map<String, Object> dto = doctorDto(d, user);
+        List<Map<String, Object>> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(id).stream()
+                .map(this::reviewDto)
+                .toList();
+        dto.put("reviews", reviews);
+        return ResponseEntity.ok(ok(Map.of("doctor", dto)));
+    }
+
+    @PostMapping("/{id}/appointments")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> book(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Doctor d = doctorRepo.findById(id).orElse(null);
+        if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            return badRequest("Doctor not found");
+        }
+
+        String reason = trim(body == null ? null : body.get("reason"));
+        if (reason.isBlank()) reason = trim(body == null ? null : body.get("notes"));
+
+        ConsultationType cType = parseConsultationType(body == null ? null : body.get("consultationType"));
+        LocalDateTime apptTime = parseAppointmentTime(body == null ? null : body.get("appointmentTime"));
+        if (apptTime == null) {
+            apptTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        }
+
         DoctorAppointment appt = new DoctorAppointment();
         appt.setUser(user);
         appt.setDoctor(d);
-        appt.setAppointmentTime(LocalDateTime.now().plusDays(1));
+        appt.setAppointmentTime(apptTime);
         appt.setStatus(DoctorAppointmentStatus.PENDING);
-        appt.setReason(trim(body.get("notes")));
+        appt.setReason(reason.isBlank() ? null : reason);
+        appt.setConsultationType(cType);
+        if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {
+            appt.setMeetingRoomId("Fight D Fear-" + UUID.randomUUID().toString().substring(0, 8));
+        }
         appointmentRepo.save(appt);
-        return ResponseEntity.ok(ok(Map.of("message", "Appointment requested", "appointmentId", appt.getId())));
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("message", "Appointment requested");
+        data.put("appointmentId", appt.getId());
+        data.put("meetingRoomId", appt.getMeetingRoomId());
+        return ResponseEntity.ok(ok(data));
     }
 
     @GetMapping("/appointments/me")
     public ResponseEntity<Map<String, Object>> myAppointments(HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
-        List<Map<String, Object>> items = appointmentRepo.findByUserOrderByAppointmentTimeDesc(user).stream().map(a -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", a.getId());
-            m.put("status", a.getStatus() == null ? null : a.getStatus().name());
-            m.put("appointmentTime", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
-            m.put("reason", a.getReason());
-            if (a.getDoctor() != null) m.put("doctor", doctorDto(a.getDoctor()));
-            return m;
-        }).toList();
+        List<Map<String, Object>> items = appointmentRepo.findByUserOrderByAppointmentTimeDesc(user).stream()
+                .map(a -> appointmentDto(a, user))
+                .toList();
         return ResponseEntity.ok(ok(Map.of("appointments", items)));
     }
 
-    private Map<String, Object> doctorDto(Doctor d) {
+    @PostMapping("/appointments/{id}/cancel")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> cancelAppointment(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null || a.getUser() == null || !a.getUser().getId().equals(user.getId())) {
+            return badRequest("Appointment not found");
+        }
+        DoctorAppointmentStatus st = a.getStatus();
+        if (st != DoctorAppointmentStatus.PENDING && st != DoctorAppointmentStatus.CONFIRMED) {
+            return badRequest("Only pending or confirmed appointments can be cancelled");
+        }
+        a.setStatus(DoctorAppointmentStatus.CANCELLED);
+        appointmentRepo.save(a);
+        return ResponseEntity.ok(ok(Map.of("message", "Appointment cancelled", "status", "CANCELLED")));
+    }
+
+    @GetMapping("/appointments/{id}/join")
+    public ResponseEntity<Map<String, Object>> joinAppointment(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean audioOnly,
+            HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        if (user == null && doctor == null) return unauthorized();
+
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null) return badRequest("Appointment not found");
+
+        boolean allowed = false;
+        String displayName = "Guest";
+        if (user != null && a.getUser() != null && a.getUser().getId().equals(user.getId())) {
+            allowed = true;
+            displayName = user.getFullName() != null ? user.getFullName() : "Patient";
+        }
+        if (doctor != null && a.getDoctor() != null && a.getDoctor().getId().equals(doctor.getId())) {
+            allowed = true;
+            displayName = "Dr. " + (doctor.getFullName() != null ? doctor.getFullName() : "Doctor");
+        }
+        if (!allowed) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "error", "Access denied"));
+        }
+
+        String room = a.getMeetingRoomId();
+        if (room == null || room.isBlank()) {
+            Long docId = a.getDoctor() != null ? a.getDoctor().getId() : 0L;
+            Long userId = a.getUser() != null ? a.getUser().getId() : 0L;
+            room = audioOnly
+                    ? ("safeher-call-" + docId + "-user-" + userId)
+                    : ("safeher-doc-" + docId + "-user-" + userId);
+        }
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("roomName", room);
+        data.put("displayName", displayName);
+        data.put("audioOnly", audioOnly);
+        data.put("jitsiUrl", "https://meet.jit.si/" + room.replace(" ", ""));
+        return ResponseEntity.ok(ok(data));
+    }
+
+    @GetMapping("/{id}/reviews")
+    public ResponseEntity<Map<String, Object>> listReviews(@PathVariable Long id, HttpSession session) {
+        if (requireUser(session) == null && requireDoctor(session) == null) return unauthorized();
+        Doctor d = doctorRepo.findById(id).orElse(null);
+        if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) return badRequest("Doctor not found");
+        List<Map<String, Object>> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(id).stream()
+                .map(this::reviewDto)
+                .toList();
+        return ResponseEntity.ok(ok(Map.of("reviews", reviews)));
+    }
+
+    @PostMapping("/{id}/reviews")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> addReview(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Doctor d = doctorRepo.findById(id).orElse(null);
+        if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            return badRequest("Doctor not found");
+        }
+        int rating;
+        try {
+            rating = Integer.parseInt(String.valueOf(body.get("rating")));
+        } catch (Exception e) {
+            return badRequest("Rating must be 1-5");
+        }
+        if (rating < 1 || rating > 5) return badRequest("Rating must be 1-5");
+        if (reviewRepo.existsByUserIdAndDoctorId(user.getId(), id)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("success", false, "error", "You already reviewed this doctor"));
+        }
+
+        DoctorReview r = new DoctorReview();
+        r.setUser(user);
+        r.setDoctor(d);
+        r.setRating(rating);
+        r.setComment(body.get("comment") == null ? null : String.valueOf(body.get("comment")).trim());
+        reviewRepo.save(r);
+
+        List<DoctorReview> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(id);
+        double avg = reviews.stream().mapToInt(x -> x.getRating() == null ? 0 : x.getRating()).average().orElse(0.0);
+        d.setRating(avg);
+        doctorRepo.save(d);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ok(Map.of("message", "Review submitted", "rating", avg)));
+    }
+
+    @GetMapping("/{id}/chat")
+    public ResponseEntity<Map<String, Object>> chatHistory(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long userId,
+            HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        Doctor target = doctorRepo.findById(id).orElse(null);
+        if (target == null) return badRequest("Doctor not found");
+
+        User chatUser;
+        if (user != null) {
+            chatUser = user;
+        } else if (doctor != null) {
+            if (!doctor.getId().equals(id)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "error", "Access denied"));
+            }
+            if (userId == null) return badRequest("userId is required for doctor chat");
+            chatUser = userRepo.findById(userId).orElse(null);
+            if (chatUser == null) return badRequest("Patient not found");
+        } else {
+            return unauthorized();
+        }
+
+        List<Map<String, Object>> messages = chatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target)
+                .stream()
+                .map(this::chatDto)
+                .toList();
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("messages", messages);
+        data.put("doctorId", id);
+        data.put("userId", chatUser.getId());
+        return ResponseEntity.ok(ok(data));
+    }
+
+    @PostMapping("/{id}/chat")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> sendChat(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        Doctor target = doctorRepo.findById(id).orElse(null);
+        if (target == null) return badRequest("Doctor not found");
+
+        String message = body == null || body.get("message") == null ? "" : String.valueOf(body.get("message")).trim();
+        if (message.isBlank()) return badRequest("Message is required");
+
+        DoctorChatMessage msg = new DoctorChatMessage();
+        msg.setDoctor(target);
+        msg.setMessage(message);
+
+        if (user != null) {
+            msg.setUser(user);
+            msg.setSenderType("USER");
+        } else if (doctor != null) {
+            if (!doctor.getId().equals(id)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("success", false, "error", "Access denied"));
+            }
+            Object uidObj = body.get("userId");
+            if (uidObj == null) return badRequest("userId is required");
+            Long uid;
+            try {
+                uid = Long.parseLong(uidObj.toString());
+            } catch (Exception e) {
+                return badRequest("Invalid userId");
+            }
+            User chatUser = userRepo.findById(uid).orElse(null);
+            if (chatUser == null) return badRequest("Patient not found");
+            msg.setUser(chatUser);
+            msg.setSenderType("DOCTOR");
+        } else {
+            return unauthorized();
+        }
+
+        chatRepo.save(msg);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ok(Map.of("message", chatDto(msg))));
+    }
+
+    // ── helpers ──
+
+    static ConsultationType parseConsultationType(String raw) {
+        String v = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+        if (v.isBlank()) return ConsultationType.CLINIC;
+        if ("HOME".equals(v) || "HOME_VISIT".equals(v)) return ConsultationType.OFFLINE;
+        try {
+            return ConsultationType.valueOf(v);
+        } catch (Exception e) {
+            return ConsultationType.CLINIC;
+        }
+    }
+
+    static LocalDateTime parseAppointmentTime(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String v = raw.trim();
+        try {
+            return LocalDateTime.parse(v, FMT_SPACE);
+        } catch (Exception ignored) {
+        }
+        try {
+            return LocalDateTime.parse(v, FMT_T);
+        } catch (Exception ignored) {
+        }
+        try {
+            return LocalDateTime.parse(v);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Map<String, Object> appointmentDto(DoctorAppointment a, User viewer) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", a.getId());
+        m.put("status", a.getStatus() == null ? null : a.getStatus().name());
+        m.put("appointmentTime", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
+        m.put("reason", a.getReason());
+        m.put("consultationType", a.getConsultationType() == null ? null : a.getConsultationType().name());
+        m.put("meetingRoomId", a.getMeetingRoomId());
+        m.put("prescriptionText", a.getPrescriptionText());
+        m.put("amountPaid", a.getAmountPaid());
+        boolean canCancel = a.getStatus() == DoctorAppointmentStatus.PENDING
+                || a.getStatus() == DoctorAppointmentStatus.CONFIRMED;
+        m.put("canCancel", canCancel);
+        boolean canReview = false;
+        if (viewer != null && a.getDoctor() != null && a.getStatus() == DoctorAppointmentStatus.COMPLETED) {
+            canReview = !reviewRepo.existsByUserIdAndDoctorId(viewer.getId(), a.getDoctor().getId());
+        }
+        m.put("canReview", canReview);
+        if (a.getDoctor() != null) m.put("doctor", doctorDto(a.getDoctor(), viewer));
+        if (a.getUser() != null) {
+            m.put("userId", a.getUser().getId());
+            m.put("clientName", a.getUser().getFullName());
+        }
+        return m;
+    }
+
+    private Map<String, Object> doctorDto(Doctor d, User viewer) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", d.getId());
         m.put("fullName", d.getFullName());
         m.put("specialization", d.getSpecialization());
         m.put("city", d.getCity());
-        m.put("locationText", d.getLocationText());
+        m.put("locationText", d.getLocationText() != null && !d.getLocationText().isBlank()
+                ? d.getLocationText()
+                : (d.getCity() != null ? d.getCity() : "Location not set"));
         m.put("consultationFee", d.getConsultationFee());
-        m.put("rating", d.getRating());
+        m.put("rating", d.getRating() != null ? d.getRating() : 0.0);
         m.put("profilePhotoPath", d.getProfilePhotoPath());
         m.put("consultationType", d.getConsultationType() == null ? null : d.getConsultationType().name());
+        m.put("qualification", d.getQualification());
+        m.put("experienceYears", d.getExperienceYears());
+        m.put("emergencyAvailable", Boolean.TRUE.equals(d.getEmergencyAvailable()));
+        m.put("phone", d.getPhone());
+        m.put("email", d.getEmail());
+        m.put("availableDays", d.getAvailableDays());
+        m.put("startTime", d.getStartTime());
+        m.put("endTime", d.getEndTime());
+        if (viewer != null) {
+            m.put("canReview", !reviewRepo.existsByUserIdAndDoctorId(viewer.getId(), d.getId()));
+        }
+        return m;
+    }
+
+    private Map<String, Object> reviewDto(DoctorReview r) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", r.getId());
+        m.put("rating", r.getRating());
+        m.put("comment", r.getComment());
+        m.put("createdAt", r.getCreatedAt() == null ? null : r.getCreatedAt().toString());
+        if (r.getUser() != null) m.put("userName", r.getUser().getFullName());
+        return m;
+    }
+
+    private Map<String, Object> chatDto(DoctorChatMessage msg) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", msg.getId());
+        m.put("message", msg.getMessage());
+        m.put("senderType", msg.getSenderType());
+        m.put("timestamp", msg.getTimestamp() == null ? null : msg.getTimestamp().toString());
+        if (msg.getUser() != null) m.put("userId", msg.getUser().getId());
         return m;
     }
 
     private User requireUser(HttpSession session) {
         Object u = session == null ? null : session.getAttribute("user");
         return u instanceof User ? (User) u : null;
+    }
+
+    private Doctor requireDoctor(HttpSession session) {
+        Object d = session == null ? null : session.getAttribute("loggedDoctor");
+        return d instanceof Doctor ? (Doctor) d : null;
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {
@@ -106,5 +432,7 @@ public class MobileDoctorController {
         return out;
     }
 
-    private static String trim(String v) { return v == null ? "" : v.trim(); }
+    private static String trim(String v) {
+        return v == null ? "" : v.trim();
+    }
 }

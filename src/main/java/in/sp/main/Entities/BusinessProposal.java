@@ -18,7 +18,8 @@ public class BusinessProposal {
     private String category;
     private String location;
 
-    @Column(length = 2000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     private Double fundingNeeded;

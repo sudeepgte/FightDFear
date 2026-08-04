@@ -5,6 +5,7 @@
 # jwt.secret=your-Xp3Iu2umGV20AJykfcM/0n+CPJ61pgSdnjk20OYGDeeniBkVR+s+fKEWRnsuih/i1lGl/DS9w9mw/Z4UNJwBNw==
 # spring.mail.username=
 # spring.mail.password=
-# razorpay.key.id=
-# razorpay.key.secret=
-# google.maps.apiKey=
+# razorpay.key.id=rzp_test_RIlD5bEKRjyn3h
+# razorpay.key.secret=Ltg6uo9vI8TiFMVfj2cGm4I8
+
+# google.maps.apiKey=AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM

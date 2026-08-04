@@ -12,6 +12,8 @@ import in.sp.main.Entities.VerificationStatus;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findByEmail(String email);
+    Optional<Doctor> findByPhone(String phone);
+    Optional<Doctor> findByMedicalRegNumber(String medicalRegNumber);
     List<Doctor> findByVerificationStatus(VerificationStatus status);
 
     // Purpose: admin doctor search — matches name, email, phone, specialization, or location.

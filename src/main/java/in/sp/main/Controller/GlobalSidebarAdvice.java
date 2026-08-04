@@ -48,6 +48,12 @@ public class GlobalSidebarAdvice {
     @Autowired
     private BusinessProposalRepository businessProposalRepository;
 
+    @Autowired
+    private EventHostRepository eventHostRepository;
+
+    @Autowired
+    private WomenEventRepository womenEventRepository;
+
     @ModelAttribute
     public void addSidebarCounts(Model model, HttpSession session) {
         if (session.getAttribute("admin") != null) {
@@ -74,6 +80,10 @@ public class GlobalSidebarAdvice {
                         .filter(i -> i.getVerificationStatus() == VerificationStatus.PENDING).count();
                 long sidePendingProposals = pendingProposals + pendingEnt + pendingInv;
 
+                long pendingEventHosts = eventHostRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+                long pendingWomenEvents = womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING").size();
+                long sidePendingEventHosts = pendingEventHosts + pendingWomenEvents;
+
                 model.addAttribute("side_pendingUsers", pendingUsers);
                 model.addAttribute("side_pendingCentres", pendingCentres);
                 model.addAttribute("side_pendingDoctors", pendingDoctors);
@@ -85,6 +95,7 @@ public class GlobalSidebarAdvice {
                 model.addAttribute("side_pendingTrainers", pendingTrainers);
                 model.addAttribute("side_unreadContactMessages", unreadContactMessages);
                 model.addAttribute("side_pendingProposals", sidePendingProposals);
+                model.addAttribute("side_pendingEventHosts", sidePendingEventHosts);
             } catch (Exception e) {
                 // Fail gracefully
             }

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_state.dart';
 import '../services/centre_auth_service.dart';
 import '../services/martial_arts_service.dart';
+import '../widgets/detail_listing_card.dart';
 import 'martial_arts_admin_screen.dart';
 import 'martial_arts_centre_dashboard_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
@@ -355,6 +356,17 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
             ),
           ),
         ),
+        if (!_loading && _error == null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Showing ${_centres.length} martial arts centres',
+                style: const TextStyle(color: MartialArtsScreen.textGray, fontSize: 13),
+              ),
+            ),
+          ),
         Expanded(
           child: RefreshIndicator(
             color: MartialArtsScreen.primary,
@@ -393,10 +405,9 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                               ),
                             ],
                           )
-                        : ListView.separated(
+                        : ListView.builder(
                             padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                             itemCount: _centres.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
                             itemBuilder: (context, i) {
                               final c = _centres[i];
                               final id = c['id'] is int
@@ -404,104 +415,43 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                                   : int.tryParse('${c['id']}') ?? 0;
                               final photo = _mediaUrl(c['profilePhoto']?.toString());
                               final styles = (c['styles'] is List)
-                                  ? (c['styles'] as List).join(' · ')
-                                  : '';
-                              return Material(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
-                                  onTap: () async {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => MartialArtsCentreScreen(centreId: id),
-                                      ),
-                                    );
-                                    if (_tabs.index == 1) _loadEnrollments();
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: photo.isEmpty
-                                              ? Container(
-                                                  width: 72,
-                                                  height: 72,
-                                                  color: const Color(0xFFFFE4E6),
-                                                  child: const Icon(
-                                                    Icons.sports_martial_arts,
-                                                    color: MartialArtsScreen.primary,
-                                                  ),
-                                                )
-                                              : Image.network(
-                                                  photo,
-                                                  width: 72,
-                                                  height: 72,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) => Container(
-                                                    width: 72,
-                                                    height: 72,
-                                                    color: const Color(0xFFFFE4E6),
-                                                    child: const Icon(
-                                                      Icons.sports_martial_arts,
-                                                      color: MartialArtsScreen.primary,
-                                                    ),
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                c['name']?.toString() ?? 'Centre',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 16,
-                                                  color: MartialArtsScreen.navy,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                c['location']?.toString() ?? '',
-                                                style: const TextStyle(
-                                                  color: MartialArtsScreen.textGray,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                              if (styles.isNotEmpty) ...[
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  styles,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    color: MartialArtsScreen.primary,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                '${_feeLabel(c)} · ${c['batchCount'] ?? 0} batches',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: MartialArtsScreen.textGray,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const Icon(Icons.chevron_right, color: MartialArtsScreen.textGray),
-                                      ],
-                                    ),
-                                  ),
+                                  ? (c['styles'] as List).map((e) => e.toString()).toList()
+                                  : <String>[];
+                              final tags = <DetailTag>[
+                                DetailTag(
+                                  label: _feeLabel(c),
+                                  icon: Icons.currency_rupee,
+                                  background: const Color(0xFFE0E7FF),
+                                  foreground: const Color(0xFF3730A3),
                                 ),
+                                DetailTag(
+                                  label: '${c['batchCount'] ?? 0} batches',
+                                  icon: Icons.groups_outlined,
+                                ),
+                                ...styles.take(3).map((s) => DetailTag(
+                                      label: s,
+                                      icon: Icons.sports_martial_arts,
+                                      background: const Color(0xFFFFE4E6),
+                                      foreground: MartialArtsScreen.primary,
+                                    )),
+                              ];
+                              return DetailListingCard(
+                                title: c['name']?.toString() ?? 'Centre',
+                                eyebrow: 'Martial Arts Centre',
+                                location: c['location']?.toString(),
+                                photoUrl: photo.isEmpty ? null : photo,
+                                tags: tags,
+                                phone: c['phoneNumber']?.toString(),
+                                showMediaActions: true,
+                                primaryLabel: 'View Centre & Enroll',
+                                onPrimary: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => MartialArtsCentreScreen(centreId: id),
+                                    ),
+                                  );
+                                  if (_tabs.index == 1) _loadEnrollments();
+                                },
                               );
                             },
                           ),

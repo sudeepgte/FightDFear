@@ -192,7 +192,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         setState(() {
           _busy = false;
           _banner = res['error']?.toString() ??
-              'Could not start journey. Is the backend running on :8084?';
+              'Could not start journey. Is the backend running on :8086?';
         });
       }
     } catch (e) {
@@ -200,7 +200,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
       setState(() {
         _busy = false;
         _banner =
-            'Cannot reach server. Start Spring Boot on port 8084, then try again.\n($e)';
+            'Cannot reach server. Start Spring Boot on port 8086, then try again.\n($e)';
       });
     }
   }

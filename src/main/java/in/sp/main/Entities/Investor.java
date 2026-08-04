@@ -19,14 +19,25 @@ public class Investor {
 
     // --- Company & Professional details ---
     private String companyName;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String investmentInterests; // e.g. text description
+
     private String budgetRange;          // e.g. "1,000 - 10,000 USD" or "10,000 - 50,000 USD"
 
     // --- Preferences ---
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String preferredLocations;   // Comma-separated preferred cities/regions
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String preferredCategories;  // Comma-separated categories
 
     // --- Verification & Premium Status ---
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String verificationDocuments; // Document paths
 
     @Enumerated(EnumType.STRING)
