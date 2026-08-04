@@ -16,8 +16,8 @@
     <style>
         :root {
             --sidebar-width: 260px;
-            --primary-red: #E11D48;
-            --primary-dark: #0F172A;
+            --primary-purple: #1e1b4b;
+            --primary-dark: #1e1b4b;
             --bg-light: #F8FAFC;
             --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -28,7 +28,6 @@
             background-color: var(--bg-light);
             color: #1E293B;
             margin: 0;
-            display: flex;
         }
 
         /* Sidebar */
@@ -50,7 +49,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .sidebar-logo img { width: 32px; }
@@ -73,6 +72,16 @@
         .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .nav-link.active { background: var(--primary-red); color: white; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
         .nav-link i { font-size: 1.1rem; }
+
+        @media (max-width: 991px) {
+            .sidebar { width: 100% !important; height: auto !important; min-height: 0 !important; position: static !important; padding: 15px !important; border-radius: 0 !important; display: block !important; }
+            .sidebar-logo { margin-bottom: 15px !important; justify-content: center !important; }
+            .nav-menu { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
+            .nav-item { margin-bottom: 0 !important; }
+            .nav-link { padding: 8px 16px !important; font-size: 0.85rem !important; border-radius: 20px !important; white-space: nowrap !important; width: auto !important; }
+            .main-content { margin-left: 0 !important; padding: 15px !important; }
+            body { display: block; }
+        }
 
         /* Main Content */
         .main-content {
@@ -171,12 +180,16 @@
 
         /* Donut Chart Simulation */
         .donut-container {
-            width: 150px; height: 150px; margin: 0 auto 20px;
-            position: relative; display: flex; align-items: center; justify-content: center;
+            width: 180px; height: 180px; margin: 0 auto 20px;
+            position: relative;
         }
-        .donut-val { position: absolute; text-align: center; }
-        .donut-val h3 { margin: 0; font-weight: 800; }
-        .donut-val span { font-size: 0.7rem; color: #64748B; text-transform: uppercase; }
+        .donut-val { 
+            position: absolute; text-align: center; 
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%;
+        }
+        .donut-val h3 { margin: 0; font-weight: 800; font-size: 1.4rem; }
+        .donut-val span { font-size: 0.70rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* Streak */
         .streak-dots { display: flex; justify-content: space-between; margin-top: 20px; }
@@ -209,6 +222,17 @@
             .layout-grid { grid-template-columns: 1fr; }
             .secondary-grid { grid-template-columns: 1fr 1fr; }
         }
+
+        @media (max-width: 767px) {
+            .header-top { flex-direction: column; text-align: center; gap: 15px; }
+            .user-actions { justify-content: center; width: 100%; }
+            .secondary-grid { grid-template-columns: 1fr; }
+            .belt-path { overflow-x: auto; overflow-y: hidden; max-width: 100%; width: 100%; justify-content: flex-start; gap: 30px; padding-bottom: 15px; }
+            .belt-node { flex-shrink: 0; }
+            .card-header-custom { flex-direction: column; text-align: center; gap: 10px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .main-content { padding: 15px !important; min-width: 0; max-width: 100vw; overflow-x: hidden; }
+        }
     </style>
 </head>
 <body>
@@ -221,11 +245,6 @@
         </div>
         
         <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
-                    <i class="bi bi-grid"></i> Dashboard
-                </a>
-            </li>
             <li class="nav-item">
                 <a href="${pageContext.request.contextPath}/users/training-journey" class="nav-link active">
                     <i class="bi bi-compass"></i> My Journey
@@ -247,18 +266,16 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="nav-link">
-                    <i class="bi bi-person"></i> Profile
+                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="margin-top: 10px;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
+                    <i class="bi bi-arrow-left"></i> Back
                 </a>
             </li>
         </ul>
-
-        <div class="mt-auto">
-            <div class="card bg-white bg-opacity-10 border-0 rounded-4 p-3 text-center">
-                <p class="small mb-2 text-white-50">Need Help?</p>
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="btn btn-danger btn-sm w-100 rounded-3">Get Support</a>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content -->

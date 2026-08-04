@@ -188,8 +188,9 @@ public class AdminController {
      * Public admin registration form (separate from user registration at /users/register).
      */
     @RequestMapping(value = "/registerAdmin", method = GET)
-    public String showRegisterPage(Model model, @ModelAttribute("error") String error,
-                                   @ModelAttribute("success") String success) {
+    public String showRegisterPage(Model model, 
+                                   @RequestParam(value = "error", required = false) String error,
+                                   @RequestParam(value = "success", required = false) String success) {
         model.addAttribute("error", error);
         model.addAttribute("success", success);
         return "adminRegister";
@@ -238,8 +239,9 @@ public class AdminController {
 
     
     @RequestMapping(value = "/loginAdmin", method = GET)
-    public String showLoginPage(Model model, @ModelAttribute("error") String error,
-                                @ModelAttribute("success") String success,
+    public String showLoginPage(Model model, 
+                                @RequestParam(value = "error", required = false) String error,
+                                @RequestParam(value = "success", required = false) String success,
                                 HttpSession session) {
         if (session.getAttribute("admin") != null) {
             return "redirect:/admin/adminDashboard";

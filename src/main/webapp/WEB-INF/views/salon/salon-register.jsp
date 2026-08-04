@@ -52,6 +52,15 @@
         .fdf-input { width: 100%; padding: 14px 18px; border: 2px solid var(--fdf-border); border-radius: 16px; background: #f8fafc; outline: none; transition: 0.3s; font-family: inherit; font-weight: 500; }
         .fdf-input:focus { border-color: var(--brand-pink); background: #fff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
 
+        .password-input-wrap { position: relative; }
+        .password-input-wrap .fdf-input { padding-right: 48px; }
+        .password-toggle-btn {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            border: none; background: transparent; color: #64748b; cursor: pointer;
+            width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+            z-index: 2;
+        }
+
         .upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 5px; }
         .upload-btn { position: relative; background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 16px; padding: 20px; text-align: center; cursor: pointer; transition: 0.3s; }
         .upload-btn:hover { border-color: var(--brand-pink); background: #fff; }
@@ -92,22 +101,30 @@
         .upload-success { color: #10b981; font-weight: 700; font-size: 0.75rem; display: none; margin-top: 5px; }
 
         @media (max-width: 992px) {
-            body, .auth-container { flex-direction: column; }
+            body, .auth-container { display: block; height: auto; min-height: 100vh; overflow-y: auto; }
             .left-panel {
-                min-height: 25vh;
-                padding: 40px 20px;
+                min-height: auto;
+                padding: 40px 20px 50px 20px;
                 text-align: center;
+                display: block;
             }
             .feature-list { display: none; }
-            .brand-tagline { margin: 0 auto; font-size: 1rem; }
+            .brand { display: flex; flex-direction: column; align-items: center; }
+            .brand-logo { justify-content: center; margin-bottom: 15px; }
+            .brand-tagline { margin: 0 auto; font-size: 0.95rem; }
             .form-panel {
                 padding: 40px 20px;
                 border-top-left-radius: 30px;
                 border-top-right-radius: 30px;
-                margin-top: -30px;
+                margin-top: -20px;
                 position: relative;
                 z-index: 5;
+                display: block;
+                height: auto;
+                min-height: 60vh;
+                overflow: visible;
             }
+            .reg-card { margin: 0 auto; max-width: 100%; }
             .reg-card h2 { font-size: 1.8rem; }
         }
 
@@ -117,11 +134,12 @@
         }
 
         @media (max-width: 480px) {
-            .brand-logo { font-size: 2rem; }
+            .brand-logo { font-size: 1.8rem; }
             .reg-card h2 { font-size: 1.5rem; padding-left: 15px; }
             .fdf-input { padding: 12px 15px; border-radius: 12px; }
-            .btn-dr { padding: 14px 20px; }
+            .btn-dr { padding: 16px; border-radius: 14px; font-size: 1rem; }
             .dr-step-dot { width: 32px; height: 32px; font-size: 0.8rem; }
+            .form-panel { padding: 30px 15px; }
         }
     </style>
 </head>
@@ -176,12 +194,22 @@
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>Password</label>
-                                <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" required>
+                                <div class="password-input-wrap">
+                                    <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" required>
+                                    <button type="button" class="password-toggle-btn" data-toggle-password="password">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
                                 <div class="error-msg" id="err-password">6-8 chars (1 uppercase, 1 number required).</div>
                             </div>
                             <div class="fdf-group">
                                 <label>Confirm Password</label>
-                                <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" required>
+                                <div class="password-input-wrap">
+                                    <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" required>
+                                    <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
                                 <div class="error-msg" id="err-confirmPassword">❌ Passwords do not match</div>
                                 <div class="valid-msg" id="val-confirmPassword" style="color: #10b981;">✅ Passwords match</div>
                             </div>
@@ -314,6 +342,22 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
+            // Password toggle logic
+            document.querySelectorAll('[data-toggle-password]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const id = btn.getAttribute('data-toggle-password');
+                    const input = document.getElementById(id);
+                    if (!input) return;
+                    const show = input.type === 'password';
+                    input.type = show ? 'text' : 'password';
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('bi-eye', !show);
+                        icon.classList.toggle('bi-eye-slash', show);
+                    }
+                });
+            });
+
             const inputs = document.querySelectorAll('.fdf-input, input[type="file"]');
             inputs.forEach(input => {
                 input.addEventListener('input', () => validateField(input));

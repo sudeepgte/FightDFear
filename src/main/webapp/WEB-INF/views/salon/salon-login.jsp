@@ -138,30 +138,36 @@
         }
 
         @media (max-width: 992px) {
-            body, .auth-container { flex-direction: column; }
+            body, .auth-container { display: block; height: auto; min-height: 100vh; overflow-y: auto; }
             .visual-panel {
-                min-height: 30vh;
-                padding: 50px 30px;
+                min-height: auto;
+                padding: 40px 20px 50px 20px;
                 text-align: center;
+                display: block;
             }
             .feature-list { display: none; }
-            .brand-tagline { margin: 0 auto; font-size: 1rem; }
+            .brand-logo { justify-content: center; margin-bottom: 15px; }
+            .brand-tagline { margin: 0 auto; font-size: 0.95rem; }
             .form-panel {
                 padding: 40px 20px;
                 border-top-left-radius: 30px;
                 border-top-right-radius: 30px;
-                margin-top: -30px;
+                margin-top: -20px;
                 position: relative;
                 z-index: 5;
+                display: block;
+                min-height: 60vh;
             }
+            .login-card { margin: 0 auto; max-width: 100%; }
             .login-card h2 { font-size: 1.8rem; }
         }
 
         @media (max-width: 480px) {
-            .brand-logo { font-size: 2rem; }
+            .brand-logo { font-size: 1.8rem; }
             .login-card h2 { font-size: 1.5rem; padding-left: 15px; }
             .fdf-input { padding: 12px 15px 12px 45px; border-radius: 12px; }
-            .btn-fdf-login { padding: 16px; border-radius: 14px; }
+            .btn-fdf-login { padding: 16px; border-radius: 14px; font-size: 1rem; }
+            .form-panel { padding: 30px 15px; }
         }
     </style>
 </head>

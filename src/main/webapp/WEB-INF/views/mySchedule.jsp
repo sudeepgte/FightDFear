@@ -32,14 +32,13 @@
             background-color: var(--bg-light);
             color: #1E293B;
             margin: 0;
-            display: flex;
         }
 
         /* Sidebar (Matching Journey Page) */
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
-            background: var(--primary-dark);
+            background: var(--primary-purple);
             color: white;
             position: fixed;
             left: 0;
@@ -54,7 +53,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .sidebar-logo span { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
@@ -75,6 +74,29 @@
 
         .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .nav-link.active { background: var(--primary-red); color: white; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+
+        @media (max-width: 1200px) {
+            .schedule-layout { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 767px) {
+            .header-top { flex-direction: column; text-align: center; gap: 15px; }
+            .header-actions { justify-content: center; width: 100%; }
+            .filter-bar { flex-direction: column; }
+            .date-picker-wrap { overflow-x: auto; white-space: nowrap; padding-bottom: 15px; -webkit-overflow-scrolling: touch; }
+            .date-chip { flex-shrink: 0; }
+            .time-slots { grid-template-columns: 1fr; }
+            .instructor-card { flex-direction: column; text-align: center; }
+            .instructor-info { align-items: center; }
+            .main-content { padding: 15px !important; }
+            .sidebar { width: 100% !important; height: auto !important; min-height: 0 !important; position: static !important; padding: 15px !important; border-radius: 0 !important; display: block !important; }
+            .sidebar-logo { margin-bottom: 15px !important; justify-content: center !important; }
+            .nav-menu { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
+            .nav-item { margin-bottom: 0 !important; }
+            .nav-link { padding: 8px 16px !important; font-size: 0.85rem !important; border-radius: 20px !important; white-space: nowrap !important; width: auto !important; }
+            .main-content { margin-left: 0 !important; padding: 15px !important; }
+            body { display: block; }
+        }
 
         /* Main Content */
         .main-content {
@@ -182,11 +204,6 @@
         
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
-                    <i class="bi bi-grid"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
                 <a href="${pageContext.request.contextPath}/users/training-journey" class="nav-link">
                     <i class="bi bi-compass"></i> My Journey
                 </a>
@@ -207,8 +224,13 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="nav-link">
-                    <i class="bi bi-person"></i> Profile
+                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="margin-top: 10px;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
+                    <i class="bi bi-arrow-left"></i> Back
                 </a>
             </li>
         </ul>
