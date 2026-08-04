@@ -131,46 +131,115 @@
 
     /* Mobile Navigation Drawer styles */
     @media (max-width: 1199px) {
+        .header {
+            padding: 10px 0 !important;
+        }
+        .header .container-fluid.container-xl {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            gap: 8px;
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+        }
+        .header .logo.me-auto {
+            flex: 1 1 auto;
+            min-width: 0;
+            margin-right: auto !important;
+        }
+        .header .logo h1 {
+            font-size: 18px !important;
+            letter-spacing: 0.5px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .header .navmenu {
+            flex: 0 0 auto;
+            margin-left: 0 !important;
+        }
+        .header .container-fluid > a.ms-3 {
+            flex: 0 0 auto;
+            margin-left: 8px !important;
+        }
+        .header-profile-img {
+            width: 36px;
+            height: 36px;
+        }
         .mobile-nav-toggle {
             display: block !important;
+            margin-left: 0 !important;
+            padding: 4px;
+            z-index: 10002;
+            position: relative;
         }
         .navmenu ul {
-            display: none;
+            display: none !important;
             position: fixed;
-            top: 70px;
-            right: 15px;
-            bottom: 15px;
-            left: 15px;
-            padding: 15px;
-            border-radius: 12px;
-            background: rgba(30, 27, 75, 0.95); /* Deep Navy backdrop */
+            top: 64px;
+            right: 12px;
+            left: 12px;
+            bottom: auto;
+            max-height: calc(100dvh - 80px);
+            padding: 12px;
+            margin: 0;
+            border-radius: 14px;
+            background: rgba(30, 27, 75, 0.98);
             backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             list-style: none;
             overflow-y: auto;
-            z-index: 9999;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            -webkit-overflow-scrolling: touch;
+            z-index: 10001;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 4px;
         }
         .navmenu ul li {
-            margin-bottom: 10px;
+            margin-bottom: 0;
+            width: 100%;
         }
         .navmenu ul li a {
-            display: block;
-            padding: 12px 20px !important;
-            font-size: 16px !important;
-            color: rgba(255, 255, 255, 0.9) !important;
-            border-radius: 8px;
+            display: flex !important;
+            align-items: center;
+            padding: 12px 16px !important;
+            font-size: 15px !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+            border-radius: 10px;
             transition: all 0.3s;
+            white-space: normal !important;
         }
-        .navmenu ul li a:hover, .navmenu ul li a.active {
-            background: rgba(244, 63, 94, 0.15) !important;
+        .navmenu ul li a:hover,
+        .navmenu ul li a.active {
+            background: rgba(244, 63, 94, 0.18) !important;
             color: #f43f5e !important;
         }
         .mobile-nav-active {
             overflow: hidden;
         }
+        .mobile-nav-active .navmenu {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(10, 8, 30, 0.55);
+        }
         .mobile-nav-active .navmenu ul {
-            display: block !important;
+            display: flex !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header .logo h1 {
+            font-size: 16px !important;
+        }
+        .header-profile-img {
+            width: 32px;
+            height: 32px;
+        }
+        .mobile-nav-toggle {
+            font-size: 24px !important;
         }
     }
 </style>
@@ -204,13 +273,8 @@
             </c:when>
             <c:otherwise>
                 <li><a href="${pageContext.request.contextPath}/">Home</a></li>
-                <li><a href="${pageContext.request.contextPath}/women-events">Events 🌸</a></li>
                 <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
                 <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-                
-                <!-- Want to Earn Button -->
-                <li><a href="${pageContext.request.contextPath}/marketplace/earn" style="color: var(--uh-coral) !important; font-weight: 800 !important;"><i class="bi bi-briefcase-fill me-1"></i> Want to Earn</a></li>
-
                 
                 <!-- Notification Bell for Broadcasts -->
                 <li>
@@ -259,7 +323,6 @@
             </a>
         </c:otherwise>
     </c:choose>
-    <a class="btn-getstarted" href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/logout' : '/logout'}">Logout</a>
   </div>
 </header>
 
@@ -445,12 +508,25 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
       const toggleBtn = document.querySelector('.mobile-nav-toggle');
+      const navmenu = document.querySelector('.navmenu');
       if (toggleBtn) {
-          toggleBtn.addEventListener('click', function() {
+          toggleBtn.addEventListener('click', function(e) {
+              e.stopPropagation();
               const body = document.querySelector('body');
               body.classList.toggle('mobile-nav-active');
               toggleBtn.classList.toggle('bi-list');
               toggleBtn.classList.toggle('bi-x');
+          });
+      }
+      if (navmenu) {
+          navmenu.addEventListener('click', function(e) {
+              if (e.target === navmenu) {
+                  document.body.classList.remove('mobile-nav-active');
+                  if (toggleBtn) {
+                      toggleBtn.classList.add('bi-list');
+                      toggleBtn.classList.remove('bi-x');
+                  }
+              }
           });
       }
   });

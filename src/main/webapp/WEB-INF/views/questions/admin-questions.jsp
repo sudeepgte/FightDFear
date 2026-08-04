@@ -1,4 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -47,18 +48,18 @@
     border-right:1px solid var(--maroon-border);
     position:sticky; top:58px; height:calc(100vh - 58px);
     padding:14px 12px; overflow-y:auto; flex-shrink:0;
+    transition: all 0.3s ease;
   }
-  .sidebar .brand-label { font-weight:700; color:var(--maroon); font-size:0.95rem; margin-bottom:10px; padding:0 6px; }
-  .sidebar .sec-title { margin:14px 8px 6px; font-size:0.72rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.06em; }
-  .sidebar a.nl {
-    display:flex; align-items:center; gap:9px;
-    padding:9px 10px; border-radius:9px;
-    color:#374151; text-decoration:none; font-weight:500; font-size:0.88rem;
-    transition:all 0.18s;
+  .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
+  .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
+  .navlink {
+    display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
+    color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
   }
-  .sidebar a.nl i { width:18px; text-align:center; color:var(--maroon); font-size:0.9rem; }
-  .sidebar a.nl:hover { background:rgba(125,42,90,0.08); padding-left:14px; color:#1a1a2e; }
-  .sidebar a.nl.active { background:rgba(125,42,90,0.12); color:var(--maroon); font-weight:700; }
+  .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
+  .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
+  .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+  .navlink.active i { color: #fff; }
 
   /* ── MAIN ── */
   .main { flex:1; min-width:0; padding:28px 20px 48px; }
@@ -201,24 +202,7 @@
 </div>
 
 <div class="layout">
-  <aside class="sidebar">
-    <div class="brand-label">Admin Menu</div>
-    <div class="sec-title">Dashboard</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/adminDashboard"><i class="fas fa-home"></i> Home</a>
-
-    <div class="sec-title">Moderation</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/sos"><i class="fas fa-broadcast-tower"></i> SOS Monitoring</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/reported-videos"><i class="fas fa-flag"></i> Reported Videos</a>
-    <a class="nl active" href="${pageContext.request.contextPath}/qna/admin/questions"><i class="fas fa-question-circle"></i> Q&amp;A Panel</a>
-
-    <div class="sec-title">Approvals</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/martialManagement"><i class="fas fa-dumbbell"></i> Martial Arts Centres</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-suggestions"><i class="fas fa-users"></i> Volunteer Suggestions</a>
-    <a class="nl" href="${pageContext.request.contextPath}/video/videoManagement"><i class="fas fa-video"></i> Video Library</a>
-
-    <div class="sec-title">Account</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/profile/${admin.id}"><i class="fas fa-user"></i> Profile</a>
-  </aside>
+  <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
   <main class="main">
     <div class="mainInner">
@@ -265,7 +249,7 @@
                   <div class="toggle-section" id="form-${q.id}">
                       <form action="${pageContext.request.contextPath}/qna/admin/qna/answer" method="post">
                           <input type="hidden" name="questionId" value="${q.id}" />
-                          <textarea name="content" required placeholder="Write your official answer here...">${q.answer.content}</textarea>
+                          <textarea name="content" required placeholder="Write your official answer here..."><c:if test="${not empty q.answer}"><c:out value="${q.answer.content}"/></c:if></textarea>
                           <button type="submit" class="btn-custom"><i class="fas fa-paper-plane me-1"></i> Post Answer</button>
                       </form>
                   </div>

@@ -1,6 +1,7 @@
 package in.sp.main.Repository;
 
 import in.sp.main.Entities.Attendance;
+import in.sp.main.Entities.MartialArtsBatch;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.OnlineClass;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByUserAndOnlineClassAndAttendanceDate(User user, OnlineClass onlineClass, java.time.LocalDate date);
     List<Attendance> findByUserId(Long userId);
     java.util.Optional<Attendance> findFirstByUserIdOrderByAttendanceDateDesc(Long userId);
+    List<Attendance> findByCenter_Id(Long centerId);
+    List<Attendance> findByBatch(MartialArtsBatch batch);
+    void deleteByUser_Id(Long userId);
 }

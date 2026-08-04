@@ -185,14 +185,35 @@
             transform: translateY(-50%);
             border: none;
             background: transparent;
-            color: #9ca3af;
+            color: #475569;
             cursor: pointer;
-            padding: 4px;
-            font-size: 1.1rem;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             z-index: 2;
         }
 
-        .password-toggle-btn:hover { color: #1e1b4b; }
+        .password-toggle-btn svg {
+            width: 20px;
+            height: 20px;
+            display: block;
+            pointer-events: none;
+        }
+
+        .password-toggle-btn:hover,
+        .password-toggle-btn:focus { color: #1e1b4b; outline: none; }
+
+        /* Open eye = password visible | Closed/slashed eye = password hidden */
+        .password-toggle-btn .icon-eye-show { display: none; }
+        .password-toggle-btn .icon-eye-hide { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-show { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-hide { display: none; }
+
+        .input-wrapper.password-field input[type="password"]::-ms-reveal,
+        .input-wrapper.password-field input[type="password"]::-ms-clear { display: none; }
 
         .input-wrapper.password-field .form-input {
             padding-right: 46px;
@@ -406,6 +427,12 @@
                     ${error}
                 </div>
             </c:if>
+            <c:if test="${not empty success}">
+                <div class="error-alert" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534;">
+                    <i class="bi bi-check-circle"></i>
+                    ${success}
+                </div>
+            </c:if>
 
             <form action="${pageContext.request.contextPath}/login" method="post">
 
@@ -424,8 +451,21 @@
                         <i class="bi bi-lock"></i>
                         <input type="password" id="password" name="password" class="form-input"
                                placeholder="Enter your password" required autocomplete="current-password">
-                        <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password">
-                            <i class="bi bi-eye"></i>
+                        <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password" aria-pressed="false">
+                            <span class="icon-eye-show" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                            <span class="icon-eye-hide" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                    <path d="M1 1l22 22"></path>
+                                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -450,7 +490,35 @@
         </div>
     </div>
 
-<script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
+<script>
+(function () {
+    function setVisible(btn, show) {
+        var id = btn.getAttribute('data-toggle-password');
+        var input = document.getElementById(id);
+        if (!input) return;
+
+        input.type = show ? 'text' : 'password';
+        btn.classList.toggle('is-visible', show);
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    }
+
+    document.querySelectorAll('.password-toggle-btn[data-toggle-password]').forEach(function (btn) {
+        btn.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+        });
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var id = btn.getAttribute('data-toggle-password');
+            var input = document.getElementById(id);
+            if (!input) return;
+            setVisible(btn, input.type === 'password');
+            input.focus();
+        });
+    });
+})();
+</script>
 </body>
 </html>
 

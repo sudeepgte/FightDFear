@@ -27,6 +27,11 @@ public class SecurityConfig {
             "/index",
             "/index/**",
             "/heatmap",
+            "/map",
+            "/features",
+            "/features.jsp",
+            "/danger-points",
+            "/danger-points/**",
             "/login",
             "/login/**",
             "/auth/**",
@@ -61,6 +66,7 @@ public class SecurityConfig {
             "/users/register",
             "/users/register/**",
             "/admin/loginAdmin",
+            "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
             "/doctors/register",
@@ -130,6 +136,8 @@ public class SecurityConfig {
                     response.setStatus(401);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
+                } else if (path != null && path.startsWith("/admin/")) {
+                    response.sendRedirect("/admin/loginAdmin");
                 } else {
                     response.sendRedirect("/login");
                 }

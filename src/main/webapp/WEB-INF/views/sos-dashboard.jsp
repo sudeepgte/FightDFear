@@ -115,6 +115,10 @@
     }
     .top-nav .back-btn:hover { color: var(--text-primary); }
 
+    .top-nav .back-btn .back-label-short {
+        display: none;
+    }
+
     /* === Main Container === */
     .sos-container {
         position: relative; z-index: 1;
@@ -619,11 +623,259 @@
     }
 
     /* === Responsive === */
+    .sos-outer-box {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .sos-btn-wrapper {
+        max-width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .top-nav {
+            padding: 12px 16px;
+            gap: 10px;
+        }
+
+        .top-nav .brand {
+            font-size: 16px;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .top-nav .back-btn {
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .sos-container {
+            padding: 72px 16px 32px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .status-bar {
+            font-size: 11px;
+            padding: 12px 14px;
+            letter-spacing: 0.5px;
+            align-items: flex-start;
+            line-height: 1.45;
+        }
+
+        .status-bar span,
+        #statusText {
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        .sos-outer-box {
+            padding: 32px 18px;
+            border-radius: 24px;
+            margin: 14px 0;
+        }
+
+        .sos-btn-wrapper {
+            width: min(250px, 78vw);
+            height: min(250px, 78vw);
+        }
+
+        .ring-1 {
+            width: 190px;
+            height: 190px;
+        }
+
+        .ring-2 {
+            width: 220px;
+            height: 220px;
+        }
+
+        .ring-3 {
+            width: 250px;
+            height: 250px;
+        }
+
+        .sos-btn {
+            width: 150px;
+            height: 150px;
+            font-size: 40px;
+        }
+
+        .sos-btn-label {
+            font-size: 12px;
+            margin-top: 18px;
+            padding: 0 8px;
+        }
+
+        .quick-actions {
+            gap: 8px;
+        }
+
+        .quick-action-btn {
+            padding: 16px 10px;
+            font-size: 12px;
+            border-radius: 16px;
+        }
+
+        .contact-response-panel {
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .contact-response-panel h4 {
+            font-size: 15px;
+            line-height: 1.35;
+        }
+
+        #volunteerResponsePanel > div:first-child {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+        }
+
+        .contact-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .contact-info {
+            width: 100%;
+        }
+
+        .contact-status {
+            align-self: flex-start;
+        }
+
+        .summary-number {
+            font-size: 26px;
+        }
+
+        .countdown-number {
+            font-size: 96px;
+        }
+
+        .countdown-text {
+            font-size: 14px;
+            padding: 0 20px;
+        }
+
+        .toast-notification {
+            top: 68px;
+            left: 12px;
+            right: 12px;
+            transform: none;
+            max-width: none;
+            text-align: center;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    }
+
     @media (max-width: 480px) {
-        .sos-container { padding: 70px 16px 30px; }
-        .sos-btn { width: 180px; height: 180px; font-size: 36px; }
-        .sos-btn-wrapper { width: 180px; height: 180px; }
-        .countdown-number { font-size: 90px; }
+        .top-nav {
+            padding: 10px 12px;
+        }
+
+        .top-nav .brand {
+            font-size: 14px;
+            gap: 6px;
+        }
+
+        .top-nav .back-btn .back-label-long {
+            display: none;
+        }
+
+        .top-nav .back-btn .back-label-short {
+            display: inline;
+        }
+
+        .sos-container {
+            padding: 66px 12px 28px;
+        }
+
+        .status-bar {
+            font-size: 10px;
+            padding: 10px 12px;
+            margin-bottom: 18px;
+        }
+
+        .sos-outer-box {
+            padding: 24px 12px;
+        }
+
+        .sos-btn-wrapper {
+            width: min(220px, 82vw);
+            height: min(220px, 82vw);
+        }
+
+        .ring-1 {
+            width: 165px;
+            height: 165px;
+        }
+
+        .ring-2 {
+            width: 190px;
+            height: 190px;
+        }
+
+        .ring-3 {
+            width: 220px;
+            height: 220px;
+        }
+
+        .sos-btn {
+            width: 132px;
+            height: 132px;
+            font-size: 34px;
+        }
+
+        .countdown-number {
+            font-size: 80px;
+        }
+
+        .countdown-cancel-btn {
+            width: calc(100% - 40px);
+            max-width: 280px;
+        }
+
+        .progress-step {
+            padding: 12px;
+            gap: 10px;
+        }
+
+        .progress-step .step-title {
+            font-size: 12px;
+        }
+
+        .progress-step .step-desc {
+            font-size: 10px;
+        }
+
+        #stopSosContainer .btn {
+            width: 100%;
+            max-width: 280px;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .response-summary {
+            grid-template-columns: 1fr !important;
+            gap: 8px;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-number {
+            font-size: 24px;
+        }
     }
 
     /* ============================================
@@ -729,15 +981,8 @@
 
     /* 10. Additional responsive polish for very small devices */
     @media (max-width: 380px) {
-        .response-summary {
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-        .quick-actions {
-            grid-template-columns: 1fr;
-        }
-        .sos-btn-wrapper {
-            transform: scale(0.9);
+        .info-card {
+            padding: 14px;
         }
     }
 
@@ -824,12 +1069,12 @@
     <!-- Top Nav -->
     <nav class="top-nav">
         <div class="brand"><i class="bi bi-shield-exclamation"></i> SOS Emergency</div>
-    </nav>
-    <div class="dashboard-bar container-fluid container-xl d-flex justify-content-end">
-        <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
-            Dashboard <i class="bi bi-arrow-right"></i>
+        <a href="${pageContext.request.contextPath}/users/dashboard" class="back-btn">
+            <i class="bi bi-arrow-left"></i>
+            <span class="back-label-long">Back to Dashboard</span>
+            <span class="back-label-short">Back</span>
         </a>
-    </div>
+    </nav>
 
     <!-- Toast -->
     <div class="toast-notification" id="toast"></div>

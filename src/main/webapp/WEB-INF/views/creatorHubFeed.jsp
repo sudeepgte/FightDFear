@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -166,7 +167,23 @@
             background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
             color: #fff;
             border-color: transparent;
-            box-shadow: var(--neon-glow);
+        }
+
+        .category-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            min-width: 0;
+        }
+        .category-filter-row .cat-scroll-btn {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* ── FEED POSTS ── */
@@ -240,6 +257,12 @@
             max-width: 100%;
             max-height: 520px;
             object-fit: contain;
+            position: relative;
+            z-index: 2;
+        }
+        .post-media-container video {
+            width: 100%;
+            background: #000;
         }
         .badge-type {
             position: absolute;
@@ -499,14 +522,35 @@
                 max-width: 100% !important;
                 padding-left: 15px !important;
                 padding-right: 15px !important;
-                margin-top: 40px !important;
+                margin-top: 12px !important;
+            }
+            #global-back-btn {
+                margin-bottom: 12px !important;
             }
         }
         @media (max-width: 576px) {
             .hub-container {
-                padding-left: 8px !important;
-                padding-right: 8px !important;
-                margin-top: 20px !important;
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+                margin-top: 8px !important;
+            }
+            .category-filter-row .cat-scroll-btn {
+                display: none !important;
+            }
+            .category-filter-row {
+                margin-bottom: 12px;
+            }
+            .category-pill {
+                padding: 7px 14px;
+                font-size: 12px;
+            }
+            .post-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+            .post-header .d-flex.align-items-center.gap-2 {
+                flex-wrap: wrap;
             }
             .post-card {
                 border-radius: 16px !important;
@@ -592,8 +636,8 @@
                 </div>
 
                 <!-- Category selector scroll -->
-                <div class="d-flex align-items-center mb-4">
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+                <div class="category-filter-row">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatLeft(this)">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
                     <div class="category-scroll flex-grow-1" style="margin-bottom: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
@@ -602,7 +646,7 @@
                             <a href="${pageContext.request.contextPath}/creator-hub?category=${cat}" class="category-pill ${selectedCategory eq cat ? 'active' : ''}">${cat}</a>
                         </c:forEach>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatRight(this)">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
                 </div>
@@ -624,10 +668,10 @@
                             <a href="${pageContext.request.contextPath}/creator-hub/creator/${post.user.id}" class="uploader-info">
                                 <c:choose>
                                     <c:when test="${not empty post.user.profilePhoto}">
-                                        <img src="${post.user.profilePhoto}" class="uploader-avatar" alt="avatar">
+                                        <img src="${pageContext.request.contextPath}${post.user.profilePhoto}" class="uploader-avatar" alt="avatar">
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="/assets/img/default-avatar.png" class="uploader-avatar" alt="avatar">
+                                        <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="uploader-avatar" alt="avatar">
                                     </c:otherwise>
                                 </c:choose>
                                 <div>
@@ -649,7 +693,7 @@
                         </div>
 
                         <!-- Post Media Container -->
-                        <div class="post-media-container" onclick="triggerView(${post.id})">
+                        <div class="post-media-container">
                             <span class="badge-type">${post.reel ? 'REEL' : (post.fileType eq 'VIDEO' ? 'VIDEO' : 'IMAGE')}</span>
                             
                             <!-- Check Monetization Locks -->
@@ -678,12 +722,16 @@
                                 </c:when>
                                 <c:otherwise>
                                     <!-- Render Media -->
+                                    <c:set var="postVideoPath" value="${post.videoPath}" />
+                                    <c:set var="postThumbPath" value="${not empty post.thumbnailPath ? post.thumbnailPath : post.videoPath}" />
+                                    <c:set var="postVideoUrl" value="${fn:startsWith(postVideoPath, 'http') ? postVideoPath : pageContext.request.contextPath.concat(postVideoPath)}" />
+                                    <c:set var="postThumbUrl" value="${fn:startsWith(postThumbPath, 'http') ? postThumbPath : pageContext.request.contextPath.concat(postThumbPath)}" />
                                     <c:choose>
                                         <c:when test="${post.fileType eq 'VIDEO'}">
-                                            <video src="${post.videoPath}" controls loop preload="metadata"></video>
+                                            <video src="${postVideoUrl}" poster="${postThumbUrl}" controls playsinline preload="metadata" onplay="triggerView(${post.id})"></video>
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="${post.videoPath}" alt="Post image">
+                                            <img src="${postThumbUrl}" alt="Post image">
                                         </c:otherwise>
                                     </c:choose>
                                 </c:otherwise>
@@ -841,7 +889,7 @@
     <div class="comment-drawer" id="commentDrawer">
         <div class="comment-header">
             <h5 class="text-white m-0"><i class="fa-regular fa-comments text-danger me-2"></i>Comments</h5>
-            <button class="btn-close btn-close-white" onclick="closeComments()"></button>
+            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="closeComments()">Close</button>
         </div>
         <div class="comment-list" id="commentList">
             <!-- Loaded via AJAX -->
@@ -899,6 +947,7 @@
         let currentStoryIndex = 0;
         let storyTimer = null;
         let activeCommentVideoId = null;
+        let activeReplyParentId = null;
 
         // Open Stories Player
         function openStoryViewer(userId, username) {
@@ -1004,7 +1053,7 @@
 
         // LIKE LOGIC (AJAX)
         function toggleLike(videoId, btn) {
-            fetch('/video/video/like?videoId=' + videoId, { method: 'POST' })
+            fetch('${pageContext.request.contextPath}/video/like?videoId=' + videoId, { method: 'POST' })
             .then(res => res.json())
             .then(data => {
                 if (data.error === 'LOGIN_REQUIRED') {
@@ -1103,6 +1152,8 @@
         // COMMENTS ACTIONS
         function openComments(videoId) {
             activeCommentVideoId = videoId;
+            activeReplyParentId = null;
+            document.getElementById('commentInput').placeholder = 'Write a comment...';
             document.getElementById('commentDrawer').classList.add('open');
             loadComments(videoId);
         }
@@ -1110,56 +1161,47 @@
         function closeComments() {
             document.getElementById('commentDrawer').classList.remove('open');
             activeCommentVideoId = null;
+            activeReplyParentId = null;
+        }
+
+        function startReply(commentId, username) {
+            activeReplyParentId = commentId;
+            const input = document.getElementById('commentInput');
+            input.placeholder = 'Reply to ' + username + '...';
+            input.focus();
         }
 
         function loadComments(videoId) {
             const listEl = document.getElementById('commentList');
             listEl.innerHTML = '<div class="text-white text-center py-4"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading comments...</div>';
 
-            fetch('${pageContext.request.contextPath}/video/comments/' + videoId)
-            .then(res => res.text())
-            .then(html => {
-                // Parse and strip comments or load clean JSON
-                // Since VideoUploadController returns JSP "video_comments" view, we can write an endpoint or parse list
-                // To keep it simple, we'll fetch the clean comments list from our api or inject mock HTML.
-                // Let's create an AJAX comments fetcher inside our controller or fetch from custom endpoint.
-                // Wait! Let's mock a simple list here for immediate UI speed if API is rendering full JSPs, 
-                // or fetch from VideoUploadController which returns /video/comments/{videoId} view.
-                // To display it beautifully inside the Drawer, we can request /video/comments/{videoId} as text and extract comments.
-                // Or let's make an AJAX endpoint in CreatorHubController to fetch comments!
-                // Actually, let's write a quick AJAX endpoint in CreatorHubController if needed, 
-                // but let's extract them from the returned text or write a dedicated AJAX method.
-                // Let's do a simple fetch from a custom mock list or write a dedicated AJAX comments list.
-                // Wait, we can fetch `/video/comments/{videoId}` which is returned as JSP.
-                // A better way: Let's fetch clean comments. Let's make sure our script can parse them.
-                // Actually, we can fetch the comments from a simple JSON API. Let's fetch comments from: `/creator-hub/video/comments?videoId=` which we can handle.
-                // Let's implement /creator-hub/video/comments JSON endpoint in CreatorHubController!
-                // Wait, I can modify CreatorHubController to support it, or I can just render comments.
-                // Let's search inside comments.
+            fetch('${pageContext.request.contextPath}/creator-hub/comments-api?videoId=' + videoId)
+            .then(res => res.json())
+            .then(comments => {
                 listEl.innerHTML = '';
-                
-                // Let's do a fetch call to `/video/comments/json/` if we want or just mock it.
-                // Let's add `/creator-hub/comments-api?videoId=` JSON endpoint in the Controller to get clean comments.
-                // Let's first mock some beautiful comments or extract them.
-                // Let's fetch from `/video/comments/` JSON list or write a simple parser.
-                // Actually, let's write a simple JSON endpoint in the controller:
-                fetch('${pageContext.request.contextPath}/creator-hub/comments-api?videoId=' + videoId)
-                .then(res => res.json())
-                .then(comments => {
-                    if (comments.length === 0) {
-                        listEl.innerHTML = '<div class="text-muted text-center py-4">No comments yet. Start the conversation!</div>';
-                        return;
-                    }
-                    comments.forEach(c => {
-                        const item = document.createElement('div');
-                        item.className = 'comment-item';
-                        item.innerHTML = '<div class="comment-user">' + c.username + '</div>' + 
-                                         '<div class="comment-text">' + c.text + '</div>';
-                        listEl.appendChild(item);
-                    });
-                }).catch(() => {
+                if (!comments.length) {
                     listEl.innerHTML = '<div class="text-muted text-center py-4">No comments yet. Start the conversation!</div>';
+                    return;
+                }
+                comments.forEach(function(c) {
+                    const item = document.createElement('div');
+                    item.className = 'comment-item mb-3';
+                    item.innerHTML = '<div class="comment-user fw-bold text-white">' + c.username + '</div>' +
+                        '<div class="comment-text text-light">' + c.text + '</div>' +
+                        '<button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="startReply(' + c.id + ', \'' + c.username.replace(/'/g, '') + '\')">Reply</button>';
+                    if (Array.isArray(c.replies)) {
+                        c.replies.forEach(function(r) {
+                            const reply = document.createElement('div');
+                            reply.className = 'comment-item ms-3 mt-2 ps-3 border-start border-secondary';
+                            reply.innerHTML = '<div class="comment-user fw-bold text-white">' + r.username + '</div>' +
+                                '<div class="comment-text text-light">' + r.text + '</div>';
+                            item.appendChild(reply);
+                        });
+                    }
+                    listEl.appendChild(item);
                 });
+            }).catch(function() {
+                listEl.innerHTML = '<div class="text-muted text-center py-4">No comments yet. Start the conversation!</div>';
             });
         }
 
@@ -1171,6 +1213,9 @@
             const formData = new URLSearchParams();
             formData.append('videoId', activeCommentVideoId);
             formData.append('commentText', text);
+            if (activeReplyParentId) {
+                formData.append('parentId', activeReplyParentId);
+            }
 
             fetch('${pageContext.request.contextPath}/video/comment', {
                 method: 'POST',
@@ -1180,10 +1225,12 @@
             .then(res => res.json())
             .then(data => {
                 if (data.error === 'NOT_LOGGED_IN') {
-                    window.location.href = '/login';
+                    window.location.href = '${pageContext.request.contextPath}/login';
                     return;
                 }
                 input.value = '';
+                activeReplyParentId = null;
+                input.placeholder = 'Write a comment...';
                 loadComments(activeCommentVideoId);
             });
         }

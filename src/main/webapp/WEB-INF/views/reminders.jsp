@@ -274,35 +274,6 @@
         animation: shimmer 1.5s infinite;
         pointer-events: none;
     }
-    /* Dashboard Button Styling */
-    .dashboard-btn {
-        background: var(--gradient-primary);
-        color: #fff !important;
-        padding: 10px 24px;
-        border-radius: 50px;
-        font-weight: 700;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        font-family: 'Poppins', sans-serif;
-        font-size: 0.95rem;
-        letter-spacing: 0.5px;
-    }
-    .dashboard-btn:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(124, 45, 94, 0.45);
-        color: #fff !important;
-    }
-    .dashboard-btn i {
-        font-size: 1.2rem;
-        transition: transform 0.3s ease;
-    }
-    .dashboard-btn:hover i {
-        transform: translateX(5px);
-    }
 </style>
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
@@ -317,9 +288,6 @@
       <h1 class="mb-1" style="font-weight: 800; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Safety Reminders</h1>
       <div class="muted">Web-only: reminders appear when you’re online.</div>
     </div>
-    <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
-      Dashboard <i class="bi bi-arrow-right"></i>
-    </a>
   </div>
 
   <c:if test="${not empty message}">

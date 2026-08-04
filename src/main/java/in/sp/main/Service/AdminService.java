@@ -23,9 +23,9 @@ public class AdminService {
     	 Optional<Admin> existing = adminRepository.findByEmail(admin.getEmail());
     	    if (existing.isEmpty()) {
     	        String raw = admin.getPassword();
-    	        if (raw == null || !raw.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$")) {
+    	        if (raw == null || !raw.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$")) {
     	            throw new IllegalArgumentException(
-    	                    "Password must be at least 6 characters long and include a number and special character");
+    	                    "Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character");
     	        }
     	        admin.setPassword(passwordService.encode(raw));
     	        adminRepository.save(admin);

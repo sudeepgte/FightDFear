@@ -2,6 +2,7 @@ package in.sp.main.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,13 +15,15 @@ import in.sp.main.Repository.UserRepository;
 @Service
 public class EmergencyContactService {
 
+    private static final int MAX_PERSONAL_CONTACTS = 5;
+    private static final Set<String> DEFAULT_CONTACT_NAMES = Set.of("Police", "Ambulance");
+
     @Autowired
     private EmergencyContactRepository emergencyContactRepository;
 
     @Autowired
-    private UserRepository userRepository; // Assuming you have a UserRepository for fetching User
+    private UserRepository userRepository;
 
-    // Default contacts
     private static final String POLICE_NAME = "Police";
     private static final String AMBULANCE_NAME = "Ambulance";
     private static final String POLICE_PHONE = "100";
@@ -31,14 +34,20 @@ public class EmergencyContactService {
 
     public List<EmergencyContact> getEmergencyContactsByUserId(Long userId) {
         List<EmergencyContact> contacts = emergencyContactRepository.findByUserId(userId);
-
-        // Ensure Police and Ambulance contacts exist by default if not already added
         ensureDefaultContacts(userId, contacts);
-
         return contacts;
     }
 
-    // This method ensures default Police and Ambulance contacts exist for the user
+    public int countPersonalContacts(Long userId) {
+        return (int) emergencyContactRepository.findByUserId(userId).stream()
+                .filter(c -> c.getName() != null && !DEFAULT_CONTACT_NAMES.contains(c.getName()))
+                .count();
+    }
+
+    public boolean canAddPersonalContact(Long userId) {
+        return countPersonalContacts(userId) < MAX_PERSONAL_CONTACTS;
+    }
+
     private void ensureDefaultContacts(Long userId, List<EmergencyContact> contacts) {
         boolean policeExists = false;
         boolean ambulanceExists = false;
@@ -52,7 +61,6 @@ public class EmergencyContactService {
             }
         }
 
-        // If Police contact doesn't exist, create it
         if (!policeExists) {
             EmergencyContact policeContact = new EmergencyContact();
             policeContact.setName(POLICE_NAME);
@@ -64,7 +72,6 @@ public class EmergencyContactService {
             emergencyContactRepository.save(policeContact);
         }
 
-        // If Ambulance contact doesn't exist, create it
         if (!ambulanceExists) {
             EmergencyContact ambulanceContact = new EmergencyContact();
             ambulanceContact.setName(AMBULANCE_NAME);
@@ -78,22 +85,38 @@ public class EmergencyContactService {
     }
 
     public EmergencyContact createEmergencyContact(Long userId, EmergencyContact contact) {
-        // Fetch the existing user from the database
+        if (!canAddPersonalContact(userId)) {
+            throw new IllegalArgumentException("You can add up to " + MAX_PERSONAL_CONTACTS + " personal emergency contacts.");
+        }
+
+        String phone = contact.getPhone() == null ? "" : contact.getPhone().replaceAll("\\D", "");
+        if (!phone.matches("^\\d{10}$")) {
+            throw new IllegalArgumentException("Phone number must be exactly 10 digits.");
+        }
+        contact.setPhone(phone);
+
+        if (contact.getName() != null && DEFAULT_CONTACT_NAMES.contains(contact.getName().trim())) {
+            throw new IllegalArgumentException("That contact name is reserved for emergency services.");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        // Associate the user with the contact
         contact.setUser(user);
-
-        // Save the emergency contact
         return emergencyContactRepository.save(contact);
     }
 
     public EmergencyContact updateEmergencyContact(Long contactId, EmergencyContact updatedContact) {
         EmergencyContact existingContact = emergencyContactRepository.findById(contactId)
                 .orElseThrow(() -> new RuntimeException("Emergency contact not found"));
+
+        String phone = updatedContact.getPhone() == null ? "" : updatedContact.getPhone().replaceAll("\\D", "");
+        if (!phone.matches("^\\d{10}$")) {
+            throw new IllegalArgumentException("Phone number must be exactly 10 digits.");
+        }
+
         existingContact.setName(updatedContact.getName());
-        existingContact.setPhone(updatedContact.getPhone());
+        existingContact.setPhone(phone);
         existingContact.setRelation(updatedContact.getRelation());
         existingContact.setEmail(updatedContact.getEmail());
         return emergencyContactRepository.save(existingContact);
@@ -107,9 +130,6 @@ public class EmergencyContactService {
         return emergencyContactRepository.findById(contactId);
     }
 
-    /**
-     * Get the first valid emergency contact phone for auto-call (skips police/ambulance defaults)
-     */
     public String getFirstContactPhone(Long userId) {
         List<EmergencyContact> contacts = emergencyContactRepository.findByUserId(userId);
         for (EmergencyContact contact : contacts) {
@@ -119,6 +139,6 @@ public class EmergencyContactService {
                 return contact.getPhone();
             }
         }
-        return "100"; // Fallback to police if no personal contacts
+        return "100";
     }
 }

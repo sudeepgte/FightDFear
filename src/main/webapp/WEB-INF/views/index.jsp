@@ -32,6 +32,12 @@
       animation: gradientBG 20s ease infinite;
       color: var(--text-dark);
       overflow-x: hidden;
+      scroll-behavior: smooth;
+      scroll-padding-top: 100px;
+    }
+
+    section[id] {
+      scroll-margin-top: 100px;
     }
     
     @keyframes gradientBG {
@@ -220,7 +226,8 @@
       position: absolute;
       bottom: 30px;
       right: 30px;
-      z-index: 10;
+      z-index: 20;
+      pointer-events: auto;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.4);
       backdrop-filter: blur(12px);
@@ -1280,8 +1287,11 @@
       <a href="#hero" class="active" onclick="closeMobileNav()"><i class="fa-solid fa-house"></i> Home</a>
       <a href="#features" onclick="closeMobileNav()"><i class="fa-solid fa-star"></i> Features</a>
       <a href="${pageContext.request.contextPath}/women-events" onclick="closeMobileNav()"><i class="fa-solid fa-calendar"></i> Events 🌸</a>
+      <a href="#tips" onclick="closeMobileNav()"><i class="fa-solid fa-shield-halved"></i> Safety</a>
+      <a href="#resources" onclick="closeMobileNav()"><i class="fa-solid fa-book"></i> Resources</a>
       <a href="#awareness" onclick="closeMobileNav()"><i class="fa-solid fa-hand-fist"></i> Awareness</a>
       <a href="#emergency" onclick="closeMobileNav()"><i class="fa-solid fa-phone-volume"></i> Emergency</a>
+      <a href="#community" onclick="closeMobileNav()"><i class="fa-solid fa-users"></i> Community</a>
       <a href="#howitworks" onclick="closeMobileNav()"><i class="fa-solid fa-circle-check"></i> How It Works</a>
       <a href="#contact" onclick="closeMobileNav()"><i class="fa-solid fa-envelope"></i> Contact</a>
     </div>
@@ -1339,7 +1349,7 @@
 
 
     <!-- Mute / Unmute Toggle -->
-    <button class="hero-mute-btn" id="heroMuteBtn" title="Toggle Audio" onclick="toggleHeroMute()">
+    <button type="button" class="hero-mute-btn" id="heroMuteBtn" title="Toggle Audio" aria-label="Toggle video sound">
       <i class="fa-solid fa-volume-xmark" id="heroMuteIcon"></i>
     </button>
 
@@ -1364,7 +1374,7 @@
         </a>
       </div>
       <div class="col-md-3 col-sm-6" data-aos="fade-up" data-aos-delay="200">
-        <a href="${pageContext.request.contextPath}/map" class="quick-action-card">
+        <a href="${pageContext.request.contextPath}/heatmap" class="quick-action-card">
           <i class="fa-solid fa-map-location-dot"></i>
           <div>
             <h5>Danger Map</h5>
@@ -1392,7 +1402,7 @@
   </div>
 
   <!-- ===== PLATFORM WELCOME & SOS EMERGENCY HUB ===== -->
-  <section class="welcome-emergency-section">
+  <section id="tips" class="welcome-emergency-section">
     <div class="container">
       <div class="row g-4 align-items-center">
         <!-- Left Column: Welcome & Info -->
@@ -1710,7 +1720,7 @@
   </section>
 
   <!-- Map Section -->
-  <section class="map-section">
+  <section id="resources" class="map-section">
     <div class="container">
       <div class="row align-items-center">
         <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
@@ -1727,7 +1737,7 @@
             <div class="map-tag tag-med"><i class="fa-solid fa-circle"></i> Medium Risk Area</div>
             <div class="map-tag tag-safe"><i class="fa-solid fa-circle"></i> Safe Area</div>
           </div>
-          <a href="${pageContext.request.contextPath}/map" class="btn-primary-custom d-inline-flex align-items-center gap-2">View Full Map <i class="fa-solid fa-arrow-right"></i></a>
+          <a href="${pageContext.request.contextPath}/heatmap" class="btn-primary-custom d-inline-flex align-items-center gap-2">View Full Map <i class="fa-solid fa-arrow-right"></i></a>
         </div>
       </div>
     </div>
@@ -1754,7 +1764,7 @@
   </div>
 
   <!-- Testimonials -->
-  <section class="steps-section" style="background: transparent; padding: 100px 0;">
+  <section id="community" class="steps-section" style="background: transparent; padding: 100px 0;">
     <div class="container">
       <h2 class="section-title" data-aos="fade-up">What Users Say</h2>
       <div class="row g-4 mt-4">
@@ -1794,7 +1804,7 @@
   </div>
 
   <!-- Footer -->
-  <footer class="footer">
+  <footer id="contact" class="footer">
     <div class="container">
       <div class="row g-4">
         <div class="col-lg-3 col-md-6">
@@ -1810,7 +1820,7 @@
         </div>
         <div class="col-lg-2 col-md-6">
           <h5>Quick Links</h5>
-          <ul><li><a href="#hero">Home</a></li><li><a href="${pageContext.request.contextPath}/features.jsp">Features</a></li><li><a href="#awareness">Awareness</a></li><li><a href="#emergency">Emergency</a></li><li><a href="#howitworks">How It Works</a></li><li><a href="#contact">Contact</a></li></ul>
+          <ul><li><a href="#hero">Home</a></li><li><a href="#features">Features</a></li><li><a href="#awareness">Awareness</a></li><li><a href="#emergency">Emergency</a></li><li><a href="#howitworks">How It Works</a></li><li><a href="#contact">Contact</a></li></ul>
         </div>
         <div class="col-lg-3 col-md-6">
           <h5>Important Links</h5>
@@ -1890,18 +1900,60 @@
       var vidBgRight = document.getElementById('heroVideoBgRight');
       var icon = document.getElementById('heroMuteIcon');
       if (!vid) return;
-      
+
       var targetMute = !vid.muted;
-      vid.muted = targetMute;
-      if (vidBgLeft) vidBgLeft.muted = targetMute;
-      if (vidBgRight) vidBgRight.muted = targetMute;
-      
-      if (targetMute) {
-        icon.className = 'fa-solid fa-volume-xmark';
-      } else {
-        icon.className = 'fa-solid fa-volume-high';
+      [vid, vidBgLeft, vidBgRight].forEach(function(v) {
+        if (!v) return;
+        v.muted = targetMute;
+        if (!targetMute) {
+          v.play().catch(function() {});
+        }
+      });
+
+      if (icon) {
+        icon.className = targetMute ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
       }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var muteBtn = document.getElementById('heroMuteBtn');
+      if (muteBtn) {
+        muteBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleHeroMute();
+        });
+      }
+
+      var headerOffset = 100;
+      function scrollToSection(target) {
+        if (!target) return;
+        var top = target.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      }
+
+      document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          var targetId = link.getAttribute('href');
+          if (!targetId || targetId === '#') return;
+          var target = document.querySelector(targetId);
+          if (target) {
+            e.preventDefault();
+            scrollToSection(target);
+            if (window.history && window.history.replaceState) {
+              window.history.replaceState(null, '', targetId);
+            }
+          }
+        });
+      });
+
+      if (window.location.hash) {
+        var initialTarget = document.querySelector(window.location.hash);
+        if (initialTarget) {
+          setTimeout(function() { scrollToSection(initialTarget); }, 100);
+        }
+      }
+    });
 
     // Mobile Navigation
     function openMobileNav() {

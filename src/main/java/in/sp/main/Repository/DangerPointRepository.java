@@ -21,5 +21,7 @@ public interface DangerPointRepository extends JpaRepository<DangerPoint, Long> 
     
     List<DangerPoint> findTop500ByVerifiedOrderByCreatedAtDesc(boolean verified);
     List<DangerPoint> findByVerified(boolean verified);
+    List<DangerPoint> findByUser(User user);
+    void deleteByUser(User user);
 }
 

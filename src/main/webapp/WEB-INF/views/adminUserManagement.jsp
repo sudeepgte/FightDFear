@@ -489,6 +489,7 @@
                   <c:choose>
                       <c:when test="${not empty verifiedUsers}">
                           <c:forEach var="u" items="${verifiedUsers}">
+                              <c:if test="${!u.banned}">
                               <tr>
                                   <td class="text-muted">${u.id}</td>
                                   <td class="fw-bold text-start ps-4">${u.fullName}</td>
@@ -507,6 +508,7 @@
                                       </div>
                                   </td>
                               </tr>
+                              </c:if>
                           </c:forEach>
                       </c:when>
                       <c:otherwise>

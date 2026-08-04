@@ -4,388 +4,356 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Update Profile | Fight D Fear</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
-    <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
     <style>
-        :root {
-            --mulberry:      #1e1b4b;
-            --mulberry-light:#312e81;
-            --hot-rose:      #f43f5e;
-            --hot-rose-dark: #1e1b4b;
-            --teal:          #20c997;
-            --gold:          #ffd700;
-            --dark-bg:       #0d0d1a;
-            --card-bg:       rgba(255,255,255,0.04);
-            --glass-border:  rgba(219,39,119,0.35);
-            --gradient:      linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
-            --glow:          0 0 22px rgba(219,39,119,0.45);
-            --shadow-md:     0 20px 50px rgba(0,0,0,0.45);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            min-height: 100vh;
-            background: var(--dark-bg);
-            font-family: 'Outfit', sans-serif;
-            color: #f0e0ec;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 16px;
-            position: relative;
+            font-family: 'Poppins', sans-serif;
+            background: var(--light-bg);
+            color: var(--fdf-text);
             overflow-x: hidden;
         }
 
-        /* ── animated background blobs ── */
-        body::before, body::after {
-            content: '';
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(90px);
-            opacity: 0.18;
-            pointer-events: none;
-            animation: blobDrift 12s ease-in-out infinite alternate;
-        }
-        body::before {
-            width: 520px; height: 520px;
-            background: var(--mulberry);
-            top: -120px; left: -140px;
-        }
-        body::after {
-            width: 440px; height: 440px;
-            background: var(--hot-rose);
-            bottom: -100px; right: -100px;
-            animation-delay: -6s;
-        }
-        @keyframes blobDrift {
-            from { transform: translate(0,0) scale(1); }
-            to   { transform: translate(40px,30px) scale(1.08); }
+        .update-page {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 16px 12px 40px;
         }
 
-        /* ── page wrapper ── */
-        .page-wrapper {
-            width: 100%;
-            max-width: 560px;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* ── brand header ── */
-        .brand-header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .brand-logo {
-            font-size: 2rem;
-            font-weight: 800;
-            background: var(--gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.5px;
-        }
-        .brand-sub {
-            font-size: 0.85rem;
-            color: rgba(240,224,236,0.55);
-            margin-top: 2px;
-        }
-
-        /* ── glass card ── */
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border-radius: 24px;
-            border: 1.5px solid var(--glass-border);
-            box-shadow: var(--shadow-md), var(--glow);
-            padding: 40px 36px 36px;
-            animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
-            position: relative;
-            overflow: hidden;
-        }
-        /* top accent line */
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--gradient);
-            border-radius: 24px 24px 0 0;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(28px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── card title ── */
-        .card-title {
-            font-size: 1.65rem;
+        .update-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fff;
+            color: var(--brand-purple) !important;
+            border: 2px solid var(--brand-purple);
+            padding: 10px 20px;
+            border-radius: 50px;
             font-weight: 700;
-            background: var(--gradient);
+            text-decoration: none;
+            transition: all 0.25s ease;
+            margin-bottom: 20px;
+        }
+        .update-back-btn:hover {
+            background: rgba(30, 27, 75, 0.06);
+            border-color: var(--brand-pink);
+            color: var(--brand-purple) !important;
+        }
+
+        .update-card {
+            background: #fff;
+            border: 1px solid var(--fdf-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            padding: 28px 24px;
+        }
+
+        .update-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-align: center;
-            margin-bottom: 28px;
-        }
-
-        /* ── form labels ── */
-        .form-label {
-            font-size: 0.82rem;
-            font-weight: 600;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            color: rgba(240,224,236,0.7);
             margin-bottom: 6px;
-            display: block;
         }
 
-        /* ── inputs & selects ── */
+        .update-subtitle {
+            color: var(--fdf-muted);
+            font-size: 0.92rem;
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: var(--brand-purple);
+            margin-bottom: 6px;
+        }
+
         .form-control,
         .form-select {
-            background: rgba(255,255,255,0.06) !important;
-            border: 1.5px solid rgba(219,39,119,0.28) !important;
-            border-radius: 12px !important;
-            color: #f0e0ec !important;
-            padding: 11px 14px !important;
-            font-family: 'Outfit', sans-serif;
+            border: 1px solid var(--fdf-border);
+            border-radius: 12px;
+            padding: 11px 14px;
             font-size: 0.95rem;
-            transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+            color: var(--fdf-text);
+            background: #fff;
         }
-        .form-control::placeholder { color: rgba(240,224,236,0.35); }
         .form-control:focus,
         .form-select:focus {
-            border-color: var(--hot-rose) !important;
-            box-shadow: 0 0 0 3px rgba(219,39,119,0.2) !important;
-            background: rgba(255,255,255,0.09) !important;
-            outline: none;
+            border-color: var(--brand-pink);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
-        select.form-control option { background: #1a0d1a; color: #f0e0ec; }
+        .form-control[readonly] {
+            background: #f8f9fc;
+            color: var(--fdf-muted);
+        }
 
-        /* file input */
         input[type="file"].form-control {
-            padding: 8px 14px !important;
+            padding: 8px 12px;
         }
         input[type="file"]::file-selector-button {
-            background: var(--gradient);
+            background: var(--gradient-primary);
             border: none;
             border-radius: 8px;
             color: #fff;
-            padding: 5px 14px;
-            font-family: 'Outfit', sans-serif;
+            padding: 6px 14px;
             font-size: 0.82rem;
             font-weight: 600;
             cursor: pointer;
             margin-right: 10px;
-            transition: opacity 0.2s;
         }
-        input[type="file"]::file-selector-button:hover { opacity: 0.85; }
 
-        /* ── divider ── */
         .section-divider {
             border: none;
-            border-top: 1px solid rgba(219,39,119,0.2);
-            margin: 20px 0;
+            border-top: 1px dashed var(--fdf-border);
+            margin: 22px 0;
         }
 
-        /* ── privacy toggle ── */
-        .form-check { display: flex; align-items: center; gap: 10px; }
-        .form-check-input {
-            width: 18px; height: 18px;
-            border-radius: 5px !important;
-            border: 2px solid rgba(219,39,119,0.4) !important;
-            background: rgba(255,255,255,0.06) !important;
-            cursor: pointer;
-            accent-color: var(--hot-rose);
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #faf7fb;
+            border-radius: 12px;
+            border: 1px solid var(--fdf-border);
         }
-        .form-check-input:checked {
-            background-color: var(--hot-rose) !important;
-            border-color: var(--hot-rose) !important;
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            accent-color: var(--brand-pink);
         }
         .form-check-label {
-            font-size: 0.88rem;
-            color: rgba(240,224,236,0.65);
-            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--fdf-text);
+            line-height: 1.45;
         }
 
-        /* ── buttons ── */
-        .btn-brand {
+        .btn-save {
             width: 100%;
             padding: 13px;
             border: none;
             border-radius: 14px;
-            background: var(--gradient);
+            background: var(--gradient-primary);
             color: #fff;
-            font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
             font-weight: 700;
-            letter-spacing: 0.3px;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            font-size: 1rem;
+            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.25);
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 6px 24px rgba(219,39,119,0.4);
-            text-decoration: none;
-            display: block;
-            text-align: center;
         }
-        .btn-brand:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 32px rgba(219,39,119,0.55);
+        .btn-save:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(244, 63, 94, 0.35);
             color: #fff;
         }
-        .btn-brand:active { transform: translateY(0); }
 
-        /* ripple */
-        .btn-brand::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 0; height: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transform: translate(-50%,-50%);
-            transition: width 0.5s, height 0.5s, opacity 0.5s;
-            opacity: 0;
-        }
-        .btn-brand:active::after {
-            width: 300px; height: 300px; opacity: 0;
-        }
-
-        .btn-ghost {
+        .btn-cancel {
+            display: block;
             width: 100%;
             padding: 12px;
-            border: 1.5px solid rgba(219,39,119,0.4);
-            border-radius: 14px;
-            background: transparent;
-            color: rgba(240,224,236,0.75);
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.25s;
-            text-decoration: none;
-            display: block;
-            text-align: center;
             margin-top: 10px;
+            border: 2px solid var(--fdf-border);
+            border-radius: 14px;
+            background: #fff;
+            color: var(--brand-purple);
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s;
         }
-        .btn-ghost:hover {
-            border-color: var(--hot-rose);
-            color: var(--hot-rose);
-            background: rgba(219,39,119,0.08);
+        .btn-cancel:hover {
+            border-color: var(--brand-purple);
+            background: rgba(30, 27, 75, 0.04);
+            color: var(--brand-purple);
         }
 
-        /* ── field group spacing ── */
-        .field-group { margin-bottom: 18px; }
+        .field-group {
+            margin-bottom: 16px;
+        }
 
-        /* ── responsive ── */
-        @media (max-width: 500px) {
-            .glass-card { padding: 28px 20px 24px; }
-            .card-title  { font-size: 1.35rem; }
+        @media (max-width: 768px) {
+            #wrapper {
+                flex-direction: column !important;
+                margin-top: 68px !important;
+            }
+            #page-content-wrapper {
+                margin-left: 0 !important;
+                padding: 12px 10px !important;
+                width: 100% !important;
+            }
+            .update-page {
+                padding: 8px 4px 32px;
+            }
+            .update-card {
+                padding: 22px 16px;
+                border-radius: 16px;
+            }
+            .update-title {
+                font-size: 1.4rem;
+            }
+            .update-back-btn {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 16px;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .update-title {
+                font-size: 1.25rem;
+            }
+            .form-control,
+            .form-select {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="page-wrapper">
-    <div class="brand-header mb-4">
-        <div class="brand-logo">Fight D Fear</div>
-        <div class="brand-sub">Women Safety &amp; Empowerment Platform</div>
-    </div>
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-    <div class="glass-card">
-        <h2 class="card-title">Update Profile</h2>
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
 
-        <form action="${pageContext.request.contextPath}/users/update/${user.id}" method="post" enctype="multipart/form-data">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
+        <div class="update-page">
+            <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="update-back-btn">
+                <i class="bi bi-arrow-left"></i>
+                Back to Profile
+            </a>
 
-            <!-- Name -->
-            <div class="field-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="name" id="name" class="form-control"
-                       value="${user.fullName}" placeholder="Enter your full name" required>
-            </div>
+            <div class="update-card">
+                <h1 class="update-title">Update Profile</h1>
+                <p class="update-subtitle">Keep your account details up to date for a safer experience.</p>
 
-            <!-- Email -->
-            <div class="field-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" name="email" id="email" class="form-control"
-                       value="${user.email}" placeholder="Enter your email" required>
-            </div>
-
-            <!-- Phone -->
-            <div class="field-group">
-                <label class="form-label">Phone Number</label>
-                <input type="tel" name="phone" id="phone" class="form-control"
-                       value="${user.phoneNumber}" placeholder="10-digit phone number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
-            </div>
-
-            <!-- Age & Gender row -->
-            <div class="row g-3 mb-0">
-                <div class="col-6">
+                <form action="${pageContext.request.contextPath}/users/update/${user.id}" method="post" enctype="multipart/form-data">
                     <div class="field-group">
-                        <label class="form-label" for="age">Age</label>
-                        <input type="number" id="age" name="age" class="form-control"
-                               value="${user.age}" placeholder="Age" min="1" max="120" required>
+                        <label class="form-label" for="name">Full Name</label>
+                        <input type="text" name="name" id="name" class="form-control"
+                               value="${user.fullName}" placeholder="Enter your full name" required>
                     </div>
-                </div>
-                <div class="col-6">
+
                     <div class="field-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" name="email" id="email" class="form-control"
+                               value="${user.email}" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" name="phone" id="phone" class="form-control"
+                               value="${user.phoneNumber}" placeholder="10-digit phone number"
+                               pattern="[0-9]{10}" maxlength="10" minlength="10"
+                               oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="field-group mb-0">
+                                <label class="form-label" for="dob">Date of Birth</label>
+                                <input type="date" id="dob" name="dob" class="form-control"
+                                       value="${user.dob}" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="field-group mb-0">
+                                <label class="form-label" for="ageDisplay">Age</label>
+                                <input type="number" id="ageDisplay" class="form-control"
+                                       value="${user.age}" placeholder="Auto from DOB"
+                                       min="18" max="100" readonly tabindex="-1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field-group mt-3">
                         <label class="form-label" for="gender">Gender</label>
-                        <select name="gender" id="gender" class="form-control" required>
+                        <select name="gender" id="gender" class="form-select" required>
                             <option value="MALE"   ${user.gender eq 'MALE'   ? 'selected' : ''}>Male</option>
                             <option value="FEMALE" ${user.gender eq 'FEMALE' ? 'selected' : ''}>Female</option>
                             <option value="OTHER"  ${user.gender eq 'OTHER'  ? 'selected' : ''}>Other</option>
                         </select>
                     </div>
-                </div>
+
+                    <div class="field-group">
+                        <label class="form-label" for="address">Home Address</label>
+                        <input type="text" name="address" id="address" class="form-control"
+                               value="${user.homeAddress}" placeholder="Enter your address" required>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="field-group">
+                        <label class="form-label" for="identityFile">Identity Document</label>
+                        <input type="file" name="identityFile" id="identityFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+
+                    <div class="field-group">
+                        <label class="form-label" for="image">Profile Photo</label>
+                        <input type="file" name="image" id="image" class="form-control" accept="image/*">
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="field-group mb-0">
+                        <div class="form-check">
+                            <input type="checkbox" name="isPrivate" class="form-check-input" id="isPrivate"
+                                   ${user['private'] ? 'checked' : ''}>
+                            <label class="form-check-label" for="isPrivate">
+                                Private Account — only followers can see my reels
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-update" class="btn-save mt-4">Save Changes</button>
+                </form>
+
+                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="btn-cancel" id="btn-cancel">Cancel</a>
             </div>
-
-            <!-- Address -->
-            <div class="field-group">
-                <label class="form-label">Home Address</label>
-                <input type="text" name="address" id="address" class="form-control"
-                       value="${user.homeAddress}" placeholder="Enter your address" required>
-            </div>
-
-            <hr class="section-divider">
-
-            <!-- Identity Doc -->
-            <div class="field-group">
-                <label class="form-label">Identity Document</label>
-                <input type="file" name="identityFile" id="identityFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
-            </div>
-
-            <!-- Profile Photo -->
-            <div class="field-group">
-                <label class="form-label">Profile Photo</label>
-                <input type="file" name="image" id="image" class="form-control" accept="image/*">
-            </div>
-
-            <hr class="section-divider">
-
-            <!-- Privacy Toggle -->
-            <div class="field-group form-check">
-                <input type="checkbox" name="isPrivate" class="form-check-input" id="isPrivate"
-                       ${user['private'] ? 'checked' : ''}>
-                <label class="form-check-label" for="isPrivate">
-                    Private Account &mdash; only followers can see my reels
-                </label>
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" id="btn-update" class="btn-brand mt-3">Save Changes</button>
-        </form>
-
-        <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="btn-ghost" id="btn-cancel">Cancel</a>
+        </div>
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var dob = document.getElementById('dob');
+    var ageDisplay = document.getElementById('ageDisplay');
+    if (!dob || !ageDisplay) return;
+
+    var today = new Date();
+    var maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    var minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+    var fmt = function(d) { return d.toISOString().split('T')[0]; };
+    dob.setAttribute('max', fmt(maxDob));
+    dob.setAttribute('min', fmt(minDob));
+
+    function syncAge() {
+        if (!dob.value) return;
+        var birthDate = new Date(dob.value + 'T00:00:00');
+        var now = new Date();
+        var computedAge = now.getFullYear() - birthDate.getFullYear();
+        var m = now.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) computedAge--;
+        ageDisplay.value = computedAge;
+    }
+
+    dob.addEventListener('change', syncAge);
+    syncAge();
+});
+</script>
+
 </body>
 </html>
-

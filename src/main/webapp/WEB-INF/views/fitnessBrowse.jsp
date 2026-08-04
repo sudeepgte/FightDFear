@@ -113,15 +113,42 @@
         }
 
         /* Category Scroll Bar */
+        .category-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 800px;
+            margin: 24px auto 0;
+            min-width: 0;
+            width: 100%;
+            padding: 0 10px;
+            text-align: left;
+        }
+        .category-filter-row .cat-scroll-btn {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
         .cat-scroll-container {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
             gap: 10px;
-            margin-top: 30px;
+            margin-top: 0;
             overflow-x: auto;
-            white-space: nowrap;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
             padding-bottom: 8px;
+            min-width: 0;
+            flex: 1 1 auto;
             scrollbar-width: none;
+            justify-content: flex-start;
+            text-align: left;
         }
         .cat-scroll-container::-webkit-scrollbar {
             display: none;
@@ -140,6 +167,8 @@
             align-items: center;
             gap: 6px;
             text-decoration: none;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .btn-cat-pill:hover, .btn-cat-pill.active {
             background: var(--gradient-primary);
@@ -306,7 +335,7 @@
             .glow-header h1 { font-size: 28px; }
             .cat-scroll-container {
                 justify-content: flex-start;
-                padding: 10px 15px;
+                padding: 4px 0 10px;
             }
             .trainers-grid {
                 grid-template-columns: 1fr;
@@ -337,9 +366,6 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
                 <a href="${pageContext.request.contextPath}/fitness/bookings" class="top-btn">
                     <i class="bi bi-calendar-check"></i> My Bookings
                 </a>
@@ -352,11 +378,11 @@
             <p>Connect with verified female fitness mentors, yoga mentors, zumba guides, and home workout trainers customized to your fitness timeline.</p>
             
             <!-- Category Scroll -->
-            <div class="d-flex align-items-center justify-content-center mt-3" style="max-width: 800px; margin: 0 auto;">
-                <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+            <div class="category-filter-row">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollFitnessCat(-1)" aria-label="Scroll categories left">
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <div class="cat-scroll-container flex-grow-1" style="margin-top: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
+                <div class="cat-scroll-container" id="fitnessCatScroll">
                     <a href="${pageContext.request.contextPath}/fitness" class="btn-cat-pill ${empty selectedCategory ? 'active' : ''}">
                         <i class="bi bi-grid-fill"></i> All Specializations
                     </a>
@@ -366,7 +392,7 @@
                         </a>
                     </c:forEach>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollFitnessCat(1)" aria-label="Scroll categories right">
                     <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
@@ -478,14 +504,33 @@
         once: true
     });
 
-    function scrollCatLeft(btn) {
-        const container = btn.nextElementSibling;
-        container.scrollBy({ left: -200, behavior: 'smooth' });
+    function scrollFitnessCat(direction) {
+        const container = document.getElementById('fitnessCatScroll');
+        if (!container) return;
+        const step = Math.max(container.clientWidth * 0.65, 180);
+        container.scrollBy({ left: direction * step, behavior: 'smooth' });
     }
-    function scrollCatRight(btn) {
-        const container = btn.previousElementSibling;
-        container.scrollBy({ left: 200, behavior: 'smooth' });
-    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const container = document.getElementById('fitnessCatScroll');
+        if (!container) return;
+
+        const activePill = container.querySelector('.btn-cat-pill.active');
+        if (activePill) {
+            const pills = [...container.querySelectorAll('.btn-cat-pill')];
+            const activeIndex = pills.indexOf(activePill);
+            if (activeIndex <= 0) {
+                container.scrollLeft = 0;
+            } else if (activeIndex >= pills.length - 1) {
+                container.scrollLeft = Math.max(0, container.scrollWidth - container.clientWidth);
+            } else {
+                const pillLeft = activePill.offsetLeft;
+                const pillWidth = activePill.offsetWidth;
+                const viewWidth = container.clientWidth;
+                container.scrollLeft = Math.max(0, pillLeft - (viewWidth / 2) + (pillWidth / 2));
+            }
+        }
+    });
 </script>
 
 </body>

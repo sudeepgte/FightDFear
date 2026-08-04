@@ -217,10 +217,24 @@ public class CreatorHubController {
         List<VideoComment> list = videoCommentRepository.findByVideo_Id(videoId);
         List<Map<String, Object>> result = new ArrayList<>();
         for (VideoComment c : list) {
+            if (c.getParent() != null) {
+                continue;
+            }
             Map<String, Object> map = new HashMap<>();
             map.put("id", c.getId());
             map.put("text", c.getText());
             map.put("username", c.getUser() != null ? c.getUser().getFullName() : "Anonymous User");
+            List<Map<String, Object>> replies = new ArrayList<>();
+            for (VideoComment reply : list) {
+                if (reply.getParent() != null && reply.getParent().getId().equals(c.getId())) {
+                    Map<String, Object> r = new HashMap<>();
+                    r.put("id", reply.getId());
+                    r.put("text", reply.getText());
+                    r.put("username", reply.getUser() != null ? reply.getUser().getFullName() : "Anonymous User");
+                    replies.add(r);
+                }
+            }
+            map.put("replies", replies);
             result.add(map);
         }
         return result;
@@ -257,6 +271,24 @@ public class CreatorHubController {
 
         if (file.isEmpty()) {
             redirectAttributes.addFlashAttribute("error", "Please upload a media file!");
+            return "redirect:/creator-hub/upload";
+        }
+
+        String originalName = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+        String contentType = file.getContentType() != null ? file.getContentType().toLowerCase() : "";
+        boolean isVideoUpload = "REEL".equalsIgnoreCase(uploadType) || "LONG_VIDEO".equalsIgnoreCase(uploadType) || "STORY".equalsIgnoreCase(uploadType);
+        boolean isImageUpload = "IMAGE".equalsIgnoreCase(uploadType);
+
+        if (isVideoUpload && !originalName.endsWith(".mp4") && !contentType.contains("mp4")) {
+            redirectAttributes.addFlashAttribute("error", "Videos must be uploaded in MP4 format only.");
+            return "redirect:/creator-hub/upload";
+        }
+        if (isImageUpload && !originalName.matches(".*\\.(jpg|jpeg|png|webp)$") && !contentType.startsWith("image/")) {
+            redirectAttributes.addFlashAttribute("error", "Images must be JPG, PNG, or WEBP format.");
+            return "redirect:/creator-hub/upload";
+        }
+        if (isPaidContent && (price == null || price <= 0 || price > 99999)) {
+            redirectAttributes.addFlashAttribute("error", "Paid course price must be between Rs. 1 and Rs. 99,999.");
             return "redirect:/creator-hub/upload";
         }
 
@@ -376,6 +408,11 @@ public class CreatorHubController {
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("followersCount", followersCount);
         model.addAttribute("followingCount", followingCount);
+        model.addAttribute("followersList", userFollowRepository.findByFollowed(creator).stream().map(f -> f.getFollower()).collect(Collectors.toList()));
+        model.addAttribute("followingList", userFollowRepository.findByFollower(creator).stream().map(f -> f.getFollowed()).collect(Collectors.toList()));
+        double subscriptionPrice = (creator.getCreatorSubscriptionPrice() != null && creator.getCreatorSubscriptionPrice() > 0)
+                ? creator.getCreatorSubscriptionPrice() : 99.0;
+        model.addAttribute("subscriptionPrice", subscriptionPrice);
         model.addAttribute("isFollowing", isFollowing);
         model.addAttribute("isRequested", isRequested);
         model.addAttribute("isSubscribed", isSubscribed);
@@ -450,7 +487,7 @@ public class CreatorHubController {
             return response;
         }
 
-        if (amount <= 0) {
+        if (amount <= 0 || amount > 99999) {
             response.put("error", "INVALID_AMOUNT");
             return response;
         }
@@ -512,8 +549,7 @@ public class CreatorHubController {
 
         Double price = creator.getCreatorSubscriptionPrice();
         if (price == null || price <= 0) {
-            response.put("error", "SUBSCRIPTION_NOT_ENABLED");
-            return response;
+            price = 99.0;
         }
 
         if (currentUser.getWalletBalance() < price) {
@@ -577,6 +613,10 @@ public class CreatorHubController {
         }
 
         Double price = video.getPrice();
+        if (price == null || price <= 0 || price > 99999) {
+            response.put("error", "INVALID_PRICE");
+            return response;
+        }
         if (currentUser.getWalletBalance() < price) {
             response.put("error", "INSUFFICIENT_FUNDS");
             return response;
@@ -692,6 +732,9 @@ public class CreatorHubController {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
+        currentUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+        session.setAttribute("user", currentUser);
+
         // Fetch user uploads (include drafts)
         List<Videoupload> myUploads = videoUploadRepository.findByUser_Id(currentUser.getId());
 
@@ -727,6 +770,7 @@ public class CreatorHubController {
         Double totalTipsAmount = tipsReceived.stream().mapToDouble(TipTransaction::getAmount).sum();
 
         model.addAttribute("user", currentUser);
+        model.addAttribute("isPrivateProfile", currentUser.isPrivate());
         model.addAttribute("drafts", drafts);
         model.addAttribute("published", published);
         model.addAttribute("totalViews", totalViews);
@@ -1266,7 +1310,13 @@ public class CreatorHubController {
                                       @RequestParam String campaignTitle,
                                       @RequestParam String description,
                                       @RequestParam Double payRate,
+                                      HttpSession session,
                                       RedirectAttributes redirectAttributes) {
+        Admin admin = (Admin) session.getAttribute("admin");
+        if (admin == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
         BrandCollaboration campaign = new BrandCollaboration();
         campaign.setBrandName(brandName);
         campaign.setCampaignTitle(campaignTitle);
@@ -1275,7 +1325,7 @@ public class CreatorHubController {
         campaign.setStatus("ACTIVE");
         brandCollaborationRepository.save(campaign);
 
-        redirectAttributes.addFlashAttribute("success", "Sponsorship Campaign created successfully!");
-        return "redirect:/creator-hub/admin";
+        redirectAttributes.addFlashAttribute("success", "Sponsorship campaign created successfully!");
+        return "redirect:/admin/adminDashboard?hubTab=campaign#creatorHubTabs";
     }
 }

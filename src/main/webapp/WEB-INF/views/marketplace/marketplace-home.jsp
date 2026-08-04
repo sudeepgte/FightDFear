@@ -273,17 +273,8 @@
 
         <!-- Dashboard Header -->
         <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
-                <a href="${pageContext.request.contextPath}/marketplace/earn" class="top-btn">
-                    <i class="bi bi-cash-stack"></i> Want to Earn
-                </a>
-            </div>
-            
             <h1>Women Marketplace</h1>
-            <p>Empowering local women creators, educators, and service providers. Discover skilled professionals, browse custom services, or register to earn by sharing your talents.</p>
+            <p>Empowering local women creators, educators, and service providers. Discover skilled professionals and browse custom services.</p>
             
             <!-- Search bar -->
             <div class="search-container">
@@ -314,16 +305,6 @@
                     <p class="fs-5">No verified worker categories available yet.</p>
                 </div>
             </c:if>
-        </div>
-
-        <!-- Call To Action -->
-        <div class="cta-box" data-aos="fade-up">
-            <h4>Are you a service provider?</h4>
-            <p>List your services, connect with clients, and launch your entrepreneurship portal with Fight D Fear.</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="btn btn-outline-primary px-4 py-2 rounded-pill" style="font-weight: 700;">Provider Login</a>
-                <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="btn btn-primary px-4 py-2 rounded-pill" style="font-weight: 700; background: var(--brand-purple); border: none;">Register Now</a>
-            </div>
         </div>
 
         <!-- Footer -->

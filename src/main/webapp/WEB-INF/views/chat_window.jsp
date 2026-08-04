@@ -142,6 +142,55 @@
                     transition: transform 0.2s ease;
                 }
 
+                .msg-time {
+                    display: block;
+                    font-size: 10px;
+                    opacity: 0.75;
+                    margin-top: 4px;
+                    text-align: right;
+                }
+
+                .message-received .msg-time {
+                    text-align: left;
+                }
+
+                .emoji-picker {
+                    position: absolute;
+                    bottom: 60px;
+                    left: 10px;
+                    background: #fff;
+                    border: 1px solid #ddd;
+                    border-radius: 12px;
+                    padding: 10px;
+                    display: none;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                    max-width: 280px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+                    z-index: 1003;
+                }
+
+                .emoji-picker.show { display: flex; }
+
+                .emoji-btn {
+                    background: none;
+                    border: none;
+                    font-size: 22px;
+                    cursor: pointer;
+                    padding: 2px 4px;
+                    border-radius: 6px;
+                }
+
+                .emoji-btn:hover { background: #f0f0f0; }
+
+                .chat-input-wrap {
+                    position: relative;
+                    flex: 1;
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                }
+
                 .message-sent:hover,
                 .message-received:hover {
                     transform: scale(1.02);
@@ -361,6 +410,10 @@
                                             </video>
                                         </c:if>
 
+                                        <c:if test="${not empty msg.timestamp}">
+                                            <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
+                                        </c:if>
+
                                         <span class="tick ${msg.readStatus ? 'read' : ''}">
                                             ✔✔
                                         </span>
@@ -383,6 +436,10 @@
                                             </video>
                                         </c:if>
 
+                                        <c:if test="${not empty msg.timestamp}">
+                                            <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
+                                        </c:if>
+
 
                                     </div>
                                 </div>
@@ -396,8 +453,14 @@
                 <!-- INPUT -->
                 <form id="chatForm" class="chat-input">
                     <input type="hidden" id="receiverId" value="${receiver.id}">
-                    <input type="text" id="message" class="form-control" placeholder="Type a message..." required>
-                    <button class="btn btn-primary">
+                    <div class="chat-input-wrap">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="emojiToggleBtn" title="Add emoji">
+                            <i class="bi bi-emoji-smile"></i>
+                        </button>
+                        <div id="emojiPicker" class="emoji-picker"></div>
+                        <input type="text" id="message" class="form-control" placeholder="Type a message..." required>
+                    </div>
+                    <button class="btn btn-primary" type="submit">
                         <i class="bi bi-send"></i>
                     </button>
                 </form>
@@ -538,6 +601,15 @@
                     messageInput.value = "";
                 }
 
+                function formatMsgTime(ts) {
+                    if (!ts) return '';
+                    const d = new Date(ts);
+                    if (isNaN(d.getTime())) {
+                        return ts.replace('T', ' ').substring(0, 16);
+                    }
+                    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
+
                 function displayMessage(msg) {
                     const chatBox = document.getElementById("chatBox");
 
@@ -561,15 +633,47 @@
                     if (msg.videoUrl) {
                         const video = document.createElement("video");
                         video.src = "${pageContext.request.contextPath}" + msg.videoUrl;
-
                         video.controls = true;
                         bubble.appendChild(video);
+                    }
+
+                    if (msg.timestamp) {
+                        const timeEl = document.createElement("span");
+                        timeEl.className = "msg-time";
+                        timeEl.textContent = formatMsgTime(msg.timestamp);
+                        bubble.appendChild(timeEl);
                     }
 
                     wrapper.appendChild(bubble);
                     chatBox.appendChild(wrapper);
                     chatBox.scrollTop = chatBox.scrollHeight;
                 }
+
+                const EMOJIS = ['😀','😂','😍','🥰','😊','😢','😡','👍','👎','🙏','💪','❤️','🔥','✨','🎉','😎','🤔','👋','💯','🌸'];
+                const emojiPicker = document.getElementById('emojiPicker');
+                EMOJIS.forEach(e => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'emoji-btn';
+                    btn.textContent = e;
+                    btn.addEventListener('click', () => {
+                        const input = document.getElementById('message');
+                        input.value += e;
+                        input.focus();
+                        emojiPicker.classList.remove('show');
+                    });
+                    emojiPicker.appendChild(btn);
+                });
+
+                document.getElementById('emojiToggleBtn').addEventListener('click', () => {
+                    emojiPicker.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#emojiPicker') && !e.target.closest('#emojiToggleBtn')) {
+                        emojiPicker.classList.remove('show');
+                    }
+                });
 
                 document.getElementById("chatForm").addEventListener("submit", function (e) {
                     e.preventDefault();

@@ -27,4 +27,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Purpose: admin user management — list all banned/active users separately.
     List<User> findByBanned(boolean banned);
+
+    @Query("SELECT u FROM User u WHERE u.verificationStatus = :status AND u.banned = false")
+    List<User> findByVerificationStatusAndBannedFalse(@Param("status") VerificationStatus status);
 }

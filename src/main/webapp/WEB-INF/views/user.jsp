@@ -135,11 +135,39 @@
         .fdf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
         .fdf-group { margin-bottom: 20px; position: relative; }
         .fdf-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--brand-purple-dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .required-star { color: var(--error-red); margin-left: 2px; }
+        .field-hint { font-size: 0.72rem; color: var(--fdf-muted); margin-top: 6px; line-height: 1.4; }
         .fdf-input { width: 100%; padding: 14px 18px; border: 2px solid var(--fdf-border); border-radius: 16px; background: #f8fafc; outline: none; transition: all 0.3s ease; font-family: inherit; font-weight: 500; }
         .fdf-input:focus { border-color: var(--brand-pink); background: #fff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
-        .password-input-wrap { position: relative; }
-        .password-input-wrap .fdf-input { padding-right: 48px; }
-        .password-toggle-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #64748b; cursor: pointer; padding: 4px; font-size: 1.1rem; }
+        .password-input-wrap { position: relative; width: 100%; }
+        .password-input-wrap .fdf-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding-right: 3rem;
+            line-height: 1.5;
+            min-height: 52px;
+        }
+        .password-input-wrap input[type="password"]::-ms-reveal,
+        .password-input-wrap input[type="password"]::-ms-clear { display: none; }
+        .password-input-wrap input::-webkit-credentials-auto-fill-button,
+        .password-input-wrap input::-webkit-contacts-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+        .password-toggle-btn {
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            border: none; background: transparent; color: #475569; cursor: pointer;
+            padding: 0; width: 36px; height: 36px;
+            display: inline-flex; align-items: center; justify-content: center;
+            z-index: 2;
+        }
+        .password-toggle-btn svg {
+            width: 20px; height: 20px; display: block; pointer-events: none;
+        }
+        .password-toggle-btn:hover,
+        .password-toggle-btn:focus { color: var(--brand-purple); outline: none; }
+        /* Open eye = password visible | Closed/slashed eye = password hidden */
+        .password-toggle-btn .icon-eye-show { display: none; }
+        .password-toggle-btn .icon-eye-hide { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-show { display: block; }
+        .password-toggle-btn.is-visible .icon-eye-hide { display: none; }
 
         .btn-dr { padding: 14px 28px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; border: none; font-size: 1rem; width: 100%; }
         .btn-dr-next { background: var(--gradient-primary); color: #fff; box-shadow: 0 8px 20px rgba(124, 45, 94, 0.2); }
@@ -228,33 +256,75 @@
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat';">Basic Information</h3>
                         <div class="fdf-row">
                             <div class="fdf-group">
-                                <label>Full Name</label>
-                                <input type="text" name="fullName" id="fullName" class="fdf-input" placeholder="e.g. Priya Sharma" required>
-                                <div class="error-feedback">Name must be at least 3 characters.</div>
+                                <label>Username <span class="required-star">*</span></label>
+                                <input type="text" name="fullName" id="fullName" class="fdf-input" placeholder="e.g. priya_sharma" minlength="3" maxlength="20" required
+                                       oninput="this.value=this.value.slice(0,20).replace(/[^a-zA-Z0-9._\-\s]/g,'')">
+                                <div class="field-hint">3–20 characters (letters, numbers, dots, underscores, hyphens).</div>
+                                <div class="error-feedback">Username must be 3-20 characters.</div>
                             </div>
                             <div class="fdf-group">
-                                <label>Phone Number</label>
+                                <label>Phone Number <span class="required-star">*</span></label>
                                 <input type="tel" name="phoneNumber" id="phoneNumber" class="fdf-input" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
                                 <div class="error-feedback">Enter a valid 10-digit number.</div>
                             </div>
                         </div>
                         <div class="fdf-group">
-                            <label>Email Address</label>
-                            <input type="email" name="email" id="email" class="fdf-input" placeholder="name@example.com" required>
-                            <div class="error-feedback">Valid email required.</div>
+                            <label>Email Address <span class="required-star">*</span></label>
+                            <input type="text" name="email" id="email" class="fdf-input" placeholder="name@example.com" inputmode="email" autocomplete="email"
+                                   pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
+                                   title="Use only letters, numbers, dots, underscores, hyphens, and plus in the email"
+                                   oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')" required>
+                            <div class="error-feedback">Enter a valid email address (no special characters like # $ % ^).</div>
                         </div>
                         <div class="fdf-group">
-                            <label>Password</label>
+                            <label>Password <span class="required-star">*</span></label>
                             <div class="password-input-wrap">
-                                <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" required autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password">
-                                    <i class="bi bi-eye"></i>
+                                <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
+                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password" aria-pressed="false">
+                                    <span class="icon-eye-show" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </span>
+                                    <span class="icon-eye-hide" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                            <path d="M1 1l22 22"></path>
+                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                        </svg>
+                                    </span>
                                 </button>
                             </div>
-                            <div class="error-feedback">Min 6 chars with number & uppercase.</div>
+                            <div class="field-hint"><strong>Password must be at least 8 characters.</strong> Also include uppercase, lowercase, a number, and a special character (!@#$%^&amp;*).</div>
+                            <div class="error-feedback">Password must meet the requirements above.</div>
                         </div>
                         <div class="fdf-group">
-                            <label>Home Address</label>
+                            <label>Confirm Password <span class="required-star">*</span></label>
+                            <div class="password-input-wrap">
+                                <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
+                                <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                                    <span class="icon-eye-show" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </span>
+                                    <span class="icon-eye-hide" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                                            <path d="M1 1l22 22"></path>
+                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="error-feedback">Passwords do not match.</div>
+                        </div>
+                        <div class="fdf-group">
+                            <label>Home Address <span class="required-star">*</span></label>
                             <input type="text" name="homeAddress" id="homeAddress" class="fdf-input" placeholder="Current residential address" required>
                             <div class="error-feedback">Address is required.</div>
                         </div>
@@ -267,19 +337,23 @@
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat';">Personal & Identity</h3>
                         <div class="fdf-row">
                             <div class="fdf-group">
-                                <label>Date of Birth</label>
-                                <input type="date" id="dob" name="dob" class="fdf-input" required max="<%= java.time.LocalDate.now() %>">
-                                <div class="error-feedback">DOB is required and cannot be a future date.</div>
+                                <label>Date of Birth <span class="required-star">*</span></label>
+                                <input type="date" id="dob" name="dob" class="fdf-input" required
+                                       min="<%= java.time.LocalDate.now().minusYears(100) %>"
+                                       max="<%= java.time.LocalDate.now().minusYears(18) %>">
+                                <div class="field-hint">You must be between 18 and 100 years old.</div>
+                                <div class="error-feedback">DOB must give an age between 18 and 100 years.</div>
                             </div>
                             <div class="fdf-group">
-                                <label>Age</label>
-                                <input type="number" id="age" name="age" class="fdf-input" placeholder="Age" required readonly>
-                                <div class="error-feedback">Invalid age.</div>
+                                <label>Age <span class="required-star">*</span></label>
+                                <input type="number" id="ageDisplay" class="fdf-input" placeholder="Auto-calculated from DOB" min="18" max="100" readonly tabindex="-1">
+                                <input type="hidden" id="age" name="age" value="">
+                                <div class="error-feedback">Age must be between 18 and 100 years.</div>
                             </div>
                         </div>
 
                         <div class="fdf-group">
-                            <label>Gender Identification</label>
+                            <label>Gender Identification <span class="required-star">*</span></label>
                             <select name="gender" id="gender" class="fdf-input" required>
                                 <option value="">Select Gender</option>
                                 <option value="FEMALE">FEMALE</option>
@@ -291,14 +365,16 @@
 
                         <div class="fdf-row">
                             <div class="fdf-group">
-                                <label>Identity Proof (PDF/IMG)</label>
+                                <label>Identity Proof (PDF/IMG) <span class="required-star">*</span></label>
                                 <input type="file" name="identityDoc" id="identityDoc" class="fdf-input" style="padding:10px;" accept="image/*,.pdf" required>
-                                <div class="error-feedback">Identity proof required (Image or PDF).</div>
+                                <div class="field-hint">Max file size: 5 MB. Accepted formats: JPG, PNG, PDF.</div>
+                                <div class="error-feedback">Identity proof required (Image or PDF, max 5 MB).</div>
                             </div>
                             <div class="fdf-group">
-                                <label>Profile Photo</label>
+                                <label>Profile Photo <span class="required-star">*</span></label>
                                 <input type="file" name="image" id="profilePhoto" class="fdf-input" style="padding:10px;" accept="image/*" required>
-                                <div class="error-feedback">Photo is required.</div>
+                                <div class="field-hint">Max file size: 5 MB. Accepted formats: JPG, PNG.</div>
+                                <div class="error-feedback">Photo is required (max 5 MB).</div>
                             </div>
                         </div>
 
@@ -328,22 +404,42 @@
 
         const validateField = (el) => {
             let isValid = true;
-            const val = el.value.trim();
-            const err = el.parentElement.querySelector('.error-feedback');
+            const err = el.closest('.fdf-group')?.querySelector('.error-feedback');
 
-            if (el.hasAttribute('required') && !val) isValid = false;
-            
-            if (isValid && el.id === 'fullName') isValid = val.length >= 3;
-            if (isValid && el.id === 'phoneNumber') isValid = /^[6-9]\d{9}$/.test(val);
-            if (isValid && el.id === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-            if (isValid && el.id === 'password') isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
-            if (isValid && el.id === 'dob') {
-                const selectedDate = new Date(val);
-                const today = new Date();
-                today.setHours(0,0,0,0);
-                isValid = selectedDate <= today;
+            if (el.type === 'file') {
+                const maxBytes = 5 * 1024 * 1024;
+                if (el.hasAttribute('required') && (!el.files || el.files.length === 0)) isValid = false;
+                if (isValid && el.files && el.files.length > 0 && el.files[0].size > maxBytes) isValid = false;
+            } else {
+                const val = el.value.trim();
+                if (el.hasAttribute('required') && !val) isValid = false;
+
+                if (isValid && el.id === 'fullName') isValid = val.length >= 3 && val.length <= 20;
+                if (isValid && el.id === 'phoneNumber') isValid = /^[6-9]\d{9}$/.test(val);
+                if (isValid && el.id === 'email') isValid = /^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(val);
+                if (isValid && el.id === 'password') {
+                    isValid = val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /\d/.test(val) && /[!@#$%^&*]/.test(val);
+                }
+                if (isValid && el.id === 'confirmPassword') {
+                    isValid = val === document.getElementById('password').value.trim();
+                }
+                if (isValid && (el.id === 'age' || el.id === 'ageDisplay')) {
+                    const ageVal = document.getElementById('age').value || document.getElementById('ageDisplay').value;
+                    const ageNum = parseInt(ageVal, 10);
+                    isValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 100;
+                }
+                if (isValid && el.id === 'dob') {
+                    const selectedDate = new Date(val + 'T00:00:00');
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    if (selectedDate > today) isValid = false;
+                    const minDate = new Date(today);
+                    minDate.setFullYear(today.getFullYear() - 100);
+                    const maxDate = new Date(today);
+                    maxDate.setFullYear(today.getFullYear() - 18);
+                    isValid = isValid && selectedDate >= minDate && selectedDate <= maxDate;
+                }
             }
-            if (isValid && el.id === 'age') isValid = parseInt(val) >= 10;
 
             if (isValid) {
                 el.classList.remove('is-invalid');
@@ -365,15 +461,19 @@
 
         document.addEventListener("DOMContentLoaded", function() {
             const dob = document.getElementById('dob');
-            const age = document.getElementById('age');
+            const ageHidden = document.getElementById('age');
+            const ageDisplay = document.getElementById('ageDisplay');
 
-            // Prevent future dates
-            const todayStr = new Date().toISOString().split('T')[0];
-            dob.setAttribute('max', todayStr);
+            const today = new Date();
+            const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            const minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
+            const fmt = (d) => d.toISOString().split('T')[0];
+            dob.setAttribute('max', fmt(maxDob));
+            dob.setAttribute('min', fmt(minDob));
             
             dob.addEventListener('change', function() {
                 if (this.value) {
-                    const birthDate = new Date(this.value);
+                    const birthDate = new Date(this.value + 'T00:00:00');
                     if (!isNaN(birthDate.getTime())) {
                         const today = new Date();
                         let computedAge = today.getFullYear() - birthDate.getFullYear();
@@ -381,22 +481,61 @@
                         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
                             computedAge--;
                         }
-                        age.value = computedAge;
-                        validateField(age);
+                        ageDisplay.value = computedAge;
+                        ageHidden.value = computedAge;
+                        validateField(ageHidden);
                     }
+                } else {
+                    ageDisplay.value = '';
+                    ageHidden.value = '';
                 }
             });
 
+            document.getElementById('email').addEventListener('blur', function() {
+                validateField(this);
+            });
+
             document.getElementById('userForm').addEventListener('submit', function(e) {
-                const currentPanel = document.querySelector('.dr-step-panel.active');
-                const fields = currentPanel.querySelectorAll('.fdf-input');
+                const panels = document.querySelectorAll('.dr-step-panel');
                 let allValid = true;
-                fields.forEach(f => { if (!validateField(f)) allValid = false; });
+                panels.forEach(function(panel) {
+                    panel.querySelectorAll('.fdf-input, input[type="hidden"]#age').forEach(function(f) {
+                        if (!validateField(f)) allValid = false;
+                    });
+                });
                 if (!allValid) e.preventDefault();
             });
         });
     </script>
-    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
+    <script>
+    (function () {
+        function setVisible(btn, show) {
+            var id = btn.getAttribute('data-toggle-password');
+            var input = document.getElementById(id);
+            if (!input) return;
+
+            input.type = show ? 'text' : 'password';
+            btn.classList.toggle('is-visible', show);
+            btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+            btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        }
+
+        document.querySelectorAll('.password-toggle-btn[data-toggle-password]').forEach(function (btn) {
+            btn.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = btn.getAttribute('data-toggle-password');
+                var input = document.getElementById(id);
+                if (!input) return;
+                setVisible(btn, input.type === 'password');
+                input.focus();
+            });
+        });
+    })();
+    </script>
 </body>
 </html>
 

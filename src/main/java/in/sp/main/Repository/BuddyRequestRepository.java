@@ -22,5 +22,8 @@ public interface BuddyRequestRepository extends JpaRepository<BuddyRequest, Long
     // Purpose: prevent duplicate pending requests to the same user.
     BuddyRequest findTop1ByFromUserAndToUserAndStatusOrderByCreatedAtDesc(
             User fromUser, User toUser, BuddyRequestStatus status);
+
+    List<BuddyRequest> findByFromUser(User fromUser);
+    List<BuddyRequest> findByToUser(User toUser);
 }
 

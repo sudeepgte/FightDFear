@@ -113,18 +113,41 @@
         }
 
         /* Category Scroll Bar */
+        .cat-scroll-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 920px;
+            width: 100%;
+            margin: 30px auto 0;
+            padding: 0 4px;
+        }
         .cat-scroll-container {
             display: flex;
-            justify-content: center;
+            align-items: center;
             gap: 10px;
-            margin-top: 30px;
+            flex: 1;
+            min-width: 0;
             overflow-x: auto;
+            overflow-y: hidden;
             white-space: nowrap;
-            padding-bottom: 8px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
+            padding: 4px 12px 12px;
+            justify-content: flex-start;
         }
         .cat-scroll-container::-webkit-scrollbar {
             display: none;
+        }
+        .cat-scroll-btn {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
         .btn-cat-pill {
             padding: 8px 20px;
@@ -140,6 +163,7 @@
             align-items: center;
             gap: 6px;
             text-decoration: none;
+            flex-shrink: 0;
         }
         .btn-cat-pill:hover, .btn-cat-pill.active {
             background: var(--gradient-primary);
@@ -281,6 +305,18 @@
 
         @media (max-width: 768px) {
             .glow-header { padding-top: 30px; padding-bottom: 20px; }
+            .cat-scroll-wrap {
+                max-width: 100%;
+                padding: 0 8px;
+                gap: 4px;
+            }
+            .cat-scroll-container {
+                padding: 4px 8px 10px;
+            }
+            .btn-cat-pill {
+                font-size: 12px;
+                padding: 7px 14px;
+            }
             .top-bar {
                 position: relative;
                 justify-content: center;
@@ -336,11 +372,11 @@
             <p>Welcome, ${currentUser.fullName}. Grow your circle, start interactive chat threads with friends, or organize customized chat groups.</p>
             
             <!-- Connection Tabs Menu -->
-            <div class="d-flex align-items-center justify-content-center mt-3" style="max-width: 800px; margin: 0 auto;">
-                <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+            <div class="cat-scroll-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatLeft(this)" aria-label="Scroll tabs left">
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <div class="cat-scroll-container flex-grow-1" style="margin-top: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
+                <div class="cat-scroll-container" id="catScrollContainer">
                     <button id="btn-followers" class="btn-cat-pill active" onclick="switchTab('followers')">
                         Followers (${followers != null ? followers.size() : 0})
                     </button>
@@ -360,7 +396,7 @@
                         <i class="bi bi-search"></i> Search Members
                     </button>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollCatRight(this)" aria-label="Scroll tabs right">
                     <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
@@ -517,10 +553,10 @@
                             </div>
                             <h5>${req.fullName}</h5>
                             <div class="d-flex flex-column gap-2 w-100 mt-2">
-                                <form action="${pageContext.request.contextPath}/users/accept-request/${req.id}" method="post">
+                                <form action="${pageContext.request.contextPath}/users/acceptRequest/${req.id}" method="post">
                                     <button class="btn-social btn-social-primary">✓ Accept</button>
                                 </form>
-                                <form action="${pageContext.request.contextPath}/users/decline-request/${req.id}" method="post">
+                                <form action="${pageContext.request.contextPath}/users/declineRequest/${req.id}" method="post">
                                     <button class="btn-social btn-social-danger">✗ Decline</button>
                                 </form>
                             </div>
@@ -660,6 +696,27 @@
         once: true
     });
 
+    function getCatScrollContainer() {
+        return document.getElementById('catScrollContainer');
+    }
+
+    function scrollActiveTabIntoView() {
+        const container = getCatScrollContainer();
+        const active = container ? container.querySelector('.btn-cat-pill.active') : null;
+        if (!container || !active) return;
+
+        const tabLeft = active.offsetLeft;
+        const tabRight = tabLeft + active.offsetWidth;
+        const viewLeft = container.scrollLeft;
+        const viewRight = viewLeft + container.clientWidth;
+
+        if (tabLeft < viewLeft + 8) {
+            container.scrollTo({ left: Math.max(0, tabLeft - 12), behavior: 'smooth' });
+        } else if (tabRight > viewRight - 8) {
+            container.scrollTo({ left: tabRight - container.clientWidth + 12, behavior: 'smooth' });
+        }
+    }
+
     function switchTab(tabId, shouldScroll = true) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('d-none'));
         const targetTab = document.getElementById(tabId);
@@ -668,6 +725,8 @@
         document.querySelectorAll('.btn-cat-pill').forEach(btn => btn.classList.remove('active'));
         const btn = document.getElementById('btn-' + tabId);
         if(btn) btn.classList.add('active');
+
+        scrollActiveTabIntoView();
 
         if(shouldScroll) {
             const target = document.getElementById('main-content');
@@ -688,15 +747,33 @@
         } else if (initialTab) {
             switchTab(initialTab, true);
         }
+
+        window.addEventListener('load', function() {
+            scrollActiveTabIntoView();
+        });
     })();
 
     function scrollCatLeft(btn) {
-        const container = btn.nextElementSibling;
-        container.scrollBy({ left: -200, behavior: 'smooth' });
+        const container = getCatScrollContainer();
+        if (!container) return;
+        const step = Math.max(container.clientWidth * 0.8, 200);
+        if (container.scrollLeft <= step) {
+            container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            container.scrollBy({ left: -step, behavior: 'smooth' });
+        }
     }
+
     function scrollCatRight(btn) {
-        const container = btn.previousElementSibling;
-        container.scrollBy({ left: 200, behavior: 'smooth' });
+        const container = getCatScrollContainer();
+        if (!container) return;
+        const step = Math.max(container.clientWidth * 0.8, 200);
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (container.scrollLeft >= maxScroll - step) {
+            container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+        } else {
+            container.scrollBy({ left: step, behavior: 'smooth' });
+        }
     }
 </script>
 

@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -68,6 +69,24 @@
         color: #483D8B;
         font-weight: bold;
         margin-top: 10px;
+    }
+
+    .message-success {
+        color: #166534;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .message-error {
+        color: #991b1b;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
     }
 
     /* ============================================
@@ -192,12 +211,17 @@
 
     <div class="container">
         <h2>Forgot Password</h2>
-        <p>Enter your email to reset your password</p>
+        <p style="font-weight: normal; color: #555;">Enter your registered email to reset your password</p>
+        <c:if test="${not empty error}">
+            <p class="message-error">${error}</p>
+        </c:if>
+        <c:if test="${not empty message}">
+            <p class="message-success">${message}</p>
+        </c:if>
         <form action="${pageContext.request.contextPath}/auth/forgot-password" method="POST">
-            <input type="email" name="email" placeholder="Enter your email" required>
+            <input type="email" name="email" placeholder="Enter your email" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" required>
             <button type="submit">Reset Password</button>
         </form>
-        <p>${message}</p>
     </div>
 
 </body>

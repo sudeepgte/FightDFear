@@ -41,75 +41,6 @@
         font-family: 'Poppins', sans-serif;
     }
 
-    /* === Sidebar Layout CSS === */
-    #wrapper {
-        display: flex;
-        width: 100%;
-        align-items: stretch;
-    }
-    
-    /* NEW: Curved sidebar */
-    #sidebar-wrapper {
-        min-width: 260px;
-        max-width: 260px;
-        background: var(--primary-purple);
-        color: white;
-        transition: all 0.3s ease-in-out;
-        min-height: calc(100vh - 80px); 
-        z-index: 1000;
-        position: sticky;
-        top: 80px; 
-        height: calc(100vh - 80px);
-        overflow-y: auto;
-        border-top-right-radius: 40px;
-        padding-top: 20px;
-        box-shadow: 10px 0 20px rgba(0,0,0,0.05);
-    }
-    
-    #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
-    #sidebar-wrapper::-webkit-scrollbar-thumb { background-color: var(--primary-purple-light); border-radius: 10px; }
-    
-    .sidebar-heading {
-        padding: 10px 25px 25px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .list-group-item {
-        background: transparent;
-        color: var(--sidebar-text);
-        border: none;
-        padding: 12px 25px;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        position: relative;
-        text-decoration: none;
-    }
-    .list-group-item i { font-size: 1.1rem; width: 20px; text-align: center; }
-    .list-group-item:hover, .list-group-item.active {
-        color: white;
-        background: transparent;
-    }
-    .list-group-item:hover::before, .list-group-item.active::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 70%;
-        width: 4px;
-        background: var(--primary-coral);
-        border-radius: 0 4px 4px 0;
-    }
-
     #page-content-wrapper {
         flex: 1;
         min-width: 0;
@@ -161,6 +92,11 @@
         display: flex;
         flex-direction: column;
         gap: 25px;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .right-col .panel-new {
+        overflow: hidden;
     }
     
     /* 4 Stat Cards */
@@ -296,6 +232,20 @@
     #dangerMap {
         border-radius: 12px;
         z-index: 1;
+        min-height: 280px;
+        height: 280px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        background: #e2e8f0;
+    }
+    .map-panel-wrap {
+        overflow: visible !important;
+    }
+    .map-panel-wrap .leaflet-container {
+        height: 100% !important;
+        width: 100% !important;
+        border-radius: 12px;
     }
     
     @media (max-width: 1200px) {
@@ -310,41 +260,76 @@
         .right-col { flex-direction: column; }
     }
     @media (max-width: 768px) {
-        #wrapper {
-            flex-direction: column !important;
+        #page-content-wrapper {
+            padding: 14px 12px;
         }
-        #sidebar-wrapper {
-            min-width: 100% !important;
-            max-width: 100% !important;
-            min-height: auto !important;
-            height: auto !important;
-            border-top-right-radius: 0 !important;
-            border-bottom-left-radius: 20px !important;
-            border-bottom-right-radius: 20px !important;
-            position: relative !important;
-            top: 0 !important;
-            padding: 15px !important;
+        .dashboard-header-flex {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 18px;
         }
-        .list-group {
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            gap: 8px !important;
-            margin-top: 10px !important;
+        .dashboard-title {
+            font-size: 1.15rem;
+            line-height: 1.35;
         }
-        .list-group-item {
-            padding: 8px 12px !important;
-            border-radius: 30px !important;
-            background: rgba(255, 255, 255, 0.05) !important;
-            font-size: 13px !important;
-            display: inline-flex !important;
-            white-space: nowrap !important;
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
         }
-        .list-group-item::before {
-            display: none !important;
+        .stat-cards-grid {
+            gap: 12px;
+            margin-bottom: 18px;
         }
-        .list-group-item:hover, .list-group-item.active {
-            background: var(--primary-coral) !important;
-            color: white !important;
+        .stat-card-new {
+            padding: 16px;
+        }
+        .stat-value-text {
+            font-size: 1.4rem;
+        }
+        .panel-new {
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .chart-container {
+            height: 220px;
+        }
+        #dangerMap {
+            min-height: 240px;
+            height: 240px;
+        }
+    }
+    @media (max-width: 430px) {
+        .stat-cards-grid {
+            grid-template-columns: 1fr;
+        }
+        .dashboard-title {
+            font-size: 1.05rem;
+        }
+        .dashboard-title .badge {
+            display: block;
+            margin-left: 0 !important;
+            margin-top: 8px;
+            width: fit-content;
+        }
+        .stat-value-text {
+            font-size: 1.25rem;
+        }
+        .stat-icon-box {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .panel-title {
+            font-size: 1rem;
+        }
+        .act-title,
+        .act-desc {
+            white-space: normal;
+        }
+        .chart-container {
+            height: 200px;
         }
     }
 </style>
@@ -355,88 +340,10 @@
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
-    <!-- Sidebar -->
-    <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
-            <i class="bi bi-layers-half"></i> Rubick <span style="font-weight: 400; font-size: 0.9rem;">FightDFire</span>
-        </div>
-        <div class="list-group list-group-flush mt-3">
-            <!-- Dashboard (Active) -->
-            <a href="${pageContext.request.contextPath}/users/dashboard" class="list-group-item active">
-                <i class="bi bi-house-door"></i> Dashboard
-            </a>
-            
-            <a href="${pageContext.request.contextPath}/creator-hub" class="list-group-item">
-                <i class="bi bi-camera-reels text-warning"></i> Creator Hub 🎥
-            </a>
-            
-            <c:if test="${isWorker}">
-                <a href="${pageContext.request.contextPath}/marketplace/worker-bookings" class="list-group-item">
-                    <i class="bi bi-briefcase-fill text-success"></i> Job Bookings
-                </a>
-            </c:if>
-            
-            <!-- Restored previous links -->
-            <a href="${pageContext.request.contextPath}/sos/dashboard" class="list-group-item">
-                <i class="bi bi-exclamation-triangle text-danger"></i> SOS Emergency
-            </a>
-            <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="list-group-item">
-                <i class="bi bi-person-badge"></i> Your Profile
-            </a>
-            <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="list-group-item">
-                <i class="bi bi-shield-check"></i> Martial Arts Centres
-            </a>
-            <a href="${pageContext.request.contextPath}/video/allVideos" class="list-group-item">
-                <i class="bi bi-play-circle"></i> View Videos
-            </a>
-
-            <a href="${pageContext.request.contextPath}/index/templates" class="list-group-item">
-                <i class="bi bi-stars"></i> Glow Space
-            </a>
-
-            <a href="${pageContext.request.contextPath}/video/reels" class="list-group-item">
-                <i class="bi bi-camera-video"></i> Reels
-            </a>
-            <a href="${pageContext.request.contextPath}/users/wallet" class="list-group-item">
-                <i class="bi bi-wallet2"></i> My Wallet
-            </a>
-            <a href="${pageContext.request.contextPath}/buddy" class="list-group-item">
-                <i class="bi bi-person-walking"></i> Buddy Mode
-            </a>
-            <a href="${pageContext.request.contextPath}/doctors/list" class="list-group-item">
-                <i class="bi bi-heart-pulse"></i> Women Doctors
-            </a>
-            <a href="${pageContext.request.contextPath}/marketplace" class="list-group-item">
-                <i class="bi bi-shop"></i> Women Marketplace
-            </a>
-
-            
-            
-            <!-- Financial Literacy Hub -->
-            <a href="${pageContext.request.contextPath}/financial-literacy" class="list-group-item">
-                <i class="bi bi-book"></i> Financial Literacy Hub
-            </a>
-            <!-- Women Lawyers -->
-            <a href="${pageContext.request.contextPath}/marketplace/list?category=WOMEN_LAWYER" class="list-group-item">
-                <i class="bi bi-briefcase"></i> Women Lawyers
-            </a>
-            <a href="${pageContext.request.contextPath}/fitness" class="list-group-item">
-                <i class="bi bi-activity text-success"></i> Fitness & Wellness 🏃‍♀️
-            </a>
-            <a href="${pageContext.request.contextPath}/women-products" class="list-group-item">
-                <i class="bi bi-bag-heart"></i> Women Products
-            </a>
-            <a href="${pageContext.request.contextPath}/journey" class="list-group-item">
-                <i class="bi bi-pin-map"></i> Journey Safety Tracker
-            </a>
-            <a href="${pageContext.request.contextPath}/reminders" class="list-group-item">
-                <i class="bi bi-alarm"></i> Routine Reminders
-            </a>
-        </div>
-    </div>
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Page Content -->
-    <div id="page-content-wrapper">
+    <div id="page-content-wrapper" data-skip-global-back="true">
         <div class="dashboard-header-flex">
             <h2 class="dashboard-title">
                 General Report
@@ -512,15 +419,15 @@
                         <div class="mt-3 w-100">
                             <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
                                 <span><i class="bi bi-circle-fill icon-blue me-2" style="font-size:10px;"></i> 17 - 30 Years old</span>
-                                <span class="fw-bold text-dark">62%</span>
+                                <span class="fw-bold text-dark">${demoAge17to30Pct}%</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
                                 <span><i class="bi bi-circle-fill icon-orange me-2" style="font-size:10px;"></i> 31 - 50 Years old</span>
-                                <span class="fw-bold text-dark">33%</span>
+                                <span class="fw-bold text-dark">${demoAge31to50Pct}%</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small text-muted">
                                 <span><i class="bi bi-circle-fill icon-yellow me-2" style="font-size:10px;"></i> >= 50 Years old</span>
-                                <span class="fw-bold text-dark">10%</span>
+                                <span class="fw-bold text-dark">${demoAge51PlusPct}%</span>
                             </div>
                         </div>
                     </div>
@@ -781,16 +688,17 @@
                 <!-- Bottom Grid -->
                 <div class="bottom-grid">
                     <!-- Map -->
-                    <div class="panel-new d-flex flex-column">
+                    <div class="panel-new d-flex flex-column map-panel-wrap">
                         <div class="panel-header-flex">
                             <h3 class="panel-title">Community Safety Map</h3>
                             <div class="d-flex align-items-center gap-2 border rounded px-3 py-1 bg-light text-muted" style="font-size:0.8rem;">
-                                <i class="bi bi-geo-alt"></i> Live Data
+                                <i class="bi bi-geo-alt"></i> ${dangerMapPointCount != null ? dangerMapPointCount : 0} reports
                             </div>
                         </div>
-                        <div id="dangerMap" style="height:250px; width:100%; background:#eee; flex:1;"></div>
+                        <div id="dangerMap"></div>
                         <div class="mt-3 text-muted small">
-                            <i class="bi bi-info-circle me-1"></i> Showing current safety reports.
+                            <i class="bi bi-info-circle me-1"></i> Showing verified safety reports across the community.
+                            <a href="${pageContext.request.contextPath}/heatmap" class="ms-1">Open full map</a>
                         </div>
                     </div>
                     
@@ -832,7 +740,7 @@
                      <h3 class="panel-title mb-3"><i class="bi bi-shield-fill-check text-primary me-2"></i> Safety Toolbox</h3>
                      <div class="row g-2">
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/map" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/heatmap" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-map text-primary fs-3 mb-2"></i>
                                  <span class="fw-bold small">Danger Map</span>
                              </a>
@@ -956,12 +864,20 @@
         var pieCanvas = document.getElementById('pieChart');
         if (pieCanvas) {
             var ctxPie = pieCanvas.getContext('2d');
+            var demoData = [
+                ${demoAge17to30Count == null ? 0 : demoAge17to30Count},
+                ${demoAge31to50Count == null ? 0 : demoAge31to50Count},
+                ${demoAge51PlusCount == null ? 0 : demoAge51PlusCount}
+            ];
+            if (demoData.reduce(function(a, b) { return a + b; }, 0) === 0) {
+                demoData = [1, 1, 1];
+            }
             new Chart(ctxPie, {
                 type: 'pie',
                 data: {
                     labels: ['17-30 Years', '31-50 Years', '>=50 Years'],
                     datasets: [{
-                        data: [62, 33, 10],
+                        data: demoData,
                         backgroundColor: ['#3b82f6', '#f97316', '#eab308'],
                         borderWidth: 0,
                         hoverOffset: 4
@@ -1007,11 +923,48 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        if(document.getElementById('dangerMap')) {
-            var map = L.map('dangerMap').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
+        var mapEl = document.getElementById('dangerMap');
+        if (!mapEl || typeof L === 'undefined') return;
+
+        var points = [];
+        try {
+            points = ${empty dangerMapPointsJson ? '[]' : dangerMapPointsJson};
+        } catch (e) {
+            points = [];
+        }
+
+        var map = L.map('dangerMap', { scrollWheelZoom: false }).setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        function refreshMapSize() {
+            map.invalidateSize(true);
+        }
+        setTimeout(refreshMapSize, 100);
+        setTimeout(refreshMapSize, 500);
+        window.addEventListener('resize', refreshMapSize);
+
+        if (Array.isArray(points) && points.length > 0) {
+            var latLngs = [];
+            points.forEach(function(p) {
+                var lat = p.lat != null ? p.lat : p.latitude;
+                var lng = p.lng != null ? p.lng : p.longitude;
+                if (lat == null || lng == null) return;
+                latLngs.push([lat, lng]);
+                L.circleMarker([lat, lng], {
+                    radius: 7,
+                    color: '#ef4444',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.75
+                }).addTo(map).bindPopup(p.note || p.category || 'Safety report');
+            });
+            if (latLngs.length > 0) {
+                map.fitBounds(L.latLngBounds(latLngs).pad(0.2));
+            }
+        } else {
+            L.marker([20.5937, 78.9629]).addTo(map).bindPopup('No reports yet — map is ready for live safety data.');
         }
     });
 </script>

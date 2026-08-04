@@ -289,11 +289,6 @@
 
         <!-- Dashboard Header -->
         <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
-            </div>
             
             <h1>Financial Literacy Hub</h1>
             <p>Master your personal finances, investments, savings, and banking programs. Learn through expert videos, interactive virtual classes, or localized workshops.</p>
