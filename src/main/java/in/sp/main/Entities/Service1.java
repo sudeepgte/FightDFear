@@ -1,5 +1,7 @@
 package in.sp.main.Entities;
  
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,7 +21,8 @@ public class Service1 {
     private Long id;
  
     @Enumerated(EnumType.STRING)
-    private ServiceCategory category;  // select only from predefined categories
+    @Column(length = 64)
+    private ServiceCategory category;  // Glow Space taxonomy (VARCHAR — not MySQL ENUM)
  
   
  

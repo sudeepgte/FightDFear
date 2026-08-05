@@ -16,11 +16,21 @@ import org.springframework.ui.Model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/payment")
 public class PaymentController {
+
+    /**
+     * Server-side pending orders for Flutter / cookie-less clients.
+     * Web browsers still also keep a session copy for compatibility.
+     */
+    private static final ConcurrentHashMap<String, PendingOrder> PENDING_ORDERS = new ConcurrentHashMap<>();
+    private static final long PENDING_TTL_MS = 30 * 60 * 1000L;
+
+    private record PendingOrder(long userId, int amountPaise, long createdAtMs) {}
 
     @Value("${razorpay.key.id}")
     private String razorpayKeyId;
@@ -76,6 +86,9 @@ public class PaymentController {
     @Autowired
     private in.sp.main.Repository.WorkerBookingRepository workerBookingRepo;
 
+    @Autowired
+    private Booking1Repository booking1Repository;
+
     @GetMapping("")
     public String showPaymentPage(HttpSession session) {
         if (session.getAttribute("user") == null) {
@@ -110,6 +123,34 @@ public class PaymentController {
         Map<String, Integer> pending = new HashMap<>();
         session.setAttribute("pendingRazorpayOrders", pending);
         return pending;
+    }
+
+    private void rememberPendingOrder(String orderId, User user, int amountPaise, HttpSession session) {
+        purgeExpiredPendingOrders();
+        PENDING_ORDERS.put(orderId, new PendingOrder(user.getId(), amountPaise, System.currentTimeMillis()));
+        pendingOrders(session).put(orderId, amountPaise);
+    }
+
+    private Integer takePendingAmountPaise(String orderId, User user, HttpSession session) {
+        purgeExpiredPendingOrders();
+        PendingOrder global = PENDING_ORDERS.get(orderId);
+        if (global != null) {
+            if (global.userId() != user.getId()) {
+                return null;
+            }
+            PENDING_ORDERS.remove(orderId);
+            pendingOrders(session).remove(orderId);
+            return global.amountPaise();
+        }
+        // Legacy web path: order bound only to this browser session
+        Map<String, Integer> pending = pendingOrders(session);
+        Integer amount = pending.remove(orderId);
+        return amount;
+    }
+
+    private void purgeExpiredPendingOrders() {
+        long now = System.currentTimeMillis();
+        PENDING_ORDERS.entrySet().removeIf(e -> now - e.getValue().createdAtMs() > PENDING_TTL_MS);
     }
 
     private boolean verifyRazorpaySignature(String orderId, String paymentId, String signature) throws Exception {
@@ -183,6 +224,25 @@ public class PaymentController {
             transactions
         );
     }
+    @GetMapping("/config")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> paymentConfig(HttpSession session) {
+        Map<String, Object> body = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            body.put("error", "Login required");
+            return ResponseEntity.status(401).body(body);
+        }
+        boolean ready = razorpayConfigured();
+        body.put("configured", ready);
+        body.put("currency", "INR");
+        // Public key id only — secret never leaves the server
+        if (ready) {
+            body.put("key", razorpayKeyId);
+        }
+        return ResponseEntity.ok(body);
+    }
+
     @PostMapping("/create-order")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> createOrder(@RequestBody Map<String, Object> data, HttpSession session) {
@@ -227,12 +287,13 @@ public class PaymentController {
             Order order = client.orders.create(orderRequest);
             String orderId = order.get("id").toString();
 
-            // Bind this order to the session so /verify cannot invent amounts or foreign orders
-            pendingOrders(session).put(orderId, amountPaise);
+            // Bind this order for both web session and cookie-less mobile clients
+            rememberPendingOrder(orderId, user, amountPaise, session);
 
             Map<String, Object> response = new HashMap<>();
             response.put("orderId", orderId);
             response.put("amount", amountPaise);
+            response.put("currency", "INR");
             response.put("key", razorpayKeyId);
 
             return ResponseEntity.ok(response);
@@ -263,8 +324,7 @@ public class PaymentController {
             String signature = Objects.toString(data.get("razorpay_signature"), "").trim();
             String type = Objects.toString(data.get("type"), "").trim();
 
-            Map<String, Integer> pending = pendingOrders(session);
-            Integer expectedPaise = pending.get(orderId);
+            Integer expectedPaise = takePendingAmountPaise(orderId, user, session);
             if (expectedPaise == null) {
                 responseMap.put("error", "Unknown or expired payment order. Create a new order and try again.");
                 return ResponseEntity.status(400).body(responseMap);
@@ -285,7 +345,6 @@ public class PaymentController {
 
             // Authoritative amount from the order we created (never trust client-supplied amount)
             double amountPaid = expectedPaise / 100.0;
-            pending.remove(orderId);
 
             DateTimeFormatter formatterT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
             DateTimeFormatter formatterSpace = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -294,16 +353,22 @@ public class PaymentController {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
                 Doctor d = doctorRepo.findById(targetId).orElse(null);
+                if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
+                    responseMap.put("error", "Doctor not found or not verified");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
 
                 String consultTypeStr = data.getOrDefault("consultationType", "CLINIC").toString();
-                ConsultationType cType = ConsultationType.valueOf(consultTypeStr);
+                ConsultationType cType = MobileDoctorController.parseConsultationType(consultTypeStr);
 
-                String apptTimeStr = data.get("appointmentTime").toString();
-                LocalDateTime apptTime;
-                try {
-                    apptTime = LocalDateTime.parse(apptTimeStr, formatterSpace);
-                } catch (Exception ex) {
-                    apptTime = LocalDateTime.parse(apptTimeStr, formatterT);
+                String apptTimeStr = data.get("appointmentTime") == null ? "" : data.get("appointmentTime").toString();
+                LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(apptTimeStr);
+                if (apptTime == null) {
+                    try {
+                        apptTime = LocalDateTime.parse(apptTimeStr, formatterSpace);
+                    } catch (Exception ex) {
+                        apptTime = LocalDateTime.parse(apptTimeStr, formatterT);
+                    }
                 }
 
                 DoctorAppointment appt = new DoctorAppointment();
@@ -313,7 +378,7 @@ public class PaymentController {
                 appt.setReason(Objects.toString(data.get("reason"), ""));
                 appt.setStatus(DoctorAppointmentStatus.PENDING);
                 appt.setConsultationType(cType);
-                if (cType == ConsultationType.VIDEO) {
+                if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {
                     appt.setMeetingRoomId("Fight D Fear-" + java.util.UUID.randomUUID().toString().substring(0, 8));
                 }
                 appt.setRazorpayOrderId(orderId);
@@ -321,6 +386,8 @@ public class PaymentController {
                 appt.setRazorpaySignature(signature);
                 appt.setAmountPaid(amountPaid);
                 appointmentRepo.save(appt);
+                responseMap.put("appointmentId", appt.getId());
+                responseMap.put("meetingRoomId", appt.getMeetingRoomId());
             } else if ("BEAUTY".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
@@ -444,6 +511,31 @@ public class PaymentController {
                     );
                     walletTransactionRepo.save(clientTx);
                 }
+            } else if ("GLOW_BOOKING".equals(type)) {
+                Object bookingIdObj = data.get("bookingId");
+                if (bookingIdObj == null) {
+                    responseMap.put("error", "bookingId is required for Glow booking payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                Booking1 glowBooking = booking1Repository.findById(Long.parseLong(bookingIdObj.toString())).orElse(null);
+                if (glowBooking == null || glowBooking.getUser() == null
+                        || !glowBooking.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Glow booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("CONFIRMED".equalsIgnoreCase(glowBooking.getStatus())
+                        || "PAID".equalsIgnoreCase(glowBooking.getStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                if (Math.abs(glowBooking.getPrice() - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match booking price.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                glowBooking.setStatus("CONFIRMED");
+                glowBooking.setPrice(amountPaid);
+                booking1Repository.save(glowBooking);
             } else {
                 responseMap.put("error", "Unknown payment type.");
                 return ResponseEntity.badRequest().body(responseMap);

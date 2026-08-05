@@ -15,9 +15,15 @@ public class WomenProductSeller {
     private String phone;
     private String password;
     private String businessName;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String address;
+    @Column(length = 500)
     private String profilePhotoPath;
+    @Column(length = 500)
     private String identityDocPath;
 
     @Enumerated(EnumType.STRING)

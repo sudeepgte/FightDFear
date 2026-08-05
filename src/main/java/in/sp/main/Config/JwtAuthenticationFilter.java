@@ -51,6 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private WomenProductSellerRepository sellerRepository;
 
     @Autowired
+    private EventHostRepository eventHostRepository;
+
+    @Autowired
     private EntrepreneurRepository entrepreneurRepository;
 
     @Autowired
@@ -139,6 +142,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } else if ("SELLER".equals(role)) {
             if (session.getAttribute("loggedSeller") == null) {
                 sellerRepository.findByEmail(email).ifPresent(s -> session.setAttribute("loggedSeller", s));
+            }
+        } else if ("HOST".equals(role)) {
+            if (session.getAttribute("loggedHost") == null) {
+                eventHostRepository.findByEmail(email).ifPresent(h -> session.setAttribute("loggedHost", h));
             }
         } else if ("ENTREPRENEUR".equals(role)) {
             if (session.getAttribute("loggedEntrepreneur") == null) {

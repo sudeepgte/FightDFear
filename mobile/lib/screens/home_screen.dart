@@ -118,23 +118,16 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
-  Future<Position?> _currentPosition() async {
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      return null;
-    }
-    if (!await Geolocator.isLocationServiceEnabled()) return null;
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    );
-  }
-
   void _beginCountdown() {
     if (_activeSosId != null || _triggering || _countdownActive) return;
+    if (_contactCount == 0) {
+      _confirmSosWithoutTrustedContacts();
+      return;
+    }
+    _startCountdown();
+  }
+
+  void _startCountdown() {
     HapticFeedback.heavyImpact();
     setState(() {
       _countdownActive = true;
@@ -157,6 +150,80 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _confirmSosWithoutTrustedContacts() async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('No trusted contacts'),
+        content: const Text(
+          'You have not added trusted contacts yet. SOS works best when contacts can be notified.\n\n'
+          'If you added an emergency number at registration, that may still be used.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, 'cancel'), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'add'), child: const Text('Add contacts')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: _sosRed),
+            onPressed: () => Navigator.pop(ctx, 'continue'),
+            child: const Text('Send SOS anyway'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    if (choice == 'add') {
+      await _openContactsAndRefresh();
+    } else if (choice == 'continue') {
+      _startCountdown();
+    }
+  }
+
+  Future<void> _openContactsAndRefresh() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ContactsScreen()),
+    );
+    if (!mounted) return;
+    await _loadContactCount();
+    setState(() {});
+  }
+
+  Future<Position?> _currentPosition() async {
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        setState(() {
+          _banner = permission == LocationPermission.deniedForever
+              ? 'Location permanently denied — enable it in phone Settings for SOS'
+              : 'Location permission is required for SOS';
+        });
+      }
+      return null;
+    }
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      if (mounted) {
+        setState(() => _banner = 'Turn on GPS / Location services to send SOS');
+      }
+      return null;
+    }
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _banner = 'Could not get GPS location. Try again outdoors.');
+      }
+      return null;
+    }
+  }
+
   void _cancelCountdown() {
     _countdownTimer?.cancel();
     setState(() {
@@ -177,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (pos == null) {
       setState(() {
         _triggering = false;
-        _banner = 'Location permission / GPS required for SOS';
+        _banner ??= 'Location permission / GPS required for SOS';
       });
       return;
     }
@@ -326,9 +393,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             tooltip: 'Trusted contacts',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ContactsScreen()),
-            ),
+            onPressed: _openContactsAndRefresh,
             icon: const Icon(Icons.contacts_outlined),
           ),
         ],
@@ -355,9 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
               triggering: _triggering,
               banner: _banner,
               onSosTap: _beginCountdown,
-              onManageContacts: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ContactsScreen()),
-              ),
+              onManageContacts: _openContactsAndRefresh,
             ),
           if (_countdownActive)
             Positioned.fill(

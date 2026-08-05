@@ -109,6 +109,66 @@ public class MobileGlowSpaceController {
         return ResponseEntity.ok(ok(Map.of("offers", items, "count", items.size())));
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        List<ServiceCategory> taxonomy = List.of(
+                ServiceCategory.HAIR,
+                ServiceCategory.SKIN_CARE,
+                ServiceCategory.MAKEUP,
+                ServiceCategory.NAIL_CARE,
+                ServiceCategory.SPA_MASSAGE,
+                ServiceCategory.WAXING,
+                ServiceCategory.THREADING,
+                ServiceCategory.EYE_BROW,
+                ServiceCategory.BRIDAL,
+                ServiceCategory.MEHENDI,
+                ServiceCategory.WELLNESS,
+                ServiceCategory.COSMETIC,
+                ServiceCategory.PACKAGES,
+                ServiceCategory.TRAINING
+        );
+
+        List<Service1> approvedServices = serviceRepo.findAll().stream()
+                .filter(s -> s.getSalon() != null && s.getSalon().isApproved())
+                .toList();
+
+        List<Map<String, Object>> items = taxonomy.stream().map(cat -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("code", cat.name());
+            m.put("label", cat.displayLabel());
+            long count = approvedServices.stream()
+                    .filter(s -> s.getCategory() != null && s.getCategory().normalized() == cat)
+                    .count();
+            m.put("serviceCount", count);
+            return m;
+        }).toList();
+
+        return ResponseEntity.ok(ok(Map.of("categories", items, "count", items.size())));
+    }
+
+    @GetMapping("/services")
+    public ResponseEntity<Map<String, Object>> services(
+            @RequestParam(required = false) String category,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        ServiceCategory filter = ServiceCategory.fromFlexible(category);
+        List<Map<String, Object>> items = serviceRepo.findAll().stream()
+                .filter(s -> s.getSalon() != null && s.getSalon().isApproved())
+                .filter(s -> {
+                    if (filter == null) return true;
+                    if (s.getCategory() == null) return false;
+                    return s.getCategory().normalized() == filter.normalized();
+                })
+                .map(this::serviceDto)
+                .toList();
+        return ResponseEntity.ok(ok(Map.of("services", items, "count", items.size())));
+    }
+
     @PostMapping("/bookings")
     @Transactional
     public ResponseEntity<Map<String, Object>> createBooking(
@@ -182,12 +242,22 @@ public class MobileGlowSpaceController {
 
         booking.setSalon(salon);
         booking.setPrice(price);
+
+        boolean isFree = price <= 0;
+        if (isFree) {
+            booking.setStatus("CONFIRMED");
+        }
+
         bookingRepo.save(booking);
 
-        return ResponseEntity.ok(ok(Map.of(
-                "message", "Booking created.",
-                "bookingId", booking.getId()
-        )));
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("message", isFree ? "Booking confirmed." : "Booking created. Complete payment to confirm.");
+        payload.put("bookingId", booking.getId());
+        payload.put("free", isFree);
+        payload.put("paymentRequired", !isFree);
+        payload.put("amount", price);
+        payload.put("status", booking.getStatus());
+        return ResponseEntity.ok(ok(payload));
     }
 
     @GetMapping("/bookings/me")
@@ -226,7 +296,9 @@ public class MobileGlowSpaceController {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", s.getId());
         m.put("name", s.getName());
-        m.put("category", s.getCategory() == null ? null : s.getCategory().name());
+        ServiceCategory cat = s.getCategory() == null ? null : s.getCategory().normalized();
+        m.put("category", cat == null ? null : cat.name());
+        m.put("categoryLabel", cat == null ? null : cat.displayLabel());
         m.put("price", s.getPrice());
         m.put("durationMinutes", s.getDurationMinutes());
         m.put("ingredients", s.getIngredients());
@@ -299,6 +371,10 @@ public class MobileGlowSpaceController {
         m.put("notes", b.getNotes());
         m.put("emergencyContact", b.getEmergencyContact());
         m.put("allergyInfo", b.getAllergyInfo());
+        m.put("paymentRequired", !"CONFIRMED".equalsIgnoreCase(b.getStatus())
+                && !"PAID".equalsIgnoreCase(b.getStatus())
+                && !"COMPLETED".equalsIgnoreCase(b.getStatus())
+                && b.getPrice() > 0);
         m.put("salon", b.getSalon() == null ? null : salonDto(b.getSalon()));
         if (b.getService() != null) {
             m.put("itemType", "SERVICE");

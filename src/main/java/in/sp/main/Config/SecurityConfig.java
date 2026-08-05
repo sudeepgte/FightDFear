@@ -37,6 +37,28 @@ public class SecurityConfig {
             "/auth/**",
             "/api/auth/**",
             "/api/glow/provider/register/**",
+            "/api/glow/provider/login/**",
+            "/api/marketplace/provider/register/**",
+            "/api/marketplace/provider/login/**",
+            "/api/entrepreneur/register",
+            "/api/entrepreneur/register/**",
+            "/api/entrepreneur/login",
+            "/api/entrepreneur/login/**",
+            "/api/investor/register",
+            "/api/investor/register/**",
+            "/api/investor/login",
+            "/api/investor/login/**",
+            "/api/doctors/provider/register",
+            "/api/doctors/provider/register/**",
+            "/api/doctors/provider/login",
+            "/api/doctors/provider/login/**",
+            "/api/fitness/trainer/register/**",
+            "/api/fitness/trainer/login/**",
+            "/api/women-events/host/register/**",
+            "/api/women-events/host/login/**",
+            "/api/women-products/seller/register/**",
+            "/api/women-products/seller/login/**",
+            "/api/landing/**",
             "/api/martial-arts/centre/register",
             "/api/martial-arts/centre/register-lite",
             "/api/martial-arts/centre/login",
@@ -109,7 +131,8 @@ public class SecurityConfig {
             )
             .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
                 String path = request.getRequestURI();
-                if (path != null && path.startsWith("/api/")) {
+                boolean wantsJson = path != null && (path.startsWith("/api/") || path.startsWith("/payment/"));
+                if (wantsJson) {
                     response.setStatus(401);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");

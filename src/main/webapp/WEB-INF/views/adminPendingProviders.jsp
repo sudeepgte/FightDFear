@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Marketplace Provider Verification — Admin</title>
+  <title>Service Partner Verification — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -211,10 +211,10 @@
                 <c:when test="${selectedCategory == 'WOMEN_PRODUCTS'}">Women Products Verification</c:when>
                 <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification</c:when>
                 <c:when test="${selectedCategory == 'FITNESS_ZUMBA'}">Fitness & Zumba Verification</c:when>
-                <c:otherwise>Marketplace Provider Verification</c:otherwise>
+                <c:otherwise>Service Partner Verification</c:otherwise>
             </c:choose>
           </h4>
-          <p>Review and verify marketplace providers</p>
+          <p>Review and verify service partners registered from mobile / web</p>
         </div>
       </div>
 

@@ -160,11 +160,26 @@
        href="${pageContext.request.contextPath}/admin/pending-proposals">
 
         <i class="fas fa-hand-holding-usd"></i>
-        Proposal Verifications
+        Investment Platform
+
 
         <c:if test="${side_pendingProposals > 0}">
             <span class="badge rounded-pill bg-danger ms-auto">
                 ${side_pendingProposals}
+            </span>
+        </c:if>
+
+    </a>
+
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-event-hosts') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-event-hosts">
+
+        <i class="fas fa-calendar-check"></i>
+        Event Organizers
+
+        <c:if test="${side_pendingEventHosts > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">
+                ${side_pendingEventHosts}
             </span>
         </c:if>
 
@@ -280,7 +295,7 @@
        href="${pageContext.request.contextPath}/admin/pending-providers">
 
         <i class="fas fa-store"></i>
-        Marketplace Providers
+        Service Partners
 
     </a>
 
@@ -288,7 +303,7 @@
        href="${pageContext.request.contextPath}/admin/pending-providers?category=WOMEN_PRODUCTS">
 
         <i class="fas fa-shopping-bag"></i>
-        Women Services
+        Women Products (legacy)
 
     </a>
 

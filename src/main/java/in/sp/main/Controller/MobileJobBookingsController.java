@@ -39,8 +39,11 @@ public class MobileJobBookingsController {
             m.put("bookingDate", b.getBookingDate() == null ? null : b.getBookingDate().toString());
             m.put("note", b.getNote());
             m.put("hours", b.getHours());
+            m.put("totalAmount", b.getTotalAmount());
+            m.put("serviceType", b.getJobApplication() == null ? null : b.getJobApplication().getJobCategory());
             if (b.getClient() != null) {
                 m.put("clientName", b.getClient().getFullName());
+                m.put("clientPhone", b.getClient().getPhoneNumber());
             }
             return m;
         }).toList();
@@ -57,12 +60,39 @@ public class MobileJobBookingsController {
             m.put("status", b.getStatus());
             m.put("bookingDate", b.getBookingDate() == null ? null : b.getBookingDate().toString());
             m.put("note", b.getNote());
+            m.put("hours", b.getHours());
+            m.put("totalAmount", b.getTotalAmount());
             if (b.getJobApplication() != null && b.getJobApplication().getUser() != null) {
                 m.put("workerName", b.getJobApplication().getUser().getFullName());
+                m.put("serviceType", b.getJobApplication().getJobCategory());
+                m.put("workerPhone", b.getJobApplication().getUser().getPhoneNumber());
             }
             return m;
         }).toList();
         return ResponseEntity.ok(ok(Map.of("bookings", items)));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Map<String, Object>> updateStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WorkerBooking booking = workerBookingRepo.findById(id).orElse(null);
+        if (booking == null) return badRequest("Booking not found");
+        if (booking.getJobApplication() == null || booking.getJobApplication().getUser() == null
+                || !booking.getJobApplication().getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "error", "Only assigned worker can update this booking"));
+        }
+        String next = body == null ? "" : body.getOrDefault("status", "").trim().toUpperCase();
+        if (!"ACCEPTED".equals(next) && !"REJECTED".equals(next) && !"COMPLETED".equals(next)) {
+            return badRequest("status must be ACCEPTED, REJECTED, or COMPLETED");
+        }
+        booking.setStatus(next);
+        workerBookingRepo.save(booking);
+        return ResponseEntity.ok(ok(Map.of("message", "Booking status updated", "status", next)));
     }
 
     private User requireUser(HttpSession session) {

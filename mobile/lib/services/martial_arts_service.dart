@@ -50,10 +50,10 @@ class MartialArtsService {
       });
 
   Future<Map<String, dynamic>> createPaymentOrder(double amount) =>
-      _api.post('/payment/create-order', body: {'amount': amount});
+      _api.post('/payment/create-order', body: {'amount': amount}, timeout: const Duration(seconds: 45));
 
   Future<Map<String, dynamic>> verifyPayment(Map<String, dynamic> body) =>
-      _api.post('/payment/verify', body: body);
+      _api.post('/payment/verify', body: body, timeout: const Duration(seconds: 45));
 
   Future<({List<int> bytes, int statusCode, String? filename})> downloadCertificate(
           int enrollmentId) =>

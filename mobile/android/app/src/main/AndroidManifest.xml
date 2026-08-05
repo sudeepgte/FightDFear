@@ -33,6 +33,7 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM"/>
+        <!-- Emulator GPU often blacks out with Impeller OpenGLES; use Skia on this machine. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />

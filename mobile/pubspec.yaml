@@ -21,7 +21,7 @@ dependencies:
   razorpay_flutter: ^1.4.0
   path_provider: ^2.1.5
   open_file: ^3.5.10
-
+  file_picker: 10.3.8
 dev_dependencies:
   flutter_test:
     sdk: flutter

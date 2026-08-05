@@ -12,10 +12,15 @@ class SosService {
     required double latitude,
     required double longitude,
   }) {
-    return _api.post('/api/sos/trigger', body: {
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-    });
+    return _api.post(
+      '/api/sos/trigger',
+      body: {
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+      },
+      // Trigger can notify contacts/email — allow longer than default API timeout.
+      timeout: const Duration(seconds: 30),
+    );
   }
 
   Future<Map<String, dynamic>> getStatus(int sosId) =>

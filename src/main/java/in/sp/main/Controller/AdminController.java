@@ -128,6 +128,9 @@ public class AdminController {
     private WomenEventRepository womenEventRepository;
 
     @Autowired
+    private EventHostRepository eventHostRepository;
+
+    @Autowired
     private WomenEventRegistrationRepository womenEventRegistrationRepository;
 
     // Sidebar counts are now handled globally via GlobalSidebarAdvice.java
@@ -185,8 +188,9 @@ public class AdminController {
      * Public admin registration form (separate from user registration at /users/register).
      */
     @RequestMapping(value = "/registerAdmin", method = GET)
-    public String showRegisterPage(Model model, @ModelAttribute("error") String error,
-                                   @ModelAttribute("success") String success) {
+    public String showRegisterPage(Model model, 
+                                   @RequestParam(value = "error", required = false) String error,
+                                   @RequestParam(value = "success", required = false) String success) {
         model.addAttribute("error", error);
         model.addAttribute("success", success);
         return "adminRegister";
@@ -235,8 +239,9 @@ public class AdminController {
 
     
     @RequestMapping(value = "/loginAdmin", method = GET)
-    public String showLoginPage(Model model, @ModelAttribute("error") String error,
-                                @ModelAttribute("success") String success,
+    public String showLoginPage(Model model, 
+                                @RequestParam(value = "error", required = false) String error,
+                                @RequestParam(value = "success", required = false) String success,
                                 HttpSession session) {
         if (session.getAttribute("admin") != null) {
             return "redirect:/admin/adminDashboard";
@@ -1215,11 +1220,19 @@ public class AdminController {
         return "redirect:/admin/pending-doctors";
     }
 
-    // Purpose: admin verification for marketplace providers (tutors/bakers/language trainers).
+    // Purpose: admin verification for marketplace providers / service partners.
     @GetMapping("/pending-providers")
     public String viewPendingProviders(@RequestParam(required = false) ProviderCategory category, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
+        }
+
+        // Fix legacy rows with null status so they appear under Pending.
+        for (ServiceProvider p : serviceProviderRepository.findAll()) {
+            if (p.getVerificationStatus() == null) {
+                p.setVerificationStatus(VerificationStatus.PENDING);
+                serviceProviderRepository.save(p);
+            }
         }
 
         if (category != null) {
@@ -1540,6 +1553,70 @@ public class AdminController {
         });
         ra.addFlashAttribute("message", "Seller rejected.");
         return "redirect:/admin/pending-sellers";
+    }
+
+    // Purpose: Event Host / Event Organizer verification for mobile + web registrations.
+    @GetMapping("/pending-event-hosts")
+    public String viewPendingEventHosts(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+
+        for (EventHost h : eventHostRepository.findAll()) {
+            if (h.getVerificationStatus() == null) {
+                h.setVerificationStatus(VerificationStatus.PENDING);
+                eventHostRepository.save(h);
+            }
+        }
+
+        model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
+        model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
+        model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
+        model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
+        model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
+        return "adminPendingEventHosts";
+    }
+
+    @PostMapping("/event-hosts/{id}/approve")
+    public String approveEventHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        eventHostRepository.findById(id).ifPresent(h -> {
+            h.setVerificationStatus(VerificationStatus.VERIFIED);
+            eventHostRepository.save(h);
+        });
+        ra.addFlashAttribute("message", "Event organizer approved. They can now log in and create events.");
+        return "redirect:/admin/pending-event-hosts";
+    }
+
+    @PostMapping("/event-hosts/{id}/reject")
+    public String rejectEventHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        eventHostRepository.findById(id).ifPresent(h -> {
+            h.setVerificationStatus(VerificationStatus.REJECTED);
+            eventHostRepository.save(h);
+        });
+        ra.addFlashAttribute("message", "Event organizer application rejected.");
+        return "redirect:/admin/pending-event-hosts";
+    }
+
+    @PostMapping("/women-events/{id}/approve")
+    public String approveWomenEventFromAdmin(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        womenEventRepository.findById(id).ifPresent(e -> {
+            e.setStatus("APPROVED");
+            womenEventRepository.save(e);
+        });
+        ra.addFlashAttribute("message", "Event approved and visible to users.");
+        return "redirect:/admin/pending-event-hosts";
+    }
+
+    @PostMapping("/women-events/{id}/reject")
+    public String rejectWomenEventFromAdmin(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        womenEventRepository.findById(id).ifPresent(e -> {
+            e.setStatus("REJECTED");
+            womenEventRepository.save(e);
+        });
+        ra.addFlashAttribute("message", "Event rejected.");
+        return "redirect:/admin/pending-event-hosts";
     }
 
     // Purpose: admin views full profile of a specific women product seller.

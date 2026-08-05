@@ -84,9 +84,12 @@ public class MobileFitnessController {
         m.put("fullName", t.getFullName());
         m.put("specializations", t.getSpecializations());
         m.put("sessionFees", t.getSessionFees());
-        m.put("rating", t.getRating());
+        m.put("rating", t.getRating() != null ? t.getRating() : 0.0);
         m.put("profilePhotoPath", t.getProfilePhotoPath());
         m.put("availableTimings", t.getAvailableTimings());
+        m.put("experienceYears", t.getExperience());
+        m.put("phone", t.getPhone());
+        m.put("email", t.getEmail());
         return m;
     }
 

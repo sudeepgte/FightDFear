@@ -38,7 +38,8 @@ public class Doctor {
     private ConsultationType consultationType;
 
     // ── 3. Location Details ──
-    // Purpose: basic location text for search (city/area).
+    // Purpose: basic location text for search (city/area) + packed metadata from mobile.
+    @Column(length = 4000)
     private String locationText;
     private String clinicAddress;
     private String city;

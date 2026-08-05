@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_state.dart';
 import '../services/module_services.dart';
+import '../widgets/detail_listing_card.dart';
 import '../widgets/module_theme.dart';
 
 class WomenEventsScreen extends StatefulWidget {
@@ -118,50 +119,51 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                 Center(child: Text('No events listed yet.')),
                               ],
                             )
-                          : ListView.separated(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _events.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              itemCount: _events.length + 1,
                               itemBuilder: (_, i) {
-                                final e = _events[i];
-                                final id = e['id'];
-                                return Card(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(14),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          e['name']?.toString() ?? 'Event',
-                                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${e['eventDate'] ?? ''} · ${e['venue'] ?? ''}, ${e['city'] ?? ''}',
-                                          style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12),
-                                        ),
-                                        if (e['description'] != null) ...[
-                                          const SizedBox(height: 6),
-                                          Text(e['description'].toString(), maxLines: 3, overflow: TextOverflow.ellipsis),
-                                        ],
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              e['free'] == true ? 'Free' : '₹${e['entryFee'] ?? 0}',
-                                              style: const TextStyle(fontWeight: FontWeight.w600),
-                                            ),
-                                            const Spacer(),
-                                            if (id is num)
-                                              FilledButton(
-                                                onPressed: () => _register(id.toInt()),
-                                                child: const Text('Register'),
-                                              ),
-                                          ],
-                                        ),
-                                      ],
+                                if (i == 0) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Text(
+                                      'Showing ${_events.length} women events',
+                                      style: const TextStyle(color: ModuleTheme.textGray, fontSize: 13),
                                     ),
-                                  ),
+                                  );
+                                }
+                                final e = _events[i - 1];
+                                final id = e['id'];
+                                final loc = [
+                                  e['venue'],
+                                  e['city'],
+                                ].where((x) => x != null && x.toString().trim().isNotEmpty).join(', ');
+                                final image = e['imagePath']?.toString() ??
+                                    e['bannerUrl']?.toString() ??
+                                    e['bannerImage']?.toString();
+                                return DetailListingCard(
+                                  title: e['name']?.toString() ?? 'Event',
+                                  eyebrow: e['category']?.toString() ?? 'Women Event',
+                                  location: loc.isEmpty ? e['eventDate']?.toString() : '$loc · ${e['eventDate'] ?? ''}',
+                                  photoUrl: (image == null || image.isEmpty) ? null : image,
+                                  showMediaActions: false,
+                                  tags: [
+                                    DetailTag(
+                                      label: e['free'] == true ? 'Free' : '₹${e['entryFee'] ?? 0}',
+                                      icon: Icons.currency_rupee,
+                                      background: const Color(0xFFE0E7FF),
+                                      foreground: const Color(0xFF3730A3),
+                                    ),
+                                    if (e['eventDate'] != null)
+                                      DetailTag(label: '${e['eventDate']}', icon: Icons.event),
+                                    if (e['capacity'] != null || e['maxParticipants'] != null)
+                                      DetailTag(
+                                        label: '${e['capacity'] ?? e['maxParticipants']} seats',
+                                        icon: Icons.groups_outlined,
+                                      ),
+                                  ],
+                                  primaryLabel: 'View & Register',
+                                  onPrimary: id is num ? () => _register(id.toInt()) : null,
                                 );
                               },
                             ),
@@ -177,20 +179,38 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                             Center(child: Text('No registrations yet.')),
                           ],
                         )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(16),
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                           itemCount: _registrations.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (_, i) {
                             final r = _registrations[i];
-                            final event = r['event'];
-                            final name = event is Map ? event['name']?.toString() : 'Event';
-                            return Card(
-                              child: ListTile(
-                                title: Text(name ?? 'Event'),
-                                subtitle: Text('Ticket: ${r['ticketCode'] ?? ''}\n${r['registeredAt'] ?? ''}'),
-                                isThreeLine: true,
-                              ),
+                            final event = r['event'] is Map
+                                ? Map<String, dynamic>.from(r['event'] as Map)
+                                : <String, dynamic>{};
+                            final name = event['name']?.toString() ?? 'Event';
+                            return DetailListingCard(
+                              title: name,
+                              eyebrow: 'Ticket',
+                              location: event['venue']?.toString() ?? event['city']?.toString(),
+                              showMediaActions: false,
+                              tags: [
+                                DetailTag(
+                                  label: r['ticketCode']?.toString() ?? '—',
+                                  icon: Icons.confirmation_number_outlined,
+                                  background: const Color(0xFFFEF3C7),
+                                  foreground: const Color(0xFFB45309),
+                                ),
+                                if (r['registeredAt'] != null)
+                                  DetailTag(label: '${r['registeredAt']}', icon: Icons.schedule),
+                                if (r['status'] != null)
+                                  DetailTag(label: '${r['status']}', icon: Icons.info_outline),
+                              ],
+                              primaryLabel: 'Ticket details',
+                              onPrimary: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Ticket ${r['ticketCode'] ?? ''}')),
+                                );
+                              },
                             );
                           },
                         ),

@@ -24,14 +24,13 @@
             background-color: var(--bg-light);
             color: #1E293B;
             margin: 0;
-            display: flex;
         }
 
         /* Sidebar */
         .sidebar {
             width: 260px;
             height: 100vh;
-            background: #0F172A;
+            background: var(--primary-purple);
             color: white;
             position: fixed;
             left: 0;
@@ -46,7 +45,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
         .sidebar-logo i { font-size: 2rem; }
@@ -69,6 +68,16 @@
         .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .nav-link.active { background: #E11D48; color: white; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
         .nav-link i { font-size: 1.1rem; }
+
+        @media (max-width: 991px) {
+            .sidebar { width: 100% !important; height: auto !important; min-height: 0 !important; position: static !important; padding: 15px !important; border-radius: 0 !important; display: block !important; }
+            .sidebar-logo { margin-bottom: 15px !important; justify-content: center !important; }
+            .nav-menu { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
+            .nav-item { margin-bottom: 0 !important; }
+            .nav-link { padding: 8px 16px !important; font-size: 0.85rem !important; border-radius: 20px !important; white-space: nowrap !important; width: auto !important; }
+            .main-content { margin-left: 0 !important; padding: 15px !important; }
+            body { display: block; }
+        }
 
         .main-content {
             margin-left: 260px;
@@ -238,11 +247,6 @@
         
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
-                    <i class="bi bi-grid"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
                 <a href="${pageContext.request.contextPath}/users/training-journey" class="nav-link">
                     <i class="bi bi-compass"></i> My Journey
                 </a>
@@ -263,18 +267,16 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="nav-link">
-                    <i class="bi bi-person"></i> Profile
+                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="margin-top: 10px;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
+                    <i class="bi bi-arrow-left"></i> Back
                 </a>
             </li>
         </ul>
-
-        <div class="mt-auto">
-            <div class="card bg-white bg-opacity-10 border-0 rounded-4 p-3 text-center">
-                <p class="small mb-2 text-white-50">Need Help?</p>
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="btn btn-danger btn-sm w-100 rounded-3">Get Support</a>
-            </div>
-        </div>
     </aside>
 
     <!-- Main Content -->
