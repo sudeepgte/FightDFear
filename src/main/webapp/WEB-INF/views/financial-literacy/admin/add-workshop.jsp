@@ -138,6 +138,43 @@
             transform: translateY(-2px);
             color: white;
         }
+
+        .main {
+            min-width: 0;
+        }
+
+        /* Mobile: remove forced full-viewport blank space; stack layout */
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+                min-height: 0;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid rgba(124, 45, 94, 0.18);
+                padding: 10px;
+                overflow: visible;
+            }
+
+            .main {
+                padding: 16px 12px 24px;
+                flex: none;
+            }
+
+            .admin-card {
+                padding: 20px 16px;
+            }
+
+            .topbar .wrap {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>

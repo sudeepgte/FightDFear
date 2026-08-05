@@ -273,38 +273,83 @@
 
         <!-- Dashboard Header -->
         <div class="glow-header">
+            <div class="top-bar">
+                <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="top-btn">
+                    <i class="bi bi-calendar-check"></i> My Bookings
+                </a>
+                <a href="${pageContext.request.contextPath}/marketplace/my-classes" class="top-btn">
+                    <i class="bi bi-mortarboard"></i> My Classes
+                </a>
+                <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="top-btn" style="margin-left:auto;">
+                    <i class="bi bi-person-plus"></i> Become a Provider
+                </a>
+            </div>
             <h1>Women Marketplace</h1>
             <p>Empowering local women creators, educators, and service providers. Discover skilled professionals and browse custom services.</p>
             
             <!-- Search bar -->
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" placeholder="Search for tutors, designers, bakers...">
-                    <button class="btn-search">Find Service</button>
+                    <input type="text" id="marketSearchInput" placeholder="Search for tutors, designers, bakers...">
+                    <button type="button" class="btn-search" id="marketSearchBtn">Find Service</button>
                 </div>
             </div>
         </div>
 
+        <c:if test="${not empty error}">
+            <div class="container mt-3"><div class="alert alert-danger">${error}</div></div>
+        </c:if>
+        <c:if test="${not empty message}">
+            <div class="container mt-3"><div class="alert alert-success">${message}</div></div>
+        </c:if>
+
         <!-- Categories Grid -->
         <div class="market-grid">
+            <c:forEach var="pcat" items="${providerCategories}">
+                <a href="${pageContext.request.contextPath}/marketplace/list?category=${pcat}" class="category-card" data-aos="fade-up" data-search-type="provider">
+                    <div class="cat-icon-box">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3>
+                        <c:choose>
+                            <c:when test="${pcat == 'TUTOR'}">Tutor</c:when>
+                            <c:when test="${pcat == 'HOME_BAKER'}">Home Baker</c:when>
+                            <c:when test="${pcat == 'LANGUAGE_TRAINER'}">Language Trainer</c:when>
+                            <c:when test="${pcat == 'WOMEN_PRODUCTS'}">Women Products</c:when>
+                            <c:when test="${pcat == 'WOMEN_LAWYER'}">Women Lawyer</c:when>
+                            <c:when test="${pcat == 'FITNESS_ZUMBA'}">Fitness / Zumba</c:when>
+                            <c:otherwise>${pcat}</c:otherwise>
+                        </c:choose>
+                    </h3>
+                    <p>Browse verified providers in this category.</p>
+                </a>
+            </c:forEach>
+
             <c:forEach var="cat" items="${dynamicCategories}">
-                <div class="col-12" style="display: contents;">
-                    <a href="${pageContext.request.contextPath}/marketplace/workers?category=${cat}" class="category-card" data-aos="fade-up">
-                        <div class="cat-icon-box">
-                            <i class="fas fa-briefcase"></i>
-                        </div>
-                        <h3>${cat}</h3>
-                        <p>Find verified professional women specialists in ${cat}.</p>
-                    </a>
-                </div>
+                <a href="${pageContext.request.contextPath}/marketplace/workers?category=${cat}" class="category-card" data-aos="fade-up" data-search-type="worker">
+                    <div class="cat-icon-box">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h3>${cat}</h3>
+                    <p>Find verified professional women specialists in ${cat}.</p>
+                </a>
             </c:forEach>
             
-            <c:if test="${empty dynamicCategories}">
+            <c:if test="${empty providerCategories && empty dynamicCategories}">
                 <div class="col-12 text-center py-5 text-muted">
                     <i class="bi bi-shop-window display-3 mb-3"></i>
-                    <p class="fs-5">No verified worker categories available yet.</p>
+                    <p class="fs-5">No marketplace categories available yet.</p>
                 </div>
             </c:if>
+        </div>
+
+        <div class="cta-box">
+            <h4>Offer your skills on Women Marketplace</h4>
+            <p>Register as a verified service provider or apply as a skilled worker to start earning.</p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="btn btn-primary px-4">Become a Provider</a>
+                <a href="${pageContext.request.contextPath}/marketplace/earn" class="btn btn-outline-primary px-4">Apply for Women Jobs</a>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -328,30 +373,31 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.querySelector('.search-box input');
-        const searchButton = document.querySelector('.search-box button');
+        const searchInput = document.getElementById('marketSearchInput');
+        const searchButton = document.getElementById('marketSearchBtn');
         const categoryCards = document.querySelectorAll('.category-card');
 
         function performSearch() {
             const query = searchInput.value.trim().toLowerCase();
-            
+            let visible = 0;
             categoryCards.forEach(card => {
                 const title = card.querySelector('h3').innerText.toLowerCase();
                 const desc = card.querySelector('p').innerText.toLowerCase();
-                const parentCol = card.parentElement;
-
-                if (title.includes(query) || desc.includes(query)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                const match = !query || title.includes(query) || desc.includes(query);
+                card.style.display = match ? 'flex' : 'none';
+                if (match) visible++;
             });
+            return visible;
         }
 
         searchInput.addEventListener('input', performSearch);
 
         searchButton.addEventListener('click', function() {
             const query = searchInput.value.trim().toLowerCase();
+            if (!query) {
+                categoryCards.forEach(card => card.style.display = 'flex');
+                return;
+            }
             let matchUrl = null;
             categoryCards.forEach(card => {
                 const title = card.querySelector('h3').innerText.toLowerCase();

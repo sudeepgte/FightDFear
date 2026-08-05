@@ -71,6 +71,47 @@ public class MarketplaceController {
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
 
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:}")
+    private String razorpayKeyId;
+
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:}")
+    private String razorpayKeySecret;
+
+    private boolean razorpayConfigured() {
+        return razorpayKeyId != null && !razorpayKeyId.isBlank()
+                && razorpayKeySecret != null && !razorpayKeySecret.isBlank();
+    }
+
+    private static String formatCategoryLabel(ProviderCategory cat) {
+        if (cat == null) return "";
+        switch (cat) {
+            case TUTOR: return "Tutor";
+            case HOME_BAKER: return "Home Baker";
+            case LANGUAGE_TRAINER: return "Language Trainer";
+            case WOMEN_PRODUCTS: return "Women Products";
+            case WOMEN_LAWYER: return "Women Lawyer";
+            case FITNESS_ZUMBA: return "Fitness / Zumba";
+            default: return cat.name().replace('_', ' ');
+        }
+    }
+
+    private void validateMarketplaceUpload(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Please upload a document (PDF or image).");
+        }
+        if (file.getSize() > 5L * 1024 * 1024) {
+            throw new IllegalArgumentException("Document must be 5MB or smaller.");
+        }
+        String contentType = file.getContentType() != null ? file.getContentType().toLowerCase() : "";
+        String name = file.getOriginalFilename() != null ? file.getOriginalFilename().toLowerCase() : "";
+        boolean okType = contentType.startsWith("image/") || contentType.equals("application/pdf")
+                || name.endsWith(".pdf") || name.endsWith(".png") || name.endsWith(".jpg")
+                || name.endsWith(".jpeg") || name.endsWith(".webp");
+        if (!okType) {
+            throw new IllegalArgumentException("Only PDF or image files are allowed.");
+        }
+    }
+
     // ==============================
     // Provider registration + login
     // ==============================
@@ -88,7 +129,8 @@ public class MarketplaceController {
                                    @RequestParam String description,
                                    @RequestParam String locationText,
                                    @RequestParam("identityDoc") MultipartFile identityDoc,
-                                   Model model) {
+                                   Model model,
+                                   RedirectAttributes redirectAttributes) {
         if (providerRepo.findByEmail(email.trim().toLowerCase()).isPresent()) {
             model.addAttribute("error", "Email already registered.");
             return "marketplace/provider-register";
@@ -99,7 +141,13 @@ public class MarketplaceController {
             return "marketplace/provider-register";
         }
 
+        if (password == null || password.length() < 8) {
+            model.addAttribute("error", "Password must be at least 8 characters.");
+            return "marketplace/provider-register";
+        }
+
         try {
+            validateMarketplaceUpload(identityDoc);
             String docPath = fileUploadService.saveFile(identityDoc);
 
             ServiceProvider p = new ServiceProvider();
@@ -123,10 +171,10 @@ public class MarketplaceController {
             p.setRating(0.0);
 
             providerRepo.save(p);
-            model.addAttribute("message", "Registration successful! Await admin verification.");
+            redirectAttributes.addFlashAttribute("message", "Registration successful! Await admin verification.");
             return "redirect:/marketplace/provider/login";
         } catch (IllegalArgumentException e) {
-            model.addAttribute("error", "Invalid category selected.");
+            model.addAttribute("error", e.getMessage() != null ? e.getMessage() : "Invalid category selected.");
             return "marketplace/provider-register";
         } catch (IOException e) {
             model.addAttribute("error", "Failed to upload identity document.");
@@ -194,7 +242,12 @@ public class MarketplaceController {
         // Calculate total earnings from PAID enrollments
         double totalEarnings = enrollmentRepo.findByProviderId(p.getId()).stream()
                 .filter(e -> "PAID".equals(e.getPaymentStatus()))
-                .mapToDouble(e -> e.getProviderClass().getPrice())
+                .mapToDouble(e -> {
+                    if (e.getProviderClass() == null || e.getProviderClass().getPrice() == null) {
+                        return 0.0;
+                    }
+                    return e.getProviderClass().getPrice();
+                })
                 .sum();
         model.addAttribute("totalEarnings", totalEarnings);
         return "marketplace/provider-dashboard";
@@ -240,6 +293,7 @@ public class MarketplaceController {
     public String categories(Model model) {
         List<String> dynamicCategories = jobAppRepo.findDistinctJobCategoriesByStatus(VerificationStatus.VERIFIED);
         model.addAttribute("dynamicCategories", dynamicCategories);
+        model.addAttribute("providerCategories", ProviderCategory.values());
         return "marketplace/marketplace-home";
     }
 
@@ -270,8 +324,13 @@ public class MarketplaceController {
                 .map(b -> b.getBookingDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")))
                 .collect(java.util.stream.Collectors.toList());
 
+        boolean revealContact = bookings.stream().anyMatch(b ->
+                b.getClient() != null && b.getClient().getId().equals(u.getId())
+                        && ("ACCEPTED".equals(b.getStatus()) || "PAID".equals(b.getStatus()) || "COMPLETED".equals(b.getStatus())));
+
         model.addAttribute("workerApp", app);
         model.addAttribute("bookedTimes", bookedTimes);
+        model.addAttribute("revealContact", revealContact);
         return "marketplace/worker-details";
     }
 
@@ -336,12 +395,20 @@ public class MarketplaceController {
     }
 
     @GetMapping("/list")
-    public String list(@RequestParam String category, Model model, HttpSession session) {
+    public String list(@RequestParam String category, Model model, HttpSession session,
+                       RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
-        ProviderCategory cat = ProviderCategory.valueOf(category);
+        ProviderCategory cat;
+        try {
+            cat = ProviderCategory.valueOf(category.trim().toUpperCase());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Invalid marketplace category.");
+            return "redirect:/marketplace";
+        }
         model.addAttribute("category", cat);
+        model.addAttribute("categoryLabel", formatCategoryLabel(cat));
         model.addAttribute("providers", providerRepo.findByCategoryAndVerificationStatus(cat, VerificationStatus.VERIFIED));
         return "marketplace/provider-list";
     }
@@ -357,8 +424,19 @@ public class MarketplaceController {
         }
 
         model.addAttribute("provider", p);
+        model.addAttribute("categoryLabel", formatCategoryLabel(p.getCategory()));
         model.addAttribute("reviews", reviewRepo.findByProviderIdOrderByCreatedAtDesc(id));
-        model.addAttribute("canReview", !reviewRepo.existsByUserIdAndProviderId(u.getId(), id));
+
+        boolean alreadyReviewed = reviewRepo.existsByUserIdAndProviderId(u.getId(), id);
+        boolean completedSession = bookingRepo.findByUserOrderByRequestedTimeDesc(u).stream()
+                .anyMatch(b -> b.getProvider() != null && b.getProvider().getId().equals(id)
+                        && b.getStatus() == ProviderBookingStatus.COMPLETED);
+        boolean paidClass = enrollmentRepo.findByUser_Id(u.getId()).stream()
+                .anyMatch(e -> e.getProviderClass() != null
+                        && e.getProviderClass().getProvider() != null
+                        && e.getProviderClass().getProvider().getId().equals(id)
+                        && "PAID".equals(e.getPaymentStatus()));
+        model.addAttribute("canReview", !alreadyReviewed && (completedSession || paidClass));
         
         // Load available classes
         model.addAttribute("classes", classRepo.findByProvider_Id(id));
@@ -372,30 +450,45 @@ public class MarketplaceController {
         if (u == null) return "redirect:/login";
 
         ProviderClass pc = classRepo.findById(classId).orElse(null);
-        if (pc == null || pc.getAvailableSeats() <= 0) {
-            redirectAttributes.addFlashAttribute("message", "Class not available or full.");
+        if (pc == null || pc.getAvailableSeats() == null || pc.getAvailableSeats() <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Class not available or full.");
             return "redirect:/marketplace";
         }
 
-        if (enrollmentRepo.existsByUser_IdAndProviderClass_Id(u.getId(), classId)) {
+        if (pc.getDateTime() != null && pc.getDateTime().isBefore(LocalDateTime.now())) {
+            redirectAttributes.addFlashAttribute("error", "Cannot enroll in a class that has already started or ended.");
+            Long providerId = pc.getProvider() != null ? pc.getProvider().getId() : null;
+            return providerId != null ? "redirect:/marketplace/view/" + providerId : "redirect:/marketplace";
+        }
+
+        if (enrollmentRepo.findByUser_Id(u.getId()).stream().anyMatch(e ->
+                e.getProviderClass() != null
+                        && classId.equals(e.getProviderClass().getId())
+                        && !"CANCELLED".equals(e.getPaymentStatus()))) {
             redirectAttributes.addFlashAttribute("message", "You are already enrolled.");
             return "redirect:/marketplace/my-classes";
         }
+
+        boolean paidClass = pc.getPrice() != null && pc.getPrice() > 0;
 
         MarketplaceEnrollment enrollment = new MarketplaceEnrollment();
         enrollment.setUser(u);
         enrollment.setProviderClass(pc);
         enrollment.setStatus("ENROLLED");
-        enrollment.setPaymentStatus(pc.getPrice() > 0 ? "PENDING" : "PAID");
+        enrollment.setPaymentStatus(paidClass ? "PENDING" : "PAID");
         enrollment.setEnrollmentTime(LocalDateTime.now());
         
         enrollmentRepo.save(enrollment);
         
-        // Deduct seat
+        // Hold seat immediately; restored if user cancels unpaid checkout
         pc.setAvailableSeats(pc.getAvailableSeats() - 1);
         classRepo.save(pc);
 
-        if (pc.getPrice() > 0) {
+        if (paidClass) {
+            if (!razorpayConfigured()) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Payment gateway is not configured. Please contact support or try again later.");
+            }
             return "redirect:/marketplace/payment/" + enrollment.getId();
         }
 
@@ -412,7 +505,33 @@ public class MarketplaceController {
         if (e == null || !e.getUser().getId().equals(u.getId())) return "redirect:/marketplace";
 
         model.addAttribute("enrollment", e);
+        model.addAttribute("razorpayConfigured", razorpayConfigured());
         return "marketplace/payment";
+    }
+
+    @GetMapping("/payment/{enrollmentId}/cancel")
+    public String cancelPayment(@PathVariable Long enrollmentId, HttpSession session,
+                                RedirectAttributes redirectAttributes) {
+        User u = (User) session.getAttribute("user");
+        if (u == null) return "redirect:/login";
+
+        MarketplaceEnrollment e = enrollmentRepo.findById(enrollmentId).orElse(null);
+        if (e == null || e.getUser() == null || !e.getUser().getId().equals(u.getId())) {
+            return "redirect:/marketplace";
+        }
+
+        if ("PENDING".equals(e.getPaymentStatus())) {
+            ProviderClass pc = e.getProviderClass();
+            if (pc != null && pc.getAvailableSeats() != null) {
+                pc.setAvailableSeats(pc.getAvailableSeats() + 1);
+                classRepo.save(pc);
+            }
+            e.setStatus("CANCELLED");
+            e.setPaymentStatus("CANCELLED");
+            enrollmentRepo.save(e);
+            redirectAttributes.addFlashAttribute("message", "Checkout cancelled. Your seat was released.");
+        }
+        return "redirect:/marketplace/my-classes";
     }
 
     /**
@@ -426,12 +545,16 @@ public class MarketplaceController {
     }
 
     @GetMapping("/my-classes")
-    public String myClasses(HttpSession session, Model model) {
+    public String myClasses(HttpSession session, Model model,
+                            @RequestParam(value = "message", required = false) String message) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
         model.addAttribute("enrollments", enrollmentRepo.findByUser_Id(u.getId()));
         model.addAttribute("now", LocalDateTime.now());
+        if (message != null && !message.isBlank() && !model.containsAttribute("message")) {
+            model.addAttribute("message", message.replace('-', ' '));
+        }
         return "marketplace/my-classes";
     }
 
@@ -444,11 +567,18 @@ public class MarketplaceController {
                            @RequestParam String mode,
                            @RequestParam Double price,
                            @RequestParam Integer seats,
-                           @RequestParam String meetingLink,
+                           @RequestParam(required = false) String meetingLink,
                            @RequestParam String category,
-                           HttpSession session) {
+                           HttpSession session,
+                           RedirectAttributes redirectAttributes) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
         if (p == null) return "redirect:/marketplace/provider/login";
+
+        String normalizedMode = mode != null ? mode.trim() : "";
+        if ("Live".equalsIgnoreCase(normalizedMode) && (meetingLink == null || meetingLink.isBlank())) {
+            redirectAttributes.addFlashAttribute("error", "Meeting link is required for Live classes.");
+            return "redirect:/marketplace/provider/dashboard";
+        }
 
         ProviderClass pc = new ProviderClass();
         pc.setProvider(p);
@@ -459,7 +589,7 @@ public class MarketplaceController {
         pc.setMode(mode);
         pc.setPrice(price);
         pc.setAvailableSeats(seats);
-        pc.setMeetingLink(meetingLink);
+        pc.setMeetingLink(meetingLink != null ? meetingLink.trim() : "");
         pc.setCategory(ProviderCategory.valueOf(category.trim().toUpperCase()));
 
         classRepo.save(pc);
@@ -477,7 +607,7 @@ public class MarketplaceController {
 
         ServiceProvider p = providerRepo.findById(providerId).orElse(null);
         if (p == null || p.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            redirectAttributes.addFlashAttribute("message", "Provider not available.");
+            redirectAttributes.addFlashAttribute("error", "Provider not available.");
             return "redirect:/marketplace";
         }
 
@@ -485,12 +615,21 @@ public class MarketplaceController {
         try {
             reqTime = LocalDateTime.parse(requestedTime, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("message", "Invalid date format.");
+            redirectAttributes.addFlashAttribute("error", "Invalid date format.");
             return "redirect:/marketplace/view/" + providerId;
         }
 
         if (reqTime.isBefore(LocalDateTime.now())) {
-            redirectAttributes.addFlashAttribute("message", "Booking date/time cannot be in the past.");
+            redirectAttributes.addFlashAttribute("error", "Booking date/time cannot be in the past.");
+            return "redirect:/marketplace/view/" + providerId;
+        }
+
+        boolean slotTaken = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
+                .filter(b -> b.getStatus() != ProviderBookingStatus.CANCELLED)
+                .anyMatch(b -> b.getRequestedTime() != null
+                        && java.time.Duration.between(b.getRequestedTime(), reqTime).abs().toMinutes() < 60);
+        if (slotTaken) {
+            redirectAttributes.addFlashAttribute("error", "This time slot is already booked. Please choose another time.");
             return "redirect:/marketplace/view/" + providerId;
         }
 
@@ -507,15 +646,17 @@ public class MarketplaceController {
     }
 
     @GetMapping("/worker-bookings")
-    public String workerBookings(HttpSession session, Model model) {
+    public String workerBookings(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
-        in.sp.main.Entities.JobApplication app = jobAppRepo.findByStatus(VerificationStatus.VERIFIED)
-                .stream().filter(a -> a.getUser().getId().equals(u.getId())).findFirst().orElse(null);
+        in.sp.main.Entities.JobApplication app = jobAppRepo
+                .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(u.getId(), VerificationStatus.VERIFIED)
+                .orElse(null);
 
         if (app == null) {
-            return "redirect:/users/dashboard";
+            redirectAttributes.addFlashAttribute("error", "Job Bookings are available only for verified workers.");
+            return "redirect:/marketplace";
         }
 
         List<in.sp.main.Entities.WorkerBooking> incomingBookings = workerBookingRepo.findByJobApplication_Id(app.getId());
@@ -539,11 +680,26 @@ public class MarketplaceController {
         if (u == null) return "redirect:/login";
         
         in.sp.main.Entities.WorkerBooking booking = workerBookingRepo.findById(id).orElse(null);
-        if (booking != null && booking.getJobApplication().getUser().getId().equals(u.getId())) {
-            booking.setStatus(status); // ACCEPTED, REJECTED, COMPLETED
-            workerBookingRepo.save(booking);
-            redirectAttributes.addFlashAttribute("success", "Booking updated successfully!");
+        if (booking == null || booking.getJobApplication() == null || booking.getJobApplication().getUser() == null
+                || !booking.getJobApplication().getUser().getId().equals(u.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Booking not found.");
+            return "redirect:/marketplace/worker-bookings";
         }
+
+        String current = booking.getStatus() != null ? booking.getStatus() : "";
+        String next = status != null ? status.trim().toUpperCase() : "";
+        boolean allowed =
+                ("PENDING".equals(current) && ("ACCEPTED".equals(next) || "REJECTED".equals(next)))
+                || (("ACCEPTED".equals(current) || "PAID".equals(current)) && "COMPLETED".equals(next));
+
+        if (!allowed) {
+            redirectAttributes.addFlashAttribute("error", "Invalid booking status transition.");
+            return "redirect:/marketplace/worker-bookings";
+        }
+
+        booking.setStatus(next);
+        workerBookingRepo.save(booking);
+        redirectAttributes.addFlashAttribute("success", "Booking updated successfully!");
         return "redirect:/marketplace/worker-bookings";
     }
 
@@ -554,7 +710,7 @@ public class MarketplaceController {
     public String payWorkerBooking(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("user") == null) return "redirect:/login";
         redirectAttributes.addFlashAttribute("error", "Direct worker payment is disabled. Complete payment via Razorpay.");
-        return "redirect:/user/bookings";
+        return "redirect:/marketplace/myBookings";
     }
 
     @PostMapping("/review")
@@ -570,12 +726,25 @@ public class MarketplaceController {
         if (p == null) return "redirect:/marketplace";
 
         if (rating == null || rating < 1 || rating > 5) {
-            redirectAttributes.addFlashAttribute("message", "Rating must be 1-5.");
+            redirectAttributes.addFlashAttribute("error", "Rating must be 1-5.");
             return "redirect:/marketplace/view/" + providerId;
         }
 
         if (reviewRepo.existsByUserIdAndProviderId(u.getId(), providerId)) {
-            redirectAttributes.addFlashAttribute("message", "You already reviewed this provider.");
+            redirectAttributes.addFlashAttribute("error", "You already reviewed this provider.");
+            return "redirect:/marketplace/view/" + providerId;
+        }
+
+        boolean completedSession = bookingRepo.findByUserOrderByRequestedTimeDesc(u).stream()
+                .anyMatch(b -> b.getProvider() != null && b.getProvider().getId().equals(providerId)
+                        && b.getStatus() == ProviderBookingStatus.COMPLETED);
+        boolean paidClass = enrollmentRepo.findByUser_Id(u.getId()).stream()
+                .anyMatch(e -> e.getProviderClass() != null
+                        && e.getProviderClass().getProvider() != null
+                        && e.getProviderClass().getProvider().getId().equals(providerId)
+                        && "PAID".equals(e.getPaymentStatus()));
+        if (!completedSession && !paidClass) {
+            redirectAttributes.addFlashAttribute("error", "You can review only after completing a session or paid class with this provider.");
             return "redirect:/marketplace/view/" + providerId;
         }
 

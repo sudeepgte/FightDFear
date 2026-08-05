@@ -8,7 +8,7 @@
   <title>Provider Registration</title>
   <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
@@ -192,7 +192,7 @@
                         </div>
                         <div class="fdf-row">
                             <div class="fdf-group"><label>Phone</label><input class="fdf-input" type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required></div>
-                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="••••••••" required></div>
+                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="Min. 8 characters" minlength="8" required></div>
                         </div>
                         <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Professional Details</button>
                     </div>

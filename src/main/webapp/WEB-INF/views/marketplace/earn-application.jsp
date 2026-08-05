@@ -15,7 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -150,7 +150,7 @@
                         
                         <div class="mb-4">
                             <label for="hourlyRate" class="form-label fw-bold">Hourly Rate (₹) <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="hourlyRate" name="hourlyRate" min="0" step="0.01" placeholder="e.g. 500" required>
+                            <input type="number" class="form-control" id="hourlyRate" name="hourlyRate" min="1" step="0.01" placeholder="e.g. 500" required>
                             <small class="text-muted">Set your expected amount per hour for your services.</small>
                         </div>
 

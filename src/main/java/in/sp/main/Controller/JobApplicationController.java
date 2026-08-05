@@ -50,7 +50,38 @@ public class JobApplicationController {
             return "redirect:/login";
         }
 
+        if (hourlyRate == null || hourlyRate <= 0) {
+            redirectAttributes.addFlashAttribute("error", "Hourly rate must be greater than zero.");
+            return "redirect:/marketplace/earn";
+        }
+
+        if (jobApplicationRepo.existsByUser_IdAndStatusIn(user.getId(),
+                java.util.List.of(in.sp.main.Entities.VerificationStatus.PENDING,
+                        in.sp.main.Entities.VerificationStatus.VERIFIED))) {
+            redirectAttributes.addFlashAttribute("error",
+                    "You already have a pending or verified job application.");
+            return "redirect:/marketplace/earn";
+        }
+
         try {
+            if (proofDocument == null || proofDocument.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "Please upload a proof document.");
+                return "redirect:/marketplace/earn";
+            }
+            if (proofDocument.getSize() > 5L * 1024 * 1024) {
+                redirectAttributes.addFlashAttribute("error", "Document must be 5MB or smaller.");
+                return "redirect:/marketplace/earn";
+            }
+            String contentType = proofDocument.getContentType() != null ? proofDocument.getContentType().toLowerCase() : "";
+            String name = proofDocument.getOriginalFilename() != null ? proofDocument.getOriginalFilename().toLowerCase() : "";
+            boolean okType = contentType.startsWith("image/") || contentType.equals("application/pdf")
+                    || name.endsWith(".pdf") || name.endsWith(".png") || name.endsWith(".jpg")
+                    || name.endsWith(".jpeg") || name.endsWith(".webp");
+            if (!okType) {
+                redirectAttributes.addFlashAttribute("error", "Only PDF or image files are allowed.");
+                return "redirect:/marketplace/earn";
+            }
+
             String docPath = fileUploadService.saveFile(proofDocument);
 
             JobApplication application = new JobApplication();
