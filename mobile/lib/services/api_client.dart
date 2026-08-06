@@ -8,6 +8,7 @@ class ApiClient {
 
   final String baseUrl;
   static const _tokenKey = 'auth_token';
+  static const _doctorTokenKey = 'doctor_auth_token';
   static const _centreTokenKey = 'centre_auth_token';
   static const _adminTokenKey = 'admin_auth_token';
   static const _salonTokenKey = 'salon_auth_token';
@@ -28,6 +29,21 @@ class ApiClient {
   Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+  }
+
+  Future<String?> getDoctorToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_doctorTokenKey);
+  }
+
+  Future<void> saveDoctorToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_doctorTokenKey, token);
+  }
+
+  Future<void> clearDoctorToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_doctorTokenKey);
   }
 
   Future<String?> getCentreToken() async {
@@ -94,6 +110,7 @@ class ApiClient {
 
   Future<Map<String, String>> _headers({
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -105,6 +122,11 @@ class ApiClient {
     };
     if (adminAuth) {
       final token = await getAdminToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (doctorAuth) {
+      final token = await getDoctorToken();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -137,6 +159,7 @@ class ApiClient {
     Map<String, String> fields = const {},
     List<http.MultipartFile> files = const [],
     bool auth = false,
+    bool doctorAuth = false,
     bool centreAuth = false,
   }) async {
     final req = http.MultipartRequest('POST', _uri(path));
@@ -145,6 +168,11 @@ class ApiClient {
     req.headers['Accept'] = 'application/json';
     if (centreAuth) {
       final token = await getCentreToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (doctorAuth) {
+      final token = await getDoctorToken();
       if (token != null && token.isNotEmpty) {
         req.headers['Authorization'] = 'Bearer $token';
       }
@@ -163,6 +191,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -174,6 +203,7 @@ class ApiClient {
           _uri(path),
           headers: await _headers(
             auth: auth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,
@@ -188,6 +218,7 @@ class ApiClient {
   Future<Map<String, dynamic>> get(
     String path, {
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -199,6 +230,7 @@ class ApiClient {
           _uri(path),
           headers: await _headers(
             auth: auth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,
@@ -256,6 +288,7 @@ class ApiClient {
 
   Future<Map<String, dynamic>> delete(
     String path, {
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -265,7 +298,8 @@ class ApiClient {
         .delete(
           _uri(path),
           headers: await _headers(
-            auth: !centreAuth && !adminAuth && !salonAuth && !stylistAuth,
+            auth: !doctorAuth && !centreAuth && !adminAuth && !salonAuth && !stylistAuth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,

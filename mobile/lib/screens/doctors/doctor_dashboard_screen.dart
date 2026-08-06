@@ -63,6 +63,18 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
+  Future<void> _logout() async {
+    final res = await _svc.logout();
+    await _svc.clearLocalSession();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['success'] == true ? 'Logged out successfully' : 'Logged out locally'),
+      ),
+    );
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   num _num(dynamic v) => v is num ? v : num.tryParse('$v') ?? 0;
 
   DateTime? _parseTime(dynamic raw) {
@@ -460,6 +472,64 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
+  Widget _profileCompletionBanner() {
+    final status = (_raw['doctorProfileStatus'] ?? _doctor['doctorProfileStatus'] ?? 'PROFILE_INCOMPLETE')
+        .toString();
+    final pct = _num(_raw['profileCompletionPct'] ?? _doctor['profileCompletionPct']).clamp(0, 100).toDouble();
+    final missing = ModuleTheme.toList(_raw['missingItems']);
+    final missingText = missing.take(3).map((e) => e.toString()).join(', ');
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.assignment_outlined, color: ModuleTheme.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Profile Completion ${pct.toInt()}%',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEEF2FF),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(status, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: pct / 100,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFE2E8F0),
+              color: pct >= 100 ? const Color(0xFF22C55E) : ModuleTheme.primary,
+            ),
+          ),
+          if (missingText.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Missing: $missingText${missing.length > 3 ? '...' : ''}',
+              style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _pill(IconData icon, String text, Color accent) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -708,6 +778,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         children: [
           _profileCard(),
+          const SizedBox(height: 12),
+          _profileCompletionBanner(),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -938,6 +1010,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             ),
           ),
           IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

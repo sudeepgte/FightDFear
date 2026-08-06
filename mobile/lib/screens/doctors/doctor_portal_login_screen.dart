@@ -3,192 +3,304 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
-import '../../widgets/registration_form_kit.dart';
 import 'doctor_dashboard_screen.dart';
-import '../portals/portal_auth_screen.dart';
 
-class DoctorPortalLoginScreen extends StatelessWidget {
+class DoctorPortalLoginScreen extends StatefulWidget {
   const DoctorPortalLoginScreen({super.key, this.startRegister = false});
 
   final bool startRegister;
 
   @override
+  State<DoctorPortalLoginScreen> createState() => _DoctorPortalLoginScreenState();
+}
+
+class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
+  final _emailOtp = TextEditingController();
+
+  bool _register = false;
+  bool _loading = false;
+  bool _terms = false;
+  bool _emailOtpSent = false;
+  String? _error;
+
+  DoctorAuthService get _svc => DoctorAuthService(context.read<AuthState>().api);
+
+  @override
+  void initState() {
+    super.initState();
+    _register = widget.startRegister;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    _email.dispose();
+    _password.dispose();
+    _confirmPassword.dispose();
+    _emailOtp.dispose();
+    super.dispose();
+  }
+
+  String? _validateEmail(String email) {
+    final v = email.trim();
+    if (v.isEmpty) return 'Email is required';
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v)) return 'Enter a valid email';
+    return null;
+  }
+
+  String? _validatePhone(String phone) {
+    final v = phone.trim();
+    if (v.isEmpty) return 'Mobile number is required';
+    if (!RegExp(r'^\d{10}$').hasMatch(v)) return 'Phone must be 10 digits';
+    return null;
+  }
+
+  String? _validatePassword(String pass) {
+    if (pass.isEmpty) return 'Password is required';
+    if (pass.length < 6) return 'Password must be at least 6 characters';
+    if (!RegExp(r'[0-9]').hasMatch(pass) || !RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=/\\]').hasMatch(pass)) {
+      return 'Password must include a number and special character';
+    }
+    return null;
+  }
+
+  Future<void> _sendOtp() async {
+    final emailErr = _validateEmail(_email.text);
+    if (emailErr != null) {
+      setState(() => _error = emailErr);
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final res = await _svc.sendEmailOtp(_email.text);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (res['success'] == true) {
+      setState(() => _emailOtpSent = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP sent to your email')),
+      );
+    } else {
+      setState(() => _error = res['error']?.toString() ?? 'Failed to send OTP');
+    }
+  }
+
+  Future<void> _submit() async {
+    setState(() => _error = null);
+    if (_register) {
+      if ((_name.text.trim()).isEmpty) {
+        setState(() => _error = 'Full name is required');
+        return;
+      }
+      final emailErr = _validateEmail(_email.text);
+      if (emailErr != null) {
+        setState(() => _error = emailErr);
+        return;
+      }
+      final phoneErr = _validatePhone(_phone.text);
+      if (phoneErr != null) {
+        setState(() => _error = phoneErr);
+        return;
+      }
+      final passErr = _validatePassword(_password.text);
+      if (passErr != null) {
+        setState(() => _error = passErr);
+        return;
+      }
+      if (_password.text != _confirmPassword.text) {
+        setState(() => _error = 'Password and confirm password do not match');
+        return;
+      }
+      if (!_terms) {
+        setState(() => _error = 'Please accept Terms & Privacy Policy');
+        return;
+      }
+      if (!_emailOtpSent) {
+        setState(() => _error = 'Please send email OTP first');
+        return;
+      }
+      if (!RegExp(r'^\d{6}$').hasMatch(_emailOtp.text.trim())) {
+        setState(() => _error = 'Please enter the 6-digit email OTP');
+        return;
+      }
+    } else {
+      final emailErr = _validateEmail(_email.text);
+      if (emailErr != null) {
+        setState(() => _error = emailErr);
+        return;
+      }
+      if (_password.text.trim().isEmpty) {
+        setState(() => _error = 'Password is required');
+        return;
+      }
+    }
+
+    setState(() => _loading = true);
+    final res = _register
+        ? await _svc.registerQuick({
+            'fullName': _name.text.trim(),
+            'phone': _phone.text.trim(),
+            'email': _email.text.trim().toLowerCase(),
+            'password': _password.text,
+            'confirmPassword': _confirmPassword.text,
+            'emailOtp': _emailOtp.text.trim(),
+            'acceptedTerms': true,
+          })
+        : await _svc.login(
+            email: _email.text.trim(),
+            password: _password.text,
+          );
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (res['success'] == true) {
+      if (_register) {
+        setState(() {
+          _register = false;
+          _name.clear();
+          _phone.clear();
+          _password.clear();
+          _confirmPassword.clear();
+          _emailOtp.clear();
+          _emailOtpSent = false;
+          _terms = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              res['message']?.toString() ??
+                  'Account created successfully. Login and complete your profile.',
+            ),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+        );
+      }
+    } else {
+      setState(() => _error = res['error']?.toString() ?? 'Request failed');
+    }
+  }
+
+  Widget _input({
+    required TextEditingController controller,
+    required String label,
+    bool obscure = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final api = context.read<AuthState>().api;
-    final svc = DoctorAuthService(api);
-    return PortalAuthScreen(
-      title: 'Women Doctor',
-      defaultRegister: startRegister,
-      requireEmailOtp: true,
-      requirePhoneOtp: true,
-      successMessage:
-          'Doctor registration submitted successfully. Your profile and medical documents are under verification. You will be notified once your account is approved.',
-      registerFields: const [
-        RegFieldDef(key: 'sec_profile', label: 'Professional information', type: RegInputType.section),
-        RegFieldDef(key: 'fullName', label: 'Full name', required: true),
-        RegFieldDef(key: 'phone', label: 'Phone', type: RegInputType.phone, required: true),
-        RegFieldDef(key: 'specialization', label: 'Specialization', initial: 'Gynecologist', required: true),
-        RegFieldDef(key: 'qualification', label: 'Qualification', initial: 'MBBS', required: true),
-        RegFieldDef(key: 'medicalRegNumber', label: 'Medical registration number', required: true),
-        RegFieldDef(
-          key: 'medicalCouncil',
-          label: 'Medical council',
-          type: RegInputType.dropdown,
-          options: RegOptions.medicalCouncils,
-          required: true,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: Text(_register ? 'Join as Doctor' : 'Doctor Login'),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      _register ? 'Quick Registration' : 'Welcome Doctor',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _register
+                          ? 'Create your account in under a minute. Complete your professional profile after login.'
+                          : 'Sign in to your doctor dashboard.',
+                    ),
+                    const SizedBox(height: 16),
+                    if (_error != null) ...[
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                      const SizedBox(height: 8),
+                    ],
+                    if (_register) ...[
+                      _input(controller: _name, label: 'Full name'),
+                      _input(controller: _phone, label: 'Mobile number', keyboardType: TextInputType.phone),
+                    ],
+                    _input(controller: _email, label: 'Email', keyboardType: TextInputType.emailAddress),
+                    if (_register) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _input(controller: _emailOtp, label: 'Email OTP', keyboardType: TextInputType.number),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: _loading ? null : _sendOtp,
+                            child: Text(_emailOtpSent ? 'Resend OTP' : 'Send OTP'),
+                          ),
+                        ],
+                      ),
+                    ],
+                    _input(controller: _password, label: 'Password', obscure: true),
+                    if (_register) ...[
+                      _input(controller: _confirmPassword, label: 'Confirm password', obscure: true),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('I accept Terms & Privacy Policy'),
+                        value: _terms,
+                        onChanged: (v) => setState(() => _terms = v ?? false),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    FilledButton(
+                      onPressed: _loading ? null : _submit,
+                      child: _loading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : Text(_register ? 'Create Account' : 'Login'),
+                    ),
+                    TextButton(
+                      onPressed: _loading
+                          ? null
+                          : () => setState(() {
+                                _register = !_register;
+                                _error = null;
+                              }),
+                      child: Text(_register ? 'Already have an account? Login' : 'New doctor? Join now'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
-        RegFieldDef(
-          key: 'consultationModes',
-          label: 'Consultation mode',
-          type: RegInputType.chips,
-          options: RegOptions.consultationModes,
-          required: true,
-        ),
-        RegFieldDef(
-          key: 'languages',
-          label: 'Languages spoken',
-          type: RegInputType.chips,
-          options: RegOptions.doctorLanguages,
-          required: true,
-        ),
-        RegFieldDef(
-          key: 'hospitalName',
-          label: 'Hospital / clinic affiliation',
-          hint: 'Add multiple hospitals separated by commas',
-          required: true,
-        ),
-        RegFieldDef(
-          key: 'specialServices',
-          label: 'Special services',
-          type: RegInputType.chips,
-          options: RegOptions.doctorSpecialServices,
-        ),
-        RegFieldDef(
-          key: 'bio',
-          label: 'Profile bio (optional)',
-          type: RegInputType.multiline,
-          maxLines: 3,
-          maxLength: 400,
-        ),
-        RegFieldDef(key: 'experienceYears', label: 'Years of experience', type: RegInputType.number, required: true),
-        RegFieldDef(
-          key: 'consultationFee',
-          label: 'Consultation fee (₹)',
-          type: RegInputType.number,
-          initial: '500',
-          required: true,
-        ),
-        RegFieldDef(
-          key: 'gender',
-          label: 'Gender',
-          type: RegInputType.dropdown,
-          options: ['Female', 'Male', 'Other'],
-          initial: 'Female',
-        ),
-        RegFieldDef(key: 'sec_location', label: 'Clinic location', type: RegInputType.section),
-        RegFieldDef(key: 'clinicAddress', label: 'Clinic address', type: RegInputType.multiline, required: true),
-        RegFieldDef(key: 'city', label: 'City', required: true),
-        RegFieldDef(
-          key: 'googleMapLocation',
-          label: 'Google Maps location / link',
-          hint: 'Paste Maps link or area landmark',
-          required: true,
-        ),
-        RegFieldDef(key: 'sec_avail', label: 'Availability', type: RegInputType.section),
-        RegFieldDef(
-          key: 'workingDays',
-          label: 'Working days',
-          type: RegInputType.chips,
-          options: RegOptions.doctorWorkingDays,
-          required: true,
-        ),
-        RegFieldDef(
-          key: 'timeSlots',
-          label: 'Available time ranges',
-          type: RegInputType.chips,
-          options: RegOptions.doctorAvailability,
-          required: true,
-        ),
-        RegFieldDef(key: 'sec_docs', label: 'Documents', type: RegInputType.section),
-        RegFieldDef(key: 'photo', label: 'Profile photo', type: RegInputType.file),
-        RegFieldDef(
-          key: 'certificates',
-          label: 'Medical certificates / licenses',
-          type: RegInputType.multiFile,
-          required: true,
-          hint: 'Upload one or more JPG/PNG/PDF certificates',
-        ),
-        RegFieldDef(key: 'idProof', label: 'Government ID proof', type: RegInputType.file, required: true),
-      ],
-      onSubmit: ({required register, required email, required password, required extra}) {
-        if (register) {
-          final modes = extra['consultationModes'] ?? '';
-          String consultationType = 'CLINIC';
-          if (modes.contains('Online') && modes.contains('In Clinic')) {
-            consultationType = 'BOTH';
-          } else if (modes.contains('Online')) {
-            consultationType = 'ONLINE';
-          } else if (modes.contains('Home Visit')) {
-            consultationType = 'OFFLINE';
-          }
-
-          final slots = extra['timeSlots'] ?? '';
-          String startTime = '09:00';
-          String endTime = '17:00';
-          if (slots.contains('9:00 AM')) startTime = '09:00';
-          if (slots.contains('8:00 PM')) {
-            endTime = '20:00';
-          } else if (slots.contains('5:00 PM')) {
-            endTime = '17:00';
-          } else if (slots.contains('1:00 PM')) {
-            endTime = '13:00';
-          }
-
-          return svc.register({
-            'fullName': extra['fullName'] ?? '',
-            'email': email,
-            'phone': extra['phone'] ?? '',
-            'password': password,
-            'confirmPassword': extra['confirmPassword'] ?? password,
-            'specialization': extra['specialization'] ?? '',
-            'qualification': extra['qualification'] ?? '',
-            'city': extra['city'] ?? '',
-            'consultationFee': extra['consultationFee'] ?? '500',
-            'medicalRegNumber': extra['medicalRegNumber'] ?? '',
-            'medicalCouncil': extra['medicalCouncil'] ?? '',
-            'hospitalName': extra['hospitalName'] ?? '',
-            'clinicAddress': extra['clinicAddress'] ?? '',
-            'googleMapLocation': extra['googleMapLocation'] ?? '',
-            'experienceYears': extra['experienceYears'] ?? '',
-            'gender': (extra['gender'] ?? 'Female').toUpperCase(),
-            'consultationType': consultationType,
-            'consultationModes': modes,
-            'languages': extra['languages'] ?? '',
-            'specialServices': extra['specialServices'] ?? '',
-            'bio': extra['bio'] ?? '',
-            'availableDays': extra['workingDays'] ?? '',
-            'timeSlots': slots,
-            'startTime': startTime,
-            'endTime': endTime,
-            'locationText': [
-              extra['hospitalName'] ?? '',
-              extra['clinicAddress'] ?? '',
-              extra['googleMapLocation'] ?? '',
-              if ((extra['languages'] ?? '').isNotEmpty) 'Languages: ${extra['languages']}',
-              if ((extra['specialServices'] ?? '').isNotEmpty) 'Services: ${extra['specialServices']}',
-              if ((extra['bio'] ?? '').isNotEmpty) 'Bio: ${extra['bio']}',
-              if ((extra['medicalCouncil'] ?? '').isNotEmpty) 'Council: ${extra['medicalCouncil']}',
-              if (modes.isNotEmpty) 'Modes: $modes',
-            ].where((e) => e.trim().isNotEmpty).join('\n'),
-            'profilePhotoPath': extra['photo'] ?? 'mobile-pending',
-            'identityDocumentPath': extra['idProof'] ?? 'mobile-pending',
-            'medicalLicensePath': extra['certificates'] ?? 'mobile-pending',
-            'degreeCertificatePath': extra['certificates'] ?? 'mobile-pending',
-          });
-        }
-        return svc.login(email: email, password: password);
-      },
-      dashboardBuilder: (_) => const DoctorDashboardScreen(),
+      ),
     );
   }
 }
