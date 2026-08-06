@@ -5,11 +5,16 @@ import in.sp.main.Entities.ConsultationType;
 import in.sp.main.Entities.Doctor;
 import in.sp.main.Entities.DoctorAppointment;
 import in.sp.main.Entities.DoctorAppointmentStatus;
+import in.sp.main.Entities.DoctorDocumentType;
+import in.sp.main.Entities.DoctorProfileStatus;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
+import in.sp.main.Service.DoctorDocumentService;
+import in.sp.main.Service.DoctorProfileService;
+import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Util.MobileValidation;
 import jakarta.servlet.http.HttpSession;
@@ -18,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,7 +43,54 @@ public class MobileDoctorAuthController {
     private PasswordService passwordService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private DoctorRegistrationService doctorRegistrationService;
+    @Autowired
+    private DoctorProfileService doctorProfileService;
+    @Autowired
+    private DoctorDocumentService doctorDocumentService;
 
+    @PostMapping("/otp/send-email")
+    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
+        String email = trim(body == null ? null : body.get("email"));
+        try {
+            doctorRegistrationService.sendRegistrationOtp(email);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Verification code sent to your email");
+            res.put("channel", "EMAIL");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/register-quick")
+    public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, String> body) {
+        try {
+            Doctor d = doctorRegistrationService.registerQuick(
+                    trim(body == null ? null : body.get("fullName")),
+                    trim(body == null ? null : body.get("email")),
+                    trim(body == null ? null : body.get("phone")),
+                    body == null ? "" : body.getOrDefault("password", ""),
+                    body == null ? "" : body.getOrDefault("confirmPassword", ""),
+                    trim(body == null ? null : body.get("emailOtp")),
+                    Boolean.parseBoolean(String.valueOf(body == null ? null : body.get("acceptedTerms"))));
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Account created successfully. Complete your profile to continue.");
+            res.put("doctorId", d.getId());
+            res.put("doctorProfileStatus", d.getDoctorProfileStatus().name());
+            res.put("profileCompletionPct", d.getProfileCompletionPct());
+            return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #registerQuick(Map)} for new mobile registrations.
+     */
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> body) {
         String fullName = trim(body == null ? null : body.get("fullName"));
@@ -125,6 +178,7 @@ public class MobileDoctorAuthController {
         d.setDegreeCertificatePath(degreeCertificatePath.isBlank() ? "mobile-pending" : degreeCertificatePath);
         d.setProfilePhotoPath(profilePhotoPath.isBlank() ? null : profilePhotoPath);
         d.setVerificationStatus(VerificationStatus.PENDING);
+        d.setDoctorProfileStatus(DoctorProfileStatus.PROFILE_INCOMPLETE);
         d.setRating(0.0);
         d.setEmergencyAvailable(false);
 
@@ -164,6 +218,9 @@ public class MobileDoctorAuthController {
         }
 
         doctorRepo.save(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorProfileService.syncVerificationStatus(d);
+        doctorRepo.save(d);
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
@@ -184,14 +241,17 @@ public class MobileDoctorAuthController {
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("Doctor not found"));
         }
-        Doctor d = opt.get();
-        boolean ok = passwordService.matchesAndUpgrade(password, d.getPassword(), hashed -> {
-            d.setPassword(hashed);
-            doctorRepo.save(d);
+        Doctor doctor = opt.get();
+        boolean ok = passwordService.matchesAndUpgrade(password, doctor.getPassword(), hashed -> {
+            doctor.setPassword(hashed);
+            doctorRepo.save(doctor);
         });
         if (!ok) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("Invalid password"));
-        if (d.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("Your account is pending admin verification"));
+        Doctor d;
+        try {
+            d = doctorRegistrationService.requireLoginDoctor(doctor);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
 
         session.setAttribute("loggedDoctor", d);
@@ -202,7 +262,106 @@ public class MobileDoctorAuthController {
         res.put("tokenType", "Bearer");
         res.put("role", "DOCTOR");
         res.put("doctor", doctorSummary(d));
+        res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+        res.put("profileCompletionPct", d.getProfileCompletionPct());
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
+        if (session != null) {
+            session.removeAttribute("loggedDoctor");
+            try {
+                session.invalidate();
+            } catch (IllegalStateException ignored) {
+            }
+        }
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Logged out successfully");
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> profile(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorProfileService.syncVerificationStatus(d);
+        doctorRepo.save(d);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("profile", doctorProfileService.profilePayload(d));
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/documents/{type}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadDocument(
+            @PathVariable String type,
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        try {
+            DoctorDocumentType docType = doctorDocumentService.parseType(type);
+            String path = doctorDocumentService.uploadDocument(d, docType, file);
+            doctorRepo.save(d);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Document uploaded successfully");
+            res.put("documentType", docType.name());
+            res.put("path", path);
+            res.put("profileCompletionPct", d.getProfileCompletionPct());
+            res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+            res.put("missingItems", doctorProfileService.missingItems(d));
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @DeleteMapping("/documents/{type}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deleteDocument(
+            @PathVariable String type,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        try {
+            DoctorDocumentType docType = doctorDocumentService.parseType(type);
+            doctorDocumentService.deleteDocument(d, docType);
+            doctorRepo.save(d);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Document removed");
+            res.put("profileCompletionPct", d.getProfileCompletionPct());
+            res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/submit-verification")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> submitForVerification(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        try {
+            doctorRegistrationService.submitForVerification(d);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Profile submitted for admin verification");
+            res.put("doctorProfileStatus", d.getDoctorProfileStatus().name());
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
     }
 
     @GetMapping("/me")
@@ -210,6 +369,9 @@ public class MobileDoctorAuthController {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorProfileService.syncVerificationStatus(d);
+        doctorRepo.save(d);
 
         var appointments = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -319,6 +481,12 @@ public class MobileDoctorAuthController {
         data.put("monthEarnings", monthEarnings);
         data.put("notifications", notifications);
         data.put("online", d.getVerificationStatus() == VerificationStatus.VERIFIED);
+        data.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+        data.put("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
+        data.put("missingItems", doctorProfileService.missingItems(d));
+        data.put("canSubmitForVerification", doctorProfileService.isReadyForVerification(d)
+                && d.getDoctorProfileStatus() != DoctorProfileStatus.PENDING_ADMIN_APPROVAL
+                && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED);
         return ResponseEntity.ok(data);
     }
 
@@ -409,6 +577,8 @@ public class MobileDoctorAuthController {
         m.put("consultationType", d.getConsultationType() == null ? null : d.getConsultationType().name());
         m.put("rating", d.getRating() != null ? d.getRating() : 0.0);
         m.put("verificationStatus", d.getVerificationStatus() == null ? null : d.getVerificationStatus().name());
+        m.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+        m.put("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
         m.put("profilePhotoPath", d.getProfilePhotoPath());
         m.put("experienceYears", d.getExperienceYears());
         m.put("hospitalName", d.getHospitalName());

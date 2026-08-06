@@ -50,6 +50,8 @@ public class SecurityConfig {
             "/api/investor/login/**",
             "/api/doctors/provider/register",
             "/api/doctors/provider/register/**",
+            "/api/doctors/provider/register-quick",
+            "/api/doctors/provider/otp/send-email",
             "/api/doctors/provider/login",
             "/api/doctors/provider/login/**",
             "/api/fitness/trainer/register/**",

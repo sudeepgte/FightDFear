@@ -1198,6 +1198,9 @@ public class AdminController {
             return "redirect:/admin/pending-doctors";
         }
         d.setVerificationStatus(VerificationStatus.VERIFIED);
+        d.setDoctorProfileStatus(DoctorProfileStatus.APPROVED);
+        d.setRejectionReason(null);
+        d.setChangesRequestedNote(null);
         doctorRepository.save(d);
         redirectAttributes.addFlashAttribute("message", "Doctor verified.");
         return "redirect:/admin/pending-doctors";
@@ -1215,6 +1218,7 @@ public class AdminController {
             return "redirect:/admin/pending-doctors";
         }
         d.setVerificationStatus(VerificationStatus.REJECTED);
+        d.setDoctorProfileStatus(DoctorProfileStatus.REJECTED);
         doctorRepository.save(d);
         redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
         return "redirect:/admin/pending-doctors";

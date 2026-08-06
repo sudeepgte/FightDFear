@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -389,23 +390,79 @@
                       </c:choose>
                   </div>
               </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-tasks"></i> Profile Status</div>
+                  <div class="info-value">${doctor.doctorProfileStatus != null ? doctor.doctorProfileStatus : '—'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-percent"></i> Profile Completion</div>
+                  <div class="info-value">${doctor.profileCompletionPct != null ? doctor.profileCompletionPct : 0}%</div>
+              </div>
           </div>
 
-          <!-- Identity Document -->
-          <div class="section-title"><i class="fas fa-file-medical-alt"></i> Medical Identity Document</div>
+          <!-- Verification Documents -->
+          <div class="section-title"><i class="fas fa-file-medical-alt"></i> Verification Documents</div>
           <div class="doc-box">
-              <div class="doc-box-icon"><i class="fas fa-file-image"></i></div>
+              <div class="doc-box-icon"><i class="fas fa-user-circle"></i></div>
               <div class="doc-box-content">
+                  <div class="label">Profile Photo</div>
                   <c:choose>
-                      <c:when test="${not empty doctor.identityDocumentPath}">
-                          <div class="label">Uploaded Certificate / ID</div>
-                          <a href="${pageContext.request.contextPath}${doctor.identityDocumentPath}" target="_blank" class="doc-link">
-                              <i class="fas fa-external-link-alt"></i> View / Download Document
+                      <c:when test="${not empty doctor.profilePhotoPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.profilePhotoPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View profile photo
                           </a>
                       </c:when>
-                      <c:otherwise>
-                          <div class="text-muted">No identity document uploaded.</div>
-                      </c:otherwise>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-id-card"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Government ID</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.idProofPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.idProofPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View government ID
+                          </a>
+                      </c:when>
+                      <c:when test="${not empty doctor.identityDocumentPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.identityDocumentPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View identity document
+                          </a>
+                          <c:if test="${fn:startsWith(doctor.identityDocumentPath, 'mobile:') || doctor.identityDocumentPath == 'mobile-pending'}">
+                              <div class="text-warning small mt-1">Placeholder only — doctor must re-upload from mobile app.</div>
+                          </c:if>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-file-certificate"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Medical Registration Certificate</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.degreeCertificatePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.degreeCertificatePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View registration certificate
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-file-medical"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Medical License</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.medicalLicensePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.medicalLicensePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View medical license
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
                   </c:choose>
               </div>
           </div>

@@ -1,5 +1,7 @@
 package in.sp.main.Entities;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -65,6 +69,25 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    private DoctorProfileStatus doctorProfileStatus = DoctorProfileStatus.REGISTERED;
+
+    private Integer profileCompletionPct = 0;
+
+    private LocalDateTime acceptedTermsAt;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String changesRequestedNote;
+
+    private LocalDateTime submittedForVerificationAt;
+
     // ── 6. Earnings Setup ──
     private Double consultationFee = 500.0;
     private Double chatFee;
@@ -75,6 +98,20 @@ public class Doctor {
     private String bankDetails;
 
     private Double rating = 0.0;
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // ═══════════ GETTERS & SETTERS ═══════════
 
@@ -161,6 +198,32 @@ public class Doctor {
 
     public VerificationStatus getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(VerificationStatus verificationStatus) { this.verificationStatus = verificationStatus; }
+
+    public DoctorProfileStatus getDoctorProfileStatus() { return doctorProfileStatus; }
+    public void setDoctorProfileStatus(DoctorProfileStatus doctorProfileStatus) { this.doctorProfileStatus = doctorProfileStatus; }
+
+    public Integer getProfileCompletionPct() { return profileCompletionPct; }
+    public void setProfileCompletionPct(Integer profileCompletionPct) { this.profileCompletionPct = profileCompletionPct; }
+
+    public LocalDateTime getAcceptedTermsAt() { return acceptedTermsAt; }
+    public void setAcceptedTermsAt(LocalDateTime acceptedTermsAt) { this.acceptedTermsAt = acceptedTermsAt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getChangesRequestedNote() { return changesRequestedNote; }
+    public void setChangesRequestedNote(String changesRequestedNote) { this.changesRequestedNote = changesRequestedNote; }
+
+    public LocalDateTime getSubmittedForVerificationAt() { return submittedForVerificationAt; }
+    public void setSubmittedForVerificationAt(LocalDateTime submittedForVerificationAt) {
+        this.submittedForVerificationAt = submittedForVerificationAt;
+    }
 
     public Double getConsultationFee() { return consultationFee; }
     public void setConsultationFee(Double consultationFee) { this.consultationFee = consultationFee; }
