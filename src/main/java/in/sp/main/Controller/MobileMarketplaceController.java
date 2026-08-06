@@ -79,34 +79,6 @@ public class MobileMarketplaceController {
         ServiceProvider p = providerRepo.findById(id).orElse(null);
         if (p == null || p.getVerificationStatus() != VerificationStatus.VERIFIED) return badRequest("Provider not found");
 
-<<<<<<< HEAD
-        LocalDateTime requestedTime = LocalDateTime.now().plusDays(1);
-        String requestedRaw = body != null ? trim(body.get("requestedTime")) : "";
-        if (!requestedRaw.isEmpty()) {
-            try {
-                if (requestedRaw.length() >= 16) {
-                    requestedTime = LocalDateTime.parse(requestedRaw.substring(0, 16),
-                            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
-                } else {
-                    requestedTime = LocalDateTime.parse(requestedRaw);
-                }
-            } catch (Exception e) {
-                return badRequest("Invalid requestedTime. Use yyyy-MM-dd'T'HH:mm");
-            }
-            if (requestedTime.isBefore(LocalDateTime.now())) {
-                return badRequest("Booking date/time cannot be in the past.");
-            }
-        }
-
-        final LocalDateTime slotTime = requestedTime;
-        boolean slotTaken = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
-                .filter(b -> b.getStatus() != ProviderBookingStatus.CANCELLED)
-                .anyMatch(b -> b.getRequestedTime() != null
-                        && java.time.Duration.between(b.getRequestedTime(), slotTime).abs().toMinutes() < 60);
-        if (slotTaken) {
-            return badRequest("This time slot is already booked.");
-        }
-=======
         List<Map<String, Object>> classes = classRepo.findByProvider_Id(id).stream()
                 .map(this::classDto)
                 .toList();
@@ -139,18 +111,21 @@ public class MobileMarketplaceController {
             requestedTime = LocalDateTime.now().plusDays(1);
         }
         if (requestedTime.isBefore(LocalDateTime.now())) return badRequest("Booking time cannot be in the past");
->>>>>>> 8352e3bb110978a162e9806fdb76d26e94301265
+
+        final LocalDateTime slotTime = requestedTime;
+        boolean slotTaken = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
+                .filter(b -> b.getStatus() != ProviderBookingStatus.CANCELLED)
+                .anyMatch(b -> b.getRequestedTime() != null
+                        && Duration.between(b.getRequestedTime(), slotTime).abs().toMinutes() < 60);
+        if (slotTaken) {
+            return badRequest("This time slot is already booked.");
+        }
 
         ProviderBooking b = new ProviderBooking();
         b.setUser(user);
         b.setProvider(p);
-<<<<<<< HEAD
-        b.setRequestedTime(slotTime);
-        b.setNote(trim(body != null ? body.get("note") : null));
-=======
         b.setRequestedTime(requestedTime);
         b.setNote(trim(Objects.toString(body.get("note"), "")));
->>>>>>> 8352e3bb110978a162e9806fdb76d26e94301265
         b.setStatus(ProviderBookingStatus.PENDING);
         bookingRepo.save(b);
         return ResponseEntity.ok(ok(Map.of("message", "Booking requested", "bookingId", b.getId(),
