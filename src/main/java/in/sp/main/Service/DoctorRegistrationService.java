@@ -15,7 +15,6 @@ import in.sp.main.Entities.DoctorProfileStatus;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.OtpChannel;
 import in.sp.main.Entities.OtpPurpose;
-import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Util.MobileValidation;
 
@@ -88,15 +87,24 @@ public class DoctorRegistrationService {
         doctor.setPhone(trimmedPhone);
         doctor.setPassword(passwordService.encode(password));
         doctor.setGender(Gender.FEMALE);
-        doctor.setVerificationStatus(VerificationStatus.PENDING);
-        doctor.setDoctorProfileStatus(DoctorProfileStatus.REGISTERED);
+        doctorProfileService.setLifecycleStatus(doctor, DoctorProfileStatus.REGISTERED);
         doctor.setAcceptedTermsAt(LocalDateTime.now());
         doctor.setRating(0.0);
         doctor.setEmergencyAvailable(false);
         doctorProfileService.refreshCompletion(doctor);
-        doctorProfileService.syncVerificationStatus(doctor);
 
         return doctorRepository.save(doctor);
+    }
+
+    public void initializeLegacyRegisteredDoctor(Doctor doctor) {
+        doctorProfileService.setLifecycleStatus(doctor, DoctorProfileStatus.PROFILE_INCOMPLETE);
+        if (doctor.getRating() == null) {
+            doctor.setRating(0.0);
+        }
+        if (doctor.getEmergencyAvailable() == null) {
+            doctor.setEmergencyAvailable(false);
+        }
+        doctorProfileService.refreshCompletion(doctor);
     }
 
     @Transactional
@@ -113,10 +121,9 @@ public class DoctorRegistrationService {
         if (status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile is already pending admin approval");
         }
-        doctor.setDoctorProfileStatus(DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
+        doctorProfileService.setLifecycleStatus(doctor, DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
         doctor.setSubmittedForVerificationAt(LocalDateTime.now());
         doctor.setChangesRequestedNote(null);
-        doctorProfileService.syncVerificationStatus(doctor);
         doctorRepository.save(doctor);
     }
 
@@ -147,7 +154,7 @@ public class DoctorRegistrationService {
         DoctorProfileStatus status = doctor.getDoctorProfileStatus();
         if (status == null) {
             status = DoctorProfileStatus.PROFILE_INCOMPLETE;
-            doctor.setDoctorProfileStatus(status);
+            doctorProfileService.setLifecycleStatus(doctor, status);
         }
         if (status == DoctorProfileStatus.SUSPENDED) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been suspended. Contact support.");

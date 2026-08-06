@@ -15,6 +15,31 @@ import in.sp.main.Entities.VerificationStatus;
 @Service
 public class DoctorProfileService {
 
+    public void setLifecycleStatus(Doctor doctor, DoctorProfileStatus status) {
+        if (doctor == null || status == null) {
+            return;
+        }
+        doctor.setDoctorProfileStatus(status);
+        syncVerificationStatus(doctor);
+    }
+
+    public void markApproved(Doctor doctor) {
+        if (doctor == null) {
+            return;
+        }
+        setLifecycleStatus(doctor, DoctorProfileStatus.APPROVED);
+        doctor.setRejectionReason(null);
+        doctor.setChangesRequestedNote(null);
+    }
+
+    public void markRejected(Doctor doctor, String reason) {
+        if (doctor == null) {
+            return;
+        }
+        setLifecycleStatus(doctor, DoctorProfileStatus.REJECTED);
+        doctor.setRejectionReason(isBlank(reason) ? null : reason.trim());
+    }
+
     public int calculateCompletionPct(Doctor doctor) {
         if (doctor == null) {
             return 0;
@@ -143,7 +168,7 @@ public class DoctorProfileService {
 
     public void ensureLoginProfileState(Doctor doctor) {
         if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.REGISTERED) {
-            doctor.setDoctorProfileStatus(DoctorProfileStatus.PROFILE_INCOMPLETE);
+            setLifecycleStatus(doctor, DoctorProfileStatus.PROFILE_INCOMPLETE);
         }
         refreshCompletion(doctor);
         syncVerificationStatus(doctor);

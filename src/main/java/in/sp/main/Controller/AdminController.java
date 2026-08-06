@@ -33,6 +33,8 @@ public class AdminController {
     @Autowired
     private EmailService emailService;
     @Autowired
+    private DoctorProfileService doctorProfileService;
+    @Autowired
     private AdminService adminService;
     @Autowired
     private VideoUploadRepository videouploadRepository;
@@ -1197,17 +1199,17 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Doctor not found.");
             return "redirect:/admin/pending-doctors";
         }
-        d.setVerificationStatus(VerificationStatus.VERIFIED);
-        d.setDoctorProfileStatus(DoctorProfileStatus.APPROVED);
-        d.setRejectionReason(null);
-        d.setChangesRequestedNote(null);
+        doctorProfileService.markApproved(d);
         doctorRepository.save(d);
         redirectAttributes.addFlashAttribute("message", "Doctor verified.");
         return "redirect:/admin/pending-doctors";
     }
 
     @PostMapping("/doctors/{id}/reject")
-    public String rejectDoctor(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String rejectDoctor(@PathVariable Long id,
+                               @RequestParam(value = "reason", required = false) String reason,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1217,8 +1219,7 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Doctor not found.");
             return "redirect:/admin/pending-doctors";
         }
-        d.setVerificationStatus(VerificationStatus.REJECTED);
-        d.setDoctorProfileStatus(DoctorProfileStatus.REJECTED);
+        doctorProfileService.markRejected(d, reason);
         doctorRepository.save(d);
         redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
         return "redirect:/admin/pending-doctors";

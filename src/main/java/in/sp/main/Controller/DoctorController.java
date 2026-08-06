@@ -28,6 +28,8 @@ import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
+import in.sp.main.Service.DoctorProfileService;
+import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 
@@ -52,6 +54,10 @@ public class DoctorController {
 
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
+    @Autowired
+    private DoctorRegistrationService doctorRegistrationService;
+    @Autowired
+    private DoctorProfileService doctorProfileService;
 
     // ==============================
     // Doctor Registration + Login
@@ -172,8 +178,7 @@ public class DoctorController {
             d.setUpiId(upiId);
             d.setBankDetails(bankDetails);
 
-            d.setVerificationStatus(VerificationStatus.PENDING);
-            d.setRating(0.0);
+            doctorRegistrationService.initializeLegacyRegisteredDoctor(d);
 
             doctorRepo.save(d);
             model.addAttribute("message", "Registration successful! Await admin verification.");
@@ -200,22 +205,21 @@ public class DoctorController {
             model.addAttribute("error", "Doctor not found.");
             return "doctor/doctor-login";
         }
-        Doctor d = dOpt.get();
-        boolean ok = passwordService.matchesAndUpgrade(password, d.getPassword(), hashed -> {
-            d.setPassword(hashed);
-            doctorRepo.save(d);
+        Doctor candidate = dOpt.get();
+        boolean ok = passwordService.matchesAndUpgrade(password, candidate.getPassword(), hashed -> {
+            candidate.setPassword(hashed);
+            doctorRepo.save(candidate);
         });
         if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "doctor/doctor-login";
         }
 
-        if (d.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending admin verification. Access denied.");
-            return "doctor/doctor-login";
-        }
-        if (d.getVerificationStatus() == VerificationStatus.REJECTED) {
-            model.addAttribute("error", "Your account has been rejected by admin.");
+        Doctor d;
+        try {
+            d = doctorRegistrationService.requireLoginDoctor(candidate);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            model.addAttribute("error", ex.getReason() == null ? "Unable to login." : ex.getReason());
             return "doctor/doctor-login";
         }
 
@@ -239,6 +243,8 @@ public class DoctorController {
         if (d == null) return "redirect:/doctors/login";
 
         d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorRepo.save(d);
         List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
         model.addAttribute("doctor", d);
         model.addAttribute("appointments", appts);

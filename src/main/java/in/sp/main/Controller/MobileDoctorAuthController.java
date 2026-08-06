@@ -9,7 +9,6 @@ import in.sp.main.Entities.DoctorDocumentType;
 import in.sp.main.Entities.DoctorProfileStatus;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
-import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Service.DoctorDocumentService;
@@ -177,10 +176,7 @@ public class MobileDoctorAuthController {
         d.setMedicalLicensePath(medicalLicensePath.isBlank() ? "mobile-pending" : medicalLicensePath);
         d.setDegreeCertificatePath(degreeCertificatePath.isBlank() ? "mobile-pending" : degreeCertificatePath);
         d.setProfilePhotoPath(profilePhotoPath.isBlank() ? null : profilePhotoPath);
-        d.setVerificationStatus(VerificationStatus.PENDING);
-        d.setDoctorProfileStatus(DoctorProfileStatus.PROFILE_INCOMPLETE);
-        d.setRating(0.0);
-        d.setEmergencyAvailable(false);
+        doctorRegistrationService.initializeLegacyRegisteredDoctor(d);
 
         try {
             if (!genderRaw.isBlank()) {
@@ -219,7 +215,6 @@ public class MobileDoctorAuthController {
 
         doctorRepo.save(d);
         doctorProfileService.refreshCompletion(d);
-        doctorProfileService.syncVerificationStatus(d);
         doctorRepo.save(d);
 
         Map<String, Object> res = new LinkedHashMap<>();
@@ -288,7 +283,6 @@ public class MobileDoctorAuthController {
         if (d == null) return unauthorized();
         d = doctorRepo.findById(d.getId()).orElse(d);
         doctorProfileService.refreshCompletion(d);
-        doctorProfileService.syncVerificationStatus(d);
         doctorRepo.save(d);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
@@ -370,7 +364,6 @@ public class MobileDoctorAuthController {
         if (d == null) return unauthorized();
         d = doctorRepo.findById(d.getId()).orElse(d);
         doctorProfileService.refreshCompletion(d);
-        doctorProfileService.syncVerificationStatus(d);
         doctorRepo.save(d);
 
         var appointments = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
@@ -480,7 +473,7 @@ public class MobileDoctorAuthController {
         data.put("todayEarnings", todayEarnings);
         data.put("monthEarnings", monthEarnings);
         data.put("notifications", notifications);
-        data.put("online", d.getVerificationStatus() == VerificationStatus.VERIFIED);
+        data.put("online", d.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED);
         data.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
         data.put("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
         data.put("missingItems", doctorProfileService.missingItems(d));
