@@ -12,8 +12,10 @@ import in.sp.main.Entities.User;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Service.DoctorDocumentService;
+import in.sp.main.Service.DoctorNotificationService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
+import in.sp.main.Service.DoctorVerificationService;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Util.MobileValidation;
 import jakarta.servlet.http.HttpSession;
@@ -48,6 +50,10 @@ public class MobileDoctorAuthController {
     private DoctorProfileService doctorProfileService;
     @Autowired
     private DoctorDocumentService doctorDocumentService;
+    @Autowired
+    private DoctorNotificationService doctorNotificationService;
+    @Autowired
+    private DoctorVerificationService doctorVerificationService;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -393,13 +399,49 @@ public class MobileDoctorAuthController {
             doctorRegistrationService.submitForVerification(d);
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Profile submitted for admin verification");
+            res.put("message", d.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED
+                    ? "Profile changes submitted for admin re-verification"
+                    : "Profile submitted for admin verification");
             res.put("doctorProfileStatus", d.getDoctorProfileStatus().name());
+            res.put("doctorProfileStatusLabel", DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
             res.put("profile", doctorProfileService.profilePayload(d));
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<Map<String, Object>> notifications(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("notifications", doctorNotificationService.listForDoctor(d.getId()));
+        res.put("unreadCount", doctorNotificationService.unreadCount(d.getId()));
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/notifications/read-all")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> markNotificationsRead(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        doctorNotificationService.markAllRead(d.getId());
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Notifications marked as read");
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/verification-history")
+    public ResponseEntity<Map<String, Object>> verificationHistory(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("history", doctorVerificationService.history(d.getId()));
+        return ResponseEntity.ok(res);
     }
 
     @GetMapping("/me")
@@ -480,24 +522,20 @@ public class MobileDoctorAuthController {
 
         // Lightweight activity feed for the notifications sheet.
         List<Map<String, Object>> notifications = new java.util.ArrayList<>();
+        for (Map<String, Object> n : doctorNotificationService.listForDoctor(d.getId())) {
+            if (notifications.size() >= 12) break;
+            notifications.add(n);
+        }
         for (DoctorAppointment a : appointments) {
             if (notifications.size() >= 12) break;
             Map<String, Object> n = new LinkedHashMap<>();
             String patient = a.getUser() != null && a.getUser().getFullName() != null
                     ? a.getUser().getFullName() : "Patient";
-            if (a.getStatus() == DoctorAppointmentStatus.PENDING) {
-                n.put("title", "New appointment booked");
-                n.put("body", patient + " requested a consultation");
-            } else if (a.getAmountPaid() != null && a.getAmountPaid() > 0) {
-                n.put("title", "Payment received");
-                n.put("body", "₹" + a.getAmountPaid().intValue() + " from " + patient);
-            } else if (a.getPrescriptionText() != null && !a.getPrescriptionText().isBlank()) {
-                n.put("title", "Prescription on file");
-                n.put("body", "Rx saved for " + patient);
-            } else {
-                continue;
-            }
-            n.put("time", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
+            n.put("type", "APPOINTMENT");
+            n.put("title", "Appointment update");
+            n.put("message", patient + " — " + (a.getStatus() == null ? "updated" : a.getStatus().name()));
+            n.put("createdAt", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
+            n.put("read", true);
             notifications.add(n);
         }
 
@@ -519,15 +557,15 @@ public class MobileDoctorAuthController {
         data.put("notifications", notifications);
         data.put("online", d.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED);
         data.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+        data.put("doctorProfileStatusLabel", DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
         data.put("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
         data.put("missingItems", doctorProfileService.missingItems(d));
-        data.put("canSubmitForVerification", doctorProfileService.isReadyForVerification(d)
-                && d.getDoctorProfileStatus() != DoctorProfileStatus.PENDING_ADMIN_APPROVAL
-                && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED
-                && d.getDoctorProfileStatus() != DoctorProfileStatus.SUSPENDED);
+        data.put("canSubmitForVerification", doctorProfileService.canSubmitForVerification(d));
+        data.put("hasPendingReverification", Boolean.TRUE.equals(d.getHasPendingReverification()));
         data.put("nextStepGuidance", doctorProfileService.nextStepGuidance(d));
         data.put("changesRequestedNote", d.getChangesRequestedNote());
         data.put("rejectionReason", d.getRejectionReason());
+        data.put("unreadNotificationCount", doctorNotificationService.unreadCount(d.getId()));
         return ResponseEntity.ok(data);
     }
 

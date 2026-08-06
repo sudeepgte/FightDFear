@@ -330,18 +330,7 @@
               </c:choose>
               <div class="profile-name">${doctor.fullName}</div>
               <div class="profile-email">${doctor.email}</div>
-              
-              <c:choose>
-                  <c:when test="${doctor.verificationStatus == 'VERIFIED'}">
-                      <span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span>
-                  </c:when>
-                  <c:when test="${doctor.verificationStatus == 'REJECTED'}">
-                      <span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span>
-                  </c:when>
-                  <c:otherwise>
-                      <span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> PENDING</span>
-                  </c:otherwise>
-              </c:choose>
+              <span class="badge-status status-PENDING">${statusLabel}</span>
           </div>
 
           <!-- Doctor Information -->
@@ -466,24 +455,125 @@
                   </c:choose>
               </div>
           </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-certificate"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Additional Certificates</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.additionalCertificatePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.additionalCertificatePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View additional certificate
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+
+          <c:if test="${not empty pendingDraft}">
+              <div class="section-title"><i class="fas fa-sync-alt"></i> Pending Re-verification Changes</div>
+              <div class="alert alert-warning" style="border-radius:12px;">
+                  <strong>Status:</strong> ${pendingDraft.status}<br/>
+                  <c:if test="${not empty pendingDraft.adminNotes}"><strong>Admin notes:</strong> ${pendingDraft.adminNotes}<br/></c:if>
+                  <c:if test="${not empty pendingDraft.submittedAt}"><strong>Submitted:</strong> ${pendingDraft.submittedAt}<br/></c:if>
+                  <div class="mt-2 small text-muted">Live approved profile is preserved until these changes are approved.</div>
+              </div>
+          </c:if>
+
+          <div class="section-title"><i class="fas fa-history"></i> Verification History</div>
+          <c:choose>
+              <c:when test="${not empty history}">
+                  <div class="table-responsive mb-4">
+                      <table class="table table-sm align-middle">
+                          <thead>
+                              <tr>
+                                  <th>When</th>
+                                  <th>Action</th>
+                                  <th>From</th>
+                                  <th>To</th>
+                                  <th>Notes</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <c:forEach var="h" items="${history}">
+                                  <tr>
+                                      <td>${h.createdAt}</td>
+                                      <td>${h.action}</td>
+                                      <td>${h.fromStatusLabel}</td>
+                                      <td>${h.toStatusLabel}</td>
+                                      <td>
+                                          <c:if test="${not empty h.reasons}"><div><strong>Reasons:</strong> ${h.reasons}</div></c:if>
+                                          <c:if test="${not empty h.notes}">${h.notes}</c:if>
+                                          <c:if test="${empty h.notes && empty h.reasons}">—</c:if>
+                                      </td>
+                                  </tr>
+                              </c:forEach>
+                          </tbody>
+                      </table>
+                  </div>
+              </c:when>
+              <c:otherwise>
+                  <div class="text-muted mb-4">No verification history yet.</div>
+              </c:otherwise>
+          </c:choose>
 
           <!-- Action Buttons -->
-          <div class="action-bar">
-              <c:if test="${doctor.verificationStatus != 'VERIFIED'}">
-                  <form action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
-                      <button type="submit" class="btn-verify">
-                          <i class="fas fa-check-circle"></i> Verify Doctor
-                      </button>
-                  </form>
+          <div class="section-title"><i class="fas fa-gavel"></i> Admin Decision</div>
+          <div class="mb-3">
+              <span class="badge-status status-PENDING">${statusLabel}</span>
+              <c:if test="${not empty doctor.changesRequestedNote}">
+                  <div class="mt-2 text-warning small"><strong>Changes requested:</strong> ${doctor.changesRequestedNote}</div>
               </c:if>
+              <c:if test="${not empty doctor.rejectionReason}">
+                  <div class="mt-2 text-danger small"><strong>Rejection reason:</strong> ${doctor.rejectionReason}</div>
+              </c:if>
+          </div>
 
-              <c:if test="${doctor.verificationStatus != 'REJECTED'}">
-                  <form action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this doctor?')">
-                      <button type="submit" class="btn-reject">
-                          <i class="fas fa-times-circle"></i> Reject Doctor
-                      </button>
-                  </form>
-              </c:if>
+          <div class="mb-3">
+              <label class="form-label fw-semibold">Decision notes / comments</label>
+              <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the doctor (required for reject / request changes)"></textarea>
+          </div>
+
+          <div class="mb-3">
+              <label class="form-label fw-semibold">Request-change reasons (optional checkboxes)</label>
+              <div class="d-flex flex-wrap gap-3">
+                  <label><input type="checkbox" class="reason-box" value="Professional information"> Professional information</label>
+                  <label><input type="checkbox" class="reason-box" value="Clinic details"> Clinic details</label>
+                  <label><input type="checkbox" class="reason-box" value="Documents"> Documents</label>
+                  <label><input type="checkbox" class="reason-box" value="Availability"> Availability</label>
+                  <label><input type="checkbox" class="reason-box" value="Fees"> Fees</label>
+              </div>
+          </div>
+
+          <div class="action-bar">
+              <form id="approveForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
+                  <input type="hidden" name="notes" id="approveNotes">
+                  <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
+                      <i class="fas fa-check-circle"></i> Approve
+                  </button>
+              </form>
+
+              <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
+                  <input type="hidden" name="notes" id="changesNotes">
+                  <input type="hidden" name="reasons" id="changesReasons">
+                  <button type="submit" class="btn btn-warning text-dark fw-semibold"
+                          style="border-radius:10px;padding:12px 28px;"
+                          onclick="
+                            document.getElementById('changesNotes').value=document.getElementById('decisionNotes').value;
+                            document.getElementById('changesReasons').value=Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value).join(', ');
+                          ">
+                      <i class="fas fa-edit"></i> Request Changes
+                  </button>
+              </form>
+
+              <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
+                    onsubmit="return confirm('Reject this doctor?')">
+                  <input type="hidden" name="notes" id="rejectNotes">
+                  <button type="submit" class="btn-reject"
+                          onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
+                      <i class="fas fa-times-circle"></i> Reject
+                  </button>
+              </form>
           </div>
 
       </div>

@@ -257,14 +257,30 @@
           <div class="alert alert-info mb-4" style="border-radius:10px;"><i class="fas fa-info-circle me-1"></i> ${message}</div>
       </c:if>
 
-      <!-- Search bar -->
+      <!-- Search + filter -->
       <form method="get" action="${pageContext.request.contextPath}/admin/pending-doctors" class="search-wrap">
-          <input type="text" id="doctorSearchInput" name="q" class="search-input" placeholder="🔍 Search by name, email, phone, specialization or location..." value="${not empty q ? q : ''}">
-          <button type="submit" class="btn-search">Search</button>
+          <input type="text" id="doctorSearchInput" name="q" class="search-input" placeholder="Search by name, email, phone, specialization or location..." value="${not empty q ? q : ''}">
+          <select name="filter" class="form-select" style="max-width:220px;border-radius:30px;">
+              <option value="pending" ${filter == 'pending' ? 'selected' : ''}>Pending queue</option>
+              <option value="reverification" ${filter == 'reverification' ? 'selected' : ''}>Re-verification</option>
+              <option value="changes_requested" ${filter == 'changes_requested' ? 'selected' : ''}>Changes Requested</option>
+              <option value="approved" ${filter == 'approved' ? 'selected' : ''}>Approved</option>
+              <option value="rejected" ${filter == 'rejected' ? 'selected' : ''}>Rejected</option>
+              <option value="all" ${filter == 'all' ? 'selected' : ''}>All</option>
+          </select>
+          <button type="submit" class="btn-search">Search / Filter</button>
           <c:if test="${not empty q}">
               <a href="${pageContext.request.contextPath}/admin/pending-doctors" class="btn-clear"><i class="fas fa-times me-1"></i> Clear</a>
           </c:if>
       </form>
+
+      <div class="d-flex flex-wrap gap-2 mb-4">
+          <a class="btn btn-sm ${filter == 'pending' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=pending">Pending (${pendingCount})</a>
+          <a class="btn btn-sm ${filter == 'reverification' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=reverification">Re-verification (${reverificationCount})</a>
+          <a class="btn btn-sm ${filter == 'changes_requested' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=changes_requested">Changes Requested (${changesRequestedCount})</a>
+          <a class="btn btn-sm ${filter == 'approved' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=approved">Approved (${approvedCount})</a>
+          <a class="btn btn-sm ${filter == 'rejected' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=rejected">Rejected (${rejectedCount})</a>
+      </div>
 
       <!-- ── Search Results ── -->
       <c:if test="${not empty q}">
@@ -304,25 +320,11 @@
                                   <td>${not empty d.specialization ? d.specialization : '—'}</td>
                                   <td>${not empty d.locationText ? d.locationText : '—'}</td>
                                   <td>
-                                      <c:choose>
-                                          <c:when test="${d.verificationStatus == 'VERIFIED'}"><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span></c:when>
-                                          <c:when test="${d.verificationStatus == 'REJECTED'}"><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span></c:when>
-                                          <c:otherwise><span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> ${d.verificationStatus}</span></c:otherwise>
-                                      </c:choose>
+                                      <span class="badge-status status-PENDING">${d.doctorProfileStatus}</span>
                                   </td>
                                   <td>
                                       <div class="d-flex justify-content-center align-items-center flex-wrap">
-                                        <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
-                                        <c:if test="${d.verificationStatus != 'VERIFIED'}">
-                                            <form action="${pageContext.request.contextPath}/admin/doctors/${d.id}/verify" method="post" class="m-0 p-0 d-inline">
-                                                <button class="btn-approve me-1" type="submit"><i class="fas fa-check"></i> Verify</button>
-                                            </form>
-                                        </c:if>
-                                        <c:if test="${d.verificationStatus != 'REJECTED'}">
-                                            <form action="${pageContext.request.contextPath}/admin/doctors/${d.id}/reject" method="post" class="m-0 p-0 d-inline">
-                                                <button class="btn-reject" type="submit"><i class="fas fa-times"></i> Reject</button>
-                                            </form>
-                                        </c:if>
+                                        <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
                                       </div>
                                   </td>
                               </tr>
@@ -380,16 +382,10 @@
                                           <c:otherwise><span class="text-muted">—</span></c:otherwise>
                                       </c:choose>
                                   </td>
-                                  <td><span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> ${d.verificationStatus}</span></td>
+                                  <td><span class="badge-status status-PENDING">${d.doctorProfileStatus}</span></td>
                                   <td>
                                       <div class="d-flex justify-content-center align-items-center flex-wrap">
-                                        <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
-                                        <form action="${pageContext.request.contextPath}/admin/doctors/${d.id}/verify" method="post" class="m-0 p-0 d-inline">
-                                            <button class="btn-approve me-1" type="submit"><i class="fas fa-check"></i></button>
-                                        </form>
-                                        <form action="${pageContext.request.contextPath}/admin/doctors/${d.id}/reject" method="post" class="m-0 p-0 d-inline">
-                                            <button class="btn-reject" type="submit"><i class="fas fa-times"></i></button>
-                                        </form>
+                                        <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
                                       </div>
                                   </td>
                               </tr>
@@ -406,10 +402,52 @@
             </div>
           </div>
 
-          <!-- Verified Doctors Table -->
+          <!-- Changes Requested -->
           <div class="card-table">
             <div class="card-table-header">
-              <i class="fas fa-user-md text-success"></i> Verified Doctors
+              <i class="fas fa-edit text-warning"></i> Changes Requested
+            </div>
+            <div class="table-responsive">
+              <table class="table align-middle">
+                  <thead>
+                      <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Specialization</th>
+                          <th>Admin Note</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                  <c:choose>
+                      <c:when test="${not empty changesRequested}">
+                          <c:forEach var="d" items="${changesRequested}">
+                              <tr>
+                                  <td class="fw-bold">${d.fullName}</td>
+                                  <td>${d.email}</td>
+                                  <td>${d.specialization}</td>
+                                  <td>${not empty d.changesRequestedNote ? d.changesRequestedNote : '—'}</td>
+                                  <td>
+                                      <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
+                                  </td>
+                              </tr>
+                          </c:forEach>
+                      </c:when>
+                      <c:otherwise>
+                          <tr>
+                              <td colspan="5" class="py-4 text-center text-muted">No doctors with changes requested.</td>
+                          </tr>
+                      </c:otherwise>
+                  </c:choose>
+                  </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Re-verification -->
+          <div class="card-table">
+            <div class="card-table-header">
+              <i class="fas fa-sync text-info"></i> Pending Re-verification
             </div>
             <div class="table-responsive">
               <table class="table align-middle">
@@ -424,13 +462,55 @@
                   </thead>
                   <tbody>
                   <c:choose>
-                      <c:when test="${not empty verified}">
-                          <c:forEach var="d" items="${verified}">
+                      <c:when test="${not empty reverification}">
+                          <c:forEach var="d" items="${reverification}">
                               <tr>
                                   <td class="fw-bold">${d.fullName}</td>
                                   <td>${d.email}</td>
                                   <td>${d.specialization}</td>
-                                  <td><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span></td>
+                                  <td><span class="badge-status status-PENDING">Pending review</span></td>
+                                  <td>
+                                      <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
+                                  </td>
+                              </tr>
+                          </c:forEach>
+                      </c:when>
+                      <c:otherwise>
+                          <tr>
+                              <td colspan="5" class="py-4 text-center text-muted">No pending re-verification requests.</td>
+                          </tr>
+                      </c:otherwise>
+                  </c:choose>
+                  </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Approved Doctors Table -->
+          <div class="card-table">
+            <div class="card-table-header">
+              <i class="fas fa-user-md text-success"></i> Approved Doctors
+            </div>
+            <div class="table-responsive">
+              <table class="table align-middle">
+                  <thead>
+                      <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Specialization</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                  <c:choose>
+                      <c:when test="${not empty approved}">
+                          <c:forEach var="d" items="${approved}">
+                              <tr>
+                                  <td class="fw-bold">${d.fullName}</td>
+                                  <td>${d.email}</td>
+                                  <td>${d.specialization}</td>
+                                  <td><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> Approved</span></td>
                                   <td>
                                       <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
                                   </td>
@@ -439,7 +519,7 @@
                       </c:when>
                       <c:otherwise>
                           <tr>
-                              <td colspan="5" class="py-4 text-center text-muted">No verified doctors.</td>
+                              <td colspan="5" class="py-4 text-center text-muted">No approved doctors.</td>
                           </tr>
                       </c:otherwise>
                   </c:choose>
@@ -472,7 +552,7 @@
                                   <td class="fw-bold">${d.fullName}</td>
                                   <td>${d.email}</td>
                                   <td>${d.specialization}</td>
-                                  <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span></td>
+                                  <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> Rejected</span></td>
                                   <td>
                                       <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
                                   </td>

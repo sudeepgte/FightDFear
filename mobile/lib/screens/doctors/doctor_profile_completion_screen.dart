@@ -263,8 +263,15 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     if (res['success'] == true && res['profile'] is Map) {
       _applyProfile(Map<String, dynamic>.from(res['profile'] as Map));
       setState(() {});
+      final approved = _profile['doctorProfileStatus']?.toString() == 'APPROVED';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile saved')),
+        SnackBar(
+          content: Text(
+            approved
+                ? 'Changes saved as pending review. Approved live profile is unchanged.'
+                : 'Profile saved',
+          ),
+        ),
       );
     } else {
       setState(() => _error = res['error']?.toString() ?? 'Failed to save profile');
@@ -470,16 +477,42 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     );
   }
 
+  String _statusLabel(String? status) {
+    switch ((status ?? '').toUpperCase()) {
+      case 'REGISTERED':
+      case 'PROFILE_INCOMPLETE':
+        return 'Profile Incomplete';
+      case 'READY_FOR_VERIFICATION':
+        return 'Ready for Verification';
+      case 'PENDING_ADMIN_APPROVAL':
+        return 'Pending Admin Approval';
+      case 'CHANGES_REQUESTED':
+        return 'Changes Requested';
+      case 'APPROVED':
+        return 'Approved';
+      case 'REJECTED':
+        return 'Rejected';
+      case 'SUSPENDED':
+        return 'Suspended';
+      default:
+        return status ?? 'Profile Incomplete';
+    }
+  }
+
   Widget _statusHeader() {
     final pct = (_profile['profileCompletionPct'] is num)
         ? (_profile['profileCompletionPct'] as num).toDouble()
         : double.tryParse('${_profile['profileCompletionPct']}') ?? 0;
     final status = _profile['doctorProfileStatus']?.toString() ?? 'PROFILE_INCOMPLETE';
+    final statusLabel = (_profile['doctorProfileStatusLabel'] ?? _statusLabel(status)).toString();
     final missing = ModuleTheme.toList(_profile['missingItems']).map((e) => e.toString()).toList();
     final canSubmit = _profile['canSubmitForVerification'] == true;
     final guidance = _profile['nextStepGuidance']?.toString() ?? '';
     final rejection = _profile['rejectionReason']?.toString();
     final changes = _profile['changesRequestedNote']?.toString();
+    final hasPending = _profile['hasPendingReverification'] == true;
+    final draft = _profile['pendingDraft'];
+    final draftStatus = draft is Map ? draft['status']?.toString() : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -496,7 +529,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                   ),
                 ),
-                Chip(label: Text(status, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700))),
+                Chip(label: Text(statusLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700))),
               ],
             ),
             const SizedBox(height: 8),
@@ -512,6 +545,15 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
             if (guidance.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(guidance, style: const TextStyle(color: ModuleTheme.textGray)),
+            ],
+            if (hasPending) ...[
+              const SizedBox(height: 8),
+              Text(
+                draftStatus == 'PENDING_REVIEW'
+                    ? 'Your edits are pending admin approval. Approved live data is unchanged.'
+                    : 'You have unpublished profile changes. Submit them for re-verification when ready.',
+                style: const TextStyle(color: Color(0xFFB45309)),
+              ),
             ],
             if (rejection != null && rejection.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -545,7 +587,11 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : Text(canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
+                  : Text(
+                      status == 'APPROVED'
+                          ? 'Submit Changes for Re-verification'
+                          : (canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
+                    ),
             ),
           ],
         ),

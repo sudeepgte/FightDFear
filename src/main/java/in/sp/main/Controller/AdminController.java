@@ -35,6 +35,8 @@ public class AdminController {
     @Autowired
     private DoctorProfileService doctorProfileService;
     @Autowired
+    private DoctorVerificationService doctorVerificationService;
+    @Autowired
     private AdminService adminService;
     @Autowired
     private VideoUploadRepository videouploadRepository;
@@ -1148,27 +1150,68 @@ public class AdminController {
         return "adminViewUserProfile";
     }
 
-    // Purpose: admin verification for doctors (only VERIFIED doctors are shown in booking).
-    // Supports optional ?q= search param to filter doctors by name, email, phone, specialization, or location.
+    // Purpose: admin verification for doctors (DoctorProfileStatus is lifecycle source of truth).
     @GetMapping("/pending-doctors")
     public String viewPendingDoctors(@RequestParam(value = "q", required = false) String q,
+                                     @RequestParam(value = "filter", required = false) String filter,
                                      Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
 
-        // Purpose: if a search keyword is provided, run DB search and return flat results.
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(Locale.ROOT);
+        model.addAttribute("filter", activeFilter);
+        model.addAttribute("q", q == null ? "" : q.trim());
+
+        List<Doctor> pending = doctorVerificationService.queueByFilter("pending");
+        List<Doctor> approved = doctorVerificationService.queueByFilter("approved");
+        List<Doctor> rejected = doctorVerificationService.queueByFilter("rejected");
+        List<Doctor> changesRequested = doctorVerificationService.queueByFilter("changes_requested");
+        List<Doctor> reverification = doctorVerificationService.queueByFilter("reverification");
+
+        model.addAttribute("pending", pending);
+        model.addAttribute("approved", approved);
+        model.addAttribute("verified", approved); // backward-compatible alias for older JSP fragments
+        model.addAttribute("rejected", rejected);
+        model.addAttribute("changesRequested", changesRequested);
+        model.addAttribute("reverification", reverification);
+        model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("approvedCount", approved.size());
+        model.addAttribute("rejectedCount", rejected.size());
+        model.addAttribute("changesRequestedCount", changesRequested.size());
+        model.addAttribute("reverificationCount", reverification.size());
+
         if (q != null && !q.trim().isEmpty()) {
-            List<Doctor> searchResults = doctorRepository.searchDoctors(q.trim());
-            model.addAttribute("searchResults", searchResults);
-            model.addAttribute("q", q.trim());
-            return "adminPendingDoctors";
+            String keyword = q.trim().toLowerCase(Locale.ROOT);
+            List<Doctor> searchResults = doctorRepository.searchDoctors(q.trim()).stream()
+                    .filter(d -> activeFilter.equals("all") || matchesDoctorFilter(d, activeFilter))
+                    .toList();
+            // If filter is default pending and search is used, still show all matching search hits unless filter set.
+            if (!activeFilter.equals("pending") || filter != null) {
+                model.addAttribute("searchResults", searchResults);
+            } else {
+                model.addAttribute("searchResults", doctorRepository.searchDoctors(q.trim()));
+            }
+            model.addAttribute("keywordLower", keyword);
         }
 
-        model.addAttribute("pending", doctorRepository.findByVerificationStatus(VerificationStatus.PENDING));
-        model.addAttribute("verified", doctorRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-        model.addAttribute("rejected", doctorRepository.findByVerificationStatus(VerificationStatus.REJECTED));
         return "adminPendingDoctors";
+    }
+
+    private boolean matchesDoctorFilter(Doctor d, String filter) {
+        DoctorProfileStatus status = d.getDoctorProfileStatus();
+        return switch (filter) {
+            case "approved" -> status == DoctorProfileStatus.APPROVED;
+            case "rejected" -> status == DoctorProfileStatus.REJECTED;
+            case "changes_requested", "changes-requested" -> status == DoctorProfileStatus.CHANGES_REQUESTED;
+            case "reverification" -> Boolean.TRUE.equals(d.getHasPendingReverification());
+            case "ready" -> status == DoctorProfileStatus.READY_FOR_VERIFICATION;
+            case "all" -> true;
+            default -> status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL
+                    || status == DoctorProfileStatus.READY_FOR_VERIFICATION
+                    || status == DoctorProfileStatus.PROFILE_INCOMPLETE
+                    || status == DoctorProfileStatus.REGISTERED;
+        };
     }
 
     // Purpose: admin views full profile of a specific doctor.
@@ -1185,29 +1228,16 @@ public class AdminController {
         }
 
         model.addAttribute("doctor", d);
+        model.addAttribute("statusLabel", DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
+        model.addAttribute("history", doctorVerificationService.history(d.getId()));
+        model.addAttribute("pendingDraft", doctorVerificationService.draftSummary(d));
+        model.addAttribute("profilePayload", doctorProfileService.profilePayload(d));
         return "adminViewDoctorProfile";
     }
 
     @PostMapping("/doctors/{id}/verify")
-    public String verifyDoctor(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
-        if (session.getAttribute("admin") == null) {
-            return "redirect:/admin/loginAdmin";
-        }
-
-        Doctor d = doctorRepository.findById(id).orElse(null);
-        if (d == null) {
-            redirectAttributes.addFlashAttribute("message", "Doctor not found.");
-            return "redirect:/admin/pending-doctors";
-        }
-        doctorProfileService.markApproved(d);
-        doctorRepository.save(d);
-        redirectAttributes.addFlashAttribute("message", "Doctor verified.");
-        return "redirect:/admin/pending-doctors";
-    }
-
-    @PostMapping("/doctors/{id}/reject")
-    public String rejectDoctor(@PathVariable Long id,
-                               @RequestParam(value = "reason", required = false) String reason,
+    public String verifyDoctor(@PathVariable Long id,
+                               @RequestParam(value = "notes", required = false) String notes,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -1219,10 +1249,65 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Doctor not found.");
             return "redirect:/admin/pending-doctors";
         }
-        doctorProfileService.markRejected(d, reason);
-        doctorRepository.save(d);
-        redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
-        return "redirect:/admin/pending-doctors";
+        Admin admin = (Admin) session.getAttribute("admin");
+        try {
+            doctorVerificationService.approve(d, admin == null ? null : Long.valueOf(admin.getId()), notes);
+            redirectAttributes.addFlashAttribute("message", "Doctor approved.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
+    }
+
+    @PostMapping("/doctors/{id}/reject")
+    public String rejectDoctor(@PathVariable Long id,
+                               @RequestParam(value = "reason", required = false) String reason,
+                               @RequestParam(value = "notes", required = false) String notes,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
+        Doctor d = doctorRepository.findById(id).orElse(null);
+        if (d == null) {
+            redirectAttributes.addFlashAttribute("message", "Doctor not found.");
+            return "redirect:/admin/pending-doctors";
+        }
+        Admin admin = (Admin) session.getAttribute("admin");
+        String combined = (notes != null && !notes.isBlank()) ? notes : reason;
+        try {
+            doctorVerificationService.reject(d, admin == null ? null : Long.valueOf(admin.getId()), combined);
+            redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
+    }
+
+    @PostMapping("/doctors/{id}/request-changes")
+    public String requestDoctorChanges(@PathVariable Long id,
+                                       @RequestParam(value = "reasons", required = false) String reasons,
+                                       @RequestParam(value = "notes", required = false) String notes,
+                                       HttpSession session,
+                                       RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
+        Doctor d = doctorRepository.findById(id).orElse(null);
+        if (d == null) {
+            redirectAttributes.addFlashAttribute("message", "Doctor not found.");
+            return "redirect:/admin/pending-doctors";
+        }
+        Admin admin = (Admin) session.getAttribute("admin");
+        try {
+            doctorVerificationService.requestChanges(d, admin == null ? null : Long.valueOf(admin.getId()), reasons, notes);
+            redirectAttributes.addFlashAttribute("message", "Changes requested from doctor.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
     }
 
     // Purpose: admin verification for marketplace providers / service partners.

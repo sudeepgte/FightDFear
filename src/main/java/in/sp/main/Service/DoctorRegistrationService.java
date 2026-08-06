@@ -34,6 +34,14 @@ public class DoctorRegistrationService {
     @Autowired
     private DoctorProfileService doctorProfileService;
 
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private DoctorVerificationService doctorVerificationService;
+
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private DoctorDraftService doctorDraftService;
+
     @Value("${otp.expiration-minutes:10}")
     private int otpExpirationMinutes;
 
@@ -115,21 +123,36 @@ public class DoctorRegistrationService {
 
     @Transactional
     public void submitForVerification(Doctor doctor) {
+        DoctorProfileStatus status = doctor.getDoctorProfileStatus();
+
+        // Approved doctors submit staged draft changes for re-verification.
+        if (status == DoctorProfileStatus.APPROVED) {
+            doctorDraftService.submitDraftForReview(doctor);
+            doctorVerificationService.recordReverificationSubmission(doctor);
+            doctorRepository.save(doctor);
+            return;
+        }
+
         doctorProfileService.refreshCompletion(doctor);
         if (!doctorProfileService.isReadyForVerification(doctor)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Complete all mandatory profile fields and upload required documents before submitting");
         }
-        DoctorProfileStatus status = doctor.getDoctorProfileStatus();
-        if (status == DoctorProfileStatus.APPROVED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile is already approved");
-        }
         if (status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile is already pending admin approval");
         }
+        if (status == DoctorProfileStatus.SUSPENDED) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Suspended accounts cannot submit for verification");
+        }
+
+        boolean resubmit = status == DoctorProfileStatus.CHANGES_REQUESTED || status == DoctorProfileStatus.REJECTED;
         doctorProfileService.setLifecycleStatus(doctor, DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
         doctor.setSubmittedForVerificationAt(LocalDateTime.now());
         doctor.setChangesRequestedNote(null);
+        if (resubmit) {
+            doctor.setRejectionReason(null);
+        }
+        doctorVerificationService.recordSubmission(doctor, resubmit);
         doctorRepository.save(doctor);
     }
 

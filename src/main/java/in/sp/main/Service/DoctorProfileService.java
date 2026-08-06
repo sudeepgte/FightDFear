@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,6 +32,10 @@ public class DoctorProfileService {
             "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
     private static final Set<String> VALID_MODES = Set.of(
             "CLINIC", "VIDEO", "ONLINE", "OFFLINE");
+
+    @Autowired
+    @Lazy
+    private DoctorDraftService doctorDraftService;
 
     public void setLifecycleStatus(Doctor doctor, DoctorProfileStatus status) {
         if (doctor == null || status == null) {
@@ -56,6 +62,15 @@ public class DoctorProfileService {
         doctor.setRejectionReason(isBlank(reason) ? null : reason.trim());
     }
 
+    public void markChangesRequested(Doctor doctor, String note) {
+        if (doctor == null) {
+            return;
+        }
+        setLifecycleStatus(doctor, DoctorProfileStatus.CHANGES_REQUESTED);
+        doctor.setChangesRequestedNote(isBlank(note) ? null : note.trim());
+        doctor.setRejectionReason(null);
+    }
+
     public void updateProfile(Doctor doctor, Map<String, Object> body) {
         if (doctor == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Doctor login required");
@@ -64,6 +79,20 @@ public class DoctorProfileService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile data is required");
         }
 
+        // Approved doctors: keep live verified data intact and stage edits in a draft.
+        if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED) {
+            Doctor staged = cloneProfessionalSnapshot(doctor);
+            applyLiveUpdates(staged, body);
+            doctorDraftService.mergeDraftFields(doctor, snapshotProfessionalFields(staged));
+            return;
+        }
+
+        applyLiveUpdates(doctor, body);
+        refreshCompletion(doctor);
+        syncVerificationStatus(doctor);
+    }
+
+    private void applyLiveUpdates(Doctor doctor, Map<String, Object> body) {
         if (body.containsKey("fullName")) {
             String fullName = asString(body.get("fullName"));
             if (isBlank(fullName)) {
@@ -149,9 +178,80 @@ public class DoctorProfileService {
                 doctor.setEndTime(blankToNull(asString(body.get("endTime"))));
             }
         }
+    }
 
-        refreshCompletion(doctor);
-        syncVerificationStatus(doctor);
+    private static Doctor cloneProfessionalSnapshot(Doctor source) {
+        Doctor d = new Doctor();
+        d.setFullName(source.getFullName());
+        d.setPhone(source.getPhone());
+        d.setSpecialization(source.getSpecialization());
+        d.setQualification(source.getQualification());
+        d.setMedicalRegNumber(source.getMedicalRegNumber());
+        d.setExperienceYears(source.getExperienceYears());
+        d.setHospitalName(source.getHospitalName());
+        d.setClinicAddress(source.getClinicAddress());
+        d.setCity(source.getCity());
+        d.setState(source.getState());
+        d.setPincode(source.getPincode());
+        d.setGoogleMapLocation(source.getGoogleMapLocation());
+        d.setLanguages(source.getLanguages());
+        d.setServices(source.getServices());
+        d.setBio(source.getBio());
+        d.setConsultationFee(source.getConsultationFee());
+        d.setChatFee(source.getChatFee());
+        d.setCallFee(source.getCallFee());
+        d.setVideoFee(source.getVideoFee());
+        d.setEmergencyAvailable(source.getEmergencyAvailable());
+        d.setConsultationType(source.getConsultationType());
+        d.setConsultationModes(source.getConsultationModes());
+        d.setAvailableDays(source.getAvailableDays());
+        d.setStartTime(source.getStartTime());
+        d.setEndTime(source.getEndTime());
+        d.setAvailabilitySlots(source.getAvailabilitySlots());
+        d.setProfilePhotoPath(source.getProfilePhotoPath());
+        d.setIdProofPath(source.getIdProofPath());
+        d.setIdentityDocumentPath(source.getIdentityDocumentPath());
+        d.setMedicalLicensePath(source.getMedicalLicensePath());
+        d.setDegreeCertificatePath(source.getDegreeCertificatePath());
+        d.setAdditionalCertificatePath(source.getAdditionalCertificatePath());
+        return d;
+    }
+
+    private static Map<String, Object> snapshotProfessionalFields(Doctor doctor) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("fullName", doctor.getFullName());
+        map.put("phone", doctor.getPhone());
+        map.put("specialization", doctor.getSpecialization());
+        map.put("qualification", doctor.getQualification());
+        map.put("medicalRegNumber", doctor.getMedicalRegNumber());
+        map.put("experienceYears", doctor.getExperienceYears());
+        map.put("hospitalName", doctor.getHospitalName());
+        map.put("clinicAddress", doctor.getClinicAddress());
+        map.put("city", doctor.getCity());
+        map.put("state", doctor.getState());
+        map.put("pincode", doctor.getPincode());
+        map.put("googleMapLocation", doctor.getGoogleMapLocation());
+        map.put("languages", doctor.getLanguages());
+        map.put("services", doctor.getServices());
+        map.put("bio", doctor.getBio());
+        map.put("consultationFee", doctor.getConsultationFee());
+        map.put("chatFee", doctor.getChatFee());
+        map.put("callFee", doctor.getCallFee());
+        map.put("videoFee", doctor.getVideoFee());
+        map.put("emergencyAvailable", doctor.getEmergencyAvailable());
+        map.put("consultationType", doctor.getConsultationType() == null ? null : doctor.getConsultationType().name());
+        map.put("consultationModes", doctor.getConsultationModes());
+        map.put("availableDays", doctor.getAvailableDays());
+        map.put("startTime", doctor.getStartTime());
+        map.put("endTime", doctor.getEndTime());
+        map.put("availabilitySlots", doctor.getAvailabilitySlots());
+        map.put("profilePhotoPath", doctor.getProfilePhotoPath());
+        map.put("idProofPath", doctor.getIdProofPath());
+        map.put("identityDocumentPath", doctor.getIdentityDocumentPath());
+        map.put("medicalLicensePath", doctor.getMedicalLicensePath());
+        map.put("degreeCertificatePath", doctor.getDegreeCertificatePath());
+        map.put("additionalCertificatePath", doctor.getAdditionalCertificatePath());
+        return map;
     }
 
     public int calculateCompletionPct(Doctor doctor) {
@@ -242,16 +342,39 @@ public class DoctorProfileService {
         payload.put("additionalCertificatePath", doctor.getAdditionalCertificatePath());
         payload.put("verificationStatus", doctor.getVerificationStatus() == null ? null : doctor.getVerificationStatus().name());
         payload.put("doctorProfileStatus", doctor.getDoctorProfileStatus() == null ? null : doctor.getDoctorProfileStatus().name());
+        payload.put("doctorProfileStatusLabel", DoctorVerificationService.friendlyStatusLabel(doctor.getDoctorProfileStatus()));
         payload.put("profileCompletionPct", doctor.getProfileCompletionPct());
         payload.put("missingItems", missingItems(doctor));
-        payload.put("canSubmitForVerification", isReadyForVerification(doctor)
-                && doctor.getDoctorProfileStatus() != DoctorProfileStatus.PENDING_ADMIN_APPROVAL
-                && doctor.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED
-                && doctor.getDoctorProfileStatus() != DoctorProfileStatus.SUSPENDED);
+        payload.put("canSubmitForVerification", canSubmitForVerification(doctor));
+        payload.put("hasPendingReverification", Boolean.TRUE.equals(doctor.getHasPendingReverification()));
+        payload.put("pendingDraft", doctorDraftService == null ? null : doctorDraftService.draftPayload(doctor));
         payload.put("rejectionReason", doctor.getRejectionReason());
         payload.put("changesRequestedNote", doctor.getChangesRequestedNote());
         payload.put("nextStepGuidance", nextStepGuidance(doctor));
         return payload;
+    }
+
+    public boolean canSubmitForVerification(Doctor doctor) {
+        if (doctor == null) {
+            return false;
+        }
+        DoctorProfileStatus status = doctor.getDoctorProfileStatus();
+        if (status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL || status == DoctorProfileStatus.SUSPENDED) {
+            return false;
+        }
+        if (status == DoctorProfileStatus.APPROVED) {
+            return Boolean.TRUE.equals(doctor.getHasPendingReverification())
+                    && doctorDraftService.findDraft(doctor.getId())
+                    .map(d -> d.getStatus() != in.sp.main.Entities.DoctorDraftStatus.PENDING_REVIEW
+                            && !doctorDraftService.readDraftMap(d).isEmpty())
+                    .orElse(false);
+        }
+        return isReadyForVerification(doctor)
+                && (status == DoctorProfileStatus.READY_FOR_VERIFICATION
+                || status == DoctorProfileStatus.PROFILE_INCOMPLETE
+                || status == DoctorProfileStatus.REGISTERED
+                || status == DoctorProfileStatus.CHANGES_REQUESTED
+                || status == DoctorProfileStatus.REJECTED);
     }
 
     public String nextStepGuidance(Doctor doctor) {
@@ -260,16 +383,23 @@ public class DoctorProfileService {
         }
         DoctorProfileStatus status = doctor.getDoctorProfileStatus();
         if (status == DoctorProfileStatus.APPROVED) {
+            if (Boolean.TRUE.equals(doctor.getHasPendingReverification())) {
+                return "You have profile changes pending admin approval. Your currently approved profile remains visible to patients.";
+            }
             return "Your profile is approved. Patients can now discover and book you.";
         }
         if (status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL) {
             return "Your profile is under admin review. We will notify you once verification is complete.";
         }
         if (status == DoctorProfileStatus.REJECTED) {
-            return "Your profile was rejected. Update the required details and documents, then resubmit.";
+            String reason = doctor.getRejectionReason();
+            return "Your profile was rejected. "
+                    + (isBlank(reason) ? "Update the required details and documents, then resubmit." : reason);
         }
         if (status == DoctorProfileStatus.CHANGES_REQUESTED) {
-            return "Admin requested changes. Update the highlighted items and resubmit for verification.";
+            String note = doctor.getChangesRequestedNote();
+            return "Admin requested changes. "
+                    + (isBlank(note) ? "Update the highlighted items and resubmit for verification." : note);
         }
         if (status == DoctorProfileStatus.SUSPENDED) {
             return "Your account is suspended. Contact support for assistance.";

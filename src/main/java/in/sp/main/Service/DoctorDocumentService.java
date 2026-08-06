@@ -2,6 +2,7 @@ package in.sp.main.Service;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import in.sp.main.Entities.Doctor;
 import in.sp.main.Entities.DoctorDocumentType;
+import in.sp.main.Entities.DoctorProfileStatus;
 
 @Service
 public class DoctorDocumentService {
@@ -30,11 +32,31 @@ public class DoctorDocumentService {
     @Autowired
     private DoctorProfileService doctorProfileService;
 
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private DoctorDraftService doctorDraftService;
+
     @Transactional
     public String uploadDocument(Doctor doctor, DoctorDocumentType type, MultipartFile file) {
         validateFile(file);
         try {
             String path = fileUploadService.saveFile(file);
+            if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED) {
+                Map<String, Object> changes = new java.util.LinkedHashMap<>();
+                switch (type) {
+                    case PROFILE_PHOTO -> changes.put("profilePhotoPath", path);
+                    case GOVERNMENT_ID -> {
+                        changes.put("idProofPath", path);
+                        changes.put("identityDocumentPath", path);
+                    }
+                    case MEDICAL_REGISTRATION -> changes.put("degreeCertificatePath", path);
+                    case MEDICAL_LICENSE -> changes.put("medicalLicensePath", path);
+                    case ADDITIONAL_CERTIFICATE -> changes.put("additionalCertificatePath", path);
+                    default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported document type");
+                }
+                doctorDraftService.mergeDraftFields(doctor, changes);
+                return path;
+            }
             applyDocumentPath(doctor, type, path);
             doctorProfileService.refreshCompletion(doctor);
             doctorProfileService.syncVerificationStatus(doctor);
@@ -46,6 +68,22 @@ public class DoctorDocumentService {
 
     @Transactional
     public void deleteDocument(Doctor doctor, DoctorDocumentType type) {
+        if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED) {
+            Map<String, Object> changes = new java.util.LinkedHashMap<>();
+            switch (type) {
+                case PROFILE_PHOTO -> changes.put("profilePhotoPath", null);
+                case GOVERNMENT_ID -> {
+                    changes.put("idProofPath", null);
+                    changes.put("identityDocumentPath", null);
+                }
+                case MEDICAL_REGISTRATION -> changes.put("degreeCertificatePath", null);
+                case MEDICAL_LICENSE -> changes.put("medicalLicensePath", null);
+                case ADDITIONAL_CERTIFICATE -> changes.put("additionalCertificatePath", null);
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported document type");
+            }
+            doctorDraftService.mergeDraftFields(doctor, changes);
+            return;
+        }
         applyDocumentPath(doctor, type, null);
         doctorProfileService.refreshCompletion(doctor);
         doctorProfileService.syncVerificationStatus(doctor);

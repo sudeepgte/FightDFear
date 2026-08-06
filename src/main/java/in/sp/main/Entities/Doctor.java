@@ -107,6 +107,8 @@ public class Doctor {
 
     private LocalDateTime submittedForVerificationAt;
 
+    private Boolean hasPendingReverification = false;
+
     // ── 6. Earnings Setup ──
     private Double consultationFee = 500.0;
     private Double chatFee;
@@ -262,6 +264,11 @@ public class Doctor {
     public LocalDateTime getSubmittedForVerificationAt() { return submittedForVerificationAt; }
     public void setSubmittedForVerificationAt(LocalDateTime submittedForVerificationAt) {
         this.submittedForVerificationAt = submittedForVerificationAt;
+    }
+
+    public Boolean getHasPendingReverification() { return hasPendingReverification; }
+    public void setHasPendingReverification(Boolean hasPendingReverification) {
+        this.hasPendingReverification = hasPendingReverification;
     }
 
     public Double getConsultationFee() { return consultationFee; }

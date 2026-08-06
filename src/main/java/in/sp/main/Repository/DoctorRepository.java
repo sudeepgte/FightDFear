@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import in.sp.main.Entities.Doctor;
+import in.sp.main.Entities.DoctorProfileStatus;
 import in.sp.main.Entities.VerificationStatus;
 
 public interface DoctorRepository extends JpaRepository<Doctor, Long> {
@@ -15,6 +16,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findByPhone(String phone);
     Optional<Doctor> findByMedicalRegNumber(String medicalRegNumber);
     List<Doctor> findByVerificationStatus(VerificationStatus status);
+    List<Doctor> findByDoctorProfileStatus(DoctorProfileStatus status);
+    List<Doctor> findByDoctorProfileStatusIn(List<DoctorProfileStatus> statuses);
+    List<Doctor> findByHasPendingReverificationTrue();
 
     // Purpose: admin doctor search — matches name, email, phone, specialization, or location.
     @Query("SELECT d FROM Doctor d WHERE " +

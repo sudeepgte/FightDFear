@@ -269,6 +269,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   void _showNotifications() {
+    _svc.markNotificationsRead();
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
@@ -292,6 +293,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final n = _notifications[i];
+                      final body = (n['message'] ?? n['body'] ?? '').toString();
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: const CircleAvatar(
@@ -299,7 +301,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                           child: Icon(Icons.notifications_outlined, color: ModuleTheme.primary),
                         ),
                         title: Text(n['title']?.toString() ?? 'Update', style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text(n['body']?.toString() ?? ''),
+                        subtitle: Text(body),
                       );
                     },
                   ),
@@ -473,15 +475,39 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
+  String _profileStatusLabel(String? status) {
+    switch ((status ?? '').toUpperCase()) {
+      case 'REGISTERED':
+      case 'PROFILE_INCOMPLETE':
+        return 'Profile Incomplete';
+      case 'READY_FOR_VERIFICATION':
+        return 'Ready for Verification';
+      case 'PENDING_ADMIN_APPROVAL':
+        return 'Pending Admin Approval';
+      case 'CHANGES_REQUESTED':
+        return 'Changes Requested';
+      case 'APPROVED':
+        return 'Approved';
+      case 'REJECTED':
+        return 'Rejected';
+      case 'SUSPENDED':
+        return 'Suspended';
+      default:
+        return status == null || status.isEmpty ? 'Profile Incomplete' : status;
+    }
+  }
+
   Widget _profileCompletionBanner() {
     final status = (_raw['doctorProfileStatus'] ?? _doctor['doctorProfileStatus'] ?? 'PROFILE_INCOMPLETE')
         .toString();
+    final statusLabel = (_raw['doctorProfileStatusLabel'] ?? _profileStatusLabel(status)).toString();
     final pct = _num(_raw['profileCompletionPct'] ?? _doctor['profileCompletionPct']).clamp(0, 100).toDouble();
     final missing = ModuleTheme.toList(_raw['missingItems']);
     final missingText = missing.take(3).map((e) => e.toString()).join(', ');
     final canSubmit = _raw['canSubmitForVerification'] == true;
     final guidance = _raw['nextStepGuidance']?.toString();
-    if (status == 'APPROVED' && pct >= 100) {
+    final hasPending = _raw['hasPendingReverification'] == true;
+    if (status == 'APPROVED' && pct >= 100 && !hasPending) {
       return const SizedBox.shrink();
     }
     return Container(
@@ -510,7 +536,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   color: const Color(0xFFEEF2FF),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Text(status, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                child: Text(statusLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -1004,7 +1030,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               ListTile(
                 leading: const Icon(Icons.verified_outlined),
                 title: const Text('Verification'),
-                subtitle: Text(_doctor['verificationStatus']?.toString() ?? '—'),
+                subtitle: Text(
+                  (_raw['doctorProfileStatusLabel'] ??
+                          _profileStatusLabel(_raw['doctorProfileStatus']?.toString() ?? _doctor['doctorProfileStatus']?.toString()))
+                      .toString(),
+                ),
               ),
               ListTile(
                 leading: const Icon(Icons.payments_outlined),
