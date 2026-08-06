@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
@@ -15,6 +18,8 @@ class DoctorPortalLoginScreen extends StatefulWidget {
 }
 
 class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
+  static const _resendCooldownSeconds = 60;
+
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _email = TextEditingController();
@@ -26,6 +31,10 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
   bool _loading = false;
   bool _terms = false;
   bool _emailOtpSent = false;
+  bool _emailVerified = false;
+  bool _verifyingOtp = false;
+  int _resendSecondsRemaining = 0;
+  Timer? _resendTimer;
   String? _error;
 
   DoctorAuthService get _svc => DoctorAuthService(context.read<AuthState>().api);
@@ -34,10 +43,36 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
   void initState() {
     super.initState();
     _register = widget.startRegister;
+    _email.addListener(_onEmailChanged);
+    _emailOtp.addListener(_onOtpChanged);
+  }
+
+  void _onEmailChanged() {
+    if (_emailOtpSent || _emailVerified) {
+      setState(() {
+        _emailOtpSent = false;
+        _emailVerified = false;
+        _emailOtp.clear();
+      });
+      _stopResendTimer();
+    }
+  }
+
+  void _onOtpChanged() {
+    if (_emailVerified) {
+      setState(() => _emailVerified = false);
+    }
+    final otp = _emailOtp.text.trim();
+    if (otp.length == 6 && !_verifyingOtp && !_loading && _emailOtpSent) {
+      _verifyOtp(auto: true);
+    }
   }
 
   @override
   void dispose() {
+    _stopResendTimer();
+    _email.removeListener(_onEmailChanged);
+    _emailOtp.removeListener(_onOtpChanged);
     _name.dispose();
     _phone.dispose();
     _email.dispose();
@@ -45,6 +80,29 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
     _confirmPassword.dispose();
     _emailOtp.dispose();
     super.dispose();
+  }
+
+  void _stopResendTimer() {
+    _resendTimer?.cancel();
+    _resendTimer = null;
+    _resendSecondsRemaining = 0;
+  }
+
+  void _startResendTimer() {
+    _stopResendTimer();
+    setState(() => _resendSecondsRemaining = _resendCooldownSeconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_resendSecondsRemaining <= 1) {
+        timer.cancel();
+        setState(() => _resendSecondsRemaining = 0);
+      } else {
+        setState(() => _resendSecondsRemaining -= 1);
+      }
+    });
   }
 
   String? _validateEmail(String email) {
@@ -79,17 +137,50 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _emailVerified = false;
+      _emailOtp.clear();
     });
     final res = await _svc.sendEmailOtp(_email.text);
     if (!mounted) return;
     setState(() => _loading = false);
     if (res['success'] == true) {
       setState(() => _emailOtpSent = true);
+      _startResendTimer();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('OTP sent to your email')),
       );
     } else {
       setState(() => _error = res['error']?.toString() ?? 'Failed to send OTP');
+    }
+  }
+
+  Future<void> _verifyOtp({bool auto = false}) async {
+    if (_emailVerified || _verifyingOtp) return;
+
+    final emailErr = _validateEmail(_email.text);
+    if (emailErr != null) {
+      setState(() => _error = emailErr);
+      return;
+    }
+    if (!RegExp(r'^\d{6}$').hasMatch(_emailOtp.text.trim())) {
+      if (!auto) setState(() => _error = 'Please enter the 6-digit email OTP');
+      return;
+    }
+
+    setState(() {
+      _verifyingOtp = true;
+      _error = null;
+    });
+    final res = await _svc.verifyEmailOtp(email: _email.text, otp: _emailOtp.text);
+    if (!mounted) return;
+    setState(() => _verifyingOtp = false);
+    if (res['success'] == true) {
+      setState(() => _emailVerified = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email verified successfully')),
+      );
+    } else {
+      setState(() => _error = res['error']?.toString() ?? 'Invalid or expired OTP');
     }
   }
 
@@ -123,12 +214,8 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
         setState(() => _error = 'Please accept Terms & Privacy Policy');
         return;
       }
-      if (!_emailOtpSent) {
-        setState(() => _error = 'Please send email OTP first');
-        return;
-      }
-      if (!RegExp(r'^\d{6}$').hasMatch(_emailOtp.text.trim())) {
-        setState(() => _error = 'Please enter the 6-digit email OTP');
+      if (!_emailVerified) {
+        setState(() => _error = 'Please verify your email OTP before creating an account');
         return;
       }
     } else {
@@ -170,8 +257,10 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
           _confirmPassword.clear();
           _emailOtp.clear();
           _emailOtpSent = false;
+          _emailVerified = false;
           _terms = false;
         });
+        _stopResendTimer();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -195,6 +284,11 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
     required String label,
     bool obscure = false,
     TextInputType keyboardType = TextInputType.text,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
+    String? hintText,
+    bool enabled = true,
+    void Function(String)? onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -202,18 +296,106 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
         controller: controller,
         obscureText: obscure,
         keyboardType: keyboardType,
+        maxLength: maxLength,
+        inputFormatters: inputFormatters,
+        enabled: enabled,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
+          counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: enabled ? Colors.white : const Color(0xFFF1F5F9),
         ),
       ),
     );
   }
 
+  Widget _buildEmailVerificationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _input(
+          controller: _email,
+          label: 'Email',
+          keyboardType: TextInputType.emailAddress,
+          enabled: !_emailVerified,
+        ),
+        if (_emailVerified)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF10B981)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Email Verified',
+                  style: TextStyle(
+                    color: Color(0xFF047857),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else ...[
+          FilledButton(
+            onPressed: (_loading || (_emailOtpSent && _resendSecondsRemaining > 0)) ? null : _sendOtp,
+            child: Text(_emailOtpSent ? 'Resend OTP' : 'Send OTP'),
+          ),
+          if (_emailOtpSent && _resendSecondsRemaining > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 4),
+              child: Text(
+                'Resend available in ${_resendSecondsRemaining}s',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              ),
+            ),
+          const SizedBox(height: 4),
+          _input(
+            controller: _emailOtp,
+            label: '6-digit OTP',
+            hintText: 'Enter code from email',
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          FilledButton.tonal(
+            onPressed: (_loading || _verifyingOtp || _emailOtp.text.trim().length != 6) ? null : () => _verifyOtp(),
+            child: _verifyingOtp
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Verify OTP'),
+          ),
+          if (_emailOtpSent && !_emailVerified)
+            const Padding(
+              padding: EdgeInsets.only(top: 4),
+              child: Text(
+                'OTP is verified automatically after you enter all 6 digits.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final canCreateAccount = _register && _emailVerified && _terms && !_loading;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -248,22 +430,9 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
                     if (_register) ...[
                       _input(controller: _name, label: 'Full name'),
                       _input(controller: _phone, label: 'Mobile number', keyboardType: TextInputType.phone),
-                    ],
-                    _input(controller: _email, label: 'Email', keyboardType: TextInputType.emailAddress),
-                    if (_register) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _input(controller: _emailOtp, label: 'Email OTP', keyboardType: TextInputType.number),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton(
-                            onPressed: _loading ? null : _sendOtp,
-                            child: Text(_emailOtpSent ? 'Resend OTP' : 'Send OTP'),
-                          ),
-                        ],
-                      ),
-                    ],
+                      _buildEmailVerificationSection(),
+                    ] else
+                      _input(controller: _email, label: 'Email', keyboardType: TextInputType.emailAddress),
                     _input(controller: _password, label: 'Password', obscure: true),
                     if (_register) ...[
                       _input(controller: _confirmPassword, label: 'Confirm password', obscure: true),
@@ -276,7 +445,7 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
                     ],
                     const SizedBox(height: 8),
                     FilledButton(
-                      onPressed: _loading ? null : _submit,
+                      onPressed: (_register ? canCreateAccount : !_loading) ? _submit : null,
                       child: _loading
                           ? const SizedBox(
                               width: 18,
@@ -291,6 +460,10 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
                           : () => setState(() {
                                 _register = !_register;
                                 _error = null;
+                                _emailOtpSent = false;
+                                _emailVerified = false;
+                                _emailOtp.clear();
+                                _stopResendTimer();
                               }),
                       child: Text(_register ? 'Already have an account? Login' : 'New doctor? Join now'),
                     ),

@@ -64,6 +64,21 @@ public class MobileDoctorAuthController {
         }
     }
 
+    @PostMapping("/otp/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody Map<String, String> body) {
+        String email = trim(body == null ? null : body.get("email"));
+        String otp = trim(body == null ? null : body.get("otp"));
+        try {
+            doctorRegistrationService.verifyRegistrationOtp(email, otp);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Email verified successfully");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
     @PostMapping("/register-quick")
     public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, String> body) {
         try {
@@ -290,6 +305,27 @@ public class MobileDoctorAuthController {
         return ResponseEntity.ok(res);
     }
 
+    @PutMapping("/profile")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        try {
+            doctorProfileService.updateProfile(d, body);
+            doctorRepo.save(d);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Profile updated successfully");
+            res.put("profile", doctorProfileService.profilePayload(d));
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
     @PostMapping("/documents/{type}")
     @Transactional
     public ResponseEntity<Map<String, Object>> uploadDocument(
@@ -311,6 +347,11 @@ public class MobileDoctorAuthController {
             res.put("profileCompletionPct", d.getProfileCompletionPct());
             res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
             res.put("missingItems", doctorProfileService.missingItems(d));
+            res.put("canSubmitForVerification", doctorProfileService.isReadyForVerification(d)
+                    && d.getDoctorProfileStatus() != DoctorProfileStatus.PENDING_ADMIN_APPROVAL
+                    && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED
+                    && d.getDoctorProfileStatus() != DoctorProfileStatus.SUSPENDED);
+            res.put("profile", doctorProfileService.profilePayload(d));
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
@@ -334,6 +375,8 @@ public class MobileDoctorAuthController {
             res.put("message", "Document removed");
             res.put("profileCompletionPct", d.getProfileCompletionPct());
             res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+            res.put("missingItems", doctorProfileService.missingItems(d));
+            res.put("profile", doctorProfileService.profilePayload(d));
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
@@ -352,6 +395,7 @@ public class MobileDoctorAuthController {
             res.put("success", true);
             res.put("message", "Profile submitted for admin verification");
             res.put("doctorProfileStatus", d.getDoctorProfileStatus().name());
+            res.put("profile", doctorProfileService.profilePayload(d));
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
@@ -479,7 +523,11 @@ public class MobileDoctorAuthController {
         data.put("missingItems", doctorProfileService.missingItems(d));
         data.put("canSubmitForVerification", doctorProfileService.isReadyForVerification(d)
                 && d.getDoctorProfileStatus() != DoctorProfileStatus.PENDING_ADMIN_APPROVAL
-                && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED);
+                && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED
+                && d.getDoctorProfileStatus() != DoctorProfileStatus.SUSPENDED);
+        data.put("nextStepGuidance", doctorProfileService.nextStepGuidance(d));
+        data.put("changesRequestedNote", d.getChangesRequestedNote());
+        data.put("rejectionReason", d.getRejectionReason());
         return ResponseEntity.ok(data);
     }
 

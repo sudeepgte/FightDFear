@@ -5,6 +5,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,9 @@ public class DoctorRegistrationService {
 
     @Autowired
     private DoctorProfileService doctorProfileService;
+
+    @Value("${otp.expiration-minutes:10}")
+    private int otpExpirationMinutes;
 
     @Transactional
     public Doctor registerQuick(
@@ -70,8 +74,10 @@ public class DoctorRegistrationService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You must accept the Terms and Privacy Policy");
         }
 
-        if (!otpVerificationService.verifyOtp(normalizedEmail, emailOtp, OtpPurpose.DOCTOR_REGISTER)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired email OTP");
+        if (!otpVerificationService.consumeVerifiedOtp(
+                normalizedEmail, OtpPurpose.DOCTOR_REGISTER, otpExpirationMinutes)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Email not verified. Please verify your email OTP first.");
         }
 
         if (doctorRepository.findByEmail(normalizedEmail).isPresent()) {
@@ -125,6 +131,20 @@ public class DoctorRegistrationService {
         doctor.setSubmittedForVerificationAt(LocalDateTime.now());
         doctor.setChangesRequestedNote(null);
         doctorRepository.save(doctor);
+    }
+
+    public void verifyRegistrationOtp(String email, String otp) {
+        String normalizedEmail = MobileValidation.normalizeEmail(email);
+        String emailErr = MobileValidation.requireEmail(normalizedEmail);
+        if (emailErr != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, emailErr);
+        }
+        if (doctorRepository.findByEmail(normalizedEmail).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+        }
+        if (!otpVerificationService.verifyOtp(normalizedEmail, otp, OtpPurpose.DOCTOR_REGISTER)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired email OTP");
+        }
     }
 
     public void sendRegistrationOtp(String email) {

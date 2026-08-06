@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
 import 'api_client.dart';
 
 class DoctorAuthService {
@@ -9,6 +13,13 @@ class DoctorAuthService {
         '/api/doctors/provider/otp/send-email',
         auth: false,
         body: {'email': email.trim().toLowerCase()},
+      );
+
+  Future<Map<String, dynamic>> verifyEmailOtp({required String email, required String otp}) =>
+      _api.post(
+        '/api/doctors/provider/otp/verify-email',
+        auth: false,
+        body: {'email': email.trim().toLowerCase(), 'otp': otp.trim()},
       );
 
   Future<Map<String, dynamic>> registerQuick(Map<String, dynamic> body) =>
@@ -41,6 +52,39 @@ class DoctorAuthService {
   Future<Map<String, dynamic>> dashboard() => _api.get('/api/doctors/provider/me', doctorAuth: true);
 
   Future<Map<String, dynamic>> profile() => _api.get('/api/doctors/provider/profile', doctorAuth: true);
+
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
+      _api.put(
+        '/api/doctors/provider/profile',
+        doctorAuth: true,
+        body: body,
+        timeout: const Duration(seconds: 30),
+      );
+
+  Future<Map<String, dynamic>> uploadDocument({
+    required String type,
+    required File file,
+    void Function(double progress)? onProgress,
+  }) async {
+    final filename = file.path.split(RegExp(r'[\\/]')).last;
+    final multipart = await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      filename: filename,
+    );
+    return _api.postMultipart(
+      '/api/doctors/provider/documents/$type',
+      doctorAuth: true,
+      files: [multipart],
+      onProgress: onProgress,
+    );
+  }
+
+  Future<Map<String, dynamic>> deleteDocument(String type) =>
+      _api.delete('/api/doctors/provider/documents/$type', doctorAuth: true);
+
+  Future<Map<String, dynamic>> submitVerification() =>
+      _api.post('/api/doctors/provider/submit-verification', doctorAuth: true);
 
   Future<Map<String, dynamic>> updateAppointmentStatus(int id, String status) =>
       _api.post(
