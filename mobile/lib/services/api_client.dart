@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -161,6 +162,7 @@ class ApiClient {
     bool auth = false,
     bool doctorAuth = false,
     bool centreAuth = false,
+    void Function(double progress)? onProgress,
   }) async {
     final req = http.MultipartRequest('POST', _uri(path));
     req.fields.addAll(fields);
@@ -182,7 +184,39 @@ class ApiClient {
         req.headers['Authorization'] = 'Bearer $token';
       }
     }
-    final streamed = await req.send().timeout(_uploadTimeout);
+
+    http.StreamedResponse streamed;
+    if (onProgress == null) {
+      streamed = await req.send().timeout(_uploadTimeout);
+    } else {
+      final total = req.contentLength;
+      final byteStream = req.finalize();
+      var sent = 0;
+      final counted = byteStream.transform<List<int>>(
+        StreamTransformer.fromHandlers(
+          handleData: (data, sink) {
+            sent += data.length;
+            if (total > 0) {
+              onProgress((sent / total).clamp(0.0, 1.0));
+            }
+            sink.add(data);
+          },
+        ),
+      );
+      final proxy = http.StreamedRequest(req.method, req.url);
+      proxy.headers.addAll(req.headers);
+      if (total >= 0) {
+        proxy.contentLength = total;
+      }
+      counted.listen(
+        proxy.sink.add,
+        onError: proxy.sink.addError,
+        onDone: proxy.sink.close,
+        cancelOnError: true,
+      );
+      streamed = await proxy.send().timeout(_uploadTimeout);
+    }
+
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }
@@ -263,25 +297,45 @@ class ApiClient {
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
+    bool auth = true,
+    bool doctorAuth = false,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    Duration? timeout,
   }) async {
     final res = await http
         .put(
           _uri(path),
-          headers: await _headers(),
+          headers: await _headers(
+            auth: auth,
+            doctorAuth: doctorAuth,
+            centreAuth: centreAuth,
+            adminAuth: adminAuth,
+          ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(_timeout);
+        .timeout(timeout ?? _timeout);
     return _decode(res);
   }
 
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,
+    bool auth = true,
+    bool doctorAuth = false,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    Duration? timeout,
   }) async {
     final req = http.Request('PATCH', _uri(path));
-    req.headers.addAll(await _headers());
+    req.headers.addAll(await _headers(
+      auth: auth,
+      doctorAuth: doctorAuth,
+      centreAuth: centreAuth,
+      adminAuth: adminAuth,
+    ));
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await req.send().timeout(_timeout);
+    final streamed = await req.send().timeout(timeout ?? _timeout);
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }

@@ -5,6 +5,7 @@ import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
 import 'doctor_chat_screen.dart';
+import 'doctor_profile_completion_screen.dart';
 
 /// Doctor portal dashboard with profile, stats, filters, and appointment actions.
 class DoctorDashboardScreen extends StatefulWidget {
@@ -478,6 +479,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     final pct = _num(_raw['profileCompletionPct'] ?? _doctor['profileCompletionPct']).clamp(0, 100).toDouble();
     final missing = ModuleTheme.toList(_raw['missingItems']);
     final missingText = missing.take(3).map((e) => e.toString()).join(', ');
+    final canSubmit = _raw['canSubmitForVerification'] == true;
+    final guidance = _raw['nextStepGuidance']?.toString();
+    if (status == 'APPROVED' && pct >= 100) {
+      return const SizedBox.shrink();
+    }
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -518,6 +524,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               color: pct >= 100 ? const Color(0xFF22C55E) : ModuleTheme.primary,
             ),
           ),
+          if (guidance != null && guidance.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(guidance, style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12)),
+          ],
           if (missingText.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -525,6 +535,22 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12),
             ),
           ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
+                    );
+                    if (mounted) _reload();
+                  },
+                  child: Text(canSubmit ? 'Review & Submit' : 'Complete Profile'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -948,6 +974,18 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         Card(
           child: Column(
             children: [
+              ListTile(
+                leading: const Icon(Icons.badge_outlined),
+                title: const Text('Complete / Update Profile'),
+                subtitle: const Text('Professional details, documents, and verification'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
+                  );
+                  if (mounted) _reload();
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.email_outlined),
                 title: const Text('Email'),

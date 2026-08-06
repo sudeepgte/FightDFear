@@ -85,17 +85,7 @@ public class DoctorDocumentService {
             }
             case MEDICAL_REGISTRATION -> doctor.setDegreeCertificatePath(path);
             case MEDICAL_LICENSE -> doctor.setMedicalLicensePath(path);
-            case ADDITIONAL_CERTIFICATE -> {
-                if (path == null) {
-                    return;
-                }
-                String existing = doctor.getDegreeCertificatePath();
-                if (existing == null || existing.isBlank() || !DoctorProfileService.isRealDocument(existing)) {
-                    doctor.setDegreeCertificatePath(path);
-                } else if (!existing.contains(path)) {
-                    doctor.setDegreeCertificatePath(existing + "|" + path);
-                }
-            }
+            case ADDITIONAL_CERTIFICATE -> doctor.setAdditionalCertificatePath(path);
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported document type");
         }
     }

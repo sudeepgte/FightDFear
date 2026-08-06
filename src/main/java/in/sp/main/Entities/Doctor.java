@@ -41,6 +41,10 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private ConsultationType consultationType;
 
+    // Purpose: comma-separated modes e.g. "CLINIC,VIDEO,ONLINE"
+    @Column(length = 200)
+    private String consultationModes;
+
     // ── 3. Location Details ──
     // Purpose: basic location text for search (city/area) + packed metadata from mobile.
     @Column(length = 4000)
@@ -58,12 +62,27 @@ public class Doctor {
     private String endTime;
     private Boolean emergencyAvailable = false;
 
+    // Purpose: JSON array of dynamic slots [{"day":"MONDAY","start":"09:00","end":"12:00"}]
+    @Column(columnDefinition = "TEXT")
+    private String availabilitySlots;
+
+    @Column(length = 500)
+    private String languages;
+
+    @Column(length = 1000)
+    private String services;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     // ── 5. Verification ──
     // Purpose: admin verification uses uploaded document path.
     private String identityDocumentPath;
     private String medicalLicensePath;
     private String idProofPath;
     private String degreeCertificatePath;
+    @Column(length = 1000)
+    private String additionalCertificatePath;
 
     // Purpose: admin-controlled verification gate; only VERIFIED doctors are shown to users.
     @Enumerated(EnumType.STRING)
@@ -154,6 +173,9 @@ public class Doctor {
     public ConsultationType getConsultationType() { return consultationType; }
     public void setConsultationType(ConsultationType consultationType) { this.consultationType = consultationType; }
 
+    public String getConsultationModes() { return consultationModes; }
+    public void setConsultationModes(String consultationModes) { this.consultationModes = consultationModes; }
+
     public String getLocationText() { return locationText; }
     public void setLocationText(String locationText) { this.locationText = locationText; }
 
@@ -184,6 +206,18 @@ public class Doctor {
     public Boolean getEmergencyAvailable() { return emergencyAvailable; }
     public void setEmergencyAvailable(Boolean emergencyAvailable) { this.emergencyAvailable = emergencyAvailable; }
 
+    public String getAvailabilitySlots() { return availabilitySlots; }
+    public void setAvailabilitySlots(String availabilitySlots) { this.availabilitySlots = availabilitySlots; }
+
+    public String getLanguages() { return languages; }
+    public void setLanguages(String languages) { this.languages = languages; }
+
+    public String getServices() { return services; }
+    public void setServices(String services) { this.services = services; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
     public String getIdentityDocumentPath() { return identityDocumentPath; }
     public void setIdentityDocumentPath(String identityDocumentPath) { this.identityDocumentPath = identityDocumentPath; }
 
@@ -195,6 +229,11 @@ public class Doctor {
 
     public String getDegreeCertificatePath() { return degreeCertificatePath; }
     public void setDegreeCertificatePath(String degreeCertificatePath) { this.degreeCertificatePath = degreeCertificatePath; }
+
+    public String getAdditionalCertificatePath() { return additionalCertificatePath; }
+    public void setAdditionalCertificatePath(String additionalCertificatePath) {
+        this.additionalCertificatePath = additionalCertificatePath;
+    }
 
     public VerificationStatus getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(VerificationStatus verificationStatus) { this.verificationStatus = verificationStatus; }
