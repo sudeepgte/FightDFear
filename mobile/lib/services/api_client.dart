@@ -209,6 +209,25 @@ class ApiClient {
     return _decode(res);
   }
 
+  /// POST application/x-www-form-urlencoded (e.g. /danger-points create).
+  Future<Map<String, dynamic>> postForm(
+    String path, {
+    required Map<String, String> fields,
+    bool auth = true,
+    Duration? timeout,
+  }) async {
+    final headers = await _headers(auth: auth);
+    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    final res = await http
+        .post(
+          _uri(path),
+          headers: headers,
+          body: fields,
+        )
+        .timeout(timeout ?? _timeout);
+    return _decode(res);
+  }
+
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
@@ -284,15 +303,36 @@ class ApiClient {
           ? decoded
           : <String, dynamic>{'data': decoded};
     } catch (_) {
+      // nginx HTML pages (502/504) are not JSON — surface a clear message.
+      final body = res.body.toLowerCase();
+      String error;
+      if (res.statusCode == 502 || body.contains('502 bad gateway')) {
+        error =
+            'Server is down (502). The app behind nginx is not running on port 8084. '
+            'Restart Spring Boot / Docker on the testing server, then try again.';
+      } else if (res.statusCode == 504 || body.contains('504 gateway')) {
+        error = 'Server timed out (504). Try again in a moment.';
+      } else if (res.statusCode == 503) {
+        error = 'Server unavailable (503). Try again shortly.';
+      } else {
+        error = 'Invalid server response (${res.statusCode})';
+      }
       json = <String, dynamic>{
         'success': false,
-        'error': 'Invalid server response (${res.statusCode})',
+        'error': error,
       };
     }
     json['_status'] = res.statusCode;
     if (res.statusCode >= 400 && json['error'] == null) {
       json['error'] = json['message'] ?? 'Request failed (${res.statusCode})';
       json['success'] = false;
+    }
+    if (res.statusCode == 502 &&
+        (json['error'] == null ||
+            json['error'].toString().contains('Invalid server'))) {
+      json['success'] = false;
+      json['error'] =
+          'Server is down (502). Restart the backend on the testing server (port 8084).';
     }
     return json;
   }
