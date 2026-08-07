@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/glow_space_service.dart';
+import '../../services/payment_service.dart';
+import '../../widgets/module_payment_checkout.dart';
 
 class GlowSpaceSalonDetailScreen extends StatefulWidget {
   const GlowSpaceSalonDetailScreen({super.key, required this.salonId});
@@ -20,6 +22,7 @@ class GlowSpaceSalonDetailScreen extends StatefulWidget {
 
 class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen> {
   late final GlowSpaceService _api;
+  late final ModulePaymentCheckout _checkout;
   bool _loading = true;
   String? _error;
   Map<String, dynamic>? _salon;
@@ -30,8 +33,20 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
   @override
   void initState() {
     super.initState();
-    _api = GlowSpaceService(context.read<AuthState>().api);
+    final api = context.read<AuthState>().api;
+    _api = GlowSpaceService(api);
+    _checkout = ModulePaymentCheckout(PaymentService(api));
+    _checkout.bind(
+      onSuccess: (r) => _checkout.handleSuccess(context, r),
+      onError: (r) => _checkout.handleError(r),
+    );
     _load();
+  }
+
+  @override
+  void dispose() {
+    _checkout.dispose();
+    super.dispose();
   }
 
   String _mediaUrl(String? path) {
@@ -64,6 +79,22 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
       _error = '$e';
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _startPayment({required int bookingId, required double amount, required String title}) async {
+    await _checkout.pay(
+      context: context,
+      amount: amount,
+      description: 'Glow Space · $title',
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'GLOW_BOOKING',
+        'bookingId': bookingId,
+        'amount': amount,
+      },
+    );
   }
 
   Future<void> _book({
@@ -138,9 +169,22 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
       notes: payload['notes'],
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res['success'] == true ? 'Booking created' : (res['error']?.toString() ?? 'Booking failed'))),
-    );
+    if (res['success'] == true) {
+      final paymentRequired = res['paymentRequired'] == true;
+      final bookingId = res['bookingId'] is int ? res['bookingId'] as int : int.tryParse('${res['bookingId']}');
+      final amount = (res['amount'] is num) ? (res['amount'] as num).toDouble() : 0.0;
+      if (paymentRequired && bookingId != null && amount > 0) {
+        await _startPayment(bookingId: bookingId, amount: amount, title: title);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message']?.toString() ?? 'Booking created')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Booking failed')),
+      );
+    }
   }
 
   @override

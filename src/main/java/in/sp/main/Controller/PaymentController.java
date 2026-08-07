@@ -105,6 +105,12 @@ public class PaymentController {
 
     @Autowired
     private MarketplaceEnrollmentRepository marketplaceEnrollmentRepo;
+
+    @Autowired
+    private FitnessBookingRepository fitnessBookingRepository;
+
+    @Autowired
+    private WomenEventRegistrationRepository womenEventRegistrationRepository;
     
     @Autowired
     private in.sp.main.Repository.WorkerBookingRepository workerBookingRepo;
@@ -662,6 +668,61 @@ public class PaymentController {
                 glowBooking.setStatus("CONFIRMED");
                 glowBooking.setPrice(amountPaid);
                 booking1Repository.save(glowBooking);
+            } else if ("FITNESS".equals(type)) {
+                Object bookingIdObj = data.get("bookingId");
+                if (bookingIdObj == null) {
+                    responseMap.put("error", "bookingId is required for fitness payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                FitnessBooking fitnessBooking = fitnessBookingRepository.findById(Long.parseLong(bookingIdObj.toString())).orElse(null);
+                if (fitnessBooking == null || fitnessBooking.getUser() == null
+                        || !fitnessBooking.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Fitness booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(fitnessBooking.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = fitnessBooking.getPaymentAmount() == null ? 0 : fitnessBooking.getPaymentAmount();
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match session fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                fitnessBooking.setPaymentStatus("PAID");
+                if ("PENDING".equalsIgnoreCase(fitnessBooking.getStatus())) {
+                    fitnessBooking.setStatus("APPROVED");
+                }
+                fitnessBookingRepository.save(fitnessBooking);
+            } else if ("WOMEN_EVENT".equals(type)) {
+                Object registrationIdObj = data.get("registrationId");
+                if (registrationIdObj == null) {
+                    responseMap.put("error", "registrationId is required for event payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                WomenEventRegistration reg = womenEventRegistrationRepository
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (reg == null || reg.getUser() == null || !reg.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Event registration not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if (reg.isPaid()) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    responseMap.put("ticketCode", reg.getTicketCode());
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
+                        ? reg.getEvent().getEntryFee() : 0;
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match event entry fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                reg.setPaid(true);
+                reg.setAmountPaid(amountPaid);
+                womenEventRegistrationRepository.save(reg);
+                responseMap.put("ticketCode", reg.getTicketCode());
             } else {
                 responseMap.put("error", "Unknown payment type.");
                 return ResponseEntity.badRequest().body(responseMap);

@@ -9,7 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
 import '../../services/martial_arts_service.dart';
+import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
+import '../../widgets/module_payment_checkout.dart';
 import 'martial_arts_admin_screen.dart';
 import 'martial_arts_centre_dashboard_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
@@ -32,6 +34,7 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
     with SingleTickerProviderStateMixin {
   late final MartialArtsService _api;
   late final CentreAuthService _centreAuth;
+  late final ModulePaymentCheckout _checkout;
   late final TabController _tabs;
   final _searchCtrl = TextEditingController();
 
@@ -49,6 +52,11 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
     super.initState();
     _api = MartialArtsService(context.read<AuthState>().api);
     _centreAuth = CentreAuthService(context.read<AuthState>().api);
+    _checkout = ModulePaymentCheckout(PaymentService(context.read<AuthState>().api));
+    _checkout.bind(
+      onSuccess: (r) => _checkout.handleSuccess(context, r),
+      onError: (r) => _checkout.handleError(r),
+    );
     _tabs = TabController(length: 5, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
@@ -78,9 +86,34 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
 
   @override
   void dispose() {
+    _checkout.dispose();
     _tabs.dispose();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _payEnrollment(Map<String, dynamic> e) async {
+    final enrollmentId = e['enrollmentId'] is num ? (e['enrollmentId'] as num).toInt() : int.tryParse('${e['enrollmentId']}');
+    final centreId = e['centreId'] is num ? (e['centreId'] as num).toInt() : int.tryParse('${e['centreId']}');
+    final batchId = e['batchId'] is num ? (e['batchId'] as num).toInt() : int.tryParse('${e['batchId']}');
+    final amount = (e['amount'] is num) ? (e['amount'] as num).toDouble() : double.tryParse('${e['fee'] ?? e['amount']}') ?? 0;
+    if (enrollmentId == null || amount <= 0) return;
+    await _checkout.pay(
+      context: context,
+      amount: amount,
+      description: 'Martial Arts · ${e['batchName'] ?? 'Enrollment'}',
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'MARTIAL_ARTS',
+        'enrollmentId': enrollmentId,
+        if (centreId != null) 'centerId': centreId,
+        if (batchId != null) 'batchId': batchId,
+        'amount': amount,
+      },
+      onSuccess: _loadEnrollments,
+    );
   }
 
   Future<void> _loadCentres({String? q}) async {
@@ -541,8 +574,17 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                 if (needsPay) ...[
                   const SizedBox(height: 10),
                   Text(
-                    'Payment pending (₹${e['amount'] ?? 0}). Open batch again to pay via Razorpay.',
+                    'Payment pending (₹${e['amount'] ?? e['fee'] ?? 0}). Complete payment to confirm your seat.',
                     style: const TextStyle(fontSize: 12, color: Colors.orange),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: () => _payEnrollment(e),
+                      style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
+                      child: const Text('Pay now'),
+                    ),
                   ),
                 ],
                 if (e['certificateAvailable'] == true) ...[

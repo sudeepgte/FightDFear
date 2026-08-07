@@ -321,12 +321,14 @@ public class MobileMartialArtsController {
         m.put("instructor", e.getBatch() != null ? e.getBatch().getInstructor() : null);
         m.put("status", e.getStatus() != null ? e.getStatus().name() : "PENDING");
         m.put("paymentStatus", e.getPaymentStatus());
-        m.put("amount", e.getAmountPaid());
-        m.put("progress", e.getProgressPercentage() != null ? e.getProgressPercentage() : 0);
         if (e.getProposedStartDate() != null) {
             m.put("startDate", e.getProposedStartDate().toString());
         }
         boolean free = e.getBatch() != null && (e.getBatch().getFee() == null || e.getBatch().getFee() <= 0);
+        double fee = free ? 0 : (e.getBatch() != null && e.getBatch().getFee() != null ? e.getBatch().getFee() : 0);
+        m.put("fee", fee);
+        m.put("amount", fee > 0 ? fee : (e.getAmountPaid() != null ? e.getAmountPaid() : 0));
+        m.put("progress", e.getProgressPercentage() != null ? e.getProgressPercentage() : 0);
         m.put("paymentRequired", !free && !"PAID".equalsIgnoreCase(e.getPaymentStatus()));
         String cert = e.getCertificateDetails();
         m.put("certificateAvailable", cert != null && !cert.isBlank());

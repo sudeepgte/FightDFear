@@ -3,8 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/module_services.dart';
+import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
+import '../../widgets/module_payment_checkout.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/ux_feedback.dart';
 
 class WomenEventsScreen extends StatefulWidget {
   const WomenEventsScreen({super.key});
@@ -16,6 +19,7 @@ class WomenEventsScreen extends StatefulWidget {
 class _WomenEventsScreenState extends State<WomenEventsScreen>
     with SingleTickerProviderStateMixin {
   late final WomenEventsService _api;
+  late final ModulePaymentCheckout _checkout;
   late final TabController _tabs;
   bool _loading = true;
   bool _loadingRegs = false;
@@ -26,7 +30,13 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
   @override
   void initState() {
     super.initState();
-    _api = WomenEventsService(context.read<AuthState>().api);
+    final authApi = context.read<AuthState>().api;
+    _api = WomenEventsService(authApi);
+    _checkout = ModulePaymentCheckout(PaymentService(authApi));
+    _checkout.bind(
+      onSuccess: (r) => _checkout.handleSuccess(context, r),
+      onError: (r) => _checkout.handleError(r),
+    );
     _tabs = TabController(length: 2, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
@@ -37,6 +47,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
 
   @override
   void dispose() {
+    _checkout.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -71,19 +82,72 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
     if (mounted) setState(() => _loadingRegs = false);
   }
 
-  Future<void> _register(int id) async {
-    final res = await _api.register(id);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          res['success'] == true
-              ? 'Registered · Ticket: ${res['ticketCode'] ?? ''}'
-              : '${res['error']}',
-        ),
-      ),
+  Future<void> _payForRegistration({
+    required int registrationId,
+    required double amount,
+    required String eventName,
+  }) async {
+    await _checkout.pay(
+      context: context,
+      amount: amount,
+      description: 'Event ticket · $eventName',
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'WOMEN_EVENT',
+        'registrationId': registrationId,
+        'amount': amount,
+      },
+      onSuccess: () async {
+        if (_tabs.index == 1) await _loadRegistrations();
+      },
     );
-    if (res['success'] == true && _tabs.index == 1) _loadRegistrations();
+  }
+
+  Future<void> _register(Map<String, dynamic> event) async {
+    final id = event['id'];
+    if (id is! num) return;
+    final fee = event['free'] == true
+        ? 0.0
+        : ((event['entryFee'] is num) ? (event['entryFee'] as num).toDouble() : double.tryParse('${event['entryFee']}') ?? 0);
+
+    try {
+      Map<String, dynamic>? res;
+      await ActionFeedback.run(
+        context,
+        loadingLabel: fee > 0 ? 'Registering…' : 'Registering…',
+        doneLabel: fee > 0 ? 'Registered' : 'Registered',
+        action: () async {
+          res = await _api.register(id.toInt());
+          if (res!['success'] != true) {
+            throw Exception(res!['error']?.toString() ?? 'Registration failed');
+          }
+          return res;
+        },
+      );
+      if (!mounted || res == null) return;
+      final booking = res!;
+
+      final paymentRequired = booking['paymentRequired'] == true;
+      final registrationId = booking['registrationId'] is num
+          ? (booking['registrationId'] as num).toInt()
+          : int.tryParse('${booking['registrationId']}');
+      final amount = (booking['amount'] is num) ? (booking['amount'] as num).toDouble() : fee;
+
+      if (paymentRequired && registrationId != null && amount > 0) {
+        await _payForRegistration(
+          registrationId: registrationId,
+          amount: amount,
+          eventName: event['name']?.toString() ?? 'Event',
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registered · Ticket: ${booking['ticketCode'] ?? ''}')),
+        );
+      }
+      if (_tabs.index == 1) _loadRegistrations();
+    } catch (_) {}
   }
 
   @override
@@ -133,7 +197,6 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                   );
                                 }
                                 final e = _events[i - 1];
-                                final id = e['id'];
                                 final loc = [
                                   e['venue'],
                                   e['city'],
@@ -141,6 +204,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                 final image = e['imagePath']?.toString() ??
                                     e['bannerUrl']?.toString() ??
                                     e['bannerImage']?.toString();
+                                final isFree = e['free'] == true;
                                 return DetailListingCard(
                                   title: e['name']?.toString() ?? 'Event',
                                   eyebrow: e['category']?.toString() ?? 'Women Event',
@@ -149,7 +213,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                   showMediaActions: false,
                                   tags: [
                                     DetailTag(
-                                      label: e['free'] == true ? 'Free' : '₹${e['entryFee'] ?? 0}',
+                                      label: isFree ? 'Free' : '₹${e['entryFee'] ?? 0}',
                                       icon: Icons.currency_rupee,
                                       background: const Color(0xFFE0E7FF),
                                       foreground: const Color(0xFF3730A3),
@@ -162,8 +226,8 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                         icon: Icons.groups_outlined,
                                       ),
                                   ],
-                                  primaryLabel: 'View & Register',
-                                  onPrimary: id is num ? () => _register(id.toInt()) : null,
+                                  primaryLabel: isFree ? 'Register free' : 'Register & Pay',
+                                  onPrimary: () => _register(e),
                                 );
                               },
                             ),
@@ -188,9 +252,16 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                 ? Map<String, dynamic>.from(r['event'] as Map)
                                 : <String, dynamic>{};
                             final name = event['name']?.toString() ?? 'Event';
+                            final needsPay = r['paymentRequired'] == true;
+                            final registrationId = r['registrationId'] is num
+                                ? (r['registrationId'] as num).toInt()
+                                : int.tryParse('${r['registrationId'] ?? r['id']}');
+                            final amount = (r['amount'] is num)
+                                ? (r['amount'] as num).toDouble()
+                                : double.tryParse('${event['entryFee']}') ?? 0;
                             return DetailListingCard(
                               title: name,
-                              eyebrow: 'Ticket',
+                              eyebrow: needsPay ? 'Payment pending' : 'Ticket',
                               location: event['venue']?.toString() ?? event['city']?.toString(),
                               showMediaActions: false,
                               tags: [
@@ -204,13 +275,21 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                                   DetailTag(label: '${r['registeredAt']}', icon: Icons.schedule),
                                 if (r['status'] != null)
                                   DetailTag(label: '${r['status']}', icon: Icons.info_outline),
+                                if (needsPay)
+                                  const DetailTag(label: 'Pay to confirm', icon: Icons.payment),
                               ],
-                              primaryLabel: 'Ticket details',
-                              onPrimary: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Ticket ${r['ticketCode'] ?? ''}')),
-                                );
-                              },
+                              primaryLabel: needsPay ? 'Pay now' : 'Ticket details',
+                              onPrimary: needsPay && registrationId != null
+                                  ? () => _payForRegistration(
+                                        registrationId: registrationId,
+                                        amount: amount,
+                                        eventName: name,
+                                      )
+                                  : () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Ticket ${r['ticketCode'] ?? ''}')),
+                                      );
+                                    },
                             );
                           },
                         ),

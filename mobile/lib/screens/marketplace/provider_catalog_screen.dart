@@ -6,6 +6,7 @@ import '../../services/auth_state.dart';
 import '../../services/module_services.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
+import '../../widgets/module_payment_checkout.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/ux_feedback.dart';
 import '../doctors/doctor_chat_screen.dart';
@@ -32,6 +33,7 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
   late final TextEditingController _searchCtrl;
   late final PaymentService _payments;
   late final Razorpay _razorpay;
+  late final ModulePaymentCheckout _moduleCheckout;
   DoctorService? _doctors;
   MarketplaceService? _marketplace;
   FitnessService? _fitness;
@@ -58,6 +60,11 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     _marketplace = MarketplaceService(api);
     _fitness = FitnessService(api);
     _payments = PaymentService(api);
+    _moduleCheckout = ModulePaymentCheckout(_payments);
+    _moduleCheckout.bind(
+      onSuccess: (r) => _moduleCheckout.handleSuccess(context, r),
+      onError: _onModulePaymentError,
+    );
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onDoctorPaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onDoctorPaymentError);
@@ -73,9 +80,39 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
   @override
   void dispose() {
     _razorpay.clear();
+    _moduleCheckout.dispose();
     _tabs.dispose();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onModulePaymentError(PaymentFailureResponse response) {
+    if (!mounted) return;
+    _moduleCheckout.handleError(response);
+  }
+
+  Future<void> _payForFitnessBooking({
+    required int bookingId,
+    required double amount,
+    String trainerName = 'Trainer',
+  }) async {
+    await _moduleCheckout.pay(
+      context: context,
+      amount: amount,
+      description: 'Fitness session with $trainerName',
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'FITNESS',
+        'bookingId': bookingId,
+        'amount': amount,
+      },
+      onSuccess: () async {
+        _tabs.animateTo(1);
+        await _loadBookings();
+      },
+    );
   }
 
   String get _listKey => switch (widget.kind) {
@@ -330,6 +367,18 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
         },
       );
       if (!mounted || res == null) return;
+      if (widget.kind == CatalogKind.fitness) {
+        final booking = res!;
+        final paymentRequired = booking['paymentRequired'] == true;
+        final bookingId = booking['bookingId'] is num ? (booking['bookingId'] as num).toInt() : int.tryParse('${booking['bookingId']}');
+        final amount = (booking['amount'] is num) ? (booking['amount'] as num).toDouble() : double.tryParse('${booking['amount']}') ?? 0;
+        _tabs.animateTo(1);
+        await _loadBookings();
+        if (paymentRequired && bookingId != null && amount > 0) {
+          await _payForFitnessBooking(bookingId: bookingId, amount: amount, trainerName: _title(item));
+        }
+        return;
+      }
       _tabs.animateTo(1);
       _loadBookings();
     } catch (_) {}
@@ -1317,6 +1366,11 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                             final nestedMap = nested is Map
                                 ? Map<String, dynamic>.from(nested)
                                 : <String, dynamic>{};
+                            final needsFitnessPay = widget.kind == CatalogKind.fitness && b['paymentRequired'] == true;
+                            final bookingId = b['id'] is num ? (b['id'] as num).toInt() : int.tryParse('${b['id']}');
+                            final payAmount = (b['amount'] is num)
+                                ? (b['amount'] as num).toDouble()
+                                : double.tryParse('${b['amount'] ?? b['paymentAmount']}') ?? 0;
                             return DetailListingCard(
                               title: nestedMap['fullName']?.toString() ?? 'Booking',
                               eyebrow: b['status']?.toString() ?? 'PENDING',
@@ -1333,16 +1387,24 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                                 ),
                                 if (b['consultationType'] != null)
                                   DetailTag(label: '${b['consultationType']}', icon: Icons.medical_services_outlined),
-                                if (b['needsPayment'] == true)
+                                if (b['needsPayment'] == true || needsFitnessPay)
                                   const DetailTag(label: 'Payment pending', icon: Icons.payment),
+                                if (b['sessionType'] != null)
+                                  DetailTag(label: '${b['sessionType']}', icon: Icons.fitness_center),
                                 if (b['reason'] != null || b['note'] != null)
                                   DetailTag(label: '${b['reason'] ?? b['note']}'),
                                 if (b['prescriptionText'] != null)
                                   const DetailTag(label: 'Prescription ready', icon: Icons.medication_outlined),
                               ],
                               showMediaActions: false,
-                              primaryLabel: 'Details',
-                              onPrimary: () => _showBookingDetails(b),
+                              primaryLabel: needsFitnessPay ? 'Pay now' : 'Details',
+                              onPrimary: needsFitnessPay && bookingId != null
+                                  ? () => _payForFitnessBooking(
+                                        bookingId: bookingId,
+                                        amount: payAmount,
+                                        trainerName: nestedMap['fullName']?.toString() ?? 'Trainer',
+                                      )
+                                  : () => _showBookingDetails(b),
                             );
                           },
                         ),
