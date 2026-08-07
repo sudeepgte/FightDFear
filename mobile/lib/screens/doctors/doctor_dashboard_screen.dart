@@ -268,6 +268,123 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
+  Future<void> _showReviewsSheet() async {
+    final res = await _svc.reviews();
+    if (!mounted) return;
+    final reviews = ModuleTheme.toList(res['reviews']);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Patient Reviews (${res['count'] ?? reviews.length}) · Rating ${res['rating'] ?? 0}',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              if (reviews.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text('No reviews yet'),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: reviews.length,
+                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final r = reviews[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text('${r['userName'] ?? 'Patient'} · ${r['rating'] ?? '-'}★'),
+                        subtitle: Text(r['comment']?.toString() ?? ''),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAnalyticsSheet() async {
+    final res = await _svc.analytics();
+    if (!mounted) return;
+    if (res['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Failed to load analytics')),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Earnings & Reports', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+              const SizedBox(height: 12),
+              Text('Today: ₹${_money(res['todayEarnings'])}'),
+              Text('This month: ₹${_money(res['monthEarnings'])}'),
+              Text('All-time: ₹${_money(res['totalEarnings'])}'),
+              const SizedBox(height: 8),
+              Text('Appointments: ${res['totalAppointments'] ?? 0}'),
+              Text('Completed: ${res['completedCount'] ?? 0} · Pending: ${res['pendingCount'] ?? 0}'),
+              Text('Confirmed: ${res['confirmedCount'] ?? 0} · Cancelled: ${res['cancelledCount'] ?? 0}'),
+              Text('Completion rate: ${res['completionRate'] ?? 0}%'),
+              Text('Rating: ${res['rating'] ?? 0}'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openInstantConsult() async {
+    if (!_online) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Go Online first so patients can find you for instant consults.')),
+      );
+      return;
+    }
+    final ready = _appointments.where((a) {
+      final status = (a['status']?.toString() ?? '').toUpperCase();
+      final type = (a['consultationType']?.toString() ?? '').toUpperCase();
+      return status == 'CONFIRMED' && (type == 'VIDEO' || type == 'ONLINE');
+    }).toList();
+    if (ready.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No confirmed video appointments yet. Enable Emergency Available in profile for instant discovery.'),
+        ),
+      );
+      return;
+    }
+    final first = ready.first;
+    final id = first['id'] is num ? (first['id'] as num).toInt() : int.tryParse('${first['id']}');
+    if (id == null) return;
+    final res = await _svc.joinAppointment(id);
+    if (!mounted) return;
+    final finalUrl = res['jitsiUrl']?.toString();
+    if (res['success'] == true && finalUrl != null && finalUrl.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Join room ready: $finalUrl')));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Unable to start instant consult')),
+      );
+    }
+  }
+
   void _showNotifications() {
     _svc.markNotificationsRead();
     showModalBottomSheet(
@@ -454,7 +571,17 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               Switch(
                 value: _online,
                 activeThumbColor: const Color(0xFF22C55E),
-                onChanged: (v) => setState(() => _online = v),
+                onChanged: (v) async {
+                  setState(() => _online = v);
+                  final res = await _svc.setOnline(v);
+                  if (!mounted) return;
+                  if (res['success'] != true) {
+                    setState(() => _online = !v);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(res['error']?.toString() ?? 'Failed to update online status')),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -628,20 +755,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       (Icons.calendar_month_outlined, 'Schedule', () => setState(() { _navIndex = 1; _filter = 'TODAY'; })),
       (Icons.groups_outlined, 'Patients', () => setState(() => _navIndex = 2)),
       (Icons.chat_bubble_outline, 'Messages', () => setState(() => _navIndex = 3)),
-      (Icons.payments_outlined, 'Earnings', () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Today ₹${_money(_raw['todayEarnings'])} · This month ₹${_money(_raw['monthEarnings'])}",
-            ),
-          ),
-        );
-      }),
-      (Icons.bar_chart_outlined, 'Reports', () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reports coming soon')),
-        );
-      }),
+      (Icons.payments_outlined, 'Earnings', () => _showAnalyticsSheet()),
+      (Icons.bar_chart_outlined, 'Reports', () => _showAnalyticsSheet()),
     ];
     return SizedBox(
       height: 84,
@@ -1037,11 +1152,36 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.star_outline),
+                title: const Text('Rating & Reviews'),
+                subtitle: Text('${_doctor['rating'] ?? _raw['rating'] ?? 0}'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showReviewsSheet,
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.emergency_outlined),
+                title: const Text('Emergency / Instant available'),
+                subtitle: const Text('Shown to patients for instant consult discovery'),
+                value: _doctor['emergencyAvailable'] == true || _raw['emergencyAvailable'] == true,
+                onChanged: (v) async {
+                  final res = await _svc.updateProfile({'emergencyAvailable': v});
+                  if (!mounted) return;
+                  if (res['success'] == true) {
+                    _reload();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(res['error']?.toString() ?? 'Update failed')),
+                    );
+                  }
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.payments_outlined),
                 title: const Text('Earnings'),
                 subtitle: Text(
                   "Today ₹${_money(_raw['todayEarnings'])} · This month ₹${_money(_raw['monthEarnings'])} · All-time ₹${_money(_raw['totalEarnings'])}",
                 ),
+                onTap: _showAnalyticsSheet,
               ),
             ],
           ),
@@ -1086,13 +1226,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Instant consultation: open Chat or Join Video on a confirmed appointment')),
-          );
-        },
+        onPressed: _openInstantConsult,
         backgroundColor: ModuleTheme.primary,
-        icon: const Icon(Icons.add),
+        icon: const Icon(Icons.bolt_outlined),
         label: const Text('Instant Consult'),
       ),
       body: _loading

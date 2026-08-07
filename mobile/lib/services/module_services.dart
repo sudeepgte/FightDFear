@@ -111,7 +111,28 @@ class DoctorService {
   DoctorService(this._api);
   final ApiClient _api;
 
-  Future<Map<String, dynamic>> list() => _api.get('/api/doctors');
+  Future<Map<String, dynamic>> list({
+    String? q,
+    String? city,
+    String? specialization,
+    bool? online,
+    bool? emergency,
+    bool? instant,
+  }) {
+    final params = <String, String>{};
+    if (q != null && q.trim().isNotEmpty) params['q'] = q.trim();
+    if (city != null && city.trim().isNotEmpty) params['city'] = city.trim();
+    if (specialization != null && specialization.trim().isNotEmpty) {
+      params['specialization'] = specialization.trim();
+    }
+    if (online == true) params['online'] = 'true';
+    if (emergency == true) params['emergency'] = 'true';
+    if (instant == true) params['instant'] = 'true';
+    final query = params.entries
+        .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return _api.get('/api/doctors${query.isEmpty ? '' : '?$query'}');
+  }
 
   Future<Map<String, dynamic>> detail(int id) => _api.get('/api/doctors/$id');
 

@@ -86,6 +86,15 @@ class DoctorAuthService {
   Future<Map<String, dynamic>> submitVerification() =>
       _api.post('/api/doctors/provider/submit-verification', doctorAuth: true);
 
+  Future<Map<String, dynamic>> setOnline(bool online) =>
+      _api.post('/api/doctors/provider/online', doctorAuth: true, body: {'online': online});
+
+  Future<Map<String, dynamic>> analytics() =>
+      _api.get('/api/doctors/provider/analytics', doctorAuth: true);
+
+  Future<Map<String, dynamic>> reviews() =>
+      _api.get('/api/doctors/provider/reviews', doctorAuth: true);
+
   Future<Map<String, dynamic>> notifications() =>
       _api.get('/api/doctors/provider/notifications', doctorAuth: true);
 
