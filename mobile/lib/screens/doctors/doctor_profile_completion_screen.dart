@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/ux_feedback.dart';
 
 class DoctorProfileCompletionScreen extends StatefulWidget {
   const DoctorProfileCompletionScreen({super.key});
@@ -224,57 +225,55 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   }
 
   Future<void> _saveProfile() async {
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    final body = <String, dynamic>{
-      'fullName': _fullName.text.trim(),
-      'specialization': _specialization.text.trim(),
-      'qualification': _qualification.text.trim(),
-      'medicalRegNumber': _medicalReg.text.trim(),
-      'experienceYears': int.tryParse(_experience.text.trim()),
-      'hospitalName': _hospital.text.trim(),
-      'clinicAddress': _clinicAddress.text.trim(),
-      'city': _city.text.trim(),
-      'state': _state.text.trim(),
-      'pincode': _pincode.text.trim(),
-      'languages': _languages.text.trim(),
-      'services': _services.text.trim(),
-      'bio': _bio.text.trim(),
-      'consultationFee': double.tryParse(_consultationFee.text.trim()),
-      'chatFee': double.tryParse(_chatFee.text.trim()),
-      'callFee': double.tryParse(_callFee.text.trim()),
-      'videoFee': double.tryParse(_videoFee.text.trim()),
-      'consultationModes': _selectedModes.toList(),
-      'emergencyAvailable': _emergency,
-      'availabilitySlots': _slots
-          .map((s) => {
-                'day': s.day,
-                'start': _formatTime(s.start),
-                'end': _formatTime(s.end),
-              })
-          .toList(),
-    };
-
-    final res = await _svc.updateProfile(body);
-    if (!mounted) return;
-    setState(() => _saving = false);
-    if (res['success'] == true && res['profile'] is Map) {
-      _applyProfile(Map<String, dynamic>.from(res['profile'] as Map));
-      setState(() {});
-      final approved = _profile['doctorProfileStatus']?.toString() == 'APPROVED';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            approved
-                ? 'Changes saved as pending review. Approved live profile is unchanged.'
-                : 'Profile saved',
-          ),
-        ),
+    setState(() => _error = null);
+    try {
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Saving…',
+        doneLabel: 'Saved',
+        action: () async {
+          setState(() => _saving = true);
+          final body = <String, dynamic>{
+            'fullName': _fullName.text.trim(),
+            'specialization': _specialization.text.trim(),
+            'qualification': _qualification.text.trim(),
+            'medicalRegNumber': _medicalReg.text.trim(),
+            'experienceYears': int.tryParse(_experience.text.trim()),
+            'hospitalName': _hospital.text.trim(),
+            'clinicAddress': _clinicAddress.text.trim(),
+            'city': _city.text.trim(),
+            'state': _state.text.trim(),
+            'pincode': _pincode.text.trim(),
+            'languages': _languages.text.trim(),
+            'services': _services.text.trim(),
+            'bio': _bio.text.trim(),
+            'consultationFee': double.tryParse(_consultationFee.text.trim()),
+            'chatFee': double.tryParse(_chatFee.text.trim()),
+            'callFee': double.tryParse(_callFee.text.trim()),
+            'videoFee': double.tryParse(_videoFee.text.trim()),
+            'consultationModes': _selectedModes.toList(),
+            'emergencyAvailable': _emergency,
+            'availabilitySlots': _slots
+                .map((s) => {
+                      'day': s.day,
+                      'start': _formatTime(s.start),
+                      'end': _formatTime(s.end),
+                    })
+                .toList(),
+          };
+          final res = await _svc.updateProfile(body);
+          if (res['success'] != true) {
+            throw Exception(res['error']?.toString() ?? 'Failed to save profile');
+          }
+          if (res['profile'] is Map) {
+            _applyProfile(Map<String, dynamic>.from(res['profile'] as Map));
+          }
+        },
       );
-    } else {
-      setState(() => _error = res['error']?.toString() ?? 'Failed to save profile');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -283,58 +282,62 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       _submitting = true;
       _error = null;
     });
-    final saveRes = await _svc.updateProfile({
-      'fullName': _fullName.text.trim(),
-      'specialization': _specialization.text.trim(),
-      'qualification': _qualification.text.trim(),
-      'medicalRegNumber': _medicalReg.text.trim(),
-      'experienceYears': int.tryParse(_experience.text.trim()),
-      'hospitalName': _hospital.text.trim(),
-      'clinicAddress': _clinicAddress.text.trim(),
-      'city': _city.text.trim(),
-      'state': _state.text.trim(),
-      'pincode': _pincode.text.trim(),
-      'languages': _languages.text.trim(),
-      'services': _services.text.trim(),
-      'bio': _bio.text.trim(),
-      'consultationFee': double.tryParse(_consultationFee.text.trim()),
-      'chatFee': double.tryParse(_chatFee.text.trim()),
-      'callFee': double.tryParse(_callFee.text.trim()),
-      'videoFee': double.tryParse(_videoFee.text.trim()),
-      'consultationModes': _selectedModes.toList(),
-      'emergencyAvailable': _emergency,
-      'availabilitySlots': _slots
-          .map((s) => {
-                'day': s.day,
-                'start': _formatTime(s.start),
-                'end': _formatTime(s.end),
-              })
-          .toList(),
-    });
-    if (!mounted) return;
-    if (saveRes['success'] == true && saveRes['profile'] is Map) {
-      _applyProfile(Map<String, dynamic>.from(saveRes['profile'] as Map));
-    }
-
-    if (_profile['canSubmitForVerification'] != true) {
-      setState(() {
-        _submitting = false;
-        _error = 'Complete all mandatory fields and required documents before submitting';
-      });
-      return;
-    }
-
-    final res = await _svc.submitVerification();
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    if (res['success'] == true) {
-      await _load();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message']?.toString() ?? 'Submitted for verification')),
+    try {
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Submitting…',
+        doneLabel: 'Submitted',
+        action: () async {
+          final saveRes = await _svc.updateProfile({
+            'fullName': _fullName.text.trim(),
+            'specialization': _specialization.text.trim(),
+            'qualification': _qualification.text.trim(),
+            'medicalRegNumber': _medicalReg.text.trim(),
+            'experienceYears': int.tryParse(_experience.text.trim()),
+            'hospitalName': _hospital.text.trim(),
+            'clinicAddress': _clinicAddress.text.trim(),
+            'city': _city.text.trim(),
+            'state': _state.text.trim(),
+            'pincode': _pincode.text.trim(),
+            'languages': _languages.text.trim(),
+            'services': _services.text.trim(),
+            'bio': _bio.text.trim(),
+            'consultationFee': double.tryParse(_consultationFee.text.trim()),
+            'chatFee': double.tryParse(_chatFee.text.trim()),
+            'callFee': double.tryParse(_callFee.text.trim()),
+            'videoFee': double.tryParse(_videoFee.text.trim()),
+            'consultationModes': _selectedModes.toList(),
+            'emergencyAvailable': _emergency,
+            'availabilitySlots': _slots
+                .map((s) => {
+                      'day': s.day,
+                      'start': _formatTime(s.start),
+                      'end': _formatTime(s.end),
+                    })
+                .toList(),
+          });
+          if (saveRes['success'] == true && saveRes['profile'] is Map) {
+            _applyProfile(Map<String, dynamic>.from(saveRes['profile'] as Map));
+          }
+          if (_profile['canSubmitForVerification'] != true) {
+            throw Exception('Complete all mandatory fields and required documents before submitting');
+          }
+          final res = await _svc.submitVerification();
+          if (res['success'] != true) {
+            throw Exception(res['error']?.toString() ?? 'Submit failed');
+          }
+          await _load();
+        },
       );
-    } else {
-      setState(() => _error = res['error']?.toString() ?? 'Submit failed');
+      if (!mounted) return;
+      await showVerificationSubmittedSheet(context);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -370,33 +373,41 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       return;
     }
 
-    setState(() {
-      _uploadingType = type;
-      _uploadProgress = 0;
-      _error = null;
-    });
-
-    final res = await _svc.uploadDocument(
-      type: type,
-      file: file,
-      onProgress: (p) {
-        if (mounted) setState(() => _uploadProgress = p);
-      },
-    );
     if (!mounted) return;
-    setState(() {
-      _uploadingType = null;
-      _uploadProgress = 0;
-    });
 
-    if (res['success'] == true) {
-      await _load();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message']?.toString() ?? 'Document uploaded')),
+    try {
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Uploading…',
+        doneLabel: 'Uploaded',
+        action: () async {
+          setState(() {
+            _uploadingType = type;
+            _uploadProgress = 0;
+            _error = null;
+          });
+          final res = await _svc.uploadDocument(
+            type: type,
+            file: file,
+            onProgress: (p) {
+              if (mounted) setState(() => _uploadProgress = p);
+            },
+          );
+          if (res['success'] != true) {
+            throw Exception(res['error']?.toString() ?? 'Upload failed');
+          }
+          await _load();
+        },
       );
-    } else {
-      setState(() => _error = res['error']?.toString() ?? 'Upload failed');
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uploadingType = null;
+          _uploadProgress = 0;
+        });
+      }
     }
   }
 
@@ -514,88 +525,68 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     final draft = _profile['pendingDraft'];
     final draftStatus = draft is Map ? draft['status']?.toString() : null;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Profile Completion ${pct.round()}%',
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                  ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ProfileCompletionCard(
+          percent: pct,
+          statusLabel: statusLabel,
+          hint: ProfileCompletionCard.hintFromMissing(missing, guidance: guidance),
+          actionLabel: '',
+          onAction: () {},
+          showActionButton: false,
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasPending) ...[
+                Text(
+                  draftStatus == 'PENDING_REVIEW'
+                      ? 'Your edits are pending admin approval. Approved live data is unchanged.'
+                      : 'You have unpublished profile changes. Submit them for re-verification when ready.',
+                  style: const TextStyle(color: Color(0xFFB45309), fontSize: 12),
                 ),
-                Chip(label: Text(statusLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700))),
+                const SizedBox(height: 8),
               ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: (pct / 100).clamp(0, 1),
-                minHeight: 8,
-                backgroundColor: const Color(0xFFE2E8F0),
-                color: pct >= 100 ? const Color(0xFF22C55E) : ModuleTheme.primary,
-              ),
-            ),
-            if (guidance.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(guidance, style: const TextStyle(color: ModuleTheme.textGray)),
+              if (rejection != null && rejection.isNotEmpty)
+                Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red, fontSize: 12)),
+              if (changes != null && changes.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309), fontSize: 12)),
+              ],
+              if (missing.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                const Text('Missing required items:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: missing
+                      .map((m) => Chip(
+                            label: Text(m, style: const TextStyle(fontSize: 12)),
+                            backgroundColor: const Color(0xFFFFF7ED),
+                          ))
+                      .toList(),
+                ),
+              ],
             ],
-            if (hasPending) ...[
-              const SizedBox(height: 8),
-              Text(
-                draftStatus == 'PENDING_REVIEW'
-                    ? 'Your edits are pending admin approval. Approved live data is unchanged.'
-                    : 'You have unpublished profile changes. Submit them for re-verification when ready.',
-                style: const TextStyle(color: Color(0xFFB45309)),
-              ),
-            ],
-            if (rejection != null && rejection.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red)),
-            ],
-            if (changes != null && changes.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309))),
-            ],
-            if (missing.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              const Text('Missing required items:', style: TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: missing
-                    .map((m) => Chip(
-                          label: Text(m, style: const TextStyle(fontSize: 12)),
-                          backgroundColor: const Color(0xFFFFF7ED),
-                        ))
-                    .toList(),
-              ),
-            ],
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: (_submitting || !canSubmit) ? null : _submit,
-              child: _submitting
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      status == 'APPROVED'
-                          ? 'Submit Changes for Re-verification'
-                          : (canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
-                    ),
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        FilledButton(
+          onPressed: (_submitting || !canSubmit) ? null : _submit,
+          child: _submitting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : Text(
+                  status == 'APPROVED'
+                      ? 'Submit Changes for Re-verification'
+                      : (canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
+                ),
+        ),
+      ],
     );
   }
 

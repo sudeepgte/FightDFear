@@ -122,6 +122,12 @@ public class Doctor {
     @Column(length = 500)
     private String bankDetails;
 
+    private Double payoutBalance = 0.0;
+    private Double totalEarned = 0.0;
+    private Double commissionPercent;
+    @Column(length = 512)
+    private String fcmToken;
+
     private Double rating = 0.0;
 
     @PrePersist
@@ -298,6 +304,15 @@ public class Doctor {
 
     public String getBankDetails() { return bankDetails; }
     public void setBankDetails(String bankDetails) { this.bankDetails = bankDetails; }
+
+    public Double getPayoutBalance() { return payoutBalance; }
+    public void setPayoutBalance(Double payoutBalance) { this.payoutBalance = payoutBalance; }
+    public Double getTotalEarned() { return totalEarned; }
+    public void setTotalEarned(Double totalEarned) { this.totalEarned = totalEarned; }
+    public Double getCommissionPercent() { return commissionPercent; }
+    public void setCommissionPercent(Double commissionPercent) { this.commissionPercent = commissionPercent; }
+    public String getFcmToken() { return fcmToken; }
+    public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }

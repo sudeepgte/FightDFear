@@ -538,9 +538,34 @@
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({amount, type:'DOCTOR'})
+          body: JSON.stringify({
+            type: 'DOCTOR',
+            targetId: doctorId,
+            consultationType: type,
+            appointmentTime: time,
+            amount: amount
+          })
         });
         const order = await res.json();
+        if (!res.ok || !order.orderId) {
+          alert(order.error || 'Unable to create payment order');
+          return;
+        }
+        if (order.mock) {
+          const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+              razorpay_order_id: order.orderId,
+              razorpay_payment_id: 'mock_pay_' + Date.now(),
+              razorpay_signature: 'mock_sig',
+              type: 'DOCTOR', targetId: doctorId, amount,
+              appointmentTime: time, consultationType: type
+            })
+          });
+          if (verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+          else alert('Verification failed');
+          return;
+        }
         const options = {
           key: order.key, amount: order.amount, currency: 'INR',
           name: 'SafeHer Medical', description: 'Consultation with Dr. ${doctor.fullName}',

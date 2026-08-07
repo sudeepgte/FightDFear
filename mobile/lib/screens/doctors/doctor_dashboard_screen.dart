@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/ux_feedback.dart';
 import 'doctor_chat_screen.dart';
 import 'doctor_profile_completion_screen.dart';
 
@@ -637,75 +638,26 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     if (status == 'APPROVED' && pct >= 100 && !hasPending) {
       return const SizedBox.shrink();
     }
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+    return ProfileCompletionCard(
+      percent: pct,
+      statusLabel: statusLabel,
+      hint: ProfileCompletionCard.hintFromMissing(
+        missing.map((e) => e.toString()).toList(),
+        guidance: guidance,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.assignment_outlined, color: ModuleTheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Profile Completion ${pct.toInt()}%',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEEF2FF),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(statusLabel, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: pct / 100,
-              minHeight: 8,
-              backgroundColor: const Color(0xFFE2E8F0),
-              color: pct >= 100 ? const Color(0xFF22C55E) : ModuleTheme.primary,
-            ),
-          ),
-          if (guidance != null && guidance.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(guidance, style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12)),
-          ],
-          if (missingText.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
+      actionLabel: canSubmit ? 'Review & Submit' : 'Complete Profile',
+      onAction: () async {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
+        );
+        if (mounted) _reload();
+      },
+      trailing: missingText.isNotEmpty
+          ? Text(
               'Missing: $missingText${missing.length > 3 ? '...' : ''}',
               style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
-                    );
-                    if (mounted) _reload();
-                  },
-                  child: Text(canSubmit ? 'Review & Submit' : 'Complete Profile'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 
@@ -918,22 +870,22 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
-  Widget _emptyAppointments() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: const BoxDecoration(color: Color(0xFFFFE4E6), shape: BoxShape.circle),
-            child: const Icon(Icons.event_available_outlined, size: 42, color: ModuleTheme.primary),
-          ),
-          const SizedBox(height: 16),
-          const Text('No appointments today', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          const SizedBox(height: 6),
-          const Text('Relax! You\'re all caught up.', style: TextStyle(color: ModuleTheme.textGray)),
-        ],
-      ),
+  Widget _emptyAppointments({bool todayOnly = false}) {
+    if (todayOnly) {
+      return EmptyStateView(
+        icon: Icons.event_available_outlined,
+        title: 'No appointments today',
+        message: "You're all caught up for today.\nNew bookings will appear here when patients schedule with you.",
+        secondaryLabel: 'Browse Help',
+        onSecondary: () => showDoctorSetupHelp(context),
+      );
+    }
+    return EmptyStateView(
+      icon: Icons.event_available_outlined,
+      title: 'No appointments yet',
+      message: 'Appointments booked by patients will appear here.',
+      actionLabel: 'Browse Help',
+      onAction: () => showDoctorSetupHelp(context),
     );
   }
 
@@ -970,7 +922,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               TextButton(onPressed: () => setState(() => _navIndex = 1), child: const Text('See all')),
             ],
           ),
-          if (list.isEmpty) _emptyAppointments() else ...list.take(5).map(_appointmentCard),
+          if (list.isEmpty) _emptyAppointments(todayOnly: true) else ...list.take(5).map(_appointmentCard),
         ],
       ),
     );
@@ -1040,9 +992,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       onRefresh: _reload,
       child: patients.isEmpty
           ? ListView(
-              children: const [
-                SizedBox(height: 80),
-                Center(child: Text('No patients yet')),
+              children: [
+                EmptyStateView(
+                  icon: Icons.people_outline,
+                  title: 'No patients yet',
+                  message: 'Patients will appear here after they book an appointment with you.',
+                  secondaryLabel: 'Need help?',
+                  onSecondary: () => showDoctorSetupHelp(context),
+                ),
               ],
             )
           : ListView.builder(
@@ -1085,9 +1042,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       onRefresh: _reload,
       child: chats.isEmpty
           ? ListView(
-              children: const [
-                SizedBox(height: 80),
-                Center(child: Text('No conversations yet')),
+              children: [
+                EmptyStateView(
+                  icon: Icons.chat_bubble_outline,
+                  title: 'No conversations yet',
+                  message: 'Chat with patients once they have an active appointment with you.',
+                  secondaryLabel: 'Need help?',
+                  onSecondary: () => showDoctorSetupHelp(context),
+                ),
               ],
             )
           : ListView.builder(

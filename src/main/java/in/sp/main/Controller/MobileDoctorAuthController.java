@@ -58,6 +58,10 @@ public class MobileDoctorAuthController {
     @Autowired
     private DoctorAppointmentService doctorAppointmentService;
     @Autowired
+    private in.sp.main.Service.DoctorInstantConsultService instantConsultService;
+    @Autowired
+    private in.sp.main.Service.PushNotificationService pushNotificationService;
+    @Autowired
     private in.sp.main.Repository.DoctorReviewRepository doctorReviewRepo;
 
     @PostMapping("/otp/send-email")
@@ -592,6 +596,65 @@ public class MobileDoctorAuthController {
         res.put("lastSeenAt", d.getLastSeenAt().toString());
         res.put("message", online ? "You are now online" : "You are now offline");
         return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/instant/pending")
+    public ResponseEntity<Map<String, Object>> instantPending(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        var list = instantConsultService.pendingForDoctor(d).stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", r.getId());
+            m.put("userId", r.getUserId());
+            m.put("status", r.getStatus());
+            m.put("consultationType", r.getConsultationType());
+            m.put("reason", r.getReason());
+            m.put("expiresAt", r.getExpiresAt() == null ? null : r.getExpiresAt().toString());
+            return m;
+        }).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("requests", list);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/instant/{id}/accept")
+    public ResponseEntity<Map<String, Object>> instantAccept(@PathVariable Long id, HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        try {
+            instantConsultService.accept(d, id);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Instant consult accepted — ask patient to complete payment/booking");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Failed" : ex.getReason()));
+        }
+    }
+
+    @PostMapping("/instant/{id}/decline")
+    public ResponseEntity<Map<String, Object>> instantDecline(@PathVariable Long id, HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        try {
+            instantConsultService.decline(d, id);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Request declined"));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Failed" : ex.getReason()));
+        }
+    }
+
+    @PostMapping("/device-token")
+    public ResponseEntity<Map<String, Object>> doctorDeviceToken(
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        pushNotificationService.registerDoctorToken(d, body == null ? null : body.get("token"));
+        return ResponseEntity.ok(Map.of("success", true, "message", "Device token registered"));
     }
 
     @GetMapping("/analytics")

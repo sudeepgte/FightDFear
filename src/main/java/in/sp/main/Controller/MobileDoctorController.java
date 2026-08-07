@@ -39,6 +39,12 @@ public class MobileDoctorController {
     private DoctorBookingService bookingService;
     @Autowired
     private DoctorAppointmentService appointmentService;
+    @Autowired
+    private in.sp.main.Service.DoctorPaymentService doctorPaymentService;
+    @Autowired
+    private in.sp.main.Service.DoctorInstantConsultService instantConsultService;
+    @Autowired
+    private in.sp.main.Service.PushNotificationService pushNotificationService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
@@ -50,13 +56,17 @@ public class MobileDoctorController {
             @RequestParam(required = false) Boolean online,
             @RequestParam(required = false) Boolean emergency,
             @RequestParam(required = false) Boolean instant,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         String qLower = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         String cityLower = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
         String specLower = specialization == null ? "" : specialization.trim().toLowerCase(Locale.ROOT);
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(50, Math.max(1, size));
 
-        List<Map<String, Object>> items = doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).stream()
+        List<Doctor> filtered = doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).stream()
                 .filter(d -> {
                     if (!qLower.isEmpty()) {
                         String hay = ((d.getFullName() == null ? "" : d.getFullName()) + " "
@@ -84,9 +94,21 @@ public class MobileDoctorController {
                     }
                     return true;
                 })
+                .toList();
+        int total = filtered.size();
+        int from = Math.min(safePage * safeSize, total);
+        int to = Math.min(from + safeSize, total);
+        List<Map<String, Object>> items = filtered.subList(from, to).stream()
                 .map(d -> doctorDto(d, null))
                 .toList();
-        return ResponseEntity.ok(ok(Map.of("doctors", items, "count", items.size())));
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("doctors", items);
+        payload.put("count", items.size());
+        payload.put("total", total);
+        payload.put("page", safePage);
+        payload.put("size", safeSize);
+        payload.put("hasMore", to < total);
+        return ResponseEntity.ok(ok(payload));
     }
 
     @GetMapping("/{id}")
@@ -151,11 +173,85 @@ public class MobileDoctorController {
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
         try {
             a = appointmentService.cancelByPatient(a, user);
-            return ResponseEntity.ok(ok(Map.of("message", "Appointment cancelled", "status", a.getStatus().name())));
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("message", "Appointment cancelled");
+            data.put("status", a.getStatus().name());
+            data.put("paymentStatus", a.getPaymentStatus());
+            data.put("refundId", a.getRefundId());
+            data.put("refundAmount", a.getRefundAmount());
+            return ResponseEntity.ok(ok(data));
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode())
                     .body(Map.of("success", false, "error", ex.getReason() == null ? "Cancel failed" : ex.getReason()));
         }
+    }
+
+    @PostMapping("/appointments/{id}/reschedule")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rescheduleAppointment(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        LocalDateTime newTime = parseAppointmentTime(body == null ? null : body.get("appointmentTime"));
+        if (newTime == null) return badRequest("appointmentTime is required");
+        try {
+            a = appointmentService.rescheduleByPatient(a, user, newTime, bookingService);
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("message", "Appointment rescheduled");
+            data.put("appointmentId", a.getId());
+            data.put("appointmentTime", a.getAppointmentTime().toString());
+            data.put("status", a.getStatus().name());
+            return ResponseEntity.ok(ok(data));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Reschedule failed" : ex.getReason()));
+        }
+    }
+
+    @GetMapping("/appointments/{id}/receipt")
+    public ResponseEntity<Map<String, Object>> appointmentReceipt(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        if (user == null && doctor == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null) return badRequest("Appointment not found");
+        boolean okAccess = (user != null && a.getUser() != null && a.getUser().getId().equals(user.getId()))
+                || (doctor != null && a.getDoctor() != null && a.getDoctor().getId().equals(doctor.getId()));
+        if (!okAccess) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "error", "Access denied"));
+        }
+        return ResponseEntity.ok(ok(Map.of("receipt", doctorPaymentService.receiptPayload(a))));
+    }
+
+    @PostMapping("/instant/request")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> instantRequest(@RequestBody Map<String, String> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        try {
+            Map<String, Object> result = instantConsultService.requestInstant(
+                    user,
+                    body == null ? null : body.get("consultationType"),
+                    body == null ? null : body.get("reason"));
+            return ResponseEntity.ok(ok(result));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Instant consult unavailable" : ex.getReason()));
+        }
+    }
+
+    @PostMapping("/device-token")
+    public ResponseEntity<Map<String, Object>> registerDeviceToken(@RequestBody Map<String, String> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        pushNotificationService.registerUserToken(
+                user.getId(),
+                body == null ? null : body.get("token"),
+                body == null ? null : body.get("platform"));
+        return ResponseEntity.ok(ok(Map.of("message", "Device token registered")));
     }
 
     @GetMapping("/appointments/{id}/join")
@@ -190,22 +286,24 @@ public class MobileDoctorController {
         }
 
         String room = a.getMeetingRoomId();
-        if (room == null || room.isBlank()) {
-            Long docId = a.getDoctor() != null ? a.getDoctor().getId() : 0L;
-            Long userId = a.getUser() != null ? a.getUser().getId() : 0L;
-            room = audioOnly
-                    ? ("safeher-call-" + docId + "-user-" + userId)
-                    : ("safeher-doc-" + docId + "-user-" + userId);
+        if (room == null || room.isBlank() || room.startsWith("safeher-")) {
+            room = doctorPaymentService.generatePrivateRoomId(a.getId());
             a.setMeetingRoomId(room);
+            if (a.getMeetingPassword() == null || a.getMeetingPassword().isBlank()) {
+                a.setMeetingPassword(doctorPaymentService.generateMeetingPassword());
+            }
             appointmentRepo.save(a);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("roomName", room);
+        data.put("meetingRoomId", room);
+        data.put("meetingPassword", a.getMeetingPassword());
         data.put("displayName", displayName);
         data.put("audioOnly", audioOnly);
         data.put("jitsiUrl", "https://meet.jit.si/" + room.replace(" ", ""));
         data.put("status", a.getStatus().name());
+        data.put("note", "Appointment-scoped room with password. Prefer a private SFU for production.");
         return ResponseEntity.ok(ok(data));
     }
 
@@ -408,8 +506,16 @@ public class MobileDoctorController {
         m.put("reason", a.getReason());
         m.put("consultationType", a.getConsultationType() == null ? null : a.getConsultationType().name());
         m.put("meetingRoomId", a.getMeetingRoomId());
+        m.put("meetingPassword", a.getMeetingPassword());
         m.put("prescriptionText", a.getPrescriptionText());
         m.put("amountPaid", a.getAmountPaid());
+        m.put("paymentStatus", a.getPaymentStatus());
+        m.put("receiptNumber", a.getReceiptNumber());
+        m.put("refundId", a.getRefundId());
+        m.put("refundAmount", a.getRefundAmount());
+        m.put("platformFee", a.getPlatformFee());
+        m.put("doctorEarning", a.getDoctorEarning());
+        m.put("rescheduledFrom", a.getRescheduledFrom() == null ? null : a.getRescheduledFrom().toString());
         boolean canCancel = a.getStatus() == DoctorAppointmentStatus.PENDING
                 || a.getStatus() == DoctorAppointmentStatus.CONFIRMED;
         m.put("canCancel", canCancel);
@@ -436,6 +542,9 @@ public class MobileDoctorController {
                 ? d.getLocationText()
                 : (d.getCity() != null ? d.getCity() : "Location not set"));
         m.put("consultationFee", d.getConsultationFee());
+        m.put("chatFee", d.getChatFee());
+        m.put("callFee", d.getCallFee());
+        m.put("videoFee", d.getVideoFee());
         m.put("rating", d.getRating() != null ? d.getRating() : 0.0);
         m.put("profilePhotoPath", d.getProfilePhotoPath());
         m.put("consultationType", d.getConsultationType() == null ? null : d.getConsultationType().name());

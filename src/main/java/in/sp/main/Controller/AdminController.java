@@ -764,8 +764,11 @@ public class AdminController {
             model.addAttribute("searchResults", userRepository.searchUsers(q.trim()));
             model.addAttribute("q", q.trim());
         } else {
-            // Include pending and verified users for approval workflow
-            model.addAttribute("pendingUsers", userRepository.findByVerificationStatus(VerificationStatus.PENDING));
+            // Include pending and verified users for approval workflow.
+            // Legacy rows with NULL verification_status are treated as pending.
+            List<User> pending = new ArrayList<>(userRepository.findByVerificationStatus(VerificationStatus.PENDING));
+            pending.addAll(userRepository.findByVerificationStatusIsNull());
+            model.addAttribute("pendingUsers", pending);
             model.addAttribute("verifiedUsers", userRepository.findByVerificationStatusAndBannedFalse(VerificationStatus.VERIFIED));
             model.addAttribute("rejectedUsers", userRepository.findByVerificationStatus(VerificationStatus.REJECTED));
             model.addAttribute("bannedUsers",  userRepository.findByBanned(true));

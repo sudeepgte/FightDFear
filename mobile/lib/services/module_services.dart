@@ -118,8 +118,13 @@ class DoctorService {
     bool? online,
     bool? emergency,
     bool? instant,
+    int page = 0,
+    int size = 20,
   }) {
-    final params = <String, String>{};
+    final params = <String, String>{
+      'page': '$page',
+      'size': '$size',
+    };
     if (q != null && q.trim().isNotEmpty) params['q'] = q.trim();
     if (city != null && city.trim().isNotEmpty) params['city'] = city.trim();
     if (specialization != null && specialization.trim().isNotEmpty) {
@@ -131,7 +136,7 @@ class DoctorService {
     final query = params.entries
         .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
         .join('&');
-    return _api.get('/api/doctors${query.isEmpty ? '' : '?$query'}');
+    return _api.get('/api/doctors?$query');
   }
 
   Future<Map<String, dynamic>> detail(int id) => _api.get('/api/doctors/$id');
@@ -154,6 +159,26 @@ class DoctorService {
 
   Future<Map<String, dynamic>> cancelAppointment(int id) =>
       _api.post('/api/doctors/appointments/$id/cancel', body: {});
+
+  Future<Map<String, dynamic>> rescheduleAppointment(int id, {required String appointmentTime}) =>
+      _api.post('/api/doctors/appointments/$id/reschedule', body: {
+        'appointmentTime': appointmentTime,
+      });
+
+  Future<Map<String, dynamic>> receipt(int id) =>
+      _api.get('/api/doctors/appointments/$id/receipt');
+
+  Future<Map<String, dynamic>> requestInstant({String consultationType = 'VIDEO', String reason = ''}) =>
+      _api.post('/api/doctors/instant/request', body: {
+        'consultationType': consultationType,
+        if (reason.isNotEmpty) 'reason': reason,
+      });
+
+  Future<Map<String, dynamic>> registerDeviceToken(String token, {String platform = 'android'}) =>
+      _api.post('/api/doctors/device-token', body: {
+        'token': token,
+        'platform': platform,
+      });
 
   Future<Map<String, dynamic>> joinAppointment(int id, {bool audioOnly = false}) =>
       _api.get('/api/doctors/appointments/$id/join?audioOnly=$audioOnly');

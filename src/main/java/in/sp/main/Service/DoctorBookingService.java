@@ -6,8 +6,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +39,12 @@ public class DoctorBookingService {
     @Autowired
     private DoctorNotificationService notificationService;
 
+    @Autowired
+    private DoctorPaymentService doctorPaymentService;
+
+    @Autowired
+    private PushNotificationService pushNotificationService;
+
     public void requireBookableDoctor(Doctor doctor) {
         if (doctor == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor not found");
@@ -58,7 +64,8 @@ public class DoctorBookingService {
         }
         ConsultationType mode = type == null ? ConsultationType.CLINIC : type;
         Double fee = switch (mode) {
-            case VIDEO -> doctor.getVideoFee() != null ? doctor.getVideoFee() : doctor.getConsultationFee();
+            case VIDEO -> doctor.getVideoFee() != null ? doctor.getVideoFee()
+                    : (doctor.getCallFee() != null ? doctor.getCallFee() : doctor.getConsultationFee());
             case ONLINE -> doctor.getChatFee() != null ? doctor.getChatFee() : doctor.getConsultationFee();
             case OFFLINE, CLINIC, BOTH -> doctor.getConsultationFee();
         };
@@ -132,7 +139,8 @@ public class DoctorBookingService {
         appt.setConsultationType(consultationType == null ? ConsultationType.CLINIC : consultationType);
         if (appt.getConsultationType() == ConsultationType.VIDEO
                 || appt.getConsultationType() == ConsultationType.ONLINE) {
-            appt.setMeetingRoomId("FightDFear-" + UUID.randomUUID().toString().substring(0, 8));
+            appt.setMeetingRoomId(doctorPaymentService.generatePrivateRoomId(null));
+            appt.setMeetingPassword(doctorPaymentService.generateMeetingPassword());
         }
         DoctorAppointment saved = appointmentRepository.save(appt);
         notificationService.notifyDoctor(
@@ -142,6 +150,11 @@ public class DoctorBookingService {
                 (user.getFullName() != null ? user.getFullName() : "A patient")
                         + " requested an appointment (#" + saved.getId() + ").",
                 true);
+        pushNotificationService.notifyDoctor(
+                doctor,
+                "New appointment request",
+                "A patient requested appointment #" + saved.getId(),
+                Map.of("type", "NEW_BOOKING", "appointmentId", String.valueOf(saved.getId())));
         return saved;
     }
 
@@ -159,6 +172,16 @@ public class DoctorBookingService {
         requireBookableDoctor(doctor);
         validateAppointmentSlot(doctor, appointmentTime);
 
+        // Idempotent: same Razorpay payment must not create duplicate appointments
+        if (paymentId != null && !paymentId.isBlank()) {
+            var existing = appointmentRepository.findByUserOrderByAppointmentTimeDesc(user).stream()
+                    .filter(a -> paymentId.equals(a.getRazorpayPaymentId()))
+                    .findFirst();
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
+
         double expected = resolveFee(doctor, consultationType);
         if (expected > 0 && Math.abs(expected - amountPaid) > 1.0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -171,16 +194,22 @@ public class DoctorBookingService {
         appt.setAppointmentTime(appointmentTime);
         appt.setReason(reason == null || reason.isBlank() ? null : reason.trim());
         appt.setConsultationType(consultationType == null ? ConsultationType.CLINIC : consultationType);
-        appt.setAmountPaid(amountPaid);
         appt.setRazorpayOrderId(orderId);
         appt.setRazorpayPaymentId(paymentId);
         appt.setRazorpaySignature(signature);
         if (appt.getConsultationType() == ConsultationType.VIDEO
                 || appt.getConsultationType() == ConsultationType.ONLINE) {
-            appt.setMeetingRoomId("FightDFear-" + UUID.randomUUID().toString().substring(0, 8));
+            appt.setMeetingRoomId(doctorPaymentService.generatePrivateRoomId(null));
+            appt.setMeetingPassword(doctorPaymentService.generateMeetingPassword());
         }
         appt.setStatus(DoctorAppointmentStatus.PENDING);
+        doctorPaymentService.applyPaidSettlement(appt, amountPaid);
         DoctorAppointment saved = appointmentRepository.save(appt);
+        // Stabilize room id with appointment id
+        if (saved.getMeetingRoomId() != null && saved.getMeetingRoomId().contains("-NEW-")) {
+            saved.setMeetingRoomId(doctorPaymentService.generatePrivateRoomId(saved.getId()));
+            saved = appointmentRepository.save(saved);
+        }
         return appointmentService.markConfirmedAfterPayment(saved);
     }
 

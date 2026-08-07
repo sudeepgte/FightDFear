@@ -4,6 +4,7 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,12 +48,28 @@ public class DoctorAppointmentService {
     @Autowired
     private DoctorNotificationService notificationService;
 
+    @Autowired
+    private DoctorPaymentService doctorPaymentService;
+
+    @Autowired
+    private PushNotificationService pushNotificationService;
+
     @Transactional
     public DoctorAppointment transitionByDoctor(DoctorAppointment appointment, Doctor doctor, DoctorAppointmentStatus target) {
         requireOwnedByDoctor(appointment, doctor);
         applyTransition(appointment, target, DOCTOR_TRANSITIONS, "doctor");
         DoctorAppointment saved = appointmentRepository.save(appointment);
+        if (target == DoctorAppointmentStatus.CANCELLED) {
+            doctorPaymentService.refundIfPaid(saved, "DOCTOR", "Cancelled by doctor");
+        }
         notifyPatientStatusChange(saved);
+        if (saved.getUser() != null) {
+            pushNotificationService.notifyUser(
+                    saved.getUser().getId(),
+                    "Appointment update",
+                    "Your appointment #" + saved.getId() + " is now " + saved.getStatus(),
+                    Map.of("type", "APPOINTMENT_STATUS", "appointmentId", String.valueOf(saved.getId())));
+        }
         return saved;
     }
 
@@ -61,7 +78,38 @@ public class DoctorAppointmentService {
         requireOwnedByPatient(appointment, user);
         applyTransition(appointment, DoctorAppointmentStatus.CANCELLED, PATIENT_TRANSITIONS, "patient");
         DoctorAppointment saved = appointmentRepository.save(appointment);
+        doctorPaymentService.refundIfPaid(saved, "PATIENT", "Cancelled by patient");
         notifyDoctorCancelled(saved);
+        pushNotificationService.notifyDoctor(
+                saved.getDoctor(),
+                "Appointment cancelled",
+                "Patient cancelled appointment #" + saved.getId(),
+                Map.of("type", "APPOINTMENT_CANCELLED", "appointmentId", String.valueOf(saved.getId())));
+        return saved;
+    }
+
+    @Transactional
+    public DoctorAppointment rescheduleByPatient(
+            DoctorAppointment appointment,
+            User user,
+            LocalDateTime newTime,
+            DoctorBookingService bookingService) {
+        requireOwnedByPatient(appointment, user);
+        if (appointment.getStatus() != DoctorAppointmentStatus.PENDING
+                && appointment.getStatus() != DoctorAppointmentStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending/confirmed appointments can be rescheduled");
+        }
+        bookingService.validateAppointmentSlot(appointment.getDoctor(), newTime);
+        appointment.setRescheduledFrom(appointment.getAppointmentTime());
+        appointment.setAppointmentTime(newTime);
+        DoctorAppointment saved = appointmentRepository.save(appointment);
+        notifyDoctorCancelled(saved); // reuse notify style — doctor gets update
+        notificationService.notifyDoctor(
+                saved.getDoctor(),
+                "APPOINTMENT_RESCHEDULED",
+                "Appointment rescheduled",
+                "Appointment #" + saved.getId() + " moved to " + newTime,
+                true);
         return saved;
     }
 

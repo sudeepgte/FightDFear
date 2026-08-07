@@ -9,9 +9,34 @@ class PaymentService {
   Future<Map<String, dynamic>> config() =>
       _api.get('/payment/config', timeout: const Duration(seconds: 20));
 
-  Future<Map<String, dynamic>> createOrder(double amount) => _api.post(
+  /// Generic amount-based order (marketplace / martial arts / glow).
+  Future<Map<String, dynamic>> createOrder(double amount, {String? type, Map<String, dynamic>? extra}) =>
+      _api.post(
         '/payment/create-order',
-        body: {'amount': amount},
+        body: {
+          'amount': amount,
+          if (type != null && type.isNotEmpty) 'type': type,
+          ...?extra,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
+  /// Women Doctor paid booking — server resolves fee from doctor + consultation type.
+  Future<Map<String, dynamic>> createDoctorOrder({
+    required int doctorId,
+    required String consultationType,
+    required String appointmentTime,
+    String reason = '',
+  }) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'DOCTOR',
+          'targetId': doctorId,
+          'consultationType': consultationType,
+          'appointmentTime': appointmentTime,
+          if (reason.isNotEmpty) 'reason': reason,
+        },
         timeout: const Duration(seconds: 45),
       );
 

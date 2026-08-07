@@ -24,6 +24,7 @@ import '../martial_arts/martial_arts_admin_screen.dart';
 import '../martial_arts/martial_arts_centre_login_screen.dart';
 import '../martial_arts/martial_arts_centre_register_screen.dart';
 import '../martial_arts/martial_arts_screen.dart';
+import '../doctors/women_doctors_screen.dart';
 import '../marketplace/provider_catalog_screen.dart';
 import '../auth/register_screen.dart';
 import '../user/user_dashboard_screen.dart';
@@ -384,12 +385,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
   void _openDoctors() => _requireLoginThen(() {
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const ProviderCatalogScreen(
-              title: 'Women Doctors',
-              kind: CatalogKind.doctors,
-            ),
-          ),
+          MaterialPageRoute(builder: (_) => const WomenDoctorsScreen()),
         );
       });
 

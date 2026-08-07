@@ -143,7 +143,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF64748B)),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 6),
+                    Text(
+                      context.watch<AuthState>().apiBaseUrl,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                    ),
+                    const SizedBox(height: 22),
                     Container(
                       padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
                       decoration: BoxDecoration(

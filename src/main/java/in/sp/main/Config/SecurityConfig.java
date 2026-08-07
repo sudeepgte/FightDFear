@@ -107,7 +107,8 @@ public class SecurityConfig {
             "/fitness/trainer/login",
             "/fitness/trainer/register",
             "/fitness/trainer/register/**",
-            "/error"
+            "/error",
+            "/payment/webhook/razorpay"
     };
 
     @Bean

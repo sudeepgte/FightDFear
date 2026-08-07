@@ -7,6 +7,7 @@ import '../../services/module_services.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/ux_feedback.dart';
 import '../doctors/doctor_chat_screen.dart';
 
 enum CatalogKind { doctors, marketplace, lawyers, fitness }
@@ -47,6 +48,7 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
   String _pendingApptTime = '';
   String _pendingConsultType = 'CLINIC';
   String _pendingReason = '';
+  String _pendingDoctorName = '';
 
   @override
   void initState() {
@@ -304,35 +306,33 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     if (ok != true || !mounted) return;
 
     try {
-      final Map<String, dynamic> res;
-      switch (widget.kind) {
-        case CatalogKind.doctors:
-          res = await _doctors!.book(id.toInt(), notes: noteCtrl.text);
-        case CatalogKind.marketplace:
-        case CatalogKind.lawyers:
-          res = await _marketplace!.book(id.toInt(), note: noteCtrl.text);
-        case CatalogKind.fitness:
-          res = await _fitness!.book(id.toInt(), note: noteCtrl.text);
-      }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            res['success'] == true
-                ? (res['message']?.toString() ?? 'Booking requested')
-                : (res['error']?.toString() ?? 'Booking failed'),
-          ),
-        ),
+      Map<String, dynamic>? res;
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Booking…',
+        doneLabel: 'Booked',
+        action: () async {
+          final Map<String, dynamic> bookingRes;
+          switch (widget.kind) {
+            case CatalogKind.doctors:
+              bookingRes = await _doctors!.book(id.toInt(), notes: noteCtrl.text);
+            case CatalogKind.marketplace:
+            case CatalogKind.lawyers:
+              bookingRes = await _marketplace!.book(id.toInt(), note: noteCtrl.text);
+            case CatalogKind.fitness:
+              bookingRes = await _fitness!.book(id.toInt(), note: noteCtrl.text);
+          }
+          if (bookingRes['success'] != true) {
+            throw Exception(bookingRes['error']?.toString() ?? 'Booking failed');
+          }
+          res = bookingRes;
+          return res;
+        },
       );
-      if (res['success'] == true) {
-        _tabs.animateTo(1);
-        _loadBookings();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    }
+      if (!mounted || res == null) return;
+      _tabs.animateTo(1);
+      _loadBookings();
+    } catch (_) {}
   }
 
   List<DateTime> _doctorDateOptions(Map<String, dynamic> item) {
@@ -422,6 +422,59 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     return '${d.year}-${two(d.month)}-${two(d.day)} ${two(d.hour)}:${two(d.minute)}:00';
   }
 
+  ({String date, String time}) _appointmentLabels(String apptStr) {
+    final dt = DateTime.tryParse(apptStr.replaceFirst(' ', 'T'));
+    if (dt == null) return (date: apptStr, time: '—');
+    final date = '${_weekdayName(dt.weekday)}, ${dt.day}/${dt.month}/${dt.year}';
+    final time = MaterialLocalizations.of(context).formatTimeOfDay(
+      TimeOfDay(hour: dt.hour, minute: dt.minute),
+    );
+    return (date: date, time: time);
+  }
+
+  int? _appointmentIdFrom(Map<String, dynamic> res) {
+    final id = res['appointmentId'];
+    if (id is num) return id.toInt();
+    return int.tryParse('$id');
+  }
+
+  Future<void> _showDoctorBookingConfirmed({
+    required String doctorName,
+    required String apptStr,
+    required String statusLabel,
+    int? doctorId,
+    int? appointmentId,
+  }) async {
+    if (!mounted) return;
+    final labels = _appointmentLabels(apptStr);
+    _tabs.animateTo(1);
+    await _loadBookings();
+    if (!mounted) return;
+    await showAppointmentConfirmedSheet(
+      context,
+      doctorName: doctorName,
+      dateLabel: labels.date,
+      timeLabel: labels.time,
+      statusLabel: statusLabel,
+      doctorId: doctorId,
+      appointmentId: appointmentId,
+      appointmentIso: apptStr,
+      onJoinChat: doctorId == null
+          ? null
+          : () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => DoctorChatScreen(
+                    api: context.read<AuthState>().api,
+                    doctorId: doctorId,
+                    title: 'Chat · $doctorName',
+                  ),
+                ),
+              );
+            },
+    );
+  }
+
   Future<void> _bookDoctor(Map<String, dynamic> item) async {
     final id = item['id'];
     if (id is! num) return;
@@ -448,14 +501,27 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     DateTime selectedDate = dates.first;
     TimeOfDay selectedTime = times.first;
     String consultType = 'CLINIC';
-    final feeRaw = doctor['consultationFee'] ?? item['consultationFee'];
-    final fee = feeRaw is num ? feeRaw.toDouble() : double.tryParse('$feeRaw') ?? 0.0;
-    final isPaid = fee > 0;
+    double resolveFee(String mode) {
+      num? pick;
+      if (mode == 'VIDEO') {
+        pick = (doctor['videoFee'] ?? doctor['callFee'] ?? doctor['consultationFee']) as num?;
+      } else if (mode == 'ONLINE') {
+        pick = (doctor['chatFee'] ?? doctor['consultationFee']) as num?;
+      } else {
+        pick = (doctor['consultationFee'] ?? item['consultationFee']) as num?;
+      }
+      return pick?.toDouble() ?? 0.0;
+    }
+    var fee = resolveFee(consultType);
+    var isPaid = fee > 0;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
+        builder: (ctx, setLocal) {
+          fee = resolveFee(consultType);
+          isPaid = fee > 0;
+          return AlertDialog(
           title: Text(isPaid ? 'Book & Pay' : 'Book ${_title(doctor)}'),
           content: SingleChildScrollView(
             child: Column(
@@ -466,7 +532,7 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                   Text(_specialty(doctor), style: const TextStyle(color: ModuleTheme.primary, fontWeight: FontWeight.w700)),
                 if (isPaid) ...[
                   const SizedBox(height: 8),
-                  Text('Consultation fee: ₹${fee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text('Fee: ₹${fee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
                 ],
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
@@ -475,7 +541,7 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                   items: const [
                     DropdownMenuItem(value: 'CLINIC', child: Text('In Clinic')),
                     DropdownMenuItem(value: 'VIDEO', child: Text('Video')),
-                    DropdownMenuItem(value: 'ONLINE', child: Text('Online')),
+                    DropdownMenuItem(value: 'ONLINE', child: Text('Online / Chat')),
                     DropdownMenuItem(value: 'OFFLINE', child: Text('Home Visit')),
                   ],
                   onChanged: (v) => setLocal(() => consultType = v ?? 'CLINIC'),
@@ -527,10 +593,11 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(isPaid ? 'Pay with Razorpay' : 'Request booking'),
+              child: Text(isPaid ? 'Pay securely' : 'Request booking'),
             ),
           ],
-        ),
+        );
+        },
       ),
     );
     if (ok != true || !mounted) return;
@@ -544,6 +611,8 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     );
     final apptStr = _formatAppt(appt);
     final reason = noteCtrl.text.trim();
+    fee = resolveFee(consultType);
+    isPaid = fee > 0;
 
     if (isPaid) {
       await _startDoctorPayment(
@@ -558,32 +627,34 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     }
 
     try {
-      final res = await _doctors!.book(
-        id.toInt(),
-        notes: reason,
-        reason: reason,
-        appointmentTime: apptStr,
-        consultationType: consultType,
+      Map<String, dynamic>? res;
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Booking…',
+        doneLabel: 'Booked',
+        action: () async {
+          res = await _doctors!.book(
+            id.toInt(),
+            notes: reason,
+            reason: reason,
+            appointmentTime: apptStr,
+            consultationType: consultType,
+          );
+          if (res!['success'] != true) {
+            throw Exception(res!['error']?.toString() ?? 'Booking failed');
+          }
+          return res;
+        },
       );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            res['success'] == true
-                ? (res['message']?.toString() ?? 'Booking requested')
-                : (res['error']?.toString() ?? 'Booking failed'),
-          ),
-        ),
+      if (!mounted || res == null) return;
+      await _showDoctorBookingConfirmed(
+        doctorName: _title(doctor),
+        apptStr: apptStr,
+        statusLabel: res!['status']?.toString() ?? 'Requested',
+        doctorId: id.toInt(),
+        appointmentId: _appointmentIdFrom(res!),
       );
-      if (res['success'] == true) {
-        _tabs.animateTo(1);
-        _loadBookings();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-      }
-    }
+    } catch (_) {}
   }
 
   Future<void> _startDoctorPayment({
@@ -599,18 +670,34 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     _pendingConsultType = consultType;
     _pendingReason = reason;
     _pendingApptTime = appointmentTime;
+    _pendingDoctorName = doctorName;
 
-    final orderRes = await _payments.createOrder(amount);
+    final orderRes = await _payments.createDoctorOrder(
+      doctorId: doctorId,
+      consultationType: consultType,
+      appointmentTime: appointmentTime,
+      reason: reason,
+    );
     if (!mounted) return;
     if (orderRes['orderId'] == null || orderRes['key'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             orderRes['error']?.toString() ??
-                'Payment gateway unavailable. Restart backend with local profile (Razorpay keys).',
+                'Payment gateway unavailable. Set Razorpay keys or enable mock payments.',
           ),
         ),
       );
+      return;
+    }
+
+    if (orderRes['mock'] == true) {
+      await _onDoctorPaymentSuccess(PaymentSuccessResponse(
+        'mock_pay_${DateTime.now().millisecondsSinceEpoch}',
+        orderRes['orderId']?.toString(),
+        'mock_sig',
+        <dynamic, dynamic>{'mock': true},
+      ));
       return;
     }
 
@@ -627,27 +714,37 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
 
   Future<void> _onDoctorPaymentSuccess(PaymentSuccessResponse response) async {
     try {
-      final verify = await _payments.verify({
-        'razorpay_order_id': response.orderId,
-        'razorpay_payment_id': response.paymentId,
-        'razorpay_signature': response.signature,
-        'type': 'DOCTOR',
-        'targetId': _pendingDoctorId,
-        'amount': _pendingDoctorAmount,
-        'appointmentTime': _pendingApptTime,
-        'consultationType': _pendingConsultType,
-        'reason': _pendingReason,
-      });
-      if (!mounted) return;
-      if (verify['error'] != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(verify['error'].toString())));
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment successful — appointment booked')),
+      Map<String, dynamic>? verify;
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Confirming payment…',
+        doneLabel: 'Confirmed',
+        action: () async {
+          verify = await _payments.verify({
+            'razorpay_order_id': response.orderId,
+            'razorpay_payment_id': response.paymentId,
+            'razorpay_signature': response.signature,
+            'type': 'DOCTOR',
+            'targetId': _pendingDoctorId,
+            'amount': _pendingDoctorAmount,
+            'appointmentTime': _pendingApptTime,
+            'consultationType': _pendingConsultType,
+            'reason': _pendingReason,
+          });
+          if (verify!['error'] != null) {
+            throw Exception(verify!['error'].toString());
+          }
+          return verify;
+        },
       );
-      _tabs.animateTo(1);
-      await _loadBookings();
+      if (!mounted || verify == null) return;
+      await _showDoctorBookingConfirmed(
+        doctorName: _pendingDoctorName.isNotEmpty ? _pendingDoctorName : 'Doctor',
+        apptStr: _pendingApptTime,
+        statusLabel: verify!['status']?.toString() ?? 'Confirmed',
+        doctorId: _pendingDoctorId,
+        appointmentId: _appointmentIdFrom(verify!),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Verification failed: $e')));
@@ -957,9 +1054,16 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                   onRefresh: _loadBookings,
                   child: _bookings.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 80),
-                            Center(child: Text('No bookings yet.')),
+                          children: [
+                            EmptyStateView(
+                              icon: Icons.event_note_outlined,
+                              title: 'No bookings yet',
+                              message: widget.kind == CatalogKind.doctors
+                                  ? 'When you book a consultation, it will appear here with date, time, and chat access.'
+                                  : 'Your booking requests will appear here once you schedule with a provider.',
+                              actionLabel: widget.kind == CatalogKind.doctors ? 'Browse Experts' : 'Browse Listings',
+                              onAction: () => _tabs.animateTo(0),
+                            ),
                           ],
                         )
                       : ListView.builder(
