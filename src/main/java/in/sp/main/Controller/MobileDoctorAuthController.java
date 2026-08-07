@@ -623,10 +623,17 @@ public class MobileDoctorAuthController {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         try {
-            instantConsultService.accept(d, id);
+            DoctorAppointment appt = instantConsultService.accept(d, id);
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Instant consult accepted — ask patient to complete payment/booking");
+            res.put("message", "Instant consult accepted");
+            if (appt != null) {
+                res.put("appointmentId", appt.getId());
+                res.put("status", appt.getStatus() == null ? null : appt.getStatus().name());
+                res.put("appointmentTime", appt.getAppointmentTime() == null ? null : appt.getAppointmentTime().toString());
+                res.put("paymentStatus", appt.getPaymentStatus());
+                res.put("paymentRequired", "PENDING_PAYMENT".equals(appt.getPaymentStatus()));
+            }
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode())

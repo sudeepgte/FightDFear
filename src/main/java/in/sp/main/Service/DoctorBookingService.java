@@ -113,6 +113,37 @@ public class DoctorBookingService {
         }
     }
 
+    /** Slot check that ignores the current user's own unpaid hold at the same time. */
+    public void validateAppointmentSlotForPayment(Doctor doctor, User user, LocalDateTime appointmentTime) {
+        requireBookableDoctor(doctor);
+        if (appointmentTime == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time is required");
+        }
+        if (appointmentTime.isBefore(LocalDateTime.now().minusMinutes(1))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time must be in the future");
+        }
+        // reuse day/hours checks via validate, but allow own unpaid hold
+        try {
+            validateAppointmentSlot(doctor, appointmentTime);
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() != HttpStatus.CONFLICT) {
+                throw ex;
+            }
+            boolean ownUnpaid = appointmentRepository.findByUserOrderByAppointmentTimeDesc(user).stream()
+                    .anyMatch(a -> a.getDoctor() != null
+                            && doctor.getId().equals(a.getDoctor().getId())
+                            && a.getAppointmentTime() != null
+                            && a.getAppointmentTime().equals(appointmentTime)
+                            && a.getStatus() != DoctorAppointmentStatus.CANCELLED
+                            && (a.getAmountPaid() == null
+                                    || a.getAmountPaid() <= 0
+                                    || "PENDING_PAYMENT".equalsIgnoreCase(a.getPaymentStatus())));
+            if (!ownUnpaid) {
+                throw ex;
+            }
+        }
+    }
+
     @Transactional
     public DoctorAppointment createRequestBooking(
             Doctor doctor,
@@ -170,7 +201,6 @@ public class DoctorBookingService {
             String paymentId,
             String signature) {
         requireBookableDoctor(doctor);
-        validateAppointmentSlot(doctor, appointmentTime);
 
         // Idempotent: same Razorpay payment must not create duplicate appointments
         if (paymentId != null && !paymentId.isBlank()) {
@@ -182,11 +212,44 @@ public class DoctorBookingService {
             }
         }
 
-        double expected = resolveFee(doctor, consultationType);
+        double expected = resolveFee(doctor, consultationType == null ? ConsultationType.CLINIC : consultationType);
         if (expected > 0 && Math.abs(expected - amountPaid) > 1.0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Payment amount does not match doctor fee (expected ₹" + (int) expected + ")");
         }
+
+        // Upgrade an existing unpaid hold (instant consult / pending payment) instead of duplicating
+        var unpaidHold = appointmentRepository.findByUserOrderByAppointmentTimeDesc(user).stream()
+                .filter(a -> a.getDoctor() != null && doctor.getId().equals(a.getDoctor().getId()))
+                .filter(a -> a.getAppointmentTime() != null && a.getAppointmentTime().equals(appointmentTime))
+                .filter(a -> a.getStatus() != DoctorAppointmentStatus.CANCELLED)
+                .filter(a -> a.getAmountPaid() == null
+                        || a.getAmountPaid() <= 0
+                        || "PENDING_PAYMENT".equalsIgnoreCase(a.getPaymentStatus()))
+                .findFirst();
+        if (unpaidHold.isPresent()) {
+            DoctorAppointment appt = unpaidHold.get();
+            if (consultationType != null) {
+                appt.setConsultationType(consultationType);
+            }
+            if (reason != null && !reason.isBlank() && (appt.getReason() == null || appt.getReason().isBlank())) {
+                appt.setReason(reason.trim());
+            }
+            appt.setRazorpayOrderId(orderId);
+            appt.setRazorpayPaymentId(paymentId);
+            appt.setRazorpaySignature(signature);
+            if ((appt.getConsultationType() == ConsultationType.VIDEO
+                    || appt.getConsultationType() == ConsultationType.ONLINE)
+                    && (appt.getMeetingRoomId() == null || appt.getMeetingRoomId().isBlank())) {
+                appt.setMeetingRoomId(doctorPaymentService.generatePrivateRoomId(appt.getId()));
+                appt.setMeetingPassword(doctorPaymentService.generateMeetingPassword());
+            }
+            doctorPaymentService.applyPaidSettlement(appt, amountPaid);
+            DoctorAppointment saved = appointmentRepository.save(appt);
+            return appointmentService.markConfirmedAfterPayment(saved);
+        }
+
+        validateAppointmentSlot(doctor, appointmentTime);
 
         DoctorAppointment appt = new DoctorAppointment();
         appt.setUser(user);

@@ -119,6 +119,15 @@ class DoctorAuthService {
   Future<Map<String, dynamic>> joinAppointment(int id, {bool audioOnly = false}) =>
       _api.get('/api/doctors/appointments/$id/join?audioOnly=$audioOnly', doctorAuth: true);
 
+  Future<Map<String, dynamic>> instantPending() =>
+      _api.get('/api/doctors/provider/instant/pending', doctorAuth: true);
+
+  Future<Map<String, dynamic>> acceptInstant(int id) =>
+      _api.post('/api/doctors/provider/instant/$id/accept', doctorAuth: true);
+
+  Future<Map<String, dynamic>> declineInstant(int id) =>
+      _api.post('/api/doctors/provider/instant/$id/decline', doctorAuth: true);
+
   Future<Map<String, dynamic>> chatHistory(int doctorId, {required int userId}) =>
       _api.get('/api/doctors/$doctorId/chat?userId=$userId', doctorAuth: true);
 

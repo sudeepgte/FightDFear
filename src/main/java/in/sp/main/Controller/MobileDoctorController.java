@@ -519,6 +519,13 @@ public class MobileDoctorController {
         boolean canCancel = a.getStatus() == DoctorAppointmentStatus.PENDING
                 || a.getStatus() == DoctorAppointmentStatus.CONFIRMED;
         m.put("canCancel", canCancel);
+        boolean canReschedule = canCancel;
+        m.put("canReschedule", canReschedule);
+        boolean needsPayment = "PENDING_PAYMENT".equalsIgnoreCase(a.getPaymentStatus())
+                || (a.getAmountPaid() == null && canCancel && a.getDoctor() != null);
+        // Only flag needsPayment when explicitly pending payment (instant hold)
+        needsPayment = "PENDING_PAYMENT".equalsIgnoreCase(a.getPaymentStatus());
+        m.put("needsPayment", needsPayment);
         boolean canReview = false;
         if (viewer != null && a.getDoctor() != null && a.getStatus() == DoctorAppointmentStatus.COMPLETED) {
             canReview = !reviewRepo.existsByUserIdAndDoctorId(viewer.getId(), a.getDoctor().getId());

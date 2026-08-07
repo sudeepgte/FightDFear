@@ -839,6 +839,201 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     );
   }
 
+  Future<void> _requestInstantConsult() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Instant consult'),
+        content: const Text(
+          'We will notify an online doctor available for emergency consults. '
+          'If a fee applies, complete payment after the doctor accepts.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Request now')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      Map<String, dynamic>? res;
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Finding a doctor…',
+        doneLabel: 'Request sent',
+        action: () async {
+          res = await _doctors!.requestInstant(consultationType: 'VIDEO');
+          if (res!['success'] != true && res!['requestId'] == null) {
+            throw Exception(res!['error']?.toString() ?? 'No doctors available');
+          }
+          return res;
+        },
+      );
+      if (!mounted || res == null) return;
+      final fee = (res!['fee'] is num) ? (res!['fee'] as num).toDouble() : double.tryParse('${res!['fee']}') ?? 0;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Request sent'),
+          content: Text(
+            'Doctor: ${res!['doctorName'] ?? 'Assigned doctor'}\n'
+            'Status: ${res!['status'] ?? 'OFFERED'}\n'
+            'Fee: ${fee > 0 ? '₹${fee.toStringAsFixed(0)} (pay after accept)' : 'Free'}\n\n'
+            'Check My Bookings after the doctor accepts.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _tabs.animateTo(1);
+                _loadBookings();
+              },
+              child: const Text('Open My Bookings'),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _payForBooking(Map<String, dynamic> b) async {
+    final nested = b['doctor'];
+    final doctor = nested is Map ? Map<String, dynamic>.from(nested) : <String, dynamic>{};
+    final doctorId = doctor['id'] is num ? (doctor['id'] as num).toInt() : int.tryParse('${doctor['id']}');
+    final apptStr = b['appointmentTime']?.toString() ?? '';
+    final consultType = b['consultationType']?.toString() ?? 'VIDEO';
+    if (doctorId == null || apptStr.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Missing booking details for payment')));
+      return;
+    }
+    num? feeNum;
+    if (consultType == 'VIDEO') {
+      feeNum = (doctor['videoFee'] ?? doctor['callFee'] ?? doctor['consultationFee']) as num?;
+    } else if (consultType == 'ONLINE') {
+      feeNum = (doctor['chatFee'] ?? doctor['consultationFee']) as num?;
+    } else {
+      feeNum = doctor['consultationFee'] as num?;
+    }
+    final fee = feeNum?.toDouble() ?? 0;
+    if (fee <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No payment required for this booking')));
+      return;
+    }
+    await _startDoctorPayment(
+      doctorId: doctorId,
+      amount: fee,
+      consultType: consultType,
+      reason: b['reason']?.toString() ?? '',
+      doctorName: doctor['fullName']?.toString() ?? 'Doctor',
+      appointmentTime: apptStr.contains('T') ? apptStr.replaceFirst('T', ' ').split('.').first : apptStr,
+    );
+  }
+
+  Future<void> _rescheduleBooking(Map<String, dynamic> b) async {
+    final id = b['id'] is num ? (b['id'] as num).toInt() : int.tryParse('${b['id']}');
+    if (id == null) return;
+    final nested = b['doctor'];
+    final doctor = nested is Map ? Map<String, dynamic>.from(nested) : <String, dynamic>{};
+    final dates = _doctorDateOptions(doctor.isEmpty ? b : doctor);
+    final times = _doctorTimeOptions(doctor.isEmpty ? b : doctor);
+    if (dates.isEmpty || times.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No slots available to reschedule')));
+      return;
+    }
+    DateTime selectedDate = dates.first;
+    TimeOfDay selectedTime = times.first;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Reschedule appointment'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Date', style: TextStyle(fontWeight: FontWeight.w600)),
+                Wrap(
+                  spacing: 6,
+                  children: dates.map((d) {
+                    final on = selectedDate.year == d.year && selectedDate.month == d.month && selectedDate.day == d.day;
+                    return ChoiceChip(
+                      label: Text('${_weekdayShort(d.weekday)} ${d.day}/${d.month}'),
+                      selected: on,
+                      onSelected: (_) => setLocal(() => selectedDate = d),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                const Text('Time', style: TextStyle(fontWeight: FontWeight.w600)),
+                Wrap(
+                  spacing: 6,
+                  children: times.map((t) {
+                    final on = selectedTime.hour == t.hour && selectedTime.minute == t.minute;
+                    return ChoiceChip(
+                      label: Text(MaterialLocalizations.of(ctx).formatTimeOfDay(t)),
+                      selected: on,
+                      onSelected: (_) => setLocal(() => selectedTime = t),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final appt = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, selectedTime.hour, selectedTime.minute);
+    try {
+      await ActionFeedback.run(
+        context,
+        loadingLabel: 'Rescheduling…',
+        doneLabel: 'Rescheduled',
+        action: () async {
+          final res = await _doctors!.rescheduleAppointment(id, appointmentTime: _formatAppt(appt));
+          if (res['success'] != true) {
+            throw Exception(res['error']?.toString() ?? 'Reschedule failed');
+          }
+          return res;
+        },
+      );
+      await _loadBookings();
+    } catch (_) {}
+  }
+
+  Future<void> _showReceipt(int id) async {
+    final res = await _doctors!.receipt(id);
+    if (!mounted) return;
+    if (res['success'] != true && res['receipt'] == null && res['error'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error'].toString())));
+      return;
+    }
+    final receipt = res['receipt'] is Map ? Map<String, dynamic>.from(res['receipt'] as Map) : res;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Payment receipt'),
+        content: Text(
+          [
+            if (receipt['receiptNumber'] != null) 'Receipt: ${receipt['receiptNumber']}',
+            if (receipt['amountPaid'] != null) 'Paid: ₹${receipt['amountPaid']}',
+            if (receipt['paymentStatus'] != null) 'Status: ${receipt['paymentStatus']}',
+            if (receipt['razorpayPaymentId'] != null) 'Payment ID: ${receipt['razorpayPaymentId']}',
+            if (receipt['appointmentId'] != null) 'Appointment: #${receipt['appointmentId']}',
+          ].where((e) => e.isNotEmpty).join('\n'),
+        ),
+        actions: [
+          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showBookingDetails(Map<String, dynamic> b) async {
     if (widget.kind != CatalogKind.doctors) return;
     final id = b['id'] is num ? (b['id'] as num).toInt() : int.tryParse('${b['id']}');
@@ -847,105 +1042,144 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     final doctorId = doctor['id'] is num ? (doctor['id'] as num).toInt() : int.tryParse('${doctor['id']}');
     final status = b['status']?.toString() ?? '';
     final canCancel = b['canCancel'] == true;
+    final canReschedule = b['canReschedule'] == true || canCancel;
+    final needsPayment = b['needsPayment'] == true;
     final canReview = b['canReview'] == true;
     final type = b['consultationType']?.toString() ?? '';
     final canJoin = type == 'VIDEO' || type == 'ONLINE' || (b['meetingRoomId']?.toString().isNotEmpty == true);
     final prescription = b['prescriptionText']?.toString();
+    final hasPaid = b['amountPaid'] != null || b['receiptNumber'] != null;
 
     await showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(doctor['fullName']?.toString() ?? 'Appointment', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-            const SizedBox(height: 8),
-            Text('Status: $status'),
-            Text('When: ${b['appointmentTime'] ?? '—'}'),
-            Text('Mode: ${type.isEmpty ? '—' : type}'),
-            if (b['amountPaid'] != null) Text('Paid: ₹${b['amountPaid']}'),
-            if (b['reason'] != null) Text('Reason: ${b['reason']}'),
-            if (prescription != null && prescription.isNotEmpty) ...[
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(ctx).bottom),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(doctor['fullName']?.toString() ?? 'Appointment', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
               const SizedBox(height: 8),
-              const Text('Prescription', style: TextStyle(fontWeight: FontWeight.w700)),
-              Text(prescription),
+              Text('Status: $status'),
+              Text('When: ${b['appointmentTime'] ?? '—'}'),
+              Text('Mode: ${type.isEmpty ? '—' : type}'),
+              if (b['amountPaid'] != null) Text('Paid: ₹${b['amountPaid']}'),
+              if (b['paymentStatus'] != null) Text('Payment: ${b['paymentStatus']}'),
+              if (b['reason'] != null) Text('Reason: ${b['reason']}'),
+              if (prescription != null && prescription.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                const Text('Prescription', style: TextStyle(fontWeight: FontWeight.w700)),
+                Text(prescription),
+              ],
+              const SizedBox(height: 12),
+              if (needsPayment)
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _payForBooking(b);
+                  },
+                  icon: const Icon(Icons.payment),
+                  label: const Text('Pay now'),
+                ),
+              if (doctorId != null)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => DoctorChatScreen(
+                          api: context.read<AuthState>().api,
+                          doctorId: doctorId,
+                          title: 'Chat · ${doctor['fullName'] ?? 'Doctor'}',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Chat with doctor'),
+                ),
+              if (canJoin && id != null)
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    openDoctorJitsi(context, context.read<AuthState>().api, id, audioOnly: false);
+                  },
+                  icon: const Icon(Icons.videocam_outlined),
+                  label: const Text('Join video call'),
+                ),
+              if (canReschedule && id != null)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _rescheduleBooking(b);
+                  },
+                  icon: const Icon(Icons.event_repeat),
+                  label: const Text('Reschedule'),
+                ),
+              if (hasPaid && id != null)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showReceipt(id);
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined),
+                  label: const Text('View receipt'),
+                ),
+              if (canReview && doctorId != null)
+                FilledButton.tonalIcon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await showDoctorReviewDialog(
+                      context,
+                      service: _doctors!,
+                      doctorId: doctorId,
+                      onDone: _loadBookings,
+                    );
+                  },
+                  icon: const Icon(Icons.star_outline),
+                  label: const Text('Leave a review'),
+                ),
+              if (canCancel && id != null)
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        title: const Text('Cancel appointment?'),
+                        content: const Text('If you already paid, a refund will be initiated automatically.'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Keep')),
+                          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Cancel booking')),
+                        ],
+                      ),
+                    );
+                    if (confirm != true) return;
+                    final res = await _doctors!.cancelAppointment(id);
+                    if (!mounted) return;
+                    String msg;
+                    if (res['success'] == true) {
+                      final refundAmt = res['refundAmount'];
+                      final refundId = res['refundId'];
+                      if (refundAmt != null || refundId != null) {
+                        msg = 'Cancelled. Refund ${refundAmt != null ? '₹$refundAmt ' : ''}'
+                            '${refundId != null ? '(ID: $refundId) ' : ''}is being processed.';
+                      } else {
+                        msg = res['message']?.toString() ?? 'Appointment cancelled';
+                      }
+                    } else {
+                      msg = res['error']?.toString() ?? 'Cancel failed';
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                    if (res['success'] == true) _loadBookings();
+                  },
+                  child: const Text('Cancel appointment', style: TextStyle(color: Colors.red)),
+                ),
             ],
-            const SizedBox(height: 12),
-            if (doctorId != null)
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => DoctorChatScreen(
-                        api: context.read<AuthState>().api,
-                        doctorId: doctorId,
-                        title: 'Chat · ${doctor['fullName'] ?? 'Doctor'}',
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Chat with doctor'),
-              ),
-            if (canJoin && id != null)
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  openDoctorJitsi(context, context.read<AuthState>().api, id, audioOnly: false);
-                },
-                icon: const Icon(Icons.videocam_outlined),
-                label: const Text('Join video call'),
-              ),
-            if (canReview && doctorId != null)
-              FilledButton.tonalIcon(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await showDoctorReviewDialog(
-                    context,
-                    service: _doctors!,
-                    doctorId: doctorId,
-                    onDone: _loadBookings,
-                  );
-                },
-                icon: const Icon(Icons.star_outline),
-                label: const Text('Leave a review'),
-              ),
-            if (canCancel && id != null)
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (c) => AlertDialog(
-                      title: const Text('Cancel appointment?'),
-                      content: const Text('This cannot be undone.'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Keep')),
-                        FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Cancel booking')),
-                      ],
-                    ),
-                  );
-                  if (confirm != true) return;
-                  final res = await _doctors!.cancelAppointment(id);
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        res['success'] == true
-                            ? (res['message']?.toString() ?? 'Cancelled')
-                            : (res['error']?.toString() ?? 'Cancel failed'),
-                      ),
-                    ),
-                  );
-                  if (res['success'] == true) _loadBookings();
-                },
-                child: const Text('Cancel appointment', style: TextStyle(color: Colors.red)),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -956,6 +1190,14 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     final filtered = _filtered;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      floatingActionButton: widget.kind == CatalogKind.doctors
+          ? FloatingActionButton.extended(
+              onPressed: _requestInstantConsult,
+              icon: const Icon(Icons.bolt),
+              label: const Text('Instant Consult'),
+              backgroundColor: ModuleTheme.primary,
+            )
+          : null,
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Colors.white,
@@ -1091,6 +1333,8 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
                                 ),
                                 if (b['consultationType'] != null)
                                   DetailTag(label: '${b['consultationType']}', icon: Icons.medical_services_outlined),
+                                if (b['needsPayment'] == true)
+                                  const DetailTag(label: 'Payment pending', icon: Icons.payment),
                                 if (b['reason'] != null || b['note'] != null)
                                   DetailTag(label: '${b['reason'] ?? b['note']}'),
                                 if (b['prescriptionText'] != null)

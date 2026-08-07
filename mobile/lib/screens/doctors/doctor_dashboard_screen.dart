@@ -358,6 +358,75 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       );
       return;
     }
+    final pendingRes = await _svc.instantPending();
+    if (!mounted) return;
+    final requests = ModuleTheme.toList(pendingRes['requests']);
+    if (requests.isNotEmpty) {
+      await showModalBottomSheet<void>(
+        context: context,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Instant consult requests', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                const SizedBox(height: 12),
+                ...requests.map((r) {
+                  final id = r['id'] is num ? (r['id'] as num).toInt() : int.tryParse('${r['id']}');
+                  return Card(
+                    child: ListTile(
+                      title: Text('Request #${r['id']} · ${r['consultationType'] ?? 'VIDEO'}'),
+                      subtitle: Text('${r['reason'] ?? 'No reason'} · expires ${r['expiresAt'] ?? ''}'),
+                      trailing: Wrap(
+                        spacing: 4,
+                        children: [
+                          TextButton(
+                            onPressed: id == null
+                                ? null
+                                : () async {
+                                    Navigator.pop(ctx);
+                                    final res = await _svc.declineInstant(id);
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Declined')),
+                                    );
+                                    _reload();
+                                  },
+                            child: const Text('Decline'),
+                          ),
+                          FilledButton(
+                            onPressed: id == null
+                                ? null
+                                : () async {
+                                    Navigator.pop(ctx);
+                                    final res = await _svc.acceptInstant(id);
+                                    if (!mounted) return;
+                                    final msg = res['success'] == true
+                                        ? (res['paymentRequired'] == true
+                                            ? 'Accepted. Patient will complete payment for #${res['appointmentId']}.'
+                                            : 'Accepted. Appointment #${res['appointmentId']} created.')
+                                        : (res['error']?.toString() ?? 'Accept failed');
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                                    _reload();
+                                  },
+                            child: const Text('Accept'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
     final ready = _appointments.where((a) {
       final status = (a['status']?.toString() ?? '').toUpperCase();
       final type = (a['consultationType']?.toString() ?? '').toUpperCase();
@@ -366,7 +435,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     if (ready.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No confirmed video appointments yet. Enable Emergency Available in profile for instant discovery.'),
+          content: Text('No instant requests right now. Keep Online + Emergency Available enabled for discovery.'),
         ),
       );
       return;

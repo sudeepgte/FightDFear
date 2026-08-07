@@ -41,6 +41,12 @@ public class DoctorInstantConsultService {
     @Autowired
     private PushNotificationService pushNotificationService;
 
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepository;
+
+    @Autowired
+    private in.sp.main.Repository.DoctorAppointmentRepository appointmentRepository;
+
     @Transactional
     public Map<String, Object> requestInstant(User user, String consultationType, String reason) {
         expireStale();
@@ -109,11 +115,38 @@ public class DoctorInstantConsultService {
         if (!"OFFERED".equals(req.getStatus())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Request is not offerable");
         }
-        // Acceptance creates a near-term unpaid request if fee=0; otherwise doctor signals ready and patient pays
+        User patient = userRepository.findById(req.getUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
+
+        ConsultationType cType;
+        try {
+            cType = ConsultationType.valueOf(
+                    (req.getConsultationType() == null ? "VIDEO" : req.getConsultationType()).trim().toUpperCase());
+        } catch (Exception ex) {
+            cType = ConsultationType.VIDEO;
+        }
+
+        // Hold a near-term slot (≥15 min so payment create-order validation still passes)
+        LocalDateTime when = LocalDateTime.now().plusMinutes(20)
+                .withSecond(0).withNano(0);
+        DoctorAppointment appt = bookingService.createRequestBooking(
+                doctor, patient, when, cType, req.getReason(), true);
+        double fee = bookingService.resolveFee(doctor, cType);
+        appt.setPaymentStatus(fee > 0 ? "PENDING_PAYMENT" : "NOT_REQUIRED");
+        appt = appointmentRepository.save(appt);
+
         req.setStatus("ACCEPTED");
         req.setRespondedAt(LocalDateTime.now());
+        req.setAppointmentId(appt.getId());
         instantRequestRepository.save(req);
-        return null;
+
+        pushNotificationService.notifyUser(
+                patient.getId(),
+                "Doctor accepted your instant consult",
+                "Appointment #" + appt.getId() + " is ready"
+                        + (fee > 0 ? ". Please complete payment." : "."),
+                Map.of("type", "INSTANT_ACCEPTED", "appointmentId", String.valueOf(appt.getId())));
+        return appt;
     }
 
     @Transactional

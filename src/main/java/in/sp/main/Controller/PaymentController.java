@@ -349,7 +349,7 @@ public class PaymentController {
                     return ResponseEntity.badRequest().body(errorBody);
                 }
                 doctorBookingService.requireBookableDoctor(d);
-                doctorBookingService.validateAppointmentSlot(d, apptTime);
+                doctorBookingService.validateAppointmentSlotForPayment(d, user, apptTime);
             } else {
                 Object amountRaw = data.get("amount");
                 if (amountRaw == null) {
@@ -723,7 +723,44 @@ public class PaymentController {
             } else if (orderId != null) {
                 appointmentRepo.findByRazorpayOrderId(orderId).ifPresent(a -> ev.setAppointmentId(a.getId()));
             }
-            ev.setProcessed(true);
+
+            // Recover DOCTOR bookings when verify never ran but payment was captured
+            if ("payment.captured".equals(event)
+                    && orderId != null
+                    && ev.getAppointmentId() == null) {
+                PendingOrder pending = PENDING_ORDERS.get(orderId);
+                if (pending != null
+                        && "DOCTOR".equalsIgnoreCase(pending.type())
+                        && pending.targetId() != null) {
+                    try {
+                        User user = userRepo.findById(pending.userId()).orElse(null);
+                        Doctor d = doctorRepo.findById(pending.targetId()).orElse(null);
+                        LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(pending.appointmentTime());
+                        ConsultationType cType = MobileDoctorController.parseConsultationType(pending.consultationType());
+                        if (user != null && d != null && apptTime != null) {
+                            DoctorAppointment appt = doctorBookingService.createPaidBooking(
+                                    d,
+                                    user,
+                                    apptTime,
+                                    cType,
+                                    pending.reason(),
+                                    pending.amountPaise() / 100.0,
+                                    orderId,
+                                    paymentId,
+                                    "webhook");
+                            ev.setAppointmentId(appt.getId());
+                            PENDING_ORDERS.remove(orderId);
+                        }
+                    } catch (Exception recoverEx) {
+                        ev.setProcessed(false);
+                        res.put("recoverError", recoverEx.getMessage());
+                    }
+                }
+            }
+
+            if (!res.containsKey("recoverError")) {
+                ev.setProcessed(true);
+            }
             doctorPaymentEventRepository.save(ev);
             res.put("success", true);
             return ResponseEntity.ok(res);

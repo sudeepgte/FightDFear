@@ -224,7 +224,7 @@
             <div class="vr mx-2"></div>
             <div class="text-end">
               <div class="small text-muted fw-600">CONSULTATION FEE</div>
-              <div class="fs-3 fw-900 text-purple">₹${doctor.consultationFee != null ? doctor.consultationFee : 500}</div>
+              <div class="fs-3 fw-900 text-purple" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</div>
             </div>
           </div>
         </div>
@@ -368,8 +368,11 @@
           
           <form id="bookingForm" onsubmit="event.preventDefault(); initiatePayment();">
             <input type="hidden" id="doctorId" value="${doctor.id}">
-            <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 500.0}">
+            <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
             <input type="hidden" id="appointmentTime" value="">
+            <input type="hidden" id="clinicFee" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
+            <input type="hidden" id="videoFee" value="${doctor.videoFee != null ? doctor.videoFee : (doctor.consultationFee != null ? doctor.consultationFee : 0)}">
+            <input type="hidden" id="chatFee" value="${doctor.chatFee != null ? doctor.chatFee : (doctor.consultationFee != null ? doctor.consultationFee : 0)}">
 
             <div class="mb-4">
               <label class="small fw-800 text-muted mb-2 d-block">PATIENT NAME *</label>
@@ -411,9 +414,9 @@
             </div>
 
             <button type="submit" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6">
-              Book Appointment & Pay ₹${doctor.consultationFee != null ? doctor.consultationFee : 500}
+              Book Appointment
             </button>
-            <p class="text-center mt-3 small text-muted"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
+            <p class="text-center mt-3 small text-muted" id="payHint"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
           </form>
         </div>
       </div>
@@ -461,6 +464,39 @@
     var daysMap = { "sunday":0, "monday":1, "tuesday":2, "wednesday":3, "thursday":4, "friday":5, "saturday":6 };
     var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase()).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
 
+    function currentFee() {
+      var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
+      var clinic = parseFloat(document.getElementById('clinicFee').value || '0');
+      var video = parseFloat(document.getElementById('videoFee').value || '0');
+      var chat = parseFloat(document.getElementById('chatFee').value || '0');
+      if (type === 'VIDEO') return isNaN(video) ? 0 : video;
+      if (type === 'ONLINE') return isNaN(chat) ? 0 : chat;
+      return isNaN(clinic) ? 0 : clinic;
+    }
+
+    function syncFeeUi() {
+      var fee = currentFee();
+      document.getElementById('amount').value = fee;
+      var btn = document.getElementById('payBtn');
+      var hint = document.getElementById('payHint');
+      var header = document.getElementById('headerFeeDisplay');
+      if (header) header.innerText = '₹' + fee;
+      if (fee > 0) {
+        btn.innerText = 'Book Appointment & Pay ₹' + fee;
+        if (hint) hint.innerHTML = '<i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay';
+      } else {
+        btn.innerText = 'Request Free Booking';
+        if (hint) hint.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> No payment required for this mode';
+      }
+    }
+
+    function localDateISO(d) {
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
     function renderDates() {
       var dateScroll = document.getElementById('dateScroll');
       if(!availableDays.length) {
@@ -474,7 +510,7 @@
       var count = 0;
       while(count < 14) {
         if(availableDays.includes(d.getDay())) {
-          var dateISO = d.toISOString().split('T')[0];
+          var dateISO = localDateISO(d);
           var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
           html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
                     <div class="small fw-700 opacity-50">\${dayName}</div>
@@ -489,13 +525,14 @@
       } else {
          dateScroll.innerHTML = html;
       }
+      syncFeeUi();
     }
 
     var selectedDateObj = null;
     function selectDate(el, dateISO) {
       document.querySelectorAll('.day-selector-item').forEach(i => i.classList.remove('active'));
       el.classList.add('active');
-      selectedDateObj = new Date(dateISO);
+      selectedDateObj = new Date(dateISO + 'T00:00:00');
       renderTimeSlots();
     }
 
@@ -521,19 +558,45 @@
     function selectTime(el, t24, t12) {
       document.querySelectorAll('.time-slot-pill').forEach(i => i.classList.remove('selected'));
       el.classList.add('selected');
-      var fullTime = selectedDateObj.toISOString().split('T')[0] + ' ' + t24;
+      var fullTime = localDateISO(selectedDateObj) + ' ' + t24;
       document.getElementById('appointmentTime').value = fullTime;
       document.getElementById('summaryText').innerText = selectedDateObj.toDateString() + ' at ' + t12;
       document.getElementById('selectedSummary').classList.remove('d-none');
       document.getElementById('payBtn').disabled = false;
       document.getElementById('payBtn').style.opacity = '1';
+      syncFeeUi();
+    }
+
+    async function bookFree(doctorId, time, type) {
+      const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: '' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+      } else {
+        alert(data.error || 'Unable to book appointment');
+      }
     }
 
     async function initiatePayment() {
+      syncFeeUi();
       const amount = document.getElementById('amount').value;
       const doctorId = document.getElementById('doctorId').value;
       const time = document.getElementById('appointmentTime').value;
       const type = document.querySelector('input[name="consultationType"]:checked').value;
+      const fee = parseFloat(amount || '0');
+
+      if (!time) {
+        alert('Please select date and time');
+        return;
+      }
+
+      if (fee <= 0) {
+        await bookFree(doctorId, time, type);
+        return;
+      }
 
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
@@ -588,7 +651,13 @@
       } catch(e) { alert('Payment failed. Please try again.'); }
     }
 
-    document.addEventListener('DOMContentLoaded', renderDates);
+    document.addEventListener('DOMContentLoaded', function() {
+      renderDates();
+      document.querySelectorAll('input[name="consultationType"]').forEach(function(el) {
+        el.addEventListener('change', syncFeeUi);
+      });
+      syncFeeUi();
+    });
   </script>
 </body>
 </html>

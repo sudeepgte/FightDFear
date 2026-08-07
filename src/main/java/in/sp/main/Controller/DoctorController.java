@@ -29,6 +29,7 @@ import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
 import in.sp.main.Service.DoctorAppointmentService;
+import in.sp.main.Service.DoctorBookingService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
@@ -61,6 +62,9 @@ public class DoctorController {
     private DoctorProfileService doctorProfileService;
     @Autowired
     private DoctorAppointmentService doctorAppointmentService;
+
+    @Autowired
+    private DoctorBookingService doctorBookingService;
 
     // ==============================
     // Doctor Registration + Login
@@ -419,6 +423,7 @@ public class DoctorController {
     public String book(@RequestParam Long doctorId,
                        @RequestParam String appointmentTime,
                        @RequestParam(required = false) String reason,
+                       @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
                        HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -430,17 +435,31 @@ public class DoctorController {
             return "redirect:/doctors/list";
         }
 
-        DoctorAppointment appt = new DoctorAppointment();
-        appt.setUser(u);
-        appt.setDoctor(d);
-        // Purpose: parse date+time from booking form (yyyy-MM-dd HH:mm:ss).
-        appt.setAppointmentTime(LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        appt.setReason(reason);
-        appt.setStatus(DoctorAppointmentStatus.PENDING);
-        appointmentRepo.save(appt);
-
-        redirectAttributes.addFlashAttribute("message", "Appointment requested.");
-        return "redirect:/doctors/myAppointments";
+        try {
+            ConsultationType cType;
+            try {
+                cType = ConsultationType.valueOf(consultationType.trim().toUpperCase());
+            } catch (Exception ex) {
+                cType = ConsultationType.CLINIC;
+            }
+            LocalDateTime when = LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            double fee = doctorBookingService.resolveFee(d, cType);
+            if (fee > 0) {
+                redirectAttributes.addFlashAttribute("message",
+                        "Payment required (₹" + (int) fee + "). Please book and pay from the doctor profile page.");
+                return "redirect:/doctors/view/" + doctorId;
+            }
+            doctorBookingService.createRequestBooking(d, u, when, cType, reason, false);
+            redirectAttributes.addFlashAttribute("message", "Appointment requested.");
+            return "redirect:/doctors/myAppointments";
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message",
+                    ex.getReason() == null ? "Booking failed." : ex.getReason());
+            return "redirect:/doctors/view/" + doctorId;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("message", "Invalid appointment time.");
+            return "redirect:/doctors/view/" + doctorId;
+        }
     }
 
     @GetMapping("/myAppointments")
