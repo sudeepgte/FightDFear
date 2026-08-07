@@ -2,6 +2,8 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
+import in.sp.main.Service.DoctorAppointmentService;
+import in.sp.main.Service.DoctorBookingService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -34,6 +35,10 @@ public class MobileDoctorController {
     private DoctorChatRepository chatRepo;
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private DoctorBookingService bookingService;
+    @Autowired
+    private DoctorAppointmentService appointmentService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(HttpSession session) {
@@ -67,36 +72,25 @@ public class MobileDoctorController {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Doctor d = doctorRepo.findById(id).orElse(null);
-        if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return badRequest("Doctor not found");
+        try {
+            String reason = trim(body == null ? null : body.get("reason"));
+            if (reason.isBlank()) reason = trim(body == null ? null : body.get("notes"));
+            ConsultationType cType = parseConsultationType(body == null ? null : body.get("consultationType"));
+            LocalDateTime apptTime = parseAppointmentTime(body == null ? null : body.get("appointmentTime"));
+            if (apptTime == null) {
+                return badRequest("Appointment time is required");
+            }
+            DoctorAppointment appt = bookingService.createRequestBooking(d, user, apptTime, cType, reason, false);
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("message", "Appointment requested");
+            data.put("appointmentId", appt.getId());
+            data.put("status", appt.getStatus().name());
+            data.put("meetingRoomId", appt.getMeetingRoomId());
+            return ResponseEntity.ok(ok(data));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Booking failed" : ex.getReason()));
         }
-
-        String reason = trim(body == null ? null : body.get("reason"));
-        if (reason.isBlank()) reason = trim(body == null ? null : body.get("notes"));
-
-        ConsultationType cType = parseConsultationType(body == null ? null : body.get("consultationType"));
-        LocalDateTime apptTime = parseAppointmentTime(body == null ? null : body.get("appointmentTime"));
-        if (apptTime == null) {
-            apptTime = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
-        }
-
-        DoctorAppointment appt = new DoctorAppointment();
-        appt.setUser(user);
-        appt.setDoctor(d);
-        appt.setAppointmentTime(apptTime);
-        appt.setStatus(DoctorAppointmentStatus.PENDING);
-        appt.setReason(reason.isBlank() ? null : reason);
-        appt.setConsultationType(cType);
-        if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {
-            appt.setMeetingRoomId("Fight D Fear-" + UUID.randomUUID().toString().substring(0, 8));
-        }
-        appointmentRepo.save(appt);
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("message", "Appointment requested");
-        data.put("appointmentId", appt.getId());
-        data.put("meetingRoomId", appt.getMeetingRoomId());
-        return ResponseEntity.ok(ok(data));
     }
 
     @GetMapping("/appointments/me")
@@ -115,16 +109,13 @@ public class MobileDoctorController {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
-        if (a == null || a.getUser() == null || !a.getUser().getId().equals(user.getId())) {
-            return badRequest("Appointment not found");
+        try {
+            a = appointmentService.cancelByPatient(a, user);
+            return ResponseEntity.ok(ok(Map.of("message", "Appointment cancelled", "status", a.getStatus().name())));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason() == null ? "Cancel failed" : ex.getReason()));
         }
-        DoctorAppointmentStatus st = a.getStatus();
-        if (st != DoctorAppointmentStatus.PENDING && st != DoctorAppointmentStatus.CONFIRMED) {
-            return badRequest("Only pending or confirmed appointments can be cancelled");
-        }
-        a.setStatus(DoctorAppointmentStatus.CANCELLED);
-        appointmentRepo.save(a);
-        return ResponseEntity.ok(ok(Map.of("message", "Appointment cancelled", "status", "CANCELLED")));
     }
 
     @GetMapping("/appointments/{id}/join")
@@ -152,6 +143,11 @@ public class MobileDoctorController {
         if (!allowed) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "error", "Access denied"));
         }
+        if (!appointmentService.canJoinVideo(a)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "error", "Video join is only allowed for confirmed video/online appointments"));
+        }
 
         String room = a.getMeetingRoomId();
         if (room == null || room.isBlank()) {
@@ -160,6 +156,8 @@ public class MobileDoctorController {
             room = audioOnly
                     ? ("safeher-call-" + docId + "-user-" + userId)
                     : ("safeher-doc-" + docId + "-user-" + userId);
+            a.setMeetingRoomId(room);
+            appointmentRepo.save(a);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -167,6 +165,7 @@ public class MobileDoctorController {
         data.put("displayName", displayName);
         data.put("audioOnly", audioOnly);
         data.put("jitsiUrl", "https://meet.jit.si/" + room.replace(" ", ""));
+        data.put("status", a.getStatus().name());
         return ResponseEntity.ok(ok(data));
     }
 
@@ -192,6 +191,13 @@ public class MobileDoctorController {
         Doctor d = doctorRepo.findById(id).orElse(null);
         if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
             return badRequest("Doctor not found");
+        }
+        boolean completed = appointmentRepo.findByUserOrderByAppointmentTimeDesc(user).stream()
+                .anyMatch(a -> a.getDoctor() != null
+                        && a.getDoctor().getId().equals(id)
+                        && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
+        if (!completed) {
+            return badRequest("You can only review doctors after a completed appointment");
         }
         int rating;
         try {
@@ -234,6 +240,11 @@ public class MobileDoctorController {
         User chatUser;
         if (user != null) {
             chatUser = user;
+            if (!appointmentService.hasActiveRelationship(target, chatUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "error", "Chat is available only after booking an appointment with this doctor"));
+            }
         } else if (doctor != null) {
             if (!doctor.getId().equals(id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -242,6 +253,11 @@ public class MobileDoctorController {
             if (userId == null) return badRequest("userId is required for doctor chat");
             chatUser = userRepo.findById(userId).orElse(null);
             if (chatUser == null) return badRequest("Patient not found");
+            if (!appointmentService.hasActiveRelationship(doctor, chatUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "error", "Chat is available only with patients who have booked you"));
+            }
         } else {
             return unauthorized();
         }
@@ -276,6 +292,11 @@ public class MobileDoctorController {
         msg.setMessage(message);
 
         if (user != null) {
+            if (!appointmentService.hasActiveRelationship(target, user)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "error", "Chat is available only after booking an appointment with this doctor"));
+            }
             msg.setUser(user);
             msg.setSenderType("USER");
         } else if (doctor != null) {
@@ -293,6 +314,11 @@ public class MobileDoctorController {
             }
             User chatUser = userRepo.findById(uid).orElse(null);
             if (chatUser == null) return badRequest("Patient not found");
+            if (!appointmentService.hasActiveRelationship(doctor, chatUser)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "success", false,
+                        "error", "Chat is available only with patients who have booked you"));
+            }
             msg.setUser(chatUser);
             msg.setSenderType("DOCTOR");
         } else {

@@ -72,6 +72,9 @@ public class PaymentController {
     private MartialArtsTypeRepository typeRepository;
 
     @Autowired
+    private in.sp.main.Service.DoctorBookingService doctorBookingService;
+
+    @Autowired
     private SlotRepository slotRepository;
 
     @Autowired
@@ -258,18 +261,36 @@ public class PaymentController {
         }
 
         try {
-            Object amountRaw = data.get("amount");
-            if (amountRaw == null) {
-                errorBody.put("error", "Amount is required");
-                return ResponseEntity.badRequest().body(errorBody);
-            }
-            String amountStr = amountRaw.toString().replaceAll("[^0-9.]", "");
+            String type = Objects.toString(data.get("type"), "").trim().toUpperCase(Locale.ROOT);
             double amount;
-            try {
-                amount = Double.parseDouble(amountStr);
-            } catch (NumberFormatException nfe) {
-                errorBody.put("error", "Invalid amount");
-                return ResponseEntity.badRequest().body(errorBody);
+            if ("DOCTOR".equals(type)) {
+                Object targetIdObj = data.get("targetId");
+                if (targetIdObj == null) {
+                    errorBody.put("error", "Doctor id is required");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                Doctor d = doctorRepo.findById(targetId).orElse(null);
+                ConsultationType cType = MobileDoctorController.parseConsultationType(
+                        Objects.toString(data.get("consultationType"), "CLINIC"));
+                amount = doctorBookingService.resolveFee(d, cType);
+                if (amount <= 0) {
+                    errorBody.put("error", "This doctor does not require payment. Book without payment.");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+            } else {
+                Object amountRaw = data.get("amount");
+                if (amountRaw == null) {
+                    errorBody.put("error", "Amount is required");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                String amountStr = amountRaw.toString().replaceAll("[^0-9.]", "");
+                try {
+                    amount = Double.parseDouble(amountStr);
+                } catch (NumberFormatException nfe) {
+                    errorBody.put("error", "Invalid amount");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
             }
             if (amount <= 0) {
                 errorBody.put("error", "Amount must be greater than zero");
@@ -353,10 +374,6 @@ public class PaymentController {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
                 Doctor d = doctorRepo.findById(targetId).orElse(null);
-                if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
-                    responseMap.put("error", "Doctor not found or not verified");
-                    return ResponseEntity.status(400).body(responseMap);
-                }
 
                 String consultTypeStr = data.getOrDefault("consultationType", "CLINIC").toString();
                 ConsultationType cType = MobileDoctorController.parseConsultationType(consultTypeStr);
@@ -371,23 +388,24 @@ public class PaymentController {
                     }
                 }
 
-                DoctorAppointment appt = new DoctorAppointment();
-                appt.setUser(user);
-                appt.setDoctor(d);
-                appt.setAppointmentTime(apptTime);
-                appt.setReason(Objects.toString(data.get("reason"), ""));
-                appt.setStatus(DoctorAppointmentStatus.PENDING);
-                appt.setConsultationType(cType);
-                if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {
-                    appt.setMeetingRoomId("Fight D Fear-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+                try {
+                    DoctorAppointment appt = doctorBookingService.createPaidBooking(
+                            d,
+                            user,
+                            apptTime,
+                            cType,
+                            Objects.toString(data.get("reason"), ""),
+                            amountPaid,
+                            orderId,
+                            paymentId,
+                            signature);
+                    responseMap.put("appointmentId", appt.getId());
+                    responseMap.put("meetingRoomId", appt.getMeetingRoomId());
+                    responseMap.put("status", appt.getStatus().name());
+                } catch (org.springframework.web.server.ResponseStatusException ex) {
+                    responseMap.put("error", ex.getReason());
+                    return ResponseEntity.status(ex.getStatusCode().value()).body(responseMap);
                 }
-                appt.setRazorpayOrderId(orderId);
-                appt.setRazorpayPaymentId(paymentId);
-                appt.setRazorpaySignature(signature);
-                appt.setAmountPaid(amountPaid);
-                appointmentRepo.save(appt);
-                responseMap.put("appointmentId", appt.getId());
-                responseMap.put("meetingRoomId", appt.getMeetingRoomId());
             } else if ("BEAUTY".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;

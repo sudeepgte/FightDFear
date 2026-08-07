@@ -28,6 +28,7 @@ import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
+import in.sp.main.Service.DoctorAppointmentService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
@@ -58,6 +59,8 @@ public class DoctorController {
     private DoctorRegistrationService doctorRegistrationService;
     @Autowired
     private DoctorProfileService doctorProfileService;
+    @Autowired
+    private DoctorAppointmentService doctorAppointmentService;
 
     // ==============================
     // Doctor Registration + Login
@@ -373,9 +376,10 @@ public class DoctorController {
         }
 
         try {
-            appt.setStatus(DoctorAppointmentStatus.valueOf(status));
-            appointmentRepo.save(appt);
+            doctorAppointmentService.transitionByDoctor(appt, d, DoctorAppointmentStatus.valueOf(status));
             redirectAttributes.addFlashAttribute("message", "Status updated.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("message", "Invalid status.");
         }

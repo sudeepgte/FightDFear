@@ -1,0 +1,201 @@
+package in.sp.main.Service;
+
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import in.sp.main.Entities.ConsultationType;
+import in.sp.main.Entities.Doctor;
+import in.sp.main.Entities.DoctorAppointment;
+import in.sp.main.Entities.DoctorAppointmentStatus;
+import in.sp.main.Entities.DoctorProfileStatus;
+import in.sp.main.Entities.User;
+import in.sp.main.Entities.VerificationStatus;
+import in.sp.main.Repository.DoctorAppointmentRepository;
+
+@Service
+public class DoctorBookingService {
+
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
+
+    @Autowired
+    private DoctorAppointmentRepository appointmentRepository;
+
+    @Autowired
+    private DoctorAppointmentService appointmentService;
+
+    @Autowired
+    private DoctorNotificationService notificationService;
+
+    public void requireBookableDoctor(Doctor doctor) {
+        if (doctor == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor not found");
+        }
+        if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.SUSPENDED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor is not available for booking");
+        }
+        if (doctor.getVerificationStatus() != VerificationStatus.VERIFIED
+                && doctor.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor is not available for booking");
+        }
+    }
+
+    public double resolveFee(Doctor doctor, ConsultationType type) {
+        if (doctor == null) {
+            return 0;
+        }
+        ConsultationType mode = type == null ? ConsultationType.CLINIC : type;
+        Double fee = switch (mode) {
+            case VIDEO -> doctor.getVideoFee() != null ? doctor.getVideoFee() : doctor.getConsultationFee();
+            case ONLINE -> doctor.getChatFee() != null ? doctor.getChatFee() : doctor.getConsultationFee();
+            case OFFLINE, CLINIC, BOTH -> doctor.getConsultationFee();
+        };
+        return fee == null ? 0 : Math.max(0, fee);
+    }
+
+    public void validateAppointmentSlot(Doctor doctor, LocalDateTime appointmentTime) {
+        if (appointmentTime == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time is required");
+        }
+        if (appointmentTime.isBefore(LocalDateTime.now().plusMinutes(15))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time must be at least 15 minutes from now");
+        }
+
+        String availableDays = doctor.getAvailableDays();
+        if (availableDays != null && !availableDays.isBlank()) {
+            Set<String> days = Arrays.stream(availableDays.split(","))
+                    .map(s -> s.trim().toUpperCase(Locale.ROOT))
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
+            DayOfWeek dow = appointmentTime.getDayOfWeek();
+            if (!days.isEmpty() && !days.contains(dow.name())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Doctor is not available on " + dow.name());
+            }
+        }
+
+        LocalTime start = parseTime(doctor.getStartTime());
+        LocalTime end = parseTime(doctor.getEndTime());
+        LocalTime slot = appointmentTime.toLocalTime();
+        if (start != null && end != null) {
+            if (slot.isBefore(start) || !slot.isBefore(end)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Selected time is outside doctor working hours ("
+                                + doctor.getStartTime() + " - " + doctor.getEndTime() + ")");
+            }
+        }
+
+        boolean overlap = appointmentRepository.findByDoctorOrderByAppointmentTimeDesc(doctor).stream()
+                .anyMatch(a -> a.getAppointmentTime() != null
+                        && a.getStatus() != DoctorAppointmentStatus.CANCELLED
+                        && a.getAppointmentTime().equals(appointmentTime));
+        if (overlap) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This time slot is already booked");
+        }
+    }
+
+    @Transactional
+    public DoctorAppointment createRequestBooking(
+            Doctor doctor,
+            User user,
+            LocalDateTime appointmentTime,
+            ConsultationType consultationType,
+            String reason,
+            boolean allowUnpaid) {
+        requireBookableDoctor(doctor);
+        validateAppointmentSlot(doctor, appointmentTime);
+
+        double fee = resolveFee(doctor, consultationType);
+        if (!allowUnpaid && fee > 0) {
+            throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED,
+                    "Payment required for this doctor. Use the payment flow to complete booking.");
+        }
+
+        DoctorAppointment appt = new DoctorAppointment();
+        appt.setUser(user);
+        appt.setDoctor(doctor);
+        appt.setAppointmentTime(appointmentTime);
+        appt.setStatus(DoctorAppointmentStatus.PENDING);
+        appt.setReason(reason == null || reason.isBlank() ? null : reason.trim());
+        appt.setConsultationType(consultationType == null ? ConsultationType.CLINIC : consultationType);
+        if (appt.getConsultationType() == ConsultationType.VIDEO
+                || appt.getConsultationType() == ConsultationType.ONLINE) {
+            appt.setMeetingRoomId("FightDFear-" + UUID.randomUUID().toString().substring(0, 8));
+        }
+        DoctorAppointment saved = appointmentRepository.save(appt);
+        notificationService.notifyDoctor(
+                doctor,
+                "NEW_BOOKING",
+                "New appointment request",
+                (user.getFullName() != null ? user.getFullName() : "A patient")
+                        + " requested an appointment (#" + saved.getId() + ").",
+                true);
+        return saved;
+    }
+
+    @Transactional
+    public DoctorAppointment createPaidBooking(
+            Doctor doctor,
+            User user,
+            LocalDateTime appointmentTime,
+            ConsultationType consultationType,
+            String reason,
+            double amountPaid,
+            String orderId,
+            String paymentId,
+            String signature) {
+        requireBookableDoctor(doctor);
+        validateAppointmentSlot(doctor, appointmentTime);
+
+        double expected = resolveFee(doctor, consultationType);
+        if (expected > 0 && Math.abs(expected - amountPaid) > 1.0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Payment amount does not match doctor fee (expected ₹" + (int) expected + ")");
+        }
+
+        DoctorAppointment appt = new DoctorAppointment();
+        appt.setUser(user);
+        appt.setDoctor(doctor);
+        appt.setAppointmentTime(appointmentTime);
+        appt.setReason(reason == null || reason.isBlank() ? null : reason.trim());
+        appt.setConsultationType(consultationType == null ? ConsultationType.CLINIC : consultationType);
+        appt.setAmountPaid(amountPaid);
+        appt.setRazorpayOrderId(orderId);
+        appt.setRazorpayPaymentId(paymentId);
+        appt.setRazorpaySignature(signature);
+        if (appt.getConsultationType() == ConsultationType.VIDEO
+                || appt.getConsultationType() == ConsultationType.ONLINE) {
+            appt.setMeetingRoomId("FightDFear-" + UUID.randomUUID().toString().substring(0, 8));
+        }
+        appt.setStatus(DoctorAppointmentStatus.PENDING);
+        DoctorAppointment saved = appointmentRepository.save(appt);
+        return appointmentService.markConfirmedAfterPayment(saved);
+    }
+
+    private static LocalTime parseTime(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            String v = raw.trim();
+            if (v.length() == 5) {
+                return LocalTime.parse(v, TIME_FMT);
+            }
+            return LocalTime.parse(v);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+}

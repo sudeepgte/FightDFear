@@ -11,6 +11,7 @@ import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
+import in.sp.main.Service.DoctorAppointmentService;
 import in.sp.main.Service.DoctorDocumentService;
 import in.sp.main.Service.DoctorNotificationService;
 import in.sp.main.Service.DoctorProfileService;
@@ -54,6 +55,8 @@ public class MobileDoctorAuthController {
     private DoctorNotificationService doctorNotificationService;
     @Autowired
     private DoctorVerificationService doctorVerificationService;
+    @Autowired
+    private DoctorAppointmentService doctorAppointmentService;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -578,7 +581,7 @@ public class MobileDoctorAuthController {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
-        if (a == null || a.getDoctor() == null || !a.getDoctor().getId().equals(d.getId())) {
+        if (a == null) {
             return badRequest("Appointment not found");
         }
         String statusRaw = trim(body == null ? null : body.get("status")).toUpperCase(Locale.ROOT);
@@ -588,12 +591,15 @@ public class MobileDoctorAuthController {
         } catch (Exception e) {
             return badRequest("Invalid appointment status");
         }
-        a.setStatus(status);
-        appointmentRepo.save(a);
+        try {
+            a = doctorAppointmentService.transitionByDoctor(a, d, status);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("message", "Appointment updated");
-        res.put("status", status.name());
+        res.put("status", a.getStatus().name());
         return ResponseEntity.ok(res);
     }
 
