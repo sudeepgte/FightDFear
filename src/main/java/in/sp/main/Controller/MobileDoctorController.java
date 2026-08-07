@@ -41,9 +41,49 @@ public class MobileDoctorController {
     private DoctorAppointmentService appointmentService;
 
     @GetMapping
-    public ResponseEntity<Map<String, Object>> list(HttpSession session) {
+    public ResponseEntity<Map<String, Object>> list(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) Double minFee,
+            @RequestParam(required = false) Double maxFee,
+            @RequestParam(required = false) Boolean online,
+            @RequestParam(required = false) Boolean emergency,
+            @RequestParam(required = false) Boolean instant,
+            HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
+        String qLower = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
+        String cityLower = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
+        String specLower = specialization == null ? "" : specialization.trim().toLowerCase(Locale.ROOT);
+
         List<Map<String, Object>> items = doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).stream()
+                .filter(d -> {
+                    if (!qLower.isEmpty()) {
+                        String hay = ((d.getFullName() == null ? "" : d.getFullName()) + " "
+                                + (d.getSpecialization() == null ? "" : d.getSpecialization()) + " "
+                                + (d.getCity() == null ? "" : d.getCity()) + " "
+                                + (d.getLocationText() == null ? "" : d.getLocationText())).toLowerCase(Locale.ROOT);
+                        if (!hay.contains(qLower)) return false;
+                    }
+                    if (!cityLower.isEmpty()) {
+                        String c = (d.getCity() == null ? "" : d.getCity()).toLowerCase(Locale.ROOT);
+                        if (!c.contains(cityLower)) return false;
+                    }
+                    if (!specLower.isEmpty()) {
+                        String s = (d.getSpecialization() == null ? "" : d.getSpecialization()).toLowerCase(Locale.ROOT);
+                        if (!s.contains(specLower)) return false;
+                    }
+                    double fee = d.getConsultationFee() == null ? 0 : d.getConsultationFee();
+                    if (minFee != null && fee < minFee) return false;
+                    if (maxFee != null && fee > maxFee) return false;
+                    if (Boolean.TRUE.equals(online) && !Boolean.TRUE.equals(d.getIsOnline())) return false;
+                    if (Boolean.TRUE.equals(emergency) && !Boolean.TRUE.equals(d.getEmergencyAvailable())) return false;
+                    if (Boolean.TRUE.equals(instant)
+                            && !(Boolean.TRUE.equals(d.getIsOnline()) && Boolean.TRUE.equals(d.getEmergencyAvailable()))) {
+                        return false;
+                    }
+                    return true;
+                })
                 .map(d -> doctorDto(d, null))
                 .toList();
         return ResponseEntity.ok(ok(Map.of("doctors", items, "count", items.size())));
@@ -402,13 +442,24 @@ public class MobileDoctorController {
         m.put("qualification", d.getQualification());
         m.put("experienceYears", d.getExperienceYears());
         m.put("emergencyAvailable", Boolean.TRUE.equals(d.getEmergencyAvailable()));
+        m.put("isOnline", Boolean.TRUE.equals(d.getIsOnline()));
+        m.put("lastSeenAt", d.getLastSeenAt() == null ? null : d.getLastSeenAt().toString());
+        m.put("instantAvailable", Boolean.TRUE.equals(d.getIsOnline()) && Boolean.TRUE.equals(d.getEmergencyAvailable()));
         m.put("phone", d.getPhone());
         m.put("email", d.getEmail());
         m.put("availableDays", d.getAvailableDays());
         m.put("startTime", d.getStartTime());
         m.put("endTime", d.getEndTime());
+        m.put("bio", d.getBio());
+        m.put("languages", d.getLanguages());
+        m.put("services", d.getServices());
+        m.put("reviewCount", reviewRepo.findByDoctorIdOrderByCreatedAtDesc(d.getId()).size());
         if (viewer != null) {
-            m.put("canReview", !reviewRepo.existsByUserIdAndDoctorId(viewer.getId(), d.getId()));
+            boolean completed = appointmentRepo.findByUserOrderByAppointmentTimeDesc(viewer).stream()
+                    .anyMatch(a -> a.getDoctor() != null
+                            && a.getDoctor().getId().equals(d.getId())
+                            && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
+            m.put("canReview", completed && !reviewRepo.existsByUserIdAndDoctorId(viewer.getId(), d.getId()));
         }
         return m;
     }

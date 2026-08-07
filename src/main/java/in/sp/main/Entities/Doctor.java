@@ -109,6 +109,10 @@ public class Doctor {
 
     private Boolean hasPendingReverification = false;
 
+    private Boolean isOnline = false;
+
+    private LocalDateTime lastSeenAt;
+
     // ── 6. Earnings Setup ──
     private Double consultationFee = 500.0;
     private Double chatFee;
@@ -270,6 +274,12 @@ public class Doctor {
     public void setHasPendingReverification(Boolean hasPendingReverification) {
         this.hasPendingReverification = hasPendingReverification;
     }
+
+    public Boolean getIsOnline() { return isOnline; }
+    public void setIsOnline(Boolean isOnline) { this.isOnline = isOnline; }
+
+    public LocalDateTime getLastSeenAt() { return lastSeenAt; }
+    public void setLastSeenAt(LocalDateTime lastSeenAt) { this.lastSeenAt = lastSeenAt; }
 
     public Double getConsultationFee() { return consultationFee; }
     public void setConsultationFee(Double consultationFee) { this.consultationFee = consultationFee; }

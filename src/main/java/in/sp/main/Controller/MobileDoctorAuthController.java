@@ -57,6 +57,8 @@ public class MobileDoctorAuthController {
     private DoctorVerificationService doctorVerificationService;
     @Autowired
     private DoctorAppointmentService doctorAppointmentService;
+    @Autowired
+    private in.sp.main.Repository.DoctorReviewRepository doctorReviewRepo;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -558,7 +560,7 @@ public class MobileDoctorAuthController {
         data.put("todayEarnings", todayEarnings);
         data.put("monthEarnings", monthEarnings);
         data.put("notifications", notifications);
-        data.put("online", d.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED);
+        data.put("online", Boolean.TRUE.equals(d.getIsOnline()));
         data.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
         data.put("doctorProfileStatusLabel", DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
         data.put("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
@@ -570,6 +572,93 @@ public class MobileDoctorAuthController {
         data.put("rejectionReason", d.getRejectionReason());
         data.put("unreadNotificationCount", doctorNotificationService.unreadCount(d.getId()));
         return ResponseEntity.ok(data);
+    }
+
+    @PostMapping("/online")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> setOnline(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        boolean online = body != null && Boolean.parseBoolean(String.valueOf(body.getOrDefault("online", false)));
+        d.setIsOnline(online);
+        d.setLastSeenAt(java.time.LocalDateTime.now());
+        doctorRepo.save(d);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("online", online);
+        res.put("lastSeenAt", d.getLastSeenAt().toString());
+        res.put("message", online ? "You are now online" : "You are now offline");
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<Map<String, Object>> analytics(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        var appointments = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.YearMonth thisMonth = java.time.YearMonth.now();
+
+        long completed = appointments.stream().filter(a -> a.getStatus() == DoctorAppointmentStatus.COMPLETED).count();
+        long cancelled = appointments.stream().filter(a -> a.getStatus() == DoctorAppointmentStatus.CANCELLED).count();
+        long pending = appointments.stream().filter(a -> a.getStatus() == DoctorAppointmentStatus.PENDING).count();
+        long confirmed = appointments.stream().filter(a -> a.getStatus() == DoctorAppointmentStatus.CONFIRMED).count();
+        double totalEarnings = appointments.stream()
+                .filter(a -> a.getAmountPaid() != null && a.getAmountPaid() > 0)
+                .mapToDouble(DoctorAppointment::getAmountPaid).sum();
+        double monthEarnings = appointments.stream()
+                .filter(a -> a.getAmountPaid() != null && a.getAmountPaid() > 0
+                        && a.getAppointmentTime() != null
+                        && java.time.YearMonth.from(a.getAppointmentTime()).equals(thisMonth))
+                .mapToDouble(DoctorAppointment::getAmountPaid).sum();
+        double todayEarnings = appointments.stream()
+                .filter(a -> a.getAmountPaid() != null && a.getAmountPaid() > 0
+                        && a.getAppointmentTime() != null
+                        && a.getAppointmentTime().toLocalDate().equals(today))
+                .mapToDouble(DoctorAppointment::getAmountPaid).sum();
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("totalAppointments", appointments.size());
+        res.put("pendingCount", pending);
+        res.put("confirmedCount", confirmed);
+        res.put("completedCount", completed);
+        res.put("cancelledCount", cancelled);
+        res.put("completionRate", appointments.isEmpty() ? 0
+                : Math.round(100.0 * completed / appointments.size()));
+        res.put("totalEarnings", totalEarnings);
+        res.put("monthEarnings", monthEarnings);
+        res.put("todayEarnings", todayEarnings);
+        res.put("rating", d.getRating() == null ? 0 : d.getRating());
+        res.put("online", Boolean.TRUE.equals(d.getIsOnline()));
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/reviews")
+    public ResponseEntity<Map<String, Object>> myReviews(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        List<Map<String, Object>> reviews = doctorReviewRepo.findByDoctorIdOrderByCreatedAtDesc(d.getId()).stream()
+                .map(r -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", r.getId());
+                    m.put("rating", r.getRating());
+                    m.put("comment", r.getComment());
+                    m.put("createdAt", r.getCreatedAt() == null ? null : r.getCreatedAt().toString());
+                    if (r.getUser() != null) m.put("userName", r.getUser().getFullName());
+                    return m;
+                })
+                .toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("reviews", reviews);
+        res.put("count", reviews.size());
+        res.put("rating", d.getRating() == null ? 0 : d.getRating());
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/appointments/{id}/status")
@@ -667,6 +756,9 @@ public class MobileDoctorAuthController {
         m.put("profilePhotoPath", d.getProfilePhotoPath());
         m.put("experienceYears", d.getExperienceYears());
         m.put("hospitalName", d.getHospitalName());
+        m.put("isOnline", Boolean.TRUE.equals(d.getIsOnline()));
+        m.put("lastSeenAt", d.getLastSeenAt() == null ? null : d.getLastSeenAt().toString());
+        m.put("emergencyAvailable", Boolean.TRUE.equals(d.getEmergencyAvailable()));
         return m;
     }
 }

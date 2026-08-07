@@ -19,6 +19,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     List<Doctor> findByDoctorProfileStatus(DoctorProfileStatus status);
     List<Doctor> findByDoctorProfileStatusIn(List<DoctorProfileStatus> statuses);
     List<Doctor> findByHasPendingReverificationTrue();
+    List<Doctor> findByVerificationStatusAndIsOnlineTrue(VerificationStatus status);
+    List<Doctor> findByVerificationStatusAndEmergencyAvailableTrue(VerificationStatus status);
 
     // Purpose: admin doctor search — matches name, email, phone, specialization, or location.
     @Query("SELECT d FROM Doctor d WHERE " +
