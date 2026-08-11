@@ -166,10 +166,7 @@
                 </a>
             </div>
             
-            <h6 class="mb-2" style="font-weight:700; color: #666; font-size: 0.8rem;">Videos</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="navlink active">
-                <i class="fas fa-plus-circle"></i> Add Video
-            </a>
+
             
             <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
             <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
@@ -188,15 +185,17 @@
                 
                 <div class="admin-card">
                     <h3>Add New Video</h3>
-                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST">
-                        <div class="mb-3">
+                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST" id="videoForm" class="needs-validation" novalidate>
+                        <div class="mb-3 position-relative">
                             <label for="title" class="form-label">Video Title</label>
-                            <input type="text" class="form-control" id="title" name="title" required>
+                            <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter video title">
+                            <div class="invalid-feedback">Please provide a valid title (min 5 characters).</div>
                         </div>
                         
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="category" class="form-label">Category</label>
                             <select class="form-select" id="category" name="category" required>
+                                <option value="" disabled selected>Select a category</option>
                                 <option value="saving">Saving</option>
                                 <option value="investing">Investing</option>
                                 <option value="loans">Loans</option>
@@ -204,20 +203,23 @@
                                 <option value="insurance">Insurance</option>
                                 <option value="government">Government Schemes</option>
                             </select>
+                            <div class="invalid-feedback">Please select a category.</div>
                         </div>
                         
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Brief description of the video..."></textarea>
+                            <div class="invalid-feedback">Please provide a description (min 10 characters).</div>
                         </div>
                         
-                        <div class="mb-4">
+                        <div class="mb-4 position-relative">
                             <label for="videoUrl" class="form-label">Video File / YouTube URL</label>
-                            <input type="text" class="form-control" id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=...">
+                            <input type="url" class="form-control" id="videoUrl" name="videoUrl" required placeholder="https://youtube.com/watch?v=..." pattern="https?://.+">
+                            <div class="invalid-feedback">Please provide a valid URL starting with http:// or https://.</div>
                         </div>
                         
-                        <button type="submit" class="btn-purple">
-                            <i class="fas fa-upload me-2"></i> Publish
+                        <button type="submit" class="btn-purple" id="submitBtn">
+                            <i class="fas fa-upload me-2"></i> Publish Video
                         </button>
                     </form>
                 </div>
@@ -226,5 +228,76 @@
         </main>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('videoForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const inputs = form.querySelectorAll('input, select, textarea');
+
+            // Real-time validation on input/change
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateField(this);
+                    checkFormValidity();
+                });
+                
+                input.addEventListener('change', function() {
+                    validateField(this);
+                    checkFormValidity();
+                });
+                
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+            });
+
+            function validateField(field) {
+                if (field.checkValidity()) {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                } else {
+                    field.classList.remove('is-valid');
+                    field.classList.add('is-invalid');
+                }
+            }
+
+            function checkFormValidity() {
+                if (form.checkValidity()) {
+                    submitBtn.classList.remove('disabled');
+                    submitBtn.removeAttribute('disabled');
+                } else {
+                    submitBtn.classList.add('disabled');
+                    submitBtn.setAttribute('disabled', 'true');
+                }
+            }
+
+            // Form submission validation
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    // Mark all fields to show invalid state
+                    inputs.forEach(input => {
+                        validateField(input);
+                    });
+                    
+                    // Focus on the first invalid field
+                    const firstInvalid = form.querySelector(':invalid');
+                    if(firstInvalid) firstInvalid.focus();
+                } else {
+                    // Show loading state
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Publishing...';
+                    submitBtn.style.pointerEvents = 'none';
+                    submitBtn.style.opacity = '0.8';
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+            
+            // Initial check to disable button
+            checkFormValidity();
+        });
+    </script>
 </body>
 </html>

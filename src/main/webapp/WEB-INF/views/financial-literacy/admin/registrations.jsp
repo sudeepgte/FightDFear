@@ -248,10 +248,7 @@
                 </a>
             </div>
             
-            <h6 class="mb-2" style="font-weight:700; color: #666; font-size: 0.8rem;">Videos</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="navlink">
-                <i class="fas fa-plus-circle"></i> Add Video
-            </a>
+
             
             <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
             <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">

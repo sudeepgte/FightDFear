@@ -125,6 +125,9 @@
         .btn-dr-next { background:var(--gradient-primary); color:#fff; }
         .btn-dr-prev { background:#f1f5f9; color:var(--fdf-muted); }
 
+        .back-btn { position:absolute; top:30px; left:30px; color:white; text-decoration:none; font-weight:600; display:flex; align-items:center; gap:8px; opacity:0.8; transition:0.3s; z-index:100; }
+        .back-btn:hover { opacity:1; transform:translateX(-5px); color:white; }
+
         .martial-art-type { background:rgba(219,39,119,0.03); padding:20px; border-radius:16px; margin-bottom:15px; border:1px dashed var(--brand-pink-light); }
         @media (max-width: 992px) {
             body { flex-direction: column; }
@@ -162,6 +165,9 @@
 <body>
     <div class="auth-container">
         <div class="left-panel">
+            <a href="${pageContext.request.contextPath}/" class="back-btn">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
             <div class="brand">
                 <div class="brand-logo"><i class="fas fa-dumbbell"></i> Fight D Fear</div>
                 <p class="brand-tagline">Empower your students with professional martial arts training and safety education.</p>
