@@ -1,20 +1,30 @@
-/// Backend base URL for the Spring Boot API (port 8086).
+import 'package:flutter/foundation.dart';
+
+/// Backend base URL for the Spring Boot API (port 8084).
 ///
-/// - Android emulator → http://10.0.2.2:8086 (maps to laptop localhost)
-/// - Physical phone later → build with:
-///   flutter build apk --dart-define=API_BASE=http://<LAPTOP-IP>:8086
-///   or use USB: adb reverse tcp:8086 tcp:8086 + API_BASE=http://127.0.0.1:8086
-/// - Chrome / Windows desktop → localhost
+/// Resolution order:
+/// 1. `--dart-define=API_BASE=...` (always wins)
+/// 2. Debug builds → local backend (emulator: 10.0.2.2, else localhost)
+/// 3. Release builds → production
+///
+/// Examples:
+///   flutter run --dart-define=API_BASE=http://192.168.1.10:8084
+///   flutter build apk --dart-define=API_BASE=http://<LAPTOP-IP>:8084
 class ApiConfig {
-  static const String androidEmulatorHost = 'http://10.0.2.2:8086';
-  static const String localhostHost = 'http://localhost:8086';
+  static const String productionHost = 'https://fightdfire.chethancodehub.com';
+  static const String androidEmulatorHost = 'http://10.0.2.2:8084';
+  static const String localhostHost = 'http://localhost:8084';
 
   /// Override at build time:
-  /// flutter run --dart-define=API_BASE=http://192.168.1.10:8086
+  /// flutter run --dart-define=API_BASE=http://192.168.1.10:8084
   static const String fromEnv = String.fromEnvironment('API_BASE');
 
   static String resolve({required bool isAndroid}) {
     if (fromEnv.isNotEmpty) return fromEnv;
-    return isAndroid ? androidEmulatorHost : localhostHost;
+    // Keep local admin + Flutter on the same MySQL DB during development.
+    if (kDebugMode) {
+      return isAndroid ? androidEmulatorHost : localhostHost;
+    }
+    return productionHost;
   }
 }

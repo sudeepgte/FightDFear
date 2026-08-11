@@ -1262,7 +1262,7 @@
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/stylists/register">Hair Stylist</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/marketplace/provider/register">Service Partner</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/women-products/seller/register">Marketplace Seller</a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/women-jobs/jobs/register">women jobs</a></li>
+
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/entrepreneur/register">Entrepreneur</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/investor/register">Investor</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/women-events/host/register">Event Host</a></li>

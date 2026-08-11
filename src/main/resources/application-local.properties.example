@@ -1,11 +1,17 @@
 # Local-only overrides. Copy to application-local.properties (gitignored)
-# and run with: --spring.profiles.active=local
+# and optionally run with: --spring.profiles.active=local
 #
 # spring.datasource.password=your-root
-# jwt.secret=your-Xp3Iu2umGV20AJykfcM/0n+CPJ61pgSdnjk20OYGDeeniBkVR+s+fKEWRnsuih/i1lGl/DS9w9mw/Z4UNJwBNw==
+# jwt.secret=LOCAL_DEV_ONLY_change_me_min_32_chars_abcdefgh
 # spring.mail.username=
 # spring.mail.password=
-# razorpay.key.id=rzp_test_RIlD5bEKRjyn3h
-# razorpay.key.secret=Ltg6uo9vI8TiFMVfj2cGm4I8
-
-# google.maps.apiKey=AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM
+# razorpay.key.id=
+# razorpay.key.secret=
+# razorpay.webhook.secret=
+# app.payments.mock-enabled=true
+# app.doctor.commission-percent=15
+# google.maps.apiKey=
+#
+# On the testing/production server, set real values via environment / .env:
+#   JWT_SECRET, DB_PASSWORD, MAIL_*, RAZORPAY_*, RAZORPAY_WEBHOOK_SECRET,
+#   PAYMENT_MOCK=false, GOOGLE_MAPS_API_KEY, TWILIO_*

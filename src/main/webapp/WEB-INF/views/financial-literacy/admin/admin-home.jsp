@@ -135,12 +135,20 @@
             color: white;
         }
 
+        .main {
+            min-width: 0;
+        }
+
         .table-container {
+            width: 100%;
+            max-width: 100%;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
+            min-width: 560px;
             border-collapse: collapse;
         }
 
@@ -148,6 +156,7 @@
             padding: 12px 16px;
             text-align: left;
             border-bottom: 1px solid rgba(124, 45, 94, 0.1);
+            white-space: nowrap;
         }
 
         th {
@@ -159,6 +168,55 @@
             text-align: center;
             padding: 40px;
             color: #666;
+        }
+
+        /* Mobile: stack layout and keep tables scrollable */
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+                min-height: 0;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid rgba(124, 45, 94, 0.18);
+                padding: 10px;
+                overflow: visible;
+            }
+
+            .main {
+                padding: 16px 12px 24px;
+                flex: none;
+            }
+
+            .admin-card {
+                padding: 16px 12px;
+            }
+
+            .admin-card .d-flex.justify-content-between {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px;
+            }
+
+            .admin-card .d-flex.gap-2 {
+                flex-wrap: wrap;
+            }
+
+            .topbar .wrap {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .table-container {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
@@ -188,10 +246,7 @@
                 </a>
             </div>
             
-            <h6 class="mb-2" style="font-weight:700; color: #666; font-size: 0.8rem;">Videos</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="navlink">
-                <i class="fas fa-plus-circle"></i> Add Video
-            </a>
+
             
             <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
             <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
@@ -215,9 +270,7 @@
                 <div class="admin-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3>Recorded Videos</h3>
-                        <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="btn-purple">
-                            <i class="fas fa-plus me-2"></i> Add Video
-                        </a>
+
                     </div>
                     <div class="table-container">
                         <c:choose>
@@ -228,6 +281,7 @@
                                             <th>Title</th>
                                             <th>Category</th>
                                             <th>Description</th>
+                                            <th>URL</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -236,6 +290,7 @@
                                                 <td>${video.title}</td>
                                                 <td>${video.category}</td>
                                                 <td>${video.description}</td>
+                                                <td><a href="${video.videoUrl}" target="_blank">Link</a></td>
                                             </tr>
                                         </c:forEach>
                                     </tbody>
@@ -270,6 +325,8 @@
                                             <th>Date</th>
                                             <th>Time</th>
                                             <th>Seats</th>
+                                            <th>Meeting URL</th>
+                                            <th>Description</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -280,6 +337,8 @@
                                                 <td>${session.date}</td>
                                                 <td>${session.time}</td>
                                                 <td>${session.seats}</td>
+                                                <td><a href="${session.meetingUrl}" target="_blank">Join</a></td>
+                                                <td>${session.description}</td>
                                             </tr>
                                         </c:forEach>
                                     </tbody>
@@ -319,6 +378,8 @@
                                             <th>Date</th>
                                             <th>Time</th>
                                             <th>Seats</th>
+                                            <th>City</th>
+                                            <th>Description</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -329,6 +390,8 @@
                                                 <td>${workshop.date}</td>
                                                 <td>${workshop.time}</td>
                                                 <td>${workshop.seats}</td>
+                                                <td>${workshop.city}</td>
+                                                <td>${workshop.description}</td>
                                             </tr>
                                         </c:forEach>
                                     </tbody>

@@ -20,4 +20,8 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     List<String> findDistinctJobCategoriesByStatus(@Param("status") VerificationStatus status);
 
     List<JobApplication> findByJobCategoryAndStatus(String jobCategory, VerificationStatus status);
+
+    java.util.Optional<JobApplication> findFirstByUser_IdAndStatusOrderByAppliedAtDesc(Long userId, VerificationStatus status);
+
+    boolean existsByUser_IdAndStatusIn(Long userId, java.util.Collection<VerificationStatus> statuses);
 }

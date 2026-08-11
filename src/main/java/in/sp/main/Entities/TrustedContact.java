@@ -15,11 +15,14 @@ public class TrustedContact {
     private String name;
     private String phone;
     private String email;
+    /** WhatsApp number (10 digits India / or with country code stored as digits). Defaults to phone. */
+    private String whatsappNumber;
     private String relation;
     private boolean isPrimary = false;
     private boolean canReceiveSMS = true;
     private boolean canReceiveEmail = true;
     private boolean canReceiveCall = true;
+    private boolean canReceiveWhatsApp = true;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -65,6 +68,14 @@ public class TrustedContact {
 		this.email = email;
 	}
 
+	public String getWhatsappNumber() {
+		return whatsappNumber;
+	}
+
+	public void setWhatsappNumber(String whatsappNumber) {
+		this.whatsappNumber = whatsappNumber;
+	}
+
 	public String getRelation() {
 		return relation;
 	}
@@ -103,6 +114,14 @@ public class TrustedContact {
 
 	public void setCanReceiveCall(boolean canReceiveCall) {
 		this.canReceiveCall = canReceiveCall;
+	}
+
+	public boolean isCanReceiveWhatsApp() {
+		return canReceiveWhatsApp;
+	}
+
+	public void setCanReceiveWhatsApp(boolean canReceiveWhatsApp) {
+		this.canReceiveWhatsApp = canReceiveWhatsApp;
 	}
     
 }

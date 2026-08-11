@@ -178,6 +178,50 @@
             background: #dc2626;
             color: white;
         }
+
+        .main {
+            min-width: 0;
+        }
+
+        .table-responsive {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Mobile: remove forced full-viewport blank space; stack layout */
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+                min-height: 0;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid rgba(124, 45, 94, 0.18);
+                padding: 10px;
+                overflow: visible;
+            }
+
+            .main {
+                padding: 16px 12px 24px;
+                flex: none;
+            }
+
+            .admin-card {
+                padding: 20px 16px;
+            }
+
+            .topbar .wrap {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -204,10 +248,7 @@
                 </a>
             </div>
             
-            <h6 class="mb-2" style="font-weight:700; color: #666; font-size: 0.8rem;">Videos</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="navlink">
-                <i class="fas fa-plus-circle"></i> Add Video
-            </a>
+
             
             <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
             <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">

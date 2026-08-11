@@ -112,6 +112,15 @@ public class MobileMarketplaceController {
         }
         if (requestedTime.isBefore(LocalDateTime.now())) return badRequest("Booking time cannot be in the past");
 
+        final LocalDateTime slotTime = requestedTime;
+        boolean slotTaken = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
+                .filter(b -> b.getStatus() != ProviderBookingStatus.CANCELLED)
+                .anyMatch(b -> b.getRequestedTime() != null
+                        && Duration.between(b.getRequestedTime(), slotTime).abs().toMinutes() < 60);
+        if (slotTaken) {
+            return badRequest("This time slot is already booked.");
+        }
+
         ProviderBooking b = new ProviderBooking();
         b.setUser(user);
         b.setProvider(p);
@@ -119,7 +128,8 @@ public class MobileMarketplaceController {
         b.setNote(trim(Objects.toString(body.get("note"), "")));
         b.setStatus(ProviderBookingStatus.PENDING);
         bookingRepo.save(b);
-        return ResponseEntity.ok(ok(Map.of("message", "Booking requested", "bookingId", b.getId())));
+        return ResponseEntity.ok(ok(Map.of("message", "Booking requested", "bookingId", b.getId(),
+                "requestedTime", b.getRequestedTime().toString())));
     }
 
     @GetMapping("/classes/{classId}")

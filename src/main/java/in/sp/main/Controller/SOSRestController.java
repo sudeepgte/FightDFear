@@ -162,6 +162,9 @@ public class SOSRestController {
         fields.put("mapsLink", result.get("mapsLink"));
         fields.put("smsConfigured", result.get("smsConfigured"));
         fields.put("alreadyActive", result.getOrDefault("alreadyActive", false));
+        if (result.get("whatsappShares") != null) {
+            fields.put("whatsappShares", result.get("whatsappShares"));
+        }
         return fields;
     }
 }

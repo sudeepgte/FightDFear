@@ -59,7 +59,18 @@ public class MobileFitnessController {
         b.setPaymentStatus("PENDING");
         b.setPaymentAmount(t.getSessionFees());
         bookingRepo.save(b);
-        return ResponseEntity.ok(ok(Map.of("message", "Booking requested", "bookingId", b.getId())));
+        double fee = t.getSessionFees() == null ? 0 : Math.max(0, t.getSessionFees());
+        if (fee <= 0) {
+            b.setPaymentStatus("NOT_REQUIRED");
+            bookingRepo.save(b);
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("message", "Booking requested");
+        data.put("bookingId", b.getId());
+        data.put("amount", fee);
+        data.put("paymentRequired", fee > 0);
+        data.put("paymentStatus", b.getPaymentStatus());
+        return ResponseEntity.ok(ok(data));
     }
 
     @GetMapping("/bookings/me")
@@ -72,6 +83,12 @@ public class MobileFitnessController {
             m.put("status", b.getStatus());
             m.put("bookingDate", b.getBookingDate() == null ? null : b.getBookingDate().toString());
             m.put("bookingTime", b.getBookingTime());
+            m.put("sessionType", b.getSessionType());
+            m.put("paymentStatus", b.getPaymentStatus());
+            m.put("paymentAmount", b.getPaymentAmount());
+            double amt = b.getPaymentAmount() == null ? 0 : Math.max(0, b.getPaymentAmount());
+            m.put("amount", amt);
+            m.put("paymentRequired", amt > 0 && !"PAID".equalsIgnoreCase(b.getPaymentStatus()));
             if (b.getTrainer() != null) m.put("trainer", trainerDto(b.getTrainer()));
             return m;
         }).toList();

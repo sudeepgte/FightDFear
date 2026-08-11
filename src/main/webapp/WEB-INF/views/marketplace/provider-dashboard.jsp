@@ -568,7 +568,7 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label small text-muted text-uppercase fw-700">Meeting Link</label>
-                                    <input type="url" name="meetingLink" class="form-control fdf-input" placeholder="Zoom/Meet Link" required>
+                                    <input type="url" name="meetingLink" id="meetingLinkInput" class="form-control fdf-input" placeholder="Zoom/Meet Link (required for Live)">
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label small text-muted text-uppercase fw-700">Price (₹)</label>
@@ -1260,6 +1260,23 @@
             </c:forEach>
         });
     </script>
+
+<script>
+(function() {
+  function syncMeetingLinkRequired() {
+    var mode = document.querySelector('select[name="mode"]');
+    var link = document.getElementById('meetingLinkInput');
+    if (!link) return;
+    var live = mode && String(mode.value).toLowerCase() === 'live';
+    link.required = !!live;
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    var mode = document.querySelector('select[name="mode"]');
+    if (mode) mode.addEventListener('change', syncMeetingLinkRequired);
+    syncMeetingLinkRequired();
+  });
+})();
+</script>
 </body>
 </html>
 

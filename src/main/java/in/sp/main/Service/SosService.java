@@ -107,6 +107,7 @@ public class SosService {
                 already.put("smsConfigured", smsService.isConfigured());
                 already.put("message", "SOS already active. Contacts were already notified.");
                 already.put("alreadyActive", true);
+                already.put("whatsappShares", List.of());
                 return already;
             }
 
@@ -348,6 +349,23 @@ public class SosService {
         sosRequestRepository.save(savedRequest);
 
         // === Build response ===
+        List<Map<String, Object>> whatsappShares = new ArrayList<>();
+        String sosMessage = "🚨 EMERGENCY SOS from " + userName
+                + "\n\nI need help right now.\n📍 Live location: " + savedRequest.getGoogleMapsLink()
+                + "\n📞 My number: " + userPhone
+                + "\n\n— Fight D Fear Safety App";
+        for (TrustedContact c : trustedContacts) {
+            if (!c.isCanReceiveWhatsApp()) continue;
+            String wa = c.getWhatsappNumber();
+            if (wa == null || wa.isBlank()) wa = c.getPhone();
+            if (wa == null || wa.isBlank()) continue;
+            Map<String, Object> share = new LinkedHashMap<>();
+            share.put("name", c.getName());
+            share.put("whatsappNumber", wa.replaceAll("\\D", ""));
+            share.put("message", sosMessage);
+            whatsappShares.add(share);
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("sosId", savedRequest.getId());
         response.put("status", savedRequest.getStatus().toString());
@@ -356,6 +374,7 @@ public class SosService {
         response.put("autoCallPhone", autoCallPhone);
         response.put("mapsLink", savedRequest.getGoogleMapsLink());
         response.put("smsConfigured", smsService.isConfigured());
+        response.put("whatsappShares", whatsappShares);
         response.put("message", "SOS activated! " + totalContacts + " contacts and " + volunteersAlerted + " nearby volunteers notified.");
 
         System.out.println("SOS #" + savedRequest.getId() + " triggered by " + userName);

@@ -46,6 +46,18 @@ public class DoctorAppointment {
     private String razorpayPaymentId;
     private String razorpaySignature;
     private Double amountPaid;
+
+    private String paymentStatus;
+    private String refundId;
+    private Double refundAmount;
+    private LocalDateTime refundedAt;
+    private String receiptNumber;
+    private String meetingPassword;
+    private LocalDateTime rescheduledFrom;
+    private Double platformFee;
+    private Double doctorEarning;
+    private String cancelledBy;
+    private String cancelReason;
     
     @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String prescriptionText;
@@ -118,5 +130,28 @@ public class DoctorAppointment {
 
     public String getPrescriptionText() { return prescriptionText; }
     public void setPrescriptionText(String prescriptionText) { this.prescriptionText = prescriptionText; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+    public String getRefundId() { return refundId; }
+    public void setRefundId(String refundId) { this.refundId = refundId; }
+    public Double getRefundAmount() { return refundAmount; }
+    public void setRefundAmount(Double refundAmount) { this.refundAmount = refundAmount; }
+    public LocalDateTime getRefundedAt() { return refundedAt; }
+    public void setRefundedAt(LocalDateTime refundedAt) { this.refundedAt = refundedAt; }
+    public String getReceiptNumber() { return receiptNumber; }
+    public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
+    public String getMeetingPassword() { return meetingPassword; }
+    public void setMeetingPassword(String meetingPassword) { this.meetingPassword = meetingPassword; }
+    public LocalDateTime getRescheduledFrom() { return rescheduledFrom; }
+    public void setRescheduledFrom(LocalDateTime rescheduledFrom) { this.rescheduledFrom = rescheduledFrom; }
+    public Double getPlatformFee() { return platformFee; }
+    public void setPlatformFee(Double platformFee) { this.platformFee = platformFee; }
+    public Double getDoctorEarning() { return doctorEarning; }
+    public void setDoctorEarning(Double doctorEarning) { this.doctorEarning = doctorEarning; }
+    public String getCancelledBy() { return cancelledBy; }
+    public void setCancelledBy(String cancelledBy) { this.cancelledBy = cancelledBy; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
 }
 

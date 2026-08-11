@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fight_d_fear/main.dart';
-import 'package:fight_d_fear/screens/landing_screen.dart';
+import 'package:fight_d_fear/screens/landing/landing_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

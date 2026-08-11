@@ -49,12 +49,22 @@ public class MobileWomenEventController {
         WomenEvent e = eventRepo.findById(id).orElse(null);
         if (e == null || !"APPROVED".equals(e.getStatus())) return badRequest("Event not found");
         if (registrationRepo.existsByEventAndUser(e, user)) return badRequest("Already registered");
+        double fee = e.getEntryFee() == null ? 0 : Math.max(0, e.getEntryFee());
         WomenEventRegistration reg = new WomenEventRegistration();
         reg.setEvent(e);
         reg.setUser(user);
         reg.setStatus("REGISTERED");
+        reg.setPaid(fee <= 0);
+        reg.setAmountPaid(fee <= 0 ? 0.0 : 0.0);
         registrationRepo.save(reg);
-        return ResponseEntity.ok(ok(Map.of("message", "Registered", "ticketCode", reg.getTicketCode())));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("message", fee > 0 ? "Registered — complete payment to confirm ticket" : "Registered");
+        data.put("registrationId", reg.getId());
+        data.put("ticketCode", reg.getTicketCode());
+        data.put("amount", fee);
+        data.put("paymentRequired", fee > 0);
+        data.put("paid", reg.isPaid());
+        return ResponseEntity.ok(ok(data));
     }
 
     @GetMapping("/registrations/me")
@@ -64,9 +74,16 @@ public class MobileWomenEventController {
         List<Map<String, Object>> items = registrationRepo.findByUserOrderByRegisteredAtDesc(user).stream().map(r -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", r.getId());
+            m.put("registrationId", r.getId());
             m.put("status", r.getStatus());
             m.put("ticketCode", r.getTicketCode());
             m.put("registeredAt", r.getRegisteredAt() == null ? null : r.getRegisteredAt().toString());
+            m.put("paid", r.isPaid());
+            m.put("amountPaid", r.getAmountPaid());
+            double fee = r.getEvent() != null && r.getEvent().getEntryFee() != null
+                    ? Math.max(0, r.getEvent().getEntryFee()) : 0;
+            m.put("amount", fee);
+            m.put("paymentRequired", !r.isPaid() && fee > 0);
             if (r.getEvent() != null) m.put("event", eventDto(r.getEvent()));
             return m;
         }).toList();

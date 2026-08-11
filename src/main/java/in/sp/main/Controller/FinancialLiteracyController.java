@@ -265,8 +265,7 @@ public class FinancialLiteracyController {
         newVideo.put("category", category);
         newVideo.put("description", description);
         newVideo.put("videoUrl", videoUrl);
-        newVideo.put("duration", "15 mins");
-        newVideo.put("level", "Beginner");
+
         videos.add(newVideo);
         
         servletContext.setAttribute("flVideos", videos);
@@ -313,7 +312,8 @@ public class FinancialLiteracyController {
 
     @PostMapping("/admin/add-workshop")
     public String addWorkshopSubmit(@RequestParam String title, @RequestParam String venue, 
-                                @RequestParam String date, @RequestParam String time,
+                                @RequestParam String date, @RequestParam String startTime,
+                                @RequestParam String endTime,
                                 @RequestParam String city, @RequestParam int seats,
                                 @RequestParam String description, HttpServletRequest request) {
         ServletContext servletContext = request.getServletContext();
@@ -325,11 +325,15 @@ public class FinancialLiteracyController {
         
         String id = title.toLowerCase().replace(" ", "-").replaceAll("[^a-z0-9-]", "");
         Map<String, Object> newWorkshop = new HashMap<>();
+        
+        // Format time safely, e.g. "10:00 - 16:00"
+        String timeStr = startTime + " - " + endTime;
+        
         newWorkshop.put("id", id);
         newWorkshop.put("title", title);
         newWorkshop.put("venue", venue);
         newWorkshop.put("date", date);
-        newWorkshop.put("time", time);
+        newWorkshop.put("time", timeStr);
         newWorkshop.put("city", city);
         newWorkshop.put("seats", seats);
         newWorkshop.put("description", description);

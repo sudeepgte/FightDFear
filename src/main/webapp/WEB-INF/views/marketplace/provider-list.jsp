@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Verified ${category}s | Marketplace</title>
+    <title>Verified ${not empty categoryLabel ? categoryLabel : category}s | Marketplace</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -137,7 +137,7 @@
     <header class="list-header">
         <div class="container d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="fw-bold mb-1">${category}s</h1>
+                <h1 class="fw-bold mb-1">${not empty categoryLabel ? categoryLabel : category}s</h1>
                 <p class="mb-0 opacity-75">Connect with verified experts in your community.</p>
             </div>
             <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-outline-light rounded-pill px-4">
@@ -177,7 +177,7 @@
         <c:if test="${empty providers}">
             <div class="text-center py-5">
                 <i class="bi bi-people text-muted display-1 opacity-25"></i>
-                <h3 class="mt-4 text-muted">No ${category}s found in your area.</h3>
+                <h3 class="mt-4 text-muted">No ${not empty categoryLabel ? categoryLabel : category}s found in your area.</h3>
                 <p class="text-muted">Check back later or explore other categories.</p>
                 <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-primary mt-3 px-4">Back to Marketplace</a>
             </div>

@@ -33,6 +33,10 @@ public class AdminController {
     @Autowired
     private EmailService emailService;
     @Autowired
+    private DoctorProfileService doctorProfileService;
+    @Autowired
+    private DoctorVerificationService doctorVerificationService;
+    @Autowired
     private AdminService adminService;
     @Autowired
     private VideoUploadRepository videouploadRepository;
@@ -545,7 +549,7 @@ public class AdminController {
 
         long totalEventBookings = womenEventRegistrationRepository.count();
         double totalEventTicketRevenue = womenEventRegistrationRepository.findAll().stream()
-                .filter(r -> r.isPaid())
+                .filter(r -> r.isPaid() && r.getAmountPaid() != null)
                 .mapToDouble(r -> r.getAmountPaid())
                 .sum();
 
@@ -553,11 +557,14 @@ public class AdminController {
         List<WomenEventRegistration> allEventRegs = womenEventRegistrationRepository.findAll();
         if (!allEventRegs.isEmpty()) {
             Map<String, Long> countMap = allEventRegs.stream()
+                    .filter(r -> r.getEvent() != null && r.getEvent().getName() != null)
                     .collect(java.util.stream.Collectors.groupingBy(r -> r.getEvent().getName(), java.util.stream.Collectors.counting()));
-            mostPopularEvent = countMap.entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse("None");
+            if (!countMap.isEmpty()) {
+                mostPopularEvent = countMap.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse("None");
+            }
         }
         res.put("totalEventBookings", totalEventBookings);
         res.put("totalEventTicketRevenue", totalEventTicketRevenue);
@@ -760,8 +767,11 @@ public class AdminController {
             model.addAttribute("searchResults", userRepository.searchUsers(q.trim()));
             model.addAttribute("q", q.trim());
         } else {
-            // Include pending and verified users for approval workflow
-            model.addAttribute("pendingUsers", userRepository.findByVerificationStatus(VerificationStatus.PENDING));
+            // Include pending and verified users for approval workflow.
+            // Legacy rows with NULL verification_status are treated as pending.
+            List<User> pending = new ArrayList<>(userRepository.findByVerificationStatus(VerificationStatus.PENDING));
+            pending.addAll(userRepository.findByVerificationStatusIsNull());
+            model.addAttribute("pendingUsers", pending);
             model.addAttribute("verifiedUsers", userRepository.findByVerificationStatusAndBannedFalse(VerificationStatus.VERIFIED));
             model.addAttribute("rejectedUsers", userRepository.findByVerificationStatus(VerificationStatus.REJECTED));
             model.addAttribute("bannedUsers",  userRepository.findByBanned(true));
@@ -1146,27 +1156,68 @@ public class AdminController {
         return "adminViewUserProfile";
     }
 
-    // Purpose: admin verification for doctors (only VERIFIED doctors are shown in booking).
-    // Supports optional ?q= search param to filter doctors by name, email, phone, specialization, or location.
+    // Purpose: admin verification for doctors (DoctorProfileStatus is lifecycle source of truth).
     @GetMapping("/pending-doctors")
     public String viewPendingDoctors(@RequestParam(value = "q", required = false) String q,
+                                     @RequestParam(value = "filter", required = false) String filter,
                                      Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
 
-        // Purpose: if a search keyword is provided, run DB search and return flat results.
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(Locale.ROOT);
+        model.addAttribute("filter", activeFilter);
+        model.addAttribute("q", q == null ? "" : q.trim());
+
+        List<Doctor> pending = doctorVerificationService.queueByFilter("pending");
+        List<Doctor> approved = doctorVerificationService.queueByFilter("approved");
+        List<Doctor> rejected = doctorVerificationService.queueByFilter("rejected");
+        List<Doctor> changesRequested = doctorVerificationService.queueByFilter("changes_requested");
+        List<Doctor> reverification = doctorVerificationService.queueByFilter("reverification");
+
+        model.addAttribute("pending", pending);
+        model.addAttribute("approved", approved);
+        model.addAttribute("verified", approved); // backward-compatible alias for older JSP fragments
+        model.addAttribute("rejected", rejected);
+        model.addAttribute("changesRequested", changesRequested);
+        model.addAttribute("reverification", reverification);
+        model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("approvedCount", approved.size());
+        model.addAttribute("rejectedCount", rejected.size());
+        model.addAttribute("changesRequestedCount", changesRequested.size());
+        model.addAttribute("reverificationCount", reverification.size());
+
         if (q != null && !q.trim().isEmpty()) {
-            List<Doctor> searchResults = doctorRepository.searchDoctors(q.trim());
-            model.addAttribute("searchResults", searchResults);
-            model.addAttribute("q", q.trim());
-            return "adminPendingDoctors";
+            String keyword = q.trim().toLowerCase(Locale.ROOT);
+            List<Doctor> searchResults = doctorRepository.searchDoctors(q.trim()).stream()
+                    .filter(d -> activeFilter.equals("all") || matchesDoctorFilter(d, activeFilter))
+                    .toList();
+            // If filter is default pending and search is used, still show all matching search hits unless filter set.
+            if (!activeFilter.equals("pending") || filter != null) {
+                model.addAttribute("searchResults", searchResults);
+            } else {
+                model.addAttribute("searchResults", doctorRepository.searchDoctors(q.trim()));
+            }
+            model.addAttribute("keywordLower", keyword);
         }
 
-        model.addAttribute("pending", doctorRepository.findByVerificationStatus(VerificationStatus.PENDING));
-        model.addAttribute("verified", doctorRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-        model.addAttribute("rejected", doctorRepository.findByVerificationStatus(VerificationStatus.REJECTED));
         return "adminPendingDoctors";
+    }
+
+    private boolean matchesDoctorFilter(Doctor d, String filter) {
+        DoctorProfileStatus status = d.getDoctorProfileStatus();
+        return switch (filter) {
+            case "approved" -> status == DoctorProfileStatus.APPROVED;
+            case "rejected" -> status == DoctorProfileStatus.REJECTED;
+            case "changes_requested", "changes-requested" -> status == DoctorProfileStatus.CHANGES_REQUESTED;
+            case "reverification" -> Boolean.TRUE.equals(d.getHasPendingReverification());
+            case "ready" -> status == DoctorProfileStatus.READY_FOR_VERIFICATION;
+            case "all" -> true;
+            default -> status == DoctorProfileStatus.PENDING_ADMIN_APPROVAL
+                    || status == DoctorProfileStatus.READY_FOR_VERIFICATION
+                    || status == DoctorProfileStatus.PROFILE_INCOMPLETE
+                    || status == DoctorProfileStatus.REGISTERED;
+        };
     }
 
     // Purpose: admin views full profile of a specific doctor.
@@ -1183,11 +1234,18 @@ public class AdminController {
         }
 
         model.addAttribute("doctor", d);
+        model.addAttribute("statusLabel", DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
+        model.addAttribute("history", doctorVerificationService.history(d.getId()));
+        model.addAttribute("pendingDraft", doctorVerificationService.draftSummary(d));
+        model.addAttribute("profilePayload", doctorProfileService.profilePayload(d));
         return "adminViewDoctorProfile";
     }
 
     @PostMapping("/doctors/{id}/verify")
-    public String verifyDoctor(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String verifyDoctor(@PathVariable Long id,
+                               @RequestParam(value = "notes", required = false) String notes,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1197,14 +1255,22 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Doctor not found.");
             return "redirect:/admin/pending-doctors";
         }
-        d.setVerificationStatus(VerificationStatus.VERIFIED);
-        doctorRepository.save(d);
-        redirectAttributes.addFlashAttribute("message", "Doctor verified.");
-        return "redirect:/admin/pending-doctors";
+        Admin admin = (Admin) session.getAttribute("admin");
+        try {
+            doctorVerificationService.approve(d, admin == null ? null : Long.valueOf(admin.getId()), notes);
+            redirectAttributes.addFlashAttribute("message", "Doctor approved.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
     }
 
     @PostMapping("/doctors/{id}/reject")
-    public String rejectDoctor(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String rejectDoctor(@PathVariable Long id,
+                               @RequestParam(value = "reason", required = false) String reason,
+                               @RequestParam(value = "notes", required = false) String notes,
+                               HttpSession session,
+                               RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1214,10 +1280,40 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Doctor not found.");
             return "redirect:/admin/pending-doctors";
         }
-        d.setVerificationStatus(VerificationStatus.REJECTED);
-        doctorRepository.save(d);
-        redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
-        return "redirect:/admin/pending-doctors";
+        Admin admin = (Admin) session.getAttribute("admin");
+        String combined = (notes != null && !notes.isBlank()) ? notes : reason;
+        try {
+            doctorVerificationService.reject(d, admin == null ? null : Long.valueOf(admin.getId()), combined);
+            redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
+    }
+
+    @PostMapping("/doctors/{id}/request-changes")
+    public String requestDoctorChanges(@PathVariable Long id,
+                                       @RequestParam(value = "reasons", required = false) String reasons,
+                                       @RequestParam(value = "notes", required = false) String notes,
+                                       HttpSession session,
+                                       RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
+        Doctor d = doctorRepository.findById(id).orElse(null);
+        if (d == null) {
+            redirectAttributes.addFlashAttribute("message", "Doctor not found.");
+            return "redirect:/admin/pending-doctors";
+        }
+        Admin admin = (Admin) session.getAttribute("admin");
+        try {
+            doctorVerificationService.requestChanges(d, admin == null ? null : Long.valueOf(admin.getId()), reasons, notes);
+            redirectAttributes.addFlashAttribute("message", "Changes requested from doctor.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
+        }
+        return "redirect:/admin/doctors/" + id + "/profile";
     }
 
     // Purpose: admin verification for marketplace providers / service partners.
@@ -1558,21 +1654,28 @@ public class AdminController {
     // Purpose: Event Host / Event Organizer verification for mobile + web registrations.
     @GetMapping("/pending-event-hosts")
     public String viewPendingEventHosts(Model model, HttpSession session) {
-        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        try {
+            if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-        for (EventHost h : eventHostRepository.findAll()) {
-            if (h.getVerificationStatus() == null) {
-                h.setVerificationStatus(VerificationStatus.PENDING);
-                eventHostRepository.save(h);
+            for (EventHost h : eventHostRepository.findAll()) {
+                if (h.getVerificationStatus() == null) {
+                    h.setVerificationStatus(VerificationStatus.PENDING);
+                    eventHostRepository.save(h);
+                }
             }
-        }
 
-        model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
-        model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-        model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
-        model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
-        model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
-        return "adminPendingEventHosts";
+            model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
+            model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
+            model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
+            model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
+            model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
+            return "adminPendingEventHosts";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage() + " - " + e.toString());
+            return "adminPendingEventHosts"; // reuse view to show error or we can return a simple string if ResponseBody was there, but it's a view.
+            // Let's pass the error to the model. We can view it in the UI or logs.
+        }
     }
 
     @PostMapping("/event-hosts/{id}/approve")

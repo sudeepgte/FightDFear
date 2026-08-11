@@ -28,6 +28,10 @@ import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
+import in.sp.main.Service.DoctorAppointmentService;
+import in.sp.main.Service.DoctorBookingService;
+import in.sp.main.Service.DoctorProfileService;
+import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 
@@ -52,6 +56,15 @@ public class DoctorController {
 
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
+    @Autowired
+    private DoctorRegistrationService doctorRegistrationService;
+    @Autowired
+    private DoctorProfileService doctorProfileService;
+    @Autowired
+    private DoctorAppointmentService doctorAppointmentService;
+
+    @Autowired
+    private DoctorBookingService doctorBookingService;
 
     // ==============================
     // Doctor Registration + Login
@@ -172,8 +185,7 @@ public class DoctorController {
             d.setUpiId(upiId);
             d.setBankDetails(bankDetails);
 
-            d.setVerificationStatus(VerificationStatus.PENDING);
-            d.setRating(0.0);
+            doctorRegistrationService.initializeLegacyRegisteredDoctor(d);
 
             doctorRepo.save(d);
             model.addAttribute("message", "Registration successful! Await admin verification.");
@@ -200,22 +212,21 @@ public class DoctorController {
             model.addAttribute("error", "Doctor not found.");
             return "doctor/doctor-login";
         }
-        Doctor d = dOpt.get();
-        boolean ok = passwordService.matchesAndUpgrade(password, d.getPassword(), hashed -> {
-            d.setPassword(hashed);
-            doctorRepo.save(d);
+        Doctor candidate = dOpt.get();
+        boolean ok = passwordService.matchesAndUpgrade(password, candidate.getPassword(), hashed -> {
+            candidate.setPassword(hashed);
+            doctorRepo.save(candidate);
         });
         if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "doctor/doctor-login";
         }
 
-        if (d.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending admin verification. Access denied.");
-            return "doctor/doctor-login";
-        }
-        if (d.getVerificationStatus() == VerificationStatus.REJECTED) {
-            model.addAttribute("error", "Your account has been rejected by admin.");
+        Doctor d;
+        try {
+            d = doctorRegistrationService.requireLoginDoctor(candidate);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            model.addAttribute("error", ex.getReason() == null ? "Unable to login." : ex.getReason());
             return "doctor/doctor-login";
         }
 
@@ -240,6 +251,8 @@ public class DoctorController {
         if (d == null) return "redirect:/doctors/login";
 
         d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorRepo.save(d);
         List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
         model.addAttribute("doctor", d);
         model.addAttribute("appointments", appts);
@@ -403,9 +416,10 @@ public class DoctorController {
         }
 
         try {
-            appt.setStatus(DoctorAppointmentStatus.valueOf(status));
-            appointmentRepo.save(appt);
+            doctorAppointmentService.transitionByDoctor(appt, d, DoctorAppointmentStatus.valueOf(status));
             redirectAttributes.addFlashAttribute("message", "Status updated.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("message", "Invalid status.");
         }
@@ -445,6 +459,7 @@ public class DoctorController {
     public String book(@RequestParam Long doctorId,
                        @RequestParam String appointmentTime,
                        @RequestParam(required = false) String reason,
+                       @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
                        HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -456,17 +471,31 @@ public class DoctorController {
             return "redirect:/doctors/list";
         }
 
-        DoctorAppointment appt = new DoctorAppointment();
-        appt.setUser(u);
-        appt.setDoctor(d);
-        // Purpose: parse date+time from booking form (yyyy-MM-dd HH:mm:ss).
-        appt.setAppointmentTime(LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        appt.setReason(reason);
-        appt.setStatus(DoctorAppointmentStatus.PENDING);
-        appointmentRepo.save(appt);
-
-        redirectAttributes.addFlashAttribute("message", "Appointment requested.");
-        return "redirect:/doctors/myAppointments";
+        try {
+            ConsultationType cType;
+            try {
+                cType = ConsultationType.valueOf(consultationType.trim().toUpperCase());
+            } catch (Exception ex) {
+                cType = ConsultationType.CLINIC;
+            }
+            LocalDateTime when = LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            double fee = doctorBookingService.resolveFee(d, cType);
+            if (fee > 0) {
+                redirectAttributes.addFlashAttribute("message",
+                        "Payment required (₹" + (int) fee + "). Please book and pay from the doctor profile page.");
+                return "redirect:/doctors/view/" + doctorId;
+            }
+            doctorBookingService.createRequestBooking(d, u, when, cType, reason, false);
+            redirectAttributes.addFlashAttribute("message", "Appointment requested.");
+            return "redirect:/doctors/myAppointments";
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message",
+                    ex.getReason() == null ? "Booking failed." : ex.getReason());
+            return "redirect:/doctors/view/" + doctorId;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("message", "Invalid appointment time.");
+            return "redirect:/doctors/view/" + doctorId;
+        }
     }
 
     @GetMapping("/myAppointments")

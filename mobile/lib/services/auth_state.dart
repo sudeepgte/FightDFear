@@ -96,6 +96,9 @@ class AuthState extends ChangeNotifier {
         return true;
       }
       error = res['error']?.toString() ?? 'Login failed';
+      if (error != null && error!.isNotEmpty) {
+        error = '$error (server: $apiBaseUrl)';
+      }
     } catch (e) {
       error = _networkErrorMessage(e);
     }

@@ -50,6 +50,9 @@ public class SecurityConfig {
             "/api/investor/login/**",
             "/api/doctors/provider/register",
             "/api/doctors/provider/register/**",
+            "/api/doctors/provider/register-quick",
+            "/api/doctors/provider/otp/send-email",
+            "/api/doctors/provider/otp/verify-email",
             "/api/doctors/provider/login",
             "/api/doctors/provider/login/**",
             "/api/fitness/trainer/register/**",
@@ -104,7 +107,8 @@ public class SecurityConfig {
             "/fitness/trainer/login",
             "/fitness/trainer/register",
             "/fitness/trainer/register/**",
-            "/error"
+            "/error",
+            "/payment/webhook/razorpay"
     };
 
     @Bean
