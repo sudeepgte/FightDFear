@@ -168,6 +168,33 @@
       width: 100%;
       box-shadow: 0 10px 25px rgba(219, 39, 119, 0.2);
     }
+    
+    .rating-stars {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+    }
+    .rating-stars input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .rating-stars label {
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 2.5rem;
+      padding: 0 5px;
+      transition: color 0.2s;
+    }
+    .rating-stars label:before {
+      content: '★';
+    }
+    .rating-stars input:checked ~ label,
+    .rating-stars label:hover,
+    .rating-stars label:hover ~ label {
+      color: #fbbf24;
+    }
   </style>
 </head>
   <header id="header" class="header d-flex align-items-center sticky-top">
@@ -178,7 +205,6 @@
           <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
           <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
           <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-          <li><a href="${pageContext.request.contextPath}/users/dashboard" class="btn-dashboard"><i class="fas fa-th-large"></i> Back to Dashboard</a></li>
           <li class="nav-profile">
               <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="d-flex align-items-center">
                   <img src="${pageContext.request.contextPath}${not empty user.profilePhoto ? user.profilePhoto : '/images/default-profile.png'}" 
@@ -406,6 +432,11 @@
               </div>
             </div>
 
+            <div class="mb-4">
+              <label class="small fw-800 text-muted mb-2 d-block">REASON FOR VISIT</label>
+              <textarea id="reason" class="form-control rounded-3 py-2" rows="2" placeholder="Briefly describe your symptoms or reason for visit (optional)"></textarea>
+            </div>
+
             <div id="selectedSummary" class="mb-4 p-3 bg-soft-pink rounded-3 text-pink small fw-700 text-center d-none">
               <i class="bi bi-clock-fill me-1"></i> <span id="summaryText"></span>
             </div>
@@ -432,12 +463,12 @@
           <input type="hidden" name="doctorId" value="${doctor.id}">
           <div class="modal-body p-4">
             <div class="mb-4 text-center">
-              <div class="rating-stars fs-2 text-warning">
-                <input type="radio" name="rating" value="5" id="r5" class="d-none" required><label for="r5" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="4" id="r4" class="d-none"><label for="r4" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="3" id="r3" class="d-none"><label for="r3" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="2" id="r2" class="d-none"><label for="r2" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="1" id="r1" class="d-none"><label for="r1" class="cursor-pointer">☆</label>
+              <div class="rating-stars text-warning">
+                <input type="radio" name="rating" value="5" id="r5" required><label for="r5"></label>
+                <input type="radio" name="rating" value="4" id="r4"><label for="r4"></label>
+                <input type="radio" name="rating" value="3" id="r3"><label for="r3"></label>
+                <input type="radio" name="rating" value="2" id="r2"><label for="r2"></label>
+                <input type="radio" name="rating" value="1" id="r1"><label for="r1"></label>
               </div>
             </div>
             <textarea name="comment" class="form-control rounded-4 p-3" rows="4" placeholder="How was your visit with Dr. ${doctor.fullName}?"></textarea>
@@ -534,6 +565,7 @@
       const doctorId = document.getElementById('doctorId').value;
       const time = document.getElementById('appointmentTime').value;
       const type = document.querySelector('input[name="consultationType"]:checked').value;
+      const reason = document.getElementById('reason').value;
 
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
@@ -552,7 +584,7 @@
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                type: 'DOCTOR', targetId: doctorId, amount,
+                type: 'DOCTOR', targetId: doctorId, amount, reason: reason,
                 appointmentTime: time, consultationType: type
               })
             });

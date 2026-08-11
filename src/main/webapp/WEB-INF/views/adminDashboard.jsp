@@ -566,8 +566,6 @@
 
                     <a href="${pageContext.request.contextPath}/admin/reported-videos" class="badge bg-light text-dark badge-pill text-decoration-none reported-videos-link" title="View reported videos">
                         Reported Videos: <span id="reportedVideos">-</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
                 </div>
             </div>
         </div>

@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
-    <script src="${pageContext.request.contextPath}/resources/bootstrap/js/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Poppins', sans-serif; min-height:100vh; display:flex; background:#fff; color:var(--fdf-text); }
@@ -184,6 +184,7 @@
                 <c:if test="${not empty error}">
                     <div class="alert alert-danger" style="border-radius:12px; margin-bottom:16px;">${error}</div>
                 </c:if>
+                <form:errors path="*" element="div" cssClass="alert alert-danger" cssStyle="border-radius:12px; margin-bottom:16px;" />
                 <c:if test="${not empty message}">
                     <div class="alert alert-success" style="border-radius:12px; margin-bottom:16px;">${message}</div>
                 </c:if>
@@ -193,8 +194,8 @@
                     <div class="dr-step-panel active" id="step1">
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker);">Basic Identity</h3>
                         <div class="fdf-row">
-                            <div class="fdf-group"><label>Center Name</label><form:input path="name" class="fdf-input" placeholder="Elite Martial Arts" required="required"/></div>
-                            <div class="fdf-group"><label>Location</label><form:input path="location" class="fdf-input" placeholder="City, Area" required="required"/></div>
+                            <div class="fdf-group"><label>Center Name</label><form:input path="name" class="fdf-input" placeholder="Elite Martial Arts" maxlength="100" required="required"/></div>
+                            <div class="fdf-group"><label>Location</label><form:input path="location" class="fdf-input" placeholder="City, Area" maxlength="100" oninput="this.value=this.value.replace(/[^a-zA-Z\\s]/g,'')" required="required"/></div>
                         </div>
                         
                         <div class="fdf-row">
@@ -227,7 +228,7 @@
 
                         <div class="fdf-row">
                             <div class="fdf-group"><label>Profile Image</label><input type="file" name="profileimage" class="fdf-input" style="padding:10px;" accept="image/*"/></div>
-                            <div class="fdf-group"><label>Gallery Photos</label><input type="file" name="galleryPhotos" class="fdf-input" style="padding:10px;" accept="image/*" multiple/></div>
+                            <div class="fdf-group"><label>Gallery Photos</label><input type="file" name="galleryPhotos" class="fdf-input" style="padding:10px;" accept="image/*" multiple="multiple"/></div>
                         </div>
                         <div class="fdf-group"><label>Affiliation Certificate</label><input type="file" name="certificate" class="fdf-input" style="padding:10px;" accept="application/pdf,image/*" ></div>
 

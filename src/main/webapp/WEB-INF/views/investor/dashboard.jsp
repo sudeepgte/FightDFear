@@ -31,19 +31,25 @@
         }
 
         #sidebar-wrapper {
-            min-width: 260px;
-            max-width: 260px;
+            width: 210px;
+            min-width: 210px;
+            max-width: 210px;
             background: var(--navy-dark);
             color: white;
-            min-height: 100vh;
-            border-top-right-radius: 40px;
-            padding-top: 30px;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+            height: 100vh; /* Full height down the side */
+            position: fixed; /* Make it fixed */
+            top: 0;
+            left: 0;
+            border-radius: 0; /* Fully flush straight bar */
+            padding: 20px 0;
+            margin: 0; /* NO empty space */
+            z-index: 1000;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
         }
 
         .sidebar-heading {
-            padding: 10px 25px 25px;
-            font-size: 1.2rem;
+            padding: 10px 20px 20px;
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -54,15 +60,16 @@
         .sidebar-link {
             background: transparent;
             color: rgba(255,255,255,0.7);
-            padding: 14px 25px;
-            font-size: 0.95rem;
+            padding: 10px 20px;
+            margin-bottom: 8px; /* Added gap between buttons */
+            font-size: 0.9rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             text-decoration: none;
             transition: all 0.3s;
-            border-left: 4px solid transparent;
+            border-left: 3px solid transparent;
         }
 
         .sidebar-link:hover, .sidebar-link.active {
@@ -73,101 +80,143 @@
 
         #page-content-wrapper {
             flex: 1;
-            padding: 40px;
+            margin-left: 210px; /* Must offset the fixed sidebar */
+            padding: 20px 30px; 
             overflow-y: auto;
         }
 
         .stat-card {
             background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
+            border-radius: 10px;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.04);
             transition: transform 0.3s;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* Modern circular design */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-bottom: 0;
+        }
+        
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-info .stat-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy-dark);
+            line-height: 1.1;
+        }
+        
+        .stat-info .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
 
         .panel {
             background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
             border: 1px solid rgba(0,0,0,0.03);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
             #wrapper {
                 flex-direction: column !important;
             }
             #sidebar-wrapper {
                 min-width: 100% !important;
                 max-width: 100% !important;
-                min-height: auto !important;
-                border-top-right-radius: 0 !important;
-                border-bottom-left-radius: 20px !important;
-                border-bottom-right-radius: 20px !important;
+                width: 100% !important;
+                height: auto !important;
+                position: static !important;
+                border-radius: 0 0 20px 20px !important;
                 padding: 20px 15px !important;
             }
-            #sidebar-wrapper .mt-3 {
+            #sidebar-wrapper .mt-1 {
                 display: flex !important;
                 flex-wrap: wrap !important;
-                gap: 10px !important;
-                margin-top: 10px !important;
+                flex-direction: row !important;
+                gap: 8px !important;
             }
             .sidebar-link {
-                padding: 10px 15px !important;
-                border-radius: 30px !important;
+                padding: 8px 15px !important;
+                border-radius: 20px !important;
                 border-left: none !important;
                 background: rgba(255, 255, 255, 0.05) !important;
                 display: inline-flex !important;
                 white-space: nowrap !important;
+                margin-bottom: 0 !important;
             }
             .sidebar-link:hover, .sidebar-link.active {
                 border-left-color: transparent !important;
                 background: var(--coral) !important;
             }
             #page-content-wrapper {
-                padding: 20px 10px !important;
+                margin-left: 0 !important;
+                padding: 20px 15px !important;
             }
         }
     </style>
 </head>
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div style="display: none; visibility: hidden;">
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+</div>
 
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
+        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2">
             <i class="bi bi-wallet2"></i> Investor Panel
         </div>
-        <div class="mt-3">
+        <div class="mt-1 d-flex flex-column">
+            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
+                <i class="bi bi-house"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link active">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-calendar2-check"></i> My Bookings
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-wallet2"></i> Wallet
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-person"></i> Profile
+            </a>
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
                 <i class="bi bi-shield-check"></i> Safety Hub Home
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-5">
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-3">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -177,12 +226,10 @@
     <div id="page-content-wrapper">
         <div class="container-fluid">
             
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="fw-bold" style="color: var(--navy-dark);">Welcome Back, ${investor.fullName}!</h2>
-                    <p class="text-muted">Browse business opportunities and manage your investment portfolios.</p>
-                </div>
-                <button onclick="location.reload()" class="btn btn-outline-secondary rounded-pill btn-sm">
+            <div class="text-center mb-4 position-relative">
+                <h5 class="fw-bold m-0" style="color: var(--navy-dark);">Welcome Back, ${investor.fullName}!</h5>
+                <p class="text-muted small m-0 mt-1">Browse opportunities and manage portfolios.</p>
+                <button onclick="location.reload()" class="btn btn-outline-secondary rounded-pill btn-sm position-absolute" style="right: 0; top: 0;">
                     <i class="bi bi-arrow-clockwise"></i> Refresh
                 </button>
             </div>
@@ -220,14 +267,16 @@
             </c:if>
 
             <!-- Stats grid -->
-            <div class="row g-4 mb-4">
+            <div class="row g-3 mb-4">
                 <div class="col-md-4">
                     <div class="stat-card">
                         <div class="stat-icon" style="background-color: #e0f2fe; color: #0284c7;">
                             <i class="bi bi-safe-fill"></i>
                         </div>
-                        <div class="fs-3 fw-bold">₹${totalInvested}</div>
-                        <p class="text-muted m-0 small">Total Capital Invested</p>
+                        <div class="stat-info">
+                            <div class="stat-value">₹${totalInvested}</div>
+                            <div class="stat-label">Total Capital</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -235,8 +284,10 @@
                         <div class="stat-icon" style="background-color: #dcfce7; color: #16a34a;">
                             <i class="bi bi-graph-up"></i>
                         </div>
-                        <div class="fs-3 fw-bold">₹${estimatedMonthlyROI}</div>
-                        <p class="text-muted m-0 small">Estimated Monthly Income (ROI)</p>
+                        <div class="stat-info">
+                            <div class="stat-value">₹${estimatedMonthlyROI}</div>
+                            <div class="stat-label">Est. Income</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -244,8 +295,10 @@
                         <div class="stat-icon" style="background-color: #f3e8ff; color: #a855f7;">
                             <i class="bi bi-building-fill"></i>
                         </div>
-                        <div class="fs-3 fw-bold">${investments.size()}</div>
-                        <p class="text-muted m-0 small">Businesses Funded</p>
+                        <div class="stat-info">
+                            <div class="stat-value">${investments.size()}</div>
+                            <div class="stat-label">Businesses Funded</div>
+                        </div>
                     </div>
                 </div>
             </div>

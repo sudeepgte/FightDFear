@@ -119,6 +119,22 @@ public class InvestorController {
         return "investor/login";
     }
 
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "investor/forgotPassword";
+    }
+
+    @PostMapping("/forgot-password")
+    public String handleForgotPassword(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
+        Optional<Investor> opt = investorRepository.findByEmail(email.toLowerCase().trim());
+        if (opt.isPresent()) {
+            redirectAttributes.addFlashAttribute("success", "If an account exists with that email, a password reset link has been sent.");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Email address not found.");
+        }
+        return "redirect:/investor/forgot-password";
+    }
+
     @PostMapping("/login")
     public String loginInvestor(
             @RequestParam("email") String email,

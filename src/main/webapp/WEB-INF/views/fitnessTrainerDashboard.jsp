@@ -15,11 +15,11 @@
     <!-- Icons & CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
         :root {
@@ -39,6 +39,7 @@
             overflow-x: hidden;
             font-family: 'Poppins', sans-serif;
             color: #1a1a2e;
+            padding-top: 0;
         }
 
         /* === Sidebar Layout CSS === */
@@ -49,53 +50,57 @@
         }
         
         #sidebar-wrapper {
-            min-width: 260px;
-            max-width: 260px;
+            min-width: 195px;
+            max-width: 195px;
             background: var(--primary-purple);
             color: white;
             transition: all 0.3s ease-in-out;
-            min-height: calc(100vh - 80px); 
+            min-height: 100vh;
             z-index: 1000;
-            position: sticky;
-            top: 80px; 
-            height: calc(100vh - 80px);
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
             overflow-y: auto;
-            border-top-right-radius: 40px;
-            padding-top: 20px;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+            border-top-right-radius: 0;
+            padding-top: 0;
+            padding-bottom: 30px;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.08);
         }
         
         #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
         #sidebar-wrapper::-webkit-scrollbar-thumb { background-color: var(--primary-purple-light); border-radius: 10px; }
         
         .sidebar-heading {
-            padding: 10px 25px 25px;
-            font-size: 1.1rem;
+            padding: 16px 18px 14px;
+            font-size: 1rem;
             font-weight: 700;
             color: white;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 6px;
         }
         
         .list-group-item {
             background: transparent;
             color: var(--sidebar-text);
             border: none;
-            padding: 12px 25px;
-            font-size: 14px;
+            padding: 10px 18px;
+            font-size: 13px;
             font-weight: 500;
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             position: relative;
             text-decoration: none;
             cursor: pointer;
             width: 100%;
             text-align: left;
         }
-        .list-group-item i { font-size: 1.1rem; width: 20px; text-align: center; }
+        .list-group-item i { font-size: 1rem; width: 18px; text-align: center; }
         .list-group-item:hover, .list-group-item.active {
             color: white;
             background: transparent;
@@ -117,7 +122,8 @@
             min-width: 0;
             display: flex;
             flex-direction: column;
-            padding: 25px 30px;
+            padding: 20px 24px;
+            margin-left: 195px;
         }
         
         .dashboard-header-flex {
@@ -156,36 +162,83 @@
             gap: 25px;
         }
 
-        /* Stat cards */
+        /* Stat cards — premium gradient redesign */
         .stat-cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
             margin-bottom: 25px;
         }
         .stat-card-new {
-            background: white;
             border-radius: 20px;
-            padding: 24px;
+            padding: 22px 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            min-height: 130px;
+            color: white;
+        }
+        .stat-card-new:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 36px rgba(0,0,0,0.14);
+        }
+        /* Decorative circle behind icon */
+        .stat-card-new::before {
+            content: '';
+            position: absolute;
+            right: -18px;
+            top: -18px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+        }
+        .stat-card-new::after {
+            content: '';
+            position: absolute;
+            right: 14px;
+            bottom: -24px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+        }
+        /* Card colour themes */
+        .stat-card-teal  { background: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%); }
+        .stat-card-blue  { background: linear-gradient(135deg, #6366f1 0%, #3b82f6 100%); }
+        .stat-card-coral { background: linear-gradient(135deg, #f43f5e 0%, #f97316 100%); }
+        .stat-card-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.82;
+        }
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+        .stat-card-icon {
+            font-size: 1.6rem;
+            opacity: 0.92;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-card-footer {
+            font-size: 0.72rem;
+            opacity: 0.75;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: var(--shadow-sm);
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(0,0,0,0.02);
+            gap: 4px;
         }
-        .stat-card-new:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
-        .stat-icon-new {
-            width: 60px;
-            height: 60px;
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-        }
-        .stat-info h3 { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--primary-purple); line-height: 1.2; }
-        .stat-info p { margin: 0; font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* Workspace Panels */
         .panel-new {
@@ -228,6 +281,7 @@
                 min-height: auto;
                 position: relative;
                 top: 0;
+                left: 0;
                 border-top-right-radius: 0;
                 border-bottom-left-radius: 30px;
                 border-bottom-right-radius: 30px;
@@ -255,7 +309,8 @@
                 color: white;
             }
             #page-content-wrapper {
-                padding: 20px 15px;
+                padding: 16px 12px;
+                margin-left: 0;
             }
             .dashboard-header-flex {
                 flex-direction: column;
@@ -285,48 +340,70 @@
 </head>
 <body>
 
+<%-- Hide the global header navbar for this page --%>
+<div style="display:none; visibility:hidden;">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
+</div>
 
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
-            <i class="bi bi-heart-pulse-fill text-warning"></i> Trainer Studio
+        <div class="sidebar-heading" style="flex-direction:column; align-items:flex-start; gap:2px; padding:14px 18px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class="bi bi-activity" style="color:rgba(255,255,255,0.85); font-size:1rem;"></i>
+                <span style="font-size:0.92rem; font-weight:700;">Fitness Trainer</span>
+            </div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.55); padding-left:24px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">${trainer.fullName}</div>
         </div>
-        <div class="nav flex-column nav-pills" id="studioTab" role="tablist">
-            <button class="list-group-item active" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requestsContent" type="button" role="tab">
-                <i class="bi bi-bell-fill text-warning"></i> Booking Requests <span class="badge bg-warning text-dark ms-auto rounded-pill">${requests.size()}</span>
+        <div class="nav flex-column nav-pills" id="studioTab">
+            <button class="list-group-item active" onclick="switchTab('requestsContent', this)" type="button">
+                <i class="bi bi-inbox-fill" style="color:rgba(255,255,255,0.75);"></i> Booking Requests <span class="badge ms-auto rounded-pill" style="background:rgba(255,255,255,0.2); font-size:0.7rem;">${requests.size()}</span>
             </button>
-            <button class="list-group-item" id="active-tab" data-bs-toggle="tab" data-bs-target="#activeContent" type="button" role="tab">
-                <i class="bi bi-calendar3 text-info"></i> Upcoming Sessions <span class="badge bg-info text-white ms-auto rounded-pill">${activeBookings.size()}</span>
+            <button class="list-group-item" onclick="switchTab('activeContent', this)" type="button">
+                <i class="bi bi-calendar3" style="color:rgba(255,255,255,0.75);"></i> Upcoming Sessions <span class="badge ms-auto rounded-pill" style="background:rgba(255,255,255,0.2); font-size:0.7rem;">${activeBookings.size()}</span>
             </button>
-            <button class="list-group-item" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completedContent" type="button" role="tab">
-                <i class="bi bi-journal-check text-success"></i> Completed Classes
+            <button class="list-group-item" onclick="switchTab('completedContent', this)" type="button">
+                <i class="bi bi-check2-square" style="color:rgba(255,255,255,0.75);"></i> Completed Classes
             </button>
-            <button class="list-group-item" id="classes-tab" data-bs-toggle="tab" data-bs-target="#classesContent" type="button" role="tab">
-                <i class="bi bi-people-fill" style="color: #a855f7;"></i> Manage Classes
+            <button class="list-group-item" onclick="switchTab('classesContent', this)" type="button">
+                <i class="bi bi-grid-1x2" style="color:rgba(255,255,255,0.75);"></i> Manage Classes
             </button>
-            <button class="list-group-item" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messagesContent" type="button" role="tab">
-                <i class="bi bi-chat-dots-fill text-danger"></i> Messages
+            <button class="list-group-item" onclick="switchTab('messagesContent', this)" type="button">
+                <i class="bi bi-chat-square-text" style="color:rgba(255,255,255,0.75);"></i> Messages
             </button>
-            <button class="list-group-item" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#scheduleContent" type="button" role="tab">
-                <i class="bi bi-gear-fill text-secondary"></i> Settings & Fees
+            <button class="list-group-item" onclick="switchTab('scheduleContent', this)" type="button">
+                <i class="bi bi-sliders" style="color:rgba(255,255,255,0.75);"></i> Settings &amp; Fees
             </button>
-            <button class="list-group-item" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviewsContent" type="button" role="tab">
-                <i class="bi bi-star-fill text-warning"></i> Feedback Ratings
+            <button class="list-group-item" onclick="switchTab('reviewsContent', this)" type="button">
+                <i class="bi bi-bar-chart-line" style="color:rgba(255,255,255,0.75);"></i> Feedback Ratings
             </button>
+            <button class="list-group-item" onclick="switchTab('editProfileContent', this)" type="button">
+                <i class="bi bi-person-lines-fill" style="color:rgba(255,255,255,0.75);"></i> Edit Profile
+            </button>
+            <a href="${pageContext.request.contextPath}/" class="list-group-item" type="button">
+                <i class="bi bi-chevron-left" style="color:rgba(255,255,255,0.75);"></i> Back to Home
+            </a>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/logout" class="list-group-item" style="color:rgba(255,100,100,0.85);" type="button">
+                <i class="bi bi-power" style="color:rgba(255,100,100,0.85);"></i> Logout
+            </a>
         </div>
     </div>
 
     <!-- Page Content -->
     <div id="page-content-wrapper">
-        <div class="dashboard-header-flex">
-            <div>
-                <h1 class="dashboard-title">Welcome back, ${trainer.fullName} 👋</h1>
-                <p class="text-muted small mt-1 mb-0">Manage your schedule, classes, and coaching requests.</p>
-            </div>
-            <div class="header-actions">
-                <a href="${pageContext.request.contextPath}/fitness/trainer/logout" class="logout-btn"><i class="bi bi-box-arrow-right me-1"></i> Logout</a>
+        <div class="dashboard-header-flex" style="justify-content:center; text-align:center; flex-direction:column; align-items:center; gap:8px; margin-bottom:20px;">
+            <div class="d-flex flex-column align-items-center">
+                <c:if test="${not empty trainer.profilePhotoPath}">
+                    <img src="${trainer.profilePhotoPath}" alt="Trainer Profile" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom:10px;" class="shadow-sm">
+                </c:if>
+                <c:if test="${empty trainer.profilePhotoPath}">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom:10px;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                </c:if>
+                <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#94a3b8; margin-bottom:2px;">Trainer Profile</div>
+                <h1 class="dashboard-title" style="text-align:center;">Welcome back, ${trainer.fullName}</h1>
+                <p class="text-muted small mt-1 mb-0" style="text-align:center;">Manage your schedule, classes, and coaching requests.</p>
             </div>
         </div>
 
@@ -343,34 +420,50 @@
         <div class="dashboard-container">
             <!-- Analytics overview cards -->
             <div class="stat-cards-grid">
-                <div class="stat-card-new">
-                    <div class="stat-icon-new" style="background:#e6fcf5; color:var(--primary-teal);"><i class="bi bi-wallet2"></i></div>
-                    <div class="stat-info">
-                        <h3>₹${totalEarnings}</h3>
-                        <p>Accumulated Earnings</p>
+
+                <!-- Earnings Card -->
+                <div class="stat-card-new stat-card-teal">
+                    <div class="d-flex justify-content-between align-items-flex-start">
+                        <div class="stat-card-label">Accumulated Earnings</div>
+                        <i class="bi bi-wallet2 stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value">₹${totalEarnings}</div>
+                    <div class="stat-card-footer">
+                        <i class="bi bi-arrow-up-circle-fill"></i> Total lifetime payouts
                     </div>
                 </div>
-                <div class="stat-card-new">
-                    <div class="stat-icon-new" style="background:#eff6ff; color:#3b82f6;"><i class="bi bi-calendar-check"></i></div>
-                    <div class="stat-info">
-                        <h3>${activeBookings.size()}</h3>
-                        <p>Active Classes Scheduled</p>
+
+                <!-- Active Sessions Card -->
+                <div class="stat-card-new stat-card-blue">
+                    <div class="d-flex justify-content-between align-items-flex-start">
+                        <div class="stat-card-label">Active Classes Scheduled</div>
+                        <i class="bi bi-calendar-check stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value">${activeBookings.size()}</div>
+                    <div class="stat-card-footer">
+                        <i class="bi bi-clock-history"></i> Currently active bookings
                     </div>
                 </div>
-                <div class="stat-card-new">
-                    <div class="stat-icon-new" style="background:#fff7ed; color:#f97316;"><i class="bi bi-chat-left-heart"></i></div>
-                    <div class="stat-info">
-                        <h3>${reviews.size()}</h3>
-                        <p>Coaching Reviews</p>
+
+                <!-- Reviews Card -->
+                <div class="stat-card-new stat-card-coral">
+                    <div class="d-flex justify-content-between align-items-flex-start">
+                        <div class="stat-card-label">Coaching Reviews</div>
+                        <i class="bi bi-star-fill stat-card-icon"></i>
+                    </div>
+                    <div class="stat-card-value">${reviews.size()}</div>
+                    <div class="stat-card-footer">
+                        <i class="bi bi-chat-left-heart-fill"></i> Client feedback received
                     </div>
                 </div>
+
             </div>
 
             <!-- Content Area -->
-            <div class="panel-new tab-content" id="studioTabContent">
+            <div class="panel-new" id="studioTabContent">
                 
                 <!-- BOOKING REQUESTS -->
-                <div class="tab-pane fade show active" id="requestsContent" role="tabpanel">
+                <div class="tab-section" id="requestsContent" style="display:block;">
                     <h4 class="fw-bold mb-4 text-dark">Booking Requests</h4>
                     
                     <c:choose>
@@ -410,7 +503,7 @@
                 </div>
 
                 <!-- UPCOMING SESSIONS -->
-                <div class="tab-pane fade" id="activeContent" role="tabpanel">
+                <div class="tab-section" id="activeContent" style="display:none;">
                     <h4 class="fw-bold mb-4 text-dark">Upcoming Coaching Classes</h4>
                     
                     <c:choose>
@@ -478,7 +571,7 @@
                 </div>
 
                 <!-- COMPLETED CLASSES -->
-                <div class="tab-pane fade" id="completedContent" role="tabpanel">
+                <div class="tab-section" id="completedContent" style="display:none;">
                     <h4 class="fw-bold mb-4 text-dark">Completed Session Logs</h4>
                     
                     <c:choose>
@@ -506,7 +599,7 @@
                 </div>
 
                 <!-- MANAGE GROUP CLASSES -->
-                <div class="tab-pane fade" id="classesContent" role="tabpanel">
+                <div class="tab-section" id="classesContent" style="display:none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold text-dark mb-0">Scheduled Group Classes</h4>
                         <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-lg"></i> New Class</button>
@@ -601,7 +694,7 @@
                 </div>
 
                 <!-- SCHEDULE & CONFIG -->
-                <div class="tab-pane fade" id="scheduleContent" role="tabpanel">
+                <div class="tab-section" id="scheduleContent" style="display:none;">
                     <h4 class="fw-bold mb-4 text-dark">Schedule & Fees Configuration</h4>
                     
                     <form action="${pageContext.request.contextPath}/fitness/trainer/update-schedule" method="POST">
@@ -631,7 +724,7 @@
                 </div>
 
                 <!-- RATINGS FEEDBACK -->
-                <div class="tab-pane fade" id="reviewsContent" role="tabpanel">
+                <div class="tab-section" id="reviewsContent" style="display:none;">
                     <h4 class="fw-bold mb-4 text-dark">Client Feedback & Ratings</h4>
                     
                     <c:choose>
@@ -658,11 +751,11 @@
                 </div>
 
                 <!-- MESSAGES -->
-                <div class="tab-pane fade" id="messagesContent" role="tabpanel">
+                <div class="tab-section" id="messagesContent" style="display:none;">
                     <h4 class="fw-bold mb-4 text-dark"><i class="bi bi-chat-dots text-danger me-2"></i> Client Messages</h4>
-                    <div class="row g-0 border rounded-4 overflow-hidden bg-white shadow-sm" style="height: 600px;">
+                    <div class="row g-0 border rounded-4 overflow-hidden bg-white shadow-sm" style="height: calc(100vh - 220px); min-height: 500px;">
                         <!-- Contacts List -->
-                        <div class="col-md-4 border-end bg-light overflow-auto h-100">
+                        <div class="col-md-3 border-end bg-light overflow-auto h-100">
                             <div class="p-3 border-bottom bg-white sticky-top z-2 shadow-sm">
                                 <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-people-fill text-primary me-2"></i> Your Clients</h6>
                             </div>
@@ -693,7 +786,7 @@
                         </div>
                         
                         <!-- Chat Box -->
-                        <div class="col-md-8 d-flex flex-column h-100 position-relative bg-white" id="chatBoxArea">
+                        <div class="col-md-9 d-flex flex-column h-100 position-relative bg-white" id="chatBoxArea">
                             <!-- Empty State -->
                             <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted" id="chatEmptyState">
                                 <i class="bi bi-chat-heart text-light" style="font-size: 6rem;"></i>
@@ -733,6 +826,85 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- EDIT PROFILE -->
+                <div class="tab-section" id="editProfileContent" style="display:none;">
+                    <h4 class="fw-bold mb-1 text-dark"><i class="bi bi-person-gear me-2" style="color:#a78bfa;"></i>Edit Profile</h4>
+                    <p class="text-muted small mb-4">Update your personal details, availability, and profile photo.</p>
+
+                    <form action="${pageContext.request.contextPath}/fitness/trainer/update-profile" method="POST" enctype="multipart/form-data">
+                        <div class="row g-3">
+
+                            <!-- Profile Photo Preview + Upload -->
+                            <div class="col-12 text-center mb-2">
+                                <div style="position:relative; display:inline-block;">
+                                    <c:if test="${not empty trainer.profilePhotoPath}">
+                                        <img id="profilePreview" src="${trainer.profilePhotoPath}" alt="Profile"
+                                             style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #e0e7ff;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                                    </c:if>
+                                    <c:if test="${empty trainer.profilePhotoPath}">
+                                        <div id="profilePreview" style="width:90px;height:90px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#6366f1;border:3px solid #e0e7ff;">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    </c:if>
+                                    <label for="profilePhotoEdit" style="position:absolute;bottom:2px;right:2px;background:#6366f1;color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.75rem;box-shadow:0 2px 6px rgba(0,0,0,0.2);">
+                                        <i class="bi bi-camera-fill"></i>
+                                    </label>
+                                    <input type="file" id="profilePhotoEdit" name="profilePhoto" accept="image/*" style="display:none;" onchange="previewPhoto(this)">
+                                </div>
+                                <div class="text-muted small mt-2">Click camera to change photo</div>
+                            </div>
+
+                            <!-- Full Name -->
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" name="fullName" class="form-control" value="${trainer.fullName}" required maxlength="50">
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number *</label>
+                                <input type="tel" name="phone" class="form-control" value="${trainer.phone}" required maxlength="10" pattern="[6-9][0-9]{9}">
+                            </div>
+
+                            <!-- Experience -->
+                            <div class="col-md-4">
+                                <label class="form-label">Experience (Years) *</label>
+                                <input type="number" name="experience" class="form-control" value="${trainer.experience}" min="0" max="50" required>
+                            </div>
+
+                            <!-- Session Fees -->
+                            <div class="col-md-4">
+                                <label class="form-label">Fee per Session (₹) *</label>
+                                <input type="number" name="sessionFees" class="form-control" value="${trainer.sessionFees}" min="1" required>
+                            </div>
+
+                            <!-- Available Timings -->
+                            <div class="col-md-4">
+                                <label class="form-label">Available Hours *</label>
+                                <input type="text" name="availableTimings" class="form-control" value="${trainer.availableTimings}" placeholder="e.g. 08:00-12:00" required>
+                            </div>
+
+                            <!-- Specializations -->
+                            <div class="col-12">
+                                <label class="form-label">Specializations *</label>
+                                <select name="specializations" class="form-select" multiple style="height:130px;">
+                                    <c:forEach var="cat" items="${categories}">
+                                        <option value="${cat}" ${trainer.specializations != null and trainer.specializations.contains(cat) ? 'selected' : ''}>${cat}</option>
+                                    </c:forEach>
+                                </select>
+                                <div class="form-text"><i class="bi bi-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple.</div>
+                            </div>
+
+                            <!-- Submit -->
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-submit w-100">
+                                    <i class="bi bi-check2-circle me-2"></i>Save Profile Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
 
             </div>
@@ -789,7 +961,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Max Capacity</label>
-                    <input type="number" name="maxCapacity" class="form-control" required value="10" min="1" max="9999">
+                    <input type="number" name="maxCapacity" class="form-control" required value="10" min="1" max="999" oninput="if(this.value.length > 3) this.value = this.value.slice(0,3);">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Price (₹)</label>
@@ -808,9 +980,6 @@
       </form>
     </div>
   </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Edit Class Modal -->
@@ -1040,6 +1209,41 @@
             }
         }
         return true;
+    }
+</script>
+
+<script>
+    function switchTab(tabId, clickedBtn) {
+        document.querySelectorAll('.tab-section').forEach(function(section) {
+            section.style.display = 'none';
+        });
+        document.querySelectorAll('#studioTab .list-group-item').forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+        var target = document.getElementById(tabId);
+        if (target) target.style.display = 'block';
+        if (clickedBtn) clickedBtn.classList.add('active');
+    }
+
+    function previewPhoto(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var preview = document.getElementById('profilePreview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    // Replace placeholder div with img
+                    var img = document.createElement('img');
+                    img.id = 'profilePreview';
+                    img.src = e.target.result;
+                    img.alt = 'Profile';
+                    img.style.cssText = 'width:90px;height:90px;border-radius:50%;object-fit:cover;border:3px solid #e0e7ff;box-shadow:0 4px 12px rgba(0,0,0,0.1);';
+                    preview.parentNode.replaceChild(img, preview);
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 </script>
 

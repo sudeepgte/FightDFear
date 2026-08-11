@@ -234,6 +234,7 @@ public class DoctorController {
 
     @GetMapping("/dashboard")
     public String dashboard(@RequestParam(required = false, defaultValue = "overview") String section,
+                            @RequestParam(required = false) Long userId,
                             HttpSession session, Model model) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
@@ -273,6 +274,15 @@ public class DoctorController {
                 }
             }
             model.addAttribute("chatUsers", chatUsers);
+
+            if (userId != null) {
+                User targetUser = userRepo.findById(userId).orElse(null);
+                model.addAttribute("targetUserId", userId);
+                if (targetUser != null) {
+                    model.addAttribute("targetUserName", targetUser.getFullName());
+                    model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(targetUser, d));
+                }
+            }
         }
 
         return "doctor/doctor-dashboard";
@@ -350,6 +360,32 @@ public class DoctorController {
         session.setAttribute("loggedDoctor", d);
         redirectAttributes.addFlashAttribute("message", "Schedule updated successfully!");
         return "redirect:/doctors/dashboard?section=schedule";
+    }
+
+    @PostMapping("/update-earnings")
+    public String updateEarnings(@RequestParam(required = false) Double consultationFee,
+                                 @RequestParam(required = false) Double chatFee,
+                                 @RequestParam(required = false) Double callFee,
+                                 @RequestParam(required = false) Double videoFee,
+                                 @RequestParam(required = false) String upiId,
+                                 @RequestParam(required = false) String bankDetails,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        if (consultationFee != null) d.setConsultationFee(consultationFee);
+        if (chatFee != null) d.setChatFee(chatFee);
+        if (callFee != null) d.setCallFee(callFee);
+        if (videoFee != null) d.setVideoFee(videoFee);
+        if (upiId != null) d.setUpiId(upiId);
+        if (bankDetails != null) d.setBankDetails(bankDetails);
+
+        doctorRepo.save(d);
+        session.setAttribute("loggedDoctor", d);
+        redirectAttributes.addFlashAttribute("message", "Fee breakdown updated successfully!");
+        return "redirect:/doctors/dashboard?section=earnings";
     }
 
     @PostMapping("/appointments/{id}/status")
@@ -629,6 +665,10 @@ public class DoctorController {
         if (d == null) return "redirect:/doctors/login";
         
         DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
+        if (prescriptionText != null && prescriptionText.length() > 500) {
+            redirectAttributes.addFlashAttribute("error", "Prescription cannot exceed 500 characters.");
+            return "redirect:/doctors/dashboard?section=prescriptions";
+        }
         if (appt != null && appt.getDoctor().getId().equals(d.getId())) {
             appt.setPrescriptionText(prescriptionText);
             appointmentRepo.save(appt);

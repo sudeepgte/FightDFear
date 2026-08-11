@@ -419,10 +419,13 @@
                     <h2>Dashboard Overview</h2>
                     <p class="text-muted m-0">Welcome back! Here's what's happening today.</p>
                 </div>
-                <div class="d-flex gap-3">
+                <div class="d-flex gap-3 align-items-center">
                     <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
                         <i class="bi bi-bell"></i>
                     </button>
+                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
                 </div>
             </div>
 
@@ -513,6 +516,14 @@
                 <div class="greeting">
                     <h2>Class Scheduling & Management</h2>
                     <p class="text-muted m-0">Launch new classes, configure capacity seats, prices, and configure online live class links.</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
                 </div>
             </div>
 
@@ -616,6 +627,14 @@
                 <div class="greeting">
                     <h2>My Clients & Students</h2>
                     <p class="text-muted m-0">Review 1-on-1 private sessions and track enrolled students across all classes.</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
                 </div>
             </div>
 
@@ -752,6 +771,14 @@
                 <div class="greeting">
                     <h2>Earnings Ledger & Payouts</h2>
                     <p class="text-muted m-0">Monitor class sales, completed booking logs, and request instant bank settlements.</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
+                        <i class="bi bi-bell"></i>
+                    </button>
+                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
                 </div>
             </div>
 
