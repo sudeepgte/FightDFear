@@ -57,11 +57,10 @@
 
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-<div class="container-fluid">
-    <div class="row">
-        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
 
-        <div class="col-md-9 col-lg-10 p-4">
+    <div id="page-content-wrapper">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <div>
@@ -211,7 +210,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 

@@ -230,9 +230,8 @@
             </div>
         </div>
     </div>
-    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
     <script>
-    (function () {
+    document.addEventListener("DOMContentLoaded", function() {
       document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var id = btn.getAttribute('data-toggle-password');
@@ -247,7 +246,7 @@
           }
         });
       });
-    })();
+    });
     </script>
 </body>
 </html>

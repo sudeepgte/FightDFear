@@ -1583,6 +1583,7 @@
                 style="background:none; border:none; font-size:24px; opacity:0.3; cursor:pointer;"><i
                   class="bi bi-x-circle"></i></button>
             </div>
+<<<<<<< HEAD
 
             <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data">
               <%-- Profile Photo Upload & Preview --%>
@@ -1593,17 +1594,28 @@
                 </div>
                 <input type="file" name="profilePhoto" accept="image/png, image/jpeg, image/jpg, image/webp" class="form-ctrl" onchange="previewProfilePhoto(this)">
                 <small style="color: #666; font-size: 0.75rem; margin-top: 5px; display: block;">Supported formats: JPG, JPEG, PNG, WEBP</small>
+=======
+            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post">
+              <div class="fdf-form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name</label>
+                <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required pattern="[A-Za-z\s]{3,50}" title="Must contain only letters and spaces, 3-50 characters">
+>>>>>>> 7d4c1bad75957ac7d540688a80cf2ca8a96fbb96
               </div>
 
               <%-- Basic Info --%>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
+<<<<<<< HEAD
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
                   <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
                 </div>
                 <div>
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
                   <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required>
+=======
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name</label>
+                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required minlength="3" maxlength="100">
+>>>>>>> 7d4c1bad75957ac7d540688a80cf2ca8a96fbb96
                 </div>
               </div>
 
@@ -1614,8 +1626,13 @@
 
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
+<<<<<<< HEAD
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
                   <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required>
+=======
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone</label>
+                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required pattern="[6-9][0-9]{9}" maxlength="10" title="Valid 10-digit mobile number">
+>>>>>>> 7d4c1bad75957ac7d540688a80cf2ca8a96fbb96
                 </div>
                 <div>
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
@@ -1640,6 +1657,7 @@
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
+<<<<<<< HEAD
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
               </div>
@@ -1647,6 +1665,15 @@
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Qualification / Certification</label>
                 <textarea name="qualification" class="form-ctrl" rows="2" placeholder="e.g. Certified Cosmetologist, Skincare & Haircare Specialist, Diploma in Beauty & Wellness">${seller.qualification}</textarea>
+=======
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address</label>
+                <textarea name="address" class="form-ctrl" rows="2" required minlength="10" maxlength="255">${seller.address}</textarea>
+              </div>
+              <div class="fdf-form-group" style="margin-bottom: 30px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business
+                  Description</label>
+                <textarea name="description" class="form-ctrl" rows="3" maxlength="500">${seller.description}</textarea>
+>>>>>>> 7d4c1bad75957ac7d540688a80cf2ca8a96fbb96
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
@@ -1955,7 +1982,11 @@
                     fullDescription: this.getAttribute('data-fullDescription'),
                     price: this.getAttribute('data-price'),
                     originalPrice: this.getAttribute('data-originalPrice'),
+<<<<<<< HEAD
                     offerBadge: this.getAttribute('data-offerbadge') || this.getAttribute('data-offer-badge'),
+=======
+                    offerBadge: this.getAttribute('data-offerBadge'),
+>>>>>>> 7d4c1bad75957ac7d540688a80cf2ca8a96fbb96
                     stock: this.getAttribute('data-stock'),
                     lowStockAlertLevel: this.getAttribute('data-lowStockAlertLevel'),
                     sku: this.getAttribute('data-sku'),
