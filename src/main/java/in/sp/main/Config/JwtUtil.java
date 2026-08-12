@@ -77,12 +77,13 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        long thirtyDaysMs = 1000L * 60 * 60 * 24 * 30;
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                // Set expiration to 10 years (essentially doesn't expire until logout)
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10))
+                // 30-day access token; refresh-token flow will be added in a future phase.
+                .setExpiration(new Date(System.currentTimeMillis() + thirtyDaysMs))
                 .signWith(secretKey)
                 .compact();
     }

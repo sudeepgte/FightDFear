@@ -3,10 +3,13 @@ package in.sp.main.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -168,6 +171,8 @@ public class SecurityConfig {
             .securityMatcher("/**")
             .authorizeHttpRequests(auth -> auth
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                .requestMatchers("/actuator/prometheus", "/actuator/prometheus/**")
+                    .access((authentication, context) -> allowLocalhostOnly(context))
                 .requestMatchers(PUBLIC_URLS).permitAll()
                 .anyRequest().authenticated())
             // Add JWT filter
@@ -205,5 +210,14 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    private static AuthorizationDecision allowLocalhostOnly(RequestAuthorizationContext context) {
+        HttpServletRequest request = context.getRequest();
+        String remoteAddr = request.getRemoteAddr();
+        boolean localhost = "127.0.0.1".equals(remoteAddr)
+                || "::1".equals(remoteAddr)
+                || "0:0:0:0:0:0:0:1".equals(remoteAddr);
+        return new AuthorizationDecision(localhost);
     }
 }

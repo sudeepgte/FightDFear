@@ -7,8 +7,10 @@ import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.RateLimitService;
 import in.sp.main.Service.UserService;
 import in.sp.main.Util.MobileValidation;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -37,6 +40,9 @@ public class MobileAuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private RateLimitService rateLimitService;
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -162,7 +168,9 @@ public class MobileAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody Map<String, String> body,
+            HttpServletRequest request) {
         Map<String, Object> response = new LinkedHashMap<>();
         String email = body == null ? null : body.get("email");
         String password = body == null ? null : body.get("password");
@@ -175,6 +183,9 @@ public class MobileAuthController {
             response.put("error", "Email and password are required");
             return ResponseEntity.badRequest().body(response);
         }
+
+        String clientIp = request == null ? "unknown" : request.getRemoteAddr();
+        rateLimitService.checkOrThrow("login:" + clientIp + ":" + normEmail, 10, Duration.ofMinutes(15));
 
         User user = userService.findByUsername(normEmail);
         boolean ok = false;

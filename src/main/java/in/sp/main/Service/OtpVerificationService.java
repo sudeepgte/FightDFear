@@ -1,6 +1,7 @@
 package in.sp.main.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +36,12 @@ public class OtpVerificationService {
     @Autowired
     private List<OtpDeliveryChannel> deliveryChannels;
 
+    @Autowired
+    private EmailAsyncService emailAsyncService;
+
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @Value("${otp.expiration-minutes:10}")
     private int expirationMinutes;
 
@@ -60,6 +67,10 @@ public class OtpVerificationService {
             throw new IllegalStateException("SMS OTP is not enabled yet");
         }
 
+        if (channel == OtpChannel.EMAIL) {
+            rateLimitService.checkOrThrow("otp:email:" + normalized, 5, Duration.ofHours(1));
+        }
+
         Optional<EmailOtpVerification> latest = otpRepository
                 .findTopByEmailAndPurposeAndVerifiedFalseOrderByCreatedAtDesc(normalized, purpose);
         if (latest.isPresent()) {
@@ -80,12 +91,16 @@ public class OtpVerificationService {
         record.setExpiresAt(LocalDateTime.now().plusMinutes(expirationMinutes));
         otpRepository.save(record);
 
-        OtpDeliveryChannel delivery = resolveChannel(channel);
         String subject = "Your Fight D Fear verification code";
         String body = "Your verification code is: " + code + "\n\n"
                 + "This code expires in " + expirationMinutes + " minutes.\n"
                 + "If you did not request this, you can ignore this email.";
-        delivery.send(normalized, subject, body);
+        if (channel == OtpChannel.EMAIL) {
+            emailAsyncService.sendEmailAsync(normalized, subject, body);
+        } else {
+            OtpDeliveryChannel delivery = resolveChannel(channel);
+            delivery.send(normalized, subject, body);
+        }
     }
 
     @Transactional
