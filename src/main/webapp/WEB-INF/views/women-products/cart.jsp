@@ -296,7 +296,7 @@
             <span class="qty-val">${ci.quantity}</span>
             <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/update" method="post">
               <input type="hidden" name="quantity" value="${ci.quantity + 1}">
-              <button type="submit" class="qty-btn">+</button>
+              <button type="submit" class="qty-btn" ${ci.quantity >= ci.product.stock ? 'disabled title="Maximum available stock reached"' : ''}>+</button>
             </form>
           </div>
           

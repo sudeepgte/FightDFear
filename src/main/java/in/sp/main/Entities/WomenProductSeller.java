@@ -26,6 +26,26 @@ public class WomenProductSeller {
     @Column(length = 500)
     private String identityDocPath;
 
+    @Column(length = 100)
+    private String category;
+    @Column(length = 255)
+    private String serviceArea;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String qualification;
+    @Column(length = 100)
+    private String experience;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String availableDays;
+    @Column(length = 50)
+    private String workingHoursFrom;
+    @Column(length = 50)
+    private String workingHoursTo;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String languagesSpoken;
+
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
@@ -56,6 +76,22 @@ public class WomenProductSeller {
     public void setProfilePhotoPath(String profilePhotoPath) { this.profilePhotoPath = profilePhotoPath; }
     public String getIdentityDocPath() { return identityDocPath; }
     public void setIdentityDocPath(String identityDocPath) { this.identityDocPath = identityDocPath; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public String getServiceArea() { return serviceArea; }
+    public void setServiceArea(String serviceArea) { this.serviceArea = serviceArea; }
+    public String getQualification() { return qualification; }
+    public void setQualification(String qualification) { this.qualification = qualification; }
+    public String getExperience() { return experience; }
+    public void setExperience(String experience) { this.experience = experience; }
+    public String getAvailableDays() { return availableDays; }
+    public void setAvailableDays(String availableDays) { this.availableDays = availableDays; }
+    public String getWorkingHoursFrom() { return workingHoursFrom; }
+    public void setWorkingHoursFrom(String workingHoursFrom) { this.workingHoursFrom = workingHoursFrom; }
+    public String getWorkingHoursTo() { return workingHoursTo; }
+    public void setWorkingHoursTo(String workingHoursTo) { this.workingHoursTo = workingHoursTo; }
+    public String getLanguagesSpoken() { return languagesSpoken; }
+    public void setLanguagesSpoken(String languagesSpoken) { this.languagesSpoken = languagesSpoken; }
     public VerificationStatus getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(VerificationStatus verificationStatus) { this.verificationStatus = verificationStatus; }
     public Double getRating() { return rating; }

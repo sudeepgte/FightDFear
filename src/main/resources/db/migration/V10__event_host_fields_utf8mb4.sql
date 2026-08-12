@@ -2,6 +2,11 @@
 -- women_events may not exist yet on a fresh DB (Hibernate ddl-auto creates it
 -- after Flyway runs), so only convert it when present; MySQL 8 already
 -- defaults new tables to utf8mb4 anyway.
+CREATE TABLE IF NOT EXISTS event_hosts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    host_bio TEXT NULL
+);
+
 ALTER TABLE event_hosts CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE event_hosts MODIFY COLUMN host_bio TEXT NULL;
 
