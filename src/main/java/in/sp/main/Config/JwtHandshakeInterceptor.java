@@ -71,8 +71,12 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                     .ifPresent(d -> attributes.put("authUserId", d.getId()));
             case "PROVIDER" -> providerRepository.findByEmail(email)
                     .ifPresent(p -> attributes.put("authUserId", p.getId()));
-            case "SALON" -> salonRepository.findByEmail(email)
-                    .ifPresent(s -> attributes.put("authUserId", s.getId()));
+            case "SALON" -> {
+                var s = salonRepository.findByEmail(email);
+                if (s != null) {
+                    attributes.put("authUserId", s.getId());
+                }
+            }
             default -> {
                 // Other roles still authenticate by email/role for topic ACLs
             }
