@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import in.sp.main.Entities.CentreFavorite;
 import in.sp.main.Entities.CentreReview;
 import in.sp.main.Entities.Enrollment;
@@ -56,21 +58,22 @@ public class MartialArtsCareService {
     private PushNotificationService pushNotificationService;
 
     @Scheduled(fixedDelay = 300000)
+    @SchedulerLock(name = "MartialArtsCareService_sendClassReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
     @Transactional
     public void sendClassReminders() {
         LocalDateTime now = LocalDateTime.now();
-        List<OnlineClass> classes = onlineClassRepository.findAll();
+        List<OnlineClass> classes = onlineClassRepository.findByDateAndStatusNotIn(
+                LocalDate.now(), List.of(OnlineClassStatus.COMPLETED));
         for (OnlineClass oc : classes) {
-            if (oc.getStatus() == OnlineClassStatus.COMPLETED) continue;
             LocalDateTime start = classStart(oc);
             if (start == null) continue;
             if (start.isAfter(now.plusMinutes(45)) && start.isBefore(now.plusMinutes(75))) {
                 remindEnrolled(oc, start);
             }
         }
-        for (Enrollment e : enrollmentRepository.findAll()) {
-            if (Boolean.TRUE.equals(e.getReminder1hSent())) continue;
-            if (e.getStatus() != TrainingStatus.APPROVED && e.getStatus() != TrainingStatus.IN_PROGRESS) continue;
+        List<Enrollment> enrollments = enrollmentRepository.findByStatusInAndReminder1hSentFalse(
+                List.of(TrainingStatus.APPROVED, TrainingStatus.IN_PROGRESS));
+        for (Enrollment e : enrollments) {
             MartialArtsBatch batch = e.getBatch();
             if (batch == null || batch.getTimeSlot() == null) continue;
             if (!isBatchDayToday(batch)) continue;

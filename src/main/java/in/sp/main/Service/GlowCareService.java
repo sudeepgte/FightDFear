@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import in.sp.main.Entities.Booking1;
 import in.sp.main.Entities.Salon;
 import in.sp.main.Entities.SalonFavorite;
@@ -48,13 +50,16 @@ public class GlowCareService {
     private PushNotificationService pushNotificationService;
 
     @Scheduled(fixedDelay = 300000)
+    @SchedulerLock(name = "GlowCareService_sendAppointmentReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
     @Transactional
     public void sendAppointmentReminders() {
         LocalDateTime now = LocalDateTime.now();
-        for (Booking1 b : bookingRepository.findAll()) {
+        LocalDate windowStart = now.plusMinutes(45).toLocalDate();
+        LocalDate windowEnd = now.plusMinutes(75).toLocalDate();
+        List<String> statuses = List.of("PENDING", "CONFIRMED", "PAID");
+        for (Booking1 b : bookingRepository.findByBookingDateBetweenAndStatusInIgnoreCase(
+                windowStart, windowEnd, statuses)) {
             if (Boolean.TRUE.equals(b.getReminder1hSent())) continue;
-            String status = b.getStatus() == null ? "" : b.getStatus().toUpperCase(Locale.ROOT);
-            if (!status.equals("PENDING") && !status.equals("CONFIRMED") && !status.equals("PAID")) continue;
             LocalDateTime start = appointmentStart(b);
             if (start == null) continue;
             if (start.isAfter(now.plusMinutes(45)) && start.isBefore(now.plusMinutes(75))) {

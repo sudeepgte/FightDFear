@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface EventHostRepository extends JpaRepository<EventHost, Long> {
     Optional<EventHost> findByEmail(String email);
     List<EventHost> findByVerificationStatus(VerificationStatus status);
+    long countByVerificationStatus(VerificationStatus status);
     List<EventHost> findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus status);
     List<EventHost> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<EventHost> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);

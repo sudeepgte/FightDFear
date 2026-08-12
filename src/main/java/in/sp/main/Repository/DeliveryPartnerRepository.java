@@ -13,6 +13,8 @@ import in.sp.main.Entities.VerificationStatus;
 public interface DeliveryPartnerRepository extends JpaRepository<DeliveryPartner, Long> {
     Optional<DeliveryPartner> findByEmail(String email);
     List<DeliveryPartner> findByVerificationStatus(VerificationStatus status);
+    long countByVerificationStatus(VerificationStatus status);
     List<DeliveryPartner> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
+    long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<DeliveryPartner> findByPartnerProfileStatusIsNull();
 }

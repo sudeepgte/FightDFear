@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import in.sp.main.Entities.LawyerFavorite;
 import in.sp.main.Entities.ProviderBooking;
 import in.sp.main.Entities.ProviderBookingStatus;
@@ -48,15 +50,15 @@ public class WomenLawyerCareService {
     private PushNotificationService pushNotificationService;
 
     @Scheduled(fixedDelay = 300000)
+    @SchedulerLock(name = "WomenLawyerCareService_sendConsultReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
     @Transactional
     public void sendConsultReminders() {
         LocalDateTime now = LocalDateTime.now();
-        for (ProviderBooking b : bookingRepository.findAll()) {
+        List<ProviderBookingStatus> statuses = List.of(
+                ProviderBookingStatus.PENDING, ProviderBookingStatus.CONFIRMED, ProviderBookingStatus.PAID);
+        for (ProviderBooking b : bookingRepository.findByStatusInAndRequestedTimeBetween(
+                statuses, now.plusMinutes(45), now.plusMinutes(75))) {
             if (Boolean.TRUE.equals(b.getReminder1hSent())) continue;
-            ProviderBookingStatus st = b.getStatus();
-            if (st != ProviderBookingStatus.PENDING && st != ProviderBookingStatus.CONFIRMED && st != ProviderBookingStatus.PAID) {
-                continue;
-            }
             LocalDateTime start = b.getRequestedTime();
             if (start == null) continue;
             if (start.isAfter(now.plusMinutes(45)) && start.isBefore(now.plusMinutes(75))) {

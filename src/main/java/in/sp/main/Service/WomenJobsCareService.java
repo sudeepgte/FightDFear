@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import in.sp.main.Entities.JobApplication;
 import in.sp.main.Entities.JobWorkerFavorite;
 import in.sp.main.Entities.JobWorkerReview;
@@ -47,10 +49,12 @@ public class WomenJobsCareService {
     private PushNotificationService pushNotificationService;
 
     @Scheduled(fixedDelay = 300000)
+    @SchedulerLock(name = "WomenJobsCareService_sendVisitReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
     @Transactional
     public void sendVisitReminders() {
         LocalDateTime now = LocalDateTime.now();
-        for (WorkerBooking b : bookingRepository.findAll()) {
+        for (WorkerBooking b : bookingRepository.findByBookingDateBetween(
+                now.plusMinutes(45), now.plusMinutes(75))) {
             if (Boolean.TRUE.equals(b.getReminder1hSent())) continue;
             String status = b.getStatus() == null ? "" : b.getStatus().toUpperCase(Locale.ROOT);
             if (!status.equals("PENDING") && !status.equals("ACCEPTED") && !status.equals("PAID") && !status.equals("CONFIRMED")) {

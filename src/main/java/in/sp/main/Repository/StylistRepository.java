@@ -18,7 +18,9 @@ public interface StylistRepository extends JpaRepository<Stylist, Long> {
 	Optional<Stylist> findByEmail(String email);
 	List<Stylist> findByIsIndependent(boolean b);
     List<Stylist> findByApproved(boolean approved);
+    long countByApproved(boolean approved);
     List<Stylist> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<Stylist> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
+    long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<Stylist> findByPartnerProfileStatusIsNull();
 }

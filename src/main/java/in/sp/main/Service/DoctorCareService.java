@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.FontFactory;
@@ -42,26 +44,26 @@ public class DoctorCareService {
     private DoctorNotificationService notificationService;
 
     @Scheduled(fixedDelay = 300000)
+    @SchedulerLock(name = "DoctorCareService_sendAppointmentReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
     @Transactional
     public void sendAppointmentReminders() {
         LocalDateTime now = LocalDateTime.now();
-        List<DoctorAppointment> upcoming = appointmentRepository.findAll().stream()
-                .filter(a -> a.getStatus() == DoctorAppointmentStatus.CONFIRMED || a.getStatus() == DoctorAppointmentStatus.PENDING)
-                .filter(a -> a.getAppointmentTime() != null)
-                .toList();
-        for (DoctorAppointment a : upcoming) {
-            LocalDateTime t = a.getAppointmentTime();
-            if (!Boolean.TRUE.equals(a.getReminder24hSent())
-                    && t.isAfter(now.plusHours(20))
-                    && t.isBefore(now.plusHours(26))) {
-                ping(a, "Appointment tomorrow", "You have a consultation at " + t);
+        List<DoctorAppointmentStatus> statuses = List.of(
+                DoctorAppointmentStatus.CONFIRMED, DoctorAppointmentStatus.PENDING);
+        List<DoctorAppointment> upcoming24h = appointmentRepository.findByStatusInAndAppointmentTimeBetween(
+                statuses, now.plusHours(20), now.plusHours(26));
+        for (DoctorAppointment a : upcoming24h) {
+            if (!Boolean.TRUE.equals(a.getReminder24hSent()) && a.getAppointmentTime() != null) {
+                ping(a, "Appointment tomorrow", "You have a consultation at " + a.getAppointmentTime());
                 a.setReminder24hSent(true);
                 appointmentRepository.save(a);
             }
-            if (!Boolean.TRUE.equals(a.getReminder1hSent())
-                    && t.isAfter(now.plusMinutes(45))
-                    && t.isBefore(now.plusMinutes(75))) {
-                ping(a, "Appointment in 1 hour", "Your consultation starts at " + t.toLocalTime());
+        }
+        List<DoctorAppointment> upcoming1h = appointmentRepository.findByStatusInAndAppointmentTimeBetween(
+                statuses, now.plusMinutes(45), now.plusMinutes(75));
+        for (DoctorAppointment a : upcoming1h) {
+            if (!Boolean.TRUE.equals(a.getReminder1hSent()) && a.getAppointmentTime() != null) {
+                ping(a, "Appointment in 1 hour", "Your consultation starts at " + a.getAppointmentTime().toLocalTime());
                 a.setReminder1hSent(true);
                 appointmentRepository.save(a);
             }

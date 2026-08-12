@@ -2,7 +2,7 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.*;
-import in.sp.main.Service.MartialArtsCenterService;
+import in.sp.main.Service.PartnerLifecycleSupport;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
@@ -14,19 +14,19 @@ public class GlobalSidebarAdvice {
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
-    private MartialArtsCenterService centreService;
-    
+    private MartialArtsCenterRepository centreRepository;
+
     @Autowired
     private DoctorRepository doctorRepository;
-    
+
     @Autowired
     private ServiceProviderRepository serviceProviderRepository;
-    
+
     @Autowired
     private SalonRepository salonRepository;
-    
+
     @Autowired
     private StylistRepository stylistRepository;
 
@@ -67,72 +67,66 @@ public class GlobalSidebarAdvice {
     public void addSidebarCounts(Model model, HttpSession session) {
         if (session.getAttribute("admin") != null) {
             try {
-                long pendingUsers = userRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
-                long pendingCentres = centreService.getCentresByApprovalStatus(false).size();
-                long pendingDoctors = doctorRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
-                long pendingSellers = womenProductSellerRepository.findByVerificationStatus(VerificationStatus.PENDING).size()
-                        + serviceProviderRepository.findByCategoryAndVerificationStatus(
-                                in.sp.main.Entities.ProviderCategory.WOMEN_PRODUCTS, VerificationStatus.PENDING).size();
+                long pendingUsers = userRepository.countByVerificationStatus(VerificationStatus.PENDING);
+                long pendingCentres = centreRepository.countByApproved(false);
+                long pendingDoctors = doctorRepository.countByVerificationStatus(VerificationStatus.PENDING);
+                long pendingSellers = womenProductSellerRepository.countByVerificationStatus(VerificationStatus.PENDING)
+                        + serviceProviderRepository.countByCategoryAndVerificationStatus(
+                                in.sp.main.Entities.ProviderCategory.WOMEN_PRODUCTS, VerificationStatus.PENDING);
                 long pendingTrainers = 0;
                 try {
                     pendingTrainers = fitnessTrainerRepository
-                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
-                            .size();
+                            .countByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
-                    pendingTrainers = fitnessTrainerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+                    pendingTrainers = fitnessTrainerRepository.countByVerificationStatus(VerificationStatus.PENDING);
                 }
                 long pendingSalons = 0;
                 try {
                     pendingSalons = salonRepository
-                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
-                            .size();
+                            .countByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
-                    pendingSalons = salonRepository.findByApproved(false).size();
+                    pendingSalons = salonRepository.countByApproved(false);
                 }
                 long pendingStylists = 0;
                 try {
                     pendingStylists = stylistRepository
-                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
-                            .size();
+                            .countByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
-                    pendingStylists = stylistRepository.findByApproved(false).size();
+                    pendingStylists = stylistRepository.countByApproved(false);
                 }
-                long pendingLawyers = serviceProviderRepository.findByCategoryAndVerificationStatus(
-                        in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER, VerificationStatus.PENDING).size();
-                long pendingFitness = serviceProviderRepository.findByCategoryAndVerificationStatus(
-                        in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA, VerificationStatus.PENDING).size();
+                long pendingLawyers = serviceProviderRepository.countByCategoryAndVerificationStatus(
+                        in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER, VerificationStatus.PENDING);
+                long pendingFitness = serviceProviderRepository.countByCategoryAndVerificationStatus(
+                        in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA, VerificationStatus.PENDING);
                 long unreadContactMessages = contactMessageRepository.countByReadByAdminFalse();
-                
-                long pendingProposals = businessProposalRepository.findByStatus(VerificationStatus.PENDING).size();
-                long pendingEnt = entrepreneurRepository.findAll().stream()
-                        .filter(e -> e.getVerificationStatus() == VerificationStatus.PENDING).count();
-                long pendingInv = investorRepository.findAll().stream()
-                        .filter(i -> i.getVerificationStatus() == VerificationStatus.PENDING).count();
+
+                long pendingProposals = businessProposalRepository.countByStatus(VerificationStatus.PENDING);
+                long pendingEnt = entrepreneurRepository.countByVerificationStatus(VerificationStatus.PENDING);
+                long pendingInv = investorRepository.countByVerificationStatus(VerificationStatus.PENDING);
                 long sidePendingProposals = pendingProposals + pendingEnt + pendingInv;
 
-                long pendingEventHosts = eventHostRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
-                long pendingWomenEvents = womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING").size();
+                long pendingEventHosts = eventHostRepository.countByVerificationStatus(VerificationStatus.PENDING);
+                long pendingWomenEvents = womenEventRepository.countByStatus("PENDING");
                 long sidePendingEventHosts = pendingEventHosts + pendingWomenEvents;
                 long pendingJobApplications = jobApplicationRepository.countByStatus(VerificationStatus.PENDING);
                 long pendingDeliveryPartners = 0;
                 try {
                     pendingDeliveryPartners = deliveryPartnerRepository
-                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
-                            .size();
+                            .countByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
-                    pendingDeliveryPartners = deliveryPartnerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+                    pendingDeliveryPartners = deliveryPartnerRepository.countByVerificationStatus(VerificationStatus.PENDING);
                 }
                 long pendingCreators = 0;
                 try {
                     pendingCreators = userRepository.countByCreatorProfileStatusIn(
-                            in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses());
+                            PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
                     pendingCreators = 0;
                 }
                 long pendingEducators = 0;
                 try {
                     pendingEducators = financialEducatorRepository.countByPartnerProfileStatusIn(
-                            in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses());
+                            PartnerLifecycleSupport.pendingQueueStatuses());
                 } catch (Exception ignored) {
                     pendingEducators = 0;
                 }

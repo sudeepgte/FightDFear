@@ -34,9 +34,13 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
 
     List<Salon> findByApproved(boolean approved);
 
+    long countByApproved(boolean approved);
+
     List<Salon> findByPartnerProfileStatus(PartnerProfileStatus status);
 
     List<Salon> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
+
+    long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
 
     List<Salon> findByPartnerProfileStatusIsNull();
 }

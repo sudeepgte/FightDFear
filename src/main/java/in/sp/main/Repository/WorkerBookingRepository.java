@@ -1,5 +1,6 @@
 package in.sp.main.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,4 +13,6 @@ public interface WorkerBookingRepository extends JpaRepository<WorkerBooking, Lo
     List<WorkerBooking> findByClient_Id(Long clientId);
     List<WorkerBooking> findByJobApplication_User_Id(Long workerUserId);
     List<WorkerBooking> findByJobApplication_Id(Long jobApplicationId);
+
+    List<WorkerBooking> findByBookingDateBetween(LocalDateTime from, LocalDateTime to);
 }

@@ -6,6 +6,8 @@ import in.sp.main.Service.CreatorProfileService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +60,8 @@ public class MobileCreatorHubController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
@@ -66,9 +70,13 @@ public class MobileCreatorHubController {
                 .map(ub -> ub.getBlockedUser().getId()).toList();
         String cityFilter = city == null ? "" : city.trim().toLowerCase(java.util.Locale.ROOT);
         String sortKey = sort == null ? "newest" : sort.trim().toLowerCase(java.util.Locale.ROOT);
+        int safeSize = Math.min(Math.max(size, 1), 50);
 
-        List<Videoupload> allContent = videoUploadRepository.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
+        Page<Videoupload> feedPage = videoUploadRepository
+                .findByIsBlockedFalseAndIsDraftFalseAndStatusOrderByUploadTimeDesc(
+                        "APPROVED", PageRequest.of(Math.max(page, 0), safeSize));
+
+        List<Videoupload> allContent = feedPage.getContent().stream()
                 .filter(v -> v.getUser() != null && !blockedUserIds.contains(v.getUser().getId()))
                 .filter(v -> v.getUser().getId().equals(currentUser.getId())
                         || CreatorProfileService.isApprovedCreator(v.getUser()))
@@ -118,16 +126,17 @@ public class MobileCreatorHubController {
         LocalDateTime since = LocalDateTime.now().minusHours(24);
         List<Map<String, Object>> storyGroups = buildStoryGroups(currentUser, blockedUserIds, since);
 
-        List<Map<String, Object>> trending = videoUploadRepository.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
-                .sorted((a, b) -> Integer.compare(b.getViewCount(), a.getViewCount()))
-                .limit(5)
+        List<Map<String, Object>> trending = videoUploadRepository
+                .findByIsBlockedFalseAndIsDraftFalseAndStatusOrderByViewCountDesc(
+                        "APPROVED", PageRequest.of(0, 5))
+                .getContent().stream()
                 .map(v -> postDto(v, currentUser))
                 .toList();
 
-        List<Map<String, Object>> recommended = userRepository.findAll().stream()
-                .filter(u -> CreatorProfileService.isApprovedCreator(u) && !u.getId().equals(currentUser.getId()))
-                .limit(5)
+        List<Map<String, Object>> recommended = userRepository
+                .findApprovedCreators(PartnerProfileStatus.APPROVED, PageRequest.of(0, 5))
+                .getContent().stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()))
                 .map(this::creatorSummary)
                 .toList();
 
@@ -142,6 +151,10 @@ public class MobileCreatorHubController {
         feed.put("categories", List.of(CREATOR_CATEGORIES));
         feed.put("unreadNotificationCount", unreadNotifCount);
         feed.put("count", posts.size());
+        feed.put("page", Math.max(page, 0));
+        feed.put("size", safeSize);
+        feed.put("totalPages", feedPage.getTotalPages());
+        feed.put("totalElements", feedPage.getTotalElements());
         feed.put("canUpload", canUpload);
         feed.put("verifiedCreator", currentUser.isVerifiedCreator());
         feed.put("creatorProfileStatus", currentUser.getCreatorProfileStatus() == null

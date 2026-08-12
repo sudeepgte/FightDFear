@@ -32,6 +32,7 @@ public class MobileLandingController {
     @Autowired private VideoUploadRepository videoUploadRepo;
     @Autowired private CreatorNotificationRepository creatorNotificationRepo;
     @Autowired private UserRepository userRepo;
+    @Autowired private MartialArtsCenterRepository centreRepo;
 
     @GetMapping("/feed")
     public ResponseEntity<Map<String, Object>> feed() {
@@ -71,23 +72,19 @@ public class MobileLandingController {
                 .map(this::doctorDto)
                 .collect(Collectors.toList());
 
-        List<Map<String, Object>> community = videoUploadRepo.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
-                .sorted((a, b) -> {
-                    if (a.getUploadTime() == null || b.getUploadTime() == null) return 0;
-                    return b.getUploadTime().compareTo(a.getUploadTime());
-                })
-                .limit(LIMIT)
+        List<Map<String, Object>> community = videoUploadRepo
+                .findTop8ByIsBlockedFalseAndIsDraftFalseAndStatusOrderByUploadTimeDesc("APPROVED")
+                .stream()
                 .map(this::communityDto)
                 .collect(Collectors.toList());
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("events", eventRepo.countByStatus("APPROVED"));
-        stats.put("salons", salonRepo.findByApproved(true).size());
-        stats.put("centres", martialArtsCenterService.getApprovedCentersForDiscovery().size());
-        stats.put("providers", providerRepo.findByVerificationStatus(VerificationStatus.VERIFIED).size());
-        stats.put("doctors", doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).size());
-        stats.put("products", productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc().size());
+        stats.put("salons", salonRepo.countByApproved(true));
+        stats.put("centres", centreRepo.countByApproved(true));
+        stats.put("providers", providerRepo.countByVerificationStatus(VerificationStatus.VERIFIED));
+        stats.put("doctors", doctorRepo.countByVerificationStatus(VerificationStatus.VERIFIED));
+        stats.put("products", productRepo.countByActiveTrueAndDeletedFalse());
 
         // What's New = mix of latest events, offers, centres
         List<Map<String, Object>> whatsNew = new ArrayList<>();

@@ -14,7 +14,9 @@ import in.sp.main.Entities.VerificationStatus;
 public interface ServiceProviderRepository extends JpaRepository<ServiceProvider, Long> {
     Optional<ServiceProvider> findByEmail(String email);
     List<ServiceProvider> findByVerificationStatus(VerificationStatus status);
+    long countByVerificationStatus(VerificationStatus status);
     List<ServiceProvider> findByCategoryAndVerificationStatus(ProviderCategory category, VerificationStatus status);
+    long countByCategoryAndVerificationStatus(ProviderCategory category, VerificationStatus status);
     List<ServiceProvider> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<ServiceProvider> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<ServiceProvider> findByPartnerProfileStatusIsNull();

@@ -30,6 +30,8 @@ public interface MartialArtsCenterRepository extends JpaRepository<MartialArtsCe
     Optional<MartialArtsCenter> findByEmail(String email);
     List<MartialArtsCenter> findByApproved(boolean approved);
 
+    long countByApproved(boolean approved);
+
     List<MartialArtsCenter> findByCentreProfileStatus(CentreProfileStatus status);
 
     List<MartialArtsCenter> findByCentreProfileStatusIn(Collection<CentreProfileStatus> statuses);
