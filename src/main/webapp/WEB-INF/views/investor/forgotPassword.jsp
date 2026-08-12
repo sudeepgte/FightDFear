@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrepreneur Login — Fight D Fear</title>
+    <title>Forgot Password — Fight D Fear</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -61,33 +61,6 @@
             margin-bottom: 40px;
         }
 
-        .feature-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            font-weight: 400;
-        }
-
-        .feature-list li .feat-icon {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
         .right-panel {
             flex: 1;
             display: flex;
@@ -139,17 +112,6 @@
             font-size: 1rem;
         }
 
-        .input-wrapper .toggle-password {
-            left: auto;
-            right: 16px;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .input-wrapper .toggle-password:hover {
-            color: #f43f5e;
-        }
-
         .form-input {
             width: 100%;
             padding: 14px 16px 14px 46px;
@@ -179,6 +141,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+            margin-top: 10px;
         }
 
         .btn-login:hover {
@@ -186,26 +149,11 @@
             box-shadow: 0 6px 25px rgba(244, 63, 94, 0.4);
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 24px 0;
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
-        }
-
         .register-link {
             text-align: center;
             font-size: 0.9rem;
             color: #64748b;
+            margin-top: 24px;
         }
 
         .register-link a {
@@ -254,7 +202,6 @@
         @media (max-width: 992px) {
             body { flex-direction: column; }
             .left-panel { padding: 50px 30px; min-height: 35vh; }
-            .feature-list { display: none; }
             .right-panel { padding: 40px 20px; background: #fff; margin-top: -30px; border-radius: 30px 30px 0 0; }
         }
 
@@ -272,29 +219,11 @@
     <div class="left-panel">
         <div class="brand">
             <div class="brand-logo">
-                <i class="bi bi-briefcase"></i> Entrepreneur Portal
+                <i class="bi bi-shield-lock"></i> Account Recovery
             </div>
             <p class="brand-tagline">
-                Turn your business ideas into reality. Connect with investors who believe in you and fund your vision.
+                No worries! Enter your registered email address and we'll send you instructions to reset your password.
             </p>
-            <ul class="feature-list">
-                <li>
-                    <span class="feat-icon"><i class="bi bi-rocket-takeoff"></i></span>
-                    Submit detailed business proposals
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-currency-dollar"></i></span>
-                    Raise full or partial funding easily
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-calendar-event"></i></span>
-                    Schedule face-to-face or video meetings
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-chat-text"></i></span>
-                    Real-time chats with interested investors
-                </li>
-            </ul>
         </div>
     </div>
 
@@ -302,12 +231,12 @@
     <div class="right-panel">
         <div class="login-card">
 
-            <a href="${pageContext.request.contextPath}/" class="back-home">
-                <i class="bi bi-arrow-left"></i> Back to Home
+            <a href="${pageContext.request.contextPath}/investor/login" class="back-home">
+                <i class="bi bi-arrow-left"></i> Back to Login
             </a>
 
-            <h2>Welcome Back, Partner! 👋</h2>
-            <p class="subtitle">Log in to manage your proposals and track investments</p>
+            <h2>Forgot Password? 🔐</h2>
+            <p class="subtitle">Please enter your email to recover your account</p>
 
             <c:if test="${not empty error}">
                 <div class="error-alert">
@@ -323,46 +252,28 @@
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/entrepreneur/login" method="post" id="loginForm" novalidate>
-                <div class="form-group">
-                    <label for="email">Email Address</label>
+            <form action="${pageContext.request.contextPath}/investor/forgot-password" method="post" id="forgotForm" novalidate>
+                <div class="form-group mb-4">
+                    <label for="email">Account Email Address</label>
                     <div class="input-wrapper">
                         <i class="bi bi-envelope"></i>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your registered email" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$">
+                        <input type="email" id="email" name="email" class="form-input" placeholder="e.g. yourname@business.com" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$">
                     </div>
                     <div id="emailError" style="display: none; color: #dc2626; font-size: 0.85rem; margin-top: 5px;">
                         Please enter a valid email address.
                     </div>
                 </div>
 
-                <div class="form-group mb-2">
-                    <label for="password">Password</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" id="password" name="password" class="form-input" style="padding-right: 45px;" placeholder="Enter your password" required>
-                        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
-                    </div>
-                </div>
-
-                <div class="text-end mb-4">
-                    <a href="${pageContext.request.contextPath}/entrepreneur/forgot-password" style="font-size: 0.85rem; color: #f43f5e; font-weight: 600; text-decoration: none;">Forgot Password?</a>
-                </div>
-
                 <button type="submit" class="btn-login">
-                    Sign In <i class="bi bi-arrow-right"></i>
+                    Send Reset Link <i class="bi bi-send ms-2"></i>
                 </button>
             </form>
 
-            <div class="divider">or</div>
-
-            <p class="register-link">
-                Don't have an entrepreneur account? <a href="${pageContext.request.contextPath}/entrepreneur/register">Register here</a>
-            </p>
         </div>
     </div>
     
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('forgotForm').addEventListener('submit', function(e) {
             var emailInput = document.getElementById('email');
             var emailError = document.getElementById('emailError');
             var regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -379,18 +290,6 @@
         document.getElementById('email').addEventListener('input', function() {
             document.getElementById('emailError').style.display = 'none';
             this.style.borderColor = '';
-        });
-
-        // Toggle Password Visibility
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
-
-        togglePassword.addEventListener('click', function (e) {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            // Toggle the eye / eye slash icon
-            this.classList.toggle('bi-eye');
-            this.classList.toggle('bi-eye-slash');
         });
     </script>
 </body>

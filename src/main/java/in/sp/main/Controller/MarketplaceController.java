@@ -84,15 +84,7 @@ public class MarketplaceController {
 
     private static String formatCategoryLabel(ProviderCategory cat) {
         if (cat == null) return "";
-        switch (cat) {
-            case TUTOR: return "Tutor";
-            case HOME_BAKER: return "Home Baker";
-            case LANGUAGE_TRAINER: return "Language Trainer";
-            case WOMEN_PRODUCTS: return "Women Products";
-            case WOMEN_LAWYER: return "Women Lawyer";
-            case FITNESS_ZUMBA: return "Fitness / Zumba";
-            default: return cat.name().replace('_', ' ');
-        }
+        return cat.getDisplayName();
     }
 
     private void validateMarketplaceUpload(MultipartFile file) {
@@ -116,7 +108,8 @@ public class MarketplaceController {
     // Provider registration + login
     // ==============================
     @GetMapping("/provider/register")
-    public String providerRegisterPage() {
+    public String providerRegisterPage(Model model) {
+        model.addAttribute("providerCategories", ProviderCategory.values());
         return "marketplace/provider-register";
     }
 
@@ -157,12 +150,13 @@ public class MarketplaceController {
             p.setPassword(passwordService.encode(password));
             
             // Robust category parsing
-            try {
-                p.setCategory(ProviderCategory.valueOf(category.trim().toUpperCase()));
-            } catch (Exception e) {
+            ProviderCategory parsedCat = ProviderCategory.fromFlexible(category);
+            if (parsedCat == null) {
                 model.addAttribute("error", "Invalid category: " + category);
+                model.addAttribute("providerCategories", ProviderCategory.values());
                 return "marketplace/provider-register";
             }
+            p.setCategory(parsedCat);
             
             p.setDescription(description);
             p.setLocationText(locationText);
@@ -251,6 +245,63 @@ public class MarketplaceController {
                 .sum();
         model.addAttribute("totalEarnings", totalEarnings);
         return "marketplace/provider-dashboard";
+    }
+
+    @PostMapping("/provider/profile/update")
+    public String updateProviderProfile(@RequestParam String fullName,
+                                       @RequestParam(required = false) String businessName,
+                                       @RequestParam String phone,
+                                       @RequestParam(required = false) String locationText,
+                                       @RequestParam(required = false) String serviceArea,
+                                       @RequestParam(required = false) String description,
+                                       @RequestParam(required = false) String qualification,
+                                       @RequestParam(required = false) String experience,
+                                       @RequestParam(required = false) String availableDays,
+                                       @RequestParam(required = false) String workingHoursFrom,
+                                       @RequestParam(required = false) String workingHoursTo,
+                                       @RequestParam(required = false) String languagesSpoken,
+                                       @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+                                       HttpSession session, RedirectAttributes ra) {
+        ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
+        if (p == null) return "redirect:/marketplace/provider/login";
+        
+        try {
+            ServiceProvider existing = providerRepo.findById(p.getId()).orElse(null);
+            if (existing != null) {
+                existing.setFullName(fullName != null ? fullName.trim() : "");
+                existing.setBusinessName(businessName != null ? businessName.trim() : "");
+                existing.setPhone(phone != null ? phone.trim() : "");
+                existing.setLocationText(locationText != null ? locationText.trim() : "");
+                existing.setServiceArea(serviceArea != null ? serviceArea.trim() : "");
+                existing.setDescription(description != null ? description.trim() : "");
+                existing.setQualification(qualification != null ? qualification.trim() : "");
+                existing.setExperience(experience != null ? experience.trim() : "");
+                existing.setAvailableDays(availableDays != null ? availableDays.trim() : "");
+                existing.setWorkingHoursFrom(workingHoursFrom != null ? workingHoursFrom.trim() : "");
+                existing.setWorkingHoursTo(workingHoursTo != null ? workingHoursTo.trim() : "");
+                existing.setLanguagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : "");
+                
+                if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                    String originalFilename = profilePhoto.getOriginalFilename();
+                    if (originalFilename != null) {
+                        String lower = originalFilename.toLowerCase();
+                        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp")) {
+                            existing.setProfilePhoto(fileUploadService.saveFile(profilePhoto));
+                        } else {
+                            ra.addFlashAttribute("error", "Invalid photo format. Please upload JPG, JPEG, PNG or WEBP.");
+                            return "redirect:/marketplace/provider/dashboard";
+                        }
+                    }
+                }
+                
+                providerRepo.save(existing);
+                session.setAttribute("loggedProvider", existing);
+                ra.addFlashAttribute("message", "Profile updated successfully!");
+            }
+        } catch (IOException e) {
+            ra.addFlashAttribute("error", "Failed to update profile photo.");
+        }
+        return "redirect:/marketplace/provider/dashboard";
     }
 
     @PostMapping("/provider/bookings/{id}/status")
@@ -400,10 +451,8 @@ public class MarketplaceController {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
-        ProviderCategory cat;
-        try {
-            cat = ProviderCategory.valueOf(category.trim().toUpperCase());
-        } catch (Exception e) {
+        ProviderCategory cat = ProviderCategory.fromFlexible(category);
+        if (cat == null) {
             redirectAttributes.addFlashAttribute("error", "Invalid marketplace category.");
             return "redirect:/marketplace";
         }
@@ -566,17 +615,28 @@ public class MarketplaceController {
                            @RequestParam String dateTime,
                            @RequestParam String mode,
                            @RequestParam Double price,
-                           @RequestParam Integer seats,
+                           @RequestParam(required = false) Integer seats,
                            @RequestParam(required = false) String meetingLink,
+                           @RequestParam(required = false) String serviceLocation,
                            @RequestParam String category,
+                           @RequestParam(required = false) String serviceProvided,
                            HttpSession session,
                            RedirectAttributes redirectAttributes) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
         if (p == null) return "redirect:/marketplace/provider/login";
 
         String normalizedMode = mode != null ? mode.trim() : "";
-        if ("Live".equalsIgnoreCase(normalizedMode) && (meetingLink == null || meetingLink.isBlank())) {
-            redirectAttributes.addFlashAttribute("error", "Meeting link is required for Live classes.");
+        boolean isOnline = normalizedMode.equalsIgnoreCase("Online") || normalizedMode.equalsIgnoreCase("Live") || normalizedMode.contains("Online");
+        boolean isOffline = normalizedMode.equalsIgnoreCase("Offline") || normalizedMode.contains("Offline");
+        boolean isHybrid = normalizedMode.contains("Hybrid");
+
+        if ((isOnline || isHybrid) && (meetingLink == null || meetingLink.isBlank())) {
+            redirectAttributes.addFlashAttribute("error", "Meeting link is required for Online / Hybrid sessions.");
+            return "redirect:/marketplace/provider/dashboard";
+        }
+
+        if ((isOffline || isHybrid) && (serviceLocation == null || serviceLocation.isBlank())) {
+            redirectAttributes.addFlashAttribute("error", "Service location is required for Offline / Hybrid sessions.");
             return "redirect:/marketplace/provider/dashboard";
         }
 
@@ -588,9 +648,13 @@ public class MarketplaceController {
         pc.setDateTime(LocalDateTime.parse(dateTime));
         pc.setMode(mode);
         pc.setPrice(price);
-        pc.setAvailableSeats(seats);
+        pc.setAvailableSeats(seats != null ? seats : 100);
         pc.setMeetingLink(meetingLink != null ? meetingLink.trim() : "");
+        pc.setServiceLocation(serviceLocation != null ? serviceLocation.trim() : "");
         pc.setCategory(ProviderCategory.valueOf(category.trim().toUpperCase()));
+        if (serviceProvided != null && !serviceProvided.isBlank()) {
+            pc.setServiceProvided(serviceProvided.trim());
+        }
 
         classRepo.save(pc);
         return "redirect:/marketplace/provider/dashboard";

@@ -1,4 +1,6 @@
--- Women Doctor payments, refunds, payouts, push tokens, instant queue
+CREATE TABLE IF NOT EXISTS doctor_appointments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY
+);
 
 ALTER TABLE doctor_appointments
     ADD COLUMN payment_status VARCHAR(32) NULL,

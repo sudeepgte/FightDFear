@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,7 +74,7 @@
         <div class="col-md-3 col-6">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#f0e8ff;"><i class="bi bi-calendar-fill" style="color:#1e1b4b;"></i></div>
-                <div class="stat-num" style="color:#1e1b4b;">${myEvents.size()}</div>
+                <div class="stat-num" style="color:#1e1b4b;">${fn:length(myEvents)}</div>
                 <div class="stat-label">Total Events</div>
             </div>
         </div>

@@ -549,7 +549,7 @@ public class AdminController {
 
         long totalEventBookings = womenEventRegistrationRepository.count();
         double totalEventTicketRevenue = womenEventRegistrationRepository.findAll().stream()
-                .filter(r -> r.isPaid())
+                .filter(r -> r.isPaid() && r.getAmountPaid() != null)
                 .mapToDouble(r -> r.getAmountPaid())
                 .sum();
 
@@ -557,11 +557,14 @@ public class AdminController {
         List<WomenEventRegistration> allEventRegs = womenEventRegistrationRepository.findAll();
         if (!allEventRegs.isEmpty()) {
             Map<String, Long> countMap = allEventRegs.stream()
+                    .filter(r -> r.getEvent() != null && r.getEvent().getName() != null)
                     .collect(java.util.stream.Collectors.groupingBy(r -> r.getEvent().getName(), java.util.stream.Collectors.counting()));
-            mostPopularEvent = countMap.entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse("None");
+            if (!countMap.isEmpty()) {
+                mostPopularEvent = countMap.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse("None");
+            }
         }
         res.put("totalEventBookings", totalEventBookings);
         res.put("totalEventTicketRevenue", totalEventTicketRevenue);
@@ -1562,7 +1565,7 @@ public class AdminController {
     public String viewReportedVideos(Model model) {
         List<VideoReport> reports = videoReportRepository.findAllByOrderByReportedAtDesc();
         model.addAttribute("reports", reports);
-        return "reported-videos"; 
+        return "adminReportedVideos"; 
     }
 
     // Legacy support for double-admin path
@@ -1651,21 +1654,28 @@ public class AdminController {
     // Purpose: Event Host / Event Organizer verification for mobile + web registrations.
     @GetMapping("/pending-event-hosts")
     public String viewPendingEventHosts(Model model, HttpSession session) {
-        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        try {
+            if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-        for (EventHost h : eventHostRepository.findAll()) {
-            if (h.getVerificationStatus() == null) {
-                h.setVerificationStatus(VerificationStatus.PENDING);
-                eventHostRepository.save(h);
+            for (EventHost h : eventHostRepository.findAll()) {
+                if (h.getVerificationStatus() == null) {
+                    h.setVerificationStatus(VerificationStatus.PENDING);
+                    eventHostRepository.save(h);
+                }
             }
-        }
 
-        model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
-        model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-        model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
-        model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
-        model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
-        return "adminPendingEventHosts";
+            model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
+            model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
+            model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
+            model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
+            model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
+            return "adminPendingEventHosts";
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage() + " - " + e.toString());
+            return "adminPendingEventHosts"; // reuse view to show error or we can return a simple string if ResponseBody was there, but it's a view.
+            // Let's pass the error to the model. We can view it in the UI or logs.
+        }
     }
 
     @PostMapping("/event-hosts/{id}/approve")

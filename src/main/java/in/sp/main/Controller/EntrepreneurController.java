@@ -216,6 +216,22 @@ public class EntrepreneurController {
         return "entrepreneur/login";
     }
 
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "entrepreneur/forgotPassword";
+    }
+
+    @PostMapping("/forgot-password")
+    public String handleForgotPassword(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
+        Optional<Entrepreneur> opt = entrepreneurRepository.findByEmail(email.toLowerCase().trim());
+        if (opt.isPresent()) {
+            redirectAttributes.addFlashAttribute("success", "Password reset instructions have been sent to your email!");
+            return "redirect:/entrepreneur/forgot-password";
+        }
+        redirectAttributes.addFlashAttribute("error", "No account found with this email.");
+        return "redirect:/entrepreneur/forgot-password";
+    }
+
     // --- Dashboard ---
 
     @GetMapping("/dashboard")

@@ -1,3 +1,21 @@
+CREATE TABLE IF NOT EXISTS investors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    investment_interests TEXT,
+    preferred_locations TEXT,
+    preferred_categories TEXT,
+    verification_documents TEXT
+);
+
+CREATE TABLE IF NOT EXISTS entrepreneurs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    business_description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS business_proposals (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    description TEXT
+);
+
 -- Investor / Entrepreneur free-text + Unicode (Rs / long bios).
 -- Guard these alters as the tables may not exist yet on a fresh database (Hibernate ddl-auto creates them after Flyway runs).
 

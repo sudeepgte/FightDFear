@@ -579,6 +579,48 @@ public class FitnessController {
         return "redirect:/fitness/trainer/dashboard";
     }
 
+    // UPDATE TRAINER PROFILE (Name, Phone, Experience, Photo, etc.)
+    @PostMapping("/trainer/update-profile")
+    @Transactional
+    public String updateTrainerProfile(
+            @RequestParam String fullName,
+            @RequestParam String phone,
+            @RequestParam Integer experience,
+            @RequestParam Double sessionFees,
+            @RequestParam String availableTimings,
+            @RequestParam List<String> specializations,
+            @RequestParam(required = false) MultipartFile profilePhoto,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        trainer.setFullName(fullName.trim());
+        trainer.setPhone(phone.trim());
+        trainer.setExperience(experience);
+        trainer.setSessionFees(sessionFees);
+        trainer.setAvailableTimings(availableTimings.trim());
+        trainer.setSpecializations(String.join(",", specializations));
+
+        if (profilePhoto != null && !profilePhoto.isEmpty()) {
+            try {
+                trainer.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
+            } catch (IOException e) {
+                redirectAttributes.addFlashAttribute("error", "Photo upload failed. Other changes were saved.");
+                fitnessTrainerRepository.save(trainer);
+                session.setAttribute("loggedTrainer", trainer);
+                return "redirect:/fitness/trainer/dashboard";
+            }
+        }
+
+        fitnessTrainerRepository.save(trainer);
+        session.setAttribute("loggedTrainer", trainer);
+
+        redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+
     // TRAINER: CREATE SCHEDULED CLASS
     @PostMapping("/trainer/class/create")
     @Transactional

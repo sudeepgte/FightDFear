@@ -225,7 +225,7 @@
                 </c:otherwise>
               </c:choose>
               
-              <c:if test="${a.status == 'COMPLETED' && not empty a.prescriptionText}">
+              <c:if test="${not empty a.prescriptionText}">
                 <textarea id="rx-data-${a.id}" style="display:none;" 
                   data-doc-name="<c:out value='${a.doctor.fullName}'/>"
                   data-doc-spec="<c:out value='${a.doctor.specialization}'/>"
