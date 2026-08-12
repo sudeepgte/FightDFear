@@ -30,7 +30,108 @@ public class Salon {
     private String website;
     private String profileImageUrl;
     @Column(length = 2000)
-    private String bio;  // add this field
+    private String bio;
+
+    // --- NEW SALON PROFILE FIELDS ---
+    private String salonTagline;
+    private String salonCategory;
+    private Boolean isWomenOnly = false;
+    private String currentStatus = "OPEN";
+
+    // Extended Profile Fields
+    private String businessRegistrationNo;
+    private String gstNumber;
+    private String salonLicenseNo;
+    private String alternateNumber;
+    private String hygieneStandard;
+    private String languagesSpoken;
+    private String landmark;
+    private Boolean hasReceptionArea;
+    private Boolean hasWaitingArea;
+
+    private Integer salonSizeSqFt;
+    private Integer totalFloors;
+    private Integer totalChairs;
+    private Integer treatmentRooms;
+    private Integer washrooms;
+
+    private Boolean hasParking = false;
+    private Boolean hasAc = false;
+    private Boolean hasWifi = false;
+    private Boolean hasPowerBackup = false;
+    private Boolean isWheelchairAccessible = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String amenitiesJson;
+
+    @Column(columnDefinition = "TEXT")
+    private String preferencesJson;
+    
+    @Column(columnDefinition = "TEXT")
+    private String operatingHoursJson;
+
+    @Column(columnDefinition = "TEXT")
+    private String socialMediaJson;
+
+    @Column(columnDefinition = "TEXT")
+    private String interiorImagesJson;
+
+    private String coverImageUrl;
+    private String businessRegistrationUrl;
+    private String salonLicenseUrl;
+    private String fireSafetyUrl;
+    private String gstCertificateUrl;
+
+    public String getSalonTagline() { return salonTagline; }
+    public void setSalonTagline(String salonTagline) { this.salonTagline = salonTagline; }
+    public String getSalonCategory() { return salonCategory; }
+    public void setSalonCategory(String salonCategory) { this.salonCategory = salonCategory; }
+    public Boolean getIsWomenOnly() { return isWomenOnly; }
+    public void setIsWomenOnly(Boolean isWomenOnly) { this.isWomenOnly = isWomenOnly; }
+    public String getCurrentStatus() { return currentStatus; }
+    public void setCurrentStatus(String currentStatus) { this.currentStatus = currentStatus; }
+    public Integer getSalonSizeSqFt() { return salonSizeSqFt; }
+    public void setSalonSizeSqFt(Integer salonSizeSqFt) { this.salonSizeSqFt = salonSizeSqFt; }
+    public Integer getTotalFloors() { return totalFloors; }
+    public void setTotalFloors(Integer totalFloors) { this.totalFloors = totalFloors; }
+    public Integer getTotalChairs() { return totalChairs; }
+    public void setTotalChairs(Integer totalChairs) { this.totalChairs = totalChairs; }
+    public Integer getTreatmentRooms() { return treatmentRooms; }
+    public void setTreatmentRooms(Integer treatmentRooms) { this.treatmentRooms = treatmentRooms; }
+    public Integer getWashrooms() { return washrooms; }
+    public void setWashrooms(Integer washrooms) { this.washrooms = washrooms; }
+    public Boolean getHasParking() { return hasParking; }
+    public void setHasParking(Boolean hasParking) { this.hasParking = hasParking; }
+    public Boolean getHasAc() { return hasAc; }
+    public void setHasAc(Boolean hasAc) { this.hasAc = hasAc; }
+    public Boolean getHasWifi() { return hasWifi; }
+    public void setHasWifi(Boolean hasWifi) { this.hasWifi = hasWifi; }
+    public Boolean getHasPowerBackup() { return hasPowerBackup; }
+    public void setHasPowerBackup(Boolean hasPowerBackup) { this.hasPowerBackup = hasPowerBackup; }
+    public Boolean getIsWheelchairAccessible() { return isWheelchairAccessible; }
+    public void setIsWheelchairAccessible(Boolean isWheelchairAccessible) { this.isWheelchairAccessible = isWheelchairAccessible; }
+    public String getAmenitiesJson() { return amenitiesJson; }
+    public void setAmenitiesJson(String amenitiesJson) { this.amenitiesJson = amenitiesJson; }
+
+    public String getPreferencesJson() { return preferencesJson; }
+    public void setPreferencesJson(String preferencesJson) { this.preferencesJson = preferencesJson; }
+    public String getOperatingHoursJson() { return operatingHoursJson; }
+    public void setOperatingHoursJson(String operatingHoursJson) { this.operatingHoursJson = operatingHoursJson; }
+    public String getSocialMediaJson() { return socialMediaJson; }
+    public void setSocialMediaJson(String socialMediaJson) { this.socialMediaJson = socialMediaJson; }
+    public String getInteriorImagesJson() { return interiorImagesJson; }
+    public void setInteriorImagesJson(String interiorImagesJson) { this.interiorImagesJson = interiorImagesJson; }
+    public String getCoverImageUrl() { return coverImageUrl; }
+    public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl; }
+    public String getBusinessRegistrationUrl() { return businessRegistrationUrl; }
+    public void setBusinessRegistrationUrl(String businessRegistrationUrl) { this.businessRegistrationUrl = businessRegistrationUrl; }
+    public String getSalonLicenseUrl() { return salonLicenseUrl; }
+    public void setSalonLicenseUrl(String salonLicenseUrl) { this.salonLicenseUrl = salonLicenseUrl; }
+    public String getFireSafetyUrl() { return fireSafetyUrl; }
+    public void setFireSafetyUrl(String fireSafetyUrl) { this.fireSafetyUrl = fireSafetyUrl; }
+    public String getGstCertificateUrl() { return gstCertificateUrl; }
+    public void setGstCertificateUrl(String gstCertificateUrl) { this.gstCertificateUrl = gstCertificateUrl; }
+    // --- END NEW SALON PROFILE FIELDS ---
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
@@ -39,12 +140,23 @@ public class Salon {
     private Double averageRating;
 
 
-    public Double getAverageRating() {
+	public Double getAverageRating() {
 		return averageRating;
 	}
 	public void setAverageRating(Double averageRating) {
 		this.averageRating = averageRating;
 	}
+
+    @Transient
+    private Integer totalReviews;
+
+    public Integer getTotalReviews() {
+        return totalReviews != null ? totalReviews : 0;
+    }
+
+    public void setTotalReviews(Integer totalReviews) {
+        this.totalReviews = totalReviews;
+    }
 	private Integer establishedYear; // e.g., 2015
 
     private String availabilityHours; // e.g., "Mon-Fri: 10am-8pm, Sat-Sun: 10am-6pm"
@@ -78,13 +190,35 @@ public class Salon {
 		this.username = username;
 	}
 
-	public String getPassword() {
-		return password;
-	}
+	    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public String getBusinessRegistrationNo() { return businessRegistrationNo; }
+    public void setBusinessRegistrationNo(String businessRegistrationNo) { this.businessRegistrationNo = businessRegistrationNo; }
+    
+    public String getGstNumber() { return gstNumber; }
+    public void setGstNumber(String gstNumber) { this.gstNumber = gstNumber; }
+    
+    public String getSalonLicenseNo() { return salonLicenseNo; }
+    public void setSalonLicenseNo(String salonLicenseNo) { this.salonLicenseNo = salonLicenseNo; }
+    
+    public String getAlternateNumber() { return alternateNumber; }
+    public void setAlternateNumber(String alternateNumber) { this.alternateNumber = alternateNumber; }
+    
+    public String getHygieneStandard() { return hygieneStandard; }
+    public void setHygieneStandard(String hygieneStandard) { this.hygieneStandard = hygieneStandard; }
+    
+    public String getLanguagesSpoken() { return languagesSpoken; }
+    public void setLanguagesSpoken(String languagesSpoken) { this.languagesSpoken = languagesSpoken; }
+    
+    public String getLandmark() { return landmark; }
+    public void setLandmark(String landmark) { this.landmark = landmark; }
+    
+    public Boolean getHasReceptionArea() { return hasReceptionArea; }
+    public void setHasReceptionArea(Boolean hasReceptionArea) { this.hasReceptionArea = hasReceptionArea; }
+    
+    public Boolean getHasWaitingArea() { return hasWaitingArea; }
+    public void setHasWaitingArea(Boolean hasWaitingArea) { this.hasWaitingArea = hasWaitingArea; }
 
 	private Double latitude;
     private Double longitude;
