@@ -6,6 +6,7 @@ import in.sp.main.Service.MartialArtsCenterService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -35,6 +36,7 @@ public class MobileLandingController {
     @Autowired private MartialArtsCenterRepository centreRepo;
 
     @GetMapping("/feed")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> feed() {
         List<Map<String, Object>> events = eventRepo.findByStatusOrderByCreatedAtDesc("APPROVED").stream()
                 .limit(LIMIT)
@@ -161,6 +163,7 @@ public class MobileLandingController {
     }
 
     @GetMapping("/notifications")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> notifications(HttpSession session) {
         List<Map<String, Object>> items = new ArrayList<>();
         List<BroadcastMessage> broadcasts = broadcastRepo.findAllByOrderBySentAtDesc();
@@ -403,6 +406,14 @@ public class MobileLandingController {
         return m;
     }
 
+    private int safeCommentCount(Videoupload v) {
+        try {
+            return v.getComments() == null ? 0 : v.getComments().size();
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
     private Map<String, Object> communityDto(Videoupload v) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", v.getId());
@@ -410,7 +421,7 @@ public class MobileLandingController {
         m.put("description", v.getDescription());
         m.put("category", v.getCategory());
         m.put("likes", v.getLikeCount());
-        m.put("comments", v.getComments() == null ? 0 : v.getComments().size());
+        m.put("comments", safeCommentCount(v));
         m.put("createdAt", v.getUploadTime() == null ? null : v.getUploadTime().toString());
         if (v.getUser() != null) {
             m.put("author", v.getUser().getFullName());
