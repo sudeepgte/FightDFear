@@ -75,6 +75,10 @@ class PaymentPendingOrderServiceTest {
                 paymentPendingOrderService.findCachedFulfillmentResponse("pay_test_123", orderId);
         assertTrue(cached.isPresent());
         assertEquals("success", cached.get().get("status"));
+
+        // Duplicate record should not create a second fulfillment row
+        paymentPendingOrderService.recordFulfillment(
+                "pay_test_123", orderId, user.getId(), "FITNESS", 1L, 50000, response);
         assertEquals(1, fulfillmentRepository.count());
         assertEquals(1, pendingOrderRepository.count());
     }
