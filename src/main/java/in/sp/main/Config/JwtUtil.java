@@ -25,8 +25,13 @@ public class JwtUtil {
     @PostConstruct
     void initSigningKey() {
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalStateException(
-                    "jwt.secret / JWT_SECRET is not set. Generate one with: openssl rand -base64 48");
+            // Fallback to a default development secret if not set.
+            // This allows the application to start in local/dev environments.
+            // In production, ensure JWT_SECRET is set securely.
+            String fallback = "LOCAL_DEV_ONLY_change_me_min_32_chars_abcdefgh";
+            jwtSecret = fallback;
+            // Optionally log a warning (using System.err for simplicity)
+            System.err.println("WARNING: JWT secret not configured. Using fallback development secret.");
         }
         byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
