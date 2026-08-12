@@ -29,6 +29,7 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
   late final FitnessService _svc;
   late final ModulePaymentCheckout _checkout;
   bool _loading = true;
+  bool _submitting = false;
   String? _error;
   Map<String, dynamic> _trainer = {};
 
@@ -177,7 +178,8 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
       _timeSlot!.isNotEmpty;
 
   Future<void> _confirmBooking() async {
-    if (!_canSubmit || _date == null) return;
+    if (!_canSubmit || _date == null || _submitting) return;
+    _submitting = true;
     final dateStr =
         '${_date!.year.toString().padLeft(4, '0')}-${_date!.month.toString().padLeft(2, '0')}-${_date!.day.toString().padLeft(2, '0')}';
 
@@ -230,6 +232,8 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -393,7 +397,7 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                 child: FilledButton(
-                  onPressed: _canSubmit ? _confirmBooking : null,
+                  onPressed: _canSubmit && !_submitting ? _confirmBooking : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: FitnessBookingScreen.primary,
                     minimumSize: const Size.fromHeight(48),

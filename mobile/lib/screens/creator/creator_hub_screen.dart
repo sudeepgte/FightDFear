@@ -29,7 +29,12 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
   late final ModulePaymentCheckout _checkout;
   final _searchCtrl = TextEditingController();
   final _cityFilter = TextEditingController();
+  final _scrollCtrl = ScrollController();
   bool _loading = true;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+  int _page = 0;
+  static const _pageSize = 20;
   String? _error;
   String _category = '';
   String _sort = 'newest';
@@ -56,11 +61,21 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         _checkout.handleError(r);
       },
     );
+    _scrollCtrl.addListener(_onScroll);
     _load();
+  }
+
+  void _onScroll() {
+    if (!_hasMore || _loadingMore || _loading) return;
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 240) {
+      _loadMore();
+    }
   }
 
   @override
   void dispose() {
+    _scrollCtrl.removeListener(_onScroll);
+    _scrollCtrl.dispose();
     _searchCtrl.dispose();
     _cityFilter.dispose();
     _checkout.dispose();
@@ -77,6 +92,8 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _page = 0;
+      _hasMore = true;
     });
     try {
       final res = await _api.feed(
@@ -84,6 +101,8 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         category: _category.isEmpty ? null : _category,
         city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
         sort: _sort,
+        page: 0,
+        size: _pageSize,
       );
       if (!mounted) return;
       if (res['success'] == true) {
@@ -97,6 +116,10 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         _canUpload = res['canUpload'] == true;
         final status = res['creatorProfileStatus']?.toString();
         _isCreatorApplicant = status != null && status.isNotEmpty;
+        final page = res['page'] is num ? (res['page'] as num).toInt() : 0;
+        final totalPages = res['totalPages'] is num ? (res['totalPages'] as num).toInt() : 1;
+        _page = page;
+        _hasMore = page + 1 < totalPages;
       } else {
         _error = res['error']?.toString();
       }
@@ -104,6 +127,34 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
       _error = '$e';
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _loadMore() async {
+    if (!_hasMore || _loadingMore) return;
+    setState(() => _loadingMore = true);
+    try {
+      final nextPage = _page + 1;
+      final res = await _api.feed(
+        search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        category: _category.isEmpty ? null : _category,
+        city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        sort: _sort,
+        page: nextPage,
+        size: _pageSize,
+      );
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final more = ModuleTheme.toList(res['posts']);
+        _posts = [..._posts, ...more];
+        final page = res['page'] is num ? (res['page'] as num).toInt() : nextPage;
+        final totalPages = res['totalPages'] is num ? (res['totalPages'] as num).toInt() : page + 1;
+        _page = page;
+        _hasMore = page + 1 < totalPages && more.isNotEmpty;
+      }
+    } catch (_) {
+      // Keep existing feed on pagination failure.
+    }
+    if (mounted) setState(() => _loadingMore = false);
   }
 
   void _openProfile(int id) {
@@ -361,6 +412,7 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: CustomScrollView(
+                    controller: _scrollCtrl,
                     slivers: [
                       SliverToBoxAdapter(
                         child: Padding(
@@ -551,6 +603,13 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
                             childCount: _posts.length,
                           ),
                         ),
+                      if (_loadingMore)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                        ),
                       const SliverToBoxAdapter(child: SizedBox(height: 80)),
                     ],
                   ),
@@ -680,10 +739,10 @@ class _PostCardState extends State<_PostCard> {
                 AspectRatio(
                   aspectRatio: 16 / 9,
                   child: widget.mediaUrl(post['thumbnailPath']?.toString()).isNotEmpty
-                      ? Image.network(
+                      ? ModuleTheme.networkImage(
                           widget.mediaUrl(post['thumbnailPath']?.toString()),
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _mediaPlaceholder(),
+                          error: _mediaPlaceholder(),
                         )
                       : _mediaPlaceholder(),
                 ),

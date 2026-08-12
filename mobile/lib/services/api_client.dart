@@ -14,7 +14,7 @@ class ApiClient {
   static const _adminTokenKey = 'admin_auth_token';
   static const _salonTokenKey = 'salon_auth_token';
   static const _stylistTokenKey = 'stylist_auth_token';
-  static const _timeout = Duration(seconds: 8);
+  static const _browseTimeout = Duration(seconds: 8);
   static const _uploadTimeout = Duration(seconds: 120);
 
   Future<String?> getToken() async {
@@ -251,7 +251,7 @@ class ApiClient {
           ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -277,7 +277,7 @@ class ApiClient {
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -296,7 +296,7 @@ class ApiClient {
           headers: headers,
           body: fields,
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -324,7 +324,7 @@ class ApiClient {
           ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -345,7 +345,7 @@ class ApiClient {
       adminAuth: adminAuth,
     ));
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await req.send().timeout(timeout ?? _timeout);
+    final streamed = await req.send().timeout(timeout ?? _browseTimeout);
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }
@@ -370,7 +370,7 @@ class ApiClient {
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(_timeout);
+        .timeout(_browseTimeout);
     return _decode(res);
   }
 

@@ -277,12 +277,12 @@ class _Avatar extends StatelessWidget {
                   color: ModuleTheme.primary,
                 ),
               )
-            : Image.network(
+            : ModuleTheme.networkImage(
                 url,
                 width: 64,
                 height: 64,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Text(
+                error: Text(
                   initial,
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,

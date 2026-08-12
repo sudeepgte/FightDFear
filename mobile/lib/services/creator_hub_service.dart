@@ -9,12 +9,21 @@ class CreatorHubService {
 
   final ApiClient _api;
 
-  Future<Map<String, dynamic>> feed({String? search, String? category, String? city, String? sort}) {
+  Future<Map<String, dynamic>> feed({
+    String? search,
+    String? category,
+    String? city,
+    String? sort,
+    int page = 0,
+    int size = 20,
+  }) {
     final params = <String>[];
     if (search != null && search.isNotEmpty) params.add('search=${Uri.encodeComponent(search)}');
     if (category != null && category.isNotEmpty) params.add('category=${Uri.encodeComponent(category)}');
     if (city != null && city.isNotEmpty) params.add('city=${Uri.encodeComponent(city)}');
     if (sort != null && sort.isNotEmpty) params.add('sort=${Uri.encodeComponent(sort)}');
+    params.add('page=$page');
+    params.add('size=$size');
     final q = params.isEmpty ? '' : '?${params.join('&')}';
     return _api.get('/api/creator-hub/feed$q');
   }
