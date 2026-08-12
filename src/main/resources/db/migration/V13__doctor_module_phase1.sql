@@ -1,4 +1,9 @@
--- Women Doctor module Phase 1: lifecycle, profile completion, OTP storage
+CREATE TABLE IF NOT EXISTS doctors (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    verification_status VARCHAR(64) NULL,
+    created_at DATETIME NULL,
+    updated_at DATETIME NULL
+);
 
 ALTER TABLE doctors
     ADD COLUMN doctor_profile_status VARCHAR(32) NULL,

@@ -310,17 +310,7 @@
                     <div class="cat-icon-box">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <h3>
-                        <c:choose>
-                            <c:when test="${pcat == 'TUTOR'}">Tutor</c:when>
-                            <c:when test="${pcat == 'HOME_BAKER'}">Home Baker</c:when>
-                            <c:when test="${pcat == 'LANGUAGE_TRAINER'}">Language Trainer</c:when>
-                            <c:when test="${pcat == 'WOMEN_PRODUCTS'}">Women Products</c:when>
-                            <c:when test="${pcat == 'WOMEN_LAWYER'}">Women Lawyer</c:when>
-                            <c:when test="${pcat == 'FITNESS_ZUMBA'}">Fitness / Zumba</c:when>
-                            <c:otherwise>${pcat}</c:otherwise>
-                        </c:choose>
-                    </h3>
+                    <h3>${pcat.displayName}</h3>
                     <p>Browse verified providers in this category.</p>
                 </a>
             </c:forEach>

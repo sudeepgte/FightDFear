@@ -1565,7 +1565,7 @@ public class AdminController {
     public String viewReportedVideos(Model model) {
         List<VideoReport> reports = videoReportRepository.findAllByOrderByReportedAtDesc();
         model.addAttribute("reports", reports);
-        return "reported-videos"; 
+        return "adminReportedVideos"; 
     }
 
     // Legacy support for double-admin path

@@ -1241,8 +1241,8 @@
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/login">User Login</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/doctors/login">Women Doctor Login</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/centres/loginCentre">Self-Defense Center Login</a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/salons/login">Beauty Salon Login</a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/stylists/login">Hair Stylist Login</a></li>
+                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/salons/login">Beauty &amp; Wellness Login</a></li>
+
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/marketplace/provider/login">Service Partner Login</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/women-products/seller/login">Marketplace Seller Login</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/entrepreneur/login">Entrepreneur Login</a></li>
@@ -1258,8 +1258,8 @@
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/users/register">Join as Member</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/doctors/register">Women Doctor</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/centres/registerCentre">Self-Defense Trainer</a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/salons/register">Beauty and wellness</a></li>
-                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/stylists/register">Hair Stylist</a></li>
+                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/salons/register">Beauty &amp; Wellness</a></li>
+
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/marketplace/provider/register">Service Partner</a></li>
                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/women-products/seller/register">Marketplace Seller</a></li>
 

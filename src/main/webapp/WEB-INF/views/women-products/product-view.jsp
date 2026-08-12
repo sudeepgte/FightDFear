@@ -533,14 +533,44 @@
           </c:if>
         </div>
 
-        <c:choose>
-          <c:when test="${product.stock > 0}">
-            <div class="stock-text"><i class="bi bi-check-circle-fill"></i> In Stock (${product.stock} available)</div>
-          </c:when>
-          <c:otherwise>
-            <div class="stock-text" style="color: #dc2626;"><i class="bi bi-x-circle-fill"></i> Out of Stock</div>
-          </c:otherwise>
-        </c:choose>
+        <!-- Stock Availability Indicator Container -->
+        <div id="stockContainer" style="margin-bottom: 20px;">
+          <c:choose>
+            <c:when test="${product.stock > 5}">
+              <div class="stock-badge-pill stock-in" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#ecfdf5; color:#059669; border:1px solid #10b98133; border-radius:12px; font-weight:800; font-size:14px;">
+                <i class="bi bi-check-circle-fill"></i> ✓ In Stock
+              </div>
+            </c:when>
+            <c:when test="${product.stock >= 2 && product.stock <= 5}">
+              <div class="stock-badge-pill stock-warning" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fffbe0; color:#d97706; border:1px solid #fde68a; border-radius:12px; font-weight:800; font-size:14px;">
+                <i class="bi bi-exclamation-triangle-fill"></i> ⚠ Only <span id="currentStockVal">${product.stock}</span> left in stock
+              </div>
+            </c:when>
+            <c:when test="${product.stock == 1}">
+              <div class="stock-badge-pill stock-urgent" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:#fef2f2; color:#dc2626; border:2px solid #fca5a5; border-radius:14px; font-weight:900; font-size:15px; box-shadow:0 4px 12px rgba(220,38,38,0.15);">
+                <i class="bi bi-fire" style="color:#ef4444;"></i> 🔥 Only 1 left in stock!
+              </div>
+            </c:when>
+            <c:otherwise>
+              <div class="stock-badge-pill stock-out" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:12px; font-weight:800; font-size:14px;">
+                <i class="bi bi-x-circle-fill"></i> Out of Stock
+              </div>
+            </c:otherwise>
+          </c:choose>
+        </div>
+
+        <!-- Dynamic Quantity Selector -->
+        <div class="quantity-selector-block" style="margin-bottom: 20px; display: flex; align-items: center; gap: 14px;">
+          <label style="font-weight: 800; font-size: 14px; color: var(--brand-purple-dark);">Quantity:</label>
+          <c:choose>
+            <c:when test="${product.stock > 0}">
+              <input type="number" id="productQuantity" min="1" max="${product.stock}" value="1" class="form-control" style="width: 100px; text-align: center; font-weight: 800; border-radius: 12px; border: 2px solid var(--fdf-border); font-size: 15px;" oninput="updateQtyInputs(this, ${product.stock})">
+            </c:when>
+            <c:otherwise>
+              <input type="number" id="productQuantity" min="0" max="0" value="0" disabled class="form-control" style="width: 100px; text-align: center; font-weight: 800; border-radius: 12px; background: #f3f4f6; color: #9ca3af; font-size: 15px;">
+            </c:otherwise>
+          </c:choose>
+        </div>
         
         <div class="product-desc" style="border:none; padding:0; margin-bottom:15px; font-size:14px;">${product.description}</div>
         
@@ -581,15 +611,24 @@
           </div>
         </c:if>
 
-        <div class="btn-group" style="margin-top:20px;">
-          <c:if test="${product.stock > 0}">
-            <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" style="flex: 2;">
-              <input type="hidden" name="productId" value="${product.id}">
-              <button type="submit" class="btn-fdf-main" style="background: #166534; box-shadow: none;">
-                <i class="bi bi-cart-plus-fill"></i> Add to Cart
-              </button>
-            </form>
-          </c:if>
+        <div class="btn-group" style="margin-top:20px; gap:12px;">
+          <!-- Buy Now Form -->
+          <form action="${pageContext.request.contextPath}/women-products/buy-now" method="post" id="buyNowForm" style="flex: 2;">
+            <input type="hidden" name="productId" value="${product.id}">
+            <input type="hidden" name="quantity" id="buyNowQty" value="1">
+            <button type="submit" class="btn-fdf-main" id="buyNowBtn" ${product.stock <= 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; background:#9ca3af; box-shadow:none;"' : ''}>
+              <i class="bi bi-lightning-charge-fill"></i> Buy Now
+            </button>
+          </form>
+
+          <!-- Add to Cart Form -->
+          <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" id="addToCartForm" style="flex: 2;">
+            <input type="hidden" name="productId" value="${product.id}">
+            <input type="hidden" name="quantity" id="addToCartQty" value="1">
+            <button type="submit" class="btn-fdf-main" id="addToCartBtn" ${product.stock <= 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; background:#9ca3af; box-shadow:none;"' : 'style="background: #166534; box-shadow: none;"'}>
+              <i class="bi bi-cart-plus-fill"></i> Add to Cart
+            </button>
+          </form>
           
           <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post" style="flex: 1;">
             <input type="hidden" name="productId" value="${product.id}">
@@ -751,6 +790,101 @@
         msgBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please enter a valid 6-digit pincode.';
       }
     }
+
+    // Dynamic Quantity Input Synchronization
+    function updateQtyInputs(inputEl, maxStock) {
+      let val = parseInt(inputEl.value) || 1;
+      if (val < 1) val = 1;
+      if (val > maxStock) val = maxStock;
+      inputEl.value = val;
+
+      const buyNowQty = document.getElementById('buyNowQty');
+      const addToCartQty = document.getElementById('addToCartQty');
+      if (buyNowQty) buyNowQty.value = val;
+      if (addToCartQty) addToCartQty.value = val;
+    }
+
+    // Real-Time Stock Availability Polling (Every 3 seconds)
+    function pollProductStock() {
+      const productId = '${product.id}';
+      if (!productId) return;
+
+      fetch('${pageContext.request.contextPath}/women-products/api/product/' + productId + '/stock')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.exists) return;
+
+          const stock = data.stock;
+          const container = document.getElementById('stockContainer');
+          const qtyInput = document.getElementById('productQuantity');
+          const buyNowBtn = document.getElementById('buyNowBtn');
+          const addToCartBtn = document.getElementById('addToCartBtn');
+
+          if (container) {
+            if (stock > 5) {
+              container.innerHTML = '<div class="stock-badge-pill stock-in" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#ecfdf5; color:#059669; border:1px solid #10b98133; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-check-circle-fill"></i> ✓ In Stock</div>';
+            } else if (stock >= 2 && stock <= 5) {
+              container.innerHTML = '<div class="stock-badge-pill stock-warning" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fffbe0; color:#d97706; border:1px solid #fde68a; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-exclamation-triangle-fill"></i> ⚠ Only ' + stock + ' left in stock</div>';
+            } else if (stock === 1) {
+              container.innerHTML = '<div class="stock-badge-pill stock-urgent" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:#fef2f2; color:#dc2626; border:2px solid #fca5a5; border-radius:14px; font-weight:900; font-size:15px; box-shadow:0 4px 12px rgba(220,38,38,0.15);"><i class="bi bi-fire" style="color:#ef4444;"></i> 🔥 Only 1 left in stock!</div>';
+            } else {
+              container.innerHTML = '<div class="stock-badge-pill stock-out" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-x-circle-fill"></i> Out of Stock</div>';
+            }
+          }
+
+          if (qtyInput) {
+            if (stock <= 0) {
+              qtyInput.value = 0;
+              qtyInput.max = 0;
+              qtyInput.min = 0;
+              qtyInput.disabled = true;
+            } else {
+              qtyInput.disabled = false;
+              qtyInput.min = 1;
+              qtyInput.max = stock;
+              if (parseInt(qtyInput.value) > stock) {
+                qtyInput.value = stock;
+                updateQtyInputs(qtyInput, stock);
+              }
+            }
+          }
+
+          if (buyNowBtn) {
+            if (stock <= 0) {
+              buyNowBtn.disabled = true;
+              buyNowBtn.style.opacity = '0.5';
+              buyNowBtn.style.cursor = 'not-allowed';
+              buyNowBtn.style.background = '#9ca3af';
+              buyNowBtn.style.boxShadow = 'none';
+            } else {
+              buyNowBtn.disabled = false;
+              buyNowBtn.style.opacity = '1';
+              buyNowBtn.style.cursor = 'pointer';
+              buyNowBtn.style.background = 'var(--gradient-primary)';
+            }
+          }
+
+          if (addToCartBtn) {
+            if (stock <= 0) {
+              addToCartBtn.disabled = true;
+              addToCartBtn.style.opacity = '0.5';
+              addToCartBtn.style.cursor = 'not-allowed';
+              addToCartBtn.style.background = '#9ca3af';
+              addToCartBtn.style.boxShadow = 'none';
+            } else {
+              addToCartBtn.disabled = false;
+              addToCartBtn.style.opacity = '1';
+              addToCartBtn.style.cursor = 'pointer';
+              addToCartBtn.style.background = '#166534';
+            }
+          }
+        })
+        .catch(err => { /* silent fail */ });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      setInterval(pollProductStock, 3000);
+    });
   </script>
 
   <footer style="margin-top: 60px; text-align: center; color: var(--fdf-muted); font-size: 14px; padding-bottom: 40px;">
