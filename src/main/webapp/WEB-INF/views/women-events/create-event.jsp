@@ -275,7 +275,7 @@
 <aside class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon"><i class="bi bi-calendar-event-fill"></i></div>
-        <span>Event<br>Organizer</span>
+        <span>Women Event<br>Organizer</span>
     </div>
     <nav class="sidebar-nav">
         <div class="nav-label">Main</div>
