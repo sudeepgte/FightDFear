@@ -15,25 +15,24 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import in.sp.main.Service.PaymentPendingOrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/payment")
 public class PaymentController {
 
-    /**
-     * Server-side pending orders for Flutter / cookie-less clients.
-     * Web browsers still also keep a session copy for compatibility.
-     */
-    private static final ConcurrentHashMap<String, PendingOrder> PENDING_ORDERS = new ConcurrentHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
+
+    /** Legacy session TTL mirror for browsers; authoritative state is in DB. */
     private static final long PENDING_TTL_MS = 30 * 60 * 1000L;
 
-    private record PendingOrder(
+    private record PendingSnapshot(
             long userId,
             int amountPaise,
-            long createdAtMs,
             String type,
             Long targetId,
             String consultationType,
@@ -134,6 +133,15 @@ public class PaymentController {
     private in.sp.main.Repository.DoctorPaymentEventRepository doctorPaymentEventRepository;
 
     @Autowired
+    private PaymentPendingOrderService paymentPendingOrderService;
+
+    @Autowired
+    private PaymentWebhookEventRepository paymentWebhookEventRepository;
+
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
+
+    @Autowired
     private SlotRepository slotRepository;
 
     @Autowired
@@ -209,16 +217,8 @@ public class PaymentController {
             String consultationType,
             String appointmentTime,
             String reason) {
-        purgeExpiredPendingOrders();
-        PENDING_ORDERS.put(orderId, new PendingOrder(
-                user.getId(),
-                amountPaise,
-                System.currentTimeMillis(),
-                type,
-                targetId,
-                consultationType,
-                appointmentTime,
-                reason));
+        paymentPendingOrderService.savePendingOrder(
+                orderId, user, amountPaise, type, targetId, consultationType, appointmentTime, reason);
         pendingOrders(session).put(orderId, amountPaise);
     }
 
@@ -227,33 +227,55 @@ public class PaymentController {
         rememberPendingOrder(orderId, user, amountPaise, session, null, null, null, null, null);
     }
 
-    private PendingOrder takePendingOrder(String orderId, User user, HttpSession session) {
-        purgeExpiredPendingOrders();
-        PendingOrder global = PENDING_ORDERS.get(orderId);
-        if (global != null) {
-            if (global.userId() != user.getId()) {
-                return null;
-            }
-            PENDING_ORDERS.remove(orderId);
-            pendingOrders(session).remove(orderId);
-            return global;
+    private PendingSnapshot resolvePendingSnapshot(String orderId, User user, HttpSession session) {
+        Optional<PaymentPendingOrder> dbPending =
+                paymentPendingOrderService.findPendingForUser(orderId, user.getId());
+        if (dbPending.isPresent()) {
+            PaymentPendingOrder p = dbPending.get();
+            return new PendingSnapshot(
+                    p.getUserId(),
+                    p.getAmountPaise(),
+                    p.getPaymentType(),
+                    p.getTargetId(),
+                    p.getConsultationType(),
+                    p.getAppointmentTime(),
+                    p.getReason());
+        }
+        PaymentPendingOrder fulfilled = paymentPendingOrderService.findByOrderId(orderId).orElse(null);
+        if (fulfilled != null && "FULFILLED".equalsIgnoreCase(fulfilled.getStatus())
+                && user.getId().equals(fulfilled.getUserId())) {
+            return new PendingSnapshot(
+                    fulfilled.getUserId(),
+                    fulfilled.getAmountPaise(),
+                    fulfilled.getPaymentType(),
+                    fulfilled.getTargetId(),
+                    fulfilled.getConsultationType(),
+                    fulfilled.getAppointmentTime(),
+                    fulfilled.getReason());
         }
         Map<String, Integer> pending = pendingOrders(session);
-        Integer amount = pending.remove(orderId);
-        if (amount == null) {
-            return null;
+        Integer amount = pending.get(orderId);
+        if (amount != null) {
+            return new PendingSnapshot(user.getId(), amount, null, null, null, null, null);
         }
-        return new PendingOrder(user.getId(), amount, System.currentTimeMillis(), null, null, null, null, null);
+        return null;
     }
 
-    private Integer takePendingAmountPaise(String orderId, User user, HttpSession session) {
-        PendingOrder order = takePendingOrder(orderId, user, session);
-        return order == null ? null : order.amountPaise();
-    }
-
-    private void purgeExpiredPendingOrders() {
-        long now = System.currentTimeMillis();
-        PENDING_ORDERS.entrySet().removeIf(e -> now - e.getValue().createdAtMs() > PENDING_TTL_MS);
+    private void finalizeSuccessfulPayment(
+            String orderId,
+            String paymentId,
+            User user,
+            String paymentType,
+            Long targetId,
+            int amountPaise,
+            Map<String, Object> responseMap) {
+        paymentPendingOrderService.findByOrderId(orderId).ifPresent(p -> {
+            if ("PENDING".equalsIgnoreCase(p.getStatus())) {
+                paymentPendingOrderService.markFulfilled(p, paymentId);
+            }
+        });
+        paymentPendingOrderService.recordFulfillment(
+                paymentId, orderId, user.getId(), paymentType, targetId, amountPaise, responseMap);
     }
 
     private boolean verifyRazorpaySignature(String orderId, String paymentId, String signature) throws Exception {
@@ -548,7 +570,7 @@ public class PaymentController {
             errorBody.put("error", ex.getReason());
             return ResponseEntity.status(ex.getStatusCode().value()).body(errorBody);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to create payment order", e);
             errorBody.put("error", "Failed to create payment order");
             return ResponseEntity.status(500).body(errorBody);
         }
@@ -574,7 +596,16 @@ public class PaymentController {
             String signature = Objects.toString(data.get("razorpay_signature"), "").trim();
             String type = Objects.toString(data.get("type"), "").trim();
 
-            PendingOrder pending = takePendingOrder(orderId, user, session);
+            Optional<Map<String, Object>> cached =
+                    paymentPendingOrderService.findCachedFulfillmentResponse(paymentId, orderId);
+            if (cached.isPresent()) {
+                Map<String, Object> cachedBody = new HashMap<>(cached.get());
+                cachedBody.putIfAbsent("status", "success");
+                cachedBody.put("idempotent", true);
+                return ResponseEntity.ok(cachedBody);
+            }
+
+            PendingSnapshot pending = resolvePendingSnapshot(orderId, user, session);
             if (pending == null) {
                 responseMap.put("error", "Unknown or expired payment order. Create a new order and try again.");
                 return ResponseEntity.status(400).body(responseMap);
@@ -998,10 +1029,13 @@ public class PaymentController {
 
             responseMap.put("status", "success");
             responseMap.put("amountPaid", amountPaid);
+            String resolvedType = type.isBlank() ? Objects.toString(pending.type(), "UNKNOWN") : type;
+            finalizeSuccessfulPayment(
+                    orderId, paymentId, user, resolvedType, pending.targetId(), expectedPaise, responseMap);
             return ResponseEntity.ok(responseMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            responseMap.put("error", "Server Error: " + e.getMessage());
+            log.error("Payment verify failed for order", e);
+            responseMap.put("error", "Server Error: Payment verification failed.");
             return ResponseEntity.status(500).body(responseMap);
         }
     }
@@ -1017,17 +1051,26 @@ public class PaymentController {
             @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
         Map<String, Object> res = new HashMap<>();
         try {
-            if (razorpayWebhookSecret != null && !razorpayWebhookSecret.isBlank() && signature != null) {
+            boolean prodProfile = activeProfiles != null && activeProfiles.contains("prod");
+            if (razorpayWebhookSecret != null && !razorpayWebhookSecret.isBlank()) {
+                if (signature == null || signature.isBlank()) {
+                    res.put("error", "Missing webhook signature");
+                    return ResponseEntity.status(401).body(res);
+                }
                 boolean ok = Utils.verifyWebhookSignature(rawBody, signature, razorpayWebhookSecret);
                 if (!ok) {
                     res.put("error", "Invalid webhook signature");
-                    return ResponseEntity.status(400).body(res);
+                    return ResponseEntity.status(401).body(res);
                 }
+            } else if (prodProfile) {
+                res.put("error", "Webhook secret required in production");
+                return ResponseEntity.status(503).body(res);
             }
             JSONObject payload = new JSONObject(rawBody);
             String event = payload.optString("event");
             String eventId = payload.optString("id", event + "_" + System.currentTimeMillis());
-            if (doctorPaymentEventRepository.findByRazorpayEventId(eventId).isPresent()) {
+            if (paymentWebhookEventRepository.findByRazorpayEventId(eventId).isPresent()
+                    || doctorPaymentEventRepository.findByRazorpayEventId(eventId).isPresent()) {
                 res.put("success", true);
                 res.put("duplicate", true);
                 return ResponseEntity.ok(res);
@@ -1038,7 +1081,7 @@ public class PaymentController {
             String paymentId = entity == null ? null : entity.optString("id", null);
             String orderId = entity == null ? null : entity.optString("order_id", null);
 
-            DoctorPaymentEvent ev = new DoctorPaymentEvent();
+            PaymentWebhookEvent ev = new PaymentWebhookEvent();
             ev.setRazorpayEventId(eventId);
             ev.setEventType(event);
             ev.setRazorpayPaymentId(paymentId);
@@ -1047,54 +1090,75 @@ public class PaymentController {
             ev.setProcessed(false);
             ev.setCreatedAt(LocalDateTime.now());
 
+            // Legacy doctor event row for backward-compatible admin queries
+            DoctorPaymentEvent doctorEv = new DoctorPaymentEvent();
+            doctorEv.setRazorpayEventId(eventId);
+            doctorEv.setEventType(event);
+            doctorEv.setRazorpayPaymentId(paymentId);
+            doctorEv.setRazorpayOrderId(orderId);
+            doctorEv.setPayload(rawBody);
+            doctorEv.setProcessed(false);
+            doctorEv.setCreatedAt(LocalDateTime.now());
+
             if (paymentId != null) {
-                appointmentRepo.findByRazorpayPaymentId(paymentId).ifPresent(a -> ev.setAppointmentId(a.getId()));
+                appointmentRepo.findByRazorpayPaymentId(paymentId).ifPresent(a -> {
+                    ev.setProcessed(true);
+                    doctorEv.setAppointmentId(a.getId());
+                    doctorEv.setProcessed(true);
+                });
             } else if (orderId != null) {
-                appointmentRepo.findByRazorpayOrderId(orderId).ifPresent(a -> ev.setAppointmentId(a.getId()));
+                appointmentRepo.findByRazorpayOrderId(orderId).ifPresent(a -> {
+                    ev.setProcessed(true);
+                    doctorEv.setAppointmentId(a.getId());
+                    doctorEv.setProcessed(true);
+                });
             }
 
-            // Recover DOCTOR bookings when verify never ran but payment was captured
-            if ("payment.captured".equals(event)
-                    && orderId != null
-                    && ev.getAppointmentId() == null) {
-                PendingOrder pending = PENDING_ORDERS.get(orderId);
-                if (pending != null
-                        && "DOCTOR".equalsIgnoreCase(pending.type())
-                        && pending.targetId() != null) {
-                    try {
-                        User user = userRepo.findById(pending.userId()).orElse(null);
-                        Doctor d = doctorRepo.findById(pending.targetId()).orElse(null);
-                        LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(pending.appointmentTime());
-                        ConsultationType cType = MobileDoctorController.parseConsultationType(pending.consultationType());
-                        if (user != null && d != null && apptTime != null) {
-                            DoctorAppointment appt = doctorBookingService.createPaidBooking(
-                                    d,
-                                    user,
-                                    apptTime,
-                                    cType,
-                                    pending.reason(),
-                                    pending.amountPaise() / 100.0,
-                                    orderId,
-                                    paymentId,
-                                    "webhook");
-                            ev.setAppointmentId(appt.getId());
-                            PENDING_ORDERS.remove(orderId);
+            if ("payment.captured".equals(event) && orderId != null && doctorEv.getAppointmentId() == null) {
+                paymentPendingOrderService.findByOrderId(orderId).ifPresent(pending -> {
+                    if ("DOCTOR".equalsIgnoreCase(pending.getPaymentType()) && pending.getTargetId() != null) {
+                        try {
+                            User user = userRepo.findById(pending.getUserId()).orElse(null);
+                            Doctor d = doctorRepo.findById(pending.getTargetId()).orElse(null);
+                            LocalDateTime apptTime =
+                                    MobileDoctorController.parseAppointmentTime(pending.getAppointmentTime());
+                            ConsultationType cType =
+                                    MobileDoctorController.parseConsultationType(pending.getConsultationType());
+                            if (user != null && d != null && apptTime != null) {
+                                DoctorAppointment appt = doctorBookingService.createPaidBooking(
+                                        d,
+                                        user,
+                                        apptTime,
+                                        cType,
+                                        pending.getReason(),
+                                        pending.getAmountPaise() / 100.0,
+                                        orderId,
+                                        paymentId,
+                                        "webhook");
+                                doctorEv.setAppointmentId(appt.getId());
+                                ev.setProcessed(true);
+                                doctorEv.setProcessed(true);
+                                paymentPendingOrderService.markFulfilled(pending, paymentId);
+                            }
+                        } catch (Exception recoverEx) {
+                            log.warn("Webhook doctor recovery failed for order {}", orderId, recoverEx);
+                            res.put("recoverError", "Recovery failed");
                         }
-                    } catch (Exception recoverEx) {
-                        ev.setProcessed(false);
-                        res.put("recoverError", recoverEx.getMessage());
                     }
-                }
+                });
             }
 
             if (!res.containsKey("recoverError")) {
                 ev.setProcessed(true);
+                doctorEv.setProcessed(true);
             }
-            doctorPaymentEventRepository.save(ev);
+            paymentWebhookEventRepository.save(ev);
+            doctorPaymentEventRepository.save(doctorEv);
             res.put("success", true);
             return ResponseEntity.ok(res);
         } catch (Exception e) {
-            res.put("error", e.getMessage());
+            log.error("Razorpay webhook processing failed", e);
+            res.put("error", "Webhook processing failed");
             return ResponseEntity.status(500).body(res);
         }
     }
