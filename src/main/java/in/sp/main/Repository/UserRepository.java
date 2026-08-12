@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 
@@ -30,4 +31,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.verificationStatus = :status AND u.banned = false")
     List<User> findByVerificationStatusAndBannedFalse(@Param("status") VerificationStatus status);
+
+    List<User> findByCreatorProfileStatusIn(List<PartnerProfileStatus> statuses);
+
+    long countByCreatorProfileStatusIn(List<PartnerProfileStatus> statuses);
+
+    List<User> findByVerifiedCreatorTrue();
 }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import 'doctor_dashboard_screen.dart';
+import 'doctor_profile_completion_screen.dart';
 
 class DoctorPortalLoginScreen extends StatefulWidget {
   const DoctorPortalLoginScreen({super.key, this.startRegister = false});
@@ -270,9 +271,24 @@ class _DoctorPortalLoginScreenState extends State<DoctorPortalLoginScreen> {
           ),
         );
       } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
-        );
+        final needsCompletion = res['needsProfileCompletion'] == true;
+        if (needsCompletion) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => DoctorProfileCompletionScreen(
+                onFinished: (ctx) {
+                  Navigator.of(ctx).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+                  );
+                },
+              ),
+            ),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+          );
+        }
       }
     } else {
       setState(() => _error = res['error']?.toString() ?? 'Request failed');

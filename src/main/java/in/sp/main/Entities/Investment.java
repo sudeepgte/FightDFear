@@ -25,6 +25,13 @@ public class Investment {
     private String status; // PENDING, COMPLETED
 
     private boolean commissionPaid = false;
+    private Boolean payoutCredited = false;
+
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
+    private Integer rating;
+    @Column(columnDefinition = "TEXT")
+    private String review;
 
     private LocalDateTime createdAt;
 
@@ -106,4 +113,13 @@ public class Investment {
     public void setAdminAmount(Double adminAmount) {
         this.adminAmount = adminAmount;
     }
+
+    public Boolean getPayoutCredited() { return payoutCredited; }
+    public void setPayoutCredited(Boolean payoutCredited) { this.payoutCredited = payoutCredited; }
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
+    public String getReview() { return review; }
+    public void setReview(String review) { this.review = review; }
 }

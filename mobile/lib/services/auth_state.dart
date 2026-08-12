@@ -163,6 +163,18 @@ class AuthState extends ChangeNotifier {
     }
   }
 
+  /// Apply a user JWT session already saved on [api] (worker portal login).
+  void applyUserSession(Map<String, dynamic> res) {
+    loggedIn = true;
+    name = res['name']?.toString();
+    email = res['email']?.toString();
+    userId = res['userId'] is int
+        ? res['userId'] as int
+        : int.tryParse('${res['userId']}');
+    error = null;
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await _client.clearToken();
     loggedIn = false;

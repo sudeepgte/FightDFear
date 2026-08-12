@@ -52,6 +52,15 @@ public class GlobalSidebarAdvice {
     private EventHostRepository eventHostRepository;
 
     @Autowired
+    private JobApplicationRepository jobApplicationRepository;
+
+    @Autowired
+    private DeliveryPartnerRepository deliveryPartnerRepository;
+
+    @Autowired
+    private FinancialEducatorRepository financialEducatorRepository;
+
+    @Autowired
     private WomenEventRepository womenEventRepository;
 
     @ModelAttribute
@@ -64,13 +73,34 @@ public class GlobalSidebarAdvice {
                 long pendingSellers = womenProductSellerRepository.findByVerificationStatus(VerificationStatus.PENDING).size()
                         + serviceProviderRepository.findByCategoryAndVerificationStatus(
                                 in.sp.main.Entities.ProviderCategory.WOMEN_PRODUCTS, VerificationStatus.PENDING).size();
-                long pendingSalons = salonRepository.findByApproved(false).size();
-                long pendingStylists = stylistRepository.findByApproved(false).size();
+                long pendingTrainers = 0;
+                try {
+                    pendingTrainers = fitnessTrainerRepository
+                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
+                            .size();
+                } catch (Exception ignored) {
+                    pendingTrainers = fitnessTrainerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+                }
+                long pendingSalons = 0;
+                try {
+                    pendingSalons = salonRepository
+                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
+                            .size();
+                } catch (Exception ignored) {
+                    pendingSalons = salonRepository.findByApproved(false).size();
+                }
+                long pendingStylists = 0;
+                try {
+                    pendingStylists = stylistRepository
+                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
+                            .size();
+                } catch (Exception ignored) {
+                    pendingStylists = stylistRepository.findByApproved(false).size();
+                }
                 long pendingLawyers = serviceProviderRepository.findByCategoryAndVerificationStatus(
                         in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER, VerificationStatus.PENDING).size();
                 long pendingFitness = serviceProviderRepository.findByCategoryAndVerificationStatus(
                         in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA, VerificationStatus.PENDING).size();
-                long pendingTrainers = fitnessTrainerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
                 long unreadContactMessages = contactMessageRepository.countByReadByAdminFalse();
                 
                 long pendingProposals = businessProposalRepository.findByStatus(VerificationStatus.PENDING).size();
@@ -83,6 +113,29 @@ public class GlobalSidebarAdvice {
                 long pendingEventHosts = eventHostRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
                 long pendingWomenEvents = womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING").size();
                 long sidePendingEventHosts = pendingEventHosts + pendingWomenEvents;
+                long pendingJobApplications = jobApplicationRepository.countByStatus(VerificationStatus.PENDING);
+                long pendingDeliveryPartners = 0;
+                try {
+                    pendingDeliveryPartners = deliveryPartnerRepository
+                            .findByPartnerProfileStatusIn(in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses())
+                            .size();
+                } catch (Exception ignored) {
+                    pendingDeliveryPartners = deliveryPartnerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+                }
+                long pendingCreators = 0;
+                try {
+                    pendingCreators = userRepository.countByCreatorProfileStatusIn(
+                            in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses());
+                } catch (Exception ignored) {
+                    pendingCreators = 0;
+                }
+                long pendingEducators = 0;
+                try {
+                    pendingEducators = financialEducatorRepository.countByPartnerProfileStatusIn(
+                            in.sp.main.Service.PartnerLifecycleSupport.pendingQueueStatuses());
+                } catch (Exception ignored) {
+                    pendingEducators = 0;
+                }
 
                 model.addAttribute("side_pendingUsers", pendingUsers);
                 model.addAttribute("side_pendingCentres", pendingCentres);
@@ -96,6 +149,10 @@ public class GlobalSidebarAdvice {
                 model.addAttribute("side_unreadContactMessages", unreadContactMessages);
                 model.addAttribute("side_pendingProposals", sidePendingProposals);
                 model.addAttribute("side_pendingEventHosts", sidePendingEventHosts);
+                model.addAttribute("side_pendingJobApplications", pendingJobApplications);
+                model.addAttribute("side_pendingDeliveryPartners", pendingDeliveryPartners);
+                model.addAttribute("side_pendingCreators", pendingCreators);
+                model.addAttribute("side_pendingEducators", pendingEducators);
             } catch (Exception e) {
                 // Fail gracefully
             }

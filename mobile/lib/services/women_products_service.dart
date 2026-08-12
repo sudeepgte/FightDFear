@@ -5,11 +5,23 @@ class WomenProductsService {
 
   final ApiClient _api;
 
-  Future<Map<String, dynamic>> listProducts({String? category}) {
-    final c = category == null || category.trim().isEmpty
-        ? ''
-        : '?category=${Uri.encodeQueryComponent(category.trim())}';
-    return _api.get('/api/women-products$c');
+  Future<Map<String, dynamic>> listProducts({
+    String? category,
+    String? city,
+    double? maxPrice,
+    bool? inStock,
+    String? sort,
+  }) {
+    final q = <String, String>{};
+    if (category != null && category.trim().isNotEmpty) q['category'] = category.trim();
+    if (city != null && city.trim().isNotEmpty) q['city'] = city.trim();
+    if (maxPrice != null) q['maxPrice'] = '$maxPrice';
+    if (inStock == true) q['inStock'] = 'true';
+    if (sort != null && sort.isNotEmpty) q['sort'] = sort;
+    final qs = q.entries
+        .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+        .join('&');
+    return _api.get('/api/women-products${qs.isEmpty ? '' : '?$qs'}');
   }
 
   Future<Map<String, dynamic>> productDetail(int id) =>
@@ -47,12 +59,25 @@ class WomenProductsService {
 
   Future<Map<String, dynamic>> placeCodOrder({
     required String shippingAddress,
+    String paymentMethod = 'COD',
   }) =>
       _api.post('/api/women-products/checkout/place', body: {
-        'paymentMethod': 'COD',
+        'paymentMethod': paymentMethod,
         'shippingAddress': shippingAddress,
+      });
+
+  Future<Map<String, dynamic>> rateOrder(int id, {required int rating, String review = ''}) =>
+      _api.post('/api/women-products/orders/$id/rate', body: {
+        'rating': rating,
+        'review': review,
       });
 
   Future<Map<String, dynamic>> myOrders() =>
       _api.get('/api/women-products/my-orders');
+
+  Future<Map<String, dynamic>> cancelOrder(int id) =>
+      _api.post('/api/women-products/orders/$id/cancel');
+
+  Future<Map<String, dynamic>> trackOrder(int id) =>
+      _api.get('/api/women-products/orders/$id/track');
 }

@@ -52,8 +52,13 @@ class _MartialArtsCentreLoginScreenState extends State<MartialArtsCentreLoginScr
       final res = await _auth.login(email: email, password: pass);
       if (!mounted) return;
       if (res['success'] == true) {
+        final needsCompletion = res['needsProfileCompletion'] == true;
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
+          MaterialPageRoute(
+            builder: (_) => MartialArtsCentreDashboardScreen(
+              openProfileCompletion: needsCompletion,
+            ),
+          ),
         );
       } else {
         setState(() {
@@ -101,7 +106,7 @@ class _MartialArtsCentreLoginScreenState extends State<MartialArtsCentreLoginScr
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Sign in after admin approves your registration.',
+                  'Sign in to manage your centre. Incomplete profiles can finish details after login.',
                   style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],

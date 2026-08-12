@@ -155,12 +155,17 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
                             final title = _kind == 'salons'
                                 ? (item['name']?.toString() ?? 'Salon')
                                 : '${item['firstName'] ?? ''} ${item['lastName'] ?? ''}'.trim();
-                            final subtitle = _kind == 'salons'
+                            final statusLabel = item['partnerProfileStatusLabel']?.toString();
+                            final baseSubtitle = _kind == 'salons'
                                 ? '${item['city'] ?? ''} · ${item['username'] ?? ''}'
                                 : '${item['email'] ?? ''} · ${item['specialization'] ?? ''}';
+                            final subtitle = (statusLabel != null && statusLabel.isNotEmpty)
+                                ? '$baseSubtitle\n$statusLabel'
+                                : baseSubtitle;
                             return ListTile(
-                              title: Text(title),
+                              title: Text(title.isEmpty ? 'Provider' : title),
                               subtitle: Text(subtitle),
+                              isThreeLine: statusLabel != null && statusLabel.isNotEmpty,
                               trailing: _status == 'pending' && id != null
                                   ? Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -189,7 +194,16 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
                                         ),
                                       ],
                                     )
-                                  : null,
+                                  : (statusLabel != null && statusLabel.isNotEmpty
+                                      ? Text(
+                                          statusLabel,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade700,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        )
+                                      : null),
                             );
                           },
                         ),

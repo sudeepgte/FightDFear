@@ -21,6 +21,7 @@ public class DoctorChatMessage {
     private String message;
     private String senderType; // USER or DOCTOR
     private LocalDateTime timestamp;
+    private String attachmentPath;
 
     @PrePersist
     protected void onCreate() { this.timestamp = LocalDateTime.now(); }
@@ -38,4 +39,6 @@ public class DoctorChatMessage {
     public void setSenderType(String senderType) { this.senderType = senderType; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getAttachmentPath() { return attachmentPath; }
+    public void setAttachmentPath(String attachmentPath) { this.attachmentPath = attachmentPath; }
 }

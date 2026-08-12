@@ -35,6 +35,9 @@ public class FitnessBooking {
     private Integer completedSessions = 0;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Boolean payoutCredited = false;
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
 
     // Getters and Setters
     public String getPaymentStatus() { return paymentStatus; }
@@ -81,6 +84,11 @@ public class FitnessBooking {
 
     public Double getPaymentAmount() { return paymentAmount; }
     public void setPaymentAmount(Double paymentAmount) { this.paymentAmount = paymentAmount; }
+
+    public Boolean getPayoutCredited() { return payoutCredited; }
+    public void setPayoutCredited(Boolean payoutCredited) { this.payoutCredited = payoutCredited; }
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
 
     public FitnessClass getFitnessClass() { return fitnessClass; }
     public void setFitnessClass(FitnessClass fitnessClass) { this.fitnessClass = fitnessClass; }

@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
+import '../../config/job_catalog.dart';
+import '../../config/marketplace_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/module_services.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
 import '../../widgets/module_theme.dart';
+import 'marketplace_booking_chat_screen.dart';
+import 'women_jobs_worker_detail_screen.dart';
 
 class WomenMarketplaceScreen extends StatefulWidget {
   const WomenMarketplaceScreen({super.key});
@@ -23,17 +27,19 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
   late final Razorpay _razorpay;
 
   bool _loading = true;
+  bool _busy = false;
   String? _error;
-  String _providerCategory = 'all';
-  String _workerCategory = '';
-  List<Map<String, dynamic>> _providers = [];
+  String _workerCategory = 'all';
+  final _cityFilter = TextEditingController();
+  bool _availableToday = false;
+  bool _doorOnly = false;
+  bool _showFavorites = false;
+  String _sort = 'rating';
   List<Map<String, dynamic>> _workers = [];
   List<Map<String, dynamic>> _bookings = [];
   List<Map<String, dynamic>> _enrollments = [];
-  List<({String value, String label, IconData icon})> _providerOptions = const [
-    (value: 'all', label: 'All Providers', icon: Icons.grid_view_rounded),
-  ];
-  List<({String value, String label, IconData icon})> _workerOptions = const [];
+  List<({String value, String label, IconData icon})> _workerOptions =
+      JobCatalog.browseFilters;
 
   int? _pendingWorkerBookingId;
   int? _pendingEnrollmentId;
@@ -47,12 +53,12 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
-    _tabs = TabController(length: 4, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
-      if (_tabs.index == 2) {
+      if (_tabs.index == 1) {
         _loadBookings();
-      } else if (_tabs.index == 3) {
+      } else if (_tabs.index == 2) {
         _loadEnrollments();
       }
     });
@@ -62,9 +68,16 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
   @override
   void dispose() {
     _razorpay.clear();
+    _cityFilter.dispose();
     _tabs.dispose();
     super.dispose();
   }
+
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+
 
   Future<void> _loadInitial() async {
     setState(() {
@@ -74,32 +87,21 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     try {
       final catRes = await _market.categories();
       if (catRes['success'] == true) {
-        final pCats = ModuleTheme.toList(catRes['providerCategories']);
         final wCats = ModuleTheme.toList(catRes['workerCategories']);
-        _providerOptions = [
-          const (value: 'all', label: 'All Providers', icon: Icons.grid_view_rounded),
-          ...pCats.map((c) {
-            final value = c['value']?.toString() ?? '';
-            return (
-              value: value,
-              label: c['label']?.toString() ?? value,
-              icon: _providerIcon(value),
-            );
-          }),
-        ];
-        _workerOptions = wCats
-            .map((c) => (
-                  value: c['value']?.toString() ?? '',
-                  label: c['label']?.toString() ?? '',
-                  icon: Icons.work_outline,
-                ))
-            .where((c) => c.value.isNotEmpty)
-            .toList();
-        if (_workerCategory.isEmpty && _workerOptions.isNotEmpty) {
-          _workerCategory = _workerOptions.first.value;
+        if (wCats.isNotEmpty) {
+          _workerOptions = [
+            const (value: 'all', label: 'All Workers', icon: Icons.grid_view_rounded),
+            ...wCats.map((c) {
+              final value = c['value']?.toString() ?? c['code']?.toString() ?? '';
+              return (
+                value: value,
+                label: c['label']?.toString() ?? JobCatalog.labelFor(value),
+                icon: Icons.work_outline,
+              );
+            }).where((c) => c.value.isNotEmpty),
+          ];
         }
       }
-      await _loadProviders();
       await _loadWorkers();
     } catch (e) {
       _error = '$e';
@@ -107,37 +109,16 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     if (mounted) setState(() => _loading = false);
   }
 
-  IconData _providerIcon(String value) {
-    return switch (value) {
-      'TUTOR' => Icons.school_outlined,
-      'HOME_BAKER' => Icons.cake_outlined,
-      'LANGUAGE_TRAINER' => Icons.translate_outlined,
-      'WOMEN_PRODUCTS' => Icons.shopping_bag_outlined,
-      'WOMEN_LAWYER' => Icons.gavel_outlined,
-      'FITNESS_ZUMBA' => Icons.fitness_center,
-      _ => Icons.storefront_outlined,
-    };
-  }
-
-  Future<void> _loadProviders() async {
-    final res = await _market.providers(
-      category: _providerCategory == 'all' ? null : _providerCategory,
-    );
-    if (res['success'] == true) {
-      _providers = ModuleTheme.toList(res['providers']);
-    } else {
-      _error = res['error']?.toString();
-    }
-    if (mounted) setState(() {});
-  }
-
   Future<void> _loadWorkers() async {
-    if (_workerCategory.isEmpty) {
-      _workers = [];
-      if (mounted) setState(() {});
-      return;
-    }
-    final res = await _market.workers(_workerCategory);
+    final res = _showFavorites
+        ? await _market.jobFavorites()
+        : await _market.workers(
+            category: _workerCategory,
+            city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+            availableToday: _availableToday ? true : null,
+            doorService: _doorOnly ? true : null,
+            sort: _sort,
+          );
     if (res['success'] == true) {
       _workers = ModuleTheme.toList(res['workers']);
     } else {
@@ -147,224 +128,42 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
   }
 
   Future<void> _loadBookings() async {
-    final res = await _market.myBookings();
-    if (res['success'] == true) {
-      _bookings = ModuleTheme.toList(res['allBookings']);
+    try {
+      final res = await _market.myBookings();
+      if (res['success'] == true) {
+        _bookings = ModuleTheme.toList(res['allBookings']);
+      } else if (mounted) {
+        _snack(res['error']?.toString() ?? 'Could not load bookings');
+      }
+    } catch (e) {
+      if (mounted) _snack('$e');
     }
     if (mounted) setState(() {});
   }
 
   Future<void> _loadEnrollments() async {
-    final res = await _market.myEnrollments();
-    if (res['success'] == true) {
-      _enrollments = ModuleTheme.toList(res['enrollments']);
+    try {
+      final res = await _market.myEnrollments();
+      if (res['success'] == true) {
+        _enrollments = ModuleTheme.toList(res['enrollments']);
+      } else if (mounted) {
+        _snack(res['error']?.toString() ?? 'Could not load classes');
+      }
+    } catch (e) {
+      if (mounted) _snack('$e');
     }
     if (mounted) setState(() {});
   }
 
-  Future<void> _bookProvider(Map<String, dynamic> provider) async {
-    final id = provider['id'] is int ? provider['id'] as int : int.tryParse('${provider['id']}');
-    if (id == null) return;
-    final noteCtrl = TextEditingController();
-    final dateCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Book ${provider['fullName'] ?? 'Provider'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: dateCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Requested time (yyyy-MM-ddTHH:mm)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Note',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Request')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final res = await _market.book(
-      id,
-      note: noteCtrl.text.trim(),
-      requestedTime: dateCtrl.text.trim().isEmpty ? null : dateCtrl.text.trim(),
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res['success'] == true ? 'Booking requested' : '${res['error']}')),
-    );
-    if (res['success'] == true) {
-      _tabs.animateTo(2);
-      _loadBookings();
-    }
-  }
 
-  Future<void> _openProviderDetail(Map<String, dynamic> provider) async {
-    final id = provider['id'] is int ? provider['id'] as int : int.tryParse('${provider['id']}');
-    if (id == null) return;
-    final detail = await _market.providerDetail(id);
-    if (!mounted) return;
-    if (detail['success'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${detail['error'] ?? 'Unable to load details'}')),
-      );
-      return;
-    }
-    final classes = ModuleTheme.toList(detail['classes']);
-    final reviews = ModuleTheme.toList(detail['reviews']);
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              DetailListingCard(
-                title: provider['fullName']?.toString() ?? 'Provider',
-                eyebrow: provider['category']?.toString(),
-                location: provider['locationText']?.toString(),
-                phone: provider['phone']?.toString(),
-                tags: [
-                  if (provider['rating'] != null)
-                    DetailTag(
-                      label: '${provider['rating']}',
-                      icon: Icons.star,
-                      background: const Color(0xFFFEF3C7),
-                      foreground: const Color(0xFFB45309),
-                    ),
-                ],
-                onPrimary: () {
-                  Navigator.pop(ctx);
-                  _bookProvider(provider);
-                },
-                primaryLabel: 'Book Session',
-              ),
-              const SizedBox(height: 10),
-              const Text('Classes', style: TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              if (classes.isEmpty)
-                const Text('No classes listed')
-              else
-                ...classes.map((c) => _classCard(c)),
-              const SizedBox(height: 12),
-              const Text('Reviews', style: TextStyle(fontWeight: FontWeight.w800)),
-              const SizedBox(height: 8),
-              if (reviews.isEmpty)
-                const Text('No reviews yet')
-              else
-                ...reviews.take(5).map((r) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        backgroundColor: const Color(0xFFFFE4E6),
-                        child: Text((r['userName']?.toString() ?? 'U').substring(0, 1)),
-                      ),
-                      title: Text(r['userName']?.toString() ?? 'User'),
-                      subtitle: Text(r['comment']?.toString() ?? ''),
-                      trailing: Text('${r['rating'] ?? '-'}★'),
-                    )),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _classCard(Map<String, dynamic> c) {
-    final id = c['id'] is int ? c['id'] as int : int.tryParse('${c['id']}');
-    final price = (c['price'] is num) ? (c['price'] as num).toDouble() : 0.0;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(c['className']?.toString() ?? 'Class', style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text('${c['dateTime'] ?? ''} · ${c['mode'] ?? ''}', style: const TextStyle(color: ModuleTheme.textGray)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            children: [
-              DetailTag(label: '₹${price.toStringAsFixed(0)}', icon: Icons.currency_rupee),
-              DetailTag(label: '${c['availableSeats'] ?? 0} seats', icon: Icons.groups),
-            ].map((t) => _tagChip(t)).toList(),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: id == null ? null : () => _enrollClass(id, price),
-              child: Text(price > 0 ? 'Enroll & Pay' : 'Enroll'),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _tagChip(DetailTag t) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: t.background, borderRadius: BorderRadius.circular(999)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (t.icon != null) ...[
-          Icon(t.icon, size: 13, color: t.foreground),
-          const SizedBox(width: 4),
-        ],
-        Text(t.label, style: TextStyle(color: t.foreground, fontSize: 11, fontWeight: FontWeight.w700)),
-      ]),
-    );
-  }
-
-  Future<void> _enrollClass(int classId, double price) async {
-    final res = await _market.enrollClass(classId);
-    if (!mounted) return;
-    if (res['success'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${res['error']}')));
-      return;
-    }
-    final enrollmentId = res['enrollmentId'] is int
-        ? res['enrollmentId'] as int
-        : int.tryParse('${res['enrollmentId']}');
-    final paymentRequired = res['paymentRequired'] == true;
-    if (!paymentRequired || enrollmentId == null || price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enrolled successfully')));
-      _tabs.animateTo(3);
-      _loadEnrollments();
-      return;
-    }
+  Future<void> _payEnrollment(int enrollmentId, double price) async {
     _pendingEnrollmentId = enrollmentId;
+    _pendingWorkerBookingId = null;
     final order = await _payments.createOrder(price);
     if (!mounted) return;
     if (order['orderId'] == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(order['error']?.toString() ?? 'Payment unavailable')),
-      );
+      _snack(order['error']?.toString() ?? 'Payment unavailable');
+      await _cancelPendingEnrollment('Payment could not be started. Seat released.');
       return;
     }
     _razorpay.open({
@@ -378,83 +177,56 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     });
   }
 
-  Future<void> _bookWorker(Map<String, dynamic> worker) async {
-    final id = worker['id'] is int ? worker['id'] as int : int.tryParse('${worker['id']}');
+  Future<void> _cancelPendingEnrollment(String message) async {
+    final id = _pendingEnrollmentId;
+    _pendingEnrollmentId = null;
     if (id == null) return;
-    final dateCtrl = TextEditingController();
-    final amountCtrl = TextEditingController(text: '${worker['hourlyRate'] ?? 0}');
-    final noteCtrl = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Book ${worker['workerName'] ?? 'Worker'}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: dateCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Booking time (yyyy-MM-ddTHH:mm)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: amountCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Amount',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Note',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Book Worker')),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    final amount = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
-    final res = await _market.bookWorker(
-      id,
-      bookingDate: dateCtrl.text.trim(),
-      totalAmount: amount,
-      note: noteCtrl.text.trim(),
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res['success'] == true ? 'Worker booking created' : '${res['error']}')),
-    );
-    if (res['success'] == true) {
-      _tabs.animateTo(2);
-      _loadBookings();
+    try {
+      final res = await _market.cancelEnrollment(id);
+      if (mounted) {
+        final extra = res['success'] == true
+            ? ''
+            : ' (${res['error'] ?? 'could not release seat automatically'})';
+        _snack('$message$extra');
+        _loadEnrollments();
+      }
+    } catch (e) {
+      if (mounted) {
+        _snack('$message ($e)');
+        _loadEnrollments();
+      }
     }
   }
 
-  Future<void> _payWorkerBooking(Map<String, dynamic> booking) async {
+  void _openWorker(Map<String, dynamic> worker) {
+    final id = worker['id'] is int ? worker['id'] as int : int.tryParse('${worker['id']}');
+    if (id == null) return;
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => WomenJobsWorkerDetailScreen(workerId: id)))
+        .then((_) => _loadWorkers());
+  }
+
+  Future<void> _cancelWorkerBooking(Map<String, dynamic> booking) async {
     final id = booking['id'] is int ? booking['id'] as int : int.tryParse('${booking['id']}');
-    final amount = (booking['totalAmount'] is num)
-        ? (booking['totalAmount'] as num).toDouble()
-        : 0.0;
+    if (id == null) return;
+    final res = await _market.cancelWorkerBooking(id);
+    if (!mounted) return;
+    _snack(res['success'] == true
+        ? (res['message']?.toString() ?? 'Cancelled')
+        : (res['error']?.toString() ?? 'Cancel failed'));
+    if (res['success'] == true) _loadBookings();
+  }
+
+  Future<void> _payWorkerBooking(Map<String, dynamic> booking) async {
+    if (_busy) return;
+    final id = booking['id'] is int ? booking['id'] as int : int.tryParse('${booking['id']}');
+    final amount = (booking['totalAmount'] is num) ? (booking['totalAmount'] as num).toDouble() : 0.0;
     if (id == null || amount <= 0) return;
     _pendingWorkerBookingId = id;
     _pendingEnrollmentId = null;
     final order = await _payments.createOrder(amount);
     if (order['orderId'] == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(order['error']?.toString() ?? 'Payment unavailable')),
-      );
+      _snack(order['error']?.toString() ?? 'Payment unavailable');
       return;
     }
     _razorpay.open({
@@ -492,14 +264,13 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     final verify = await _payments.verify(payload);
     if (!mounted) return;
     if (verify['error'] != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(verify['error'].toString())),
-      );
+      _snack(verify['error'].toString());
+      if (_pendingEnrollmentId != null) {
+        await _cancelPendingEnrollment('Payment verification failed. Seat released.');
+      }
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Payment successful')),
-    );
+    _snack('Payment successful');
     _pendingWorkerBookingId = null;
     _pendingEnrollmentId = null;
     _loadBookings();
@@ -507,9 +278,55 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
   }
 
   void _onPaymentError(PaymentFailureResponse response) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(response.message ?? 'Payment cancelled/failed')),
+    final msg = response.message ?? 'Payment cancelled/failed';
+    if (_pendingEnrollmentId != null) {
+      _cancelPendingEnrollment('$msg. Your seat was released.');
+      return;
+    }
+    _snack(msg);
+  }
+
+  void _showBookingDetail(Map<String, dynamic> b) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(b['kind'] == 'WORKER' ? 'Worker booking' : 'Provider booking',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 8),
+            Text('Status: ${b['status'] ?? 'PENDING'}'),
+            Text('When: ${b['bookingDate'] ?? b['requestedTime'] ?? '—'}'),
+            if ((b['note']?.toString() ?? '').isNotEmpty) Text('Note: ${b['note']}'),
+            if ((b['cancelPolicy']?.toString() ?? '').isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(b['cancelPolicy'].toString(),
+                  style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray)),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (b['kind'] == 'WORKER' &&
+                    !['COMPLETED', 'CANCELLED', 'REJECTED', 'PAID']
+                        .contains((b['status']?.toString() ?? '').toUpperCase()))
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _cancelWorkerBooking(b);
+                    },
+                    child: const Text('Cancel booking'),
+                  ),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -527,7 +344,6 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
           labelColor: ModuleTheme.primary,
           unselectedLabelColor: ModuleTheme.textGray,
           tabs: const [
-            Tab(text: 'Providers'),
             Tab(text: 'Workers'),
             Tab(text: 'My Bookings'),
             Tab(text: 'My Classes'),
@@ -541,7 +357,6 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
               : TabBarView(
                   controller: _tabs,
                   children: [
-                    _providersView(),
                     _workersView(),
                     _bookingsView(),
                     _classesView(),
@@ -550,56 +365,10 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     );
   }
 
-  Widget _providersView() {
-    return RefreshIndicator(
-      onRefresh: _loadProviders,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          const SizedBox(height: 10),
-          CategoryPillBar(
-            options: _providerOptions,
-            selected: _providerCategory,
-            onSelected: (v) async {
-              setState(() => _providerCategory = v);
-              await _loadProviders();
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Text(
-              'Showing ${_providers.length} verified marketplace providers',
-              style: const TextStyle(color: ModuleTheme.textGray, fontSize: 13),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: _providers.map((p) {
-                return DetailListingCard(
-                  title: p['fullName']?.toString() ?? 'Provider',
-                  eyebrow: p['category']?.toString() ?? 'Marketplace',
-                  location: p['locationText']?.toString(),
-                  phone: p['phone']?.toString(),
-                  tags: [
-                    if (p['rating'] != null)
-                      DetailTag(
-                        label: '${p['rating']}',
-                        icon: Icons.star,
-                        background: const Color(0xFFFEF3C7),
-                        foreground: const Color(0xFFB45309),
-                      ),
-                  ],
-                  onPrimary: () => _openProviderDetail(p),
-                  primaryLabel: 'View Profile & Book',
-                );
-              }).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _empty(String text) => ListView(children: [
+        const SizedBox(height: 120),
+        Center(child: Text(text, style: const TextStyle(color: ModuleTheme.textGray))),
+      ]);
 
   Widget _workersView() {
     return RefreshIndicator(
@@ -608,47 +377,121 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
         padding: const EdgeInsets.only(bottom: 24),
         children: [
           const SizedBox(height: 10),
-          if (_workerOptions.isNotEmpty)
-            CategoryPillBar(
-              options: _workerOptions,
-              selected: _workerCategory,
-              onSelected: (v) async {
-                setState(() => _workerCategory = v);
-                await _loadWorkers();
-              },
+          CategoryPillBar(
+            options: _workerOptions,
+            selected: _workerCategory,
+            onSelected: (v) async {
+              setState(() {
+                _workerCategory = v;
+                _showFavorites = false;
+              });
+              await _loadWorkers();
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              controller: _cityFilter,
+              decoration: InputDecoration(
+                hintText: 'City',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _loadWorkers),
+                isDense: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onSubmitted: (_) => _loadWorkers(),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: Wrap(
+              spacing: 6,
+              children: [
+                FilterChip(
+                  label: const Text('Available today'),
+                  selected: _availableToday,
+                  onSelected: (v) {
+                    setState(() => _availableToday = v);
+                    _loadWorkers();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Door service'),
+                  selected: _doorOnly,
+                  onSelected: (v) {
+                    setState(() => _doorOnly = v);
+                    _loadWorkers();
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Favourites'),
+                  selected: _showFavorites,
+                  onSelected: (v) {
+                    setState(() => _showFavorites = v);
+                    _loadWorkers();
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Top rated'),
+                  selected: _sort == 'rating',
+                  onSelected: (_) {
+                    setState(() => _sort = 'rating');
+                    _loadWorkers();
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Fee'),
+                  selected: _sort == 'fee',
+                  onSelected: (_) {
+                    setState(() => _sort = 'fee');
+                    _loadWorkers();
+                  },
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Text(
-              'Showing ${_workers.length} verified workers',
+              'Showing ${_workers.length} verified workers · book up to 60 days ahead',
               style: const TextStyle(color: ModuleTheme.textGray, fontSize: 13),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: _workers.map((w) {
-                return DetailListingCard(
-                  title: w['workerName']?.toString() ?? 'Worker',
-                  eyebrow: w['jobCategory']?.toString() ?? 'Worker',
-                  location: w['location']?.toString(),
-                  phone: w['phone']?.toString(),
-                  tags: [
-                    DetailTag(
-                      label: '₹${w['hourlyRate'] ?? 0}/hr',
-                      icon: Icons.currency_rupee,
-                      background: const Color(0xFFE0E7FF),
-                      foreground: const Color(0xFF3730A3),
-                    ),
-                    if (w['jobSubCategory'] != null)
-                      DetailTag(label: '${w['jobSubCategory']}', icon: Icons.category_outlined),
-                  ],
-                  onPrimary: () => _bookWorker(w),
-                  primaryLabel: 'Book Worker',
-                );
-              }).toList(),
+          if (_workers.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(child: Text('No verified workers in this category yet.')),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: _workers.map((w) {
+                  return DetailListingCard(
+                    title: w['workerName']?.toString() ?? 'Worker',
+                    eyebrow: JobCatalog.labelFor(w['jobCategory']?.toString()),
+                    location: w['location']?.toString(),
+                    phone: w['phone']?.toString(),
+                    tags: [
+                      DetailTag(
+                        label: '₹${w['hourlyRate'] ?? 0}/hr',
+                        icon: Icons.currency_rupee,
+                        background: const Color(0xFFE0E7FF),
+                        foreground: const Color(0xFF3730A3),
+                      ),
+                      if (w['jobSubCategory'] != null)
+                        DetailTag(label: '${w['jobSubCategory']}', icon: Icons.category_outlined),
+                      if (w['nextSlotLabel'] != null)
+                        DetailTag(label: '${w['nextSlotLabel']}', icon: Icons.schedule),
+                      if (w['availableToday'] == true)
+                        const DetailTag(label: 'Today', icon: Icons.today_outlined),
+                    ],
+                    onPrimary: () => _openWorker(w),
+                    primaryLabel: 'View & Book',
+                  );
+                }).toList(),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -658,10 +501,7 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     return RefreshIndicator(
       onRefresh: _loadBookings,
       child: _bookings.isEmpty
-          ? ListView(children: const [
-              SizedBox(height: 120),
-              Center(child: Text('No marketplace bookings yet')),
-            ])
+          ? _empty('No marketplace bookings yet')
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               itemCount: _bookings.length,
@@ -678,7 +518,7 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
                     location: b['bookingDate']?.toString(),
                     phone: worker['phone']?.toString(),
                     tags: [
-                      DetailTag(label: worker['jobCategory']?.toString() ?? 'Worker'),
+                      DetailTag(label: JobCatalog.labelFor(worker['jobCategory']?.toString())),
                       if (b['totalAmount'] != null)
                         DetailTag(
                           label: '₹${b['totalAmount']}',
@@ -688,25 +528,37 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
                         ),
                     ],
                     primaryLabel: payable ? 'Pay now' : 'Details',
-                    onPrimary: payable ? () => _payWorkerBooking(b) : () {},
+                    onPrimary: payable ? () => _payWorkerBooking(b) : () => _showBookingDetail(b),
                     showMediaActions: false,
                   );
                 }
                 final provider = b['provider'] is Map
                     ? Map<String, dynamic>.from(b['provider'] as Map)
                     : <String, dynamic>{};
+                final confirmed = (b['status']?.toString().toUpperCase() == 'CONFIRMED');
+                final bookingId = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
                 return DetailListingCard(
                   title: provider['fullName']?.toString() ?? 'Provider Booking',
                   eyebrow: b['status']?.toString() ?? 'PENDING',
                   location: b['requestedTime']?.toString(),
                   phone: provider['phone']?.toString(),
                   tags: [
-                    DetailTag(label: provider['category']?.toString() ?? 'Provider'),
+                    DetailTag(label: MarketplaceCatalog.labelFor(provider['category']?.toString())),
                     if (b['note'] != null && '${b['note']}'.isNotEmpty)
                       DetailTag(label: '${b['note']}', icon: Icons.notes),
                   ],
-                  primaryLabel: 'Details',
-                  onPrimary: () {},
+                  primaryLabel: confirmed ? 'Chat' : 'Details',
+                  onPrimary: confirmed && bookingId != null
+                      ? () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => MarketplaceBookingChatScreen(
+                              bookingId: bookingId,
+                              asProvider: false,
+                              peerName: provider['fullName']?.toString(),
+                            ),
+                          ));
+                        }
+                      : () => _showBookingDetail(b),
                   showMediaActions: false,
                 );
               },
@@ -718,10 +570,7 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     return RefreshIndicator(
       onRefresh: _loadEnrollments,
       child: _enrollments.isEmpty
-          ? ListView(children: const [
-              SizedBox(height: 120),
-              Center(child: Text('No class enrollments yet')),
-            ])
+          ? _empty('No class enrollments yet')
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               itemCount: _enrollments.length,
@@ -731,10 +580,10 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
                     ? Map<String, dynamic>.from(e['classItem'] as Map)
                     : <String, dynamic>{};
                 final paymentStatus = e['paymentStatus']?.toString() ?? '';
-                final needsPay = paymentStatus.toUpperCase() == 'PENDING';
-                final classId = classItem['id'] is int
-                    ? classItem['id'] as int
-                    : int.tryParse('${classItem['id']}');
+                final status = e['status']?.toString() ?? '';
+                final needsPay = paymentStatus.toUpperCase() == 'PENDING' &&
+                    status.toUpperCase() != 'CANCELLED';
+                final enrollmentId = e['id'] is int ? e['id'] as int : int.tryParse('${e['id']}');
                 final price = (classItem['price'] is num)
                     ? (classItem['price'] as num).toDouble()
                     : 0.0;
@@ -752,8 +601,40 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
                         foreground: const Color(0xFF3730A3),
                       ),
                   ],
-                  primaryLabel: needsPay ? 'Pay now' : 'Details',
-                  onPrimary: needsPay && classId != null ? () => _enrollClass(classId, price) : () {},
+                  primaryLabel: needsPay ? 'Pay or cancel' : 'Details',
+                  onPrimary: needsPay && enrollmentId != null
+                      ? () async {
+                          final action = await showModalBottomSheet<String>(
+                            context: context,
+                            builder: (ctx) => SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.payments_outlined),
+                                    title: const Text('Pay now'),
+                                    onTap: () => Navigator.pop(ctx, 'pay'),
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.cancel_outlined),
+                                    title: const Text('Cancel enrollment'),
+                                    onTap: () => Navigator.pop(ctx, 'cancel'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                          if (action == 'pay') {
+                            await _payEnrollment(enrollmentId, price);
+                          } else if (action == 'cancel') {
+                            final res = await _market.cancelEnrollment(enrollmentId);
+                            _snack(res['success'] == true
+                                ? 'Enrollment cancelled. Seat released.'
+                                : (res['error']?.toString() ?? 'Cancel failed'));
+                            _loadEnrollments();
+                          }
+                        }
+                      : () {},
                   showMediaActions: false,
                 );
               },
@@ -761,4 +642,3 @@ class _WomenMarketplaceScreenState extends State<WomenMarketplaceScreen>
     );
   }
 }
-

@@ -1,6 +1,10 @@
 package in.sp.main.Entities;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Marketplace / Service Partner categories used by mobile + admin.
@@ -67,5 +71,20 @@ public enum ProviderCategory {
                 default -> null;
             };
         }
+    }
+
+    public String label() {
+        return Arrays.stream(name().split("_"))
+                .filter(s -> !s.isBlank())
+                .map(s -> Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining(" "));
+    }
+
+    public Map<String, String> asCatalog() {
+        Map<String, String> row = new LinkedHashMap<>();
+        row.put("code", name());
+        row.put("value", name());
+        row.put("label", label());
+        return row;
     }
 }

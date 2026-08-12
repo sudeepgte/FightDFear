@@ -29,6 +29,12 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
   List<Map<String, dynamic>> _services = [];
   List<Map<String, dynamic>> _treatments = [];
   List<Map<String, dynamic>> _offers = [];
+  List<Map<String, dynamic>> _reviews = [];
+  List<String> _slotsToday = [];
+  List<String> _photos = [];
+  bool _favorite = false;
+  String? _nextSlotLabel;
+  String? _cancelPolicy;
 
   @override
   void initState() {
@@ -72,6 +78,17 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
         _services = _toList(res['services']);
         _treatments = _toList(res['treatments']);
         _offers = _toList(res['offers']);
+        _reviews = _toList(res['reviews']);
+        _slotsToday = (res['slotsToday'] is List)
+            ? (res['slotsToday'] as List).map((e) => e.toString()).toList()
+            : <String>[];
+        _photos = (res['salon'] is Map && (res['salon'] as Map)['galleryPhotos'] is List)
+            ? ((res['salon'] as Map)['galleryPhotos'] as List).map((e) => e.toString()).toList()
+            : <String>[];
+        _favorite = res['favorite'] == true || _salon?['favorite'] == true;
+        _nextSlotLabel = res['nextSlot'] is Map ? (res['nextSlot'] as Map)['label']?.toString() : null;
+        if (res['noSlotsToday'] == true) _nextSlotLabel ??= 'No slots today';
+        _cancelPolicy = res['cancelPolicy']?.toString() ?? GlowCatalog.cancelPolicy;
       } else {
         _error = res['error']?.toString() ?? 'Could not load salon';
       }
@@ -97,6 +114,43 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
     );
   }
 
+  Future<void> _writeReview() async {
+    int rating = 5;
+    final comment = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Write a review'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                initialValue: rating,
+                items: const [1, 2, 3, 4, 5].map((e) => DropdownMenuItem(value: e, child: Text('$e ★'))).toList(),
+                onChanged: (v) => setLocal(() => rating = v ?? 5),
+                decoration: const InputDecoration(labelText: 'Rating'),
+              ),
+              const SizedBox(height: 8),
+              TextField(controller: comment, maxLines: 3, decoration: const InputDecoration(labelText: 'Comment')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Post')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final res = await _api.addReview(widget.salonId, rating: rating, comment: comment.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(res['success'] == true ? 'Review saved' : (res['error']?.toString() ?? 'Failed'))),
+    );
+    if (res['success'] == true) _load();
+  }
+
   Future<void> _book({
     required String itemType,
     required int itemId,
@@ -106,11 +160,12 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
     final payload = await showDialog<Map<String, String>>(
       context: context,
       builder: (ctx) {
-        final dateCtrl = TextEditingController(text: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}');
-        final timeCtrl = TextEditingController(text: '11:00');
+        DateTime pickedDate = date;
+        String pickedTime = _slotsToday.isNotEmpty ? _slotsToday.first : '11:00';
         final addressCtrl = TextEditingController();
         final notesCtrl = TextEditingController();
         String type = 'ONLINE';
+        List<String> slots = List<String>.from(_slotsToday);
         return StatefulBuilder(
           builder: (ctx, setLocal) => AlertDialog(
             title: Text('Book $title'),
@@ -118,9 +173,39 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
-                  const SizedBox(height: 8),
-                  TextField(controller: timeCtrl, decoration: const InputDecoration(labelText: 'Time (HH:mm)')),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Date'),
+                    subtitle: Text('${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}'),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final d = await showDatePicker(
+                        context: ctx,
+                        initialDate: pickedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 60)),
+                      );
+                      if (d == null) return;
+                      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                      final slotRes = await _api.salonSlots(widget.salonId, date: key);
+                      setLocal(() {
+                        pickedDate = d;
+                        slots = (slotRes['slots'] is List)
+                            ? (slotRes['slots'] as List).map((e) => e.toString()).toList()
+                            : <String>[];
+                        if (slots.isNotEmpty) pickedTime = slots.first;
+                      });
+                    },
+                  ),
+                  if (slots.isEmpty)
+                    const Text('No slots on this date', style: TextStyle(color: GlowSpaceSalonDetailScreen.textGray))
+                  else
+                    DropdownButtonFormField<String>(
+                      initialValue: slots.contains(pickedTime) ? pickedTime : slots.first,
+                      items: slots.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      onChanged: (v) => setLocal(() => pickedTime = v ?? pickedTime),
+                      decoration: const InputDecoration(labelText: 'Time'),
+                    ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: type,
@@ -144,8 +229,8 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
               TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
               FilledButton(
                 onPressed: () => Navigator.of(ctx).pop({
-                  'bookingDate': dateCtrl.text.trim(),
-                  'preferredTime': timeCtrl.text.trim(),
+                  'bookingDate': '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}',
+                  'preferredTime': pickedTime,
                   'bookingType': type,
                   'address': addressCtrl.text.trim(),
                   'notes': notesCtrl.text.trim(),
@@ -197,6 +282,18 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
         backgroundColor: Colors.white,
         foregroundColor: GlowSpaceSalonDetailScreen.navy,
         title: Text(s?['name']?.toString() ?? 'Salon'),
+        actions: [
+          IconButton(
+            icon: Icon(_favorite ? Icons.favorite : Icons.favorite_border, color: GlowSpaceSalonDetailScreen.primary),
+            onPressed: () async {
+              final res = await _api.toggleFavorite(widget.salonId);
+              if (!mounted) return;
+              if (res['success'] == true) {
+                setState(() => _favorite = res['favorite'] == true);
+              }
+            },
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -216,8 +313,45 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
                       const SizedBox(height: 12),
                       Text(s?['name']?.toString() ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                       Text('${s?['city'] ?? ''} ${s?['state'] ?? ''}', style: const TextStyle(color: GlowSpaceSalonDetailScreen.textGray)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          if (s?['rating'] != null) Chip(label: Text('★ ${s?['rating']}')),
+                          if (s?['startingFee'] != null) Chip(label: Text('From ₹${s?['startingFee']}')),
+                          if (_nextSlotLabel != null) Chip(label: Text(_nextSlotLabel!)),
+                          if (s?['doorService'] == true) const Chip(label: Text('Door service')),
+                          if (s?['femaleStaff'] == true) const Chip(label: Text('Female staff')),
+                        ],
+                      ),
+                      if (_photos.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 90,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: _photos.map((p) {
+                              final url = _mediaUrl(p);
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: url.isEmpty
+                                      ? Container(width: 90, color: const Color(0xFFFFE4E6))
+                                      : Image.network(url, width: 90, height: 90, fit: BoxFit.cover),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       if (s?['bio'] != null && '${s!['bio']}'.isNotEmpty) Text('${s['bio']}'),
+                      if (_cancelPolicy != null) ...[
+                        const SizedBox(height: 8),
+                        Text(_cancelPolicy!, style: const TextStyle(fontSize: 12, color: GlowSpaceSalonDetailScreen.textGray)),
+                      ],
                       const SizedBox(height: 16),
                       const Text('Services by category', style: TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
@@ -254,6 +388,22 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
                                 itemId: (x['id'] is int) ? x['id'] as int : int.parse('${x['id']}'),
                                 title: x['title']?.toString() ?? 'Offer',
                               ),
+                            )),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Expanded(child: Text('Reviews', style: TextStyle(fontWeight: FontWeight.w700))),
+                          TextButton(onPressed: _writeReview, child: const Text('Write review')),
+                        ],
+                      ),
+                      if (_reviews.isEmpty)
+                        const Text('No reviews yet', style: TextStyle(color: GlowSpaceSalonDetailScreen.textGray))
+                      else
+                        ..._reviews.take(8).map((r) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.star, color: Color(0xFFF59E0B)),
+                              title: Text('${r['userName'] ?? 'Member'} · ${r['rating'] ?? ''}★'),
+                              subtitle: Text(r['comment']?.toString() ?? ''),
                             )),
                     ],
                   ),

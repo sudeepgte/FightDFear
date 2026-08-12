@@ -62,6 +62,19 @@ public class DoctorAppointment {
     @jakarta.persistence.Column(columnDefinition = "TEXT")
     private String prescriptionText;
 
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String prescriptionJson;
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String doctorNotes;
+
+    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    private String reportPaths;
+
+    private Long followUpOfId;
+    private Boolean reminder24hSent = false;
+    private Boolean reminder1hSent = false;
+
     public Long getId() {
         return id;
     }
@@ -153,5 +166,18 @@ public class DoctorAppointment {
     public void setCancelledBy(String cancelledBy) { this.cancelledBy = cancelledBy; }
     public String getCancelReason() { return cancelReason; }
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+
+    public String getPrescriptionJson() { return prescriptionJson; }
+    public void setPrescriptionJson(String prescriptionJson) { this.prescriptionJson = prescriptionJson; }
+    public String getDoctorNotes() { return doctorNotes; }
+    public void setDoctorNotes(String doctorNotes) { this.doctorNotes = doctorNotes; }
+    public String getReportPaths() { return reportPaths; }
+    public void setReportPaths(String reportPaths) { this.reportPaths = reportPaths; }
+    public Long getFollowUpOfId() { return followUpOfId; }
+    public void setFollowUpOfId(Long followUpOfId) { this.followUpOfId = followUpOfId; }
+    public Boolean getReminder24hSent() { return reminder24hSent; }
+    public void setReminder24hSent(Boolean reminder24hSent) { this.reminder24hSent = reminder24hSent; }
+    public Boolean getReminder1hSent() { return reminder1hSent; }
+    public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
 }
 

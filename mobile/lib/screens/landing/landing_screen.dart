@@ -3,23 +3,25 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/landing_service.dart';
+import '../../services/module_services.dart';
 import '../safety/contacts_screen.dart';
 import '../creator/creator_hub_screen.dart';
+import '../creator/creator_portal_login_screen.dart';
 import '../safety/danger_map_screen.dart';
 import '../doctors/doctor_portal_login_screen.dart';
 import '../entrepreneur/entrepreneur_portal_login_screen.dart';
 import '../events/event_host_portal_login_screen.dart';
+import '../financial/financial_educator_portal_login_screen.dart';
 import '../financial/financial_literacy_screen.dart';
 import '../fitness/fitness_trainer_portal_login_screen.dart';
+import '../fitness/fitness_wellness_screen.dart';
 import '../glow/glow_provider_login_screen.dart';
-import '../glow/glow_provider_signup_screen.dart';
 import '../glow/glow_space_screen.dart';
 import '../safety/home_screen.dart';
 import '../investor/investor_portal_login_screen.dart';
 import '../marketplace/job_bookings_screen.dart';
 import 'landing_notifications_screen.dart';
 import '../auth/login_screen.dart';
-import '../marketplace/marketplace_provider_login_screen.dart';
 import '../martial_arts/martial_arts_admin_screen.dart';
 import '../martial_arts/martial_arts_centre_login_screen.dart';
 import '../martial_arts/martial_arts_centre_register_screen.dart';
@@ -29,8 +31,10 @@ import '../marketplace/provider_catalog_screen.dart';
 import '../auth/register_screen.dart';
 import '../user/user_dashboard_screen.dart';
 import '../events/women_events_screen.dart';
-import '../marketplace/women_jobs_apply_screen.dart';
+import '../marketplace/women_jobs_portal_login_screen.dart';
+import '../marketplace/women_lawyer_portal_login_screen.dart';
 import '../marketplace/women_marketplace_screen.dart';
+import '../products/delivery_portal_login_screen.dart';
 import '../products/women_products_screen.dart';
 import '../products/women_products_seller_login_screen.dart';
 
@@ -203,12 +207,21 @@ class _LandingScreenState extends State<LandingScreen> {
       case 'glow':
       case 'stylist':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GlowProviderSignupScreen()),
+          MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen(startRegister: true)),
         );
         return;
       case 'service_partner':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MarketplaceProviderLoginScreen(startRegister: true)),
+          MaterialPageRoute(
+            builder: (_) => const WomenJobsPortalLoginScreen(startRegister: true),
+          ),
+        );
+        return;
+      case 'women_lawyer':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WomenLawyerPortalLoginScreen(startRegister: true),
+          ),
         );
         return;
       case 'marketplace_seller':
@@ -218,7 +231,9 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'women_jobs':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const WomenJobsApplyScreen()),
+          MaterialPageRoute(
+            builder: (_) => const WomenJobsPortalLoginScreen(startRegister: true),
+          ),
         );
         return;
       case 'entrepreneur':
@@ -241,6 +256,21 @@ class _LandingScreenState extends State<LandingScreen> {
           MaterialPageRoute(builder: (_) => const FitnessTrainerPortalLoginScreen(startRegister: true)),
         );
         return;
+      case 'delivery':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen(startRegister: true)),
+        );
+        return;
+      case 'creator':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
+        );
+        return;
+      case 'financial':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen(startRegister: true)),
+        );
+        return;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_joinUsLabel(value)} — coming soon on mobile')),
@@ -256,12 +286,16 @@ class _LandingScreenState extends State<LandingScreen> {
       'salon' || 'glow' => 'Glow Space',
       'stylist' => 'Glow Space',
       'service_partner' => 'Service Partner',
+      'women_lawyer' => 'Women Lawyer',
       'marketplace_seller' => 'Product Seller',
       'women_jobs' => 'Women Jobs',
       'entrepreneur' => 'Entrepreneur',
       'investor' => 'Investor',
       'event_host' => 'Event Host',
       'fitness_trainer' => 'Fitness Trainer',
+      'delivery' => 'Delivery Guy',
+      'creator' => 'Creator Hub',
+      'financial' => 'Financial Educator',
       _ => 'Registration',
     };
   }
@@ -290,7 +324,17 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'service_partner':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MarketplaceProviderLoginScreen()),
+          MaterialPageRoute(builder: (_) => const WomenJobsPortalLoginScreen()),
+        );
+        return;
+      case 'women_lawyer':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const WomenLawyerPortalLoginScreen()),
+        );
+        return;
+      case 'women_jobs':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const WomenJobsPortalLoginScreen()),
         );
         return;
       case 'marketplace_seller':
@@ -318,6 +362,21 @@ class _LandingScreenState extends State<LandingScreen> {
           MaterialPageRoute(builder: (_) => const FitnessTrainerPortalLoginScreen()),
         );
         return;
+      case 'delivery':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen()),
+        );
+        return;
+      case 'creator':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen()),
+        );
+        return;
+      case 'financial':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen()),
+        );
+        return;
       case 'admin':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const MartialArtsAdminScreen()),
@@ -338,11 +397,16 @@ class _LandingScreenState extends State<LandingScreen> {
       'salon' || 'glow' => 'Glow Space Login',
       'stylist' => 'Glow Space Login',
       'service_partner' => 'Service Partner Login',
+      'women_lawyer' => 'Women Lawyer Login',
+      'women_jobs' => 'Women Jobs Login',
       'marketplace_seller' => 'Product Seller Login',
       'entrepreneur' => 'Entrepreneur Login',
       'investor' => 'Investor Login',
       'event_host' => 'Event Host Login',
       'fitness_trainer' => 'Fitness Trainer Login',
+      'delivery' => 'Delivery Guy Login',
+      'creator' => 'Creator Hub Login',
+      'financial' => 'Financial Educator Login',
       'admin' => 'Admin Login',
       _ => 'Login',
     };
@@ -401,11 +465,32 @@ class _LandingScreenState extends State<LandingScreen> {
       });
 
   void _openJobs() => _requireLoginThen(() {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const JobBookingsScreen()));
+        _openJobsAfterLogin();
       });
+
+  Future<void> _openJobsAfterLogin() async {
+    try {
+      final res = await MarketplaceService(context.read<AuthState>().api).myJobApplication();
+      if (!mounted) return;
+      if (res['isVerifiedWorker'] == true) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const JobBookingsScreen(workerView: true)),
+        );
+        return;
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const WomenMarketplaceScreen()),
+    );
+  }
 
   void _openFinancial() => _requireLoginThen(() {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FinancialLiteracyScreen()));
+      });
+
+  void _openFitness() => _requireLoginThen(() {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FitnessWellnessScreen()));
       });
 
   void _openContacts() => _requireLoginThen(() {
@@ -606,6 +691,7 @@ class _LandingScreenState extends State<LandingScreen> {
             SliverToBoxAdapter(
               child: _TipsAndCategories(
                 onFinancial: _openFinancial,
+                onFitness: _openFitness,
                 onDefense: _openMartialArts,
                 onDoctors: _openDoctors,
                 onJobs: _openJobs,
@@ -1537,6 +1623,7 @@ class _CommunitySection extends StatelessWidget {
 class _TipsAndCategories extends StatelessWidget {
   const _TipsAndCategories({
     required this.onFinancial,
+    required this.onFitness,
     required this.onDefense,
     required this.onDoctors,
     required this.onJobs,
@@ -1545,7 +1632,8 @@ class _TipsAndCategories extends StatelessWidget {
   });
 
   final VoidCallback onFinancial;
-  final VoidCallback onDefense;
+  final VoidCallback onFitness;
+  final VoidCallback onDefense; // kept for other category tiles if remapped later // kept for other category tiles if remapped later
   final VoidCallback onDoctors;
   final VoidCallback onJobs;
   final VoidCallback onLegal;
@@ -1555,7 +1643,7 @@ class _TipsAndCategories extends StatelessWidget {
   Widget build(BuildContext context) {
     final cats = [
       ('Mental Wellness', Icons.psychology_outlined, onDoctors),
-      ('Fitness', Icons.fitness_center_outlined, onDefense),
+      ('Fitness', Icons.fitness_center_outlined, onFitness),
       ('Women Health', Icons.favorite_outline, onDoctors),
       ('Career Growth', Icons.work_outline, onJobs),
       ('Legal Awareness', Icons.gavel_outlined, onLegal),
@@ -1846,12 +1934,16 @@ class _LoginDropdown {
     _LoginOption(value: 'doctor', label: 'Women Doctor Login', icon: Icons.monitor_heart_outlined, available: true),
     _LoginOption(value: 'martial_arts', label: 'Self-Defense Center Login', icon: Icons.sports_martial_arts_outlined, available: true),
     _LoginOption(value: 'glow', label: 'Glow Space Login', icon: Icons.spa_outlined, available: true),
-    _LoginOption(value: 'service_partner', label: 'Service Partner Login', icon: Icons.handshake_outlined, available: true),
+    _LoginOption(value: 'women_lawyer', label: 'Women Lawyer Login', icon: Icons.gavel_outlined, available: true),
+    _LoginOption(value: 'women_jobs', label: 'Women Jobs Login', icon: Icons.work_outline, available: true),
     _LoginOption(value: 'marketplace_seller', label: 'Product Seller Login', icon: Icons.storefront_outlined, available: true),
     _LoginOption(value: 'entrepreneur', label: 'Entrepreneur Login', icon: Icons.lightbulb_outline, available: true),
     _LoginOption(value: 'investor', label: 'Investor Login', icon: Icons.trending_up, available: true),
     _LoginOption(value: 'event_host', label: 'Event Host Login', icon: Icons.event_available_outlined, available: true),
     _LoginOption(value: 'fitness_trainer', label: 'Fitness Trainer Login', icon: Icons.fitness_center_outlined, available: true),
+    _LoginOption(value: 'delivery', label: 'Delivery Guy Login', icon: Icons.delivery_dining_outlined, available: true),
+    _LoginOption(value: 'creator', label: 'Creator Hub Login', icon: Icons.video_camera_front_outlined, available: true),
+    _LoginOption(value: 'financial', label: 'Financial Educator Login', icon: Icons.menu_book_outlined, available: true),
     _LoginOption(value: 'admin', label: 'Admin Login', icon: Icons.admin_panel_settings_outlined, available: true),
   ];
 
@@ -1891,12 +1983,14 @@ class _JoinUsOption {
     required this.value,
     required this.label,
     required this.icon,
+    this.subtitle,
     this.available = false,
   });
 
   final String value;
   final String label;
   final IconData icon;
+  final String? subtitle;
   final bool available;
 }
 
@@ -1904,15 +1998,18 @@ class _JoinUsDropdown {
   static const options = [
     _JoinUsOption(value: 'member', label: 'Join as Member', icon: Icons.person_outline, available: true),
     _JoinUsOption(value: 'doctor', label: 'Women Doctor', icon: Icons.monitor_heart_outlined, available: true),
-    _JoinUsOption(value: 'martial_arts', label: 'Self-Defense Trainer', icon: Icons.sports_martial_arts_outlined, available: true),
+    _JoinUsOption(value: 'martial_arts', label: 'Self-Defense Trainer', subtitle: 'Karate, Taekwondo & martial arts centres', icon: Icons.sports_martial_arts_outlined, available: true),
     _JoinUsOption(value: 'glow', label: 'Glow Space', icon: Icons.spa_outlined, available: true),
-    _JoinUsOption(value: 'service_partner', label: 'Service Partner', icon: Icons.handshake_outlined, available: true),
-    _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', icon: Icons.storefront_outlined, available: true),
+    _JoinUsOption(value: 'women_lawyer', label: 'Women Lawyer', subtitle: 'Dedicated lawyer registration — consultations & advocacy', icon: Icons.gavel_outlined, available: true),
+    _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', subtitle: 'List products, photos, stock & orders', icon: Icons.storefront_outlined, available: true),
+    _JoinUsOption(value: 'delivery', label: 'Delivery Guy', subtitle: 'Pick up and deliver Women Products orders', icon: Icons.delivery_dining_outlined, available: true),
     _JoinUsOption(value: 'women_jobs', label: 'Women Jobs', icon: Icons.work_outline, available: true),
     _JoinUsOption(value: 'entrepreneur', label: 'Entrepreneur', icon: Icons.lightbulb_outline, available: true),
     _JoinUsOption(value: 'investor', label: 'Investor', icon: Icons.trending_up, available: true),
     _JoinUsOption(value: 'event_host', label: 'Event Host', icon: Icons.event_available_outlined, available: true),
-    _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', icon: Icons.fitness_center_outlined, available: true),
+    _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', subtitle: 'Gym, Zumba, Yoga & wellness coaching', icon: Icons.fitness_center_outlined, available: true),
+    _JoinUsOption(value: 'creator', label: 'Creator Hub', subtitle: 'Publish videos, reels & stories after admin approval', icon: Icons.video_camera_front_outlined, available: true),
+    _JoinUsOption(value: 'financial', label: 'Financial Educator', subtitle: 'Publish videos, live sessions & workshops after admin approval', icon: Icons.menu_book_outlined, available: true),
   ];
 
   static Future<void> showSheet(BuildContext context, ValueChanged<String> onSelected) async {
@@ -1932,6 +2029,7 @@ class _JoinUsDropdown {
               (o) => ListTile(
                 leading: Icon(o.icon, color: LandingScreen.primary),
                 title: Text(o.label),
+                subtitle: o.subtitle == null ? null : Text(o.subtitle!, style: const TextStyle(fontSize: 12)),
                 trailing: o.available
                     ? const Text('Open', style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w700))
                     : null,

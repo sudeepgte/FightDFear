@@ -214,7 +214,12 @@
                 <c:otherwise>Service Partner Verification</c:otherwise>
             </c:choose>
           </h4>
-          <p>Review and verify service partners registered from mobile / web</p>
+          <p>
+            <c:choose>
+              <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Review lawyer profiles from Join Us → Women Lawyer (practice areas, bar ID, fee)</c:when>
+              <c:otherwise>Review and verify service partners registered from mobile / web</c:otherwise>
+            </c:choose>
+          </p>
         </div>
       </div>
 
@@ -236,6 +241,12 @@
                       <th>Phone</th>
                       <th>Category</th>
                       <th>Location</th>
+                      <c:if test="${selectedCategory == 'WOMEN_LAWYER'}">
+                          <th>Practice areas</th>
+                          <th>Bar ID</th>
+                          <th>Exp / Fee</th>
+                          <th>Bio</th>
+                      </c:if>
                       <th>Identity Doc</th>
                       <th>Status</th>
                       <th>Action</th>
@@ -251,6 +262,22 @@
                               <td>${p.phone}</td>
                               <td><span class="badge bg-light text-dark border">${p.category}</span></td>
                               <td>${p.locationText}</td>
+                              <c:if test="${selectedCategory == 'WOMEN_LAWYER'}">
+                                  <td class="text-start" style="max-width:180px;white-space:normal;">${empty p.practiceAreas ? '—' : p.practiceAreas}</td>
+                                  <td>${empty p.barCouncilId ? '—' : p.barCouncilId}</td>
+                                  <td>
+                                      <c:choose>
+                                          <c:when test="${p.experienceYears != null}">${p.experienceYears} yrs</c:when>
+                                          <c:otherwise>—</c:otherwise>
+                                      </c:choose>
+                                      <br>
+                                      <c:choose>
+                                          <c:when test="${p.consultationFee != null}">Rs ${p.consultationFee}</c:when>
+                                          <c:otherwise>—</c:otherwise>
+                                      </c:choose>
+                                  </td>
+                                  <td class="text-start" style="max-width:220px;white-space:normal;font-size:0.8rem;">${empty p.description ? '—' : p.description}</td>
+                              </c:if>
                               <td>
                                   <c:choose>
                                       <c:when test="${not empty p.identityDocumentPath}">
@@ -277,7 +304,7 @@
                   </c:when>
                   <c:otherwise>
                       <tr>
-                          <td colspan="8" class="py-4 text-center text-muted"><i class="fas fa-check-circle fa-2x mb-2 d-block text-success" style="opacity:0.4;"></i>No pending providers.</td>
+                          <td colspan="12" class="py-4 text-center text-muted"><i class="fas fa-check-circle fa-2x mb-2 d-block text-success" style="opacity:0.4;"></i>No pending providers.</td>
                       </tr>
                   </c:otherwise>
               </c:choose>

@@ -16,6 +16,8 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
 	  List<Booking1> findByUser(User user);
 	    List<Booking1> findBySalon(Salon salon);
+	    List<Booking1> findBySalonAndBookingDate(Salon salon, java.time.LocalDate bookingDate);
+	    List<Booking1> findByStatusIgnoreCase(String status);
 	 
  
 	

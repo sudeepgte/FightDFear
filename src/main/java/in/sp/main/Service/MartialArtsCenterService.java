@@ -2,6 +2,7 @@ package in.sp.main.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import in.sp.main.Entities.CentreProfileStatus;
 import in.sp.main.Entities.Enrollment;
 import in.sp.main.Entities.MartialArtsCenter;
 import in.sp.main.Entities.MartialArtsType;
@@ -25,6 +27,8 @@ import in.sp.main.Repository.SlotRepository;
 import in.sp.main.Repository.AttendanceRepository;
 import in.sp.main.Repository.OnlineClassRepository;
 import in.sp.main.Repository.TrainingSessionRepository;
+import in.sp.main.Util.MartialArtsDiscoveryFilter;
+
 import jakarta.servlet.ServletContext;
 
 @Service
@@ -120,21 +124,94 @@ public class MartialArtsCenterService {
         MartialArtsCenter center = centerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Center not found"));
         center.setApproved(true);
+        center.setCentreProfileStatus(in.sp.main.Entities.CentreProfileStatus.APPROVED);
+        if (center.getProfileCompletionPct() == null || center.getProfileCompletionPct() < 100) {
+            center.setProfileCompletionPct(100);
+        }
         centerRepository.save(center);
     }
 
-    // ================== Reject a center ==================
+    // ================== Reject a center (soft reject — keep record like doctors) ==================
     @Transactional
     public boolean rejectCenter(Long id) {
-        return deleteCenter(id);
+        return rejectCenter(id, null);
+    }
+
+    @Transactional
+    public boolean rejectCenter(Long id, String reason) {
+        MartialArtsCenter center = centerRepository.findById(id).orElse(null);
+        if (center == null) return false;
+        center.setApproved(false);
+        center.setCentreProfileStatus(CentreProfileStatus.REJECTED);
+        center.setRejectionReason(reason == null || reason.isBlank() ? "Rejected by admin" : reason.trim());
+        centerRepository.save(center);
+        return true;
+    }
+
+    /** Request changes — trainer can update profile and resubmit. */
+    @Transactional
+    public boolean requestChanges(Long id, String note) {
+        MartialArtsCenter center = centerRepository.findById(id).orElse(null);
+        if (center == null) return false;
+        center.setApproved(false);
+        center.setCentreProfileStatus(CentreProfileStatus.CHANGES_REQUESTED);
+        center.setChangesRequestedNote(note == null || note.isBlank()
+                ? "Please update your profile and resubmit."
+                : note.trim());
+        centerRepository.save(center);
+        return true;
     }
 
     // ================== Get centers by approval ==================
     @Transactional(readOnly = true)
     public List<MartialArtsCenter> getCentresByApprovalStatus(boolean approved) {
-        List<MartialArtsCenter> centers = centerRepository.findByApproved(approved);
+        List<MartialArtsCenter> centers;
+        if (approved) {
+            centers = new java.util.ArrayList<>(
+                    centerRepository.findByCentreProfileStatus(CentreProfileStatus.APPROVED));
+            for (MartialArtsCenter legacy : centerRepository.findByApproved(true)) {
+                if (centers.stream().noneMatch(c -> c.getId().equals(legacy.getId()))) {
+                    centers.add(legacy);
+                }
+            }
+        } else {
+            // Mirror doctor pending queue: show anyone awaiting admin action / incomplete / submitted
+            centers = new java.util.ArrayList<>(centerRepository.findByCentreProfileStatusIn(List.of(
+                    CentreProfileStatus.PENDING_ADMIN_APPROVAL,
+                    CentreProfileStatus.READY_FOR_VERIFICATION,
+                    CentreProfileStatus.CHANGES_REQUESTED,
+                    CentreProfileStatus.PROFILE_INCOMPLETE,
+                    CentreProfileStatus.REGISTERED
+            )));
+            // Legacy rows: not approved and no lifecycle status yet
+            for (MartialArtsCenter legacy : centerRepository.findByApprovedFalseAndCentreProfileStatusIsNull()) {
+                if (centers.stream().noneMatch(c -> c.getId().equals(legacy.getId()))) {
+                    centers.add(legacy);
+                }
+            }
+            // Sort: submitted for verification first
+            centers.sort((a, b) -> {
+                int pa = pendingPriority(a.getCentreProfileStatus());
+                int pb = pendingPriority(b.getCentreProfileStatus());
+                if (pa != pb) return Integer.compare(pa, pb);
+                java.time.LocalDateTime sa = a.getSubmittedForVerificationAt();
+                java.time.LocalDateTime sb = b.getSubmittedForVerificationAt();
+                if (sa == null && sb == null) return 0;
+                if (sa == null) return 1;
+                if (sb == null) return -1;
+                return sb.compareTo(sa);
+            });
+        }
         initializeLazyCollections(centers);
         return centers;
+    }
+
+    private static int pendingPriority(CentreProfileStatus s) {
+        if (s == CentreProfileStatus.PENDING_ADMIN_APPROVAL) return 0;
+        if (s == CentreProfileStatus.CHANGES_REQUESTED) return 1;
+        if (s == CentreProfileStatus.READY_FOR_VERIFICATION) return 2;
+        if (s == null) return 3;
+        return 4;
     }
 
     @Transactional(readOnly = true)
@@ -146,10 +223,14 @@ public class MartialArtsCenterService {
     @Transactional(readOnly = true)
     public List<MartialArtsCenter> getApprovedCentersForDiscovery() {
         List<MartialArtsCenter> centers = centerRepository.findByApproved(true);
+        List<MartialArtsCenter> filtered = new ArrayList<>();
         for (MartialArtsCenter center : centers) {
             initializeLazyCollections(center);
+            if (MartialArtsDiscoveryFilter.isMartialArtsCentreForDiscovery(center)) {
+                filtered.add(center);
+            }
         }
-        return centers;
+        return filtered;
     }
 
     @Transactional(readOnly = true)
@@ -264,11 +345,9 @@ public class MartialArtsCenterService {
     }
 
     private void initializeLazyCollections(MartialArtsCenter center) {
-        center.getMartialArtsTypes().size();
-        center.getAvailableDays().size();
-        if (center.getBatches() != null) {
-            center.getBatches().size();
-        }
+        if (center.getMartialArtsTypes() != null) center.getMartialArtsTypes().size();
+        if (center.getAvailableDays() != null) center.getAvailableDays().size();
+        if (center.getBatches() != null) center.getBatches().size();
     }
     @Transactional
     public void updateCenterDetails(Long centerId, MartialArtsCenter updatedCenter, MultipartFile file,

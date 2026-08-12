@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/seller_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/women_products_seller_auth_service.dart';
 import '../../widgets/module_theme.dart';
-import 'women_products_seller_login_screen.dart';
+import '../../widgets/ux_feedback.dart';
+import '../landing/landing_screen.dart';
+import 'order_live_tracking_screen.dart';
+import 'women_products_seller_profile_completion_screen.dart';
 
 class WomenProductsSellerDashboardScreen extends StatefulWidget {
   const WomenProductsSellerDashboardScreen({super.key});
@@ -28,6 +32,9 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _orders = [];
   double _earnings = 0;
+  double _payoutBalance = 0;
+  String _upiId = '';
+  String _cancelPolicy = '';
 
   @override
   void initState() {
@@ -47,6 +54,13 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
         _products = ModuleTheme.toList(res['products']);
         _orders = ModuleTheme.toList(res['orders']);
         _earnings = (res['totalEarnings'] is num) ? (res['totalEarnings'] as num).toDouble() : 0;
+        _payoutBalance = (res['payoutBalance'] is num)
+            ? (res['payoutBalance'] as num).toDouble()
+            : (_seller['payoutBalance'] is num)
+                ? (_seller['payoutBalance'] as num).toDouble()
+                : 0;
+        _upiId = res['upiId']?.toString() ?? _seller['upiId']?.toString() ?? '';
+        _cancelPolicy = res['cancelPolicy']?.toString() ?? SellerCatalog.cancelPolicy;
       } else {
         _error = res['error']?.toString() ?? 'Failed to load';
       }
@@ -60,25 +74,47 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
     await context.read<AuthState>().api.clearToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const WomenProductsSellerLoginScreen()),
+      MaterialPageRoute(builder: (_) => const LandingScreen()),
       (_) => false,
     );
   }
 
-  Future<void> _addProduct() async {
-    final name = TextEditingController();
-    final brand = TextEditingController(text: _seller['businessName']?.toString() ?? 'Own Brand');
-    final price = TextEditingController(text: '199');
-    final stock = TextEditingController(text: '10');
-    final desc = TextEditingController();
-    final categoryLabels = SellerCatalog.categories.map((c) => c.label).toList();
-    String cat = categoryLabels.first;
+  bool get _approved => _seller['partnerProfileStatus']?.toString() == 'APPROVED';
+
+  WomenProductsSellerAuthService get _svc =>
+      WomenProductsSellerAuthService(context.read<AuthState>().api);
+
+  void _openProfile() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const WomenProductsSellerProfileCompletionScreen()))
+        .then((_) => _load());
+  }
+
+  Future<void> _addProduct() => _editProduct();
+
+  Future<void> _editProduct([Map<String, dynamic>? existing]) async {
+    if (!_approved) {
+      _toast('Complete your shop profile and wait for admin approval before listing products.');
+      _openProfile();
+      return;
+    }
+    final isEdit = existing != null;
+    final name = TextEditingController(text: existing?['name']?.toString() ?? '');
+    final brand = TextEditingController(
+        text: existing?['brand']?.toString() ?? _seller['businessName']?.toString() ?? 'Own Brand');
+    final price = TextEditingController(text: '${existing?['price'] ?? '199'}');
+    final stock = TextEditingController(text: '${existing?['stock'] ?? '10'}');
+    final desc = TextEditingController(text: existing?['description']?.toString() ?? '');
+    final codes = SellerCatalog.categories.map((c) => c.code).toList();
+    String cat = existing?['category']?.toString() ?? codes.first;
+    if (!codes.contains(cat)) cat = codes.first;
+    String? pickedPath;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Add Product'),
+          title: Text(isEdit ? 'Edit Product' : 'Add Product'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -90,15 +126,26 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
                 DropdownButtonFormField<String>(
                   initialValue: cat,
                   decoration: const InputDecoration(labelText: 'Category *', border: OutlineInputBorder()),
-                  items: categoryLabels.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  items: SellerCatalog.categories
+                      .map((c) => DropdownMenuItem(value: c.code, child: Text(c.label)))
+                      .toList(),
                   onChanged: (v) => setLocal(() => cat = v ?? cat),
                 ),
                 const SizedBox(height: 10),
                 TextField(controller: price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price (Rs) *', border: OutlineInputBorder())),
                 const SizedBox(height: 10),
-                TextField(controller: stock, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stock', border: OutlineInputBorder())),
+                TextField(controller: stock, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Stock *', border: OutlineInputBorder())),
                 const SizedBox(height: 10),
                 TextField(controller: desc, maxLines: 2, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder())),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
+                    if (file != null) setLocal(() => pickedPath = file.path);
+                  },
+                  icon: const Icon(Icons.photo_outlined),
+                  label: Text(pickedPath != null ? 'Photo selected' : (existing?['imagePath'] != null ? 'Change photo' : 'Add product photo')),
+                ),
               ],
             ),
           ),
@@ -106,26 +153,60 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: WomenProductsSellerDashboardScreen.primary),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Save'),
+              onPressed: () {
+                      if (name.text.trim().isEmpty || brand.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Name and brand are required.')),
+                        );
+                        return;
+                      }
+                      if ((double.tryParse(price.text.trim()) ?? 0) <= 0) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(content: Text('Enter a valid price.')),
+                        );
+                        return;
+                      }
+                      Navigator.pop(ctx, true);
+                    },
+              child: Text(isEdit ? 'Update' : 'Save'),
             ),
           ],
         ),
       ),
     );
     if (ok != true || !mounted) return;
-    final res = await WomenProductsSellerAuthService(context.read<AuthState>().api).addProduct({
+    final payload = {
       'name': name.text.trim(),
       'brand': brand.text.trim().isEmpty ? 'Own Brand' : brand.text.trim(),
       'category': cat,
       'price': double.tryParse(price.text.trim()) ?? 0,
-      'stock': int.tryParse(stock.text.trim()) ?? 10,
+      'stock': int.tryParse(stock.text.trim()) ?? 0,
       'description': desc.text.trim(),
-    });
+    };
+    Map<String, dynamic> res;
+    if (isEdit) {
+      final id = existing['id'] is int ? existing['id'] as int : int.tryParse('${existing['id']}');
+      if (id == null) return;
+      res = await _svc.updateProduct(id, payload);
+      if (res['success'] == true && pickedPath != null) {
+        await _svc.uploadProductImage(id, pickedPath!);
+      }
+    } else {
+      res = await _svc.addProduct(payload);
+      final created = res['product'];
+      final id = created is Map
+          ? (created['id'] is int ? created['id'] as int : int.tryParse('${created['id']}'))
+          : null;
+      if (res['success'] == true && pickedPath != null && id != null) {
+        await _svc.uploadProductImage(id, pickedPath!);
+      }
+    }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res['success'] == true ? 'Product added' : '${res['error']}'),
+        content: Text(res['success'] == true
+            ? (isEdit ? 'Product updated' : 'Product added')
+            : '${res['error']}'),
         backgroundColor: res['success'] == true ? Colors.teal : Colors.red.shade700,
       ),
     );
@@ -135,8 +216,77 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
     }
   }
 
+  Future<void> _deleteProduct(Map<String, dynamic> p) async {
+    final id = p['id'] is int ? p['id'] as int : int.tryParse('${p['id']}');
+    if (id == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove product?'),
+        content: Text('Remove "${p['name'] ?? 'this product'}" from your shop?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final res = await _svc.deleteProduct(id);
+    if (!mounted) return;
+    _toast(res['success'] == true ? 'Product removed' : '${res['error']}');
+    if (res['success'] == true) _load();
+  }
+
+  Future<void> _requestPayout() async {
+    final res = await _svc.requestPayout();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['success'] == true
+            ? (res['message']?.toString() ?? 'Requested')
+            : (res['error']?.toString() ?? 'Payout failed')),
+      ),
+    );
+    if (res['success'] == true) _load();
+  }
+
+  Future<void> _editNotes(Map<String, dynamic> o) async {
+    final oid = o['id'] is int ? o['id'] as int : int.tryParse('${o['id']}');
+    if (oid == null) return;
+    final ctrl = TextEditingController(text: o['coachNotes']?.toString() ?? '');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Packing notes'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            hintText: 'Packed items, gift wrap, delivery instructions…',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    final res = await _svc.updateOrderNotes(oid, ctrl.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['success'] == true
+            ? 'Notes saved'
+            : (res['error']?.toString() ?? 'Could not save notes')),
+      ),
+    );
+    if (res['success'] == true) _load();
+  }
+
   Future<void> _updateOrder(int id, String status) async {
-    final res = await WomenProductsSellerAuthService(context.read<AuthState>().api).updateOrderStatus(id, status);
+    final res = await _svc.updateOrderStatus(id, status);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(res['success'] == true ? 'Order updated to $status' : '${res['error']}')),
@@ -181,9 +331,21 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
 
   void _toast(String m) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
 
+  String _mediaUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    final base = context.read<AuthState>().api.baseUrl;
+    return path.startsWith('/') ? '$base$path' : '$base/$path';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _tab == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _tab != 0) setState(() => _tab = 0);
+      },
+      child: Scaffold(
       backgroundColor: WomenProductsSellerDashboardScreen.softBg,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
@@ -204,7 +366,7 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
               _nav(1, Icons.inventory_2_outlined, Icons.inventory_2, 'Products'),
               const SizedBox(width: 56),
               _nav(2, Icons.receipt_long_outlined, Icons.receipt_long, 'Orders'),
-              _nav(3, Icons.storefront_outlined, Icons.storefront, 'Shop'),
+              _nav(3, Icons.account_balance_wallet_outlined, Icons.account_balance_wallet, 'Finance'),
             ],
           ),
         ),
@@ -219,6 +381,7 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
                     children: [_home(), _productsTab(), _ordersTab(), _shopTab()],
                   ),
                 ),
+        ),
     );
   }
 
@@ -262,6 +425,18 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
           ),
           const SizedBox(height: 12),
           _storeHero(),
+          if (!_approved) ...[
+            const SizedBox(height: 12),
+            ProfileCompletionCard(
+              percent: (_seller['profileCompletionPct'] is num)
+                  ? (_seller['profileCompletionPct'] as num).toDouble()
+                  : 0,
+              statusLabel: _seller['partnerProfileStatusLabel']?.toString() ?? 'Pending',
+              hint: 'Complete shop details and wait for admin approval before listing products.',
+              actionLabel: 'Complete profile',
+              onAction: _openProfile,
+            ),
+          ],
           const SizedBox(height: 14),
           _kpiRow(),
           const SizedBox(height: 16),
@@ -398,12 +573,12 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
       (Icons.inventory_2_outlined, 'Manage Products', () => setState(() => _tab = 1)),
       (Icons.receipt_long_outlined, 'Orders', () => setState(() => _tab = 2)),
       (Icons.warehouse_outlined, 'Inventory', () => setState(() => _tab = 1)),
-      (Icons.payments_outlined, 'Earnings', () => _toast('Earnings: ${_money(_earnings)}')),
+      (Icons.payments_outlined, 'Earnings', () => setState(() => _tab = 3)),
       (Icons.people_outline, 'Customers', () => _toast('Customers coming soon')),
       (Icons.star_outline, 'Reviews', () => _toast('Reviews coming soon')),
       (Icons.campaign_outlined, 'Marketing', () => _toast('Marketing coming soon')),
       (Icons.insights_outlined, 'Analytics', () => _toast('Analytics coming soon')),
-      (Icons.storefront_outlined, 'Store Profile', () => setState(() => _tab = 3)),
+      (Icons.storefront_outlined, 'Store Profile', _openProfile),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -534,6 +709,50 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
       children: [
+        const Text('Finance', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: WomenProductsSellerDashboardScreen.navy)),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined,
+                color: WomenProductsSellerDashboardScreen.primary),
+            title: const Text('Payout balance'),
+            subtitle: Text(_upiId.isEmpty
+                ? 'Add UPI in Complete Profile to withdraw'
+                : 'UPI: $_upiId'),
+            trailing: Text(
+              '₹${_payoutBalance.round()}',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.payments_outlined),
+            title: const Text('Confirmed earnings'),
+            trailing: Text(
+              '₹${_earnings.round()}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _requestPayout,
+          style: FilledButton.styleFrom(
+            backgroundColor: WomenProductsSellerDashboardScreen.primary,
+            minimumSize: const Size.fromHeight(48),
+          ),
+          child: const Text('Request UPI payout'),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _cancelPolicy.isNotEmpty
+              ? _cancelPolicy
+              : 'Minimum payout ₹100. Online orders credit when paid; COD credits on delivery.',
+          style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+        ),
+        const SizedBox(height: 20),
         _storeHero(),
         const SizedBox(height: 14),
         ListTile(tileColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: const Icon(Icons.person), title: const Text('Seller'), subtitle: Text(_name)),
@@ -544,6 +763,8 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
         const SizedBox(height: 8),
         ListTile(tileColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), leading: const Icon(Icons.place), title: const Text('Address'), subtitle: Text(_address)),
         const SizedBox(height: 16),
+        FilledButton.tonal(onPressed: _openProfile, child: const Text('Edit shop profile')),
+        const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: _logout,
           icon: const Icon(Icons.logout),
@@ -558,6 +779,31 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
     );
   }
 
+  Widget _productThumb(Map<String, dynamic> p) {
+    final url = _mediaUrl(p['imagePath']?.toString());
+    const size = 48.0;
+    if (url.isEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        color: WomenProductsSellerDashboardScreen.softPink,
+        child: const Icon(Icons.shopping_bag_outlined, color: WomenProductsSellerDashboardScreen.primary),
+      );
+    }
+    return Image.network(
+      url,
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Container(
+        width: size,
+        height: size,
+        color: WomenProductsSellerDashboardScreen.softPink,
+        child: const Icon(Icons.shopping_bag_outlined, color: WomenProductsSellerDashboardScreen.primary),
+      ),
+    );
+  }
+
   Widget _productTile(Map<String, dynamic> p) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -565,11 +811,9 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
       decoration: _card(),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(color: WomenProductsSellerDashboardScreen.softPink, borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.shopping_bag_outlined, color: WomenProductsSellerDashboardScreen.primary),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _productThumb(p),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -582,6 +826,8 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
             ),
           ),
           Text(_money(p['price'] is num ? p['price'] as num : 0), style: const TextStyle(fontWeight: FontWeight.w800, color: WomenProductsSellerDashboardScreen.primary)),
+          IconButton(onPressed: () => _editProduct(p), icon: const Icon(Icons.edit_outlined, size: 20)),
+          IconButton(onPressed: () => _deleteProduct(p), icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFBE123C))),
         ],
       ),
     );
@@ -606,18 +852,47 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
           ),
           const SizedBox(height: 4),
           Text('${o['buyerName'] ?? o['customerName'] ?? 'Customer'} · ${_money(o['totalPrice'] is num ? o['totalPrice'] as num : 0)}', style: const TextStyle(fontSize: 12, color: WomenProductsSellerDashboardScreen.muted)),
+          if ((o['coachNotes']?.toString() ?? '').isNotEmpty)
+            Text('Notes: ${o['coachNotes']}', style: const TextStyle(fontSize: 12, color: WomenProductsSellerDashboardScreen.muted)),
           if (oid != null) ...[
             const SizedBox(height: 8),
             Wrap(
               spacing: 6,
-              children: ['CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']
-                  .map((s) => ActionChip(
-                        label: Text(s, style: const TextStyle(fontSize: 10)),
-                        onPressed: () => _updateOrder(oid, s),
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
+              children: [
+                if (status == 'PLACED') ...[
+                  ActionChip(label: const Text('Confirm', style: TextStyle(fontSize: 10)), onPressed: () => _updateOrder(oid, 'CONFIRMED')),
+                  ActionChip(label: const Text('Cancel', style: TextStyle(fontSize: 10)), onPressed: () => _updateOrder(oid, 'CANCELLED')),
+                ],
+                if (status == 'CONFIRMED') ...[
+                  ActionChip(label: const Text('Ready for pickup', style: TextStyle(fontSize: 10)), onPressed: () => _updateOrder(oid, 'READY_FOR_PICKUP')),
+                  ActionChip(label: const Text('Cancel', style: TextStyle(fontSize: 10)), onPressed: () => _updateOrder(oid, 'CANCELLED')),
+                ],
+                ActionChip(label: const Text('Notes', style: TextStyle(fontSize: 10)), onPressed: () => _editNotes(o)),
+              ],
             ),
+            if ((o['deliveryName']?.toString() ?? '').isNotEmpty)
+              Text('Delivery: ${o['deliveryName']} ${o['deliveryPhone'] ?? ''}',
+                  style: const TextStyle(fontSize: 12, color: WomenProductsSellerDashboardScreen.muted)),
+            if ((o['trackingNote']?.toString() ?? '').isNotEmpty)
+              Text(o['trackingNote'].toString(),
+                  style: const TextStyle(fontSize: 12, color: WomenProductsSellerDashboardScreen.muted)),
+            if (o['canLiveTrack'] == true ||
+                status == 'ASSIGNED' ||
+                status == 'OUT_FOR_DELIVERY' ||
+                status == 'DELIVERED')
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => OrderLiveTrackingScreen(
+                      orderId: oid,
+                      title: 'Order tracking',
+                      fetchTrack: () => _svc.trackOrder(oid),
+                    ),
+                  ));
+                },
+                icon: const Icon(Icons.map_outlined, size: 18),
+                label: Text(status == 'DELIVERED' ? 'View route' : 'Live track'),
+              ),
           ],
         ],
       ),
@@ -630,7 +905,7 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
     if (status == 'DELIVERED') {
       bg = const Color(0xFFDCFCE7);
       fg = const Color(0xFF166534);
-    } else if (status == 'SHIPPED') {
+    } else if (status == 'SHIPPED' || status == 'OUT_FOR_DELIVERY' || status == 'ASSIGNED' || status == 'READY_FOR_PICKUP') {
       bg = const Color(0xFFDBEAFE);
       fg = const Color(0xFF1D4ED8);
     } else if (status == 'CANCELLED') {

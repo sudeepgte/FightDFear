@@ -26,6 +26,10 @@ public class MartialArtsBatch {
     private String location;
     private String timeSlot;
     private Double fee;
+    private Double admissionFee;
+    private String trialType;
+    private Integer bufferMinutes;
+    private Integer durationMinutes;
 
     @ManyToOne
     @JoinColumn(name = "center_id")
@@ -65,6 +69,14 @@ public class MartialArtsBatch {
     public void setTimeSlot(String timeSlot) { this.timeSlot = timeSlot; }
     public Double getFee() { return fee; }
     public void setFee(Double fee) { this.fee = fee; }
+    public Double getAdmissionFee() { return admissionFee; }
+    public void setAdmissionFee(Double admissionFee) { this.admissionFee = admissionFee; }
+    public String getTrialType() { return trialType; }
+    public void setTrialType(String trialType) { this.trialType = trialType; }
+    public Integer getBufferMinutes() { return bufferMinutes; }
+    public void setBufferMinutes(Integer bufferMinutes) { this.bufferMinutes = bufferMinutes; }
+    public Integer getDurationMinutes() { return durationMinutes; }
+    public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
     public MartialArtsCenter getCenter() { return center; }
     public void setCenter(MartialArtsCenter center) { this.center = center; }
 }

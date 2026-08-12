@@ -12,4 +12,5 @@ public interface InvestmentRepository extends JpaRepository<Investment, Long> {
     List<Investment> findByInvestor(Investor investor);
     List<Investment> findByProposal(BusinessProposal proposal);
     List<Investment> findByProposal_Entrepreneur_Id(Long entrepreneurId);
+    List<Investment> findByInvestorAndProposal(Investor investor, BusinessProposal proposal);
 }

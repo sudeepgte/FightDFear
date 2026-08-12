@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -116,50 +117,59 @@ public class MobileApiController {
     }
 
     @GetMapping("/me/dashboard")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard(HttpSession session) {
-        User user = requireUser(session);
-        if (user == null) {
+        User sessionUser = requireUser(session);
+        if (sessionUser == null || sessionUser.getId() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("success", false, "error", "Unauthorized"));
         }
 
-        List<BroadcastMessage> broadcasts = broadcastMessageRepository.findAllByOrderBySentAtDesc();
-        long unreadCount = 0;
-        if (user.getLastReadBroadcastTime() == null) {
-            unreadCount = broadcasts.size();
-        } else {
-            unreadCount = broadcasts.stream()
-                    .filter(b -> b.getSentAt() != null
-                            && b.getSentAt().isAfter(user.getLastReadBroadcastTime()))
-                    .count();
+        try {
+            User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
+
+            List<BroadcastMessage> broadcasts = broadcastMessageRepository.findAllByOrderBySentAtDesc();
+            long unreadCount;
+            if (user.getLastReadBroadcastTime() == null) {
+                unreadCount = broadcasts.size();
+            } else {
+                unreadCount = broadcasts.stream()
+                        .filter(b -> b.getSentAt() != null
+                                && b.getSentAt().isAfter(user.getLastReadBroadcastTime()))
+                        .count();
+            }
+
+            int pendingRequestCount = userFollowService.getPendingRequestCount(user.getId());
+            int approvedCentreCount = martialArtsCenterService.getApprovedCentersForDiscovery().size();
+            boolean isWorker = jobApplicationRepository.existsByUser_IdAndStatusIn(
+                    user.getId(), List.of(VerificationStatus.VERIFIED));
+
+            List<Map<String, Object>> recentBroadcasts = new ArrayList<>();
+            broadcasts.stream().limit(5).forEach(b -> {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", b.getId());
+                item.put("title", b.getTitle());
+                item.put("message", b.getMessage());
+                item.put("type", b.getType());
+                item.put("sentAt", b.getSentAt() == null ? null : b.getSentAt().toString());
+                recentBroadcasts.add(item);
+            });
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("name", user.getFullName());
+            response.put("unreadBroadcastCount", unreadCount);
+            response.put("approvedCentreCount", approvedCentreCount);
+            response.put("pendingRequestCount", pendingRequestCount);
+            response.put("isWorker", isWorker);
+            response.put("recentBroadcasts", recentBroadcasts);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("error", "Dashboard load failed: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
         }
-
-        int pendingRequestCount = userFollowService.getPendingRequestCount(user.getId());
-        int approvedCentreCount = martialArtsCenterService.getApprovedCentersForDiscovery().size();
-        boolean isWorker = jobApplicationRepository.findByStatus(VerificationStatus.VERIFIED)
-                .stream()
-                .anyMatch(app -> app.getUser() != null && app.getUser().getId().equals(user.getId()));
-
-        List<Map<String, Object>> recentBroadcasts = new ArrayList<>();
-        broadcasts.stream().limit(5).forEach(b -> {
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id", b.getId());
-            item.put("title", b.getTitle());
-            item.put("message", b.getMessage());
-            item.put("type", b.getType());
-            item.put("sentAt", b.getSentAt() == null ? null : b.getSentAt().toString());
-            recentBroadcasts.add(item);
-        });
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("success", true);
-        response.put("name", user.getFullName());
-        response.put("unreadBroadcastCount", unreadCount);
-        response.put("approvedCentreCount", approvedCentreCount);
-        response.put("pendingRequestCount", pendingRequestCount);
-        response.put("isWorker", isWorker);
-        response.put("recentBroadcasts", recentBroadcasts);
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me/trusted-contacts")

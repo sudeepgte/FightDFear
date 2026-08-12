@@ -4,6 +4,7 @@ package in.sp.main.Entities;
 public enum ProviderBookingStatus {
     PENDING,
     CONFIRMED,
+    PAID,
     COMPLETED,
     CANCELLED
 }

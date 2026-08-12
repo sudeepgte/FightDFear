@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/funding_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/entrepreneur_auth_service.dart';
 import '../../widgets/module_theme.dart';
-import '../../widgets/registration_form_kit.dart';
-import 'entrepreneur_portal_login_screen.dart';
+import '../funding/entrepreneur_funding_screen.dart';
+import '../funding/funding_chat_threads_screen.dart';
+import '../funding/funding_meetings_screen.dart';
+import '../funding/funding_menu_sheet.dart';
+import '../funding/funding_notifications_screen.dart';
+import '../funding/funding_pitch_deck_screen.dart';
+import '../landing/landing_screen.dart';
+import 'entrepreneur_profile_completion_screen.dart';
 
 class EntrepreneurDashboardScreen extends StatefulWidget {
   const EntrepreneurDashboardScreen({super.key});
@@ -25,7 +32,13 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   String? _error;
   Map<String, dynamic> _entrepreneur = {};
   List<Map<String, dynamic>> _proposals = [];
+  List<Map<String, dynamic>> _interests = [];
   Map<String, dynamic> _funding = {};
+  bool _canCreate = false;
+  bool _creating = false;
+  bool _cancelling = false;
+
+  EntrepreneurAuthService get _svc => EntrepreneurAuthService(context.read<AuthState>().api);
 
   @override
   void initState() {
@@ -33,17 +46,131 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     _load();
   }
 
+  // ── Status helpers ────────────────────────────────────────────────────────
+
+  String get _partnerStatus =>
+      (_entrepreneur['partnerProfileStatus']?.toString() ?? '').toUpperCase();
+
+  String get _verificationStatus =>
+      (_entrepreneur['verificationStatus']?.toString() ?? '').toUpperCase();
+
+  bool get _verified => _partnerStatus == 'APPROVED';
+
+  bool get _needsProfile {
+    const incomplete = {
+      'PROFILE_INCOMPLETE',
+      'REGISTERED',
+      'READY_FOR_VERIFICATION',
+      'CHANGES_REQUESTED',
+      'REJECTED',
+    };
+    return incomplete.contains(_partnerStatus);
+  }
+
+  String get _statusBadgeLabel {
+    if (_verified || _partnerStatus == 'APPROVED') return 'Approved';
+    if (_partnerStatus == 'CHANGES_REQUESTED') return 'Changes Requested';
+    if (_partnerStatus == 'REJECTED' || _verificationStatus == 'REJECTED') {
+      return 'Rejected';
+    }
+    if (_partnerStatus == 'PENDING_ADMIN_APPROVAL' ||
+        _partnerStatus == 'READY_FOR_VERIFICATION' ||
+        _verificationStatus == 'PENDING') {
+      return 'Pending';
+    }
+    return 'Incomplete';
+  }
+
+  Color get _statusBadgeBg {
+    switch (_statusBadgeLabel) {
+      case 'Approved':
+        return const Color(0xFFDCFCE7);
+      case 'Rejected':
+        return const Color(0xFFFFE4E6);
+      case 'Pending':
+      case 'Changes Requested':
+        return const Color(0xFFFEF3C7);
+      default:
+        return const Color(0xFFE2E8F0);
+    }
+  }
+
+  Color get _statusBadgeFg {
+    switch (_statusBadgeLabel) {
+      case 'Approved':
+        return const Color(0xFF166534);
+      case 'Rejected':
+        return const Color(0xFFBE123C);
+      case 'Pending':
+      case 'Changes Requested':
+        return const Color(0xFFB45309);
+      default:
+        return const Color(0xFF475569);
+    }
+  }
+
+  String get _name => _entrepreneur['fullName']?.toString() ?? 'Entrepreneur';
+  String get _firstName => _name.trim().split(RegExp(r'\s+')).first;
+  String get _business => _entrepreneur['businessName']?.toString() ?? 'Business';
+  String get _category => _entrepreneur['businessCategory']?.toString() ?? 'Startup';
+  String get _location => _entrepreneur['businessLocation']?.toString() ?? 'Location not set';
+  int get _experience => (_entrepreneur['businessExperience'] is num)
+      ? (_entrepreneur['businessExperience'] as num).toInt()
+      : 0;
+
+  int get _profileCompletionPct {
+    final raw = _entrepreneur['profileCompletionPct'];
+    if (raw is num) return raw.toInt().clamp(0, 100);
+    return (int.tryParse('$raw') ?? 0).clamp(0, 100);
+  }
+
+  double get _requested {
+    final fromFunding =
+        (_funding['totalRequested'] is num) ? (_funding['totalRequested'] as num).toDouble() : 0.0;
+    if (fromFunding > 0) return fromFunding;
+    final needed = (_entrepreneur['investmentNeeded'] is num)
+        ? (_entrepreneur['investmentNeeded'] as num).toDouble()
+        : 0.0;
+    return needed;
+  }
+
+  double get _raised =>
+      (_funding['totalRaised'] is num) ? (_funding['totalRaised'] as num).toDouble() : 0;
+  double get _remaining => (_requested - _raised).clamp(0, double.infinity);
+  double get _progress => _requested <= 0 ? 0 : (_raised / _requested).clamp(0.0, 1.0);
+
+  int get _investorsInterested {
+    final fromFunding = _funding['pendingInterestCount'];
+    if (fromFunding is num) return fromFunding.toInt();
+    return _interests
+        .where((i) => (i['status']?.toString() ?? '').toUpperCase() == 'PENDING')
+        .length;
+  }
+
+  int get _activeProposals => _proposals
+      .where((p) => (p['status']?.toString() ?? '').toUpperCase() != 'CANCELLED')
+      .length;
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final res = await EntrepreneurAuthService(context.read<AuthState>().api).dashboard();
+      final res = await _svc.dashboard();
+      if (!mounted) return;
       if (res['success'] == true) {
         _entrepreneur = Map<String, dynamic>.from(res['entrepreneur'] ?? {});
+        if (res['payoutBalance'] != null) _entrepreneur['payoutBalance'] = res['payoutBalance'];
         _proposals = ModuleTheme.toList(res['proposals']);
+        _interests = ModuleTheme.toList(res['interests']);
         _funding = Map<String, dynamic>.from(res['funding'] ?? {});
+        final canCreateRaw = res['canCreateProposal'];
+        _canCreate = canCreateRaw == true ||
+            _partnerStatus == 'APPROVED' ||
+            _entrepreneur['canCreateProposal'] == true;
       } else {
         _error = res['error']?.toString() ?? 'Failed to load';
       }
@@ -53,96 +180,27 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _logout() async {
-    await context.read<AuthState>().api.clearToken();
-    if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const EntrepreneurPortalLoginScreen()),
-      (_) => false,
-    );
-  }
-
-  Future<void> _createProposal() async {
-    final title = TextEditingController();
-    final desc = TextEditingController();
-    final funding = TextEditingController(text: '100000');
-    final income = TextEditingController(text: '0');
-    String category = RegOptions.businessCategories.first;
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('New Funding Proposal'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: title, decoration: const InputDecoration(labelText: 'Proposal title *', border: OutlineInputBorder())),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: category,
-                  decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                  items: RegOptions.businessCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (v) => setLocal(() => category = v ?? category),
-                ),
-                const SizedBox(height: 10),
-                TextField(controller: desc, maxLines: 3, decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder())),
-                const SizedBox(height: 10),
-                TextField(controller: funding, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Funding needed (Rs) *', border: OutlineInputBorder())),
-                const SizedBox(height: 10),
-                TextField(controller: income, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Expected monthly income (Rs)', border: OutlineInputBorder())),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: EntrepreneurDashboardScreen.primary),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Submit'),
-            ),
-          ],
+  Future<void> _openProfileCompletion() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EntrepreneurProfileCompletionScreen(
+          onFinished: (ctx) => Navigator.of(ctx).pop(true),
         ),
       ),
     );
-    if (ok != true || !mounted) return;
-    final res = await EntrepreneurAuthService(context.read<AuthState>().api).createProposal({
-      'title': title.text.trim(),
-      'category': category,
-      'description': desc.text.trim(),
-      'location': _entrepreneur['businessLocation'],
-      'fundingNeeded': double.tryParse(funding.text.trim()) ?? 0,
-      'expectedMonthlyIncome': double.tryParse(income.text.trim()) ?? 0,
-    });
+    if (mounted) _load();
+  }
+
+  Future<void> _logout() async {
+    try {
+      await _svc.logout();
+    } catch (_) {}
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res['success'] == true ? 'Proposal submitted for admin approval' : '${res['error']}'),
-        backgroundColor: res['success'] == true ? Colors.teal : Colors.red.shade700,
-      ),
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LandingScreen()),
+      (_) => false,
     );
-    if (res['success'] == true) _load();
   }
-
-  String get _name => _entrepreneur['fullName']?.toString() ?? 'Entrepreneur';
-  String get _firstName => _name.trim().split(RegExp(r'\s+')).first;
-  String get _business => _entrepreneur['businessName']?.toString() ?? 'Business';
-  String get _category => _entrepreneur['businessCategory']?.toString() ?? 'Startup';
-  String get _location => _entrepreneur['businessLocation']?.toString() ?? 'Location not set';
-  int get _experience => (_entrepreneur['businessExperience'] is num) ? (_entrepreneur['businessExperience'] as num).toInt() : 0;
-
-  double get _requested {
-    final fromFunding = (_funding['totalRequested'] is num) ? (_funding['totalRequested'] as num).toDouble() : 0.0;
-    if (fromFunding > 0) return fromFunding;
-    final needed = (_entrepreneur['investmentNeeded'] is num) ? (_entrepreneur['investmentNeeded'] as num).toDouble() : 0.0;
-    return needed;
-  }
-
-  double get _raised => (_funding['totalRaised'] is num) ? (_funding['totalRaised'] as num).toDouble() : 0;
-  double get _remaining => (_requested - _raised).clamp(0, double.infinity);
-  double get _progress => _requested <= 0 ? 0 : (_raised / _requested).clamp(0.0, 1.0);
-  int get _startupScore => (55 + (_proposals.length * 8) + (_progress * 25).round() + (_experience.clamp(0, 10))).clamp(0, 99);
 
   String _money(num v) {
     if (v >= 10000000) return '₹${(v / 10000000).toStringAsFixed(1)} Cr';
@@ -158,9 +216,394 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     return 'Good evening';
   }
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  void _toast(String msg, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: error ? Colors.red.shade700 : null,
+      ),
+    );
   }
+
+  void _requireVerifiedOrToast({bool openProfile = true}) {
+    _toast(
+      'Your entrepreneur account must be verified before creating proposals. '
+      'Complete your profile and wait for admin approval.',
+      error: true,
+    );
+    if (openProfile && _needsProfile) {
+      _openProfileCompletion();
+    }
+  }
+
+  Future<void> _onCreateProposalPressed() async {
+    if (!_verified && !_canCreate) {
+      _requireVerifiedOrToast();
+      return;
+    }
+    await _createProposal();
+  }
+
+  int? _proposalId(Map<String, dynamic> p) {
+    final id = p['id'];
+    if (id is int) return id;
+    return int.tryParse('$id');
+  }
+
+  // ── Create / edit proposal ────────────────────────────────────────────────
+
+  Future<void> _createProposal({Map<String, dynamic>? existing}) async {
+    if (_creating) return;
+    setState(() => _creating = true);
+
+    final isEdit = existing != null;
+    final title = TextEditingController(text: existing?['title']?.toString() ?? '');
+    final desc = TextEditingController(text: existing?['description']?.toString() ?? '');
+    final funding = TextEditingController(
+      text: existing?['fundingNeeded']?.toString() ?? '100000',
+    );
+    final income = TextEditingController(
+      text: existing?['expectedMonthlyIncome']?.toString() ?? '0',
+    );
+
+    final existingCat = FundingCatalog.normalize(existing?['category']?.toString()) ??
+        FundingCatalog.normalize(_entrepreneur['businessCategory']?.toString());
+    String category = (existingCat != null && FundingCatalog.categories.contains(existingCat))
+        ? existingCat
+        : FundingCatalog.categories.first;
+
+    String? formError;
+    bool submitting = false;
+
+    try {
+      final ok = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setLocal) {
+            Future<void> submit() async {
+              if (submitting) return;
+              final t = title.text.trim();
+              final fundingVal = double.tryParse(funding.text.trim());
+              final incomeVal = double.tryParse(income.text.trim().isEmpty ? '0' : income.text.trim());
+
+              if (t.isEmpty) {
+                setLocal(() => formError = 'Title is required');
+                return;
+              }
+              if (fundingVal == null || fundingVal <= 0) {
+                setLocal(() => formError = 'Funding needed must be greater than 0');
+                return;
+              }
+              if (incomeVal == null || incomeVal < 0) {
+                setLocal(() => formError = 'Expected monthly income must be 0 or greater');
+                return;
+              }
+
+              setLocal(() {
+                submitting = true;
+                formError = null;
+              });
+
+              final body = {
+                'title': t,
+                'category': category,
+                'description': desc.text.trim(),
+                'location': existing?['location'] ?? _entrepreneur['businessLocation'],
+                'fundingNeeded': fundingVal,
+                'expectedMonthlyIncome': incomeVal,
+              };
+
+              Map<String, dynamic> res;
+              try {
+                if (isEdit) {
+                  final id = _proposalId(existing);
+                  if (id == null) {
+                    setLocal(() {
+                      submitting = false;
+                      formError = 'Invalid proposal';
+                    });
+                    return;
+                  }
+                  res = await _svc.updateProposal(id, body);
+                } else {
+                  res = await _svc.createProposal(body);
+                }
+              } catch (e) {
+                if (!ctx.mounted) return;
+                setLocal(() {
+                  submitting = false;
+                  formError = '$e';
+                });
+                return;
+              }
+
+              if (!ctx.mounted) return;
+              if (res['success'] == true) {
+                Navigator.pop(ctx, true);
+                return;
+              }
+
+              final err = res['error']?.toString() ?? 'Request failed';
+              final friendly = err.toLowerCase().contains('verified')
+                  ? 'Your account must be verified before creating or editing proposals.'
+                  : err;
+              setLocal(() {
+                submitting = false;
+                formError = friendly;
+              });
+            }
+
+            return AlertDialog(
+              title: Text(isEdit ? 'Edit Funding Proposal' : 'New Funding Proposal'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: title,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Proposal title *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      initialValue: category,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: FundingCatalog.categories
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: submitting
+                          ? null
+                          : (v) => setLocal(() => category = v ?? category),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: desc,
+                      enabled: !submitting,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: funding,
+                      enabled: !submitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Funding needed (Rs) *',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: income,
+                      enabled: !submitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Expected monthly income (Rs)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    if (formError != null) ...[
+                      const SizedBox(height: 10),
+                      Text(formError!, style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: EntrepreneurDashboardScreen.primary),
+                  onPressed: submitting ? null : submit,
+                  child: submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(isEdit ? 'Save' : 'Submit'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      if (ok == true && mounted) {
+        _toast(isEdit ? 'Proposal updated' : 'Proposal submitted for admin approval');
+        await _load();
+      }
+    } finally {
+      title.dispose();
+      desc.dispose();
+      funding.dispose();
+      income.dispose();
+      if (mounted) setState(() => _creating = false);
+    }
+  }
+
+  Future<void> _cancelProposal(Map<String, dynamic> p) async {
+    if (_cancelling) return;
+    final id = _proposalId(p);
+    if (id == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel proposal?'),
+        content: Text(
+          'Cancel "${p['title'] ?? 'this proposal'}"? Investors will no longer see it.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Keep')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Cancel proposal'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+
+    setState(() => _cancelling = true);
+    try {
+      final res = await _svc.cancelProposal(id);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        _toast('Proposal cancelled');
+        await _load();
+      } else {
+        _toast(res['error']?.toString() ?? 'Cancel failed', error: true);
+      }
+    } catch (e) {
+      if (mounted) _toast('$e', error: true);
+    } finally {
+      if (mounted) setState(() => _cancelling = false);
+    }
+  }
+
+  void _showProposalDetails(Map<String, dynamic> p) {
+    final status = (p['status']?.toString() ?? 'PENDING').toUpperCase();
+    final raised = (p['amountRaised'] is num) ? (p['amountRaised'] as num).toDouble() : 0.0;
+    final needed = (p['fundingNeeded'] is num) ? (p['fundingNeeded'] as num).toDouble() : 0.0;
+    final pendingInterest = (p['pendingInterestCount'] is num)
+        ? (p['pendingInterestCount'] as num).toInt()
+        : 0;
+    final canEdit = p['canEdit'] == true && status != 'CANCELLED';
+    final canCancel = p['canCancel'] == true && status != 'CANCELLED';
+    final desc = p['description']?.toString() ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + MediaQuery.of(ctx).padding.bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      p['title']?.toString() ?? 'Proposal',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: EntrepreneurDashboardScreen.navy,
+                      ),
+                    ),
+                  ),
+                  _statusPill(status),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${p['category'] ?? ''} · ${p['location'] ?? ''}',
+                style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted),
+              ),
+              const SizedBox(height: 14),
+              _kv('Funding needed', _money(needed)),
+              const SizedBox(height: 8),
+              _kv('Raised', _money(raised)),
+              const SizedBox(height: 8),
+              _kv('Pending interest', '$pendingInterest'),
+              if (desc.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const Text(
+                  'Description',
+                  style: TextStyle(fontWeight: FontWeight.w700, color: EntrepreneurDashboardScreen.navy),
+                ),
+                const SizedBox(height: 4),
+                Text(desc, style: const TextStyle(color: EntrepreneurDashboardScreen.muted, height: 1.35)),
+              ],
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  if (canEdit)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _createProposal(existing: p);
+                        },
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit'),
+                      ),
+                    ),
+                  if (canEdit && canCancel) const SizedBox(width: 10),
+                  if (canCancel)
+                    Expanded(
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+                        onPressed: _cancelling
+                            ? null
+                            : () {
+                                Navigator.pop(ctx);
+                                _cancelProposal(p);
+                              },
+                        icon: const Icon(Icons.cancel_outlined, size: 18),
+                        label: const Text('Cancel'),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +613,7 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
       floatingActionButton: FloatingActionButton(
         backgroundColor: EntrepreneurDashboardScreen.primary,
         elevation: 6,
-        onPressed: _createProposal,
+        onPressed: _onCreateProposalPressed,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       bottomNavigationBar: BottomAppBar(
@@ -231,6 +674,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         children: [
           _topBar(),
           const SizedBox(height: 14),
+          if (!_verified) ...[
+            _statusBanner(),
+            const SizedBox(height: 14),
+          ],
           _profileHero(),
           const SizedBox(height: 14),
           _metricsGrid(),
@@ -264,11 +711,90 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     );
   }
 
+  Widget _statusBanner() {
+    String message;
+    String cta = 'Complete profile';
+    VoidCallback? onTap = _openProfileCompletion;
+
+    if (_partnerStatus == 'REJECTED' || _verificationStatus == 'REJECTED') {
+      final reason = _entrepreneur['rejectionReason']?.toString();
+      message = reason != null && reason.isNotEmpty
+          ? 'Your profile was rejected: $reason'
+          : 'Your profile was rejected. Update details and resubmit.';
+      cta = 'Update profile';
+    } else if (_partnerStatus == 'CHANGES_REQUESTED') {
+      final note = _entrepreneur['changesRequestedNote']?.toString();
+      message = note != null && note.isNotEmpty
+          ? 'Changes requested: $note'
+          : 'Admin requested profile changes before approval.';
+      cta = 'Update profile';
+    } else if (_partnerStatus == 'PENDING_ADMIN_APPROVAL') {
+      message =
+          'Profile submitted. Waiting for admin verification before you can create proposals.';
+      cta = 'View profile';
+      onTap = () => setState(() => _tab = 3);
+    } else if (_partnerStatus == 'READY_FOR_VERIFICATION') {
+      message =
+          'Your profile looks ready. Submit for verification to unlock proposal creation.';
+      cta = 'Finish profile';
+    } else {
+      message = 'Complete your entrepreneur profile and get verified to create funding proposals.';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFBBF24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.info_outline, color: Color(0xFFB45309), size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Color(0xFF92400E),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              onPressed: onTap,
+              style: FilledButton.styleFrom(
+                backgroundColor: EntrepreneurDashboardScreen.primary,
+                visualDensity: VisualDensity.compact,
+              ),
+              child: Text(cta),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _topBar() {
     return Row(
       children: [
         IconButton(
-          onPressed: () => _toast('Menu coming soon'),
+          onPressed: () => showFundingMenuSheet(
+            context,
+            isEntrepreneur: true,
+            proposals: _proposals,
+            onProfile: () => setState(() => _tab = 3),
+          ),
           icon: const Icon(Icons.menu_rounded, color: EntrepreneurDashboardScreen.navy),
         ),
         Expanded(
@@ -276,8 +802,12 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_greeting()}, $_firstName! 👋',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy),
+                '${_greeting()}, $_firstName!',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: EntrepreneurDashboardScreen.navy,
+                ),
               ),
               const Text(
                 "Here's what's happening with your startup today.",
@@ -288,37 +818,42 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         ),
         TextButton(
           onPressed: () => setState(() => _tab = 3),
-          child: const Text('View Profile', style: TextStyle(color: EntrepreneurDashboardScreen.primary, fontWeight: FontWeight.w700, fontSize: 12)),
-        ),
-        _iconBadge(Icons.notifications_none_rounded, 3),
-        _iconBadge(Icons.chat_bubble_outline_rounded, 2),
-      ],
-    );
-  }
-
-  Widget _iconBadge(IconData icon, int count) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        IconButton(onPressed: () => _toast('Coming soon'), icon: Icon(icon, color: EntrepreneurDashboardScreen.navy)),
-        if (count > 0)
-          Positioned(
-            right: 8,
-            top: 8,
-            child: Container(
-              width: 16,
-              height: 16,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(color: EntrepreneurDashboardScreen.primary, shape: BoxShape.circle),
-              child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+          child: const Text(
+            'View Profile',
+            style: TextStyle(
+              color: EntrepreneurDashboardScreen.primary,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
             ),
           ),
+        ),
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const FundingNotificationsScreen(isEntrepreneur: true),
+              ),
+            );
+          },
+          icon: const Icon(Icons.notifications_none_rounded, color: EntrepreneurDashboardScreen.navy),
+        ),
+        IconButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const FundingChatThreadsScreen(isEntrepreneur: true),
+              ),
+            );
+          },
+          icon: const Icon(Icons.chat_bubble_outline_rounded, color: EntrepreneurDashboardScreen.navy),
+        ),
       ],
     );
   }
 
   Widget _profileHero() {
     final initial = _business.isNotEmpty ? _business[0].toUpperCase() : 'E';
+    final pct = _profileCompletionPct;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -329,7 +864,11 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: EntrepreneurDashboardScreen.primary.withValues(alpha: 0.28), blurRadius: 18, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: EntrepreneurDashboardScreen.primary.withValues(alpha: 0.28),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Row(
@@ -337,7 +876,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+            child: Text(
+              initial,
+              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -347,10 +889,21 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(20)),
-                  child: Text(_category.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                  child: Text(
+                    _category.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 6),
-                Text(_business, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+                Text(
+                  _business,
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+                ),
                 Text(_name, style: const TextStyle(color: Colors.white70, fontSize: 12)),
                 const SizedBox(height: 6),
                 Row(
@@ -358,20 +911,32 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                     const Icon(Icons.place_outlined, size: 14, color: Colors.white70),
                     const SizedBox(width: 2),
                     Expanded(
-                      child: Text(_location, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                      child: Text(
+                        _location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(20)),
-                  child: const Row(
+                  decoration: BoxDecoration(color: _statusBadgeBg, borderRadius: BorderRadius.circular(20)),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.circle, size: 8, color: Color(0xFF16A34A)),
-                      SizedBox(width: 6),
-                      Text('Fundraising Active', style: TextStyle(color: Color(0xFF166534), fontSize: 10, fontWeight: FontWeight.w800)),
+                      Icon(Icons.circle, size: 8, color: _statusBadgeFg),
+                      const SizedBox(width: 6),
+                      Text(
+                        _statusBadgeLabel,
+                        style: TextStyle(
+                          color: _statusBadgeFg,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -379,13 +944,13 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
             ),
           ),
           const SizedBox(width: 8),
-          _scoreRing(_startupScore),
+          _completionRing(pct),
         ],
       ),
     );
   }
 
-  Widget _scoreRing(int score) {
+  Widget _completionRing(int pct) {
     return Column(
       children: [
         SizedBox(
@@ -395,18 +960,24 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
             alignment: Alignment.center,
             children: [
               CircularProgressIndicator(
-                value: score / 100,
+                value: pct / 100,
                 strokeWidth: 6,
                 backgroundColor: Colors.white24,
                 color: Colors.white,
               ),
-              Text('$score%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+              Text('$pct%', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
             ],
           ),
         ),
         const SizedBox(height: 4),
-        const Text('Startup Score', style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w600)),
-        Text(score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : 'Building', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+        const Text(
+          'Profile',
+          style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w600),
+        ),
+        Text(
+          pct >= 100 ? 'Complete' : 'In progress',
+          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+        ),
       ],
     );
   }
@@ -414,9 +985,24 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   Widget _metricsGrid() {
     final items = [
       _Metric('Funding Goal', _money(_requested), Icons.flag_outlined, const Color(0xFFFCE7F3)),
-      _Metric('Raised', '${_money(_raised)}\n${(_progress * 100).toStringAsFixed(0)}% of Goal', Icons.trending_up, const Color(0xFFDCFCE7)),
-      _Metric('Investors\nInterested', '${_proposals.where((p) => (p['amountRaised'] ?? 0) != 0).length + (_raised > 0 ? 1 : 0)}', Icons.groups_outlined, const Color(0xFFE0E7FF)),
-      _Metric('Active\nProposals', '${_proposals.length}', Icons.description_outlined, const Color(0xFFFEF3C7)),
+      _Metric(
+        'Raised',
+        '${_money(_raised)}\n${(_progress * 100).toStringAsFixed(0)}% of Goal',
+        Icons.trending_up,
+        const Color(0xFFDCFCE7),
+      ),
+      _Metric(
+        'Investors\nInterested',
+        '$_investorsInterested',
+        Icons.groups_outlined,
+        const Color(0xFFE0E7FF),
+      ),
+      _Metric(
+        'Active\nProposals',
+        '$_activeProposals',
+        Icons.description_outlined,
+        const Color(0xFFFEF3C7),
+      ),
       _Metric('Profile\nViews', '—', Icons.visibility_outlined, const Color(0xFFE0F2FE)),
     ];
     return SizedBox(
@@ -441,9 +1027,27 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                   child: Icon(m.icon, size: 18, color: EntrepreneurDashboardScreen.navy),
                 ),
                 const Spacer(),
-                Text(m.label, style: const TextStyle(fontSize: 10, color: EntrepreneurDashboardScreen.muted, fontWeight: FontWeight.w600, height: 1.15)),
+                Text(
+                  m.label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: EntrepreneurDashboardScreen.muted,
+                    fontWeight: FontWeight.w600,
+                    height: 1.15,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(m.value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy, height: 1.15)),
+                Text(
+                  m.value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: EntrepreneurDashboardScreen.navy,
+                    height: 1.15,
+                  ),
+                ),
               ],
             ),
           );
@@ -461,8 +1065,16 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         children: [
           Row(
             children: [
-              const Expanded(child: Text('Funding Progress', style: TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy))),
-              Text('${(_progress * 100).toStringAsFixed(0)}%', style: const TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.primary)),
+              const Expanded(
+                child: Text(
+                  'Funding Progress',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy),
+                ),
+              ),
+              Text(
+                '${(_progress * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.primary),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -478,9 +1090,23 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
           const SizedBox(height: 8),
           Row(
             children: [
-              Text('${_money(_raised)} raised', style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted, fontWeight: FontWeight.w600)),
+              Text(
+                '${_money(_raised)} raised',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: EntrepreneurDashboardScreen.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
-              Text('${_money(_remaining)} remaining', style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted, fontWeight: FontWeight.w600)),
+              Text(
+                '${_money(_remaining)} remaining',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: EntrepreneurDashboardScreen.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ],
@@ -490,12 +1116,54 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
 
   Widget _quickActions() {
     final actions = [
-      (Icons.add_circle_outline, 'Create Proposal', EntrepreneurDashboardScreen.primary, _createProposal),
-      (Icons.picture_as_pdf_outlined, 'Pitch Deck', const Color(0xFF8B5CF6), () => _toast('Upload pitch deck from profile soon')),
-      (Icons.event_available_outlined, 'Meetings', const Color(0xFF16A34A), () => _toast('Meetings coming soon')),
-      (Icons.chat_bubble_outline, 'Investor Chat', const Color(0xFF3B82F6), () => _toast('Chat coming soon')),
+      (Icons.add_circle_outline, 'Create Proposal', EntrepreneurDashboardScreen.primary, _onCreateProposalPressed),
+      (
+        Icons.picture_as_pdf_outlined,
+        'Pitch Deck',
+        const Color(0xFF8B5CF6),
+        () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => FundingPitchDeckScreen(proposals: _proposals),
+            ),
+          );
+        },
+      ),
+      (
+        Icons.event_available_outlined,
+        'Meetings',
+        const Color(0xFF16A34A),
+        () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const FundingMeetingsScreen(isEntrepreneur: true),
+            ),
+          );
+        },
+      ),
+      (
+        Icons.chat_bubble_outline,
+        'Investor Chat',
+        const Color(0xFF3B82F6),
+        () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const FundingChatThreadsScreen(isEntrepreneur: true),
+            ),
+          );
+        },
+      ),
       (Icons.insights_outlined, 'Analytics', const Color(0xFFF97316), () => setState(() => _tab = 2)),
-      (Icons.account_balance_wallet_outlined, 'Withdraw', const Color(0xFFEF4444), () => _toast('Withdrawals coming soon')),
+      (
+        Icons.account_balance_wallet_outlined,
+        'Withdraw',
+        const Color(0xFFEF4444),
+        () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const EntrepreneurFundingScreen()),
+          );
+        },
+      ),
     ];
     return SizedBox(
       height: 96,
@@ -518,11 +1186,23 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                   Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(color: a.$3.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(
+                      color: a.$3.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Icon(a.$1, color: a.$3, size: 20),
                   ),
                   const SizedBox(height: 8),
-                  Text(a.$2, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: EntrepreneurDashboardScreen.navy, height: 1.15)),
+                  Text(
+                    a.$2,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: EntrepreneurDashboardScreen.navy,
+                      height: 1.15,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -533,20 +1213,18 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   }
 
   Widget _activityCard() {
-    final items = _raised > 0
-        ? [
-            ('Investor', 'Expressed interest in your startup', 'Recently'),
-            ('Admin', 'Proposal verification in progress', 'Today'),
-          ]
-        : [
-            ('System', 'Complete your proposal to attract investors', 'Now'),
-            ('Tip', 'Add funding amount and pitch details', 'Today'),
-          ];
+    if (_interests.isEmpty) {
+      return _empty('No investor interest yet. Create a proposal to start attracting investors.');
+    }
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: _cardDeco(),
       child: Column(
-        children: items.map((e) {
+        children: _interests.take(8).map((e) {
+          final name = e['investorName']?.toString() ?? 'Investor';
+          final amount = (e['amount'] is num) ? (e['amount'] as num).toDouble() : 0.0;
+          final status = (e['status']?.toString() ?? 'PENDING').toUpperCase();
+          final proposalTitle = e['proposalTitle']?.toString() ?? 'Proposal';
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
@@ -554,19 +1232,37 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: const Color(0xFFFFE4E6),
-                  child: Text(e.$1[0], style: const TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.primary)),
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : 'I',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: EntrepreneurDashboardScreen.primary,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(e.$1, style: const TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy, fontSize: 13)),
-                      Text(e.$2, style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted)),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: EntrepreneurDashboardScreen.navy,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        '${_money(amount)} · $proposalTitle',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted),
+                      ),
                     ],
                   ),
                 ),
-                Text(e.$3, style: const TextStyle(fontSize: 11, color: EntrepreneurDashboardScreen.muted)),
+                _statusPill(status),
               ],
             ),
           );
@@ -576,7 +1272,9 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   }
 
   Widget _startupMetrics() {
-    final income = (_entrepreneur['expectedMonthlyIncome'] is num) ? (_entrepreneur['expectedMonthlyIncome'] as num).toDouble() : 0.0;
+    final income = (_entrepreneur['expectedMonthlyIncome'] is num)
+        ? (_entrepreneur['expectedMonthlyIncome'] as num).toDouble()
+        : 0.0;
     final metrics = [
       ('Monthly Revenue', income > 0 ? _money(income) : '—', Icons.payments_outlined, const Color(0xFFDCFCE7)),
       ('Customers', '—', Icons.people_outline, const Color(0xFFE0E7FF)),
@@ -612,8 +1310,22 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(m.$1, style: const TextStyle(fontSize: 11, color: EntrepreneurDashboardScreen.muted, fontWeight: FontWeight.w600)),
-                    Text(m.$2, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy)),
+                    Text(
+                      m.$1,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: EntrepreneurDashboardScreen.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      m.$2,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: EntrepreneurDashboardScreen.navy,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -631,33 +1343,54 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   }
 
   Widget _meetingsCard() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(color: const Color(0xFFE0F2FE), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Icons.videocam_outlined, color: Color(0xFF0369A1)),
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const FundingMeetingsScreen(isEntrepreneur: true),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('No meetings scheduled', style: TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy)),
-                Text('Investor meetings will appear here once booked.', style: TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted)),
-              ],
+        );
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: _cardDeco(),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2FE),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.videocam_outlined, color: Color(0xFF0369A1)),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(20)),
-            child: const Text('Pending', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: EntrepreneurDashboardScreen.muted)),
-          ),
-        ],
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Investor meetings',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: EntrepreneurDashboardScreen.navy,
+                    ),
+                  ),
+                  Text(
+                    'Accept or reject meeting requests from investors.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: EntrepreneurDashboardScreen.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: EntrepreneurDashboardScreen.muted),
+          ],
+        ),
       ),
     );
   }
@@ -670,9 +1403,18 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         children: [
           Row(
             children: [
-              const Expanded(child: Text('Proposals', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy))),
+              const Expanded(
+                child: Text(
+                  'Proposals',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: EntrepreneurDashboardScreen.navy,
+                  ),
+                ),
+              ),
               FilledButton.icon(
-                onPressed: _createProposal,
+                onPressed: _onCreateProposalPressed,
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Create'),
                 style: FilledButton.styleFrom(backgroundColor: EntrepreneurDashboardScreen.primary),
@@ -690,7 +1432,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
       children: [
-        const Text('Funding Overview', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy)),
+        const Text(
+          'Funding Overview',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy),
+        ),
         const SizedBox(height: 14),
         _fundingProgressCard(),
         const SizedBox(height: 14),
@@ -704,9 +1449,33 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
               _kv('Total raised', _money(_raised)),
               const Divider(height: 22),
               _kv('Remaining', _money(_remaining)),
+              const Divider(height: 22),
+              _kv('Pending interest', '$_investorsInterested'),
+              const Divider(height: 22),
+              _kv('Payout balance', _money(_entrepreneur['payoutBalance'] is num ? _entrepreneur['payoutBalance'] as num : 0)),
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        FilledButton(
+          onPressed: () async {
+            final res = await _svc.requestPayout();
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(res['success'] == true
+                  ? (res['message']?.toString() ?? 'Payout requested')
+                  : res['error']?.toString() ?? 'Payout failed'),
+            ));
+            if (res['success'] == true) _load();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: EntrepreneurDashboardScreen.primary,
+            minimumSize: const Size.fromHeight(48),
+          ),
+          child: const Text('Request UPI payout'),
+        ),
+        const SizedBox(height: 8),
+        Text(FundingCatalog.cancelPolicy, style: const TextStyle(color: EntrepreneurDashboardScreen.muted, fontSize: 12)),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
@@ -717,13 +1486,22 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Need more capital?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+              const Text(
+                'Need more capital?',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+              ),
               const SizedBox(height: 4),
-              const Text('Create another proposal for admin review and investor interest.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              const Text(
+                'Create another proposal for admin review and investor interest.',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
               const SizedBox(height: 12),
               FilledButton(
-                onPressed: _createProposal,
-                style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: EntrepreneurDashboardScreen.primary),
+                onPressed: _onCreateProposalPressed,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: EntrepreneurDashboardScreen.primary,
+                ),
                 child: const Text('Create Proposal'),
               ),
             ],
@@ -734,19 +1512,48 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   }
 
   Widget _profileTab() {
+    final statusLabel =
+        _entrepreneur['partnerProfileStatusLabel']?.toString() ?? _statusBadgeLabel;
+    final rejection = _entrepreneur['rejectionReason']?.toString();
+    final changesNote = _entrepreneur['changesRequestedNote']?.toString();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
       children: [
         _profileHero(),
         const SizedBox(height: 14),
+        if (!_verified) ...[
+          _statusBanner(),
+          const SizedBox(height: 14),
+        ],
         _infoTile(Icons.person_outline, 'Founder', _name),
         _infoTile(Icons.business_outlined, 'Business', _business),
         _infoTile(Icons.category_outlined, 'Category', _category),
         _infoTile(Icons.place_outlined, 'Location', _location),
         _infoTile(Icons.work_history_outlined, 'Experience', '$_experience years'),
-        _infoTile(Icons.currency_rupee, 'Investment needed', _money(_entrepreneur['investmentNeeded'] is num ? _entrepreneur['investmentNeeded'] as num : 0)),
-        _infoTile(Icons.verified_outlined, 'Status', _entrepreneur['verificationStatus']?.toString() ?? '—'),
-        const SizedBox(height: 16),
+        _infoTile(
+          Icons.currency_rupee,
+          'Investment needed',
+          _money(_entrepreneur['investmentNeeded'] is num ? _entrepreneur['investmentNeeded'] as num : 0),
+        ),
+        _infoTile(Icons.verified_outlined, 'Partner status', statusLabel),
+        if (rejection != null && rejection.isNotEmpty)
+          _infoTile(Icons.report_gmailerrorred_outlined, 'Rejection reason', rejection),
+        if (changesNote != null && changesNote.isNotEmpty)
+          _infoTile(Icons.edit_note_outlined, 'Changes requested', changesNote),
+        _infoTile(Icons.percent, 'Profile completion', '$_profileCompletionPct%'),
+        const SizedBox(height: 8),
+        if (_needsProfile)
+          FilledButton.icon(
+            onPressed: _openProfileCompletion,
+            icon: const Icon(Icons.badge_outlined),
+            label: const Text('Complete / update profile'),
+            style: FilledButton.styleFrom(
+              backgroundColor: EntrepreneurDashboardScreen.primary,
+              minimumSize: const Size.fromHeight(48),
+            ),
+          ),
+        const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: _logout,
           icon: const Icon(Icons.logout),
@@ -766,29 +1573,52 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     final raised = (p['amountRaised'] is num) ? (p['amountRaised'] as num).toDouble() : 0.0;
     final needed = (p['fundingNeeded'] is num) ? (p['fundingNeeded'] as num).toDouble() : 0.0;
     final prog = needed <= 0 ? 0.0 : (raised / needed).clamp(0.0, 1.0);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: _cardDeco(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(p['title']?.toString() ?? 'Proposal', style: const TextStyle(fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy))),
-              _statusPill(status),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text('${p['category'] ?? ''} · ${p['location'] ?? ''}', style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted)),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(value: prog, minHeight: 6, backgroundColor: const Color(0xFFFCE7F3), color: EntrepreneurDashboardScreen.primary),
-          ),
-          const SizedBox(height: 6),
-          Text('${_money(raised)} raised of ${_money(needed)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-        ],
+    return InkWell(
+      onTap: () => _showProposalDetails(p),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: _cardDeco(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    p['title']?.toString() ?? 'Proposal',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: EntrepreneurDashboardScreen.navy,
+                    ),
+                  ),
+                ),
+                _statusPill(status),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${p['category'] ?? ''} · ${p['location'] ?? ''}',
+              style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted),
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: prog,
+                minHeight: 6,
+                backgroundColor: const Color(0xFFFCE7F3),
+                color: EntrepreneurDashboardScreen.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${_money(raised)} raised of ${_money(needed)}',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -796,17 +1626,21 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   Widget _statusPill(String status) {
     Color bg = const Color(0xFFE0F2FE);
     Color fg = const Color(0xFF0369A1);
-    if (status == 'VERIFIED') {
+    final s = status.toUpperCase();
+    if (s == 'VERIFIED' || s == 'APPROVED' || s == 'ACCEPTED') {
       bg = const Color(0xFFDCFCE7);
       fg = const Color(0xFF166534);
-    } else if (status == 'REJECTED') {
+    } else if (s == 'REJECTED' || s == 'CANCELLED') {
       bg = const Color(0xFFFFE4E6);
       fg = const Color(0xFFBE123C);
+    } else if (s == 'PENDING') {
+      bg = const Color(0xFFFEF3C7);
+      fg = const Color(0xFFB45309);
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: fg)),
+      child: Text(s, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: fg)),
     );
   }
 
@@ -817,7 +1651,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
       child: ListTile(
         leading: Icon(icon, color: EntrepreneurDashboardScreen.primary),
         title: Text(label, style: const TextStyle(fontSize: 12, color: EntrepreneurDashboardScreen.muted)),
-        subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.w700, color: EntrepreneurDashboardScreen.navy)),
+        subtitle: Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w700, color: EntrepreneurDashboardScreen.navy),
+        ),
       ),
     );
   }
@@ -825,11 +1662,26 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   Widget _section(String title, {String? action, VoidCallback? onAction}) {
     return Row(
       children: [
-        Expanded(child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: EntrepreneurDashboardScreen.navy))),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: EntrepreneurDashboardScreen.navy,
+            ),
+          ),
+        ),
         if (action != null)
           TextButton(
             onPressed: onAction,
-            child: Text(action, style: const TextStyle(color: EntrepreneurDashboardScreen.primary, fontWeight: FontWeight.w700)),
+            child: Text(
+              action,
+              style: const TextStyle(
+                color: EntrepreneurDashboardScreen.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
       ],
     );
@@ -848,7 +1700,11 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: Text(text, style: const TextStyle(color: EntrepreneurDashboardScreen.muted)),
     );
   }
@@ -856,7 +1712,13 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   BoxDecoration _cardDeco() => BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.045), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       );
 }
 

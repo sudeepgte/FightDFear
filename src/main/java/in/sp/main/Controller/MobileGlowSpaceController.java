@@ -2,6 +2,7 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
+import in.sp.main.Service.GlowCareService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,16 +33,59 @@ public class MobileGlowSpaceController {
     private StylistRepository stylistRepo;
     @Autowired
     private Booking1Repository bookingRepo;
+    @Autowired
+    private GlowCareService glowCareService;
 
     @GetMapping("/salons")
-    public ResponseEntity<Map<String, Object>> salons(HttpSession session) {
+    public ResponseEntity<Map<String, Object>> salons(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Double minFee,
+            @RequestParam(required = false) Double maxFee,
+            @RequestParam(required = false) Boolean availableToday,
+            @RequestParam(required = false) Boolean doorService,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
-        List<Map<String, Object>> items = salonRepo.findByApproved(true).stream()
-                .map(this::salonDto)
-                .toList();
-        return ResponseEntity.ok(ok(Map.of("salons", items, "count", items.size())));
+        String cityQ = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
+        ServiceCategory catFilter = ServiceCategory.fromFlexible(category);
+        List<Salon> approved = salonRepo.findByApproved(true);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (Salon s : approved) {
+            if (!cityQ.isBlank() && (s.getCity() == null || !s.getCity().toLowerCase(Locale.ROOT).contains(cityQ))) {
+                continue;
+            }
+            if (Boolean.TRUE.equals(doorService) && !Boolean.TRUE.equals(s.getDoorService())) {
+                continue;
+            }
+            List<Service1> services = serviceRepo.findBySalonId(s.getId());
+            if (catFilter != null) {
+                boolean match = services.stream().anyMatch(sv -> sv.getCategory() != null
+                        && sv.getCategory().normalized() == catFilter.normalized());
+                String offered = s.getCategoriesOffered() == null ? "" : s.getCategoriesOffered().toUpperCase(Locale.ROOT);
+                if (!match && !offered.contains(catFilter.name())) continue;
+            }
+            int fee = glowCareService.startingFee(s, services);
+            if (minFee != null && fee < minFee) continue;
+            if (maxFee != null && (fee == 0 || fee > maxFee)) continue;
+            if (Boolean.TRUE.equals(availableToday) && !glowCareService.availableToday(s)) continue;
+            items.add(salonCard(s, user, services, lat, lng));
+        }
+        String sortKey = sort == null ? "rating" : sort.trim().toLowerCase(Locale.ROOT);
+        items.sort((a, b) -> {
+            if ("fee".equals(sortKey) || "price".equals(sortKey)) {
+                return Double.compare(asDouble(a.get("startingFee")), asDouble(b.get("startingFee")));
+            }
+            if ("nearest".equals(sortKey)) {
+                return Double.compare(asDouble(a.get("distanceKm")), asDouble(b.get("distanceKm")));
+            }
+            return Double.compare(asDouble(b.get("rating")), asDouble(a.get("rating")));
+        });
+        return ResponseEntity.ok(ok(Map.of("salons", items, "count", items.size(), "cancelPolicy", GlowCareService.CANCEL_POLICY)));
     }
 
     @GetMapping("/salons/{id}")
@@ -66,15 +110,106 @@ public class MobileGlowSpaceController {
                 .filter(Stylist::isApproved)
                 .map(this::stylistDto)
                 .toList();
+        List<Service1> serviceEntities = serviceRepo.findBySalonId(id);
+        int duration = serviceEntities.stream()
+                .map(sv -> sv.getDurationMinutes() == null ? 30 : sv.getDurationMinutes())
+                .min(Integer::compareTo).orElse(30);
+        List<String> slotsToday = glowCareService.slotsFor(s, LocalDate.now(), duration);
+        Map<String, Object> next = glowCareService.nextSlot(s);
+        List<Map<String, Object>> reviews = glowCareService.reviewsFor(id).stream()
+                .map(glowCareService::reviewDto)
+                .toList();
 
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("success", true);
-        out.put("salon", salonDto(s));
+        out.put("salon", salonCard(s, user, serviceEntities, null, null));
         out.put("services", services);
         out.put("treatments", treatments);
         out.put("offers", offers);
         out.put("stylists", stylists);
+        out.put("reviews", reviews);
+        out.put("slotsToday", slotsToday);
+        out.put("nextSlot", next);
+        out.put("noSlotsToday", slotsToday.isEmpty());
+        out.put("favorite", glowCareService.isFavorite(user, id));
+        out.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
         return ResponseEntity.ok(out);
+    }
+
+    @GetMapping("/salons/{id}/slots")
+    public ResponseEntity<Map<String, Object>> salonSlots(
+            @PathVariable Long id,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) Integer durationMinutes,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Salon s = salonRepo.findById(id).orElse(null);
+        if (s == null || !s.isApproved()) return badRequest("Salon not found.");
+        LocalDate day;
+        try {
+            day = (date == null || date.isBlank()) ? LocalDate.now() : LocalDate.parse(date);
+        } catch (Exception e) {
+            return badRequest("Invalid date");
+        }
+        int dur = durationMinutes == null ? 30 : durationMinutes;
+        List<String> slots = glowCareService.slotsFor(s, day, dur);
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("success", true);
+        out.put("date", day.toString());
+        out.put("slots", slots);
+        out.put("open", glowCareService.isOpenOn(s, day));
+        out.put("nextSlot", glowCareService.nextSlot(s));
+        return ResponseEntity.ok(out);
+    }
+
+    @PostMapping("/salons/{id}/reviews")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> addReview(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Salon s = salonRepo.findById(id).orElse(null);
+        if (s == null || !s.isApproved()) return badRequest("Salon not found.");
+        int rating = 5;
+        try {
+            if (body != null && body.get("rating") != null) rating = Integer.parseInt(body.get("rating").toString());
+        } catch (Exception ignored) {}
+        String comment = body == null ? "" : str(body.get("comment"));
+        try {
+            var review = glowCareService.addReview(user, s, rating, comment);
+            return ResponseEntity.ok(ok(Map.of("review", glowCareService.reviewDto(review), "message", "Review saved")));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        }
+    }
+
+    @PostMapping("/salons/{id}/favorite")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> toggleFavorite(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Salon s = salonRepo.findById(id).orElse(null);
+        if (s == null || !s.isApproved()) return badRequest("Salon not found.");
+        boolean fav = glowCareService.toggleFavorite(user, id);
+        return ResponseEntity.ok(ok(Map.of("favorite", fav, "message", fav ? "Added to favourites" : "Removed from favourites")));
+    }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<Map<String, Object>> myFavorites(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (var fav : glowCareService.favoritesFor(user)) {
+            salonRepo.findById(fav.getSalonId()).ifPresent(s -> {
+                if (s.isApproved()) {
+                    items.add(salonCard(s, user, serviceRepo.findBySalonId(s.getId()), null, null));
+                }
+            });
+        }
+        return ResponseEntity.ok(ok(Map.of("salons", items, "count", items.size())));
     }
 
     @GetMapping("/treatments")
@@ -214,6 +349,8 @@ public class MobileGlowSpaceController {
         booking.setNotes(notes);
         booking.setEmergencyContact(emergencyContact);
         booking.setAllergyInfo(allergyInfo);
+        booking.setConsentPolicy(true);
+        booking.setCreatedAt(java.time.LocalDateTime.now());
         booking.setStatus("PENDING");
 
         double price;
@@ -242,6 +379,12 @@ public class MobileGlowSpaceController {
 
         booking.setSalon(salon);
         booking.setPrice(price);
+        if (!glowCareService.isOpenOn(salon, bookingDate)) {
+            return badRequest("Salon is closed on " + bookingDate + ".");
+        }
+        if (glowCareService.slotTaken(salon, bookingDate, preferredTime, null)) {
+            return badRequest("That slot is already booked. Please pick another time.");
+        }
 
         boolean isFree = price <= 0;
         if (isFree) {
@@ -260,6 +403,30 @@ public class MobileGlowSpaceController {
         return ResponseEntity.ok(ok(payload));
     }
 
+    @PostMapping("/bookings/{id}/cancel")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Booking1 b = bookingRepo.findById(id).orElse(null);
+        if (b == null || b.getUser() == null || !b.getUser().getId().equals(user.getId())) {
+            return badRequest("Booking not found.");
+        }
+        String status = b.getStatus() == null ? "" : b.getStatus().toUpperCase(Locale.ROOT);
+        if (status.equals("COMPLETED") || status.equals("CANCELLED") || status.equals("REJECTED")) {
+            return badRequest("This booking cannot be cancelled.");
+        }
+        if (!glowCareService.canCancelFree(b) && (status.equals("CONFIRMED") || status.equals("PAID"))) {
+            return badRequest(GlowCareService.CANCEL_POLICY);
+        }
+        b.setStatus("CANCELLED");
+        bookingRepo.save(b);
+        return ResponseEntity.ok(ok(Map.of(
+                "message", "Booking cancelled",
+                "status", "CANCELLED",
+                "cancelPolicy", GlowCareService.CANCEL_POLICY)));
+    }
+
     @GetMapping("/bookings/me")
     public ResponseEntity<Map<String, Object>> myBookings(HttpSession session) {
         User user = requireUser(session);
@@ -275,20 +442,51 @@ public class MobileGlowSpaceController {
     }
 
     private Map<String, Object> salonDto(Salon s) {
+        return salonCard(s, null, List.of(), null, null);
+    }
+
+    private Map<String, Object> salonCard(Salon s, User user, List<Service1> services, Double lat, Double lng) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", s.getId());
         m.put("name", s.getName());
         m.put("address", s.getAddress());
         m.put("city", s.getCity());
         m.put("state", s.getState());
+        m.put("pincode", s.getPincode());
         m.put("phone", s.getPhone());
         m.put("website", s.getWebsite());
         m.put("profileImageUrl", s.getProfileImageUrl());
+        m.put("galleryPhotos", s.getGalleryPhotos() == null || s.getGalleryPhotos().isBlank()
+                ? List.of()
+                : Arrays.stream(s.getGalleryPhotos().split(",")).map(String::trim).filter(v -> !v.isEmpty()).toList());
         m.put("bio", s.getBio());
         m.put("availabilityHours", s.getAvailabilityHours());
+        m.put("openDays", s.getOpenDays());
+        m.put("openTime", s.getOpenTime() == null ? null : s.getOpenTime().toString());
+        m.put("closeTime", s.getCloseTime() == null ? null : s.getCloseTime().toString());
         m.put("rating", s.getRating());
         m.put("ecoFriendly", s.getIsEcoFriendly());
         m.put("certified", s.getIsCertified());
+        m.put("hygieneCertified", s.getHygieneCertificateUrl() != null && !s.getHygieneCertificateUrl().isBlank());
+        m.put("doorService", Boolean.TRUE.equals(s.getDoorService()));
+        m.put("femaleStaff", Boolean.TRUE.equals(s.getFemaleStaff()));
+        m.put("audience", s.getAudience());
+        m.put("categoriesOffered", s.getCategoriesOffered());
+        m.put("facilities", s.getFacilities());
+        m.put("latitude", s.getLatitude());
+        m.put("longitude", s.getLongitude());
+        m.put("startingFee", glowCareService.startingFee(s, services));
+        Map<String, Object> next = glowCareService.nextSlot(s);
+        m.put("nextSlot", next);
+        m.put("availableToday", glowCareService.availableToday(s));
+        m.put("slotsTodayCount", glowCareService.slotsFor(s, LocalDate.now(), 30).size());
+        m.put("favorite", glowCareService.isFavorite(user, s.getId()));
+        m.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
+        double distance = 9999;
+        if (lat != null && lng != null && s.getLatitude() != null && s.getLongitude() != null) {
+            distance = haversineKm(lat, lng, s.getLatitude(), s.getLongitude());
+        }
+        m.put("distanceKm", Math.round(distance * 10.0) / 10.0);
         return m;
     }
 
@@ -303,6 +501,8 @@ public class MobileGlowSpaceController {
         m.put("durationMinutes", s.getDurationMinutes());
         m.put("ingredients", s.getIngredients());
         m.put("allergenInfo", s.getAllergenInfo());
+        m.put("bufferMinutes", s.getBufferMinutes());
+        m.put("serviceMode", s.getServiceMode());
         m.put("photoUrl", s.getPhotoUrl());
         m.put("salonId", s.getSalon() == null ? null : s.getSalon().getId());
         m.put("salonName", s.getSalon() == null ? null : s.getSalon().getName());
@@ -375,6 +575,12 @@ public class MobileGlowSpaceController {
                 && !"PAID".equalsIgnoreCase(b.getStatus())
                 && !"COMPLETED".equalsIgnoreCase(b.getStatus())
                 && b.getPrice() > 0);
+        m.put("canCancel", glowCareService.canCancelFree(b)
+                || "PENDING".equalsIgnoreCase(b.getStatus()));
+        m.put("canCancelFree", glowCareService.canCancelFree(b));
+        m.put("joinWindowOpen", glowCareService.joinWindowOpen(b));
+        m.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
+        m.put("coachNotes", b.getCoachNotes());
         m.put("salon", b.getSalon() == null ? null : salonDto(b.getSalon()));
         if (b.getService() != null) {
             m.put("itemType", "SERVICE");
@@ -424,5 +630,20 @@ public class MobileGlowSpaceController {
 
     private static String str(Object v) {
         return v == null ? "" : v.toString().trim();
+    }
+
+    private static double asDouble(Object v) {
+        if (v instanceof Number n) return n.doubleValue();
+        try { return Double.parseDouble(String.valueOf(v)); } catch (Exception e) { return 0; }
+    }
+
+    private static double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        double r = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return r * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 }

@@ -4,8 +4,11 @@ import 'package:video_player/video_player.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/creator_hub_service.dart';
+import '../../services/payment_service.dart';
+import '../../widgets/module_payment_checkout.dart';
 import '../../widgets/module_theme.dart';
 import 'creator_notifications_screen.dart';
+import 'creator_portal_login_screen.dart';
 import 'creator_profile_screen.dart';
 import 'creator_studio_screen.dart';
 import 'creator_upload_screen.dart';
@@ -23,25 +26,44 @@ class CreatorHubScreen extends StatefulWidget {
 
 class _CreatorHubScreenState extends State<CreatorHubScreen> {
   late final CreatorHubService _api;
+  late final ModulePaymentCheckout _checkout;
   final _searchCtrl = TextEditingController();
+  final _cityFilter = TextEditingController();
   bool _loading = true;
   String? _error;
   String _category = '';
+  String _sort = 'newest';
   List<Map<String, dynamic>> _posts = [];
   List<Map<String, dynamic>> _stories = [];
   List<Map<String, dynamic>> _categories = [];
   int _unreadNotifs = 0;
+  bool _canUpload = false;
+  bool _isCreatorApplicant = false;
 
   @override
   void initState() {
     super.initState();
-    _api = CreatorHubService(context.read<AuthState>().api);
+    final api = context.read<AuthState>().api;
+    _api = CreatorHubService(api);
+    _checkout = ModulePaymentCheckout(PaymentService(api));
+    _checkout.bind(
+      onSuccess: (r) {
+        if (!mounted) return;
+        _checkout.handleSuccess(context, r);
+      },
+      onError: (r) {
+        if (!mounted) return;
+        _checkout.handleError(r);
+      },
+    );
     _load();
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _cityFilter.dispose();
+    _checkout.dispose();
     super.dispose();
   }
 
@@ -60,6 +82,8 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
       final res = await _api.feed(
         search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
         category: _category.isEmpty ? null : _category,
+        city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        sort: _sort,
       );
       if (!mounted) return;
       if (res['success'] == true) {
@@ -70,6 +94,9 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         _unreadNotifs = res['unreadNotificationCount'] is num
             ? (res['unreadNotificationCount'] as num).toInt()
             : 0;
+        _canUpload = res['canUpload'] == true;
+        final status = res['creatorProfileStatus']?.toString();
+        _isCreatorApplicant = status != null && status.isNotEmpty;
       } else {
         _error = res['error']?.toString();
       }
@@ -168,19 +195,27 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         ),
       );
       if (ok == true) {
-        final res = await _api.subscribe(creatorId.toInt());
-        _snack(res['success'] == true ? 'Subscribed!' : res['error']?.toString() ?? 'Failed');
-        _load();
+        final price = creator is Map && creator['subscriptionPrice'] is num
+            ? (creator['subscriptionPrice'] as num).toDouble()
+            : 99.0;
+        await _pay(
+          amount: price,
+          description: 'Creator subscription',
+          type: 'CREATOR_SUB',
+          extra: {'creatorId': creatorId.toInt(), 'targetId': creatorId.toInt()},
+        );
       }
       return;
     }
     if (post['paidLocked'] == true) {
-      final price = post['price'] ?? 0;
+      final price = (post['price'] is num) ? (post['price'] as num).toDouble() : 0.0;
+      final id = post['id'];
+      if (id is! num || price <= 0) return;
       final ok = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Unlock content'),
-          content: Text('Pay ₹$price from your wallet to unlock this post?'),
+          content: Text('Pay ₹${price.round()} to unlock this post? Tips and unlocks are not refundable.'),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
             FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Unlock')),
@@ -188,14 +223,37 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         ),
       );
       if (ok == true) {
-        final id = post['id'];
-        if (id is num) {
-          final res = await _api.unlock(id.toInt());
-          _snack(res['success'] == true ? 'Unlocked!' : res['error']?.toString() ?? 'Failed');
-          _load();
-        }
+        await _pay(
+          amount: price,
+          description: 'Unlock post',
+          type: 'CREATOR_UNLOCK',
+          extra: {'videoId': id.toInt(), 'targetId': id.toInt()},
+        );
       }
     }
+  }
+
+  Future<void> _pay({
+    required double amount,
+    required String description,
+    required String type,
+    required Map<String, dynamic> extra,
+  }) async {
+    await _checkout.pay(
+      context: context,
+      amount: amount,
+      description: description,
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': type,
+        'amount': amount,
+        ...extra,
+      },
+      onSuccess: () async => _load(),
+      onError: _snack,
+    );
   }
 
   void _snack(String msg) {
@@ -261,17 +319,39 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.dashboard_outlined),
-            onPressed: () => Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => const CreatorStudioScreen()))
-                .then((_) => _load()),
+            onPressed: () {
+              final loggedIn = context.read<AuthState>().loggedIn;
+              if (_canUpload || _isCreatorApplicant || loggedIn) {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const CreatorStudioScreen()))
+                    .then((_) => _load());
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
+                );
+              }
+            },
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: CreatorHubScreen.primary,
-        onPressed: () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const CreatorUploadScreen()))
-            .then((_) => _load()),
+        onPressed: () {
+          final loggedIn = context.read<AuthState>().loggedIn;
+          if (_canUpload) {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const CreatorUploadScreen()))
+                .then((_) => _load());
+          } else if (_isCreatorApplicant || loggedIn) {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const CreatorStudioScreen()))
+                .then((_) => _load());
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
+            );
+          }
+        },
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: _loading
@@ -389,6 +469,48 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
                                   },
                                 );
                               }),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: TextField(
+                            controller: _cityFilter,
+                            decoration: InputDecoration(
+                              hintText: 'City',
+                              prefixIcon: const Icon(Icons.place_outlined, size: 18),
+                              suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _load),
+                              isDense: true,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onSubmitted: (_) => _load(),
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                          child: Wrap(
+                            spacing: 6,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Newest'),
+                                selected: _sort == 'newest',
+                                onSelected: (_) {
+                                  setState(() => _sort = 'newest');
+                                  _load();
+                                },
+                              ),
+                              ChoiceChip(
+                                label: const Text('Top rated'),
+                                selected: _sort == 'rating',
+                                onSelected: (_) {
+                                  setState(() => _sort = 'rating');
+                                  _load();
+                                },
+                              ),
                             ],
                           ),
                         ),

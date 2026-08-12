@@ -80,6 +80,17 @@ public class Enrollment {
     private boolean consentAccuracy;
     private boolean consentRules;
     private String paymentStatus;
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
+    private Boolean reminder1hSent;
+    private String cancelReason;
+    private Boolean transferUsed;
+    private java.time.LocalDateTime enrolledAt;
+
+    @PrePersist
+    void onEnroll() {
+        if (enrolledAt == null) enrolledAt = java.time.LocalDateTime.now();
+    }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -157,4 +168,14 @@ public class Enrollment {
 
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
+    public Boolean getReminder1hSent() { return reminder1hSent; }
+    public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+    public Boolean getTransferUsed() { return transferUsed; }
+    public void setTransferUsed(Boolean transferUsed) { this.transferUsed = transferUsed; }
+    public java.time.LocalDateTime getEnrolledAt() { return enrolledAt; }
+    public void setEnrolledAt(java.time.LocalDateTime enrolledAt) { this.enrolledAt = enrolledAt; }
 }

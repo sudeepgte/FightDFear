@@ -14,6 +14,7 @@ import '../landing/landing_screen.dart';
 import '../martial_arts/martial_arts_screen.dart';
 import 'profile_screen.dart';
 import '../marketplace/provider_catalog_screen.dart';
+import '../fitness/fitness_wellness_screen.dart';
 import '../safety/reminders_screen.dart';
 import '../creator/creator_hub_screen.dart';
 import '../creator/video_feed_screen.dart';
@@ -257,10 +258,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         title: 'Fitness & Wellness',
         icon: Icons.fitness_center_outlined,
         status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Fitness & Wellness',
-          kind: CatalogKind.fitness,
-        )),
+        onTap: () => _pushScreen(const FitnessWellnessScreen()),
       ),
       _DashboardModule(
         title: 'Women Events',
@@ -434,10 +432,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         icon: Icons.fitness_center_outlined,
         iconColor: const Color(0xFF22C55E),
         status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Fitness & Wellness',
-          kind: CatalogKind.fitness,
-        )),
+        onTap: () => _pushScreen(const FitnessWellnessScreen()),
       ),
       _SidebarNavItem(
         title: 'Women Events',

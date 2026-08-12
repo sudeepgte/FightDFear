@@ -162,13 +162,19 @@ class ApiClient {
     bool auth = false,
     bool doctorAuth = false,
     bool centreAuth = false,
+    bool salonAuth = false,
     void Function(double progress)? onProgress,
   }) async {
     final req = http.MultipartRequest('POST', _uri(path));
     req.fields.addAll(fields);
     req.files.addAll(files);
     req.headers['Accept'] = 'application/json';
-    if (centreAuth) {
+    if (salonAuth) {
+      final token = await getSalonToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (centreAuth) {
       final token = await getCentreToken();
       if (token != null && token.isNotEmpty) {
         req.headers['Authorization'] = 'Bearer $token';
@@ -301,6 +307,8 @@ class ApiClient {
     bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
     Duration? timeout,
   }) async {
     final res = await http
@@ -311,6 +319,8 @@ class ApiClient {
             doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
           ),
           body: body == null ? null : jsonEncode(body),
         )
@@ -368,9 +378,10 @@ class ApiClient {
   Future<({List<int> bytes, int statusCode, String? filename})> getBytes(
     String path, {
     bool auth = true,
+    bool doctorAuth = false,
   }) async {
     final res = await http
-        .get(_uri(path), headers: await _headers(auth: auth))
+        .get(_uri(path), headers: await _headers(auth: auth, doctorAuth: doctorAuth))
         .timeout(_uploadTimeout);
     String? filename;
     final cd = res.headers['content-disposition'];

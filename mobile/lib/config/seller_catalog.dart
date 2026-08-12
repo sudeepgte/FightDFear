@@ -23,6 +23,92 @@ class SellerCategory {
 class SellerCatalog {
   SellerCatalog._();
 
+  static const browseFilters = <({String value, String label, IconData icon})>[
+    (value: '', label: 'All Products', icon: Icons.grid_view_rounded),
+    (value: 'FASHION', label: 'Fashion', icon: Icons.checkroom_rounded),
+    (value: 'BEAUTY', label: 'Beauty', icon: Icons.spa_rounded),
+    (value: 'HOME_DECOR', label: 'Home Decor', icon: Icons.chair_rounded),
+    (value: 'ORGANIC_FOOD', label: 'Organic', icon: Icons.eco_rounded),
+    (value: 'BABY', label: 'Baby', icon: Icons.child_care_rounded),
+    (value: 'JEWELLERY', label: 'Jewellery', icon: Icons.diamond_rounded),
+    (value: 'BOOKS', label: 'Books', icon: Icons.menu_book_rounded),
+    (value: 'FITNESS', label: 'Fitness', icon: Icons.fitness_center_rounded),
+  ];
+
+  static const cancelPolicy =
+      'Free cancellation until the order is packed and assigned to a delivery partner.';
+
+  static const designations = [
+    'Shop owner',
+    'Brand seller',
+    'Reseller',
+    'Homemaker seller',
+    'Other',
+  ];
+
+  static const audiences = [
+    'Women',
+    'Families',
+    'Working professionals',
+    'Students',
+    'Kids',
+  ];
+
+  static const facilities = [
+    'Packed ready',
+    'Returns accepted',
+    'COD available',
+    'UPI / card',
+    'Gift wrap',
+    'Same-day dispatch',
+  ];
+
+  static const days = [
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+    'SUNDAY',
+  ];
+
+  static const dispatchHours = [6, 12, 24, 48, 72];
+
+  static const indianStates = [
+    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi',
+    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand',
+    'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+    'Mizoram', 'Nagaland', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Sikkim',
+    'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Other',
+  ];
+
+  static String formatTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  static List<String> splitCsv(dynamic raw) {
+    if (raw is List) {
+      return raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+    }
+    if (raw == null) return [];
+    return raw
+        .toString()
+        .split(RegExp(r'[,|]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  static TimeOfDay? parseTime(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final parts = raw.trim().split(':');
+    if (parts.length < 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
+
   static const themes = ['Modern', 'Elegant', 'Minimal', 'Traditional', 'Luxury'];
 
   static const brandTypes = ['Own Brand', 'Reseller'];

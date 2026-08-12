@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
@@ -211,17 +212,26 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
   }
 
   Future<void> _savePrescription(int id, String existing) async {
-    final ctrl = TextEditingController(text: existing);
+    final med = TextEditingController();
+    final dose = TextEditingController();
+    final days = TextEditingController();
+    final advice = TextEditingController(text: existing);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Prescription'),
-        content: TextField(
-          controller: ctrl,
-          maxLines: 6,
-          decoration: const InputDecoration(
-            hintText: 'Medicines, dosage, advice…',
-            border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: med, decoration: const InputDecoration(labelText: 'Medicine *', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: dose, decoration: const InputDecoration(labelText: 'Dosage (e.g. 1-0-1)', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: days, decoration: const InputDecoration(labelText: 'Days', border: OutlineInputBorder()), keyboardType: TextInputType.number),
+              const SizedBox(height: 8),
+              TextField(controller: advice, maxLines: 3, decoration: const InputDecoration(labelText: 'Advice', border: OutlineInputBorder())),
+            ],
           ),
         ),
         actions: [
@@ -231,7 +241,14 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       ),
     );
     if (ok != true) return;
-    final res = await _svc.savePrescription(id, ctrl.text.trim());
+    final name = med.text.trim();
+    if (name.isEmpty && advice.text.trim().isEmpty) return;
+    final json = '{"meds":[{"name":"$name","dosage":"${dose.text.trim()}","days":"${days.text.trim()}"}],"advice":"${advice.text.trim()}"}';
+    final text = [
+      if (name.isNotEmpty) '$name  ${dose.text.trim()}  ${days.text.trim()} days',
+      if (advice.text.trim().isNotEmpty) 'Advice: ${advice.text.trim()}',
+    ].join('\n');
+    final res = await _svc.savePrescription(id, text, prescriptionJson: json, doctorNotes: advice.text.trim());
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -239,6 +256,102 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           res['success'] == true ? 'Prescription sent' : (res['error']?.toString() ?? 'Failed'),
         ),
       ),
+    );
+    if (res['success'] == true) _reload();
+  }
+
+  Future<void> _openPatientFile(Map<String, dynamic> item) async {
+    final userId = item['userId'] is num ? (item['userId'] as num).toInt() : int.tryParse('${item['userId']}');
+    if (userId == null) return;
+    final res = await _svc.patientFile(userId);
+    if (!mounted) return;
+    final visits = ModuleTheme.toList(res['visits']);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(item['clientName']?.toString() ?? 'Patient', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+            const SizedBox(height: 8),
+            if (visits.isEmpty) const Text('No visit history yet')
+            else ...visits.map((v) {
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('${v['appointmentTime'] ?? ''} · ${v['status'] ?? ''}'),
+                subtitle: Text(
+                  [
+                    if (v['reason'] != null) v['reason'],
+                    if (v['prescriptionText'] != null) 'Rx: ${v['prescriptionText']}',
+                    if (v['doctorNotes'] != null) 'Notes: ${v['doctorNotes']}',
+                  ].join('\n'),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _rescheduleAsDoctor(Map<String, dynamic> item) async {
+    final id = item['id'] is num ? (item['id'] as num).toInt() : int.tryParse('${item['id']}');
+    if (id == null) return;
+    final dates = DoctorCatalog.bookableDates(_doctor);
+    if (dates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No open slots')));
+      return;
+    }
+    var date = dates.first;
+    var times = DoctorCatalog.timesForDate(_doctor, date);
+    var time = times.isEmpty ? const TimeOfDay(hour: 10, minute: 0) : times.first;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Propose new time'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Wrap(
+                spacing: 6,
+                children: dates.map((d) => ChoiceChip(
+                      label: Text('${DoctorCatalog.weekdayShort(d.weekday)} ${d.day}/${d.month}'),
+                      selected: date.day == d.day && date.month == d.month,
+                      onSelected: (_) => setLocal(() {
+                        date = d;
+                        times = DoctorCatalog.timesForDate(_doctor, d);
+                        time = times.isEmpty ? time : times.first;
+                      }),
+                    )).toList(),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                children: times.map((t) => ChoiceChip(
+                      label: Text(MaterialLocalizations.of(ctx).formatTimeOfDay(t)),
+                      selected: time.hour == t.hour && time.minute == t.minute,
+                      onSelected: (_) => setLocal(() => time = t),
+                    )).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final when = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final res = await _svc.reschedule(id, DoctorCatalog.formatAppt(when));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(res['success'] == true ? 'Rescheduled' : '${res['error']}')),
     );
     if (res['success'] == true) _reload();
   }
@@ -516,6 +629,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
+  bool _inJoinWindow(DateTime? when) {
+    if (when == null) return false;
+    final now = DateTime.now();
+    return !now.isBefore(when.subtract(const Duration(minutes: 5))) &&
+        !now.isAfter(when.add(const Duration(minutes: 45)));
+  }
+
   Widget _joinHint(DateTime? when, bool canJoin) {
     if (!canJoin || when == null) return const SizedBox.shrink();
     final diff = when.difference(DateTime.now());
@@ -717,7 +837,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       actionLabel: canSubmit ? 'Review & Submit' : 'Complete Profile',
       onAction: () async {
         await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
+          MaterialPageRoute(
+            builder: (_) => DoctorProfileCompletionScreen(
+              onFinished: (ctx) => Navigator.of(ctx).pop(),
+            ),
+          ),
         );
         if (mounted) _reload();
       },
@@ -817,7 +941,9 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     final type = item['consultationType']?.toString() ?? '';
     final status = item['status']?.toString() ?? 'PENDING';
     final when = _parseTime(item['appointmentTime']);
-    final canJoin = type == 'VIDEO' || type == 'ONLINE' || (item['meetingRoomId']?.toString().isNotEmpty == true);
+    final canJoin = item['canJoin'] == true ||
+        ((type == 'VIDEO' || type == 'ONLINE' || (item['meetingRoomId']?.toString().isNotEmpty == true)) &&
+            _inJoinWindow(when));
     final hasRx = (item['prescriptionText']?.toString() ?? '').trim().isNotEmpty;
     final reason = item['reason']?.toString() ?? '';
 
@@ -846,10 +972,17 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               _statusBadge(status),
               if (id != null)
                 PopupMenuButton<String>(
-                  onSelected: (v) => _setStatus(id, v),
+                  onSelected: (v) {
+                    if (v == 'RESCHEDULE') {
+                      _rescheduleAsDoctor(item);
+                    } else {
+                      _setStatus(id, v);
+                    }
+                  },
                   itemBuilder: (_) => const [
                     PopupMenuItem(value: 'CONFIRMED', child: Text('Confirm')),
                     PopupMenuItem(value: 'COMPLETED', child: Text('Complete')),
+                    PopupMenuItem(value: 'RESCHEDULE', child: Text('Reschedule')),
                     PopupMenuItem(value: 'CANCELLED', child: Text('Cancel')),
                   ],
                 ),
@@ -926,7 +1059,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(backgroundColor: ModuleTheme.primary),
-                    onPressed: () => openDoctorJitsi(context, context.read<AuthState>().api, id),
+                    onPressed: () {
+                      _svc.pingWaiting(id);
+                      openDoctorJitsi(context, context.read<AuthState>().api, id);
+                    },
                     icon: const Icon(Icons.videocam, size: 18),
                     label: const Text('Join'),
                   ),
@@ -1092,8 +1228,10 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         if (p['patientAge'] != null) 'Age ${p['patientAge']}',
                         if (p['patientGender'] != null) '${p['patientGender']}',
                         if (p['clientPhone'] != null) '${p['clientPhone']}',
+                        if (p['reason'] != null) '${p['reason']}',
                       ].where((e) => e.toString().isNotEmpty).join(' · '),
                     ),
+                    onTap: () => _openPatientFile(p),
                     trailing: IconButton(
                       icon: const Icon(Icons.chat_bubble_outline),
                       onPressed: () => _openChat(p),
@@ -1153,7 +1291,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
                   await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const DoctorProfileCompletionScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => DoctorProfileCompletionScreen(
+                        onFinished: (ctx) => Navigator.of(ctx).pop(),
+                      ),
+                    ),
                   );
                   if (mounted) _reload();
                 },
@@ -1213,6 +1355,22 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                   "Today ₹${_money(_raw['todayEarnings'])} · This month ₹${_money(_raw['monthEarnings'])} · All-time ₹${_money(_raw['totalEarnings'])}",
                 ),
                 onTap: _showAnalyticsSheet,
+              ),
+              ListTile(
+                leading: const Icon(Icons.account_balance_wallet_outlined),
+                title: const Text('Request payout'),
+                subtitle: Text(
+                  (_doctor['upiId'] ?? _raw['upiId']) == null
+                      ? 'Add UPI in Complete Profile first'
+                      : 'UPI ${ _doctor['upiId'] ?? _raw['upiId'] }',
+                ),
+                onTap: () async {
+                  final res = await _svc.requestPayout();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Requested')),
+                  );
+                },
               ),
             ],
           ),

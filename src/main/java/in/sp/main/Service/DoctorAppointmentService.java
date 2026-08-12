@@ -78,7 +78,14 @@ public class DoctorAppointmentService {
         requireOwnedByPatient(appointment, user);
         applyTransition(appointment, DoctorAppointmentStatus.CANCELLED, PATIENT_TRANSITIONS, "patient");
         DoctorAppointment saved = appointmentRepository.save(appointment);
-        doctorPaymentService.refundIfPaid(saved, "PATIENT", "Cancelled by patient");
+        boolean refundable = appointment.getAppointmentTime() == null
+                || appointment.getAppointmentTime().isAfter(LocalDateTime.now().plusHours(2));
+        if (refundable) {
+            doctorPaymentService.refundIfPaid(saved, "PATIENT", "Cancelled by patient (free cancellation window)");
+        } else {
+            saved.setCancelReason("Cancelled inside 2-hour window — no refund");
+            saved = appointmentRepository.save(saved);
+        }
         notifyDoctorCancelled(saved);
         pushNotificationService.notifyDoctor(
                 saved.getDoctor(),
@@ -114,6 +121,31 @@ public class DoctorAppointmentService {
     }
 
     @Transactional
+    public DoctorAppointment rescheduleByDoctor(
+            DoctorAppointment appointment,
+            Doctor doctor,
+            LocalDateTime newTime,
+            DoctorBookingService bookingService) {
+        requireOwnedByDoctor(appointment, doctor);
+        if (appointment.getStatus() != DoctorAppointmentStatus.PENDING
+                && appointment.getStatus() != DoctorAppointmentStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending/confirmed appointments can be rescheduled");
+        }
+        bookingService.validateAppointmentSlot(appointment.getDoctor(), newTime);
+        appointment.setRescheduledFrom(appointment.getAppointmentTime());
+        appointment.setAppointmentTime(newTime);
+        DoctorAppointment saved = appointmentRepository.save(appointment);
+        if (saved.getUser() != null) {
+            pushNotificationService.notifyUser(
+                    saved.getUser().getId(),
+                    "Appointment rescheduled",
+                    "Your appointment was moved to " + newTime,
+                    Map.of("type", "APPOINTMENT_RESCHEDULED", "appointmentId", String.valueOf(saved.getId())));
+        }
+        return saved;
+    }
+
+    @Transactional
     public DoctorAppointment markConfirmedAfterPayment(DoctorAppointment appointment) {
         if (appointment.getStatus() == DoctorAppointmentStatus.PENDING) {
             appointment.setStatus(DoctorAppointmentStatus.CONFIRMED);
@@ -133,9 +165,18 @@ public class DoctorAppointmentService {
             return false;
         }
         var type = appointment.getConsultationType();
-        return type == in.sp.main.Entities.ConsultationType.VIDEO
+        boolean video = type == in.sp.main.Entities.ConsultationType.VIDEO
                 || type == in.sp.main.Entities.ConsultationType.ONLINE
                 || type == in.sp.main.Entities.ConsultationType.BOTH;
+        if (!video || appointment.getAppointmentTime() == null) {
+            return false;
+        }
+        LocalDateTime start = appointment.getAppointmentTime();
+        int duration = DoctorBookingService.slotDuration(appointment.getDoctor());
+        LocalDateTime from = start.minusMinutes(5);
+        LocalDateTime to = start.plusMinutes(duration + 15);
+        LocalDateTime now = LocalDateTime.now();
+        return !now.isBefore(from) && !now.isAfter(to);
     }
 
     public boolean hasActiveRelationship(Doctor doctor, User user) {

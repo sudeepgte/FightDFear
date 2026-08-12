@@ -80,6 +80,45 @@ public class PaymentController {
     private EnrollmentRepository enrollmentRepository;
 
     @Autowired
+    private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
+
+    @Autowired
+    private in.sp.main.Service.GlowCareService glowCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenJobsCareService womenJobsCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenLawyerCareService womenLawyerCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenProductsCareService womenProductsCareService;
+
+    @Autowired
+    private in.sp.main.Service.FinancialLiteracyCareService financialLiteracyCareService;
+
+    @Autowired
+    private in.sp.main.Service.EventsCareService eventsCareService;
+
+    @Autowired
+    private in.sp.main.Service.CreatorCareService creatorCareService;
+
+    @Autowired
+    private in.sp.main.Service.FitnessCareService fitnessCareService;
+
+    @Autowired
+    private VideoUploadRepository videoUploadPayRepo;
+
+    @Autowired
+    private FinancialEnrollmentRepository financialEnrollmentPayRepo;
+
+    @Autowired
+    private WomenProductOrderRepository womenProductOrderPayRepo;
+
+    @Autowired
+    private ProviderBookingRepository providerBookingPayRepo;
+
+    @Autowired
     private MartialArtsCenterRepository centerRepository;
 
     @Autowired
@@ -356,6 +395,108 @@ public class PaymentController {
                 }
                 doctorBookingService.requireBookableDoctor(d);
                 doctorBookingService.validateAppointmentSlotForPayment(d, user, apptTime);
+            } else if ("FINANCIAL_BOOKING".equals(type)) {
+                Object registrationIdObj = data.get("registrationId") != null ? data.get("registrationId") : data.get("targetId");
+                if (registrationIdObj == null) {
+                    errorBody.put("error", "registrationId is required for financial session payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                FinancialEnrollment en = financialEnrollmentPayRepo
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (en == null || en.getUser() == null || !en.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Registration not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if ("cancelled".equalsIgnoreCase(en.getStatus()) || "rejected".equalsIgnoreCase(en.getStatus())) {
+                    errorBody.put("error", "Registration is cancelled");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if ("PAID".equalsIgnoreCase(en.getPaymentStatus())) {
+                    errorBody.put("error", "Already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = en.getAmount() != null ? Math.max(0, en.getAmount()) : 0;
+                if (amount <= 0) {
+                    errorBody.put("error", "This session does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = en.getId();
+            } else if ("WOMEN_EVENT".equals(type)) {
+                Object registrationIdObj = data.get("registrationId");
+                if (registrationIdObj == null) {
+                    errorBody.put("error", "registrationId is required for event payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                WomenEventRegistration reg = womenEventRegistrationRepository
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (reg == null || reg.getUser() == null || !reg.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Event registration not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if ("CANCELLED".equalsIgnoreCase(reg.getStatus())) {
+                    errorBody.put("error", "Registration is cancelled");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if (reg.isPaid()) {
+                    errorBody.put("error", "Already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
+                        ? Math.max(0, reg.getEvent().getEntryFee()) : 0;
+                if (amount <= 0) {
+                    errorBody.put("error", "This event does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+            } else if ("CREATOR_TIP".equals(type) || "CREATOR_SUB".equals(type) || "CREATOR_UNLOCK".equals(type)) {
+                Object creatorIdObj = data.get("creatorId") != null ? data.get("creatorId") : data.get("targetId");
+                Object videoIdObj = data.get("videoId") != null ? data.get("videoId") : data.get("registrationId");
+                if ("CREATOR_UNLOCK".equals(type)) {
+                    if (videoIdObj == null) {
+                        errorBody.put("error", "videoId is required for unlock");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    Videoupload video = videoUploadPayRepo.findById(Long.parseLong(videoIdObj.toString())).orElse(null);
+                    if (video == null) {
+                        errorBody.put("error", "Post not found");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    amount = video.getPrice() == null ? 0 : Math.max(0, video.getPrice());
+                    if (amount <= 0) {
+                        errorBody.put("error", "This post does not require payment");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    targetId = video.getId();
+                } else {
+                    if (creatorIdObj == null) {
+                        errorBody.put("error", "creatorId is required");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    User creator = userRepo.findById(Long.parseLong(creatorIdObj.toString())).orElse(null);
+                    if (creator == null || !in.sp.main.Service.CreatorProfileService.isApprovedCreator(creator)) {
+                        errorBody.put("error", "Creator not found");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    if ("CREATOR_SUB".equals(type)) {
+                        amount = creator.getCreatorSubscriptionPrice() == null ? 0 : Math.max(0, creator.getCreatorSubscriptionPrice());
+                        if (amount <= 0) {
+                            errorBody.put("error", "Subscription not enabled");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                    } else {
+                        Object amountRaw = data.get("amount");
+                        if (amountRaw == null) {
+                            errorBody.put("error", "Amount is required");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                        try {
+                            amount = Double.parseDouble(amountRaw.toString().replaceAll("[^0-9.]", ""));
+                        } catch (NumberFormatException nfe) {
+                            errorBody.put("error", "Invalid amount");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                    }
+                    targetId = creator.getId();
+                }
             } else {
                 Object amountRaw = data.get("amount");
                 if (amountRaw == null) {
@@ -587,6 +728,9 @@ public class PaymentController {
                 if (enrollment.getCenter() != null) {
                     user.setMartialArtsCenter(enrollment.getCenter());
                     userRepo.save(user);
+                    try {
+                        martialArtsCareService.creditPayout(enrollment.getCenter(), amountPaid);
+                    } catch (Exception ignored) {}
                 }
             } else if ("MARKETPLACE".equals(type)) {
                 Object enrollmentIdObj = data.get("enrollmentId");
@@ -602,6 +746,54 @@ public class PaymentController {
                 enrollment.setRazorpaySignature(signature);
                 enrollment.setAmountPaid(amountPaid);
                 marketplaceEnrollmentRepo.save(enrollment);
+            } else if ("LAWYER_BOOKING".equals(type)) {
+                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("bookingId");
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                ProviderBooking booking = providerBookingPayRepo.findById(targetId).orElse(null);
+                if (booking == null || booking.getUser() == null || !booking.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if (booking.getStatus() == ProviderBookingStatus.PAID) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expectedAmount = booking.getTotalAmount() != null ? booking.getTotalAmount() : 0.0;
+                if (expectedAmount > 0 && Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match consult fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                booking.setStatus(ProviderBookingStatus.PAID);
+                providerBookingPayRepo.save(booking);
+                try {
+                    womenLawyerCareService.creditPayout(booking.getProvider(), expectedAmount > 0 ? expectedAmount : amountPaid);
+                } catch (Exception ignored) {}
+            } else if ("WOMEN_PRODUCT".equals(type)) {
+                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("orderId");
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                WomenProductOrder order = womenProductOrderPayRepo.findById(targetId).orElse(null);
+                if (order == null || order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Order not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expectedAmount = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
+                if (expectedAmount > 0 && Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match order total.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                order.setPaymentMethod("ONLINE");
+                order.setPaymentStatus("PAID");
+                order.setRazorpayPaymentId(paymentId);
+                womenProductOrderPayRepo.save(order);
+                try {
+                    womenProductsCareService.creditSeller(order);
+                } catch (Exception ignored) {}
             } else if ("WORKER_BOOKING".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = Long.parseLong(targetIdObj.toString());
@@ -626,6 +818,9 @@ public class PaymentController {
                 double walletAmount = expectedAmount > 0 ? expectedAmount : amountPaid;
 
                 User worker = booking.getJobApplication().getUser();
+                try {
+                    womenJobsCareService.creditPayout(booking.getJobApplication(), walletAmount);
+                } catch (Exception ignored) {}
                 if (worker != null) {
                     worker.setWalletBalance((worker.getWalletBalance() != null ? worker.getWalletBalance() : 0.0) + walletAmount);
                     userRepo.save(worker);
@@ -668,6 +863,9 @@ public class PaymentController {
                 glowBooking.setStatus("CONFIRMED");
                 glowBooking.setPrice(amountPaid);
                 booking1Repository.save(glowBooking);
+                if (glowBooking.getSalon() != null) {
+                    glowCareService.creditPayout(glowBooking.getSalon(), amountPaid);
+                }
             } else if ("FITNESS".equals(type)) {
                 Object bookingIdObj = data.get("bookingId");
                 if (bookingIdObj == null) {
@@ -691,10 +889,41 @@ public class PaymentController {
                     return ResponseEntity.status(400).body(responseMap);
                 }
                 fitnessBooking.setPaymentStatus("PAID");
-                if ("PENDING".equalsIgnoreCase(fitnessBooking.getStatus())) {
-                    fitnessBooking.setStatus("APPROVED");
-                }
                 fitnessBookingRepository.save(fitnessBooking);
+                fitnessCareService.creditPayout(fitnessBooking);
+            } else if ("FINANCIAL_BOOKING".equals(type)) {
+                Object registrationIdObj = data.get("registrationId") != null
+                        ? data.get("registrationId")
+                        : (data.get("targetId") != null ? data.get("targetId") : data.get("enrollmentId"));
+                if (registrationIdObj == null) {
+                    responseMap.put("error", "registrationId is required for financial session payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                FinancialEnrollment en = financialEnrollmentPayRepo
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (en == null || en.getUser() == null || !en.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Registration not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(en.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = en.getAmount() == null ? 0 : en.getAmount();
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match session fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                en.setPaymentStatus("PAID");
+                en.setRazorpayPaymentId(paymentId);
+                if (!"approved".equalsIgnoreCase(en.getStatus()) && !"completed".equalsIgnoreCase(en.getStatus())) {
+                    en.setStatus("paid");
+                }
+                financialEnrollmentPayRepo.save(en);
+                try {
+                    financialLiteracyCareService.creditPayout(en);
+                } catch (Exception ignored) {}
             } else if ("WOMEN_EVENT".equals(type)) {
                 Object registrationIdObj = data.get("registrationId");
                 if (registrationIdObj == null) {
@@ -722,7 +951,46 @@ public class PaymentController {
                 reg.setPaid(true);
                 reg.setAmountPaid(amountPaid);
                 womenEventRegistrationRepository.save(reg);
+                try {
+                    eventsCareService.creditPayout(reg);
+                } catch (Exception ignored) {}
                 responseMap.put("ticketCode", reg.getTicketCode());
+            } else if ("CREATOR_TIP".equals(type) || "CREATOR_SUB".equals(type) || "CREATOR_UNLOCK".equals(type)
+                    || "CREATOR_TIP".equalsIgnoreCase(Objects.toString(pending.type(), ""))
+                    || "CREATOR_SUB".equalsIgnoreCase(Objects.toString(pending.type(), ""))
+                    || "CREATOR_UNLOCK".equalsIgnoreCase(Objects.toString(pending.type(), ""))) {
+                String payType = type.isBlank() ? Objects.toString(pending.type(), "") : type;
+                Long targetId = pending.targetId();
+                if ("CREATOR_UNLOCK".equalsIgnoreCase(payType)) {
+                    if (targetId == null && data.get("videoId") != null) {
+                        targetId = Long.parseLong(data.get("videoId").toString());
+                    }
+                    Videoupload video = targetId == null ? null : videoUploadPayRepo.findById(targetId).orElse(null);
+                    if (video == null) {
+                        responseMap.put("error", "Post not found");
+                        return ResponseEntity.badRequest().body(responseMap);
+                    }
+                    try {
+                        creatorCareService.fulfillUnlock(user, video, amountPaid);
+                    } catch (Exception ignored) {}
+                } else {
+                    if (targetId == null && data.get("creatorId") != null) {
+                        targetId = Long.parseLong(data.get("creatorId").toString());
+                    }
+                    User creator = targetId == null ? null : userRepo.findById(targetId).orElse(null);
+                    if (creator == null) {
+                        responseMap.put("error", "Creator not found");
+                        return ResponseEntity.badRequest().body(responseMap);
+                    }
+                    try {
+                        if ("CREATOR_SUB".equalsIgnoreCase(payType)) {
+                            creatorCareService.fulfillSubscribe(user, creator, amountPaid);
+                        } else {
+                            creatorCareService.fulfillTip(user, creator, amountPaid,
+                                    Objects.toString(data.get("message"), ""));
+                        }
+                    } catch (Exception ignored) {}
+                }
             } else {
                 responseMap.put("error", "Unknown payment type.");
                 return ResponseEntity.badRequest().body(responseMap);
