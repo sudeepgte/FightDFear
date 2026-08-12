@@ -25,13 +25,8 @@ public class EmailService {
             message.setSubject(subject);
             message.setText(text);
             emailSender.send(message);
-            System.out.println("Email sent successfully to: " + to);
         } catch (Exception e) {
-
-            System.err.println("CRITICAL: Email sending failed to " + to + ". Error: " + e.getMessage());
-
-            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
-
+            throw new IllegalStateException("Could not send email to " + to + ": " + e.getMessage(), e);
         }
     }
 }

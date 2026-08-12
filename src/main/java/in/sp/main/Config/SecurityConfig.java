@@ -174,6 +174,11 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/prometheus", "/actuator/prometheus/**")
                     .access((authentication, context) -> allowLocalhostOnly(context))
                 .requestMatchers(PUBLIC_URLS).permitAll()
+                .requestMatchers(request -> {
+                    String path = request.getRequestURI();
+                    if (path == null) return false;
+                    return path.contains("/otp/") || path.endsWith("/register-quick");
+                }).permitAll()
                 .anyRequest().authenticated())
             // Add JWT filter
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)

@@ -116,7 +116,7 @@ public class JobWorkerRegistrationService {
         user.setEmail(normalizedEmail);
         user.setPhoneNumber(trimmedPhone);
         user.setPassword(passwordService.encode(password));
-        user.setVerificationStatus(VerificationStatus.PENDING);
+        user.setVerificationStatus(VerificationStatus.VERIFIED);
         user.setIdentityDocument(JOB_CAT_PREFIX + category);
         userService.createUser(user);
         return user;
