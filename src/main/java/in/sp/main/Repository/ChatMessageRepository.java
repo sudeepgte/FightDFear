@@ -1,5 +1,6 @@
 package in.sp.main.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -43,5 +44,18 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
         @Param("receiverId") Long receiverId
     );
 
-	List<ChatMessage> findByGroupIdOrderByCreatedAtAsc(Long groupId);
+    List<ChatMessage> findByGroupIdOrderByCreatedAtAsc(Long groupId);
+
+    @Query("""
+    SELECT m FROM ChatMessage m
+    WHERE ((m.sender.id = :user1Id AND m.receiver.id = :user2Id)
+        OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id))
+      AND m.timestamp > :since
+    ORDER BY m.timestamp ASC
+    """)
+    List<ChatMessage> findMessagesSince(
+        @Param("user1Id") Long user1Id,
+        @Param("user2Id") Long user2Id,
+        @Param("since") LocalDateTime since
+    );
 }
