@@ -17,6 +17,8 @@ public class ProviderClass {
     private Double price;
     private Integer availableSeats;
     private String meetingLink;
+    private String serviceProvided;
+    private String serviceLocation;
 
     @ManyToOne
     private ServiceProvider provider;
@@ -43,6 +45,10 @@ public class ProviderClass {
     public void setAvailableSeats(Integer availableSeats) { this.availableSeats = availableSeats; }
     public String getMeetingLink() { return meetingLink; }
     public void setMeetingLink(String meetingLink) { this.meetingLink = meetingLink; }
+    public String getServiceProvided() { return serviceProvided; }
+    public void setServiceProvided(String serviceProvided) { this.serviceProvided = serviceProvided; }
+    public String getServiceLocation() { return serviceLocation; }
+    public void setServiceLocation(String serviceLocation) { this.serviceLocation = serviceLocation; }
     public ServiceProvider getProvider() { return provider; }
     public void setProvider(ServiceProvider provider) { this.provider = provider; }
 

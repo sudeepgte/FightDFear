@@ -117,6 +117,18 @@ public class ServiceProvider {
     private String galleryPhotos;
     private String profileImageUrl;
 
+    private String profilePhoto;
+    private String businessName;
+    private String serviceArea;
+    private String qualification;
+    private String experience;
+    private String availableDays;
+    private String workingHoursFrom;
+    private String workingHoursTo;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String languagesSpoken;
+
     public Long getId() {
         return id;
     }
@@ -355,5 +367,77 @@ public class ServiceProvider {
     public void setGalleryPhotos(String galleryPhotos) { this.galleryPhotos = galleryPhotos; }
     public String getProfileImageUrl() { return profileImageUrl; }
     public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
+
+    public String getProfilePhoto() {
+        return profilePhoto;
+    }
+
+    public void setProfilePhoto(String profilePhoto) {
+        this.profilePhoto = profilePhoto;
+    }
+
+    public String getQualification() {
+        return qualification;
+    }
+
+    public void setQualification(String qualification) {
+        this.qualification = qualification;
+    }
+
+    public String getExperience() {
+        return experience;
+    }
+
+    public void setExperience(String experience) {
+        this.experience = experience;
+    }
+
+    public String getAvailableDays() {
+        return availableDays;
+    }
+
+    public void setAvailableDays(String availableDays) {
+        this.availableDays = availableDays;
+    }
+
+    public String getBusinessName() {
+        return businessName;
+    }
+
+    public void setBusinessName(String businessName) {
+        this.businessName = businessName;
+    }
+
+    public String getServiceArea() {
+        return serviceArea;
+    }
+
+    public void setServiceArea(String serviceArea) {
+        this.serviceArea = serviceArea;
+    }
+
+    public String getWorkingHoursFrom() {
+        return workingHoursFrom;
+    }
+
+    public void setWorkingHoursFrom(String workingHoursFrom) {
+        this.workingHoursFrom = workingHoursFrom;
+    }
+
+    public String getWorkingHoursTo() {
+        return workingHoursTo;
+    }
+
+    public void setWorkingHoursTo(String workingHoursTo) {
+        this.workingHoursTo = workingHoursTo;
+    }
+
+    public String getLanguagesSpoken() {
+        return languagesSpoken;
+    }
+
+    public void setLanguagesSpoken(String languagesSpoken) {
+        this.languagesSpoken = languagesSpoken;
+    }
 }
 

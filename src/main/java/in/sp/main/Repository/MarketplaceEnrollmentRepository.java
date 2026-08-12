@@ -9,7 +9,7 @@ import java.util.List;
 public interface MarketplaceEnrollmentRepository extends JpaRepository<MarketplaceEnrollment, Long> {
     List<MarketplaceEnrollment> findByUser_Id(Long userId);
     
-    @Query("SELECT e FROM MarketplaceEnrollment e WHERE e.providerClass.provider.id = :providerId")
+    @Query("SELECT e FROM MarketplaceEnrollment e JOIN e.providerClass pc WHERE pc.provider.id = :providerId")
     List<MarketplaceEnrollment> findByProviderId(@Param("providerId") Long providerId);
     
     boolean existsByUser_IdAndProviderClass_Id(Long userId, Long classId);

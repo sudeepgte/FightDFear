@@ -547,7 +547,190 @@
         font-size: 0.82rem !important;
         letter-spacing: 1px !important;
     }
+
+    /* Premium Dashboard Styles */
+    .dashboard-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 15px 35px rgba(30, 27, 75, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03);
+        margin-bottom: 28px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .dashboard-panel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(30, 27, 75, 0.08), 0 8px 20px rgba(0, 0, 0, 0.04);
+    }
+    .dashboard-panel-title {
+        color: var(--primary-purple);
+        font-weight: 800;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 1.2px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .dashboard-panel-title i {
+        background: linear-gradient(135deg, var(--primary-purple), var(--primary-coral));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 1.2rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(145deg, #ffffff, #f8f9fc);
+        border-radius: 18px;
+        padding: 22px 18px;
+        text-align: center;
+        border: 1px solid rgba(30, 27, 75, 0.05);
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 8px 20px rgba(0,0,0,0.03);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, var(--primary-purple), var(--primary-coral));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 15px 30px rgba(244, 63, 94, 0.1);
+        border-color: rgba(244, 63, 94, 0.2);
+    }
+    .stat-val {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-purple), #5b21b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+    .stat-lbl {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    
+    /* Specific stat colors */
+    .stat-card.danger .stat-val { background: linear-gradient(135deg, #e11d48, #be123c); -webkit-background-clip: text; }
+    .stat-card.danger:hover { box-shadow: 0 15px 30px rgba(225, 29, 72, 0.15); border-color: rgba(225, 29, 72, 0.2); }
+    .stat-card.danger::before { background: linear-gradient(90deg, #f43f5e, #e11d48); }
+    
+    .stat-card.success .stat-val { background: linear-gradient(135deg, #10b981, #059669); -webkit-background-clip: text; }
+    .stat-card.success:hover { box-shadow: 0 15px 30px rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.2); }
+    .stat-card.success::before { background: linear-gradient(90deg, #34d399, #10b981); }
+    
+    .stat-card.info .stat-val { background: linear-gradient(135deg, #3b82f6, #2563eb); -webkit-background-clip: text; }
+    .stat-card.info:hover { box-shadow: 0 15px 30px rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.2); }
+    .stat-card.info::before { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+    
+    .stat-card.warning .stat-val { background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; }
+    .stat-card.warning:hover { box-shadow: 0 15px 30px rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.2); }
+    .stat-card.warning::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
+    
+    .stat-card.royal .stat-val { background: linear-gradient(135deg, #8b5cf6, #6d28d9); -webkit-background-clip: text; }
+    .stat-card.royal:hover { box-shadow: 0 15px 30px rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.2); }
+    .stat-card.royal::before { background: linear-gradient(90deg, #a78bfa, #8b5cf6); }
+    
+    /* Enhance the overall background */
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        background-attachment: fixed;
+    }
+    
+    /* Topbar enhancement */
+    .topbar {
+        background: rgba(30, 27, 75, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    /* Management Modules Grid */
+    .management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .admin-card {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(30, 27, 75, 0.08);
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+    }
+    .admin-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(30, 27, 75, 0.1);
+        border-color: rgba(123, 44, 191, 0.3);
+    }
+    
+    /* Tables */
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(30,27,75,0.05);
+    }
+    .table thead {
+        background: rgba(30,27,75,0.03);
+    }
+    .table thead th {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: var(--primary-purple);
+        border-bottom: 2px solid rgba(30,27,75,0.05);
+    }
+    
+    /* Nav Tabs */
+    .nav-tabs {
+        border-bottom: 2px solid rgba(30,27,75,0.05);
+        gap: 10px;
+    }
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: 30px;
+        padding: 10px 20px;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.3s ease;
+        background: transparent;
+    }
+    .nav-tabs .nav-link:hover {
+        background: rgba(30,27,75,0.03);
+        color: var(--primary-purple);
+    }
+    .nav-tabs .nav-link.active {
+        background: var(--primary-purple);
+        color: white !important;
+        box-shadow: 0 8px 15px rgba(30,27,75,0.2);
+    }
 </style>
+
     
 </head>
 <body>
@@ -563,11 +746,6 @@
                     <p class="title mb-0">Fight D Fear Admin Dashboard</p>
                 </div>
                 <div class="meta">
-
-                    <a href="${pageContext.request.contextPath}/admin/reported-videos" class="badge bg-light text-dark badge-pill text-decoration-none reported-videos-link" title="View reported videos">
-                        Reported Videos: <span id="reportedVideos">-</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
                 </div>
             </div>
         </div>
@@ -590,107 +768,107 @@
 
                 <!-- ── Categorized Analytics ── -->
                 <div class="col-12 mb-4">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+                    <div class="dashboard-panel">
                         
                         <!-- Row 1: Safety -->
                         <div class="mb-4">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <h6 class="dashboard-panel-title">
                                 <i class="fas fa-shield-alt"></i> Safety & Emergency
                             </h6>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                                <div style="background:#FFF5F5; border-radius:15px; padding:18px; border:1px solid #FED7D7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#C53030;" id="stat-activeSos">—</div>
-                                    <div style="font-size:0.75rem; color:#9B2C2C; font-weight:600;">🚨 Active SOS Alerts</div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-card danger">
+    <div class="stat-val" id="stat-activeSos">—</div>
+    <div class="stat-lbl">🚨 Active SOS Alerts</div>
+</div>
 
-                                <div style="background:#EBF8FF; border-radius:15px; padding:18px; border:1px solid #BEE3F8; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#2B6CB0;" id="stat-safeRoutes">—</div>
-                                    <div style="font-size:0.75rem; color:#2C5282; font-weight:600;">📍 Verified Routes</div>
-                                </div>
+                                <div class="stat-card info">
+    <div class="stat-val" id="stat-safeRoutes">—</div>
+    <div class="stat-lbl">📍 Verified Routes</div>
+</div>
                             </div>
                         </div>
 
                         <!-- Row 2: Partners -->
                         <div class="mb-4">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <h6 class="dashboard-panel-title">
                                 <i class="fas fa-handshake"></i> Verified Partners
                             </h6>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                                <div style="background:#FAF5FF; border-radius:15px; padding:18px; border:1px solid #E9D8FD; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#6B46C1;" id="stat-verifiedDoctors">—</div>
-                                    <div style="font-size:0.75rem; color:#553C9A; font-weight:600;">👨‍⚕️ Verified Doctors</div>
-                                </div>
-                                <div style="background:#FAF5FF; border-radius:15px; padding:18px; border:1px solid #E9D8FD; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#6B46C1;" id="stat-verifiedSalons">—</div>
-                                    <div style="font-size:0.75rem; color:#553C9A; font-weight:600;">✂️ Verified Salons</div>
-                                </div>
-                                <div style="background:#FAF5FF; border-radius:15px; padding:18px; border:1px solid #E9D8FD; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#6B46C1;" id="stat-verifiedStylists">—</div>
-                                    <div style="font-size:0.75rem; color:#553C9A; font-weight:600;">💇 Verified Stylists</div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-card royal">
+    <div class="stat-val" id="stat-verifiedDoctors">—</div>
+    <div class="stat-lbl">👨‍⚕️ Verified Doctors</div>
+</div>
+                                <div class="stat-card royal">
+    <div class="stat-val" id="stat-verifiedSalons">—</div>
+    <div class="stat-lbl">✂️ Verified Salons</div>
+</div>
+                                <div class="stat-card royal">
+    <div class="stat-val" id="stat-verifiedStylists">—</div>
+    <div class="stat-lbl">💇 Verified Stylists</div>
+</div>
                             </div>
                         </div>
 
                         <!-- Row 3: Users -->
                         <div>
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <h6 class="dashboard-panel-title">
                                 <i class="fas fa-users"></i> Platform Community
                             </h6>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                                <div style="background:#EDF2F7; border-radius:15px; padding:18px; border:1px solid #E2E8F0; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#2D3748;" id="stat-totalUsers">—</div>
-                                    <div style="font-size:0.75rem; color:#4A5568; font-weight:600;">👥 Total Users</div>
-                                </div>
-                                <div style="background:#FFF5F5; border-radius:15px; padding:18px; border:1px solid #FED7D7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#E53E3E;" id="stat-bannedUsers">—</div>
-                                    <div style="font-size:0.75rem; color:#9B2C2C; font-weight:600;">🚫 Banned Accounts</div>
-                                </div>
-                                <div style="background:#F7FAFC; border-radius:15px; padding:18px; border:1px solid #EDF2F7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#4A5568;" id="stat-pendingUsers">—</div>
-                                    <div style="font-size:0.75rem; color:#718096; font-weight:600;">🆕 New Registrations</div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+    <div class="stat-val" id="stat-totalUsers">—</div>
+    <div class="stat-lbl">👥 Total Users</div>
+</div>
+                                <div class="stat-card danger">
+    <div class="stat-val" id="stat-bannedUsers">—</div>
+    <div class="stat-lbl">🚫 Banned Accounts</div>
+</div>
+                                <div class="stat-card">
+    <div class="stat-val" id="stat-pendingUsers">—</div>
+    <div class="stat-lbl">🆕 New Registrations</div>
+</div>
                             </div>
                         </div>
 
                         <!-- Row 4: Entrepreneur & Investor Platform (Community) -->
                         <div class="mt-4">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <h6 class="dashboard-panel-title">
                                 <i class="fas fa-handshake"></i> Entrepreneur & Investor Community
                             </h6>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                                <div style="background:#FFFDF5; border-radius:15px; padding:18px; border:1px solid #FEF3C7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#D97706;" id="stat-totalEntrepreneurs">—</div>
-                                    <div style="font-size:0.75rem; color:#92400E; font-weight:600;">👩‍💼 Total Entrepreneurs</div>
-                                </div>
-                                <div style="background:#FFFDF5; border-radius:15px; padding:18px; border:1px solid #FEF3C7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#D97706;" id="stat-totalInvestors">—</div>
-                                    <div style="font-size:0.75rem; color:#92400E; font-weight:600;">💼 Total Investors</div>
-                                </div>
-                                <div style="background:#FFFDF5; border-radius:15px; padding:18px; border:1px solid #FEF3C7; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#D97706;" id="stat-totalProposals">—</div>
-                                    <div style="font-size:0.75rem; color:#92400E; font-weight:600;">📈 Total Proposals</div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-card warning">
+    <div class="stat-val" id="stat-totalEntrepreneurs">—</div>
+    <div class="stat-lbl">👩‍💼 Total Entrepreneurs</div>
+</div>
+                                <div class="stat-card warning">
+    <div class="stat-val" id="stat-totalInvestors">—</div>
+    <div class="stat-lbl">💼 Total Investors</div>
+</div>
+                                <div class="stat-card warning">
+    <div class="stat-val" id="stat-totalProposals">—</div>
+    <div class="stat-lbl">📈 Total Proposals</div>
+</div>
                             </div>
                         </div>
 
                         <!-- Row 5: Entrepreneur & Investor Platform (Financials) -->
                         <div class="mt-4">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                            <h6 class="dashboard-panel-title">
                                 <i class="fas fa-wallet"></i> Investment & Platform Revenue
                             </h6>
-                            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                                <div style="background:#F0FFF4; border-radius:15px; padding:18px; border:1px solid #C6F6D5; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#276749;" id="stat-capitalRequested">—</div>
-                                    <div style="font-size:0.75rem; color:#2F855A; font-weight:600;">💰 Capital Requested</div>
-                                </div>
-                                <div style="background:#F0FFF4; border-radius:15px; padding:18px; border:1px solid #C6F6D5; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#276749;" id="stat-capitalInvested">—</div>
-                                    <div style="font-size:0.75rem; color:#2F855A; font-weight:600;">🤝 Capital Funded</div>
-                                </div>
-                                <div style="background:#FAF5FF; border-radius:15px; padding:18px; border:1px solid #E9D8FD; text-align:center;">
-                                    <div style="font-size:1.6rem; font-weight:700; color:#6B46C1;" id="stat-platformRevenue">—</div>
-                                    <div style="font-size:0.75rem; color:#553C9A; font-weight:600;">💎 Platform Revenue</div>
-                                </div>
+                            <div class="stats-grid">
+                                <div class="stat-card success">
+    <div class="stat-val" id="stat-capitalRequested">—</div>
+    <div class="stat-lbl">💰 Capital Requested</div>
+</div>
+                                <div class="stat-card success">
+    <div class="stat-val" id="stat-capitalInvested">—</div>
+    <div class="stat-lbl">🤝 Capital Funded</div>
+</div>
+                                <div class="stat-card royal">
+    <div class="stat-val" id="stat-platformRevenue">—</div>
+    <div class="stat-lbl">💎 Platform Revenue</div>
+</div>
                             </div>
                         </div>
 
@@ -700,9 +878,9 @@
 
                 <!-- Row 6: Women Events Platform -->
                 <div class="col-12 mb-4">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+                    <div class="dashboard-panel">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin: 0;">
+                            <h6 class="dashboard-panel-title" style="margin: 0;">
                                 <i class="bi bi-calendar-heart-fill"></i> Women Events Platform
                             </h6>
                             <a href="${pageContext.request.contextPath}/admin/pending-event-hosts"
@@ -710,40 +888,40 @@
                                 Approve Organizers / Events
                             </a>
                         </div>
-                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px;">
-                            <div style="background:#fdf5ff; border-radius:15px; padding:18px; border:1px solid #e9d8fd; text-align:center;">
-                                <div style="font-size:1.6rem; font-weight:700; color:#1e1b4b;" id="stat-totalWomenEvents">—</div>
-                                <div style="font-size:0.75rem; color:#6B46C1; font-weight:600;">🌸 Total Events</div>
-                            </div>
-                            <div style="background:#f0fdf4; border-radius:15px; padding:18px; border:1px solid #C6F6D5; text-align:center;">
-                                <div style="font-size:1.6rem; font-weight:700; color:#276749;" id="stat-approvedWomenEvents">—</div>
-                                <div style="font-size:0.75rem; color:#2F855A; font-weight:600;">✅ Approved Events</div>
-                            </div>
-                            <div style="background:#fffbeb; border-radius:15px; padding:18px; border:1px solid #fde68a; text-align:center;">
-                                <div style="font-size:1.6rem; font-weight:700; color:#92400e;" id="stat-pendingWomenEvents">—</div>
-                                <div style="font-size:0.75rem; color:#b45309; font-weight:600;">⏳ Pending Review</div>
-                            </div>
-                            <div style="background:#edf2f7; border-radius:15px; padding:18px; border:1px solid #cbd5e1; text-align:center;">
-                                <div style="font-size:1.6rem; font-weight:700; color:#475569;" id="stat-totalEventBookings">—</div>
-                                <div style="font-size:0.75rem; color:#64748b; font-weight:600;">🎟️ Ticket Bookings</div>
-                            </div>
-                            <div style="background:#ecfdf5; border-radius:15px; padding:18px; border:1px solid #a7f3d0; text-align:center;">
-                                <div style="font-size:1.6rem; font-weight:700; color:#047857;" id="stat-totalEventTicketRevenue">—</div>
-                                <div style="font-size:0.75rem; color:#065f46; font-weight:600;">💳 Ticket Revenue</div>
-                            </div>
-                            <div style="background:#fff7ed; border-radius:15px; padding:18px; border:1px solid #ffedd5; text-align:center; overflow: hidden;">
-                                <div style="font-size:1.2rem; font-weight:700; color:#c2410c; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" id="stat-mostPopularEvent">—</div>
-                                <div style="font-size:0.75rem; color:#9a3412; font-weight:600;">🏆 Popular Event</div>
-                            </div>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+    <div class="stat-val" id="stat-totalWomenEvents">—</div>
+    <div class="stat-lbl">🌸 Total Events</div>
+</div>
+                            <div class="stat-card success">
+    <div class="stat-val" id="stat-approvedWomenEvents">—</div>
+    <div class="stat-lbl">✅ Approved Events</div>
+</div>
+                            <div class="stat-card warning">
+    <div class="stat-val" id="stat-pendingWomenEvents">—</div>
+    <div class="stat-lbl">⏳ Pending Review</div>
+</div>
+                            <div class="stat-card">
+    <div class="stat-val" id="stat-totalEventBookings">—</div>
+    <div class="stat-lbl">🎟️ Ticket Bookings</div>
+</div>
+                            <div class="stat-card success">
+    <div class="stat-val" id="stat-totalEventTicketRevenue">—</div>
+    <div class="stat-lbl">💳 Ticket Revenue</div>
+</div>
+                            <div class="stat-card warning">
+    <div class="stat-val" id="stat-mostPopularEvent">—</div>
+    <div class="stat-lbl">🏆 Popular Event</div>
+</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recent contact form messages -->
                 <div class="col-12 mb-4">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+                    <div class="dashboard-panel">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin: 0;">
+                            <h6 class="dashboard-panel-title" style="margin: 0;">
                                 <i class="fas fa-envelope"></i> Recent Contact Messages
                             </h6>
                             <a href="${pageContext.request.contextPath}/admin/contact-messages" class="btn btn-sm" style="background: #1e1b4b; color: #fff; border-radius: 20px; font-weight: 600;">
@@ -791,9 +969,9 @@
 
                 <!-- Recent Entrepreneur & Investor Activity Feed -->
                 <div class="col-12 mb-4">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+                    <div class="dashboard-panel">
                         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                            <h6 style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin: 0;">
+                            <h6 class="dashboard-panel-title" style="margin: 0;">
                                 <i class="fas fa-history"></i> Recent Entrepreneur & Investor Platform Feed
                             </h6>
                             <a href="${pageContext.request.contextPath}/admin/pending-proposals" class="btn btn-sm" style="background: #1e1b4b; color: #fff; border-radius: 20px; font-weight: 600;">
@@ -830,7 +1008,13 @@
                     </div>
                 </div>
 
-                <div class="col-md-3 col-sm-6">
+                
+    <div class="col-12 mt-5 mb-3">
+        <h5 class="dashboard-panel-title" style="font-size: 1.2rem; border-bottom: 2px solid rgba(30,27,75,0.1); padding-bottom: 10px;">
+            <i class="fas fa-layer-group"></i> Management Modules
+        </h5>
+    </div>
+    <div class="col-md-3 col-sm-6">
                     <div class="admin-card">
                         <div class="rowTop">
                             <div>
@@ -1228,34 +1412,34 @@
 
                 <!-- ── Women Creator Hub Oversight ── -->
                 <div class="col-12 mb-4">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
-                        <h5 class="mb-4" style="color: #1e1b4b; font-weight: 700; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px;">
+                    <div class="dashboard-panel">
+                        <h5 class="dashboard-panel-title mb-4" style="font-size: 1.1rem;">
                             <i class="fas fa-shield-halved text-danger me-2"></i> Women Creator Hub Oversight
                         </h5>
 
                         <ul class="nav nav-tabs mb-3" id="creatorHubTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="moder-tab" data-bs-toggle="tab" data-bs-target="#moderContent" type="button" role="tab" style="color:#1e1b4b; font-weight:600;">
+                                <button class="nav-link active" id="moder-tab" data-bs-toggle="tab" data-bs-target="#moderContent" type="button" role="tab" >
                                     Moderation Queue (${moderationQueue.size()})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reportsContent" type="button" role="tab" style="color:#1e1b4b; font-weight:600;">
+                                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reportsContent" type="button" role="tab" >
                                     Safety Reports (${reports.size()})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="verify-tab" data-bs-toggle="tab" data-bs-target="#verifyContent" type="button" role="tab" style="color:#1e1b4b; font-weight:600;">
+                                <button class="nav-link" id="verify-tab" data-bs-toggle="tab" data-bs-target="#verifyContent" type="button" role="tab" >
                                     Creator Badges
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="payout-tab" data-bs-toggle="tab" data-bs-target="#payoutContent" type="button" role="tab" style="color:#1e1b4b; font-weight:600;">
+                                <button class="nav-link" id="payout-tab" data-bs-toggle="tab" data-bs-target="#payoutContent" type="button" role="tab" >
                                     Cashouts (${cashoutRequests.size()})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="campaign-tab" data-bs-toggle="tab" data-bs-target="#campaignContent" type="button" role="tab" style="color:#1e1b4b; font-weight:600;">
+                                <button class="nav-link" id="campaign-tab" data-bs-toggle="tab" data-bs-target="#campaignContent" type="button" role="tab" >
                                     Create Brand Campaign
                                 </button>
                             </li>
@@ -1509,24 +1693,24 @@
 
                 <!-- ── Fitness & Wellness Administration ── -->
                 <div class="col-12 mb-4" id="fitnessOversightTabs">
-                    <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
-                        <h5 class="mb-4" style="color: #10b981; font-weight: 700; text-transform: uppercase; font-size: 0.95rem; letter-spacing: 1px;">
+                    <div class="dashboard-panel">
+                        <h5 class="dashboard-panel-title mb-4" style="font-size: 1.1rem; color: #10b981;">
                             <i class="fas fa-dumbbell text-success me-2"></i> Fitness &amp; Wellness Administration
                         </h5>
 
                         <ul class="nav nav-tabs mb-3" id="fitnessAdminTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="fit-pending-tab" data-bs-toggle="tab" data-bs-target="#fitPendingContent" type="button" role="tab" style="color:#065f46; font-weight:600;">
+                                <button class="nav-link active" id="fit-pending-tab" data-bs-toggle="tab" data-bs-target="#fitPendingContent" type="button" role="tab" >
                                     Trainer Approvals (${pendingTrainers.size()})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="fit-active-tab" data-bs-toggle="tab" data-bs-target="#fitActiveContent" type="button" role="tab" style="color:#065f46; font-weight:600;">
+                                <button class="nav-link" id="fit-active-tab" data-bs-toggle="tab" data-bs-target="#fitActiveContent" type="button" role="tab" >
                                     Active Trainers (${activeTrainers.size()})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="fit-stats-tab" data-bs-toggle="tab" data-bs-target="#fitStatsContent" type="button" role="tab" style="color:#065f46; font-weight:600;">
+                                <button class="nav-link" id="fit-stats-tab" data-bs-toggle="tab" data-bs-target="#fitStatsContent" type="button" role="tab" >
                                     Fitness Reports &amp; Analytics
                                 </button>
                             </li>

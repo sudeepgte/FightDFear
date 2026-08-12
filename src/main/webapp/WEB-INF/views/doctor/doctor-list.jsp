@@ -377,7 +377,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -388,6 +388,9 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
+                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn" style="background: var(--brand-purple); color: white;">
+                    <i class="bi bi-file-earmark-medical"></i> My Prescriptions
+                </a>
                 <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
                     <i class="bi bi-calendar-event"></i> My Appointments
                 </a>

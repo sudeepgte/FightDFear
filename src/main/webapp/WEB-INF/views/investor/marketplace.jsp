@@ -30,19 +30,25 @@
         }
 
         #sidebar-wrapper {
-            min-width: 260px;
-            max-width: 260px;
+            width: 210px;
+            min-width: 210px;
+            max-width: 210px;
             background: var(--navy-dark);
             color: white;
-            min-height: 100vh;
-            border-top-right-radius: 40px;
-            padding-top: 30px;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            border-radius: 0;
+            padding: 20px 0;
+            margin: 0;
+            z-index: 1000;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
         }
 
         .sidebar-heading {
-            padding: 10px 25px 25px;
-            font-size: 1.2rem;
+            padding: 10px 20px 20px;
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -53,15 +59,16 @@
         .sidebar-link {
             background: transparent;
             color: rgba(255,255,255,0.7);
-            padding: 14px 25px;
-            font-size: 0.95rem;
+            padding: 10px 20px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             text-decoration: none;
             transition: all 0.3s;
-            border-left: 4px solid transparent;
+            border-left: 3px solid transparent;
         }
 
         .sidebar-link:hover, .sidebar-link.active {
@@ -72,15 +79,17 @@
 
         #page-content-wrapper {
             flex: 1;
-            padding: 40px;
+            margin-left: 210px;
+            padding: 20px 30px;
+            overflow-y: auto;
         }
 
         .proposal-card {
             background: white;
-            border-radius: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
-            transition: all 0.3s ease;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05); /* Lighter border */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); /* Thinner shadow */
+            transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
             display: flex;
@@ -89,71 +98,128 @@
         }
 
         .proposal-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(49, 46, 129, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(49, 46, 129, 0.08); /* Minimal lift */
         }
 
         .proposal-card.premium {
-            border: 2px solid #ffd700;
-            background: linear-gradient(180deg, #fffcf0 0%, #ffffff 100%);
+            border-top: 4px solid #ffd700;
+            background: white; /* Removed yellow background gradient */
         }
 
         .proposal-card.featured {
-            border: 2px solid var(--coral);
+            border-top: 4px solid var(--coral);
         }
 
         .featured-banner {
             position: absolute;
-            top: 15px;
-            right: -30px;
+            top: 10px;
+            right: -25px;
             background: var(--coral);
             color: white;
-            padding: 4px 30px;
-            font-size: 0.7rem;
+            padding: 3px 25px;
+            font-size: 0.6rem;
             font-weight: bold;
             transform: rotate(45deg);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .premium-badge {
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-            color: #1e1b4b;
-            font-size: 0.75rem;
+            background: #fff8e1;
+            color: #d97706;
+            font-size: 0.65rem;
             font-weight: bold;
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 3px 8px;
+            border-radius: 12px;
             display: inline-flex;
             align-items: center;
             gap: 4px;
         }
 
-        .progress {
-            height: 8px;
-            border-radius: 8px;
+        .desc-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+            word-wrap: break-word;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        @media (max-width: 992px) {
+            #wrapper {
+                flex-direction: column !important;
+            }
+            #sidebar-wrapper {
+                min-width: 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                position: static !important;
+                border-radius: 0 0 20px 20px !important;
+                padding: 20px 15px !important;
+            }
+            #sidebar-wrapper .mt-1 {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+            }
+            .sidebar-link {
+                padding: 8px 15px !important;
+                border-radius: 20px !important;
+                border-left: none !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                display: inline-flex !important;
+                white-space: nowrap !important;
+                margin-bottom: 0 !important;
+            }
+            .sidebar-link:hover, .sidebar-link.active {
+                border-left-color: transparent !important;
+                background: var(--coral) !important;
+            }
+            #page-content-wrapper {
+                margin-left: 0 !important;
+                padding: 20px 15px !important;
+            }
         }
     </style>
 </head>
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div style="display: none; visibility: hidden;">
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+</div>
 
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
+        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2">
             <i class="bi bi-wallet2"></i> Investor Panel
         </div>
-        <div class="mt-3">
+        <div class="mt-1 d-flex flex-column">
+            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
+                <i class="bi bi-house"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link active">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-calendar2-check"></i> My Bookings
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-wallet2"></i> Wallet
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-person"></i> Profile
+            </a>
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
                 <i class="bi bi-shield-check"></i> Safety Hub Home
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-5">
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-3">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -163,11 +229,9 @@
     <div id="page-content-wrapper">
         <div class="container-fluid">
             
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-                <div>
-                    <h2 class="fw-bold" style="color: var(--navy-dark);"><i class="bi bi-shop"></i> Investor Marketplace</h2>
-                    <p class="text-muted m-0">Invest in women entrepreneurs and track real-time funding progress.</p>
-                </div>
+            <div class="text-center mb-4 position-relative">
+                <h5 class="fw-bold m-0" style="color: var(--navy-dark);"><i class="bi bi-shop"></i> Investor Marketplace</h5>
+                <p class="text-muted small m-0 mt-1">Invest in women entrepreneurs and track real-time funding progress.</p>
             </div>
 
             <!-- Filters Panel -->
@@ -212,39 +276,39 @@
                                 <div class="featured-banner">PINNED</div>
                             </c:if>
                             
-                            <div class="p-4 flex-grow-1">
-                                <div class="mb-3 d-flex justify-content-between align-items-center">
-                                    <span class="badge bg-secondary rounded-pill px-2 py-1" style="font-size:0.75rem;">${p.category}</span>
+                            <div class="p-3 flex-grow-1">
+                                <div class="mb-2 d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1" style="font-size:0.65rem;">${p.category}</span>
                                     <c:if test="${p.premium}">
                                         <span class="premium-badge"><i class="bi bi-award-fill"></i> Premium</span>
                                     </c:if>
                                 </div>
 
-                                <h5 class="fw-bold mb-2 text-navy-emphasis">${p.title}</h5>
-                                <p class="text-secondary small mb-3" style="min-height: 50px;">
+                                <h6 class="fw-bold mb-1 text-navy-emphasis text-truncate">${p.title}</h6>
+                                <p class="desc-text">
                                     ${p.description.length() > 100 ? p.description.substring(0, 100).concat("...") : p.description}
                                 </p>
 
-                                <div class="d-flex align-items-center gap-2 text-muted small mb-3">
-                                    <i class="bi bi-geo-alt"></i> <span>${p.location}</span>
+                                <div class="d-flex flex-wrap align-items-center gap-2 text-muted mb-3" style="font-size:0.75rem;">
+                                    <span><i class="bi bi-geo-alt"></i> ${p.location}</span>
                                     <span class="mx-1">|</span>
-                                    <i class="bi bi-person-fill"></i> <span>${p.entrepreneur.fullName}</span>
+                                    <span><i class="bi bi-person-fill"></i> ${p.entrepreneur.fullName}</span>
                                 </div>
 
-                                <div class="border-top pt-3">
-                                    <div class="d-flex justify-content-between small text-muted mb-1">
-                                        <span>₹${p.amountRaised} raised</span>
+                                <div class="border-top pt-2">
+                                    <div class="d-flex justify-content-between text-muted mb-1" style="font-size:0.75rem;">
+                                        <span><strong class="text-success">₹${p.amountRaised}</strong> raised</span>
                                         <span>₹${p.fundingNeeded} target</span>
                                     </div>
-                                    <div class="progress mb-2">
+                                    <div class="progress">
                                         <div class="progress-bar bg-success" role="progressbar" style="width: ${(p.amountRaised/p.fundingNeeded)*100}%;"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="p-4 border-top bg-light">
-                                <a href="${pageContext.request.contextPath}/investor/proposal/${p.id}" class="btn btn-navy w-100 rounded-pill py-2 text-white" style="background-color: var(--navy-light); border: none;">
-                                    Open Proposal <i class="bi bi-arrow-right"></i>
+                            <div class="p-3 border-top bg-white">
+                                <a href="${pageContext.request.contextPath}/investor/proposal/${p.id}" class="btn btn-sm w-100 rounded-pill py-1 text-white fw-semibold" style="background-color: var(--navy-light); border: none; font-size:0.8rem;">
+                                    View Details <i class="bi bi-arrow-right-short"></i>
                                 </a>
                             </div>
                         </div>

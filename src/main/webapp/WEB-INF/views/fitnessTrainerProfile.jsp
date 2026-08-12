@@ -84,10 +84,11 @@
 
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding: 0;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding: 0;" data-skip-global-back="true">
             <!-- Profile header banner -->
-            <div class="profile-header text-center text-md-start">
+            <div class="profile-header text-center text-md-start" style="position: relative;">
                 <div class="container px-5">
+                    <a href="${pageContext.request.contextPath}/fitness" class="btn btn-sm btn-outline-light mb-4" style="border-radius: 20px;"><i class="bi bi-arrow-left"></i> Go Back</a>
                     <div class="row align-items-center">
                         <div class="col-md-3 text-center mb-3 mb-md-0">
                             <img src="${not empty trainer.profilePhotoPath ? trainer.profilePhotoPath : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'}" class="profile-img" alt="${trainer.fullName}">
@@ -324,7 +325,10 @@
                                         </div>
                                         <div class="col-6">
                                             <label class="form-label text-xs text-muted mb-1">CVV</label>
-                                            <input type="password" id="cardCvvInput" class="form-control bg-white border-0 py-2 text-sm" placeholder="***" maxlength="3" style="border-radius:8px;">
+                                            <div class="input-group">
+                                                <input type="password" id="cardCvvInput" class="form-control bg-white border-0 py-2 text-sm" placeholder="***" maxlength="4" style="border-radius:8px 0 0 8px;">
+                                                <button class="btn btn-light bg-white border-0" type="button" onclick="toggleCvv()" style="border-radius:0 8px 8px 0;"><i class="bi bi-eye-slash" id="cvvEyeIcon"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="mb-0">
@@ -374,6 +378,20 @@
                                 cardNumber.required = false;
                                 expiry.required = false;
                                 cvv.required = false;
+                            }
+                        }
+
+                        function toggleCvv() {
+                            const input = document.getElementById("cardCvvInput");
+                            const icon = document.getElementById("cvvEyeIcon");
+                            if (input.type === "password") {
+                                input.type = "text";
+                                icon.classList.remove("bi-eye-slash");
+                                icon.classList.add("bi-eye");
+                            } else {
+                                input.type = "password";
+                                icon.classList.remove("bi-eye");
+                                icon.classList.add("bi-eye-slash");
                             }
                         }
                     </script>

@@ -139,6 +139,23 @@
             font-size: 1rem;
         }
 
+        .input-wrapper .toggle-password {
+            left: auto;
+            right: 16px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 0.85rem;
+            color: #312e81;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+
         .form-input {
             width: 100%;
             padding: 14px 16px 14px 46px;
@@ -314,13 +331,16 @@
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 10px;">
                     <label for="password">Password</label>
                     <div class="input-wrapper">
                         <i class="bi bi-lock"></i>
                         <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+                        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
                     </div>
                 </div>
+
+                <a href="${pageContext.request.contextPath}/investor/forgot-password" class="forgot-password">Forgot Password?</a>
 
                 <button type="submit" class="btn-login">
                     Sign In <i class="bi bi-arrow-right"></i>
@@ -334,5 +354,19 @@
             </p>
         </div>
     </div>
+    
+    <script>
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function () {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.classList.toggle('bi-eye');
+                this.classList.toggle('bi-eye-slash');
+            });
+        }
+    </script>
 </body>
 </html>

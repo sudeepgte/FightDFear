@@ -58,17 +58,19 @@
         }
 
         .form-control, .form-select {
-            border-radius: 10px;
-            border: 1.5px solid #cbd5e1;
-            padding: 10px 15px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 14px 16px;
             font-size: 0.95rem;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            background: #fff;
+            color: #0f172a;
         }
 
         .form-control:focus, .form-select:focus {
             outline: none;
             border-color: #f43f5e;
-            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
         }
 
         .btn-register {
@@ -78,15 +80,16 @@
             padding: 14px;
             font-weight: 700;
             border-radius: 12px;
+            font-size: 1rem;
             width: 100%;
-            transition: all 0.3s;
-            box-shadow: 0 5px 15px rgba(244, 63, 94, 0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
             margin-top: 20px;
         }
 
         .btn-register:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(244, 63, 94, 0.4);
+            box-shadow: 0 6px 25px rgba(244, 63, 94, 0.4);
             color: white;
         }
 
@@ -100,13 +103,23 @@
             text-decoration: none;
             font-weight: 600;
         }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .register-container { padding: 30px 20px; border-radius: 16px; }
+            .header-title { font-size: 1.5rem; margin-bottom: 20px; }
+            .section-title { font-size: 1.05rem; }
+        }
     </style>
 </head>
 <body>
 
     <div class="register-container">
-        <div class="mb-4">
-            <a href="${pageContext.request.contextPath}/entrepreneur/login" class="text-secondary text-decoration-none">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <a href="${pageContext.request.contextPath}/" class="text-secondary text-decoration-none fw-bold small">
+                <i class="bi bi-house-door-fill"></i> Back to Home
+            </a>
+            <a href="${pageContext.request.contextPath}/entrepreneur/login" class="text-secondary text-decoration-none fw-bold small">
                 <i class="bi bi-arrow-left"></i> Back to Login
             </a>
         </div>
