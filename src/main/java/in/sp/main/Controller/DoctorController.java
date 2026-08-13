@@ -32,6 +32,10 @@ import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.DoctorAppointmentRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
+import in.sp.main.Service.DoctorAppointmentService;
+import in.sp.main.Service.DoctorBookingService;
+import in.sp.main.Service.DoctorProfileService;
+import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 
@@ -56,6 +60,15 @@ public class DoctorController {
 
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
+    @Autowired
+    private DoctorRegistrationService doctorRegistrationService;
+    @Autowired
+    private DoctorProfileService doctorProfileService;
+    @Autowired
+    private DoctorAppointmentService doctorAppointmentService;
+
+    @Autowired
+    private DoctorBookingService doctorBookingService;
 
     @Autowired
     private in.sp.main.Repository.DoctorChatRepository doctorChatRepo;
@@ -185,8 +198,7 @@ public class DoctorController {
             d.setUpiId(upiId);
             d.setBankDetails(bankDetails);
 
-            d.setVerificationStatus(VerificationStatus.PENDING);
-            d.setRating(0.0);
+            doctorRegistrationService.initializeLegacyRegisteredDoctor(d);
 
             doctorRepo.save(d);
             model.addAttribute("message", "Registration successful! Await admin verification.");
@@ -213,22 +225,21 @@ public class DoctorController {
             model.addAttribute("error", "Doctor not found.");
             return "doctor/doctor-login";
         }
-        Doctor d = dOpt.get();
-        boolean ok = passwordService.matchesAndUpgrade(password, d.getPassword(), hashed -> {
-            d.setPassword(hashed);
-            doctorRepo.save(d);
+        Doctor candidate = dOpt.get();
+        boolean ok = passwordService.matchesAndUpgrade(password, candidate.getPassword(), hashed -> {
+            candidate.setPassword(hashed);
+            doctorRepo.save(candidate);
         });
         if (!ok) {
             model.addAttribute("error", "Invalid password.");
             return "doctor/doctor-login";
         }
 
-        if (d.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending admin verification. Access denied.");
-            return "doctor/doctor-login";
-        }
-        if (d.getVerificationStatus() == VerificationStatus.REJECTED) {
-            model.addAttribute("error", "Your account has been rejected by admin.");
+        Doctor d;
+        try {
+            d = doctorRegistrationService.requireLoginDoctor(candidate);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            model.addAttribute("error", ex.getReason() == null ? "Unable to login." : ex.getReason());
             return "doctor/doctor-login";
         }
 
@@ -249,11 +260,14 @@ public class DoctorController {
 
     @GetMapping("/dashboard")
     public String dashboard(@RequestParam(required = false, defaultValue = "overview") String section,
+                            @RequestParam(required = false) Long userId,
                             HttpSession session, Model model) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
 
         d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorRepo.save(d);
         List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
         model.addAttribute("doctor", d);
         model.addAttribute("appointments", appts);
@@ -361,6 +375,15 @@ public class DoctorController {
                 }
             }
             model.addAttribute("chatUsers", chatUsers);
+
+            if (userId != null) {
+                User targetUser = userRepo.findById(userId).orElse(null);
+                model.addAttribute("targetUserId", userId);
+                if (targetUser != null) {
+                    model.addAttribute("targetUserName", targetUser.getFullName());
+                    model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(targetUser, d));
+                }
+            }
         }
 
         return "doctor/doctor-dashboard";
@@ -475,6 +498,32 @@ public class DoctorController {
         return "redirect:/doctors/dashboard?section=schedule";
     }
 
+    @PostMapping("/update-earnings")
+    public String updateEarnings(@RequestParam(required = false) Double consultationFee,
+                                 @RequestParam(required = false) Double chatFee,
+                                 @RequestParam(required = false) Double callFee,
+                                 @RequestParam(required = false) Double videoFee,
+                                 @RequestParam(required = false) String upiId,
+                                 @RequestParam(required = false) String bankDetails,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        if (consultationFee != null) d.setConsultationFee(consultationFee);
+        if (chatFee != null) d.setChatFee(chatFee);
+        if (callFee != null) d.setCallFee(callFee);
+        if (videoFee != null) d.setVideoFee(videoFee);
+        if (upiId != null) d.setUpiId(upiId);
+        if (bankDetails != null) d.setBankDetails(bankDetails);
+
+        doctorRepo.save(d);
+        session.setAttribute("loggedDoctor", d);
+        redirectAttributes.addFlashAttribute("message", "Fee breakdown updated successfully!");
+        return "redirect:/doctors/dashboard?section=earnings";
+    }
+
     @PostMapping("/appointments/{id}/status")
     public String updateAppointmentStatus(@PathVariable Long id,
                                           @RequestParam String status,
@@ -490,9 +539,10 @@ public class DoctorController {
         }
 
         try {
-            appt.setStatus(DoctorAppointmentStatus.valueOf(status));
-            appointmentRepo.save(appt);
+            doctorAppointmentService.transitionByDoctor(appt, d, DoctorAppointmentStatus.valueOf(status));
             redirectAttributes.addFlashAttribute("message", "Status updated.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message", ex.getReason());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("message", "Invalid status.");
         }
@@ -535,6 +585,7 @@ public class DoctorController {
     public String book(@RequestParam Long doctorId,
                        @RequestParam String appointmentTime,
                        @RequestParam(required = false) String reason,
+                       @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
                        HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -545,6 +596,7 @@ public class DoctorController {
             redirectAttributes.addFlashAttribute("message", "Doctor not available.");
             return "redirect:/doctors/list";
         }
+
 
         DoctorAppointment appt = new DoctorAppointment();
         appt.setUser(u);
@@ -558,6 +610,33 @@ public class DoctorController {
 
         redirectAttributes.addFlashAttribute("message", "Appointment requested.");
         return "redirect:/doctors/myAppointments";
+
+        try {
+            ConsultationType cType;
+            try {
+                cType = ConsultationType.valueOf(consultationType.trim().toUpperCase());
+            } catch (Exception ex) {
+                cType = ConsultationType.CLINIC;
+            }
+            LocalDateTime when = LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            double fee = doctorBookingService.resolveFee(d, cType);
+            if (fee > 0) {
+                redirectAttributes.addFlashAttribute("message",
+                        "Payment required (₹" + (int) fee + "). Please book and pay from the doctor profile page.");
+                return "redirect:/doctors/view/" + doctorId;
+            }
+            doctorBookingService.createRequestBooking(d, u, when, cType, reason, false);
+            redirectAttributes.addFlashAttribute("message", "Appointment requested.");
+            return "redirect:/doctors/myAppointments";
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("message",
+                    ex.getReason() == null ? "Booking failed." : ex.getReason());
+            return "redirect:/doctors/view/" + doctorId;
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("message", "Invalid appointment time.");
+            return "redirect:/doctors/view/" + doctorId;
+        }
+
     }
 
     @GetMapping("/myAppointments")
@@ -850,6 +929,10 @@ public class DoctorController {
         }
 
         DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
+        if (prescriptionText != null && prescriptionText.length() > 500) {
+            redirectAttributes.addFlashAttribute("error", "Prescription cannot exceed 500 characters.");
+            return "redirect:/doctors/dashboard?section=prescriptions";
+        }
         if (appt != null && appt.getDoctor().getId().equals(d.getId())) {
             appt.setPrescriptionText(text);
             appointmentRepo.save(appt);

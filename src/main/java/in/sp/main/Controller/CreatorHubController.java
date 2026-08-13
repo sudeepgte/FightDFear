@@ -1251,6 +1251,14 @@ public class CreatorHubController {
         User creator = userRepository.findById(creatorId).orElse(null);
         if (creator != null) {
             creator.setVerifiedCreator(verify);
+            if (verify) {
+                creator.setCreatorProfileStatus(in.sp.main.Entities.PartnerProfileStatus.APPROVED);
+                creator.setCreatorRejectionReason(null);
+                creator.setCreatorChangesRequestedNote(null);
+                creator.setBannedCreator(false);
+            } else if (creator.getCreatorProfileStatus() == in.sp.main.Entities.PartnerProfileStatus.APPROVED) {
+                creator.setCreatorProfileStatus(in.sp.main.Entities.PartnerProfileStatus.REJECTED);
+            }
             userRepository.save(creator);
 
             // Notify creator

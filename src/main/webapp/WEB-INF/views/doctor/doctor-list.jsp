@@ -390,6 +390,7 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
+
                 <c:choose>
                     <c:when test="${viewerIsDoctor}">
                         <a href="${pageContext.request.contextPath}/doctors/dashboard" class="top-btn">
@@ -405,6 +406,14 @@
                         </a>
                     </c:otherwise>
                 </c:choose>
+
+                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn" style="background: var(--brand-purple); color: white;">
+                    <i class="bi bi-file-earmark-medical"></i> My Prescriptions
+                </a>
+                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
+                    <i class="bi bi-calendar-event"></i> My Appointments
+                </a>
+
             </div>
             
             <h1>Find Your Doctor</h1>

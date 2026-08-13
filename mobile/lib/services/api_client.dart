@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,11 +9,12 @@ class ApiClient {
 
   final String baseUrl;
   static const _tokenKey = 'auth_token';
+  static const _doctorTokenKey = 'doctor_auth_token';
   static const _centreTokenKey = 'centre_auth_token';
   static const _adminTokenKey = 'admin_auth_token';
   static const _salonTokenKey = 'salon_auth_token';
   static const _stylistTokenKey = 'stylist_auth_token';
-  static const _timeout = Duration(seconds: 8);
+  static const _browseTimeout = Duration(seconds: 8);
   static const _uploadTimeout = Duration(seconds: 120);
 
   Future<String?> getToken() async {
@@ -28,6 +30,21 @@ class ApiClient {
   Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+  }
+
+  Future<String?> getDoctorToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_doctorTokenKey);
+  }
+
+  Future<void> saveDoctorToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_doctorTokenKey, token);
+  }
+
+  Future<void> clearDoctorToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_doctorTokenKey);
   }
 
   Future<String?> getCentreToken() async {
@@ -94,6 +111,7 @@ class ApiClient {
 
   Future<Map<String, String>> _headers({
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -105,6 +123,11 @@ class ApiClient {
     };
     if (adminAuth) {
       final token = await getAdminToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (doctorAuth) {
+      final token = await getDoctorToken();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -137,14 +160,27 @@ class ApiClient {
     Map<String, String> fields = const {},
     List<http.MultipartFile> files = const [],
     bool auth = false,
+    bool doctorAuth = false,
     bool centreAuth = false,
+    bool salonAuth = false,
+    void Function(double progress)? onProgress,
   }) async {
     final req = http.MultipartRequest('POST', _uri(path));
     req.fields.addAll(fields);
     req.files.addAll(files);
     req.headers['Accept'] = 'application/json';
-    if (centreAuth) {
+    if (salonAuth) {
+      final token = await getSalonToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (centreAuth) {
       final token = await getCentreToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (doctorAuth) {
+      final token = await getDoctorToken();
       if (token != null && token.isNotEmpty) {
         req.headers['Authorization'] = 'Bearer $token';
       }
@@ -154,7 +190,39 @@ class ApiClient {
         req.headers['Authorization'] = 'Bearer $token';
       }
     }
-    final streamed = await req.send().timeout(_uploadTimeout);
+
+    http.StreamedResponse streamed;
+    if (onProgress == null) {
+      streamed = await req.send().timeout(_uploadTimeout);
+    } else {
+      final total = req.contentLength;
+      final byteStream = req.finalize();
+      var sent = 0;
+      final counted = byteStream.transform<List<int>>(
+        StreamTransformer.fromHandlers(
+          handleData: (data, sink) {
+            sent += data.length;
+            if (total > 0) {
+              onProgress((sent / total).clamp(0.0, 1.0));
+            }
+            sink.add(data);
+          },
+        ),
+      );
+      final proxy = http.StreamedRequest(req.method, req.url);
+      proxy.headers.addAll(req.headers);
+      if (total >= 0) {
+        proxy.contentLength = total;
+      }
+      counted.listen(
+        proxy.sink.add,
+        onError: proxy.sink.addError,
+        onDone: proxy.sink.close,
+        cancelOnError: true,
+      );
+      streamed = await proxy.send().timeout(_uploadTimeout);
+    }
+
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }
@@ -163,6 +231,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -174,6 +243,7 @@ class ApiClient {
           _uri(path),
           headers: await _headers(
             auth: auth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,
@@ -181,13 +251,14 @@ class ApiClient {
           ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
   Future<Map<String, dynamic>> get(
     String path, {
     bool auth = true,
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -199,44 +270,89 @@ class ApiClient {
           _uri(path),
           headers: await _headers(
             auth: auth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
+    return _decode(res);
+  }
+
+  /// POST application/x-www-form-urlencoded (e.g. /danger-points create).
+  Future<Map<String, dynamic>> postForm(
+    String path, {
+    required Map<String, String> fields,
+    bool auth = true,
+    Duration? timeout,
+  }) async {
+    final headers = await _headers(auth: auth);
+    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    final res = await http
+        .post(
+          _uri(path),
+          headers: headers,
+          body: fields,
+        )
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
   Future<Map<String, dynamic>> put(
     String path, {
     Map<String, dynamic>? body,
+    bool auth = true,
+    bool doctorAuth = false,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
+    Duration? timeout,
   }) async {
     final res = await http
         .put(
           _uri(path),
-          headers: await _headers(),
+          headers: await _headers(
+            auth: auth,
+            doctorAuth: doctorAuth,
+            centreAuth: centreAuth,
+            adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
+          ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(_timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
   Future<Map<String, dynamic>> patch(
     String path, {
     Map<String, dynamic>? body,
+    bool auth = true,
+    bool doctorAuth = false,
+    bool centreAuth = false,
+    bool adminAuth = false,
+    Duration? timeout,
   }) async {
     final req = http.Request('PATCH', _uri(path));
-    req.headers.addAll(await _headers());
+    req.headers.addAll(await _headers(
+      auth: auth,
+      doctorAuth: doctorAuth,
+      centreAuth: centreAuth,
+      adminAuth: adminAuth,
+    ));
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await req.send().timeout(_timeout);
+    final streamed = await req.send().timeout(timeout ?? _browseTimeout);
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }
 
   Future<Map<String, dynamic>> delete(
     String path, {
+    bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
     bool salonAuth = false,
@@ -246,14 +362,15 @@ class ApiClient {
         .delete(
           _uri(path),
           headers: await _headers(
-            auth: !centreAuth && !adminAuth && !salonAuth && !stylistAuth,
+            auth: !doctorAuth && !centreAuth && !adminAuth && !salonAuth && !stylistAuth,
+            doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
             salonAuth: salonAuth,
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(_timeout);
+        .timeout(_browseTimeout);
     return _decode(res);
   }
 
@@ -261,9 +378,10 @@ class ApiClient {
   Future<({List<int> bytes, int statusCode, String? filename})> getBytes(
     String path, {
     bool auth = true,
+    bool doctorAuth = false,
   }) async {
     final res = await http
-        .get(_uri(path), headers: await _headers(auth: auth))
+        .get(_uri(path), headers: await _headers(auth: auth, doctorAuth: doctorAuth))
         .timeout(_uploadTimeout);
     String? filename;
     final cd = res.headers['content-disposition'];
@@ -284,15 +402,36 @@ class ApiClient {
           ? decoded
           : <String, dynamic>{'data': decoded};
     } catch (_) {
+      // nginx HTML pages (502/504) are not JSON — surface a clear message.
+      final body = res.body.toLowerCase();
+      String error;
+      if (res.statusCode == 502 || body.contains('502 bad gateway')) {
+        error =
+            'Server is down (502). The app behind nginx is not running on port 8084. '
+            'Restart Spring Boot / Docker on the testing server, then try again.';
+      } else if (res.statusCode == 504 || body.contains('504 gateway')) {
+        error = 'Server timed out (504). Try again in a moment.';
+      } else if (res.statusCode == 503) {
+        error = 'Server unavailable (503). Try again shortly.';
+      } else {
+        error = 'Invalid server response (${res.statusCode})';
+      }
       json = <String, dynamic>{
         'success': false,
-        'error': 'Invalid server response (${res.statusCode})',
+        'error': error,
       };
     }
     json['_status'] = res.statusCode;
     if (res.statusCode >= 400 && json['error'] == null) {
       json['error'] = json['message'] ?? 'Request failed (${res.statusCode})';
       json['success'] = false;
+    }
+    if (res.statusCode == 502 &&
+        (json['error'] == null ||
+            json['error'].toString().contains('Invalid server'))) {
+      json['success'] = false;
+      json['error'] =
+          'Server is down (502). Restart the backend on the testing server (port 8084).';
     }
     return json;
   }

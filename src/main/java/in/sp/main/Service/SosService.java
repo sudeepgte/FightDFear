@@ -3,6 +3,8 @@ package in.sp.main.Service;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -28,7 +30,9 @@ import in.sp.main.Repository.VolunteerSOSResponseRepository;
 @Service
 @Transactional
 public class SosService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(SosService.class);
+
     @Autowired
     private SOSRequestRepository sosRequestRepository;
     
@@ -61,7 +65,10 @@ public class SosService {
     
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-    
+
+    @Autowired
+    private SosAsyncNotificationService sosAsyncNotificationService;
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
@@ -107,6 +114,7 @@ public class SosService {
                 already.put("smsConfigured", smsService.isConfigured());
                 already.put("message", "SOS already active. Contacts were already notified.");
                 already.put("alreadyActive", true);
+                already.put("whatsappShares", List.of());
                 return already;
             }
 
@@ -148,9 +156,9 @@ public class SosService {
             SOSRequest savedRequest = sosRequestRepository.save(sosRequest);
             System.out.println("✅ SOS Request saved with ID: " + savedRequest.getId());
 
-        // === TIER 1: Notify Trusted Contacts ===
+        // === TIER 1: Prepare contact response records (notifications sent async after persist) ===
         List<SOSContactResponse> contactResponses = new ArrayList<>();
-        
+
         for (TrustedContact contact : trustedContacts) {
             SOSContactResponse response = new SOSContactResponse();
             response.setSosRequest(savedRequest);
@@ -161,62 +169,9 @@ public class SosService {
             response.setUniqueToken(UUID.randomUUID().toString());
             response.setNotifiedAt(LocalDateTime.now());
             response.setResponseStatus(SOSContactResponse.ResponseStatus.PENDING);
-
-            // Send notifications based on contact preferences
-            String notificationMethods = "";
-            
-            // Send SMS if enabled
-            if (contact.isCanReceiveSMS() && contact.getPhone() != null) {
-                boolean smsSent = smsService.sendSOSSMS(
-                    contact.getPhone(),
-                    userName,
-                    sosRequest.getGoogleMapsLink(),
-                    response.getUniqueToken(),
-                    response.getUniqueToken(),
-                    baseUrl
-                );
-                response.setSMSDelivered(smsSent);
-                response.setNotificationSent(smsSent);
-                notificationMethods += "SMS ";
-            }
-            
-            // Send Email if enabled
-            if (contact.isCanReceiveEmail() && contact.getEmail() != null) {
-                try {
-                    String acceptLink = baseUrl + "/sos/respond?token=" + response.getUniqueToken() + "&action=accept";
-                    String rejectLink = baseUrl + "/sos/respond?token=" + response.getUniqueToken() + "&action=reject";
-                    
-                    String emailBody = "🚨 EMERGENCY SOS ALERT 🚨\n\n"
-                        + userName + " has triggered an emergency SOS!\n\n"
-                        + "📍 Live Location: " + sosRequest.getGoogleMapsLink() + "\n\n"
-                        + "📞 Contact: " + userPhone + "\n\n"
-                        + "⏰ Time: " + LocalDateTime.now() + "\n\n"
-                        + "═══════════════════════════════\n"
-                        + "Please respond immediately:\n\n"
-                        + "✅ ACCEPT HELP: " + acceptLink + "\n\n"
-                        + "❌ DECLINE: " + rejectLink + "\n\n"
-                        + "═══════════════════════════════\n\n"
-                        + "This is an automated emergency alert from the Women Safety App.";
-                    
-                    emailService.sendEmail(
-                        contact.getEmail(),
-                        "🚨 EMERGENCY SOS - " + userName + " needs your help!",
-                        emailBody
-                    );
-                    response.setEmailDelivered(true);
-                    response.setNotificationSent(true);
-                    notificationMethods += "Email ";
-                } catch (Exception e) {
-                    System.err.println("Failed to email contact: " + contact.getEmail() + " - " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            
-            response.setNotificationMethod(notificationMethods.trim());
             contactResponses.add(response);
         }
 
-        // Notify Emergency Contacts
         for (EmergencyContact contact : emergencyContacts) {
             SOSContactResponse response = new SOSContactResponse();
             response.setSosRequest(savedRequest);
@@ -227,59 +182,10 @@ public class SosService {
             response.setUniqueToken(UUID.randomUUID().toString());
             response.setNotifiedAt(LocalDateTime.now());
             response.setResponseStatus(SOSContactResponse.ResponseStatus.PENDING);
-
-            String notificationMethods = "";
-            
-            if (contact.getPhone() != null && !contact.getPhone().isEmpty()) {
-                boolean smsSent = smsService.sendSOSSMS(
-                    contact.getPhone(),
-                    userName,
-                    sosRequest.getGoogleMapsLink(),
-                    response.getUniqueToken(),
-                    response.getUniqueToken(),
-                    baseUrl
-                );
-                response.setSMSDelivered(smsSent);
-                response.setNotificationSent(smsSent);
-                notificationMethods += "SMS ";
-            }
-            
-            if (contact.getEmail() != null && !contact.getEmail().isEmpty()) {
-                try {
-                    String acceptLink = baseUrl + "/sos/respond?token=" + response.getUniqueToken() + "&action=accept";
-                    String rejectLink = baseUrl + "/sos/respond?token=" + response.getUniqueToken() + "&action=reject";
-                    
-                    String emailBody = "🚨 EMERGENCY SOS ALERT 🚨\n\n"
-                        + userName + " has triggered an emergency SOS!\n\n"
-                        + "📍 Live Location: " + sosRequest.getGoogleMapsLink() + "\n\n"
-                        + "📞 Contact: " + userPhone + "\n\n"
-                        + "⏰ Time: " + LocalDateTime.now() + "\n\n"
-                        + "═══════════════════════════════\n"
-                        + "Please respond immediately:\n\n"
-                        + "✅ ACCEPT HELP: " + acceptLink + "\n\n"
-                        + "❌ DECLINE: " + rejectLink + "\n\n"
-                        + "═══════════════════════════════\n\n"
-                        + "This is an automated emergency alert from the Women Safety App.";
-                    
-                    emailService.sendEmail(
-                        contact.getEmail(),
-                        "🚨 EMERGENCY SOS - " + userName + " needs your help!",
-                        emailBody
-                    );
-                    response.setEmailDelivered(true);
-                    response.setNotificationSent(true);
-                    notificationMethods += "Email ";
-                } catch (Exception e) {
-                    System.err.println("Failed to email emergency contact: " + contact.getEmail() + " - " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-            
-            response.setNotificationMethod(notificationMethods.trim());
             contactResponses.add(response);
         }
 
-        // Save all contact responses
+        // Save all contact responses before outbound notifications
         sosContactResponseRepository.saveAll(contactResponses);
         savedRequest.setContactResponses(contactResponses);
 
@@ -302,6 +208,9 @@ public class SosService {
         
         savedRequest.setAutoCallPhone(autoCallPhone);
         sosRequestRepository.save(savedRequest);
+
+        // Queue SMS/email delivery after DB commit
+        sosAsyncNotificationService.notifyContactsAsync(savedRequest.getId());
 
         // === WebSocket notification for real-time tracking ===
         Map<String, Object> wsPayload = new HashMap<>();
@@ -348,6 +257,23 @@ public class SosService {
         sosRequestRepository.save(savedRequest);
 
         // === Build response ===
+        List<Map<String, Object>> whatsappShares = new ArrayList<>();
+        String sosMessage = "🚨 EMERGENCY SOS from " + userName
+                + "\n\nI need help right now.\n📍 Live location: " + savedRequest.getGoogleMapsLink()
+                + "\n📞 My number: " + userPhone
+                + "\n\n— Fight D Fear Safety App";
+        for (TrustedContact c : trustedContacts) {
+            if (!c.isCanReceiveWhatsApp()) continue;
+            String wa = c.getWhatsappNumber();
+            if (wa == null || wa.isBlank()) wa = c.getPhone();
+            if (wa == null || wa.isBlank()) continue;
+            Map<String, Object> share = new LinkedHashMap<>();
+            share.put("name", c.getName());
+            share.put("whatsappNumber", wa.replaceAll("\\D", ""));
+            share.put("message", sosMessage);
+            whatsappShares.add(share);
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("sosId", savedRequest.getId());
         response.put("status", savedRequest.getStatus().toString());
@@ -356,19 +282,17 @@ public class SosService {
         response.put("autoCallPhone", autoCallPhone);
         response.put("mapsLink", savedRequest.getGoogleMapsLink());
         response.put("smsConfigured", smsService.isConfigured());
-        response.put("message", "SOS activated! " + totalContacts + " contacts and " + volunteersAlerted + " nearby volunteers notified.");
+        response.put("whatsappShares", whatsappShares);
+        response.put("message", "SOS activated! " + totalContacts + " contacts queued and "
+                + volunteersAlerted + " nearby volunteers alerted.");
 
-        System.out.println("SOS #" + savedRequest.getId() + " triggered by " + userName);
-        System.out.println("Contacts notified: " + totalContacts);
-        System.out.println("Volunteers alerted: " + volunteersAlerted);
-        System.out.println("Auto-call: " + autoCallPhone);
-        System.out.println("SMS configured: " + smsService.isConfigured());
+        log.info("SOS #{} triggered by {} — contacts queued: {}, volunteers: {}",
+                savedRequest.getId(), userName, totalContacts, volunteersAlerted);
 
         return response;
         } catch (Exception e) {
-            System.err.println("❌ ERROR triggering SOS: " + e.getMessage());
-            e.printStackTrace();
-            
+            log.error("Failed to trigger SOS for user {}", userId, e);
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Failed to trigger SOS: " + e.getMessage());
             errorResponse.put("contactsNotified", 0);

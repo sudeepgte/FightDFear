@@ -377,8 +377,40 @@
             <c:when test="${empty cartItems}">No items yet — browse the shop to add products.</c:when>
             <c:otherwise>${cartItems.size()} item<c:if test="${cartItems.size() != 1}">s</c:if> in your cart</c:otherwise>
           </c:choose>
+
         </p>
       </div>
+
+          
+          <div class="cart-info">
+            <div class="name">${ci.product.name}</div>
+            <div class="seller">
+              <i class="bi bi-patch-check-fill text-primary"></i> 
+              ${ci.product.seller.businessName}
+            </div>
+            <div class="price">&#8377;${ci.product.price}</div>
+          </div>
+          
+          <div class="cart-qty-control">
+            <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/update" method="post">
+              <input type="hidden" name="quantity" value="${ci.quantity - 1}">
+              <button type="submit" class="qty-btn" ${ci.quantity <= 1 ? 'disabled' : ''}>−</button>
+            </form>
+            <span class="qty-val">${ci.quantity}</span>
+            <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/update" method="post">
+              <input type="hidden" name="quantity" value="${ci.quantity + 1}">
+              <button type="submit" class="qty-btn" ${ci.quantity >= ci.product.stock ? 'disabled title="Maximum available stock reached"' : ''}>+</button>
+            </form>
+          </div>
+          
+          <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/remove" method="post">
+            <button type="submit" class="remove-btn" title="Remove Item">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </form>
+        </div>
+      </c:forEach>
+
     </div>
 
     <div class="cart-container">

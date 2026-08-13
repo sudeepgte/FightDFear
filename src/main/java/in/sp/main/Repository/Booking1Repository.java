@@ -1,5 +1,9 @@
 package in.sp.main.Repository;
  
+
+import java.time.LocalDate;
+import java.util.Collection;
+>>>>>>> origin/main
 import java.util.List;
  
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,8 +16,17 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
     List<Booking1> findByUser(User user);
 
+
     /** Prefer ID-based lookup — session User entities are detached. */
     List<Booking1> findByUser_IdOrderByIdDesc(Long userId);
 
     List<Booking1> findBySalon(Salon salon);
+
+    List<Booking1> findBySalon(Salon salon);
+    List<Booking1> findBySalonAndBookingDate(Salon salon, LocalDate bookingDate);
+    List<Booking1> findByStatusIgnoreCase(String status);
+
+    List<Booking1> findByBookingDateBetweenAndStatusInIgnoreCase(
+            LocalDate from, LocalDate to, Collection<String> statuses);
+
 }

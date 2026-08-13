@@ -26,6 +26,8 @@ public class SalonReview {
  
     private String userName;
 
+    private Long userId;
+
     private int rating;
  
     @Column(length = 1000)
@@ -84,6 +86,10 @@ public class SalonReview {
     public String getUserName() { return userName; }
 
     public void setUserName(String userName) { this.userName = userName; }
+
+    public Long getUserId() { return userId; }
+
+    public void setUserId(Long userId) { this.userId = userId; }
  
     public int getRating() { return rating; }
 

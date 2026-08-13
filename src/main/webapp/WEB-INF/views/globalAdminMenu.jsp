@@ -143,6 +143,15 @@
 
     </a>
 
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-creators') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-creators">
+        <i class="fas fa-user-check"></i>
+        Creator Approvals
+        <c:if test="${side_pendingCreators > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">${side_pendingCreators}</span>
+        </c:if>
+    </a>
+
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'questions') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/qna/admin/questions">
 
@@ -277,15 +286,29 @@
 
     </a>
 
-    <a class="navlink"
-       href="${pageContext.request.contextPath}/admin/adminDashboard#fitnessOversightTabs">
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-trainers') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-trainers">
 
         <i class="fas fa-running text-success"></i>
-        Fitness &amp; Wellness
+        Fitness Trainers
 
         <c:if test="${side_pendingTrainers > 0}">
             <span class="badge rounded-pill bg-danger ms-auto">
                 ${side_pendingTrainers}
+            </span>
+        </c:if>
+
+    </a>
+
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'job-applications') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/job-applications">
+
+        <i class="fas fa-briefcase"></i>
+        Women Jobs
+
+        <c:if test="${side_pendingJobApplications > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">
+                ${side_pendingJobApplications}
             </span>
         </c:if>
 
@@ -321,6 +344,15 @@
 
     </a>
 
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-delivery-partners') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-delivery-partners">
+        <i class="fas fa-motorcycle"></i>
+        Delivery Partners
+        <c:if test="${side_pendingDeliveryPartners > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">${side_pendingDeliveryPartners}</span>
+        </c:if>
+    </a>
+
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'women-product-orders') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/admin/women-product-orders">
 
@@ -334,6 +366,15 @@
     <div class="sectionTitle">
         Financial Literacy
     </div>
+
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-educators') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-educators">
+        <i class="fas fa-chalkboard-teacher"></i>
+        Educator Approvals
+        <c:if test="${side_pendingEducators > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">${side_pendingEducators}</span>
+        </c:if>
+    </a>
 
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'financial-literacy/admin') && !fn:contains(pageContext.request.requestURI,'add-') && !fn:contains(pageContext.request.requestURI,'registrations') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/financial-literacy/admin">
@@ -372,13 +413,6 @@
 
         <i class="fas fa-users"></i>
         View Registrations
-
-    <a class="navlink ${fn:contains(pageContext.request.requestURI,'job-applications') ? 'active' : ''}"
-       href="${pageContext.request.contextPath}/admin/job-applications">
-
-        <i class="fas fa-briefcase"></i>
-        Job Applications
-
 
     </a>
 

@@ -158,6 +158,7 @@
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>First Name</label>
+
                                 <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya"
                                        value="${stylist.firstName}" maxlength="50" required>
                                 <div class="error-msg" id="err-firstName">Required (Min 2 chars, alphabets only).</div>
@@ -167,6 +168,15 @@
                                 <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma"
                                        value="${stylist.lastName}" maxlength="50" required>
                                 <div class="error-msg" id="err-lastName">Required (Min 2 chars, alphabets only).</div>
+
+                                <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya" required>
+                                <div class="error-msg" id="err-firstName">Required (alphabets only).</div>
+                            </div>
+                            <div class="fdf-group">
+                                <label>Last Name</label>
+                                <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma" required>
+                                <div class="error-msg" id="err-lastName">Required (alphabets only).</div>
+
                             </div>
                         </div>
                         <div class="fdf-group">
@@ -191,7 +201,7 @@
                         <div class="fdf-group">
                             <label>Password</label>
                             <input type="password" name="password" id="password" class="fdf-input" placeholder="Create a strong password" required>
-                            <div class="error-msg" id="err-password">6-8 chars (1 Uppercase & 1 Number required).</div>
+                            <div class="error-msg" id="err-password">At least 6 characters (1 Uppercase & 1 Number required).</div>
                             <div class="password-strength-container" id="strengthContainer" style="display:none;">
                                 <div class="strength-bar"><div id="strengthFill" class="strength-fill"></div></div>
                                 <span id="strengthText" class="strength-text"></span>
@@ -283,7 +293,11 @@
                 isValid = false;
             } else {
                 if (fieldId === 'firstName' || fieldId === 'lastName') {
+
                     isValid = val.length >= 2 && /^[a-zA-Z][a-zA-Z .'-]*$/.test(val);
+
+                    isValid = val.length >= 1 && /^[a-zA-Z\s]+$/.test(val);
+
                 } else if (fieldId === 'email') {
                     isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
                 } else if (fieldId === 'contactNumber') {
@@ -299,7 +313,7 @@
                         isValid = typeOk && file.size <= maxPhotoBytes;
                     }
                 } else if (fieldId === 'password') {
-                    isValid = val.length >= 6 && val.length <= 8 && /[A-Z]/.test(val) && /\d/.test(val);
+                    isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
                     updatePasswordStrength(val);
                 } else if (fieldId === 'specialization') {
                     isValid = val.length >= 3;

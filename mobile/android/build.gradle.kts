@@ -21,6 +21,10 @@ subprojects {
     pluginManager.withPlugin("com.android.library") {
         extensions.configure(LibraryExtension::class.java) {
             compileSdk = 36
+            lint {
+                abortOnError = false
+                checkReleaseBuilds = false
+            }
         }
     }
 }

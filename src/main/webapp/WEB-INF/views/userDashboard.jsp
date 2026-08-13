@@ -609,8 +609,11 @@
                                         <c:if test="${sub.totalSessions > 0}">
                                             <c:set var="pct" value="${(sub.completedSessions * 100) / sub.totalSessions}" />
                                         </c:if>
-                                        <div class="mt-auto">
-                                            <div class="d-flex justify-content-between mb-1 small text-dark fw-medium">
+                                        <div class="mt-auto pt-3 border-top position-relative">
+                                            <button type="button" class="btn btn-sm btn-outline-primary position-absolute end-0 top-0 mt-3 me-0 border-0" onclick="openUserChat(${sub.trainer.id}, '${sub.trainer.fullName}')" title="Chat with Trainer" style="background:#e0e7ff; color:#312e81; border-radius: 50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+                                                <i class="bi bi-chat-dots-fill"></i>
+                                            </button>
+                                            <div class="d-flex justify-content-between mb-1 small text-dark fw-medium" style="padding-right: 40px;">
                                                 <span>Progress Tracker</span>
                                                 <span>${sub.completedSessions} / ${sub.totalSessions} Sessions</span>
                                             </div>
@@ -1010,10 +1013,10 @@
 </script>
 
 <!-- Floating Chat Window for User -->
-<div id="userFloatingChat" class="card shadow-lg d-none" style="position: fixed; bottom: 25px; right: 25px; width: 360px; z-index: 1050; border: none; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;">
-    <div class="card-header text-white d-flex justify-content-between align-items-center p-3" style="background: linear-gradient(135deg, #1e1b4b, #312e81); border-radius: 16px 16px 0 0;">
-        <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-            <i class="bi bi-chat-dots-fill text-warning"></i> <span id="userChatTrainerName">Trainer Name</span>
+<div id="userFloatingChat" class="card shadow-lg d-none" style="position: fixed; bottom: 20px; right: 25px; width: 330px; max-width: calc(100vw - 40px); z-index: 1050; border: none; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;">
+    <div class="card-header d-flex justify-content-between align-items-center p-3" style="background: linear-gradient(135deg, #1e1b4b, #312e81);">
+        <h6 class="mb-0 fw-bold d-flex align-items-center gap-2 text-white">
+            <i class="bi bi-chat-dots-fill text-warning"></i> <span id="userChatTrainerName" class="text-white">Trainer Name</span>
         </h6>
         <button type="button" class="btn-close btn-close-white" onclick="closeUserChat()"></button>
     </div>

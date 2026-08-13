@@ -1,49 +1,72 @@
 package in.sp.main.Entities;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * Marketplace / Service Partner categories used by mobile + admin.
+ * Marketplace / Service Partner categories used across the application.
  */
 public enum ProviderCategory {
-    TUTOR,
-    TAILOR,
-    HOME_COOK,
-    CATERING_SERVICE,
-    EVENT_PLANNER,
-    BABYSITTER,
-    PET_CARE,
-    DIETITIAN,
-    HOME_CLEANER,
-    INTERIOR_DESIGNER,
-    HANDICRAFT_SELLER,
-    DIGITAL_MARKETING_CONSULTANT,
-    HOME_BAKER,
-    LANGUAGE_TRAINER,
-    WOMEN_PRODUCTS,
-    WOMEN_LAWYER,
-    FITNESS_ZUMBA,
-    BEAUTICIAN,
-    MAKEUP_ARTIST,
-    MEHENDI_ARTIST,
-    PHOTOGRAPHER,
-    YOGA_TRAINER,
-    FITNESS_TRAINER,
-    DANCE_INSTRUCTOR,
-    MUSIC_TEACHER,
-    CRAFT_SELLER,
-    HANDMADE_PRODUCTS,
-    BOUTIQUE,
-    FASHION_DESIGNER,
-    FREELANCER,
-    GRAPHIC_DESIGNER,
-    CONTENT_WRITER;
+    TUTOR("Tutor"),
+    TAILOR("Tailor"),
+    HOME_COOK("Home Cook"),
+    CATERING_SERVICE("Catering Service"),
+    EVENT_PLANNER("Event Planner"),
+    BABYSITTER("Babysitter"),
+    PET_CARE("Pet Care"),
+    DIETITIAN("Dietitian"),
+    HOME_CLEANER("Home Cleaner"),
+    INTERIOR_DESIGNER("Interior Designer"),
+    HANDICRAFT_SELLER("Handicraft Seller"),
+    DIGITAL_MARKETING_CONSULTANT("Digital Marketing Consultant"),
+    HOME_BAKER("Home Baker"),
+    LANGUAGE_TRAINER("Language Trainer"),
+    WOMEN_PRODUCTS("Women Products"),
+    WOMEN_LAWYER("Women Lawyer"),
+    FITNESS_ZUMBA("Fitness / Zumba"),
+    BEAUTICIAN("Beautician"),
+    MAKEUP_ARTIST("Makeup Artist"),
+    MEHENDI_ARTIST("Mehendi Artist"),
+    PHOTOGRAPHER("Photographer"),
+    YOGA_TRAINER("Yoga Trainer"),
+    FITNESS_TRAINER("Fitness Trainer"),
+    DANCE_INSTRUCTOR("Dance Instructor"),
+    MUSIC_TEACHER("Music Teacher"),
+    CRAFT_SELLER("Craft Seller"),
+    HANDMADE_PRODUCTS("Handmade Products"),
+    BOUTIQUE("Boutique"),
+    FASHION_DESIGNER("Fashion Designer"),
+    FREELANCER("Freelancer"),
+    GRAPHIC_DESIGNER("Graphic Designer"),
+    CONTENT_WRITER("Content Writer"),
+    MARTIAL_ARTS("Martial Arts"),
+    FEMALE_DOCTORS("Female Doctors");
+
+    private final String displayName;
+
+    ProviderCategory(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 
     public static ProviderCategory fromFlexible(String raw) {
         if (raw == null || raw.isBlank()) return null;
-        String key = raw.trim().toUpperCase(Locale.ROOT)
+        String trimmed = raw.trim();
+        for (ProviderCategory cat : values()) {
+            if (cat.name().equalsIgnoreCase(trimmed) || cat.getDisplayName().equalsIgnoreCase(trimmed)) {
+                return cat;
+            }
+        }
+        String key = trimmed.toUpperCase(Locale.ROOT)
                 .replace('-', '_')
-                .replace(' ', '_');
+                .replace(' ', '_')
+                .replace('/', '_');
         try {
             return ProviderCategory.valueOf(key);
         } catch (Exception ignored) {
@@ -56,7 +79,7 @@ public enum ProviderCategory {
                 case "BABY_SITTER", "CHILDCARE" -> BABYSITTER;
                 case "CLEANER", "CLEANING" -> HOME_CLEANER;
                 case "INTERIOR", "INTERIOR_DESIGN" -> INTERIOR_DESIGNER;
-                case "ZUMBA", "FITNESS" -> FITNESS_ZUMBA;
+                case "FITNESS", "ZUMBA", "FITNESS_ZUMBA" -> FITNESS_ZUMBA;
                 case "LAWYER" -> WOMEN_LAWYER;
                 case "PRODUCTS", "SELLER", "MARKETPLACE_SELLER" -> WOMEN_PRODUCTS;
                 case "YOGA" -> YOGA_TRAINER;
@@ -64,8 +87,25 @@ public enum ProviderCategory {
                 case "MUSIC" -> MUSIC_TEACHER;
                 case "MAKEUP" -> MAKEUP_ARTIST;
                 case "MEHENDI" -> MEHENDI_ARTIST;
+                case "MARTIAL", "SELF_DEFENSE", "MARTIAL_ARTS_INSTRUCTOR" -> MARTIAL_ARTS;
+                case "DOCTOR", "DOCTORS", "FEMALE_DOCTOR" -> FEMALE_DOCTORS;
                 default -> null;
             };
         }
+    }
+
+    public String label() {
+        return Arrays.stream(name().split("_"))
+                .filter(s -> !s.isBlank())
+                .map(s -> Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining(" "));
+    }
+
+    public Map<String, String> asCatalog() {
+        Map<String, String> row = new LinkedHashMap<>();
+        row.put("code", name());
+        row.put("value", name());
+        row.put("label", label());
+        return row;
     }
 }

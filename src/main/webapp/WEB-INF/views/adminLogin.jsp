@@ -240,7 +240,28 @@
             </div>
         </div>
     </div>
+
     <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-toggle-password');
+          var input = document.getElementById(id);
+          if (!input) return;
+          var show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          var icon = btn.querySelector('i');
+          if (icon) {
+            icon.classList.toggle('bi-eye', !show);
+            icon.classList.toggle('bi-eye-slash', show);
+          }
+        });
+      });
+    });
+    </script>
+
 </body>
 </html>
 

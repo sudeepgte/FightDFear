@@ -6,10 +6,12 @@ import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Entities.WorkerBooking;
 import in.sp.main.Repository.JobApplicationRepository;
 import in.sp.main.Repository.WorkerBookingRepository;
+import in.sp.main.Service.WomenJobsCareService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
@@ -24,6 +26,8 @@ public class MobileJobBookingsController {
     private WorkerBookingRepository workerBookingRepo;
     @Autowired
     private JobApplicationRepository jobApplicationRepo;
+    @Autowired
+    private WomenJobsCareService jobsCareService;
 
     @GetMapping("/worker/me")
     public ResponseEntity<Map<String, Object>> workerBookings(HttpSession session) {
@@ -38,8 +42,11 @@ public class MobileJobBookingsController {
             m.put("status", b.getStatus());
             m.put("bookingDate", b.getBookingDate() == null ? null : b.getBookingDate().toString());
             m.put("note", b.getNote());
+            m.put("coachNotes", b.getCoachNotes());
             m.put("hours", b.getHours());
             m.put("totalAmount", b.getTotalAmount());
+            m.put("cancelPolicy", WomenJobsCareService.CANCEL_POLICY);
+            m.put("canCancelFree", jobsCareService.canCancelFree(b));
             m.put("serviceType", b.getJobApplication() == null ? null : b.getJobApplication().getJobCategory());
             if (b.getClient() != null) {
                 m.put("clientName", b.getClient().getFullName());
@@ -60,8 +67,11 @@ public class MobileJobBookingsController {
             m.put("status", b.getStatus());
             m.put("bookingDate", b.getBookingDate() == null ? null : b.getBookingDate().toString());
             m.put("note", b.getNote());
+            m.put("coachNotes", b.getCoachNotes());
             m.put("hours", b.getHours());
             m.put("totalAmount", b.getTotalAmount());
+            m.put("cancelPolicy", WomenJobsCareService.CANCEL_POLICY);
+            m.put("canCancelFree", jobsCareService.canCancelFree(b));
             if (b.getJobApplication() != null && b.getJobApplication().getUser() != null) {
                 m.put("workerName", b.getJobApplication().getUser().getFullName());
                 m.put("serviceType", b.getJobApplication().getJobCategory());
@@ -86,13 +96,59 @@ public class MobileJobBookingsController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("success", false, "error", "Only assigned worker can update this booking"));
         }
+        String current = booking.getStatus() == null ? "PENDING" : booking.getStatus().trim().toUpperCase();
         String next = body == null ? "" : body.getOrDefault("status", "").trim().toUpperCase();
-        if (!"ACCEPTED".equals(next) && !"REJECTED".equals(next) && !"COMPLETED".equals(next)) {
-            return badRequest("status must be ACCEPTED, REJECTED, or COMPLETED");
+        boolean allowed = switch (current) {
+            case "PENDING" -> "ACCEPTED".equals(next) || "REJECTED".equals(next);
+            case "ACCEPTED" -> "COMPLETED".equals(next);
+            default -> false;
+        };
+        if (!allowed) {
+            return badRequest("Cannot change worker booking from " + current + " to " + next
+                    + ". Use PENDING → ACCEPTED/REJECTED, then COMPLETED.");
         }
         booking.setStatus(next);
         workerBookingRepo.save(booking);
         return ResponseEntity.ok(ok(Map.of("message", "Booking status updated", "status", next)));
+    }
+
+    @PostMapping("/{id}/notes")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateNotes(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WorkerBooking booking = workerBookingRepo.findById(id).orElse(null);
+        if (booking == null) return badRequest("Booking not found");
+        if (booking.getJobApplication() == null || booking.getJobApplication().getUser() == null
+                || !booking.getJobApplication().getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "error", "Only assigned worker can add notes"));
+        }
+        booking.setCoachNotes(body == null ? "" : body.getOrDefault("coachNotes", ""));
+        workerBookingRepo.save(booking);
+        return ResponseEntity.ok(ok(Map.of("message", "Notes saved", "coachNotes", booking.getCoachNotes())));
+    }
+
+    @PostMapping("/{id}/cancel")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> cancel(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        try {
+            WorkerBooking b = jobsCareService.cancelBooking(user, id, body == null ? "" : body.getOrDefault("reason", ""));
+            return ResponseEntity.ok(ok(Map.of(
+                    "message", "Booking cancelled",
+                    "status", b.getStatus(),
+                    "cancelPolicy", WomenJobsCareService.CANCEL_POLICY)));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        }
     }
 
     private User requireUser(HttpSession session) {

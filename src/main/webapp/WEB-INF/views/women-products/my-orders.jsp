@@ -441,7 +441,7 @@
     </c:if>
 
     <c:forEach var="o" items="${orders}">
-      <div class="order-card">
+      <div class="order-card" data-order-id="${o.id}" data-current-status="${o.status}">
         <!-- Order Header -->
         <div class="order-card-header" onclick="toggleTrackingFromHeader(this)" style="cursor: pointer;">
           <div class="order-id-block">
@@ -808,7 +808,122 @@
         });
       }
 
+
       // Expected delivery dates are rendered server-side from WomenProductDeliveryService.
+
+      const deliveryElements = document.querySelectorAll('.dynamic-delivery');
+      
+      deliveryElements.forEach(el => {
+        const address = el.getAttribute('data-address');
+        const orderDateStr = el.getAttribute('data-order-date');
+        
+        let pincode = null;
+        const pinMatch = address.match(/Pincode:\s*(\d{6})/i);
+        if (pinMatch) {
+          pincode = pinMatch[1];
+        } else {
+          const anyPinMatch = address.match(/\b(\d{6})\b/);
+          if (anyPinMatch) pincode = anyPinMatch[1];
+        }
+        
+        if (pincode) {
+          let sum = 0;
+          for (let i = 0; i < pincode.length; i++) {
+            sum += parseInt(pincode.charAt(i));
+          }
+          
+          let daysToAdd = (sum % 6) + 2;
+          const prefix = pincode.substring(0, 2);
+          if (['56', '11', '40', '60'].includes(prefix)) {
+            daysToAdd = (sum % 2) + 1;
+          }
+          
+          let baseDate = new Date();
+          if (orderDateStr) {
+             const parsed = new Date(orderDateStr.replace(' ', 'T'));
+             if (!isNaN(parsed.getTime())) {
+                baseDate = parsed;
+             }
+          }
+          
+          baseDate.setDate(baseDate.getDate() + daysToAdd);
+          
+          const options = { weekday: 'long', day: 'numeric', month: 'short' };
+          const dateString = baseDate.toLocaleDateString('en-IN', options);
+          
+          el.innerHTML = '<i class="bi bi-truck"></i> Expected Delivery: <strong>' + dateString + '</strong>';
+        } else {
+          el.innerHTML = '<i class="bi bi-truck"></i> Expected Delivery: <strong>Within 3-5 working days</strong>';
+        }
+      });
+
+      // Real-time Order Status Updates Polling (Every 4 seconds)
+      function pollRealtimeOrderStatuses() {
+        const cards = document.querySelectorAll('.order-card[data-order-id]');
+        if (!cards || cards.length === 0) return;
+
+        fetch('${pageContext.request.contextPath}/women-products/api/my-orders-status')
+          .then(res => res.json())
+          .then(data => {
+            if (!Array.isArray(data)) return;
+
+            data.forEach(item => {
+              const card = document.querySelector('.order-card[data-order-id="' + item.id + '"]');
+              if (!card) return;
+
+              const prevStatus = card.getAttribute('data-current-status');
+              const newStatus = item.status;
+
+              if (prevStatus !== newStatus) {
+                card.setAttribute('data-current-status', newStatus);
+
+                // Update timeline tracking steps
+                const trackingWrapper = card.querySelector('.tracking-wrapper');
+                if (trackingWrapper) {
+                  const steps = trackingWrapper.querySelectorAll('.track-step');
+                  if (steps.length >= 4) {
+                    // Step 0: Placed
+                    steps[0].className = 'track-step ' + (newStatus === 'PLACED' ? 'active' : 'completed');
+
+                    // Step 1: Confirmed
+                    if (newStatus === 'CONFIRMED') {
+                      steps[1].className = 'track-step active';
+                    } else if (['SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(newStatus)) {
+                      steps[1].className = 'track-step completed';
+                    } else {
+                      steps[1].className = 'track-step';
+                    }
+
+                    // Step 2: Shipped / In Transit
+                    if (['SHIPPED', 'IN_TRANSIT'].includes(newStatus)) {
+                      steps[2].className = 'track-step active';
+                    } else if (newStatus === 'DELIVERED') {
+                      steps[2].className = 'track-step completed';
+                    } else {
+                      steps[2].className = 'track-step';
+                    }
+
+                    // Step 3: Delivered
+                    if (newStatus === 'DELIVERED') {
+                      steps[3].className = 'track-step completed';
+                    } else {
+                      steps[3].className = 'track-step';
+                    }
+                  }
+                }
+
+                // Reload if status changed to DELIVERED or CANCELLED to sync action buttons
+                if (newStatus === 'DELIVERED' || newStatus === 'CANCELLED') {
+                  window.location.reload();
+                }
+              }
+            });
+          })
+          .catch(err => { /* silent fail */ });
+      }
+
+      setInterval(pollRealtimeOrderStatuses, 4000);
+
     });
   </script>
   <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />

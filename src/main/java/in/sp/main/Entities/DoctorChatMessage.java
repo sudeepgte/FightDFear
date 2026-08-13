@@ -21,6 +21,7 @@ public class DoctorChatMessage {
     private String message;
     private String senderType; // USER or DOCTOR
     private LocalDateTime timestamp;
+    private String attachmentPath;
 
     /** False until the doctor opens chats / that conversation (user→doctor messages). */
     @Column(nullable = false)
@@ -47,6 +48,11 @@ public class DoctorChatMessage {
     public void setSenderType(String senderType) { this.senderType = senderType; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
     public boolean isReadByDoctor() { return readByDoctor; }
     public void setReadByDoctor(boolean readByDoctor) { this.readByDoctor = readByDoctor; }
+
+    public String getAttachmentPath() { return attachmentPath; }
+    public void setAttachmentPath(String attachmentPath) { this.attachmentPath = attachmentPath; }
+
 }

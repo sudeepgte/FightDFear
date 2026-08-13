@@ -9,10 +9,12 @@ import in.sp.main.Repository.JobApplicationRepository;
 import in.sp.main.Service.MartialArtsCenterService;
 import in.sp.main.Service.TrustedContactService;
 import in.sp.main.Service.UserFollowService;
+import in.sp.main.Util.MobileValidation;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -68,11 +70,14 @@ public class MobileApiController {
         dto.put("name", c.getName());
         dto.put("phone", c.getPhone());
         dto.put("email", c.getEmail());
+        dto.put("whatsappNumber", c.getWhatsappNumber() != null && !c.getWhatsappNumber().isBlank()
+                ? c.getWhatsappNumber() : c.getPhone());
         dto.put("relation", c.getRelation());
         dto.put("isPrimary", c.isPrimary());
         dto.put("canReceiveSMS", c.isCanReceiveSMS());
         dto.put("canReceiveEmail", c.isCanReceiveEmail());
         dto.put("canReceiveCall", c.isCanReceiveCall());
+        dto.put("canReceiveWhatsApp", c.isCanReceiveWhatsApp());
         return dto;
     }
 
@@ -112,50 +117,59 @@ public class MobileApiController {
     }
 
     @GetMapping("/me/dashboard")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> dashboard(HttpSession session) {
-        User user = requireUser(session);
-        if (user == null) {
+        User sessionUser = requireUser(session);
+        if (sessionUser == null || sessionUser.getId() == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("success", false, "error", "Unauthorized"));
         }
 
-        List<BroadcastMessage> broadcasts = broadcastMessageRepository.findAllByOrderBySentAtDesc();
-        long unreadCount = 0;
-        if (user.getLastReadBroadcastTime() == null) {
-            unreadCount = broadcasts.size();
-        } else {
-            unreadCount = broadcasts.stream()
-                    .filter(b -> b.getSentAt() != null
-                            && b.getSentAt().isAfter(user.getLastReadBroadcastTime()))
-                    .count();
+        try {
+            User user = userRepository.findById(sessionUser.getId()).orElse(sessionUser);
+
+            List<BroadcastMessage> broadcasts = broadcastMessageRepository.findAllByOrderBySentAtDesc();
+            long unreadCount;
+            if (user.getLastReadBroadcastTime() == null) {
+                unreadCount = broadcasts.size();
+            } else {
+                unreadCount = broadcasts.stream()
+                        .filter(b -> b.getSentAt() != null
+                                && b.getSentAt().isAfter(user.getLastReadBroadcastTime()))
+                        .count();
+            }
+
+            int pendingRequestCount = userFollowService.getPendingRequestCount(user.getId());
+            int approvedCentreCount = martialArtsCenterService.getApprovedCentersForDiscovery().size();
+            boolean isWorker = jobApplicationRepository.existsByUser_IdAndStatusIn(
+                    user.getId(), List.of(VerificationStatus.VERIFIED));
+
+            List<Map<String, Object>> recentBroadcasts = new ArrayList<>();
+            broadcasts.stream().limit(5).forEach(b -> {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", b.getId());
+                item.put("title", b.getTitle());
+                item.put("message", b.getMessage());
+                item.put("type", b.getType());
+                item.put("sentAt", b.getSentAt() == null ? null : b.getSentAt().toString());
+                recentBroadcasts.add(item);
+            });
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("success", true);
+            response.put("name", user.getFullName());
+            response.put("unreadBroadcastCount", unreadCount);
+            response.put("approvedCentreCount", approvedCentreCount);
+            response.put("pendingRequestCount", pendingRequestCount);
+            response.put("isWorker", isWorker);
+            response.put("recentBroadcasts", recentBroadcasts);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("error", "Dashboard load failed: " + ex.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
         }
-
-        int pendingRequestCount = userFollowService.getPendingRequestCount(user.getId());
-        int approvedCentreCount = martialArtsCenterService.getApprovedCentersForDiscovery().size();
-        boolean isWorker = jobApplicationRepository.findByStatus(VerificationStatus.VERIFIED)
-                .stream()
-                .anyMatch(app -> app.getUser() != null && app.getUser().getId().equals(user.getId()));
-
-        List<Map<String, Object>> recentBroadcasts = new ArrayList<>();
-        broadcasts.stream().limit(5).forEach(b -> {
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id", b.getId());
-            item.put("title", b.getTitle());
-            item.put("message", b.getMessage());
-            item.put("type", b.getType());
-            item.put("sentAt", b.getSentAt() == null ? null : b.getSentAt().toString());
-            recentBroadcasts.add(item);
-        });
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("success", true);
-        response.put("name", user.getFullName());
-        response.put("unreadBroadcastCount", unreadCount);
-        response.put("approvedCentreCount", approvedCentreCount);
-        response.put("pendingRequestCount", pendingRequestCount);
-        response.put("isWorker", isWorker);
-        response.put("recentBroadcasts", recentBroadcasts);
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me/trusted-contacts")
@@ -187,20 +201,41 @@ public class MobileApiController {
         }
         String name = body == null ? null : stringVal(body.get("name"));
         String phone = body == null ? null : stringVal(body.get("phone"));
-        if (name == null || name.isBlank() || phone == null || phone.isBlank()) {
+        if (name == null || name.isBlank()) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("success", false, "error", "name and phone are required"));
+                    .body(Map.of("success", false, "error", "name is required"));
+        }
+        String phoneErr = MobileValidation.requirePhone(phone, true);
+        if (phoneErr != null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", phoneErr));
         }
 
         TrustedContact contact = new TrustedContact();
         contact.setName(name.trim());
-        contact.setPhone(phone.trim());
-        contact.setEmail(stringVal(body.get("email")));
+        contact.setPhone(MobileValidation.trim(phone));
+        String email = stringVal(body.get("email"));
+        if (email != null && !email.isBlank() && !MobileValidation.isEmail(email)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Enter a valid email address"));
+        }
+        contact.setEmail(email == null || email.isBlank() ? null : MobileValidation.trim(email));
+        String wa = stringVal(body.get("whatsappNumber"));
+        if (wa == null || wa.isBlank()) {
+            wa = phone;
+        }
+        String waErr = MobileValidation.requirePhone(wa, true);
+        if (waErr != null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "WhatsApp " + waErr.toLowerCase()));
+        }
+        contact.setWhatsappNumber(MobileValidation.trim(wa));
         contact.setRelation(stringVal(body.getOrDefault("relation", "")));
         contact.setPrimary(boolVal(body.get("isPrimary"), false));
         contact.setCanReceiveSMS(boolVal(body.get("canReceiveSMS"), true));
-        contact.setCanReceiveEmail(boolVal(body.get("canReceiveEmail"), true));
+        contact.setCanReceiveEmail(boolVal(body.get("canReceiveEmail"), email != null && !email.isBlank()));
         contact.setCanReceiveCall(boolVal(body.get("canReceiveCall"), true));
+        contact.setCanReceiveWhatsApp(boolVal(body.get("canReceiveWhatsApp"), true));
 
         TrustedContact saved = trustedContactService.createTrustedContact(user.getId(), contact);
         Map<String, Object> response = new LinkedHashMap<>();
@@ -227,14 +262,48 @@ public class MobileApiController {
         }
 
         if (body != null) {
-            if (body.containsKey("name")) existing.setName(stringVal(body.get("name")));
-            if (body.containsKey("phone")) existing.setPhone(stringVal(body.get("phone")));
-            if (body.containsKey("email")) existing.setEmail(stringVal(body.get("email")));
+            if (body.containsKey("name")) {
+                String n = stringVal(body.get("name"));
+                if (n == null || n.isBlank()) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("success", false, "error", "name is required"));
+                }
+                existing.setName(n.trim());
+            }
+            if (body.containsKey("phone")) {
+                String phoneErr = MobileValidation.requirePhone(stringVal(body.get("phone")), true);
+                if (phoneErr != null) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("success", false, "error", phoneErr));
+                }
+                existing.setPhone(MobileValidation.trim(stringVal(body.get("phone"))));
+            }
+            if (body.containsKey("email")) {
+                String email = stringVal(body.get("email"));
+                if (email != null && !email.isBlank() && !MobileValidation.isEmail(email)) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("success", false, "error", "Enter a valid email address"));
+                }
+                existing.setEmail(email == null || email.isBlank() ? null : MobileValidation.trim(email));
+            }
+            if (body.containsKey("whatsappNumber")) {
+                String wa = stringVal(body.get("whatsappNumber"));
+                if (wa == null || wa.isBlank()) {
+                    wa = existing.getPhone();
+                }
+                String waErr = MobileValidation.requirePhone(wa, true);
+                if (waErr != null) {
+                    return ResponseEntity.badRequest()
+                            .body(Map.of("success", false, "error", "WhatsApp " + waErr.toLowerCase()));
+                }
+                existing.setWhatsappNumber(MobileValidation.trim(wa));
+            }
             if (body.containsKey("relation")) existing.setRelation(stringVal(body.get("relation")));
             if (body.containsKey("isPrimary")) existing.setPrimary(boolVal(body.get("isPrimary"), existing.isPrimary()));
             if (body.containsKey("canReceiveSMS")) existing.setCanReceiveSMS(boolVal(body.get("canReceiveSMS"), existing.isCanReceiveSMS()));
             if (body.containsKey("canReceiveEmail")) existing.setCanReceiveEmail(boolVal(body.get("canReceiveEmail"), existing.isCanReceiveEmail()));
             if (body.containsKey("canReceiveCall")) existing.setCanReceiveCall(boolVal(body.get("canReceiveCall"), existing.isCanReceiveCall()));
+            if (body.containsKey("canReceiveWhatsApp")) existing.setCanReceiveWhatsApp(boolVal(body.get("canReceiveWhatsApp"), existing.isCanReceiveWhatsApp()));
         }
 
         TrustedContact updated = trustedContactService.updateTrustedContact(contactId, existing);

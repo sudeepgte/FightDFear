@@ -62,6 +62,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private FitnessTrainerRepository fitnessTrainerRepository;
 
+    @Autowired
+    private DeliveryPartnerRepository deliveryPartnerRepository;
+
+    @Autowired
+    private FinancialEducatorRepository financialEducatorRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -117,7 +123,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } else if ("ADMIN".equals(role)) {
             if (session.getAttribute("admin") == null) {
-                adminRepository.findByEmail(email).ifPresent(a -> session.setAttribute("admin", a));
+                adminRepository.findByEmailIgnoreCase(email)
+                        .or(() -> adminRepository.findByEmail(email))
+                        .ifPresent(a -> session.setAttribute("admin", a));
             }
         } else if ("DOCTOR".equals(role)) {
             if (session.getAttribute("loggedDoctor") == null) {
@@ -134,6 +142,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } else if ("SALON".equals(role)) {
             if (session.getAttribute("loggedSalon") == null) {
                 salonRepository.findByUsername(email).ifPresent(s -> session.setAttribute("loggedSalon", s));
+                if (session.getAttribute("loggedSalon") == null) {
+                    Salon byEmail = salonRepository.findByEmail(email);
+                    if (byEmail != null) session.setAttribute("loggedSalon", byEmail);
+                }
             }
         } else if ("STYLIST".equals(role)) {
             if (session.getAttribute("loggedStylist") == null) {
@@ -158,6 +170,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } else if ("TRAINER".equals(role)) {
             if (session.getAttribute("loggedTrainer") == null) {
                 fitnessTrainerRepository.findByEmail(email).ifPresent(t -> session.setAttribute("loggedTrainer", t));
+            }
+        } else if ("DELIVERY".equals(role)) {
+            if (session.getAttribute("loggedDelivery") == null) {
+                deliveryPartnerRepository.findByEmail(email).ifPresent(d -> session.setAttribute("loggedDelivery", d));
+            }
+        } else if ("EDUCATOR".equals(role)) {
+            if (session.getAttribute("loggedEducator") == null) {
+                financialEducatorRepository.findByEmail(email).ifPresent(ed -> session.setAttribute("loggedEducator", ed));
             }
         }
     }

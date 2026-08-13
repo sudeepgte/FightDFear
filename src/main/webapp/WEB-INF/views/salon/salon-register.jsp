@@ -162,12 +162,16 @@
 
         <div class="form-panel">
             <div class="reg-card">
+
                 <div class="dr-progress">
                     <div class="dr-step-dot active" data-step="1" onclick="showStep(1)">1</div>
                     <div class="dr-step-dot" data-step="2" onclick="showStep(2)">2</div>
                 </div>
 
                 <a href="${pageContext.request.contextPath}/" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
+
+                <a href="${pageContext.request.contextPath}/index" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
+
                 <h2>Join our Ecosystem</h2>
 
                 <c:if test="${not empty error}">
@@ -175,6 +179,7 @@
                         <i class="bi bi-shield-exclamation me-2"></i> ${error}
                     </div>
                 </c:if>
+
 
                 <form action="${pageContext.request.contextPath}/salons/register" method="post" enctype="multipart/form-data" id="salonRegForm">
                     <!-- Step 1: Salon Account Setup -->
@@ -191,6 +196,17 @@
                             <div class="error-msg" id="err-salonName">Salon name must be 3–255 characters.</div>
                         </div>
 
+                <form action="${pageContext.request.contextPath}/salons/register" method="post" id="salonRegForm">
+                    <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Salon Account Setup</h3>
+                    
+                    <div class="fdf-group">
+                        <label>Salon Name</label>
+                        <input type="text" name="name" id="salonName" class="fdf-input" placeholder="e.g. Radiance Wellness Hub" required>
+                        <div class="error-msg" id="err-salonName">Salon name must be at least 3 characters.</div>
+                    </div>
+
+
+                    <div class="fdf-row">
                         <div class="fdf-group">
                             <label>Username</label>
                             <input type="text" name="username" id="username" class="fdf-input"
@@ -226,60 +242,44 @@
                                 <div class="error-msg" id="err-phone">Phone number must be exactly 10 digits.</div>
                             </div>
                         </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Password</label>
-                                <div class="password-input-wrap">
-                                    <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" required>
-                                    <button type="button" class="password-toggle-btn" data-toggle-password="password">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                <div class="error-msg" id="err-password">6-8 chars (1 uppercase, 1 number required).</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Confirm Password</label>
-                                <div class="password-input-wrap">
-                                    <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" required>
-                                    <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                </div>
-                                <div class="error-msg" id="err-confirmPassword">❌ Passwords do not match</div>
-                                <div class="valid-msg" id="val-confirmPassword" style="color: #10b981;">✅ Passwords match</div>
-                            </div>
+                        <div class="fdf-group">
+                            <label>Phone Number</label>
+                            <input type="tel" name="phone" id="phone" class="fdf-input" placeholder="e.g. 9876543210" required>
+                            <div class="error-msg" id="err-phone">Enter a valid 10-digit phone number.</div>
                         </div>
-                        
-                        <button type="button" class="btn-dr btn-dr-next" id="btn-next-1" onclick="nextStep(1)">Continue to Business Info</button>
                     </div>
 
-                    <!-- Step 2: Business Verification -->
-                    <div class="dr-step-panel" id="step2">
-                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Step 2: Business Verification</h3>
-                        
-                        <div class="fdf-group">
-                            <label>Bio / Service Description</label>
-                            <textarea name="bio" id="bio" class="fdf-input" rows="4" placeholder="Briefly describe your services (Min 15-20 characters)..." required></textarea>
-                            <div class="error-msg" id="err-bio">Bio must be at least 15-20 characters.</div>
-                        </div>
+                    <div class="fdf-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" id="email" class="fdf-input" placeholder="e.g. contact@radiance.com" required>
+                        <div class="error-msg" id="err-email">Enter a valid email address.</div>
+                    </div>
 
+                    <div class="fdf-row">
                         <div class="fdf-group">
-                            <label>Hygiene Certificate (PDF/IMG)</label>
-                            <div class="upload-btn" id="certBox">
-                                <i class="bi bi-patch-check"></i>
-                                <span id="certText">Click to Upload Hygiene Certificate</span>
-                                <input type="file" name="hygieneCertificate" id="hygieneCertificate" accept="image/*,.pdf" required>
-                                <div class="upload-success" id="certSuccess"><i class="bi bi-check-circle-fill"></i> Uploaded successfully</div>
+                            <label>Password</label>
+                            <div class="password-input-wrap">
+                                <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" required>
+                                <button type="button" class="password-toggle-btn" data-toggle-password="password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
-                            <div class="error-msg" id="err-cert">Required: JPG, PNG, or PDF (Max 2MB).</div>
+                            <div class="error-msg" id="err-password">At least 6 characters (1 uppercase, 1 number required).</div>
                         </div>
-
-                        <div style="display:flex; justify-content:space-between; gap:20px; margin-top:30px;">
-                            <button type="button" class="btn-dr btn-dr-prev" onclick="showStep(1)">Back</button>
-                            <button type="submit" class="btn-dr btn-dr-next" id="btn-submit" style="margin-top:0;">Initialize Salon Partner</button>
+                        <div class="fdf-group">
+                            <label>Confirm Password</label>
+                            <div class="password-input-wrap">
+                                <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" required>
+                                <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="error-msg" id="err-confirmPassword">❌ Passwords do not match</div>
+                            <div class="valid-msg" id="val-confirmPassword" style="color: #10b981;">✅ Passwords match</div>
                         </div>
                     </div>
+                    
+                    <button type="submit" class="btn-dr btn-dr-next" id="btn-submit">Register Salon Partner</button>
                 </form>
 
                 <div class="login-link">
@@ -290,42 +290,28 @@
     </div>
 
     <script>
-        function showStep(s) {
-            document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('step' + s).classList.add('active');
-            document.querySelectorAll('.dr-step-dot').forEach(d => {
-                const step = parseInt(d.dataset.step);
-                d.classList.remove('active', 'completed');
-                if (step === s) d.classList.add('active');
-                else if (step < s) d.classList.add('completed');
-            });
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            checkFormValidity();
-        }
-
         const validateField = (el) => {
             let isValid = true;
             const val = el.value.trim();
             const fieldId = el.id;
-            const errorEl = document.getElementById('err-' + (fieldId === 'hygieneCertificate' ? 'cert' : fieldId));
+            const errorEl = document.getElementById('err-' + fieldId);
             const validEl = document.getElementById('val-' + fieldId);
 
-            if (el.hasAttribute('required') && !val && el.type !== 'file') isValid = false;
-            if (el.type === 'file' && el.hasAttribute('required') && el.files.length === 0) isValid = false;
+            if (el.hasAttribute('required') && !val) isValid = false;
             
             if (isValid) {
                 if (fieldId === 'salonName') isValid = val.length >= 3 && val.length <= 255;
                 if (fieldId === 'username') isValid = /^[a-zA-Z0-9_]{3,20}$/.test(val);
+
                 if (fieldId === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && val.length <= 255;
                 if (fieldId === 'phone') isValid = /^\d{10}$/.test(val);
                 if (fieldId === 'password') isValid = val.length >= 6 && val.length <= 8 && /[A-Z]/.test(val) && /\d/.test(val);
+
+                if (fieldId === 'phone') isValid = /^\d{10}$/.test(val);
+                if (fieldId === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+                if (fieldId === 'password') isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
+
                 if (fieldId === 'confirmPassword') isValid = val === document.getElementById('password').value;
-                if (fieldId === 'bio') isValid = val.length >= 15;
-                if (fieldId === 'hygieneCertificate' && el.files[0]) {
-                    const file = el.files[0];
-                    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
-                    isValid = allowed.includes(file.type) && file.size <= 2 * 1024 * 1024;
-                }
             }
 
             if (isValid) {
@@ -333,54 +319,34 @@
                 el.classList.add('is-valid');
                 if (errorEl) errorEl.style.display = 'none';
                 if (validEl) validEl.style.display = 'block';
-                if (fieldId === 'hygieneCertificate') {
-                    document.getElementById('certSuccess').style.display = 'block';
-                    document.getElementById('certBox').style.borderColor = '#10b981';
-                }
             } else {
                 el.classList.remove('is-valid');
                 el.classList.add('is-invalid');
                 if (errorEl) errorEl.style.display = 'block';
                 if (validEl) validEl.style.display = 'none';
-                if (fieldId === 'hygieneCertificate') {
-                    document.getElementById('certSuccess').style.display = 'none';
-                    document.getElementById('certBox').style.borderColor = 'var(--error-red)';
-                }
             }
             checkFormValidity();
             return isValid;
         };
 
         function checkFormValidity() {
+
             const step1Fields = ['salonName', 'username', 'email', 'phone', 'password', 'confirmPassword'];
             const step2Fields = ['bio', 'hygieneCertificate'];
             
             const isStep1Valid = step1Fields.every(id => {
+
+            const fields = ['salonName', 'username', 'email', 'phone', 'password', 'confirmPassword'];
+            const isValid = fields.every(id => {
+
                 const el = document.getElementById(id);
                 return el && el.classList.contains('is-valid');
             });
-
-            const isStep2Valid = step2Fields.every(id => {
-                const el = document.getElementById(id);
-                return el && el.classList.contains('is-valid');
-            });
-
-            const nextBtn = document.getElementById('btn-next-1');
-            if (nextBtn) nextBtn.disabled = !isStep1Valid;
             const submitBtn = document.getElementById('btn-submit');
-            if (submitBtn) submitBtn.disabled = !isStep2Valid;
-        }
-
-        function nextStep(s) {
-            const panel = document.getElementById('step' + s);
-            const fields = panel.querySelectorAll('.fdf-input, input[type="file"]');
-            let allValid = true;
-            fields.forEach(f => { if (!validateField(f)) allValid = false; });
-            if (allValid) showStep(s + 1);
+            if (submitBtn) submitBtn.disabled = !isValid;
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Password toggle logic
             document.querySelectorAll('[data-toggle-password]').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const id = btn.getAttribute('data-toggle-password');
@@ -396,24 +362,18 @@
                 });
             });
 
-            const inputs = document.querySelectorAll('.fdf-input, input[type="file"]');
+            const inputs = document.querySelectorAll('.fdf-input');
             inputs.forEach(input => {
                 input.addEventListener('input', () => validateField(input));
                 input.addEventListener('change', () => validateField(input));
             });
 
-            document.getElementById('hygieneCertificate').addEventListener('change', function() {
-                if (this.files[0]) document.getElementById('certText').innerText = this.files[0].name;
-                validateField(this);
-            });
-
             document.getElementById('salonRegForm').addEventListener('submit', function(e) {
-                const fields = document.querySelectorAll('.fdf-input, input[type="file"]');
+                const fields = document.querySelectorAll('.fdf-input');
                 let allValid = true;
                 fields.forEach(f => { if (!validateField(f)) allValid = false; });
                 if (!allValid) {
                     e.preventDefault();
-                    if (!document.getElementById('step2').classList.contains('active')) showStep(1);
                 }
             });
 

@@ -15,28 +15,41 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import in.sp.main.Service.PaymentPendingOrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/payment")
 public class PaymentController {
 
-    /**
-     * Server-side pending orders for Flutter / cookie-less clients.
-     * Web browsers still also keep a session copy for compatibility.
-     */
-    private static final ConcurrentHashMap<String, PendingOrder> PENDING_ORDERS = new ConcurrentHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
+
+    /** Legacy session TTL mirror for browsers; authoritative state is in DB. */
     private static final long PENDING_TTL_MS = 30 * 60 * 1000L;
 
-    private record PendingOrder(long userId, int amountPaise, long createdAtMs) {}
+    private record PendingSnapshot(
+            long userId,
+            int amountPaise,
+            String type,
+            Long targetId,
+            String consultationType,
+            String appointmentTime,
+            String reason) {}
 
     @Value("${razorpay.key.id}")
     private String razorpayKeyId;
 
     @Value("${razorpay.key.secret}")
     private String razorpayKeySecret;
+
+    @Value("${app.payments.mock-enabled:false}")
+    private boolean paymentMockEnabled;
+
+    @Value("${razorpay.webhook.secret:}")
+    private String razorpayWebhookSecret;
 
     @Autowired
     private BookingRepository bookingRepository;
@@ -66,10 +79,67 @@ public class PaymentController {
     private EnrollmentRepository enrollmentRepository;
 
     @Autowired
+    private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
+
+    @Autowired
+    private in.sp.main.Service.GlowCareService glowCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenJobsCareService womenJobsCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenLawyerCareService womenLawyerCareService;
+
+    @Autowired
+    private in.sp.main.Service.WomenProductsCareService womenProductsCareService;
+
+    @Autowired
+    private in.sp.main.Service.FinancialLiteracyCareService financialLiteracyCareService;
+
+    @Autowired
+    private in.sp.main.Service.EventsCareService eventsCareService;
+
+    @Autowired
+    private in.sp.main.Service.CreatorCareService creatorCareService;
+
+    @Autowired
+    private in.sp.main.Service.FitnessCareService fitnessCareService;
+
+    @Autowired
+    private VideoUploadRepository videoUploadPayRepo;
+
+    @Autowired
+    private FinancialEnrollmentRepository financialEnrollmentPayRepo;
+
+    @Autowired
+    private WomenProductOrderRepository womenProductOrderPayRepo;
+
+    @Autowired
+    private ProviderBookingRepository providerBookingPayRepo;
+
+    @Autowired
     private MartialArtsCenterRepository centerRepository;
 
     @Autowired
     private MartialArtsTypeRepository typeRepository;
+
+    @Autowired
+    private in.sp.main.Service.DoctorBookingService doctorBookingService;
+
+    @Autowired
+    private in.sp.main.Service.DoctorPaymentService doctorPaymentService;
+
+    @Autowired
+    private in.sp.main.Repository.DoctorPaymentEventRepository doctorPaymentEventRepository;
+
+    @Autowired
+    private PaymentPendingOrderService paymentPendingOrderService;
+
+    @Autowired
+    private PaymentWebhookEventRepository paymentWebhookEventRepository;
+
+    @Value("${spring.profiles.active:}")
+    private String activeProfiles;
 
     @Autowired
     private SlotRepository slotRepository;
@@ -82,6 +152,12 @@ public class PaymentController {
 
     @Autowired
     private MarketplaceEnrollmentRepository marketplaceEnrollmentRepo;
+
+    @Autowired
+    private FitnessBookingRepository fitnessBookingRepository;
+
+    @Autowired
+    private WomenEventRegistrationRepository womenEventRegistrationRepository;
     
     @Autowired
     private in.sp.main.Repository.WorkerBookingRepository workerBookingRepo;
@@ -110,8 +186,14 @@ public class PaymentController {
     }
 
     private boolean razorpayConfigured() {
-        return razorpayKeyId != null && !razorpayKeyId.isBlank()
-                && razorpayKeySecret != null && !razorpayKeySecret.isBlank();
+        return doctorPaymentService != null
+                ? doctorPaymentService.razorpayConfigured()
+                : (razorpayKeyId != null && !razorpayKeyId.isBlank()
+                && razorpayKeySecret != null && !razorpayKeySecret.isBlank());
+    }
+
+    private boolean paymentsAvailable() {
+        return doctorPaymentService.paymentsAvailable();
     }
 
     @SuppressWarnings("unchecked")
@@ -125,32 +207,75 @@ public class PaymentController {
         return pending;
     }
 
-    private void rememberPendingOrder(String orderId, User user, int amountPaise, HttpSession session) {
-        purgeExpiredPendingOrders();
-        PENDING_ORDERS.put(orderId, new PendingOrder(user.getId(), amountPaise, System.currentTimeMillis()));
+    private void rememberPendingOrder(
+            String orderId,
+            User user,
+            int amountPaise,
+            HttpSession session,
+            String type,
+            Long targetId,
+            String consultationType,
+            String appointmentTime,
+            String reason) {
+        paymentPendingOrderService.savePendingOrder(
+                orderId, user, amountPaise, type, targetId, consultationType, appointmentTime, reason);
         pendingOrders(session).put(orderId, amountPaise);
     }
 
-    private Integer takePendingAmountPaise(String orderId, User user, HttpSession session) {
-        purgeExpiredPendingOrders();
-        PendingOrder global = PENDING_ORDERS.get(orderId);
-        if (global != null) {
-            if (global.userId() != user.getId()) {
-                return null;
-            }
-            PENDING_ORDERS.remove(orderId);
-            pendingOrders(session).remove(orderId);
-            return global.amountPaise();
-        }
-        // Legacy web path: order bound only to this browser session
-        Map<String, Integer> pending = pendingOrders(session);
-        Integer amount = pending.remove(orderId);
-        return amount;
+    /** Backward-compatible overload for non-doctor payment types. */
+    private void rememberPendingOrder(String orderId, User user, int amountPaise, HttpSession session) {
+        rememberPendingOrder(orderId, user, amountPaise, session, null, null, null, null, null);
     }
 
-    private void purgeExpiredPendingOrders() {
-        long now = System.currentTimeMillis();
-        PENDING_ORDERS.entrySet().removeIf(e -> now - e.getValue().createdAtMs() > PENDING_TTL_MS);
+    private PendingSnapshot resolvePendingSnapshot(String orderId, User user, HttpSession session) {
+        Optional<PaymentPendingOrder> dbPending =
+                paymentPendingOrderService.findPendingForUser(orderId, user.getId());
+        if (dbPending.isPresent()) {
+            PaymentPendingOrder p = dbPending.get();
+            return new PendingSnapshot(
+                    p.getUserId(),
+                    p.getAmountPaise(),
+                    p.getPaymentType(),
+                    p.getTargetId(),
+                    p.getConsultationType(),
+                    p.getAppointmentTime(),
+                    p.getReason());
+        }
+        PaymentPendingOrder fulfilled = paymentPendingOrderService.findByOrderId(orderId).orElse(null);
+        if (fulfilled != null && "FULFILLED".equalsIgnoreCase(fulfilled.getStatus())
+                && user.getId().equals(fulfilled.getUserId())) {
+            return new PendingSnapshot(
+                    fulfilled.getUserId(),
+                    fulfilled.getAmountPaise(),
+                    fulfilled.getPaymentType(),
+                    fulfilled.getTargetId(),
+                    fulfilled.getConsultationType(),
+                    fulfilled.getAppointmentTime(),
+                    fulfilled.getReason());
+        }
+        Map<String, Integer> pending = pendingOrders(session);
+        Integer amount = pending.get(orderId);
+        if (amount != null) {
+            return new PendingSnapshot(user.getId(), amount, null, null, null, null, null);
+        }
+        return null;
+    }
+
+    private void finalizeSuccessfulPayment(
+            String orderId,
+            String paymentId,
+            User user,
+            String paymentType,
+            Long targetId,
+            int amountPaise,
+            Map<String, Object> responseMap) {
+        paymentPendingOrderService.findByOrderId(orderId).ifPresent(p -> {
+            if ("PENDING".equalsIgnoreCase(p.getStatus())) {
+                paymentPendingOrderService.markFulfilled(p, paymentId);
+            }
+        });
+        paymentPendingOrderService.recordFulfillment(
+                paymentId, orderId, user.getId(), paymentType, targetId, amountPaise, responseMap);
     }
 
     private boolean verifyRazorpaySignature(String orderId, String paymentId, String signature) throws Exception {
@@ -233,12 +358,14 @@ public class PaymentController {
             body.put("error", "Login required");
             return ResponseEntity.status(401).body(body);
         }
-        boolean ready = razorpayConfigured();
+        boolean ready = paymentsAvailable();
         body.put("configured", ready);
+        body.put("mock", doctorPaymentService.mockPaymentsEnabled());
         body.put("currency", "INR");
-        // Public key id only — secret never leaves the server
-        if (ready) {
+        if (razorpayConfigured()) {
             body.put("key", razorpayKeyId);
+        } else if (doctorPaymentService.mockPaymentsEnabled()) {
+            body.put("key", "rzp_test_mock");
         }
         return ResponseEntity.ok(body);
     }
@@ -252,24 +379,159 @@ public class PaymentController {
             errorBody.put("error", "Login required");
             return ResponseEntity.status(401).body(errorBody);
         }
-        if (!razorpayConfigured()) {
-            errorBody.put("error", "Payment gateway is not configured");
+        if (!paymentsAvailable()) {
+            errorBody.put("error", "Payment gateway is not configured. Set RAZORPAY_KEY_ID/SECRET or enable app.payments.mock-enabled=true for local testing.");
             return ResponseEntity.status(503).body(errorBody);
         }
 
         try {
-            Object amountRaw = data.get("amount");
-            if (amountRaw == null) {
-                errorBody.put("error", "Amount is required");
-                return ResponseEntity.badRequest().body(errorBody);
-            }
-            String amountStr = amountRaw.toString().replaceAll("[^0-9.]", "");
+            String type = Objects.toString(data.get("type"), "").trim().toUpperCase(Locale.ROOT);
+            Long targetId = null;
+            String consultationType = null;
+            String appointmentTime = Objects.toString(data.get("appointmentTime"), "").trim();
+            String reason = Objects.toString(data.get("reason"), "").trim();
             double amount;
-            try {
-                amount = Double.parseDouble(amountStr);
-            } catch (NumberFormatException nfe) {
-                errorBody.put("error", "Invalid amount");
-                return ResponseEntity.badRequest().body(errorBody);
+            if ("DOCTOR".equals(type)) {
+                Object targetIdObj = data.get("targetId");
+                if (targetIdObj == null) {
+                    errorBody.put("error", "Doctor id is required");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = Long.parseLong(targetIdObj.toString());
+                Doctor d = doctorRepo.findById(targetId).orElse(null);
+                consultationType = Objects.toString(data.get("consultationType"), "CLINIC");
+                ConsultationType cType = MobileDoctorController.parseConsultationType(consultationType);
+                amount = doctorBookingService.resolveFee(d, cType);
+                if (amount <= 0) {
+                    errorBody.put("error", "This doctor does not require payment. Book without payment.");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if (appointmentTime.isBlank()) {
+                    errorBody.put("error", "appointmentTime is required for doctor payments");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(appointmentTime);
+                if (apptTime == null) {
+                    errorBody.put("error", "Invalid appointmentTime");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                doctorBookingService.requireBookableDoctor(d);
+                doctorBookingService.validateAppointmentSlotForPayment(d, user, apptTime);
+            } else if ("FINANCIAL_BOOKING".equals(type)) {
+                Object registrationIdObj = data.get("registrationId") != null ? data.get("registrationId") : data.get("targetId");
+                if (registrationIdObj == null) {
+                    errorBody.put("error", "registrationId is required for financial session payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                FinancialEnrollment en = financialEnrollmentPayRepo
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (en == null || en.getUser() == null || !en.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Registration not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if ("cancelled".equalsIgnoreCase(en.getStatus()) || "rejected".equalsIgnoreCase(en.getStatus())) {
+                    errorBody.put("error", "Registration is cancelled");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if ("PAID".equalsIgnoreCase(en.getPaymentStatus())) {
+                    errorBody.put("error", "Already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = en.getAmount() != null ? Math.max(0, en.getAmount()) : 0;
+                if (amount <= 0) {
+                    errorBody.put("error", "This session does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = en.getId();
+            } else if ("WOMEN_EVENT".equals(type)) {
+                Object registrationIdObj = data.get("registrationId");
+                if (registrationIdObj == null) {
+                    errorBody.put("error", "registrationId is required for event payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                WomenEventRegistration reg = womenEventRegistrationRepository
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (reg == null || reg.getUser() == null || !reg.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Event registration not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if ("CANCELLED".equalsIgnoreCase(reg.getStatus())) {
+                    errorBody.put("error", "Registration is cancelled");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if (reg.isPaid()) {
+                    errorBody.put("error", "Already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
+                        ? Math.max(0, reg.getEvent().getEntryFee()) : 0;
+                if (amount <= 0) {
+                    errorBody.put("error", "This event does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+            } else if ("CREATOR_TIP".equals(type) || "CREATOR_SUB".equals(type) || "CREATOR_UNLOCK".equals(type)) {
+                Object creatorIdObj = data.get("creatorId") != null ? data.get("creatorId") : data.get("targetId");
+                Object videoIdObj = data.get("videoId") != null ? data.get("videoId") : data.get("registrationId");
+                if ("CREATOR_UNLOCK".equals(type)) {
+                    if (videoIdObj == null) {
+                        errorBody.put("error", "videoId is required for unlock");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    Videoupload video = videoUploadPayRepo.findById(Long.parseLong(videoIdObj.toString())).orElse(null);
+                    if (video == null) {
+                        errorBody.put("error", "Post not found");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    amount = video.getPrice() == null ? 0 : Math.max(0, video.getPrice());
+                    if (amount <= 0) {
+                        errorBody.put("error", "This post does not require payment");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    targetId = video.getId();
+                } else {
+                    if (creatorIdObj == null) {
+                        errorBody.put("error", "creatorId is required");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    User creator = userRepo.findById(Long.parseLong(creatorIdObj.toString())).orElse(null);
+                    if (creator == null || !in.sp.main.Service.CreatorProfileService.isApprovedCreator(creator)) {
+                        errorBody.put("error", "Creator not found");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    if ("CREATOR_SUB".equals(type)) {
+                        amount = creator.getCreatorSubscriptionPrice() == null ? 0 : Math.max(0, creator.getCreatorSubscriptionPrice());
+                        if (amount <= 0) {
+                            errorBody.put("error", "Subscription not enabled");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                    } else {
+                        Object amountRaw = data.get("amount");
+                        if (amountRaw == null) {
+                            errorBody.put("error", "Amount is required");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                        try {
+                            amount = Double.parseDouble(amountRaw.toString().replaceAll("[^0-9.]", ""));
+                        } catch (NumberFormatException nfe) {
+                            errorBody.put("error", "Invalid amount");
+                            return ResponseEntity.badRequest().body(errorBody);
+                        }
+                    }
+                    targetId = creator.getId();
+                }
+            } else {
+                Object amountRaw = data.get("amount");
+                if (amountRaw == null) {
+                    errorBody.put("error", "Amount is required");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                String amountStr = amountRaw.toString().replaceAll("[^0-9.]", "");
+                try {
+                    amount = Double.parseDouble(amountStr);
+                } catch (NumberFormatException nfe) {
+                    errorBody.put("error", "Invalid amount");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
             }
             if (amount <= 0) {
                 errorBody.put("error", "Amount must be greater than zero");
@@ -277,28 +539,38 @@ public class PaymentController {
             }
 
             int amountPaise = (int) Math.round(amount * 100);
-            RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+            String orderId;
+            String key;
 
-            JSONObject orderRequest = new JSONObject();
-            orderRequest.put("amount", amountPaise);
-            orderRequest.put("currency", "INR");
-            orderRequest.put("receipt", "txn_" + user.getId() + "_" + System.currentTimeMillis());
+            if (doctorPaymentService.mockPaymentsEnabled()) {
+                orderId = "order_mock_" + user.getId() + "_" + System.currentTimeMillis();
+                key = "rzp_test_mock";
+            } else {
+                RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+                JSONObject orderRequest = new JSONObject();
+                orderRequest.put("amount", amountPaise);
+                orderRequest.put("currency", "INR");
+                orderRequest.put("receipt", "txn_" + user.getId() + "_" + System.currentTimeMillis());
+                Order order = client.orders.create(orderRequest);
+                orderId = order.get("id").toString();
+                key = razorpayKeyId;
+            }
 
-            Order order = client.orders.create(orderRequest);
-            String orderId = order.get("id").toString();
-
-            // Bind this order for both web session and cookie-less mobile clients
-            rememberPendingOrder(orderId, user, amountPaise, session);
+            rememberPendingOrder(orderId, user, amountPaise, session, type, targetId, consultationType, appointmentTime, reason);
 
             Map<String, Object> response = new HashMap<>();
             response.put("orderId", orderId);
             response.put("amount", amountPaise);
             response.put("currency", "INR");
-            response.put("key", razorpayKeyId);
-
+            response.put("key", key);
+            response.put("mock", doctorPaymentService.mockPaymentsEnabled());
+            response.put("amountRupees", amount);
             return ResponseEntity.ok(response);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            errorBody.put("error", ex.getReason());
+            return ResponseEntity.status(ex.getStatusCode().value()).body(errorBody);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to create payment order", e);
             errorBody.put("error", "Failed to create payment order");
             return ResponseEntity.status(500).body(errorBody);
         }
@@ -314,7 +586,7 @@ public class PaymentController {
                 responseMap.put("error", "Session expired. Please login again.");
                 return ResponseEntity.status(401).body(responseMap);
             }
-            if (!razorpayConfigured()) {
+            if (!paymentsAvailable()) {
                 responseMap.put("error", "Payment gateway is not configured");
                 return ResponseEntity.status(503).body(responseMap);
             }
@@ -324,15 +596,37 @@ public class PaymentController {
             String signature = Objects.toString(data.get("razorpay_signature"), "").trim();
             String type = Objects.toString(data.get("type"), "").trim();
 
-            Integer expectedPaise = takePendingAmountPaise(orderId, user, session);
-            if (expectedPaise == null) {
+            Optional<Map<String, Object>> cached =
+                    paymentPendingOrderService.findCachedFulfillmentResponse(paymentId, orderId);
+            if (cached.isPresent()) {
+                Map<String, Object> cachedBody = new HashMap<>(cached.get());
+                cachedBody.putIfAbsent("status", "success");
+                cachedBody.put("idempotent", true);
+                return ResponseEntity.ok(cachedBody);
+            }
+
+            PendingSnapshot pending = resolvePendingSnapshot(orderId, user, session);
+            if (pending == null) {
                 responseMap.put("error", "Unknown or expired payment order. Create a new order and try again.");
                 return ResponseEntity.status(400).body(responseMap);
             }
+            int expectedPaise = pending.amountPaise();
 
             boolean isValid;
             try {
-                isValid = verifyRazorpaySignature(orderId, paymentId, signature);
+                if (doctorPaymentService.mockPaymentsEnabled()
+                        || orderId.startsWith("order_mock_")
+                        || paymentId.startsWith("mock_")) {
+                    isValid = !orderId.isBlank() && !paymentId.isBlank();
+                    if (paymentId.isBlank()) {
+                        paymentId = "mock_pay_" + System.currentTimeMillis();
+                    }
+                    if (signature.isBlank()) {
+                        signature = "mock_sig";
+                    }
+                } else {
+                    isValid = verifyRazorpaySignature(orderId, paymentId, signature);
+                }
             } catch (Exception e) {
                 responseMap.put("error", "Payment signature verification failed.");
                 return ResponseEntity.status(400).body(responseMap);
@@ -349,19 +643,21 @@ public class PaymentController {
             DateTimeFormatter formatterT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
             DateTimeFormatter formatterSpace = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-            if ("DOCTOR".equals(type)) {
-                Object targetIdObj = data.get("targetId");
-                Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
-                Doctor d = doctorRepo.findById(targetId).orElse(null);
-                if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) {
-                    responseMap.put("error", "Doctor not found or not verified");
-                    return ResponseEntity.status(400).body(responseMap);
+            if ("DOCTOR".equalsIgnoreCase(type) || "DOCTOR".equalsIgnoreCase(Objects.toString(pending.type(), ""))) {
+                Long targetId = pending.targetId();
+                if (targetId == null && data.get("targetId") != null) {
+                    targetId = Long.parseLong(data.get("targetId").toString());
                 }
+                Doctor d = doctorRepo.findById(targetId).orElse(null);
 
-                String consultTypeStr = data.getOrDefault("consultationType", "CLINIC").toString();
+                String consultTypeStr = pending.consultationType() != null && !pending.consultationType().isBlank()
+                        ? pending.consultationType()
+                        : data.getOrDefault("consultationType", "CLINIC").toString();
                 ConsultationType cType = MobileDoctorController.parseConsultationType(consultTypeStr);
 
-                String apptTimeStr = data.get("appointmentTime") == null ? "" : data.get("appointmentTime").toString();
+                String apptTimeStr = pending.appointmentTime() != null && !pending.appointmentTime().isBlank()
+                        ? pending.appointmentTime()
+                        : (data.get("appointmentTime") == null ? "" : data.get("appointmentTime").toString());
                 LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(apptTimeStr);
                 if (apptTime == null) {
                     try {
@@ -371,6 +667,7 @@ public class PaymentController {
                     }
                 }
 
+<<<<<<< HEAD
                 DoctorAppointment appt = new DoctorAppointment();
                 appt.setUser(user);
                 appt.setDoctor(d);
@@ -381,14 +678,33 @@ public class PaymentController {
                 appt.setConsultationType(cType);
                 if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {
                     appt.setMeetingRoomId("Fight D Fear-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+=======
+                String reason = pending.reason() != null && !pending.reason().isBlank()
+                        ? pending.reason()
+                        : Objects.toString(data.get("reason"), "");
+
+                try {
+                    DoctorAppointment appt = doctorBookingService.createPaidBooking(
+                            d,
+                            user,
+                            apptTime,
+                            cType,
+                            reason,
+                            amountPaid,
+                            orderId,
+                            paymentId,
+                            signature);
+                    responseMap.put("appointmentId", appt.getId());
+                    responseMap.put("meetingRoomId", appt.getMeetingRoomId());
+                    responseMap.put("meetingPassword", appt.getMeetingPassword());
+                    responseMap.put("status", appt.getStatus().name());
+                    responseMap.put("receipt", doctorPaymentService.receiptPayload(appt));
+                    responseMap.put("success", true);
+                } catch (org.springframework.web.server.ResponseStatusException ex) {
+                    responseMap.put("error", ex.getReason());
+                    return ResponseEntity.status(ex.getStatusCode().value()).body(responseMap);
+>>>>>>> origin/main
                 }
-                appt.setRazorpayOrderId(orderId);
-                appt.setRazorpayPaymentId(paymentId);
-                appt.setRazorpaySignature(signature);
-                appt.setAmountPaid(amountPaid);
-                appointmentRepo.save(appt);
-                responseMap.put("appointmentId", appt.getId());
-                responseMap.put("meetingRoomId", appt.getMeetingRoomId());
             } else if ("BEAUTY".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = (targetIdObj != null) ? Long.parseLong(targetIdObj.toString()) : null;
@@ -456,6 +772,9 @@ public class PaymentController {
                 if (enrollment.getCenter() != null) {
                     user.setMartialArtsCenter(enrollment.getCenter());
                     userRepo.save(user);
+                    try {
+                        martialArtsCareService.creditPayout(enrollment.getCenter(), amountPaid);
+                    } catch (Exception ignored) {}
                 }
             } else if ("MARKETPLACE".equals(type)) {
                 Object enrollmentIdObj = data.get("enrollmentId");
@@ -471,6 +790,54 @@ public class PaymentController {
                 enrollment.setRazorpaySignature(signature);
                 enrollment.setAmountPaid(amountPaid);
                 marketplaceEnrollmentRepo.save(enrollment);
+            } else if ("LAWYER_BOOKING".equals(type)) {
+                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("bookingId");
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                ProviderBooking booking = providerBookingPayRepo.findById(targetId).orElse(null);
+                if (booking == null || booking.getUser() == null || !booking.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if (booking.getStatus() == ProviderBookingStatus.PAID) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expectedAmount = booking.getTotalAmount() != null ? booking.getTotalAmount() : 0.0;
+                if (expectedAmount > 0 && Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match consult fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                booking.setStatus(ProviderBookingStatus.PAID);
+                providerBookingPayRepo.save(booking);
+                try {
+                    womenLawyerCareService.creditPayout(booking.getProvider(), expectedAmount > 0 ? expectedAmount : amountPaid);
+                } catch (Exception ignored) {}
+            } else if ("WOMEN_PRODUCT".equals(type)) {
+                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("orderId");
+                Long targetId = Long.parseLong(targetIdObj.toString());
+                WomenProductOrder order = womenProductOrderPayRepo.findById(targetId).orElse(null);
+                if (order == null || order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Order not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expectedAmount = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
+                if (expectedAmount > 0 && Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match order total.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                order.setPaymentMethod("ONLINE");
+                order.setPaymentStatus("PAID");
+                order.setRazorpayPaymentId(paymentId);
+                womenProductOrderPayRepo.save(order);
+                try {
+                    womenProductsCareService.creditSeller(order);
+                } catch (Exception ignored) {}
             } else if ("WORKER_BOOKING".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = Long.parseLong(targetIdObj.toString());
@@ -495,6 +862,9 @@ public class PaymentController {
                 double walletAmount = expectedAmount > 0 ? expectedAmount : amountPaid;
 
                 User worker = booking.getJobApplication().getUser();
+                try {
+                    womenJobsCareService.creditPayout(booking.getJobApplication(), walletAmount);
+                } catch (Exception ignored) {}
                 if (worker != null) {
                     worker.setWalletBalance((worker.getWalletBalance() != null ? worker.getWalletBalance() : 0.0) + walletAmount);
                     userRepo.save(worker);
@@ -537,6 +907,134 @@ public class PaymentController {
                 glowBooking.setStatus("CONFIRMED");
                 glowBooking.setPrice(amountPaid);
                 booking1Repository.save(glowBooking);
+                if (glowBooking.getSalon() != null) {
+                    glowCareService.creditPayout(glowBooking.getSalon(), amountPaid);
+                }
+            } else if ("FITNESS".equals(type)) {
+                Object bookingIdObj = data.get("bookingId");
+                if (bookingIdObj == null) {
+                    responseMap.put("error", "bookingId is required for fitness payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                FitnessBooking fitnessBooking = fitnessBookingRepository.findById(Long.parseLong(bookingIdObj.toString())).orElse(null);
+                if (fitnessBooking == null || fitnessBooking.getUser() == null
+                        || !fitnessBooking.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Fitness booking not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(fitnessBooking.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = fitnessBooking.getPaymentAmount() == null ? 0 : fitnessBooking.getPaymentAmount();
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match session fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                fitnessBooking.setPaymentStatus("PAID");
+                fitnessBookingRepository.save(fitnessBooking);
+                fitnessCareService.creditPayout(fitnessBooking);
+            } else if ("FINANCIAL_BOOKING".equals(type)) {
+                Object registrationIdObj = data.get("registrationId") != null
+                        ? data.get("registrationId")
+                        : (data.get("targetId") != null ? data.get("targetId") : data.get("enrollmentId"));
+                if (registrationIdObj == null) {
+                    responseMap.put("error", "registrationId is required for financial session payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                FinancialEnrollment en = financialEnrollmentPayRepo
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (en == null || en.getUser() == null || !en.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Registration not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(en.getPaymentStatus())) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = en.getAmount() == null ? 0 : en.getAmount();
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match session fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                en.setPaymentStatus("PAID");
+                en.setRazorpayPaymentId(paymentId);
+                if (!"approved".equalsIgnoreCase(en.getStatus()) && !"completed".equalsIgnoreCase(en.getStatus())) {
+                    en.setStatus("paid");
+                }
+                financialEnrollmentPayRepo.save(en);
+                try {
+                    financialLiteracyCareService.creditPayout(en);
+                } catch (Exception ignored) {}
+            } else if ("WOMEN_EVENT".equals(type)) {
+                Object registrationIdObj = data.get("registrationId");
+                if (registrationIdObj == null) {
+                    responseMap.put("error", "registrationId is required for event payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                WomenEventRegistration reg = womenEventRegistrationRepository
+                        .findById(Long.parseLong(registrationIdObj.toString())).orElse(null);
+                if (reg == null || reg.getUser() == null || !reg.getUser().getId().equals(user.getId())) {
+                    responseMap.put("error", "Event registration not found or access denied.");
+                    return ResponseEntity.status(403).body(responseMap);
+                }
+                if (reg.isPaid()) {
+                    responseMap.put("status", "success");
+                    responseMap.put("message", "Already paid");
+                    responseMap.put("ticketCode", reg.getTicketCode());
+                    return ResponseEntity.ok(responseMap);
+                }
+                double expected = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
+                        ? reg.getEvent().getEntryFee() : 0;
+                if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match event entry fee.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                reg.setPaid(true);
+                reg.setAmountPaid(amountPaid);
+                womenEventRegistrationRepository.save(reg);
+                try {
+                    eventsCareService.creditPayout(reg);
+                } catch (Exception ignored) {}
+                responseMap.put("ticketCode", reg.getTicketCode());
+            } else if ("CREATOR_TIP".equals(type) || "CREATOR_SUB".equals(type) || "CREATOR_UNLOCK".equals(type)
+                    || "CREATOR_TIP".equalsIgnoreCase(Objects.toString(pending.type(), ""))
+                    || "CREATOR_SUB".equalsIgnoreCase(Objects.toString(pending.type(), ""))
+                    || "CREATOR_UNLOCK".equalsIgnoreCase(Objects.toString(pending.type(), ""))) {
+                String payType = type.isBlank() ? Objects.toString(pending.type(), "") : type;
+                Long targetId = pending.targetId();
+                if ("CREATOR_UNLOCK".equalsIgnoreCase(payType)) {
+                    if (targetId == null && data.get("videoId") != null) {
+                        targetId = Long.parseLong(data.get("videoId").toString());
+                    }
+                    Videoupload video = targetId == null ? null : videoUploadPayRepo.findById(targetId).orElse(null);
+                    if (video == null) {
+                        responseMap.put("error", "Post not found");
+                        return ResponseEntity.badRequest().body(responseMap);
+                    }
+                    try {
+                        creatorCareService.fulfillUnlock(user, video, amountPaid);
+                    } catch (Exception ignored) {}
+                } else {
+                    if (targetId == null && data.get("creatorId") != null) {
+                        targetId = Long.parseLong(data.get("creatorId").toString());
+                    }
+                    User creator = targetId == null ? null : userRepo.findById(targetId).orElse(null);
+                    if (creator == null) {
+                        responseMap.put("error", "Creator not found");
+                        return ResponseEntity.badRequest().body(responseMap);
+                    }
+                    try {
+                        if ("CREATOR_SUB".equalsIgnoreCase(payType)) {
+                            creatorCareService.fulfillSubscribe(user, creator, amountPaid);
+                        } else {
+                            creatorCareService.fulfillTip(user, creator, amountPaid,
+                                    Objects.toString(data.get("message"), ""));
+                        }
+                    } catch (Exception ignored) {}
+                }
             } else {
                 responseMap.put("error", "Unknown payment type.");
                 return ResponseEntity.badRequest().body(responseMap);
@@ -544,11 +1042,137 @@ public class PaymentController {
 
             responseMap.put("status", "success");
             responseMap.put("amountPaid", amountPaid);
+            String resolvedType = type.isBlank() ? Objects.toString(pending.type(), "UNKNOWN") : type;
+            finalizeSuccessfulPayment(
+                    orderId, paymentId, user, resolvedType, pending.targetId(), expectedPaise, responseMap);
             return ResponseEntity.ok(responseMap);
         } catch (Exception e) {
-            e.printStackTrace();
-            responseMap.put("error", "Server Error: " + e.getMessage());
+            log.error("Payment verify failed for order", e);
+            responseMap.put("error", "Server Error: Payment verification failed.");
             return ResponseEntity.status(500).body(responseMap);
+        }
+    }
+
+    /**
+     * Razorpay webhook for payment.captured / payment.failed reconciliation.
+     * Configure dashboard URL: POST /payment/webhook/razorpay
+     */
+    @PostMapping("/webhook/razorpay")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> razorpayWebhook(
+            @RequestBody String rawBody,
+            @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
+        Map<String, Object> res = new HashMap<>();
+        try {
+            boolean prodProfile = activeProfiles != null && activeProfiles.contains("prod");
+            if (razorpayWebhookSecret != null && !razorpayWebhookSecret.isBlank()) {
+                if (signature == null || signature.isBlank()) {
+                    res.put("error", "Missing webhook signature");
+                    return ResponseEntity.status(401).body(res);
+                }
+                boolean ok = Utils.verifyWebhookSignature(rawBody, signature, razorpayWebhookSecret);
+                if (!ok) {
+                    res.put("error", "Invalid webhook signature");
+                    return ResponseEntity.status(401).body(res);
+                }
+            } else if (prodProfile) {
+                res.put("error", "Webhook secret required in production");
+                return ResponseEntity.status(503).body(res);
+            }
+            JSONObject payload = new JSONObject(rawBody);
+            String event = payload.optString("event");
+            String eventId = payload.optString("id", event + "_" + System.currentTimeMillis());
+            if (paymentWebhookEventRepository.findByRazorpayEventId(eventId).isPresent()
+                    || doctorPaymentEventRepository.findByRazorpayEventId(eventId).isPresent()) {
+                res.put("success", true);
+                res.put("duplicate", true);
+                return ResponseEntity.ok(res);
+            }
+            JSONObject entity = payload.optJSONObject("payload") == null ? null
+                    : payload.getJSONObject("payload").optJSONObject("payment") == null ? null
+                    : payload.getJSONObject("payload").getJSONObject("payment").optJSONObject("entity");
+            String paymentId = entity == null ? null : entity.optString("id", null);
+            String orderId = entity == null ? null : entity.optString("order_id", null);
+
+            PaymentWebhookEvent ev = new PaymentWebhookEvent();
+            ev.setRazorpayEventId(eventId);
+            ev.setEventType(event);
+            ev.setRazorpayPaymentId(paymentId);
+            ev.setRazorpayOrderId(orderId);
+            ev.setPayload(rawBody);
+            ev.setProcessed(false);
+            ev.setCreatedAt(LocalDateTime.now());
+
+            // Legacy doctor event row for backward-compatible admin queries
+            DoctorPaymentEvent doctorEv = new DoctorPaymentEvent();
+            doctorEv.setRazorpayEventId(eventId);
+            doctorEv.setEventType(event);
+            doctorEv.setRazorpayPaymentId(paymentId);
+            doctorEv.setRazorpayOrderId(orderId);
+            doctorEv.setPayload(rawBody);
+            doctorEv.setProcessed(false);
+            doctorEv.setCreatedAt(LocalDateTime.now());
+
+            if (paymentId != null) {
+                appointmentRepo.findByRazorpayPaymentId(paymentId).ifPresent(a -> {
+                    ev.setProcessed(true);
+                    doctorEv.setAppointmentId(a.getId());
+                    doctorEv.setProcessed(true);
+                });
+            } else if (orderId != null) {
+                appointmentRepo.findByRazorpayOrderId(orderId).ifPresent(a -> {
+                    ev.setProcessed(true);
+                    doctorEv.setAppointmentId(a.getId());
+                    doctorEv.setProcessed(true);
+                });
+            }
+
+            if ("payment.captured".equals(event) && orderId != null && doctorEv.getAppointmentId() == null) {
+                paymentPendingOrderService.findByOrderId(orderId).ifPresent(pending -> {
+                    if ("DOCTOR".equalsIgnoreCase(pending.getPaymentType()) && pending.getTargetId() != null) {
+                        try {
+                            User user = userRepo.findById(pending.getUserId()).orElse(null);
+                            Doctor d = doctorRepo.findById(pending.getTargetId()).orElse(null);
+                            LocalDateTime apptTime =
+                                    MobileDoctorController.parseAppointmentTime(pending.getAppointmentTime());
+                            ConsultationType cType =
+                                    MobileDoctorController.parseConsultationType(pending.getConsultationType());
+                            if (user != null && d != null && apptTime != null) {
+                                DoctorAppointment appt = doctorBookingService.createPaidBooking(
+                                        d,
+                                        user,
+                                        apptTime,
+                                        cType,
+                                        pending.getReason(),
+                                        pending.getAmountPaise() / 100.0,
+                                        orderId,
+                                        paymentId,
+                                        "webhook");
+                                doctorEv.setAppointmentId(appt.getId());
+                                ev.setProcessed(true);
+                                doctorEv.setProcessed(true);
+                                paymentPendingOrderService.markFulfilled(pending, paymentId);
+                            }
+                        } catch (Exception recoverEx) {
+                            log.warn("Webhook doctor recovery failed for order {}", orderId, recoverEx);
+                            res.put("recoverError", "Recovery failed");
+                        }
+                    }
+                });
+            }
+
+            if (!res.containsKey("recoverError")) {
+                ev.setProcessed(true);
+                doctorEv.setProcessed(true);
+            }
+            paymentWebhookEventRepository.save(ev);
+            doctorPaymentEventRepository.save(doctorEv);
+            res.put("success", true);
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            log.error("Razorpay webhook processing failed", e);
+            res.put("error", "Webhook processing failed");
+            return ResponseEntity.status(500).body(res);
         }
     }
 }

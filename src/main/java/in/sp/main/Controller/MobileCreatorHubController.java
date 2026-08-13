@@ -2,9 +2,12 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
+import in.sp.main.Service.CreatorProfileService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +45,8 @@ public class MobileCreatorHubController {
     @Autowired private UserFollowRepository userFollowRepository;
     @Autowired private VideoReportRepository videoReportRepository;
     @Autowired private FileUploadService fileUploadService;
+    @Autowired private CreatorProfileService creatorProfileService;
+    @Autowired private in.sp.main.Service.CreatorCareService creatorCareService;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
@@ -53,16 +58,28 @@ public class MobileCreatorHubController {
     public ResponseEntity<Map<String, Object>> feed(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
 
         List<Long> blockedUserIds = userBlockRepository.findByUser_Id(currentUser.getId()).stream()
                 .map(ub -> ub.getBlockedUser().getId()).toList();
+        String cityFilter = city == null ? "" : city.trim().toLowerCase(java.util.Locale.ROOT);
+        String sortKey = sort == null ? "newest" : sort.trim().toLowerCase(java.util.Locale.ROOT);
+        int safeSize = Math.min(Math.max(size, 1), 50);
 
-        List<Videoupload> allContent = videoUploadRepository.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
+        Page<Videoupload> feedPage = videoUploadRepository
+                .findByIsBlockedFalseAndIsDraftFalseAndStatusOrderByUploadTimeDesc(
+                        "APPROVED", PageRequest.of(Math.max(page, 0), safeSize));
+
+        List<Videoupload> allContent = feedPage.getContent().stream()
                 .filter(v -> v.getUser() != null && !blockedUserIds.contains(v.getUser().getId()))
+                .filter(v -> v.getUser().getId().equals(currentUser.getId())
+                        || CreatorProfileService.isApprovedCreator(v.getUser()))
                 .filter(v -> canViewUploader(currentUser, v.getUser()))
                 .collect(Collectors.toList());
 
@@ -73,11 +90,34 @@ public class MobileCreatorHubController {
             ).collect(Collectors.toList());
         }
         if (category != null && !category.isBlank()) {
+            String cat = category.trim().toLowerCase();
             allContent = allContent.stream()
-                    .filter(v -> category.equalsIgnoreCase(v.getCategory()))
+                    .filter(v -> {
+                        String vc = v.getCategory() == null ? "" : v.getCategory().toLowerCase();
+                        String uc = v.getUser() == null || v.getUser().getCreatorCategory() == null
+                                ? "" : v.getUser().getCreatorCategory().toLowerCase();
+                        return vc.contains(cat) || uc.contains(cat);
+                    })
                     .collect(Collectors.toList());
         }
-        allContent.sort((a, b) -> b.getUploadTime().compareTo(a.getUploadTime()));
+        if (!cityFilter.isBlank()) {
+            allContent = allContent.stream()
+                    .filter(v -> v.getUser() != null && v.getUser().getCreatorCity() != null
+                            && v.getUser().getCreatorCity().toLowerCase(java.util.Locale.ROOT).contains(cityFilter))
+                    .collect(Collectors.toList());
+        }
+        allContent.sort((a, b) -> {
+            if ("rating".equals(sortKey)) {
+                double ra = a.getUser() == null ? 0 : a.getUser().getCreatorRating();
+                double rb = b.getUser() == null ? 0 : b.getUser().getCreatorRating();
+                int cmp = Double.compare(rb, ra);
+                if (cmp != 0) return cmp;
+            }
+            if (a.getUploadTime() == null && b.getUploadTime() == null) return 0;
+            if (a.getUploadTime() == null) return 1;
+            if (b.getUploadTime() == null) return -1;
+            return b.getUploadTime().compareTo(a.getUploadTime());
+        });
 
         List<Map<String, Object>> posts = allContent.stream()
                 .map(v -> postDto(v, currentUser))
@@ -86,30 +126,41 @@ public class MobileCreatorHubController {
         LocalDateTime since = LocalDateTime.now().minusHours(24);
         List<Map<String, Object>> storyGroups = buildStoryGroups(currentUser, blockedUserIds, since);
 
-        List<Map<String, Object>> trending = videoUploadRepository.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
-                .sorted((a, b) -> Integer.compare(b.getViewCount(), a.getViewCount()))
-                .limit(5)
+        List<Map<String, Object>> trending = videoUploadRepository
+                .findByIsBlockedFalseAndIsDraftFalseAndStatusOrderByViewCountDesc(
+                        "APPROVED", PageRequest.of(0, 5))
+                .getContent().stream()
                 .map(v -> postDto(v, currentUser))
                 .toList();
 
-        List<Map<String, Object>> recommended = userRepository.findAll().stream()
-                .filter(u -> u.isVerifiedCreator() && !u.getId().equals(currentUser.getId()))
-                .limit(5)
+        List<Map<String, Object>> recommended = userRepository
+                .findApprovedCreators(PartnerProfileStatus.APPROVED, PageRequest.of(0, 5))
+                .getContent().stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()))
                 .map(this::creatorSummary)
                 .toList();
 
         int unreadNotifCount = creatorNotificationRepository.countByUser_IdAndIsReadFalse(currentUser.getId());
+        boolean canUpload = CreatorProfileService.isApprovedCreator(currentUser);
 
-        return ok(Map.of(
-                "posts", posts,
-                "stories", storyGroups,
-                "trending", trending,
-                "recommendedCreators", recommended,
-                "categories", List.of(CREATOR_CATEGORIES),
-                "unreadNotificationCount", unreadNotifCount,
-                "count", posts.size()
-        ));
+        Map<String, Object> feed = new LinkedHashMap<>();
+        feed.put("posts", posts);
+        feed.put("stories", storyGroups);
+        feed.put("trending", trending);
+        feed.put("recommendedCreators", recommended);
+        feed.put("categories", List.of(CREATOR_CATEGORIES));
+        feed.put("unreadNotificationCount", unreadNotifCount);
+        feed.put("count", posts.size());
+        feed.put("page", Math.max(page, 0));
+        feed.put("size", safeSize);
+        feed.put("totalPages", feedPage.getTotalPages());
+        feed.put("totalElements", feedPage.getTotalElements());
+        feed.put("canUpload", canUpload);
+        feed.put("verifiedCreator", currentUser.isVerifiedCreator());
+        feed.put("creatorProfileStatus", currentUser.getCreatorProfileStatus() == null
+                ? null : currentUser.getCreatorProfileStatus().name());
+        feed.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
+        return ok(feed);
     }
 
     @GetMapping("/creators/{id}")
@@ -118,6 +169,9 @@ public class MobileCreatorHubController {
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
         if (creator == null) return badRequest("Creator not found");
+        if (!creator.getId().equals(currentUser.getId()) && !CreatorProfileService.isApprovedCreator(creator)) {
+            return badRequest("Creator not found");
+        }
 
         boolean blocked = userBlockRepository.existsByUser_IdAndBlockedUser_Id(currentUser.getId(), creator.getId())
                 || userBlockRepository.existsByUser_IdAndBlockedUser_Id(creator.getId(), currentUser.getId());
@@ -143,6 +197,11 @@ public class MobileCreatorHubController {
         profile.put("subscriptionPrice", creator.getCreatorSubscriptionPrice());
         profile.put("walletBalance", creator.getWalletBalance());
         profile.put("isOwnProfile", creator.getId().equals(currentUser.getId()));
+        profile.put("canReview", creatorCareService.canReview(currentUser, creator));
+        profile.put("canCancelSub", isSubscribed);
+        profile.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
+        profile.put("rating", creator.getCreatorRating());
+        profile.put("reviewCount", creator.getCreatorReviewCount());
 
         List<Map<String, Object>> posts = videoUploadRepository.findByUser_Id(creator.getId()).stream()
                 .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
@@ -227,6 +286,7 @@ public class MobileCreatorHubController {
         userStats.put("subscriptionPrice", user.getCreatorSubscriptionPrice());
         userStats.put("affiliateCode", user.getCreatorAffiliateCode());
         userStats.put("verifiedCreator", user.isVerifiedCreator());
+        userStats.putAll(creatorProfileService.profilePayload(user));
 
         Map<String, Object> dash = new LinkedHashMap<>();
         dash.put("drafts", drafts);
@@ -241,6 +301,11 @@ public class MobileCreatorHubController {
         dash.put("blockedUsers", blocked);
         dash.put("categories", List.of(CREATOR_CATEGORIES));
         dash.put("user", userStats);
+        dash.put("approved", CreatorProfileService.isApprovedCreator(user));
+        dash.put("canUpload", CreatorProfileService.isApprovedCreator(user));
+        dash.put("payoutBalance", user.getCreatorPayoutBalance());
+        dash.put("upiId", user.getCreatorUpiId());
+        dash.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
         return ok(dash);
     }
 
@@ -290,6 +355,11 @@ public class MobileCreatorHubController {
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
+        if (!CreatorProfileService.isApprovedCreator(user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "error", "Your creator profile must be approved by admin before you can upload."));
+        }
         if (file.isEmpty()) return badRequest("Media file is required");
 
         try {
@@ -388,6 +458,7 @@ public class MobileCreatorHubController {
         tip.setAmount(amount);
         tip.setMessage(message);
         tipTransactionRepository.save(tip);
+        try { creatorCareService.creditPayout(creator, amount); } catch (Exception ignored) {}
         session.setAttribute("user", currentUser);
         return ok(Map.of("success", true, "newBalance", currentUser.getWalletBalance()));
     }
@@ -419,8 +490,47 @@ public class MobileCreatorHubController {
         creator.setWalletBalance((creator.getWalletBalance() == null ? 0.0 : creator.getWalletBalance()) + price);
         userRepository.save(currentUser);
         userRepository.save(creator);
+        try { creatorCareService.creditPayout(creator, price); } catch (Exception ignored) {}
         session.setAttribute("user", currentUser);
         return ok(Map.of("success", true, "newBalance", currentUser.getWalletBalance()));
+    }
+
+    @PostMapping("/creators/{id}/unsubscribe")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> unsubscribe(@PathVariable Long id, HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        User creator = userRepository.findById(id).orElse(null);
+        if (creator == null) return badRequest("Creator not found");
+        try {
+            creatorCareService.cancelSubscription(currentUser, creator);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        }
+        return ok(Map.of("message", "Subscription cancelled", "cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY));
+    }
+
+    @PostMapping("/creators/{id}/rate")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rateCreator(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        User creator = userRepository.findById(id).orElse(null);
+        if (creator == null) return badRequest("Creator not found");
+        int stars = 5;
+        try {
+            if (body != null && body.get("rating") != null) stars = Integer.parseInt(String.valueOf(body.get("rating")));
+        } catch (Exception ignored) {}
+        String text = body == null || body.get("review") == null ? "" : String.valueOf(body.get("review"));
+        try {
+            creatorCareService.rate(currentUser, creator, stars, text);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        }
+        return ok(Map.of("message", "Thanks for your review"));
     }
 
     @PostMapping("/posts/{id}/unlock")
@@ -447,6 +557,9 @@ public class MobileCreatorHubController {
         unlock.setVideo(video);
         unlock.setAmountPaid(price);
         paidContentUnlockRepository.save(unlock);
+        if (creator != null) {
+            try { creatorCareService.creditPayout(creator, price); } catch (Exception ignored) {}
+        }
         session.setAttribute("user", currentUser);
         return ok(Map.of("success", true, "newBalance", currentUser.getWalletBalance()));
     }
@@ -632,6 +745,11 @@ public class MobileCreatorHubController {
     public ResponseEntity<Map<String, Object>> publishDraft(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
+        if (!CreatorProfileService.isApprovedCreator(user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "error", "Your creator profile must be approved by admin before you can publish."));
+        }
         Long videoId = longVal(body.get("videoId"));
         Videoupload video = videoUploadRepository.findById(videoId).orElse(null);
         if (video == null || !video.getUser().getId().equals(user.getId())) return badRequest("Not found");
@@ -671,6 +789,11 @@ public class MobileCreatorHubController {
     public ResponseEntity<Map<String, Object>> applyCollab(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
+        if (!CreatorProfileService.isApprovedCreator(user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "error", "Your creator profile must be approved before applying to campaigns."));
+        }
         Long campaignId = longVal(body.get("campaignId"));
         String pitch = str(body.get("pitch"));
         BrandCollaboration collab = brandCollaborationRepository.findById(campaignId).orElse(null);
@@ -699,6 +822,8 @@ public class MobileCreatorHubController {
     private List<Map<String, Object>> buildStoryGroups(User currentUser, List<Long> blockedUserIds, LocalDateTime since) {
         List<CreatorStory> active = creatorStoryRepository.findByIsDraftFalseAndUploadTimeAfter(since).stream()
                 .filter(s -> s.getUser() != null && !blockedUserIds.contains(s.getUser().getId()))
+                .filter(s -> s.getUser().getId().equals(currentUser.getId())
+                        || CreatorProfileService.isApprovedCreator(s.getUser()))
                 .filter(s -> canViewUploader(currentUser, s.getUser()))
                 .toList();
         Map<Long, List<CreatorStory>> byUser = active.stream()
@@ -775,6 +900,11 @@ public class MobileCreatorHubController {
         m.put("profilePhoto", u.getProfilePhoto());
         m.put("verifiedCreator", u.isVerifiedCreator());
         m.put("isPrivate", u.isPrivate());
+        m.put("city", u.getCreatorCity());
+        m.put("category", u.getCreatorCategory());
+        m.put("rating", u.getCreatorRating());
+        m.put("reviewCount", u.getCreatorReviewCount());
+        m.put("approved", CreatorProfileService.isApprovedCreator(u));
         return m;
     }
 

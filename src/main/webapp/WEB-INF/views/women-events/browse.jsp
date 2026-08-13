@@ -716,9 +716,7 @@
                                                 <div class="card-cat">${ev.category.displayName}</div>
                                                 <h4 class="card-title">${ev.name}</h4>
                                                 <div class="card-meta">
-                                                    <span><i class="bi bi-calendar3"></i>
-                                                        <fmt:formatDate value="${ev.eventDate}" pattern="dd MMM yyyy" type="date"/>
-                                                    </span>
+                                                    <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
                                                     <span><i class="bi bi-geo-alt"></i> ${ev.venue}, ${ev.city}</span>
                                                     <span><i class="bi bi-person"></i> ${ev.organizerName} <small class="text-muted">(${ev.organizerType})</small></span>
                                                 </div>

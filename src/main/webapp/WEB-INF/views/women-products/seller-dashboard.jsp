@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
   <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
     <!DOCTYPE html>
     <html lang="en">
 
@@ -627,41 +628,94 @@
             </div>
 
             <div class="fdf-section">
-              <div class="fdf-section-header">
-                <h2><i class="bi bi-lightning-charge-fill"></i> Recent Orders Queue</h2>
-                <a href="?section=orders"
-                  style="color: var(--brand-pink); font-size: 0.9rem; font-weight: 700; text-decoration: none;">View All
-                  Trace</a>
+              <div class="fdf-section-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2><i class="bi bi-lightning-charge-fill" style="color:var(--brand-pink);"></i> Recent Orders Queue</h2>
+                <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=orders"
+                  style="color: var(--brand-pink); font-size: 0.85rem; font-weight: 800; text-decoration: none; display:flex; align-items:center; gap:4px;">
+                  View All Orders <i class="bi bi-arrow-right"></i>
+                </a>
               </div>
               <div class="fdf-section-body" style="padding: 0;">
                 <c:if test="${empty orders}">
-                  <div style="padding: 80px; text-align: center; color: var(--fdf-muted); font-weight: 500;"><i
-                      class="bi bi-inbox"
-                      style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i> No active orders
-                    found.</div>
+                  <div style="padding: 80px; text-align: center; color: var(--fdf-muted); font-weight: 500;">
+                    <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i>
+                    No active orders found.
+                  </div>
                 </c:if>
                 <c:if test="${not empty orders}">
                   <table class="premium-table">
                     <thead>
                       <tr>
-                        <th>Customer Identity</th>
-                        <th>Item Details</th>
-                        <th>Qty</th>
-                        <th>Value</th>
-                        <th>Status</th>
+                        <th>Order & Customer</th>
+                        <th>Product Item</th>
+                        <th style="text-align:center;">Qty</th>
+                        <th>Amount</th>
+                        <th style="text-align:center;">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       <c:forEach var="o" items="${orders}" begin="0" end="4">
                         <tr>
                           <td>
-                            <div style="font-weight: 800;">${o.user.fullName}</div>
-                            <div style="font-size: 0.8rem; opacity: 0.6;">${o.paymentMethod}</div>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                              <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem; flex-shrink:0;">
+                                ${not empty o.user && not empty o.user.fullName ? o.user.fullName.substring(0,1) : 'C'}
+                              </div>
+                              <div>
+                                <div style="font-weight: 800; color:var(--brand-purple-dark); font-size:0.9rem;">
+                                  ${not empty o.user && not empty o.user.fullName ? o.user.fullName : 'Customer #'.concat(o.id)}
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--fdf-muted); font-weight:600; display:flex; align-items:center; gap:6px; margin-top:2px;">
+                                  <span>#ORD-${o.id}</span> • 
+                                  <span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:700; color:#475569; font-size:0.7rem;">${o.paymentMethod}</span>
+                                </div>
+                              </div>
+                            </div>
                           </td>
-                          <td>${o.product.name}</td>
-                          <td>${o.quantity}</td>
-                          <td><span style="font-weight: 900; color: #16a34a;">&#8377;${o.totalPrice}</span></td>
-                          <td><span class="fdf-badge badge-${o.status}">${o.status}</span></td>
+                          <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                              <c:if test="${not empty o.product.imagePath}">
+                                <img src="${pageContext.request.contextPath}${o.product.imagePath}" style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                              </c:if>
+                              <div>
+                                <div style="font-weight:700; font-size:0.9rem; color:var(--brand-purple-dark);">${o.product.name}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style="text-align:center;">
+                            <span style="font-weight:800; background:#fdf2f8; color:var(--brand-pink); padding:4px 10px; border-radius:12px; font-size:0.85rem;">
+                              ${o.quantity}
+                            </span>
+                          </td>
+                          <td>
+                            <span style="font-weight: 900; color: #16a34a; font-size:0.95rem;">
+                              &#8377;<fmt:formatNumber value="${o.totalPrice}" maxFractionDigits="0" />
+                            </span>
+                          </td>
+                          <td style="text-align:center;">
+                            <c:choose>
+                              <c:when test="${o.status == 'DELIVERED'}">
+                                <span style="background:#dcfce7; color:#15803d; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                  <i class="bi bi-check-circle-fill"></i> Delivered
+                                </span>
+                              </c:when>
+                              <c:when test="${o.status == 'SHIPPED'}">
+                                <span style="background:#f3e8ff; color:#6b21a8; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                  <i class="bi bi-truck"></i> Shipped
+                                </span>
+                              </c:when>
+                              <c:when test="${o.status == 'CANCELLED'}">
+                                <span style="background:#fee2e2; color:#b91c1c; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                  <i class="bi bi-x-circle-fill"></i> Cancelled
+                                </span>
+                              </c:when>
+                              <c:otherwise>
+                                <span style="background:#fef3c7; color:#b45309; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                  <i class="bi bi-box-seam-fill"></i> ${o.status}
+                                </span>
+                              </c:otherwise>
+                            </c:choose>
+                          </td>
                         </tr>
                       </c:forEach>
                     </tbody>
@@ -791,6 +845,7 @@
                   <form id="productForm" method="post"
                     action="${pageContext.request.contextPath}/women-products/seller/products/add"
                     enctype="multipart/form-data">
+                    <input type="hidden" name="productId" id="editProductId" value="">
 
                     <h4
                       style="margin-bottom: 15px; color: var(--brand-purple-dark); font-weight: 800; font-size: 1.1rem;">
@@ -937,70 +992,133 @@
 
             <%-- ══════ ORDERS ══════ --%>
               <c:if test="${section == 'orders'}">
-                <div class="header-info">
-                  <h1>Fulfillment Stream</h1>
+                <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
+                  <div>
+                    <h1 style="margin:0; font-weight:800;">Order Fulfillment Stream</h1>
+                    <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">Track customer orders, manage delivery dispatches, and update fulfillment statuses.</p>
+                  </div>
+                  <div style="background:#fff; padding:10px 20px; border-radius:14px; border:1px solid var(--fdf-border); display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-sm);">
+                    <span style="font-weight:800; color:var(--brand-purple-dark);">Total Direct Orders:</span>
+                    <span style="color:var(--brand-pink); font-size:1.1rem; font-weight:900;">${not empty orders ? orders.size() : 0}</span>
+                  </div>
                 </div>
+
                 <div class="fdf-section">
                   <div class="fdf-section-body" style="padding: 0;">
                     <c:if test="${empty orders}">
-                      <div style="padding: 80px; text-align: center; color: var(--fdf-muted);"><i class="bi bi-truck"
-                          style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i> No active
-                        fulfillment requests.</div>
+                      <div style="padding: 80px; text-align: center; color: var(--fdf-muted); font-weight: 500;">
+                        <i class="bi bi-truck" style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i>
+                        No active fulfillment requests.
+                      </div>
                     </c:if>
                     <c:if test="${not empty orders}">
                       <table class="premium-table">
                         <thead>
                           <tr>
-                            <th>ID/Trace</th>
-                            <th>Consignee</th>
-                            <th>Product Pool</th>
-                            <th>Supply</th>
-                            <th>Address Log</th>
-                            <th>Status State</th>
-                            <th>Execute Update</th>
+                            <th>Order ID</th>
+                            <th>Customer & Contact</th>
+                            <th>Product Item</th>
+                            <th>Qty & Amount</th>
+                            <th>Shipping Address</th>
+                            <th style="text-align:center;">Order Status</th>
+                            <th style="text-align:center;">Update Action</th>
                           </tr>
                         </thead>
                         <tbody>
                           <c:forEach var="o" items="${orders}">
                             <tr>
-                              <td style="font-family:monospace; font-weight:800; font-size:0.8rem;">#${o.id}</td>
                               <td>
-                                <div style="font-weight: 800;">${o.user.fullName}</div>
-                                <div style="font-size: 0.7rem; opacity: 0.6;">${o.user.email}</div>
+                                <span style="font-family:monospace; font-weight:800; font-size:0.85rem; background:#f1f5f9; color:var(--brand-purple-dark); padding:4px 10px; border-radius:8px; display:inline-block;">
+                                  #ORD-${o.id}
+                                </span>
                               </td>
-                              <td>${o.product.name}</td>
-                              <td style="text-align: center;">${o.quantity}u</td>
                               <td>
-                                <div style="font-size: 0.75rem; max-width: 180px;">${o.shippingAddress}</div>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                  <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem; flex-shrink:0;">
+                                    ${not empty o.user && not empty o.user.fullName ? o.user.fullName.substring(0,1) : 'C'}
+                                  </div>
+                                  <div>
+                                    <div style="font-weight: 800; color:var(--brand-purple-dark); font-size:0.9rem;">
+                                      ${not empty o.user && not empty o.user.fullName ? o.user.fullName : 'Customer #'.concat(o.id)}
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--fdf-muted); font-weight:600; display:flex; align-items:center; gap:6px; margin-top:2px;">
+                                      <span>${not empty o.user && not empty o.user.email ? o.user.email : 'No Email'}</span> • 
+                                      <span style="background:#fdf2f8; padding:2px 6px; border-radius:4px; font-weight:700; color:var(--brand-pink); font-size:0.7rem;">${o.paymentMethod}</span>
+                                    </div>
+                                  </div>
+                                </div>
                               </td>
-                              <td><span class="fdf-badge badge-${o.status}">${o.status}</span></td>
                               <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                  <c:if test="${not empty o.product.imagePath}">
+                                    <img src="${pageContext.request.contextPath}${o.product.imagePath}" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                                  </c:if>
+                                  <div>
+                                    <div style="font-weight:700; font-size:0.9rem; color:var(--brand-purple-dark);">${o.product.name}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div style="font-weight:800; color:var(--brand-purple-dark); font-size:0.85rem;">${o.quantity} ${o.quantity == 1 ? 'item' : 'items'}</div>
+                                <div style="font-weight:900; color:#16a34a; font-size:0.95rem; margin-top:2px;">
+                                  &#8377;<fmt:formatNumber value="${o.totalPrice}" maxFractionDigits="0" />
+                                </div>
+                              </td>
+                              <td>
+                                <div style="font-size: 0.8rem; line-height:1.4; max-width: 220px; background:#fafafa; padding:8px 12px; border-radius:10px; border:1px solid #eee; color:#475569;">
+                                  <i class="bi bi-geo-alt-fill" style="color:var(--brand-pink); margin-right:4px;"></i> ${o.shippingAddress}
+                                </div>
+                              </td>
+                              <td style="text-align:center;">
+                                <c:choose>
+                                  <c:when test="${o.status == 'DELIVERED'}">
+                                    <span style="background:#dcfce7; color:#15803d; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                      <i class="bi bi-check-circle-fill"></i> Delivered
+                                    </span>
+                                  </c:when>
+                                  <c:when test="${o.status == 'SHIPPED' || o.status == 'IN_TRANSIT'}">
+                                    <span style="background:#f3e8ff; color:#6b21a8; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                      <i class="bi bi-truck"></i> In Transit
+                                    </span>
+                                  </c:when>
+                                  <c:when test="${o.status == 'CONFIRMED'}">
+                                    <span style="background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                      <i class="bi bi-clipboard-check-fill"></i> Confirmed
+                                    </span>
+                                  </c:when>
+                                  <c:when test="${o.status == 'CANCELLED'}">
+                                    <span style="background:#fee2e2; color:#b91c1c; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                      <i class="bi bi-x-circle-fill"></i> Cancelled
+                                    </span>
+                                  </c:when>
+                                  <c:otherwise>
+                                    <span style="background:#fef3c7; color:#b45309; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                      <i class="bi bi-box-seam-fill"></i> ${o.status}
+                                    </span>
+                                  </c:otherwise>
+                                </c:choose>
+                              </td>
+                              <td id="orderStatusCell_${o.id}" style="text-align:center;">
                                 <c:set var="curr" value="${o.status}" />
                                 <c:if test="${curr != 'DELIVERED' && curr != 'CANCELLED'}">
-                                  <form
-                                    action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
-                                    method="post" style="display:flex; gap:8px;">
-                                    <select name="status" class="form-ctrl"
-                                      style="margin-top:0; padding:8px 12px; font-size:0.85rem; width:120px;">
-                                      <option value="PLACED" ${curr=='PLACED' ?'selected':''} ${curr !='PLACED'
-                                        ? 'disabled' : '' }>Placed</option>
-                                      <option value="CONFIRMED" ${curr=='CONFIRMED' ?'selected':''} ${(curr !='PLACED'
-                                        && curr !='CONFIRMED' ) ? 'disabled' : '' }>Confirmed</option>
-                                      <option value="SHIPPED" ${curr=='SHIPPED' ?'selected':''} ${(curr !='PLACED' &&
-                                        curr !='CONFIRMED' && curr !='SHIPPED' ) ? 'disabled' : '' }>In Transit</option>
-                                      <option value="DELIVERED" ${curr=='DELIVERED' ?'selected':''}>Delivered</option>
-                                      <option value="CANCELLED" ${curr=='CANCELLED' ?'selected':''}>Cancelled</option>
+                                  <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
+                                    method="post" class="seller-order-form" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
+                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:120px; border-radius:10px;">
+                                      <option value="PLACED" ${curr=='PLACED' ? 'selected' : ''}>Placed</option>
+                                      <option value="CONFIRMED" ${curr=='CONFIRMED' ? 'selected' : ''}>Confirmed</option>
+                                      <option value="SHIPPED" ${(curr=='SHIPPED' || curr=='IN_TRANSIT') ? 'selected' : ''}>In Transit</option>
+                                      <option value="DELIVERED" ${curr=='DELIVERED' ? 'selected' : ''}>Delivered</option>
+                                      <option value="CANCELLED" ${curr=='CANCELLED' ? 'selected' : ''}>Cancelled</option>
                                     </select>
-                                    <button type="submit"
-                                      style="background:var(--brand-purple); color:#fff; border:none; width:34px; height:34px; border-radius:10px; cursor:pointer;"><i
-                                        class="bi bi-save-fill"></i></button>
+                                    <button type="submit" style="background:var(--gradient-primary); color:#fff; border:none; padding:6px 12px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Update Status">
+                                      <i class="bi bi-arrow-repeat"></i> Update
+                                    </button>
                                   </form>
                                 </c:if>
                                 <c:if test="${curr == 'DELIVERED' || curr == 'CANCELLED'}">
-                                  <div style="display:flex; align-items:center; gap:8px; padding-left:12px;">
-                                    <span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">${curr ==
-                                      'DELIVERED' ? 'Fulfilled' : 'Terminated'}</span>
-                                    <i class="bi bi-lock-fill" style="opacity:0.3;"></i>
+                                  <div style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; padding:6px 14px; border-radius:20px; border:1px solid #e2e8f0;">
+                                    <span style="font-size:0.8rem; font-weight:700; color:var(--fdf-muted);">${curr == 'DELIVERED' ? 'Fulfilled' : 'Terminated'}</span>
+                                    <i class="bi bi-lock-fill" style="opacity:0.4; font-size:0.8rem;"></i>
                                   </div>
                                 </c:if>
                               </td>
@@ -1284,145 +1402,205 @@
 
                     <%-- ══════ PROFILE ══════ --%>
                       <c:if test="${section == 'profile'}">
-                        <div class="header-info">
-                          <h1>Profile Settings</h1>
-                          <span class="fdf-badge badge-${seller.verificationStatus}"
-                            style="padding: 8px 20px; font-size: 0.9rem;">
-                            <i class="bi bi-shield-check"></i> ${seller.verificationStatus}
-                          </span>
+                        <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px;">
+                          <div>
+                            <h1 style="margin:0; font-weight:800;">Business & Service Profile</h1>
+                            <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">Manage your business identity, professional qualifications, availability and contact details.</p>
+                          </div>
+                          <button class="btn-fdf-action" onclick="openProfileEditModal()" style="display:flex; align-items:center; gap:8px; padding:12px 24px; font-weight:800; font-size:0.95rem;">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                          </button>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 320px 1fr; gap: 30px;">
-                          <div class="fdf-section">
-                            <div class="fdf-section-body" style="text-align: center; padding: 40px 30px;">
-                              <div style="position: relative; display: inline-block; margin-bottom: 25px;">
-                                <c:choose>
-                                  <c:when test="${not empty seller.profilePhotoPath}">
-                                    <img src="${pageContext.request.contextPath}${seller.profilePhotoPath}"
-                                      style="width: 160px; height: 160px; border-radius: 40px; object-fit: cover; border: 5px solid #fff; box-shadow: var(--shadow-md);">
-                                  </c:when>
-                                  <c:otherwise>
-                                    <div
-                                      style="width: 160px; height: 160px; border-radius: 40px; background: #fff1f2; display: flex; align-items: center; justify-content: center; border: 5px solid #fff; box-shadow: var(--shadow-md);">
-                                      <i class="bi bi-person-fill"
-                                        style="font-size: 64px; color: var(--brand-pink);"></i>
-                                    </div>
-                                  </c:otherwise>
-                                </c:choose>
+            <%-- Profile Completion Banner --%>
+            <c:set var="completedCount" value="0" />
+            <c:if test="${not empty seller.fullName}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.businessName}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.profilePhotoPath}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.phone}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.email}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.address}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.serviceArea}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.description}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.qualification}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.experience}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.availableDays}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.workingHoursFrom || not empty seller.workingHoursTo}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.languagesSpoken}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
 
-                                <form id="profilePhotoForm"
-                                  action="${pageContext.request.contextPath}/women-products/seller/profile/update"
-                                  method="post" enctype="multipart/form-data" style="display:none;">
-                                  <input type="hidden" name="fullName" value="${seller.fullName}">
-                                  <input type="hidden" name="businessName" value="${seller.businessName}">
-                                  <input type="hidden" name="phone" value="${seller.phone}">
-                                  <input type="hidden" name="address" value="${seller.address}">
-                                  <input type="hidden" name="description" value="${seller.description}">
-                                  <input type="file" name="profilePhoto" id="profilePhotoInput"
-                                    onchange="document.getElementById('profilePhotoForm').submit()">
-                                </form>
+            <fmt:formatNumber value="${completedCount * 100 / 13}" maxFractionDigits="0" var="profilePercent" />
 
-                                <label for="profilePhotoInput"
-                                  style="position: absolute; bottom: -10px; right: -10px; background: var(--brand-pink); color: #fff; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 4px solid #fff; cursor: pointer; transition: 0.3s;">
-                                  <i class="bi bi-camera-fill"></i>
-                                </label>
-                              </div>
+            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div>
+                  <h3 style="margin:0; font-weight:800; font-size:1.2rem; color:#fff;"><i class="bi bi-speedometer2" style="color:var(--brand-pink);"></i> Profile Completion</h3>
+                  <p style="margin:5px 0 0 0; font-size:0.85rem; opacity:0.8;">Complete all profile information to build customer trust and search visibility.</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; font-size: 1.3rem; font-weight: 900; color: #38bdf8;">
+                  ${profilePercent}%
+                </div>
+              </div>
+              <div style="width: 100%; background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+                <div style="width: ${profilePercent}%; background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%); height: 100%; border-radius: 6px; transition: width 0.5s ease;"></div>
+              </div>
+              <div style="font-size: 0.8rem; opacity: 0.9; display: flex; gap: 15px; flex-wrap: wrap;">
+                <span><i class="bi bi-check-circle-fill" style="color:#4ade80;"></i> ${completedCount} of 13 fields completed</span>
+                <c:if test="${profilePercent < 100}">
+                  <span style="color: #fca5a5;"><i class="bi bi-exclamation-triangle-fill"></i> Complete remaining fields for 100% profile score</span>
+                </c:if>
+              </div>
+            </div>
 
-                              <h3
-                                style="font-family: 'Montserrat', sans-serif; font-weight: 800; color: var(--brand-purple-darker); margin-bottom: 5px;">
-                                ${seller.fullName}</h3>
-                              <p
-                                style="color: var(--fdf-muted); font-weight: 600; font-size: 0.9rem; margin-bottom: 20px;">
-                                ${seller.email}</p>
-
-                              <div
-                                style="background: #fdf2f8; border-radius: 20px; padding: 20px; display: flex; justify-content: center; align-items: center;">
-                                <div>
-                                  <div style="font-weight: 800; color: var(--brand-pink); font-size: 1.2rem;">
-                                    ${totalOrders}</div>
-                                  <div
-                                    style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--fdf-muted);">
-                                    Total Sales</div>
-                                </div>
-                              </div>
-                            </div>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+              <%-- Profile Summary Card --%>
+                <div class="fdf-section" style="height: fit-content;">
+                  <div class="fdf-section-body" style="text-align: center; padding: 30px;">
+                    <div style="position: relative; width: 120px; height: 120px; margin: 0 auto 20px auto;">
+                      <c:choose>
+                        <c:when test="${not empty seller.profilePhotoPath}">
+                          <img src="${pageContext.request.contextPath}${seller.profilePhotoPath}" alt="Logo" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--brand-pink); box-shadow: var(--shadow-md);">
+                        </c:when>
+                        <c:otherwise>
+                          <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; border: 4px solid #fff; box-shadow: var(--shadow-md);">
+                            ${not empty seller.businessName ? seller.businessName.substring(0,1) : 'S'}
                           </div>
+                        </c:otherwise>
+                      </c:choose>
+                    </div>
 
-                          <div class="fdf-section">
-                            <div class="fdf-section-header">
-                              <h2><i class="bi bi-shop"></i> Business Identity</h2>
-                            </div>
-                            <div class="fdf-section-body">
-                              <div
-                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-                                <div>
-                                  <label
-                                    style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted); letter-spacing: 0.5px;">Business
-                                    Name</label>
-                                  <div
-                                    style="font-size: 1.1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 5px;">
-                                    ${seller.businessName}</div>
-                                </div>
-                                <div>
-                                  <label
-                                    style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted); letter-spacing: 0.5px;">Contact
-                                    Phone</label>
-                                  <div
-                                    style="font-size: 1.1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 5px;">
-                                    ${seller.phone}</div>
-                                </div>
-                              </div>
+                    <h2 style="font-weight: 800; color: var(--brand-purple-dark); margin-bottom: 15px;">${seller.businessName}</h2>
 
-                              <div style="margin-bottom: 24px;">
-                                <label
-                                  style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted); letter-spacing: 0.5px;">Registered
-                                  Address</label>
-                                <div
-                                  style="font-size: 1rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 5px; line-height: 1.6;">
-                                  ${seller.address}</div>
-                              </div>
+                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 20px; background: #ecfdf5; color: #059669; font-weight: 700; font-size: 0.85rem; margin-bottom: 20px;">
+                      <i class="bi bi-patch-check-fill"></i> ${seller.verificationStatus}
+                    </div>
 
-                              <div style="margin-bottom: 24px;">
-                                <label
-                                  style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted); letter-spacing: 0.5px;">Business
-                                  Description</label>
-                                <div
-                                  style="font-size: 1rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 5px; line-height: 1.6;">
-                                  ${not empty seller.description ? seller.description : '<em style="opacity: 0.5;">No
-                                    description provided.</em>'}
-                                </div>
-                              </div>
+                    <div style="padding-top: 20px; border-top: 1px solid var(--fdf-border); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                      <div style="background: #fafafa; padding: 12px; border-radius: 12px;">
+                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--brand-purple-dark);">${totalProducts}</div>
+                        <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--fdf-muted);">Products</div>
+                      </div>
+                      <div style="background: #fafafa; padding: 12px; border-radius: 12px;">
+                        <div style="font-size: 1.2rem; font-weight: 900; color: var(--brand-purple-dark);">${totalOrders}</div>
+                        <div style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--fdf-muted);">Orders</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                              <div
-                                style="padding-top: 20px; border-top: 1px solid var(--fdf-border); display: flex; gap: 15px;">
-                                <c:if test="${not empty seller.identityDocPath}">
-                                  <a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank"
-                                    class="btn-fdf-action"
-                                    style="background: var(--brand-purple); text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                    <i class="bi bi-file-earmark-person"></i> View ID Document
-                                  </a>
-                                </c:if>
-                                <button class="btn-fdf-action" onclick="openProfileEditModal()"
-                                  style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                                  <i class="bi bi-pencil-square"></i> Update Business Profile
-                                </button>
-                              </div>
-                            </div>
+              <%-- Detailed Info Sections --%>
+                <div>
+                  <%-- 1. Profile Information --%>
+                  <div class="fdf-section" style="margin-bottom: 20px;">
+                    <div class="fdf-section-header">
+                      <h2><i class="bi bi-person-badge-fill"></i> Profile Information</h2>
+                    </div>
+                    <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Full Name</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.fullName}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Name</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.businessName}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Service Area</label>
+                          <div style="font-size: 1rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.serviceArea ? seller.serviceArea : 'N/A'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <%-- 2. Contact Information --%>
+                  <div class="fdf-section" style="margin-bottom: 20px;">
+                    <div class="fdf-section-header">
+                      <h2><i class="bi bi-geo-alt-fill"></i> Contact Information</h2>
+                    </div>
+                    <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Phone Number</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.phone}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Email Address</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.email}</div>
+                        </div>
+                      </div>
+                      <div style="margin-bottom: 15px;">
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Address</label>
+                        <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px; line-height: 1.5;">${seller.address}</div>
+                      </div>
+                      <div>
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Description</label>
+                        <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px; line-height: 1.5;">${not empty seller.description ? seller.description : 'No description provided.'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <%-- 3. Professional Information --%>
+                  <div class="fdf-section" style="margin-bottom: 20px;">
+                    <div class="fdf-section-header">
+                      <h2><i class="bi bi-award-fill"></i> Professional Information</h2>
+                    </div>
+                    <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Years of Experience</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.experience ? seller.experience : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Languages Spoken</label>
+                          <div style="font-size: 1rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.languagesSpoken ? seller.languagesSpoken : 'N/A'}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Qualification / Certification</label>
+                        <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px; line-height: 1.5;">${not empty seller.qualification ? seller.qualification : 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <%-- 4. Availability --%>
+                  <div class="fdf-section">
+                    <div class="fdf-section-header">
+                      <h2><i class="bi bi-clock-history"></i> Availability & Working Hours</h2>
+                    </div>
+                    <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Available Days</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.availableDays ? seller.availableDays : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Working Hours</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">
+                            <c:choose>
+                              <c:when test="${not empty seller.workingHoursFrom || not empty seller.workingHoursTo}">
+                                ${seller.workingHoursFrom} - ${seller.workingHoursTo}
+                              </c:when>
+                              <c:otherwise>N/A</c:otherwise>
+                            </c:choose>
                           </div>
                         </div>
-
-      </div>
+                      </div>
+                    </div>
+                  </div>
+            </div>
+          </c:if>
 
       <%-- Edit Profile Modal --%>
         <div id="profileEditModal" class="fdf-modal">
-          <div class="fdf-modal-content">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-              <h2 style="font-family:'Montserrat',sans-serif; font-weight:900;"><i class="bi bi-person-gear"
+          <div class="fdf-modal-content" style="max-width: 750px; max-height: 90vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
+              <h2 style="font-family:'Montserrat',sans-serif; font-weight:900; margin:0;"><i class="bi bi-person-gear"
                   style="color:var(--brand-pink)"></i> Edit Profile</h2>
               <button onclick="document.getElementById('profileEditModal').style.display='none'"
                 style="background:none; border:none; font-size:24px; opacity:0.3; cursor:pointer;"><i
                   class="bi bi-x-circle"></i></button>
             </div>
+
             <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" novalidate>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
@@ -1430,9 +1608,29 @@
                        required minlength="2" maxlength="80"
                        pattern="[A-Za-z][A-Za-z .'-]{1,79}"
                        title="2–80 letters only; spaces, apostrophes, periods, hyphens allowed">
+
+
+            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data">
+              <%-- Profile Photo Upload & Preview --%>
+              <div class="fdf-form-group" style="margin-bottom: 20px; text-align: center; background: #fafafa; padding: 20px; border-radius: 14px; border: 1px dashed #ccc;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:10px;">Profile Photo / Business Logo</label>
+                <div style="margin-bottom: 10px;">
+                  <img id="photoPreview" src="${not empty seller.profilePhotoPath ? pageContext.request.contextPath.concat(seller.profilePhotoPath) : ''}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; ${empty seller.profilePhotoPath ? 'display:none;' : ''} border: 2px solid var(--brand-pink);">
+                </div>
+                <input type="file" name="profilePhoto" accept="image/png, image/jpeg, image/jpg, image/webp" class="form-ctrl" onchange="previewProfilePhoto(this)">
+                <small style="color: #666; font-size: 0.75rem; margin-top: 5px; display: block;">Supported formats: JPG, JPEG, PNG, WEBP</small>
+
+            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post">
+              <div class="fdf-form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name</label>
+                <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required pattern="[A-Za-z\s]{3,50}" title="Must contain only letters and spaces, 3-50 characters">
+
               </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:15px;">
+
+              <%-- Basic Info --%>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
+
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
                   <input type="text" name="businessName" id="profileBusinessName" class="form-ctrl" value="${seller.businessName}"
                          required minlength="2" maxlength="100"
@@ -1445,32 +1643,189 @@
                          required minlength="10" maxlength="10" pattern="[0-9]{10}"
                          title="Exactly 10 digits"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
+                  <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
+                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required>
+
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name</label>
+                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required minlength="3" maxlength="100">
+
                 </div>
               </div>
+
+              <div class="fdf-form-group" style="margin-bottom:15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Service Area</label>
+                <input type="text" name="serviceArea" class="form-ctrl" value="${seller.serviceArea}" placeholder="e.g. Hyderabad, Secunderabad">
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
+                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required>
+
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone</label>
+                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required pattern="[6-9][0-9]{9}" maxlength="10" title="Valid 10-digit mobile number">
+
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
+                  <select name="experience" class="form-ctrl">
+                    <option value="">-- Select Experience --</option>
+                    <option value="Less than 1 year" ${seller.experience == 'Less than 1 year' ? 'selected' : ''}>Less than 1 year</option>
+                    <option value="1 year" ${seller.experience == '1 year' ? 'selected' : ''}>1 year</option>
+                    <option value="2 years" ${seller.experience == '2 years' ? 'selected' : ''}>2 years</option>
+                    <option value="3 years" ${seller.experience == '3 years' ? 'selected' : ''}>3 years</option>
+                    <option value="4 years" ${seller.experience == '4 years' ? 'selected' : ''}>4 years</option>
+                    <option value="5 years" ${seller.experience == '5 years' ? 'selected' : ''}>5 years</option>
+                    <option value="6 years" ${seller.experience == '6 years' ? 'selected' : ''}>6 years</option>
+                    <option value="7 years" ${seller.experience == '7 years' ? 'selected' : ''}>7 years</option>
+                    <option value="8 years" ${seller.experience == '8 years' ? 'selected' : ''}>8 years</option>
+                    <option value="9 years" ${seller.experience == '9 years' ? 'selected' : ''}>9 years</option>
+                    <option value="10 years" ${seller.experience == '10 years' ? 'selected' : ''}>10 years</option>
+                    <option value="11–15 years" ${seller.experience == '11–15 years' ? 'selected' : ''}>11–15 years</option>
+                    <option value="16–20 years" ${seller.experience == '16–20 years' ? 'selected' : ''}>16–20 years</option>
+                    <option value="20+ years" ${seller.experience == '20+ years' ? 'selected' : ''}>20+ years</option>
+                  </select>
+                </div>
+              </div>
+
               <div class="fdf-form-group" style="margin-bottom: 15px;">
+
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
                           minlength="10" maxlength="1000">${seller.address}</textarea>
+
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
+                <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
+
+              </div>
+
+              <div class="fdf-form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Qualification / Certification</label>
+                <textarea name="qualification" class="form-ctrl" rows="2" placeholder="e.g. Certified Cosmetologist, Skincare & Haircare Specialist, Diploma in Beauty & Wellness">${seller.qualification}</textarea>
+
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address</label>
+                <textarea name="address" class="form-ctrl" rows="2" required minlength="10" maxlength="255">${seller.address}</textarea>
               </div>
               <div class="fdf-form-group" style="margin-bottom: 30px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business
                   Description</label>
+
                 <textarea name="description" id="profileDescription" class="form-ctrl" rows="3"
                           maxlength="2000">${seller.description}</textarea>
+
+                <textarea name="description" class="form-ctrl" rows="3" maxlength="500">${seller.description}</textarea>
+
               </div>
-              <button type="submit" class="btn-fdf-action" style="width:100%; padding: 15px; border-radius: 14px;">Save
-                Profile Changes</button>
+
+              <div class="fdf-form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Description</label>
+                <textarea name="description" class="form-ctrl" rows="2">${seller.description}</textarea>
+              </div>
+
+              <%-- Available Days Multi-Select --%>
+              <div class="fdf-form-group" style="margin-bottom: 15px; background: #fafafa; padding: 15px; border-radius: 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase; margin:0;">Available Days</label>
+                  <div>
+                    <button type="button" onclick="toggleAllDays(true)" style="background:none; border:none; color:var(--brand-pink); font-size:0.75rem; font-weight:700; cursor:pointer;">Select All</button> |
+                    <button type="button" onclick="toggleAllDays(false)" style="background:none; border:none; color:#666; font-size:0.75rem; font-weight:700; cursor:pointer;">Clear All</button>
+                  </div>
+                </div>
+                <input type="hidden" name="availableDays" id="availableDaysInput" value="${seller.availableDays}">
+                <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                  <c:forTokens items="Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday" delims="," var="day">
+                    <label style="font-size:0.8rem; font-weight:600; background:#fff; padding:6px 12px; border-radius:8px; border:1px solid #ddd; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                      <input type="checkbox" class="day-checkbox" value="${day}" onchange="syncAvailableDays()" ${not empty seller.availableDays && seller.availableDays.contains(day) ? 'checked' : ''}> ${day}
+                    </label>
+                  </c:forTokens>
+                </div>
+              </div>
+
+              <%-- Working Hours --%>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Working Hours (From)</label>
+                  <input type="time" name="workingHoursFrom" class="form-ctrl" value="${seller.workingHoursFrom}">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Working Hours (To)</label>
+                  <input type="time" name="workingHoursTo" class="form-ctrl" value="${seller.workingHoursTo}">
+                </div>
+              </div>
+
+              <%-- Languages Spoken Multi-Select --%>
+              <div class="fdf-form-group" style="margin-bottom: 20px; background: #fafafa; padding: 15px; border-radius: 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase; margin:0;">Languages Spoken</label>
+                  <div>
+                    <button type="button" onclick="toggleAllLanguages(true)" style="background:none; border:none; color:var(--brand-pink); font-size:0.75rem; font-weight:700; cursor:pointer;">Select All</button> |
+                    <button type="button" onclick="toggleAllLanguages(false)" style="background:none; border:none; color:#666; font-size:0.75rem; font-weight:700; cursor:pointer;">Clear All</button>
+                  </div>
+                </div>
+                <input type="hidden" name="languagesSpoken" id="languagesSpokenInput" value="${seller.languagesSpoken}">
+                <div style="display:flex; flex-wrap:wrap; gap:8px; max-height:120px; overflow-y:auto;">
+                  <c:forTokens items="English,Hindi,Telugu,Tamil,Kannada,Malayalam,Marathi,Bengali,Other" delims="," var="lang">
+                    <label style="font-size:0.75rem; font-weight:600; background:#fff; padding:4px 10px; border-radius:6px; border:1px solid #ddd; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                      <input type="checkbox" class="lang-checkbox" value="${lang}" onchange="syncLanguagesSpoken()" ${not empty seller.languagesSpoken && seller.languagesSpoken.contains(lang) ? 'checked' : ''}> ${lang}
+                    </label>
+                  </c:forTokens>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-fdf-action" style="width:100%; padding: 15px; border-radius: 14px; font-weight:800;">Save Profile Changes</button>
             </form>
           </div>
         </div>
-        </c:if>
+
+        <script>
+          function previewProfilePhoto(input) {
+            if (input.files && input.files[0]) {
+              const reader = new FileReader();
+              reader.onload = function(e) {
+                const preview = document.getElementById('photoPreview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+              }
+              reader.readAsDataURL(input.files[0]);
+            }
+          }
+
+          function syncAvailableDays() {
+            const checked = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => cb.value);
+            document.getElementById('availableDaysInput').value = checked.join(', ');
+          }
+
+          function toggleAllDays(select) {
+            document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = select);
+            syncAvailableDays();
+          }
+
+          function syncLanguagesSpoken() {
+            const checked = Array.from(document.querySelectorAll('.lang-checkbox:checked')).map(cb => cb.value);
+            document.getElementById('languagesSpokenInput').value = checked.join(', ');
+          }
+
+          function toggleAllLanguages(select) {
+            document.querySelectorAll('.lang-checkbox').forEach(cb => cb.checked = select);
+            syncLanguagesSpoken();
+          }
+        </script>
 
         <%-- ══════ REVIEWS ══════ --%>
           <c:if test="${section == 'reviews'}">
-            <div class="header-info">
-              <h1>Customer Feedback</h1>
+            <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
+              <div>
+                <h1 style="margin:0; font-weight:800;">Customer Feedback</h1>
+                <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">View rating history, customer comments, and product impact reviews.</p>
+              </div>
               <div
-                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px;">
+                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);">
                 <span style="font-weight: 800; color: var(--brand-purple-dark);">Aggregate Rating:</span>
                 <span style="color: #ffca08; font-size: 1.1rem; font-weight: 900;">
                   <i class="bi bi-star-fill"></i> ${seller.rating} / 5.0
@@ -1658,6 +2013,9 @@
               form.action = '${pageContext.request.contextPath}/women-products/seller/products/add';
               form.reset();
 
+              const idInput = document.getElementById('editProductId');
+              if (idInput) idInput.value = '';
+
               // Set defaults
               form.querySelector('[name="active"]').checked = true;
               form.querySelector('[name="trackInventory"]').checked = true;
@@ -1669,13 +2027,20 @@
             }
 
             function openEditModal(p) {
+              if (!p || !p.id) {
+                alert("Error: Product ID is missing.");
+                return;
+              }
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
               const title = document.getElementById('modalTitle');
 
               title.innerHTML = '<i class="bi bi-pencil-square" style="color:var(--brand-pink)"></i> Update Product Trace';
-              form.action = `${pageContext.request.contextPath}/women-products/seller/products/${p.id}/edit`;
+              form.action = '${pageContext.request.contextPath}/women-products/seller/products/' + p.id + '/edit';
               form.querySelector('[name="images"]').removeAttribute('required');
+
+              const idInput = document.getElementById('editProductId');
+              if (idInput) idInput.value = p.id;
 
               // Fill fields
               form.querySelector('[name="name"]').value = p.name || '';
@@ -1724,6 +2089,7 @@
               document.querySelector('.fdf-sidebar').classList.toggle('show');
               document.querySelector('.sidebar-overlay').classList.toggle('show');
             }
+
 
             function validateSellerProfileForm(form) {
               const fullName = (form.querySelector('[name="fullName"]').value || '').trim();
@@ -1796,6 +2162,46 @@
                   }
                 });
               }
+
+            function calculateAutoOfferBadge() {
+              const priceInput = document.querySelector('#productForm [name="price"]');
+              const mrpInput = document.querySelector('#productForm [name="originalPrice"]');
+              const offerInput = document.querySelector('#productForm [name="offerBadge"]');
+
+              if (!priceInput || !mrpInput || !offerInput) return;
+
+              const price = parseFloat(priceInput.value);
+              const mrp = parseFloat(mrpInput.value);
+
+              if (!isNaN(price) && !isNaN(mrp) && mrp > price && price > 0) {
+                const discount = Math.round(((mrp - price) / mrp) * 100);
+                if (discount > 0) {
+                  offerInput.value = discount + '% OFF';
+                }
+              } else if (isNaN(mrp) || mrp <= price) {
+                if (offerInput.value && offerInput.value.endsWith('% OFF')) {
+                  offerInput.value = '';
+                }
+              }
+            }
+
+            document.addEventListener("DOMContentLoaded", function() {
+              const pForm = document.getElementById('productForm');
+              if (pForm) {
+                pForm.addEventListener('submit', function() {
+                  const idVal = document.getElementById('editProductId') ? document.getElementById('editProductId').value : '';
+                  if (idVal && (!this.action || this.action.includes('//edit') || (!this.action.includes('/add') && !this.action.includes('/' + idVal + '/edit')))) {
+                    this.action = '${pageContext.request.contextPath}/women-products/seller/products/' + idVal + '/edit';
+                  }
+                });
+
+                const priceInput = pForm.querySelector('[name="price"]');
+                const mrpInput = pForm.querySelector('[name="originalPrice"]');
+                if (priceInput) priceInput.addEventListener('input', calculateAutoOfferBadge);
+                if (mrpInput) mrpInput.addEventListener('input', calculateAutoOfferBadge);
+              }
+
+
               document.querySelectorAll('.edit-product-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                   const p = {
@@ -1806,7 +2212,11 @@
                     fullDescription: this.getAttribute('data-fullDescription'),
                     price: this.getAttribute('data-price'),
                     originalPrice: this.getAttribute('data-originalPrice'),
-                    offerBadge: this.getAttribute('data-offer-badge'),
+
+                    offerBadge: this.getAttribute('data-offerbadge') || this.getAttribute('data-offer-badge'),
+
+                    offerBadge: this.getAttribute('data-offerBadge'),
+
                     stock: this.getAttribute('data-stock'),
                     lowStockAlertLevel: this.getAttribute('data-lowStockAlertLevel'),
                     sku: this.getAttribute('data-sku'),
@@ -1826,6 +2236,57 @@
                     return;
                   }
                   openEditModal(p);
+                });
+              });
+
+              // Dynamic AJAX Order Status Update
+              document.querySelectorAll('.seller-order-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                  e.preventDefault();
+                  const orderId = this.getAttribute('data-order-id');
+                  const selectEl = this.querySelector('select[name="status"]');
+                  const newStatus = selectEl.value;
+                  const btn = this.querySelector('button[type="submit"]');
+
+                  if (btn) btn.disabled = true;
+
+                  const formData = new URLSearchParams();
+                  formData.append('status', newStatus);
+
+                  fetch('${pageContext.request.contextPath}/women-products/seller/orders/' + orderId + '/status/ajax', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                    if (btn) btn.disabled = false;
+                    if (data.status === 'SUCCESS') {
+                      // Dynamically update status badge cell in table
+                      const row = form.closest('tr');
+                      if (row) {
+                        const badgeSpan = row.querySelector('.fdf-badge');
+                        if (badgeSpan) {
+                          badgeSpan.className = 'fdf-badge badge-' + data.newStatus;
+                          badgeSpan.textContent = data.newStatus;
+                        }
+                      }
+                      if (data.newStatus === 'DELIVERED' || data.newStatus === 'CANCELLED') {
+                        const cell = document.getElementById('orderStatusCell_' + orderId);
+                        if (cell) {
+                          const text = data.newStatus === 'DELIVERED' ? 'Fulfilled' : 'Terminated';
+                          cell.innerHTML = '<div style="display:flex; align-items:center; gap:8px; padding-left:12px;"><span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">' + text + '</span><i class="bi bi-lock-fill" style="opacity:0.3;"></i></div>';
+                        }
+                      }
+                    } else {
+                      alert('Failed to update status: ' + (data.message || 'Error'));
+                    }
+                  })
+                  .catch(err => {
+                    if (btn) btn.disabled = false;
+                    // Fallback to normal form submission if needed
+                    form.submit();
+                  });
                 });
               });
             });

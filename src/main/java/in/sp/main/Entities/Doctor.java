@@ -1,5 +1,7 @@
 package in.sp.main.Entities;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,6 +9,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 @Entity
@@ -37,6 +41,10 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private ConsultationType consultationType;
 
+    // Purpose: comma-separated modes e.g. "CLINIC,VIDEO,ONLINE"
+    @Column(length = 200)
+    private String consultationModes;
+
     // ── 3. Location Details ──
     // Purpose: basic location text for search (city/area) + packed metadata from mobile.
     @Column(length = 4000)
@@ -54,16 +62,69 @@ public class Doctor {
     private String endTime;
     private Boolean emergencyAvailable = false;
 
+    // Purpose: JSON array of dynamic slots [{"day":"MONDAY","start":"09:00","end":"12:00"}]
+    @Column(columnDefinition = "TEXT")
+    private String availabilitySlots;
+
+    private Integer slotDurationMinutes = 30;
+    private Integer bufferMinutes = 0;
+    private String breakStart;
+    private String breakEnd;
+    @Column(columnDefinition = "TEXT")
+    private String blockedDates;
+    private Boolean autoConfirm = false;
+    @Column(columnDefinition = "TEXT")
+    private String clinicPhotos;
+    private Double clinicLat;
+    private Double clinicLng;
+    private LocalDateTime payoutRequestedAt;
+
+    @Column(length = 500)
+    private String languages;
+
+    @Column(length = 1000)
+    private String services;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     // ── 5. Verification ──
     // Purpose: admin verification uses uploaded document path.
     private String identityDocumentPath;
     private String medicalLicensePath;
     private String idProofPath;
     private String degreeCertificatePath;
+    @Column(length = 1000)
+    private String additionalCertificatePath;
 
     // Purpose: admin-controlled verification gate; only VERIFIED doctors are shown to users.
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private DoctorProfileStatus doctorProfileStatus = DoctorProfileStatus.REGISTERED;
+
+    private Integer profileCompletionPct = 0;
+
+    private LocalDateTime acceptedTermsAt;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String changesRequestedNote;
+
+    private LocalDateTime submittedForVerificationAt;
+
+    private Boolean hasPendingReverification = false;
+
+    private Boolean isOnline = false;
+
+    private LocalDateTime lastSeenAt;
 
     // ── 6. Earnings Setup ──
     private Double consultationFee = 500.0;
@@ -74,7 +135,27 @@ public class Doctor {
     @Column(length = 500)
     private String bankDetails;
 
+    private Double payoutBalance = 0.0;
+    private Double totalEarned = 0.0;
+    private Double commissionPercent;
+    @Column(length = 512)
+    private String fcmToken;
+
     private Double rating = 0.0;
+
+    @PrePersist
+    void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // ═══════════ GETTERS & SETTERS ═══════════
 
@@ -117,6 +198,9 @@ public class Doctor {
     public ConsultationType getConsultationType() { return consultationType; }
     public void setConsultationType(ConsultationType consultationType) { this.consultationType = consultationType; }
 
+    public String getConsultationModes() { return consultationModes; }
+    public void setConsultationModes(String consultationModes) { this.consultationModes = consultationModes; }
+
     public String getLocationText() { return locationText; }
     public void setLocationText(String locationText) { this.locationText = locationText; }
 
@@ -147,6 +231,18 @@ public class Doctor {
     public Boolean getEmergencyAvailable() { return emergencyAvailable; }
     public void setEmergencyAvailable(Boolean emergencyAvailable) { this.emergencyAvailable = emergencyAvailable; }
 
+    public String getAvailabilitySlots() { return availabilitySlots; }
+    public void setAvailabilitySlots(String availabilitySlots) { this.availabilitySlots = availabilitySlots; }
+
+    public String getLanguages() { return languages; }
+    public void setLanguages(String languages) { this.languages = languages; }
+
+    public String getServices() { return services; }
+    public void setServices(String services) { this.services = services; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
     public String getIdentityDocumentPath() { return identityDocumentPath; }
     public void setIdentityDocumentPath(String identityDocumentPath) { this.identityDocumentPath = identityDocumentPath; }
 
@@ -159,8 +255,50 @@ public class Doctor {
     public String getDegreeCertificatePath() { return degreeCertificatePath; }
     public void setDegreeCertificatePath(String degreeCertificatePath) { this.degreeCertificatePath = degreeCertificatePath; }
 
+    public String getAdditionalCertificatePath() { return additionalCertificatePath; }
+    public void setAdditionalCertificatePath(String additionalCertificatePath) {
+        this.additionalCertificatePath = additionalCertificatePath;
+    }
+
     public VerificationStatus getVerificationStatus() { return verificationStatus; }
     public void setVerificationStatus(VerificationStatus verificationStatus) { this.verificationStatus = verificationStatus; }
+
+    public DoctorProfileStatus getDoctorProfileStatus() { return doctorProfileStatus; }
+    public void setDoctorProfileStatus(DoctorProfileStatus doctorProfileStatus) { this.doctorProfileStatus = doctorProfileStatus; }
+
+    public Integer getProfileCompletionPct() { return profileCompletionPct; }
+    public void setProfileCompletionPct(Integer profileCompletionPct) { this.profileCompletionPct = profileCompletionPct; }
+
+    public LocalDateTime getAcceptedTermsAt() { return acceptedTermsAt; }
+    public void setAcceptedTermsAt(LocalDateTime acceptedTermsAt) { this.acceptedTermsAt = acceptedTermsAt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getChangesRequestedNote() { return changesRequestedNote; }
+    public void setChangesRequestedNote(String changesRequestedNote) { this.changesRequestedNote = changesRequestedNote; }
+
+    public LocalDateTime getSubmittedForVerificationAt() { return submittedForVerificationAt; }
+    public void setSubmittedForVerificationAt(LocalDateTime submittedForVerificationAt) {
+        this.submittedForVerificationAt = submittedForVerificationAt;
+    }
+
+    public Boolean getHasPendingReverification() { return hasPendingReverification; }
+    public void setHasPendingReverification(Boolean hasPendingReverification) {
+        this.hasPendingReverification = hasPendingReverification;
+    }
+
+    public Boolean getIsOnline() { return isOnline; }
+    public void setIsOnline(Boolean isOnline) { this.isOnline = isOnline; }
+
+    public LocalDateTime getLastSeenAt() { return lastSeenAt; }
+    public void setLastSeenAt(LocalDateTime lastSeenAt) { this.lastSeenAt = lastSeenAt; }
 
     public Double getConsultationFee() { return consultationFee; }
     public void setConsultationFee(Double consultationFee) { this.consultationFee = consultationFee; }
@@ -180,6 +318,36 @@ public class Doctor {
     public String getBankDetails() { return bankDetails; }
     public void setBankDetails(String bankDetails) { this.bankDetails = bankDetails; }
 
+    public Double getPayoutBalance() { return payoutBalance; }
+    public void setPayoutBalance(Double payoutBalance) { this.payoutBalance = payoutBalance; }
+    public Double getTotalEarned() { return totalEarned; }
+    public void setTotalEarned(Double totalEarned) { this.totalEarned = totalEarned; }
+    public Double getCommissionPercent() { return commissionPercent; }
+    public void setCommissionPercent(Double commissionPercent) { this.commissionPercent = commissionPercent; }
+    public String getFcmToken() { return fcmToken; }
+    public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }
+
+    public Integer getSlotDurationMinutes() { return slotDurationMinutes; }
+    public void setSlotDurationMinutes(Integer slotDurationMinutes) { this.slotDurationMinutes = slotDurationMinutes; }
+    public Integer getBufferMinutes() { return bufferMinutes; }
+    public void setBufferMinutes(Integer bufferMinutes) { this.bufferMinutes = bufferMinutes; }
+    public String getBreakStart() { return breakStart; }
+    public void setBreakStart(String breakStart) { this.breakStart = breakStart; }
+    public String getBreakEnd() { return breakEnd; }
+    public void setBreakEnd(String breakEnd) { this.breakEnd = breakEnd; }
+    public String getBlockedDates() { return blockedDates; }
+    public void setBlockedDates(String blockedDates) { this.blockedDates = blockedDates; }
+    public Boolean getAutoConfirm() { return autoConfirm; }
+    public void setAutoConfirm(Boolean autoConfirm) { this.autoConfirm = autoConfirm; }
+    public String getClinicPhotos() { return clinicPhotos; }
+    public void setClinicPhotos(String clinicPhotos) { this.clinicPhotos = clinicPhotos; }
+    public Double getClinicLat() { return clinicLat; }
+    public void setClinicLat(Double clinicLat) { this.clinicLat = clinicLat; }
+    public Double getClinicLng() { return clinicLng; }
+    public void setClinicLng(Double clinicLng) { this.clinicLng = clinicLng; }
+    public LocalDateTime getPayoutRequestedAt() { return payoutRequestedAt; }
+    public void setPayoutRequestedAt(LocalDateTime payoutRequestedAt) { this.payoutRequestedAt = payoutRequestedAt; }
 }

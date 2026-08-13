@@ -24,10 +24,21 @@ public class JwtUtil {
 
     @PostConstruct
     void initSigningKey() {
+
         // Empty JWT_SECRET env var can resolve to blank and override the property default.
         String secret = jwtSecret == null ? "" : jwtSecret.trim();
         if (secret.isBlank()) {
             secret = "Xp3Iu2umGV20AJykfcM/0n+CPJ61pgSdnjk20OYGDeeniBkVR+s+fKEWRnsuih/i1lGl/DS9w9mw/Z4UNJwBNw==";
+
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            // Fallback to a default development secret if not set.
+            // This allows the application to start in local/dev environments.
+            // In production, ensure JWT_SECRET is set securely.
+            String fallback = "LOCAL_DEV_ONLY_change_me_min_32_chars_abcdefgh";
+            jwtSecret = fallback;
+            // Optionally log a warning (using System.err for simplicity)
+            System.err.println("WARNING: JWT secret not configured. Using fallback development secret.");
+
         }
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
@@ -74,12 +85,13 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        long thirtyDaysMs = 1000L * 60 * 60 * 24 * 30;
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                // Set expiration to 10 years (essentially doesn't expire until logout)
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10))
+                // 30-day access token; refresh-token flow will be added in a future phase.
+                .setExpiration(new Date(System.currentTimeMillis() + thirtyDaysMs))
                 .signWith(secretKey)
                 .compact();
     }

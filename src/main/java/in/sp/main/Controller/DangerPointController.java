@@ -121,6 +121,7 @@ public class DangerPointController {
     private static Map<String, Object> res(boolean ok, String message) {
         Map<String, Object> m = new HashMap<>();
         m.put("ok", ok);
+        m.put("success", ok);
         m.put("message", message);
         return m;
     }

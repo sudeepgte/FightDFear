@@ -33,7 +33,11 @@
     </a>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" class="dd-nav-item ${section == 'appointments' ? 'active' : ''}">
       <i class="bi bi-calendar-check"></i> Appointments
+
       <c:if test="${appointmentNotifCount > 0}"><span class="badge-count">${appointmentNotifCount}</span></c:if>
+
+      <c:if test="${pendingCount > 0}"><span class="badge-count" id="sidebar-appt-badge" style="background-color: var(--dd-coral, #ff6b6b);">${pendingCount}</span></c:if>
+
     </a>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats" class="dd-nav-item ${section == 'chats' ? 'active' : ''}">
       <i class="bi bi-chat-dots"></i> Chats
@@ -83,6 +87,7 @@
       </div>
     </div>
     <div class="dd-topbar-right">
+
       <div class="dd-notif-wrap">
         <button type="button" class="notif-btn" id="notifToggle" aria-label="Notifications" aria-expanded="false" aria-controls="notifPanel">
           <i class="bi bi-bell"></i>
@@ -118,6 +123,40 @@
             <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments">View appointments</a>
             <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats">View chats</a>
           </div>
+
+      <style>
+        .notif-item:hover { background: rgba(0,0,0,0.02); }
+      </style>
+      <div class="notif-btn" id="bellIcon" onclick="toggleNotifications()" style="cursor: pointer; position: relative;">
+        <i class="bi bi-bell"></i>
+        <c:if test="${pendingCount > 0}"><span class="dot" id="bell-dot"></span></c:if>
+      </div>
+      
+      <!-- Notifications Dropdown -->
+      <div id="notifDropdown" class="dd-notif-dropdown" style="display:none; position:absolute; top:70px; right:20px; width:300px; background:var(--dd-bg, #fff); border:1px solid var(--dd-border, rgba(255,255,255,0.1)); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.2); z-index:1000; overflow:hidden;">
+        <div style="padding:15px; border-bottom:1px solid var(--dd-border, rgba(255,255,255,0.05)); display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="margin:0; font-size:14px; font-weight:700;">Notifications</h3>
+          <c:if test="${pendingCount > 0}"><span class="badge" id="notif-badge" style="background:var(--dd-coral, #ff6b6b); color:#fff; font-size:10px; padding:2px 6px; border-radius:10px;">${pendingCount} New</span></c:if>
+        </div>
+        <div style="max-height:300px; overflow-y:auto;" id="notif-list-container">
+          <c:choose>
+            <c:when test="${pendingCount > 0}">
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" class="notif-item" onclick="clearNotifs()" style="display:flex; padding:15px; border-bottom:1px solid var(--dd-border, rgba(255,255,255,0.05)); text-decoration:none; color:inherit; gap:12px; align-items:flex-start; transition:0.2s;">
+                <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,107,107,0.1); color:var(--dd-coral, #ff6b6b); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px;"><i class="bi bi-calendar-event"></i></div>
+                <div>
+                  <div style="font-size:13px; font-weight:600;">Action Required</div>
+                  <div style="font-size:11px; color:var(--dd-muted, #9ca3af); margin-top:4px;">You have ${pendingCount} pending appointments waiting for confirmation.</div>
+                </div>
+              </a>
+            </c:when>
+            <c:otherwise>
+              <div style="padding:40px 20px; text-align:center; color:var(--dd-muted, #9ca3af); font-size:13px;">
+                <i class="bi bi-bell-slash" style="font-size:24px; opacity:0.5; margin-bottom:10px; display:block;"></i>
+                No new notifications.
+              </div>
+            </c:otherwise>
+          </c:choose>
+
         </div>
       </div>
     </div>
@@ -164,6 +203,13 @@
           </c:if>
         </div>
       </div>
+
+      <div class="dd-section" style="margin-top: 20px;">
+        <div class="dd-section-header"><h2><i class="bi bi-graph-up"></i> Patient Traffic Graph</h2></div>
+        <div class="dd-section-body">
+          <canvas id="appointmentsChart" height="100"></canvas>
+        </div>
+      </div>
     </c:if>
 
     <%-- ══════ APPOINTMENTS SECTION ══════ --%>
@@ -196,29 +242,152 @@
 
     <%-- ══════ CHATS SECTION ══════ --%>
     <c:if test="${section == 'chats'}">
-      <div class="dd-section">
-        <div class="dd-section-header"><h2><i class="bi bi-chat-dots"></i> My Chats</h2></div>
-        <div class="dd-section-body">
-          <c:if test="${empty chatUsers}"><div class="dd-empty"><i class="bi bi-chat-left-dots"></i><p>No chats available yet.</p></div></c:if>
-          <c:if test="${not empty chatUsers}">
-            <div style="overflow-x:auto"><table class="dd-table"><thead><tr><th>User</th><th>Actions</th></tr></thead><tbody>
+      <div class="dd-section" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+        <div class="dd-section-header" style="margin-bottom: 20px;"><h2><i class="bi bi-chat-dots"></i> My Chats</h2></div>
+        
+        <div class="dd-chat-wrapper" style="display: flex; gap: 20px; height: calc(100vh - 200px); min-height: 550px;">
+          
+          <!-- Users Sidebar -->
+          <div class="dd-chat-sidebar" style="width: 320px; background: var(--dd-bg); border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="padding: 20px; border-bottom: 1px solid var(--dd-border); background: rgba(255,255,255,0.02);">
+              <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Patients</h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: var(--dd-muted);">Select a patient to chat</p>
+            </div>
+            
+            <div style="flex: 1; overflow-y: auto; padding: 10px;">
+              <c:if test="${empty chatUsers}">
+                <div style="text-align:center; padding: 30px 20px; color: var(--dd-muted); font-size: 13px;">
+                  <i class="bi bi-inbox" style="font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.5;"></i>
+                  No chats yet
+                </div>
+              </c:if>
+              
               <c:forEach var="u" items="${chatUsers}">
-                <tr>
-                  <td>
-                    <div class="dd-user-cell">
-                      <div class="user-avatar">${u.fullName.charAt(0)}</div>
-                      <span>${u.fullName}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${u.id}" target="_blank" class="dd-video-btn" style="background:#20c997; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; text-decoration: none; border-radius: 6px;">
-                      <i class="bi bi-chat-dots-fill"></i> Open Chat
-                    </a>
-                  </td>
-                </tr>
+                <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats&userId=${u.id}" 
+                   style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(123,44,191,0.1)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(123,44,191,0.2)' : 'transparent'};">
+                  <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--dd-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
+                  <div style="flex: 1; overflow: hidden;">
+                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? 'var(--dd-purple-l)' : '#fff'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
+                    <div style="font-size: 12px; color: var(--dd-muted);">Patient</div>
+                  </div>
+                  <c:if test="${targetUserId == u.id}">
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--dd-purple-l);"></div>
+                  </c:if>
+                </a>
               </c:forEach>
-            </tbody></table></div>
-          </c:if>
+            </div>
+          </div>
+          
+          <!-- Chat Window -->
+          <div class="dd-chat-main" style="flex: 1; background: var(--dd-bg); border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <c:choose>
+              
+              <c:when test="${not empty targetUserId}">
+                <!-- Chat Header -->
+                <div style="padding: 16px 24px; border-bottom: 1px solid var(--dd-border); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02);">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: var(--dd-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff;">${targetUserName != null ? targetUserName.charAt(0) : 'U'}</div>
+                    <div>
+                      <h3 style="margin: 0; font-size: 16px; font-weight: 700;">${targetUserName}</h3>
+                      <p style="margin: 2px 0 0; font-size: 12px; color: #20c997; display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #20c997; display: inline-block;"></span> Online</p>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 10px;">
+                    <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(32,201,151,0.1); color: #20c997; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-telephone-fill"></i></a>
+                    <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(74,144,217,0.1); color: #4a90d9; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-camera-video-fill"></i></a>
+                  </div>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div id="chatMessages" style="flex: 1; padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.1);">
+                  <c:if test="${empty chatHistory}">
+                    <div style="margin: auto; text-align: center; color: var(--dd-muted);">
+                      <i class="bi bi-chat-dots" style="font-size: 40px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                      <p>Start conversation with ${targetUserName}</p>
+                    </div>
+                  </c:if>
+                  <c:forEach var="m" items="${chatHistory}">
+                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: rgba(255,255,255,0.06); color: #e0e0e0; border-bottom-left-radius: 4px;'}">
+                      ${m.message}
+                      <span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">${m.timestamp}</span>
+                    </div>
+                  </c:forEach>
+                </div>
+                
+                <!-- Chat Input -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--dd-border); display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.02);">
+                  <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: rgba(255,255,255,0.03); color: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
+                  <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--dd-gradient); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(123,44,191,0.3); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
+                </div>
+                
+                <!-- WebSocket Script -->
+                <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+                <script>
+                  const doctorId = ${doctor.id};
+                  const senderType = 'DOCTOR';
+                  const targetUserId = '${targetUserId}';
+                  const ctx = '${pageContext.request.contextPath}';
+                  const chatBox = document.getElementById('chatMessages');
+
+                  const socket = new SockJS(ctx + '/ws-chat');
+                  const stompClient = Stomp.over(socket);
+                  stompClient.debug = null; 
+                  stompClient.connect({}, function() {
+                    stompClient.subscribe('/topic/doctor-chat/' + doctorId, function(payload) {
+                      const msg = JSON.parse(payload.body);
+                      if (msg.userId && msg.userId != targetUserId) return;
+                      appendMsg(msg.message, msg.senderType === senderType ? 'DOCTOR' : 'USER');
+                    });
+                  });
+
+                  function sendMsg() {
+                    const input = document.getElementById('msgInput');
+                    const text = input.value.trim();
+                    if (!text) return;
+                    input.value = '';
+
+                    const empty = chatBox.querySelector('.bi-chat-dots');
+                    if (empty) empty.parentNode.remove();
+
+                    fetch(ctx + '/doctors/chat/send', {
+                      method: 'POST',
+                      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                      body: 'doctorId=' + doctorId + '&message=' + encodeURIComponent(text) + '&senderType=' + senderType + '&userId=' + targetUserId
+                    });
+                  }
+
+                  function appendMsg(text, type) {
+                    const div = document.createElement('div');
+                    let styles = "max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ";
+                    if(type === 'DOCTOR') {
+                        styles += "align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;";
+                    } else {
+                        styles += "align-self: flex-start; background: rgba(255,255,255,0.06); color: #e0e0e0; border-bottom-left-radius: 4px;";
+                    }
+                    div.style.cssText = styles;
+                    div.innerHTML = text + '<span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">Just now</span>';
+                    chatBox.appendChild(div);
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                  }
+
+                  if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                </script>
+              </c:when>
+              
+              <c:otherwise>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--dd-muted);">
+                  <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                    <i class="bi bi-chat-square-dots" style="font-size: 32px; color: var(--dd-purple-l); filter: drop-shadow(0 0 10px rgba(123,44,191,0.4));"></i>
+                  </div>
+                  <h3 style="font-size: 18px; font-weight: 600; color: #fff; margin: 0 0 8px;">Select a Patient</h3>
+                  <p style="font-size: 14px; text-align: center; max-width: 300px;">Choose a patient from the sidebar to view your conversation or start a new message.</p>
+                </div>
+              </c:otherwise>
+              
+            </c:choose>
+          </div>
+          
         </div>
       </div>
     </c:if>
@@ -394,12 +563,19 @@
       </div>
 
       <!-- Fee Breakdown -->
+
       <div class="dd-section" id="feesView">
         <div class="dd-section-header">
           <h2><i class="bi bi-wallet2"></i> Fee Breakdown</h2>
           <button type="button" class="dd-btn-edit" onclick="document.getElementById('feesView').style.display='none';document.getElementById('feesEdit').style.display='block';">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
+
+      <div class="dd-section" id="feeBreakdownView">
+        <div class="dd-section-header">
+          <h2><i class="bi bi-wallet2"></i> Fee Breakdown</h2>
+          <button onclick="document.getElementById('feeBreakdownView').style.display='none';document.getElementById('feeBreakdownEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit</button>
+
         </div>
         <div class="dd-section-body padded">
           <div class="dd-profile-grid">
@@ -473,6 +649,30 @@
           </div>
         </div>
       </div>
+      
+      <!-- Fee Breakdown Edit -->
+      <div class="dd-section" id="feeBreakdownEdit" style="display:none">
+        <div class="dd-section-header">
+          <h2><i class="bi bi-pencil-square"></i> Edit Fee Breakdown</h2>
+          <button onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';" class="dd-btn-edit"><i class="bi bi-x-lg"></i> Cancel</button>
+        </div>
+        <div class="dd-section-body padded">
+          <form action="${pageContext.request.contextPath}/doctors/update-earnings" method="post">
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field"><label>Consultation Fee</label><input type="number" name="consultationFee" value="${doctor.consultationFee != null ? doctor.consultationFee : ''}" min="0"></div>
+              <div class="dd-edit-field"><label>Chat Fee</label><input type="number" name="chatFee" value="${doctor.chatFee != null ? doctor.chatFee : ''}" min="0"></div>
+              <div class="dd-edit-field"><label>Call Fee</label><input type="number" name="callFee" value="${doctor.callFee != null ? doctor.callFee : ''}" min="0"></div>
+              <div class="dd-edit-field"><label>Video Fee</label><input type="number" name="videoFee" value="${doctor.videoFee != null ? doctor.videoFee : ''}" min="0"></div>
+              <div class="dd-edit-field full"><label>UPI ID</label><input type="text" name="upiId" value="${doctor.upiId != null ? doctor.upiId : ''}" placeholder="e.g. yourname@upi"></div>
+              <div class="dd-edit-field full"><label>Bank Details</label><textarea name="bankDetails" rows="2" placeholder="Account No, IFSC, etc.">${doctor.bankDetails != null ? doctor.bankDetails : ''}</textarea></div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px">
+              <button type="submit" class="dd-btn-save"><i class="bi bi-check-circle"></i> Save Changes</button>
+              <button type="button" onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';" class="dd-btn-cancel">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- Booking Transactions Table -->
       <div class="dd-section">
@@ -490,6 +690,7 @@
               <th>Status</th>
               <th>Payment Method</th>
               <th>Payment ID</th>
+
               <th style="text-align:right">Amount</th>
             </tr></thead><tbody>
               <c:forEach var="a" items="${appointments}">
@@ -520,6 +721,7 @@
                       <c:otherwise><span class="dd-badge cancelled"><span class="dot"></span> Cancelled</span></c:otherwise>
                     </c:choose>
                   </td>
+
                   <td>
                     <c:choose>
                       <c:when test="${not empty a.razorpayPaymentId}">
@@ -534,6 +736,19 @@
                     </c:choose>
                   </td>
                   <td class="dd-payment-id">${not empty a.razorpayPaymentId ? a.razorpayPaymentId : '—'}</td>
+
+                  <td style="font-size:13px; font-weight: 500;">
+                    <c:choose>
+                      <c:when test="${a.razorpayPaymentId != null}">
+                        <span style="color: #20c997;"><i class="bi bi-credit-card"></i> Online</span>
+                        <div style="font-size:10px;color:#6b7280;font-family:monospace;margin-top:4px;">${a.razorpayPaymentId}</div>
+                      </c:when>
+                      <c:otherwise>
+                        <span style="color: #6b7280;"><i class="bi bi-cash"></i> Pay at Clinic</span>
+                      </c:otherwise>
+                    </c:choose>
+                  </td>
+
                   <td style="text-align:right;font-weight:700;color:#20c997">
                     <c:choose>
                       <c:when test="${a.amountPaid != null && a.amountPaid > 0}">&#8377;${a.amountPaid}</c:when>
@@ -610,6 +825,7 @@
               <input type="text" id="prescPatientName" readonly style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;background:var(--dd-bg);outline:none;font-family:'Poppins',sans-serif;">
             </div>
             <div style="margin-bottom:20px;">
+
               <label style="display:block;font-size:12px;font-weight:600;color:var(--dd-muted);margin-bottom:6px;">Prescription / Rx</label>
               <textarea name="prescriptionText" id="prescText" rows="6" required maxlength="2000"
                         placeholder="Write medicines, dosage, and instructions here..."
@@ -618,6 +834,13 @@
                 <span id="prescLimitMsg" style="font-size:11px;color:#be123c;font-weight:600;display:none;">Maximum 2000 characters allowed.</span>
                 <span style="font-size:11px;color:var(--dd-muted);margin-left:auto;"><span id="prescCount">0</span>/2000</span>
               </div>
+
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <label style="font-size:12px;font-weight:600;color:var(--dd-muted);">Prescription / Rx</label>
+                <span id="charCount" style="font-size:10px;font-weight:500;color:var(--dd-muted);">0 / 500</span>
+              </div>
+              <textarea name="prescriptionText" id="prescText" rows="6" maxlength="500" required placeholder="Write medicines, dosage, and instructions here..." style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;outline:none;font-family:'Poppins',sans-serif;resize:vertical;" oninput="document.getElementById('charCount').textContent = this.value.length + ' / 500'"></textarea>
+
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
               <button type="button" onclick="closePrescriptionModal()" style="padding:10px 20px;border:none;border-radius:999px;background:rgba(107,114,128,0.1);color:var(--dd-muted);font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
@@ -680,6 +903,7 @@
 <script>
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
 
+
 (function() {
   var toggle = document.getElementById('notifToggle');
   var panel = document.getElementById('notifPanel');
@@ -711,7 +935,115 @@ function toggleSidebar(){document.getElementById('sidebar').classList.toggle('op
     if (e.key === 'Escape') closePanel();
   });
 })();
+
+function toggleNotifications() {
+  const dropdown = document.getElementById('notifDropdown');
+  if(dropdown.style.display === 'none') {
+    dropdown.style.display = 'block';
+  } else {
+    dropdown.style.display = 'none';
+  }
+}
+
+function clearNotifs() {
+  const dot = document.getElementById('bell-dot');
+  if(dot) dot.style.display = 'none';
+  const badge = document.getElementById('notif-badge');
+  if(badge) badge.style.display = 'none';
+  const sidebarBadge = document.getElementById('sidebar-appt-badge');
+  if(sidebarBadge) sidebarBadge.style.display = 'none';
+}
+
+document.addEventListener('click', function(event) {
+  const dropdown = document.getElementById('notifDropdown');
+  const bell = document.getElementById('bellIcon');
+  if(dropdown && bell && !bell.contains(event.target) && !dropdown.contains(event.target)) {
+    dropdown.style.display = 'none';
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if ('${section}' === 'appointments') {
+      clearNotifs();
+  }
+
+  // Graph Logic
+  var ctx = document.getElementById('appointmentsChart');
+  if (ctx) {
+      if (typeof Chart === 'undefined') {
+          console.error("Chart.js failed to load!");
+          return;
+      }
+      var rawAppointments = [
+          <c:forEach var="a" items="${appointments}" varStatus="status">
+              {
+                  time: '${a.appointmentTime}',
+                  status: '${a.status}'
+              }${!status.last ? ',' : ''}
+          </c:forEach>
+      ];
+
+      var buckets = {
+          "00:00": 0, "04:00": 0, "08:00": 0,
+          "12:00": 0, "16:00": 0, "20:00": 0
+      };
+
+      rawAppointments.forEach(function(appt) {
+          var dateObj = new Date(appt.time);
+          if (!isNaN(dateObj)) {
+              var hour = dateObj.getHours();
+              var bucket = "00:00";
+              if (hour >= 4 && hour < 8) bucket = "04:00";
+              else if (hour >= 8 && hour < 12) bucket = "08:00";
+              else if (hour >= 12 && hour < 16) bucket = "12:00";
+              else if (hour >= 16 && hour < 20) bucket = "16:00";
+              else if (hour >= 20) bucket = "20:00";
+              
+              buckets[bucket]++;
+          }
+      });
+
+      var labels = Object.keys(buckets);
+      var dataValues = Object.values(buckets);
+      
+      // Calculate min and max for y-axis
+      var maxVal = Math.max(...dataValues);
+      if (maxVal < 5) maxVal = 5; // ensure there's at least some scale
+
+      new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: labels,
+              datasets: [{
+                  label: 'Patients Seen',
+                  data: dataValues,
+                  borderColor: '#7b2cbf',
+                  backgroundColor: 'rgba(123, 44, 191, 0.1)',
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.3,
+                  pointBackgroundColor: '#7b2cbf',
+                  pointRadius: 4
+              }]
+          },
+          options: {
+              responsive: true,
+              scales: {
+                  x: { title: { display: true, text: 'Time (4 Hours Format)' } },
+                  y: { 
+                      min: 0, 
+                      max: maxVal + 1, 
+                      title: { display: true, text: 'Number of Patients' }, 
+                      ticks: { stepSize: 1 } 
+                  }
+              }
+          }
+      });
+  }
+});
+
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
 

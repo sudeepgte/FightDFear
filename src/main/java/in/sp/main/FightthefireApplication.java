@@ -16,6 +16,7 @@ public class FightthefireApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
         SpringApplication.run(FightthefireApplication.class, args);
         System.out.println("Women safety");
+        
     }
 }
 
