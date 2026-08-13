@@ -11,6 +11,8 @@ import in.sp.main.Entities.FinancialVideo;
 import in.sp.main.Entities.FinancialWorkshop;
 import in.sp.main.Entities.User;
 import in.sp.main.Service.FinancialLiteracyCatalogService;
+import in.sp.main.Service.FileUploadService;
+import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -19,6 +21,9 @@ public class FinancialLiteracyController {
 
     @Autowired
     private FinancialLiteracyCatalogService catalog;
+
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @GetMapping
     public String financialLiteracyHome(Model model) {
@@ -95,8 +100,20 @@ public class FinancialLiteracyController {
 
     @PostMapping("/admin/add-video")
     public String addVideoSubmit(@RequestParam String title, @RequestParam String category,
-                                 @RequestParam String description, @RequestParam String videoUrl) {
-        catalog.addVideo(title, category, description, videoUrl, null);
+                                 @RequestParam String description, 
+                                 @RequestParam(value = "videoUrl", required = false) String videoUrl,
+                                 @RequestParam(value = "videoFile", required = false) MultipartFile videoFile) {
+        
+        String finalUrl = videoUrl;
+        try {
+            if (videoFile != null && !videoFile.isEmpty()) {
+                finalUrl = fileUploadService.saveFile(videoFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        catalog.addVideo(title, category, description, finalUrl, null);
         return "redirect:/financial-literacy/admin";
     }
 
@@ -121,9 +138,11 @@ public class FinancialLiteracyController {
 
     @PostMapping("/admin/add-workshop")
     public String addWorkshopSubmit(@RequestParam String title, @RequestParam String venue,
-                                    @RequestParam String date, @RequestParam String time,
+                                    @RequestParam String date, @RequestParam String startTime,
+                                    @RequestParam String endTime,
                                     @RequestParam String city, @RequestParam int seats,
                                     @RequestParam String description) {
+        String time = startTime + " - " + endTime;
         catalog.addWorkshop(title, venue, date, time, city, seats, description, null);
         return "redirect:/financial-literacy/admin";
     }

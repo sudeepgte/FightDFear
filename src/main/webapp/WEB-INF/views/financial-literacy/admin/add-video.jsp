@@ -159,25 +159,8 @@
     <!-- Layout -->
     <div class="layout">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="mb-4">
-                <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="navlink">
-                    <i class="fas fa-home"></i> Home
-                </a>
-            </div>
-            
-
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
-                <i class="fas fa-video"></i> Add Session
-            </a>
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Workshops</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" class="navlink">
-                <i class="fas fa-calendar-check"></i> Add Workshop
-            </a>
-        </div>
+        <!-- Sidebar -->
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <!-- Main Content -->
         <main class="main">
@@ -185,7 +168,7 @@
                 
                 <div class="admin-card">
                     <h3>Add New Video</h3>
-                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST" id="videoForm" class="needs-validation" novalidate>
+                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST" id="videoForm" enctype="multipart/form-data" class="needs-validation" novalidate>
                         <div class="mb-3 position-relative">
                             <label for="title" class="form-label">Video Title</label>
                             <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter video title">
@@ -208,14 +191,23 @@
                         
                         <div class="mb-3 position-relative">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Brief description of the video..."></textarea>
-                            <div class="invalid-feedback">Please provide a description (min 10 characters).</div>
+                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" maxlength="5000" placeholder="Brief description of the video..."></textarea>
+                            <div class="invalid-feedback">Please provide a description (between 10 and 5000 characters).</div>
                         </div>
                         
                         <div class="mb-4 position-relative">
-                            <label for="videoUrl" class="form-label">Video File / YouTube URL</label>
-                            <input type="url" class="form-control" id="videoUrl" name="videoUrl" required placeholder="https://youtube.com/watch?v=..." pattern="https?://.+">
-                            <div class="invalid-feedback">Please provide a valid URL starting with http:// or https://.</div>
+                            <label class="form-label d-block">Video Source (Optional: Provide URL OR Upload File)</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="videoUrl" class="form-label" style="font-size: 0.85rem; color: #666;">YouTube / External URL</label>
+                                    <input type="url" class="form-control" id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=..." pattern="https?://.+">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="videoFile" class="form-label" style="font-size: 0.85rem; color: #666;">Upload Video File</label>
+                                    <input type="file" class="form-control" id="videoFile" name="videoFile" accept="video/*">
+                                </div>
+                            </div>
+                            <div id="sourceError" class="invalid-feedback" style="display: none;">Please provide either a video URL or upload a video file.</div>
                         </div>
                         
                         <button type="submit" class="btn-purple" id="submitBtn">
@@ -234,20 +226,36 @@
             const submitBtn = document.getElementById('submitBtn');
             const inputs = form.querySelectorAll('input, select, textarea');
 
+            const urlInput = document.getElementById('videoUrl');
+            const fileInput = document.getElementById('videoFile');
+            const sourceError = document.getElementById('sourceError');
+
+            function validateSource() {
+                // Made optional as requested by user
+                sourceError.style.display = 'none';
+                urlInput.classList.remove('is-invalid');
+                fileInput.classList.remove('is-invalid');
+                return true;
+            }
+
             // Real-time validation on input/change
             inputs.forEach(input => {
                 input.addEventListener('input', function() {
-                    validateField(this);
+                    if (this !== urlInput && this !== fileInput) validateField(this);
                     checkFormValidity();
                 });
                 
                 input.addEventListener('change', function() {
-                    validateField(this);
+                    if (this !== urlInput && this !== fileInput) {
+                        validateField(this);
+                    } else {
+                        validateSource();
+                    }
                     checkFormValidity();
                 });
                 
                 input.addEventListener('blur', function() {
-                    validateField(this);
+                    if (this !== urlInput && this !== fileInput) validateField(this);
                 });
             });
 
@@ -262,7 +270,10 @@
             }
 
             function checkFormValidity() {
-                if (form.checkValidity()) {
+                const isFormValid = form.checkValidity();
+                const isSourceValid = validateSource();
+                
+                if (isFormValid && isSourceValid) {
                     submitBtn.classList.remove('disabled');
                     submitBtn.removeAttribute('disabled');
                 } else {
@@ -273,17 +284,20 @@
 
             // Form submission validation
             form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
+                const isFormValid = form.checkValidity();
+                const isSourceValid = validateSource();
+                
+                if (!isFormValid || !isSourceValid) {
                     event.preventDefault();
                     event.stopPropagation();
                     
                     // Mark all fields to show invalid state
                     inputs.forEach(input => {
-                        validateField(input);
+                        if (input !== urlInput && input !== fileInput) validateField(input);
                     });
                     
                     // Focus on the first invalid field
-                    const firstInvalid = form.querySelector(':invalid');
+                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
                     if(firstInvalid) firstInvalid.focus();
                 } else {
                     // Show loading state

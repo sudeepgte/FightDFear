@@ -181,14 +181,14 @@ public class FinancialLiteracyCatalogService {
 
     @Transactional
     public FinancialVideo addVideo(String title, String category, String description, String videoUrl, FinancialEducator educator) {
-        if (blank(title) || blank(videoUrl)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title and video URL are required");
+        if (blank(title)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         }
         FinancialVideo v = new FinancialVideo();
         v.setTitle(title.trim());
         v.setCategory(blank(category) ? "saving" : category.trim());
         v.setDescription(description);
-        v.setVideoUrl(videoUrl.trim());
+        v.setVideoUrl(videoUrl != null ? videoUrl.trim() : null);
         v.setDuration("15 mins");
         v.setLevel("Beginner");
         v.setPublished(true);

@@ -526,4 +526,24 @@ public class EntrepreneurController {
         }
         return "redirect:/entrepreneur/dashboard";
     }
+
+    // --- Wallet & Bookings placeholders ---
+    @GetMapping("/wallet")
+    public String viewWallet(HttpSession session, Model model) {
+        Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
+        if (e == null) return "redirect:/entrepreneur/login";
+        // Refresh Entrepreneur data
+        Optional<Entrepreneur> opt = entrepreneurRepository.findById(e.getId());
+        if (opt.isPresent()) {
+            session.setAttribute("loggedEntrepreneur", opt.get());
+        }
+        return "entrepreneur/wallet";
+    }
+
+    @GetMapping("/bookings")
+    public String viewBookings(HttpSession session, Model model) {
+        Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
+        if (e == null) return "redirect:/entrepreneur/login";
+        return "entrepreneur/bookings";
+    }
 }
