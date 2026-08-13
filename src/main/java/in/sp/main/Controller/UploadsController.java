@@ -27,12 +27,26 @@ public class UploadsController {
     @Autowired
     private ServletContext servletContext;
 
-    @GetMapping("/uploads/{fileName:.+}")
-    public void getUploadedFile(@PathVariable String fileName, HttpServletResponse response) throws IOException {
+    @GetMapping("/uploads/{*fileName}")
+    public void getUploadedFile(@PathVariable("fileName") String fileName, HttpServletResponse response) throws IOException {
+        if (fileName == null || fileName.isBlank()) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        
+        String normalizedName = fileName.trim().replace('\\', '/');
+        while (normalizedName.startsWith("/")) {
+            normalizedName = normalizedName.substring(1);
+        }
+        if (normalizedName.isEmpty() || normalizedName.contains("..")) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
         try {
-            Resource resource = storageService.readResource(fileName);
+            Resource resource = storageService.readResource(normalizedName);
             if (resource.exists()) {
-                serveResource(fileName, resource, response);
+                serveResource(normalizedName, resource, response);
                 return;
             }
         } catch (FileNotFoundException ignored) {
@@ -42,30 +56,50 @@ public class UploadsController {
             return;
         }
 
+        // Check permanent upload dir
         String permanentUploadDir = System.getProperty("user.dir") + File.separator + "uploads";
-        Path filePath = Paths.get(permanentUploadDir).resolve(fileName).normalize();
+        Path permanentRoot = Paths.get(permanentUploadDir).toAbsolutePath().normalize();
+        Path filePath = permanentRoot.resolve(normalizedName).normalize();
+        
+        if (!filePath.startsWith(permanentRoot)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        
         File file = filePath.toFile();
 
-        if (!file.exists()) {
+        // Check temp upload dir
+        if (!file.exists() || !file.isFile()) {
             String tempUploadDir = servletContext.getRealPath("/uploads/");
             if (tempUploadDir != null) {
-                filePath = Paths.get(tempUploadDir).resolve(fileName).normalize();
-                file = filePath.toFile();
+                Path tempRoot = Paths.get(tempUploadDir).toAbsolutePath().normalize();
+                Path tempPath = tempRoot.resolve(normalizedName).normalize();
+                if (tempPath.startsWith(tempRoot) && Files.isRegularFile(tempPath)) {
+                    filePath = tempPath;
+                    file = tempPath.toFile();
+                }
             }
         }
 
-        if (!file.exists()) {
-            writeNotFoundPage(fileName, response);
+        if (!file.exists() || !file.isFile()) {
+            writeNotFoundPage(normalizedName, response);
             return;
         }
 
         String mimeType = Files.probeContentType(filePath);
         if (mimeType == null) {
-            mimeType = "application/octet-stream";
+            String lower = normalizedName.toLowerCase();
+            if (lower.endsWith(".png")) mimeType = "image/png";
+            else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) mimeType = "image/jpeg";
+            else if (lower.endsWith(".gif")) mimeType = "image/gif";
+            else if (lower.endsWith(".webp")) mimeType = "image/webp";
+            else if (lower.endsWith(".mp4")) mimeType = "video/mp4";
+            else mimeType = "application/octet-stream";
         }
 
         response.setContentType(mimeType);
-        response.setHeader("Content-Disposition", "inline; filename=\"" + fileName + "\"");
+        response.setHeader("Cache-Control", "public, max-age=86400");
+        response.setHeader("Content-Disposition", "inline; filename=\"" + file.getName() + "\"");
         Files.copy(filePath, response.getOutputStream());
         response.getOutputStream().flush();
     }
@@ -76,7 +110,9 @@ public class UploadsController {
             mimeType = Files.probeContentType(Paths.get(resource.getFilename()));
         }
         if (mimeType == null) {
-            mimeType = "application/octet-stream";
+            String lower = fileName.toLowerCase();
+            if (lower.endsWith(".mp4")) mimeType = "video/mp4";
+            else mimeType = "application/octet-stream";
         }
 
         response.setContentType(mimeType);

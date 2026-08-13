@@ -135,6 +135,28 @@ public class Salon {
     public void setGstCertificateUrl(String gstCertificateUrl) { this.gstCertificateUrl = gstCertificateUrl; }
     // --- END NEW SALON PROFILE FIELDS ---
 
+    /** Matches typical JPA/MySQL VARCHAR default for unconstrained String columns. */
+    public static final int NAME_MAX_LENGTH = 255;
+    public static final int USERNAME_MIN_LENGTH = 3;
+    public static final int USERNAME_MAX_LENGTH = 20;
+    /** Letters, digits, underscore only — same rule as salon registration UI. */
+    public static final String USERNAME_PATTERN = "^[a-zA-Z0-9_]{3,20}$";
+    public static final int EMAIL_MAX_LENGTH = 255;
+    public static final int PHONE_LENGTH = 10;
+    public static final String EMAIL_PATTERN = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+    public static final String PHONE_PATTERN = "^\\d{10}$";
+    public static final int ADDRESS_MAX_LENGTH = 500;
+    public static final int CITY_STATE_MAX_LENGTH = 100;
+    public static final int CITY_STATE_MIN_LENGTH = 2;
+    public static final int PINCODE_LENGTH = 6;
+    public static final String PINCODE_PATTERN = "^\\d{6}$";
+    public static final int BIO_MAX_LENGTH = 2000;
+    public static final int WEBSITE_MAX_LENGTH = 255;
+    public static final int HOURS_MAX_LENGTH = 255;
+    /** Earliest accepted salon established year. */
+    public static final int ESTABLISHED_YEAR_MIN = 1900;
+    public static final String ESTABLISHED_YEAR_PATTERN = "^\\d{4}$";
+
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
     

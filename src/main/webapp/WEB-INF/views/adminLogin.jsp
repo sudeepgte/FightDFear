@@ -96,9 +96,19 @@
             margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;
         }
         .input-wrapper { position: relative; }
-        .input-wrapper i { 
-            position: absolute; left: 18px; top: 50%; transform: translateY(-50%); 
+        .input-wrapper > i {
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
             color: var(--brand-purple); opacity: 0.5; font-size: 1.1rem;
+            pointer-events: none;
+        }
+        .password-toggle-btn i {
+            position: static;
+            left: auto;
+            transform: none;
+            opacity: 1;
+            color: inherit;
+            font-size: 1.15rem;
+            pointer-events: none;
         }
         .fdf-input { 
             width: 100%; padding: 15px 15px 15px 50px; border: 2px solid var(--fdf-border); 
@@ -230,6 +240,9 @@
             </div>
         </div>
     </div>
+
+    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
+
     <script>
     document.addEventListener("DOMContentLoaded", function() {
       document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
@@ -248,6 +261,7 @@
       });
     });
     </script>
+
 </body>
 </html>
 

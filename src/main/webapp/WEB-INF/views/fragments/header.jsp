@@ -249,7 +249,7 @@
 <!-- ======= Header ======= -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
-    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : '/users/dashboard'}" class="logo me-auto" style="text-decoration: none;"><h1>Fight D Fear</h1></a>
+    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto" style="text-decoration: none;"><h1>Fight D Fear</h1></a>
     <nav id="navmenu" class="navmenu">
       <ul>
         <c:choose>

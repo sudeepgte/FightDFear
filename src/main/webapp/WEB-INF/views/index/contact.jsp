@@ -151,19 +151,37 @@
                 <div class="col-lg-7">
                     <h2 class="fw-bold mb-4">Send an Inquiry</h2>
                     <div id="alertContainer"></div>
-                    <form id="inquiryForm" action="${pageContext.request.contextPath}/sendMessage" method="post">
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger rounded-4" role="alert"><c:out value="${error}"/></div>
+                    </c:if>
+                    <c:if test="${not empty success}">
+                        <div class="alert alert-success rounded-4" role="alert"><c:out value="${success}"/></div>
+                    </c:if>
+                    <form id="inquiryForm" action="${pageContext.request.contextPath}/sendMessage" method="post" novalidate>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <input type="text" id="inquiryName" name="name" class="form-control p-3 rounded-4" placeholder="Full Name" required>
+                                <label for="inquiryName" class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+                                <input type="text" id="inquiryName" name="name" class="form-control p-3 rounded-4"
+                                       placeholder="Full Name" required minlength="2" maxlength="80"
+                                       pattern="[A-Za-z]([A-Za-z .'-]*[A-Za-z])?"
+                                       title="Letters only (spaces, apostrophes, hyphens allowed). No numbers.">
+                                <div class="invalid-feedback">Enter a valid name (letters only, 2–80 characters).</div>
                             </div>
                             <div class="col-md-6">
-                                <input type="email" id="inquiryEmail" name="email" class="form-control p-3 rounded-4" placeholder="Email Address" required>
+                                <label for="inquiryEmail" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" id="inquiryEmail" name="email" class="form-control p-3 rounded-4" placeholder="Email Address" required maxlength="255">
+                                <div class="invalid-feedback">Please enter a valid email address.</div>
                             </div>
                             <div class="col-12">
-                                <input type="text" id="inquirySubject" name="subject" class="form-control p-3 rounded-4" placeholder="Subject" required>
+                                <label for="inquirySubject" class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+                                <input type="text" id="inquirySubject" name="subject" class="form-control p-3 rounded-4" placeholder="Subject" required maxlength="150">
+                                <div class="invalid-feedback">Subject is required (max 150 characters).</div>
                             </div>
                             <div class="col-12">
-                                <textarea id="inquiryMessage" name="message" rows="5" class="form-control p-3 rounded-4" placeholder="Message" required></textarea>
+                                <label for="inquiryMessage" class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
+                                <textarea id="inquiryMessage" name="message" rows="5" class="form-control p-3 rounded-4"
+                                          placeholder="Message" required minlength="10" maxlength="2000"></textarea>
+                                <div class="invalid-feedback">Message must be 10–2000 characters.</div>
                             </div>
                         </div>
                         <button type="submit" id="btnSubmitMessage" class="btn-send-message mt-4">Send Message</button>
@@ -205,21 +223,54 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const nameInput = document.getElementById("inquiryName");
+        if (nameInput) {
+            nameInput.addEventListener("input", function () {
+                this.value = this.value.replace(/[^A-Za-z .'-]/g, "");
+            });
+        }
+
         document.getElementById("inquiryForm").addEventListener("submit", function(e) {
             e.preventDefault();
             const btn = document.getElementById("btnSubmitMessage");
             const alertContainer = document.getElementById("alertContainer");
-            
-            // Show loading state
+            const name = (document.getElementById("inquiryName").value || "").trim();
+            const email = (document.getElementById("inquiryEmail").value || "").trim();
+            const subject = (document.getElementById("inquirySubject").value || "").trim();
+            const message = (document.getElementById("inquiryMessage").value || "").trim();
+
+            function mark(id, ok) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.toggle("is-invalid", !ok);
+                el.classList.toggle("is-valid", ok);
+            }
+
+            const nameOk = /^[A-Za-z]([A-Za-z .'-]*[A-Za-z])?$/.test(name) && name.length >= 2 && name.length <= 80;
+            const emailOk = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6}$/.test(email);
+            const subjectOk = subject.length > 0 && subject.length <= 150;
+            const messageOk = message.length >= 10 && message.length <= 2000;
+            mark("inquiryName", nameOk);
+            mark("inquiryEmail", emailOk);
+            mark("inquirySubject", subjectOk);
+            mark("inquiryMessage", messageOk);
+            if (!nameOk || !emailOk || !subjectOk || !messageOk) {
+                alertContainer.innerHTML =
+                    '<div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">' +
+                    '<i class="bi bi-exclamation-triangle-fill me-2"></i> Please correct the highlighted fields.' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Sending...';
             alertContainer.innerHTML = '';
 
             const params = new URLSearchParams();
-            params.append("name", document.getElementById("inquiryName").value);
-            params.append("email", document.getElementById("inquiryEmail").value);
-            params.append("subject", document.getElementById("inquirySubject").value);
-            params.append("message", document.getElementById("inquiryMessage").value);
+            params.append("name", name);
+            params.append("email", email);
+            params.append("subject", subject);
+            params.append("message", message);
 
             fetch(this.action, {
                 method: "POST",
@@ -232,31 +283,30 @@
             .then(async response => {
                 const text = await response.text();
                 if (response.ok) {
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-success alert-dismissible fade show rounded-4" role="alert">
-                            <i class="bi bi-check-circle-fill me-2"></i> \${text === "OK" ? "Your message has been sent successfully!" : text}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
+                    const okMsg = (text === "OK") ? "Your message has been sent successfully!" : text;
+                    alertContainer.innerHTML =
+                        '<div class="alert alert-success alert-dismissible fade show rounded-4" role="alert">' +
+                        '<i class="bi bi-check-circle-fill me-2"></i> ' + okMsg +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
                     document.getElementById("inquiryForm").reset();
+                    ["inquiryName","inquiryEmail","inquirySubject","inquiryMessage"].forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove("is-valid", "is-invalid");
+                    });
                 } else {
-                    alertContainer.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i> \${text}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `;
+                    alertContainer.innerHTML =
+                        '<div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">' +
+                        '<i class="bi bi-exclamation-triangle-fill me-2"></i> ' + (text || "Failed to send message. Please try again.") +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
                 }
             })
-            .catch(err => {
-                alertContainer.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Failed to send message. Please try again.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                `;
+            .catch(function() {
+                alertContainer.innerHTML =
+                    '<div class="alert alert-danger alert-dismissible fade show rounded-4" role="alert">' +
+                    '<i class="bi bi-exclamation-triangle-fill me-2"></i> Failed to send message. Please try again.' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
             })
-            .finally(() => {
+            .finally(function() {
                 btn.disabled = false;
                 btn.innerText = "Send Message";
             });

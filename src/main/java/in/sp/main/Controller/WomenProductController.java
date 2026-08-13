@@ -37,6 +37,9 @@ public class WomenProductController {
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
 
+    @Autowired
+    private in.sp.main.Service.WomenProductDeliveryService deliveryService;
+
     // ══════════════════════════════════════
     // SELLER: Register + Login
     // ══════════════════════════════════════
@@ -55,9 +58,30 @@ public class WomenProductController {
                                  @RequestParam String address,
                                  @RequestParam("profilePhoto") MultipartFile profilePhoto,
                                  @RequestParam("identityDoc") MultipartFile identityDoc,
-                                 Model model) {
+                                 Model model,
+                                 RedirectAttributes ra) {
+        if (email == null || email.trim().isEmpty()) {
+            model.addAttribute("error", "Email is required.");
+            return "women-products/seller-register";
+        }
         if (sellerRepo.findByEmail(email.trim().toLowerCase()).isPresent()) {
             model.addAttribute("error", "Email already registered.");
+            return "women-products/seller-register";
+        }
+
+        String cleanedFullName = fullName == null ? "" : fullName.trim();
+        if (cleanedFullName.length() < WomenProductSeller.FULL_NAME_MIN_LENGTH
+                || cleanedFullName.length() > WomenProductSeller.FULL_NAME_MAX_LENGTH
+                || !cleanedFullName.matches(WomenProductSeller.FULL_NAME_PATTERN)) {
+            model.addAttribute("error",
+                    "Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).");
+            return "women-products/seller-register";
+        }
+
+        String cleanedBusinessName = businessName == null ? "" : businessName.trim();
+        String businessNameError = validateBusinessName(cleanedBusinessName);
+        if (businessNameError != null) {
+            model.addAttribute("error", businessNameError);
             return "women-products/seller-register";
         }
 
@@ -67,22 +91,43 @@ public class WomenProductController {
         }
         try {
             WomenProductSeller s = new WomenProductSeller();
-            s.setFullName(fullName);
+            s.setFullName(cleanedFullName);
             s.setEmail(email.trim().toLowerCase());
             s.setPhone(phone);
             s.setPassword(passwordService.encode(password));
-            s.setBusinessName(businessName);
+            s.setBusinessName(cleanedBusinessName);
             s.setDescription(description);
             s.setAddress(address);
-            if (!profilePhoto.isEmpty()) s.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
-            if (!identityDoc.isEmpty()) s.setIdentityDocPath(fileUploadService.saveFile(identityDoc));
+            if (profilePhoto == null || profilePhoto.isEmpty() || identityDoc == null || identityDoc.isEmpty()) {
+                model.addAttribute("error", "Profile photo and identity proof are required.");
+                return "women-products/seller-register";
+            }
+            s.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
+            s.setIdentityDocPath(fileUploadService.saveFile(identityDoc));
             s.setVerificationStatus(VerificationStatus.PENDING);
             sellerRepo.save(s);
-            return "redirect:/women-products/seller/login?registered=true";
+            ra.addFlashAttribute("success",
+                    "Registration successful! Your account is pending admin verification. You can sign in once approved.");
+            return "redirect:/women-products/seller/register";
         } catch (IOException e) {
-            model.addAttribute("error", "Failed to upload files.");
+            model.addAttribute("error", "Registration failed: could not upload files. Please try again.");
+            return "women-products/seller-register";
+        } catch (Exception e) {
+            model.addAttribute("error", "Registration failed. Please check your details and try again.");
             return "women-products/seller-register";
         }
+    }
+
+    private static String validateBusinessName(String cleanedBusinessName) {
+        if (cleanedBusinessName == null || cleanedBusinessName.isEmpty()) {
+            return "Business Name is required.";
+        }
+        if (cleanedBusinessName.length() < WomenProductSeller.BUSINESS_NAME_MIN_LENGTH
+                || cleanedBusinessName.length() > WomenProductSeller.BUSINESS_NAME_MAX_LENGTH
+                || !cleanedBusinessName.matches(WomenProductSeller.BUSINESS_NAME_PATTERN)) {
+            return "Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , ' ( ) - only.";
+        }
+        return null;
     }
 
     @GetMapping("/seller/login")
@@ -178,6 +223,55 @@ public class WomenProductController {
         try {
             WomenProductSeller existing = sellerRepo.findById(s.getId()).orElse(null);
             if (existing != null) {
+
+                String cleanedFullName = fullName == null ? "" : fullName.trim();
+                if (cleanedFullName.length() < WomenProductSeller.FULL_NAME_MIN_LENGTH
+                        || cleanedFullName.length() > WomenProductSeller.FULL_NAME_MAX_LENGTH
+                        || !cleanedFullName.matches(WomenProductSeller.FULL_NAME_PATTERN)) {
+                    ra.addFlashAttribute("error",
+                            "Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).");
+                    return "redirect:/women-products/seller/dashboard?section=profile";
+                }
+                String cleanedBusinessName = businessName == null ? "" : businessName.trim();
+                String businessNameError = validateBusinessName(cleanedBusinessName);
+                if (businessNameError != null) {
+                    ra.addFlashAttribute("error", businessNameError);
+                    return "redirect:/women-products/seller/dashboard?section=profile";
+                }
+                String cleanedPhone = phone == null ? "" : phone.trim();
+                if (!cleanedPhone.matches(WomenProductSeller.PHONE_PATTERN)) {
+                    ra.addFlashAttribute("error", "Phone number must be exactly 10 digits.");
+                    return "redirect:/women-products/seller/dashboard?section=profile";
+                }
+                String cleanedAddress = address == null ? "" : address.trim();
+                if (cleanedAddress.length() < WomenProductSeller.ADDRESS_MIN_LENGTH
+                        || cleanedAddress.length() > WomenProductSeller.ADDRESS_MAX_LENGTH) {
+                    ra.addFlashAttribute("error",
+                            "Business Address must be between " + WomenProductSeller.ADDRESS_MIN_LENGTH
+                                    + " and " + WomenProductSeller.ADDRESS_MAX_LENGTH + " characters.");
+                    return "redirect:/women-products/seller/dashboard?section=profile";
+                }
+                String cleanedDescription = description == null ? "" : description.trim();
+                if (cleanedDescription.length() > WomenProductSeller.DESCRIPTION_MAX_LENGTH) {
+                    ra.addFlashAttribute("error",
+                            "Business Description must be at most "
+                                    + WomenProductSeller.DESCRIPTION_MAX_LENGTH + " characters.");
+                    return "redirect:/women-products/seller/dashboard?section=profile";
+                }
+                if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                    String photoErr = fileUploadService.validatePngOrJpegImage(profilePhoto, 5L * 1024 * 1024);
+                    if (photoErr != null) {
+                        ra.addFlashAttribute("error", photoErr.replace("Profile photo", "Profile photo"));
+                        return "redirect:/women-products/seller/dashboard?section=profile";
+                    }
+                }
+
+                existing.setFullName(cleanedFullName);
+                existing.setBusinessName(cleanedBusinessName);
+                existing.setPhone(cleanedPhone);
+                existing.setAddress(cleanedAddress);
+                existing.setDescription(cleanedDescription.isEmpty() ? null : cleanedDescription);
+
                 existing.setFullName(fullName != null ? fullName.trim() : "");
                 existing.setBusinessName(businessName != null ? businessName.trim() : "");
                 existing.setPhone(phone != null ? phone.trim() : "");
@@ -191,6 +285,7 @@ public class WomenProductController {
                 existing.setWorkingHoursFrom(workingHoursFrom != null ? workingHoursFrom.trim() : "");
                 existing.setWorkingHoursTo(workingHoursTo != null ? workingHoursTo.trim() : "");
                 existing.setLanguagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : "");
+
                 
                 if (profilePhoto != null && !profilePhoto.isEmpty()) {
                     String originalFilename = profilePhoto.getOriginalFilename();
@@ -218,7 +313,7 @@ public class WomenProductController {
     @PostMapping("/seller/products/add")
     public String addProduct(@RequestParam String name,
                              @RequestParam(required = false) String brand,
-                             @RequestParam String description,
+                             @RequestParam(required = false) String description,
                              @RequestParam(required = false) String fullDescription,
                              @RequestParam Double price,
                              @RequestParam(required = false) Double originalPrice,
@@ -236,29 +331,26 @@ public class WomenProductController {
                              @RequestParam(required = false, defaultValue = "true") Boolean active,
                              @RequestParam(required = false, defaultValue = "false") Boolean featured,
                              @RequestParam(required = false, defaultValue = "true") Boolean trackInventory,
-                             @RequestParam(value = "images", required = false) MultipartFile[] images,
+                             @RequestParam(value = "images", required = false) java.util.List<MultipartFile> images,
                              HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
-        if (brand == null || brand.trim().isEmpty()) {
-            ra.addFlashAttribute("error", "Brand name is required.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (price == null || price <= 0) {
-            ra.addFlashAttribute("error", "Selling price must be positive.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (originalPrice != null && originalPrice <= 0) {
-            ra.addFlashAttribute("error", "MRP must be positive.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (images == null || images.length == 0 || images[0].isEmpty()) {
-            ra.addFlashAttribute("error", "Product image is required.");
+
+        String validationError = validateProductInput(name, brand, description, fullDescription, price,
+                originalPrice, offerBadge, stock, lowStockAlertLevel, sku, category, weightSize,
+                manufacturer, ingredients, benefits, usageInstructions, tags, true, images);
+        if (validationError != null) {
+            ra.addFlashAttribute("error", validationError);
             return "redirect:/women-products/seller/dashboard?section=products";
         }
 
         try {
             WomenProduct p = new WomenProduct();
+
+            applyProductFields(p, name, brand, description, fullDescription, price, originalPrice,
+                    offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
+                    ingredients, benefits, usageInstructions, tags, active, featured, trackInventory);
+
             p.setName(name);
             p.setBrand(brand);
             p.setDescription(description);
@@ -286,30 +378,15 @@ public class WomenProductController {
             p.setActive(active);
             p.setFeatured(featured);
             p.setTrackInventory(trackInventory);
-            p.setSeller(s);
-            
-            if (images != null && images.length > 0) {
-                if (!images[0].isEmpty()) {
-                    p.setImagePath(fileUploadService.saveFile(images[0]));
-                }
-                if (images.length > 1) {
-                    StringBuilder additionalPaths = new StringBuilder();
-                    for (int i = 1; i < images.length; i++) {
-                        if (!images[i].isEmpty()) {
-                            if (additionalPaths.length() > 0) additionalPaths.append(",");
-                            additionalPaths.append(fileUploadService.saveFile(images[i]));
-                        }
-                    }
-                    if (additionalPaths.length() > 0) {
-                        p.setAdditionalImagePaths(additionalPaths.toString());
-                    }
-                }
-            }
 
+            p.setSeller(s);
+            applyProductImages(p, images, false);
             productRepo.save(p);
             ra.addFlashAttribute("message", "Product added successfully!");
         } catch (IOException e) {
-            ra.addFlashAttribute("error", "Failed to upload image.");
+            ra.addFlashAttribute("error", "Failed to upload image. Please try again with a valid JPG/PNG file.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Could not add product. Please check your details and try again.");
         }
         return "redirect:/women-products/seller/dashboard?section=products";
     }
@@ -337,7 +414,7 @@ public class WomenProductController {
                               @RequestParam(required = false, defaultValue = "true") Boolean active,
                               @RequestParam(required = false, defaultValue = "false") Boolean featured,
                               @RequestParam(required = false, defaultValue = "true") Boolean trackInventory,
-                              @RequestParam(value = "images", required = false) MultipartFile[] images,
+                              @RequestParam(value = "images", required = false) java.util.List<MultipartFile> images,
                               HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -354,76 +431,237 @@ public class WomenProductController {
             return "redirect:/women-products/seller/dashboard?section=products";
         }
 
-        if (name == null || name.trim().isEmpty()) {
-            ra.addFlashAttribute("error", "Product name is required.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (brand == null || brand.trim().isEmpty()) {
-            ra.addFlashAttribute("error", "Brand name is required.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (price == null || price <= 0) {
-            ra.addFlashAttribute("error", "Selling price must be positive.");
-            return "redirect:/women-products/seller/dashboard?section=products";
-        }
-        if (originalPrice != null && originalPrice <= 0) {
-            ra.addFlashAttribute("error", "MRP must be positive.");
+        String validationError = validateProductInput(name, brand, description, fullDescription, price,
+                originalPrice, offerBadge, stock, lowStockAlertLevel, sku, category, weightSize,
+                manufacturer, ingredients, benefits, usageInstructions, tags, false, images);
+        if (validationError != null) {
+            ra.addFlashAttribute("error", validationError);
             return "redirect:/women-products/seller/dashboard?section=products";
         }
 
-        p.setName(name.trim());
-        p.setBrand(brand.trim());
-        p.setDescription(description != null ? description.trim() : "");
-        p.setFullDescription(fullDescription != null ? fullDescription.trim() : "");
-        p.setPrice(price);
-        Double finalMrp = originalPrice != null ? originalPrice : price;
-        p.setOriginalPrice(finalMrp);
-        
-        String finalOfferBadge = offerBadge;
-        if ((finalOfferBadge == null || finalOfferBadge.trim().isEmpty() || finalOfferBadge.trim().endsWith("% OFF")) && finalMrp > price) {
-            long discount = Math.round(((finalMrp - price) / finalMrp) * 100);
-            if (discount > 0) finalOfferBadge = discount + "% OFF";
-        }
-        p.setOfferBadge(finalOfferBadge);
-        p.setStock(stock != null ? stock : 0);
-        p.setLowStockAlertLevel(lowStockAlertLevel != null ? lowStockAlertLevel : 5);
-        p.setSku(sku);
-        p.setCategory(category != null ? category.trim() : p.getCategory());
-        p.setWeightSize(weightSize);
-        p.setManufacturer(manufacturer);
-        p.setIngredients(ingredients);
-        p.setBenefits(benefits);
-        p.setUsageInstructions(usageInstructions);
-        p.setTags(tags);
-        p.setActive(active != null ? active : true);
-        p.setFeatured(featured != null ? featured : false);
-        p.setTrackInventory(trackInventory != null ? trackInventory : true);
-        
+        applyProductFields(p, name, brand, description, fullDescription, price, originalPrice,
+                offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
+                ingredients, benefits, usageInstructions, tags, active, featured, trackInventory);
+
         try {
-            if (images != null && images.length > 0) {
-                if (!images[0].isEmpty()) {
-                    p.setImagePath(fileUploadService.saveFile(images[0]));
-                }
-                if (images.length > 1) {
-                    StringBuilder additionalPaths = new StringBuilder();
-                    for (int i = 1; i < images.length; i++) {
-                        if (!images[i].isEmpty()) {
-                            if (additionalPaths.length() > 0) additionalPaths.append(",");
-                            additionalPaths.append(fileUploadService.saveFile(images[i]));
-                        }
-                    }
-                    if (additionalPaths.length() > 0) {
-                        p.setAdditionalImagePaths(additionalPaths.toString());
-                    }
-                }
-            }
-        } catch (IOException e) { /* keep old image */ }
+            applyProductImages(p, images, true);
+        } catch (IOException e) {
+            ra.addFlashAttribute("error", "Failed to upload new image. Other product details were not saved.");
+            return "redirect:/women-products/seller/dashboard?section=products";
+        }
         productRepo.save(p);
         ra.addFlashAttribute("message", "Product updated successfully!");
         return "redirect:/women-products/seller/dashboard?section=products";
     }
+    private static String trimToNull(String value) {
+        if (value == null) return null;
+        String t = value.trim();
+        return t.isEmpty() ? null : t;
+    }
+
+    private static String validateProductInput(String name, String brand, String description,
+                                               String fullDescription, Double price, Double originalPrice,
+                                               String offerBadge, Integer stock, Integer lowStockAlertLevel,
+                                               String sku, String category, String weightSize,
+                                               String manufacturer, String ingredients, String benefits,
+                                               String usageInstructions, String tags,
+                                               boolean requireImages, java.util.List<MultipartFile> images) {
+        String cleanedName = name == null ? "" : name.trim();
+        if (cleanedName.length() < WomenProduct.NAME_MIN_LENGTH
+                || cleanedName.length() > WomenProduct.NAME_MAX_LENGTH) {
+            return "Product Name must be between " + WomenProduct.NAME_MIN_LENGTH
+                    + " and " + WomenProduct.NAME_MAX_LENGTH + " characters.";
+        }
+
+        String cleanedBrand = brand == null ? "" : brand.trim();
+        if (cleanedBrand.isEmpty() || cleanedBrand.length() > WomenProduct.BRAND_MAX_LENGTH) {
+            return "Brand is required (max " + WomenProduct.BRAND_MAX_LENGTH + " characters).";
+        }
+
+        if (category == null || category.trim().isEmpty() || !WomenProduct.isAllowedCategory(category)) {
+            return "Please select a valid product category.";
+        }
+
+        String cleanedDescription = description == null ? "" : description.trim();
+        if (cleanedDescription.isEmpty()) {
+            return "Short Description is required.";
+        }
+        if (cleanedDescription.length() > WomenProduct.SHORT_DESCRIPTION_MAX_LENGTH) {
+            return "Short Description must be at most "
+                    + WomenProduct.SHORT_DESCRIPTION_MAX_LENGTH + " characters.";
+        }
+
+        if (fullDescription != null && fullDescription.trim().length() > WomenProduct.FULL_DESCRIPTION_MAX_LENGTH) {
+            return "Full Description must be at most "
+                    + WomenProduct.FULL_DESCRIPTION_MAX_LENGTH + " characters.";
+        }
+
+        if (price == null || price <= 0 || price > WomenProduct.PRICE_MAX) {
+            return "Selling price must be greater than 0 and at most " + (long) WomenProduct.PRICE_MAX + ".";
+        }
+        if (originalPrice != null) {
+            if (originalPrice <= 0 || originalPrice > WomenProduct.PRICE_MAX) {
+                return "MRP must be greater than 0 when provided.";
+            }
+            if (originalPrice < price) {
+                return "MRP cannot be less than the selling price.";
+            }
+        }
+
+        if (offerBadge != null && offerBadge.trim().length() > WomenProduct.OFFER_BADGE_MAX_LENGTH) {
+            return "Offer Badge must be at most " + WomenProduct.OFFER_BADGE_MAX_LENGTH + " characters.";
+        }
+
+        if (stock == null || stock < 0 || stock > WomenProduct.STOCK_MAX) {
+            return "Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".";
+        }
+        if (lowStockAlertLevel == null
+                || lowStockAlertLevel < WomenProduct.ALERT_LEVEL_MIN
+                || lowStockAlertLevel > WomenProduct.ALERT_LEVEL_MAX) {
+            return "Alert Level must be a non-negative number (0 or greater). Negative values are not allowed.";
+        }
+
+        if (sku != null && !sku.trim().isEmpty()) {
+            String cleanedSku = sku.trim();
+            if (cleanedSku.length() > WomenProduct.SKU_MAX_LENGTH || !cleanedSku.matches("^[A-Za-z0-9_-]+$")) {
+                return "SKU must be at most " + WomenProduct.SKU_MAX_LENGTH
+                        + " characters and use only letters, numbers, hyphens, or underscores.";
+            }
+        }
+
+        if (weightSize != null && weightSize.trim().length() > WomenProduct.WEIGHT_SIZE_MAX_LENGTH) {
+            return "Weight/Size must be at most " + WomenProduct.WEIGHT_SIZE_MAX_LENGTH + " characters.";
+        }
+        if (manufacturer != null && manufacturer.trim().length() > WomenProduct.MANUFACTURER_MAX_LENGTH) {
+            return "Manufacturer must be at most " + WomenProduct.MANUFACTURER_MAX_LENGTH + " characters.";
+        }
+        if (ingredients != null && ingredients.trim().length() > WomenProduct.INGREDIENTS_MAX_LENGTH) {
+            return "Ingredients must be at most " + WomenProduct.INGREDIENTS_MAX_LENGTH + " characters.";
+        }
+        if (benefits != null && benefits.trim().length() > WomenProduct.BENEFITS_MAX_LENGTH) {
+            return "Benefits must be at most " + WomenProduct.BENEFITS_MAX_LENGTH + " characters.";
+        }
+        if (usageInstructions != null && usageInstructions.trim().length() > WomenProduct.USAGE_MAX_LENGTH) {
+            return "Usage Instructions must be at most " + WomenProduct.USAGE_MAX_LENGTH + " characters.";
+        }
+        if (tags != null && tags.trim().length() > WomenProduct.TAGS_MAX_LENGTH) {
+            return "Tags must be at most " + WomenProduct.TAGS_MAX_LENGTH + " characters.";
+        }
+
+        java.util.List<MultipartFile> uploaded = nonEmptyImages(images);
+        if (requireImages && uploaded.isEmpty()) {
+            return "At least one product image is required.";
+        }
+        if (uploaded.size() > WomenProduct.MAX_PRODUCT_IMAGES) {
+            return "You can upload at most " + WomenProduct.MAX_PRODUCT_IMAGES + " images per product.";
+        }
+        for (MultipartFile img : uploaded) {
+            String contentType = img.getContentType();
+            if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+                return "Only image files (JPG/PNG) are allowed for product photos.";
+            }
+            if (img.getSize() > 5L * 1024 * 1024) {
+                return "Each product image must be 5MB or smaller.";
+            }
+        }
+        return null;
+    }
+
+    private static java.util.List<MultipartFile> nonEmptyImages(java.util.List<MultipartFile> images) {
+        java.util.List<MultipartFile> uploaded = new ArrayList<>();
+        if (images == null) return uploaded;
+        for (MultipartFile img : images) {
+            if (img != null && !img.isEmpty()) {
+                uploaded.add(img);
+            }
+        }
+        return uploaded;
+    }
+
+    private static void applyProductFields(WomenProduct p, String name, String brand, String description,
+                                           String fullDescription, Double price, Double originalPrice,
+                                           String offerBadge, Integer stock, Integer lowStockAlertLevel,
+                                           String sku, String category, String weightSize,
+                                           String manufacturer, String ingredients, String benefits,
+                                           String usageInstructions, String tags,
+                                           Boolean active, Boolean featured, Boolean trackInventory) {
+        p.setName(name.trim());
+        p.setBrand(brand.trim());
+        p.setDescription(description.trim());
+        p.setFullDescription(trimToNull(fullDescription));
+        p.setPrice(price);
+        p.setOriginalPrice(originalPrice != null ? originalPrice : price);
+        p.setOfferBadge(trimToNull(offerBadge));
+        p.setStock(stock);
+        p.setLowStockAlertLevel(lowStockAlertLevel != null ? lowStockAlertLevel : 5);
+        p.setSku(trimToNull(sku));
+        String normalizedCategory = WomenProduct.normalizeCategory(category);
+        p.setCategory(normalizedCategory != null ? normalizedCategory : category.trim().toUpperCase());
+        p.setWeightSize(trimToNull(weightSize));
+        p.setManufacturer(trimToNull(manufacturer));
+        p.setIngredients(trimToNull(ingredients));
+        p.setBenefits(trimToNull(benefits));
+        p.setUsageInstructions(trimToNull(usageInstructions));
+        p.setTags(trimToNull(tags));
+        p.setActive(active == null || active);
+        p.setFeatured(Boolean.TRUE.equals(featured));
+        p.setTrackInventory(trackInventory == null || trackInventory);
+    }
+
+    private void applyProductImages(WomenProduct p, java.util.List<MultipartFile> images, boolean keepExisting) throws IOException {
+        java.util.List<MultipartFile> uploaded = nonEmptyImages(images);
+        if (uploaded.isEmpty()) {
+            if (!keepExisting && (p.getImagePath() == null || p.getImagePath().isEmpty())) {
+                throw new IOException("Product image is required.");
+            }
+            return;
+        }
+
+        // First image is the primary catalog image; remaining images are gallery extras.
+        p.setImagePath(fileUploadService.saveFile(uploaded.get(0)));
+        if (uploaded.size() == 1) {
+            if (!keepExisting) {
+                p.setAdditionalImagePaths(null);
+            }
+            return;
+        }
+
+        StringBuilder additionalPaths = new StringBuilder();
+        for (int i = 1; i < uploaded.size(); i++) {
+            if (additionalPaths.length() > 0) additionalPaths.append(",");
+            additionalPaths.append(fileUploadService.saveFile(uploaded.get(i)));
+        }
+        p.setAdditionalImagePaths(additionalPaths.toString());
+    }
+
+    /** Normalize stored upload path to a public /uploads/... URL (no hardcoded product files). */
+    static String toPublicUploadPath(String stored) {
+        if (stored == null || stored.isBlank()) return null;
+        String path = stored.trim().replace('\\', '/');
+        if (path.startsWith("http://") || path.startsWith("https://")) return path;
+        int idx = path.toLowerCase().lastIndexOf("/uploads/");
+        if (idx >= 0) {
+            path = path.substring(idx);
+        } else if (path.toLowerCase().startsWith("uploads/")) {
+            path = "/" + path;
+        } else if (!path.startsWith("/")) {
+            path = "/uploads/" + path;
+        }
+        return path;
+    }
+
+    private static java.util.List<String> splitAdditionalImages(String additionalImagePaths) {
+        java.util.List<String> urls = new ArrayList<>();
+        if (additionalImagePaths == null || additionalImagePaths.isBlank()) return urls;
+        for (String part : additionalImagePaths.split(",")) {
+            String url = toPublicUploadPath(part);
+            if (url != null && !url.isBlank()) urls.add(url);
+        }
+        return urls;
+    }
 
     @GetMapping({"/seller/products/{id}/edit", "/seller/products/edit", "/seller/products//edit"})
+
     public String editProductGet() {
         return "redirect:/women-products/seller/dashboard?section=products";
     }
@@ -504,16 +742,46 @@ public class WomenProductController {
     }
 
     // ══════════════════════════════════════
+    // SELLER: Shop Preview (seller's own catalog)
+    // ══════════════════════════════════════
+    @GetMapping("/seller/shop-preview")
+    public String sellerShopPreview(@RequestParam(required = false) String category,
+                                    HttpSession session, Model model) {
+        WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
+        if (s == null) return "redirect:/women-products/seller/login";
+        s = sellerRepo.findById(s.getId()).orElse(s);
+
+        List<WomenProduct> products = productRepo.findBySellerAndDeletedFalseOrderByCreatedAtDesc(s).stream()
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .filter(p -> {
+                    String normalized = WomenProduct.normalizeCategory(category);
+                    return normalized == null
+                            || normalized.equalsIgnoreCase(WomenProduct.normalizeCategory(p.getCategory()));
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        model.addAttribute("seller", s);
+        model.addAttribute("products", products);
+        model.addAttribute("selectedCategory", WomenProduct.normalizeCategory(category));
+        model.addAttribute("previewMode", true);
+        return "women-products/seller-shop-preview";
+    }
+
+    // ══════════════════════════════════════
     // USER: Browse Products
     // ══════════════════════════════════════
     @GetMapping
     public String shopHome(Model model, @RequestParam(required = false) String category) {
-        if (category != null && !category.isEmpty()) {
-            model.addAttribute("products", productRepo.findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(category));
+        String normalized = WomenProduct.normalizeCategory(category);
+        if (normalized != null) {
+            model.addAttribute("products",
+                    productRepo.findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(normalized));
+            model.addAttribute("selectedCategory", normalized);
         } else {
             model.addAttribute("products", productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc());
+            model.addAttribute("selectedCategory", null);
         }
-        model.addAttribute("selectedCategory", category);
+        model.addAttribute("categoryCodes", WomenProduct.CATEGORY_CODES);
         return "women-products/shop";
     }
 
@@ -533,6 +801,13 @@ public class WomenProductController {
                 .orElse(0.0);
         
         model.addAttribute("product", p);
+        model.addAttribute("productImageUrl", toPublicUploadPath(p.getImagePath()));
+        model.addAttribute("additionalImageUrls", splitAdditionalImages(p.getAdditionalImagePaths()));
+        // Explicit product-detail fields for the user Product Details page
+        model.addAttribute("ingredients", p.getIngredients());
+        model.addAttribute("benefits", p.getBenefits());
+        model.addAttribute("usageInstructions", p.getUsageInstructions());
+        model.addAttribute("fullDescription", p.getFullDescription());
         model.addAttribute("reviews", ratedReviews);
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("reviewCount", ratedReviews.size());
@@ -761,6 +1036,11 @@ public class WomenProductController {
             order.setShippingAddress(shippingAddress);
             order.setStatus("PLACED");
             if (razorpayPaymentId != null) order.setRazorpayPaymentId(razorpayPaymentId);
+            java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
+            order.setOrderTime(placedAt);
+            order.setExpectedDeliveryDate(deliveryService
+                    .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, ci.getQuantity())
+                    .atStartOfDay());
             orderRepo.save(order);
 
             // Deduct stock safely
@@ -822,6 +1102,11 @@ public class WomenProductController {
             order.setShippingAddress(shippingAddress);
             order.setStatus("PLACED");
             if (razorpayPaymentId != null) order.setRazorpayPaymentId(razorpayPaymentId);
+            java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
+            order.setOrderTime(placedAt);
+            order.setExpectedDeliveryDate(deliveryService
+                    .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, ci.getQuantity())
+                    .atStartOfDay());
             orderRepo.save(order);
             orderIds.add(order.getId());
 
@@ -880,7 +1165,27 @@ public class WomenProductController {
     public String myOrders(HttpSession session, Model model) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
-        model.addAttribute("orders", orderRepo.findByUserOrderByOrderTimeDesc(u));
+        List<WomenProductOrder> orders = orderRepo.findByUserOrderByOrderTimeDesc(u);
+        Map<String, String> expectedDeliveryLabels = new HashMap<>();
+        java.time.format.DateTimeFormatter fmt =
+                java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", java.util.Locale.ENGLISH);
+        for (WomenProductOrder o : orders) {
+            if (o.getStatus() != null && "CANCELLED".equalsIgnoreCase(o.getStatus())) continue;
+            java.time.LocalDate eta;
+            if (o.getExpectedDeliveryDate() != null) {
+                eta = o.getExpectedDeliveryDate().toLocalDate();
+            } else {
+                // Legacy orders: compute in-memory only (do not overwrite stored rows)
+                eta = deliveryService.calculateExpectedDeliveryDate(
+                        o.getOrderTime(),
+                        o.getShippingAddress(),
+                        o.getProduct(),
+                        o.getQuantity());
+            }
+            expectedDeliveryLabels.put(String.valueOf(o.getId()), eta.format(fmt));
+        }
+        model.addAttribute("orders", orders);
+        model.addAttribute("expectedDeliveryLabels", expectedDeliveryLabels);
         return "women-products/my-orders";
     }
 
@@ -918,27 +1223,109 @@ public class WomenProductController {
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
         if (o == null || !o.getUser().getId().equals(u.getId())) return "redirect:/women-products/my-orders";
 
+        String cleanedType = type == null ? "" : type.trim().toUpperCase();
+        if (!"REFUND".equals(cleanedType) && !"EXCHANGE".equals(cleanedType) && !"RETURN".equals(cleanedType)) {
+            ra.addFlashAttribute("error", "Invalid request type.");
+            return "redirect:/women-products/my-orders";
+        }
+        if (!"DELIVERED".equalsIgnoreCase(o.getStatus())) {
+            ra.addFlashAttribute("error", "Refund/exchange is only available for delivered orders.");
+            return "redirect:/women-products/my-orders";
+        }
+        if (returnRepo.findByOrder(o).isPresent()) {
+            ra.addFlashAttribute("error", "A refund/exchange request already exists for this order.");
+            return "redirect:/women-products/my-orders";
+        }
+
+        String cleanedReason = reason == null ? "" : reason.trim().toLowerCase();
+        if ("REFUND".equals(cleanedType) || "RETURN".equals(cleanedType)) {
+            if (!WomenReturnRequest.REFUND_REASONS.contains(cleanedReason)) {
+                ra.addFlashAttribute("error", "Please select a valid refund reason.");
+                return "redirect:/women-products/my-orders";
+            }
+            String refundErr = validateRefundBankFields(holderName, accountNumber, ifsc, branch);
+            if (refundErr != null) {
+                ra.addFlashAttribute("error", refundErr);
+                return "redirect:/women-products/my-orders";
+            }
+        } else {
+            if (!WomenReturnRequest.EXCHANGE_REASONS.contains(cleanedReason)) {
+                ra.addFlashAttribute("error", "Please select a valid exchange reason.");
+                return "redirect:/women-products/my-orders";
+            }
+            if (image == null || image.isEmpty()) {
+                ra.addFlashAttribute("error", "Please upload a product image for the exchange request.");
+                return "redirect:/women-products/my-orders";
+            }
+        }
+
+        String cleanedComments = comments == null ? "" : comments.trim();
+        if (cleanedComments.length() > WomenReturnRequest.COMMENTS_MAX) {
+            ra.addFlashAttribute("error",
+                    "Comments must be at most " + WomenReturnRequest.COMMENTS_MAX + " characters.");
+            return "redirect:/women-products/my-orders";
+        }
+
         try {
-            WomenReturnRequest r = returnRepo.findByOrder(o).orElse(new WomenReturnRequest());
+            WomenReturnRequest r = new WomenReturnRequest();
             r.setOrder(o);
             r.setSeller(o.getSeller());
-            r.setType(type);
-            r.setReason(reason);
-            r.setComments(comments);
-            
-            if (bankDetails == null && holderName != null) {
-                bankDetails = "Holder: " + holderName + ", A/C: " + accountNumber + ", IFSC: " + ifsc + ", Branch: " + branch;
+            r.setType("RETURN".equals(cleanedType) ? "REFUND" : cleanedType);
+            r.setReason(cleanedReason);
+            r.setComments(cleanedComments.isEmpty() ? null : cleanedComments);
+
+            if ("REFUND".equals(r.getType())) {
+                String h = holderName.trim();
+                String a = accountNumber.trim();
+                String i = ifsc.trim().toUpperCase();
+                String b = branch.trim();
+                r.setBankDetails("Holder: " + h + ", A/C: " + a + ", IFSC: " + i + ", Branch: " + b);
+            } else if (bankDetails != null && !bankDetails.isBlank()) {
+                r.setBankDetails(bankDetails.trim());
             }
-            r.setBankDetails(bankDetails);
+
             r.setStatus("PENDING");
             if (image != null && !image.isEmpty()) {
+                String contentType = image.getContentType();
+                if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
+                    ra.addFlashAttribute("error", "Please upload a valid image file (JPG/PNG).");
+                    return "redirect:/women-products/my-orders";
+                }
+                if (image.getSize() > 5L * 1024 * 1024) {
+                    ra.addFlashAttribute("error", "Image must be 5MB or smaller.");
+                    return "redirect:/women-products/my-orders";
+                }
                 r.setImagePath(fileUploadService.saveFile(image));
             }
             returnRepo.save(r);
-            ra.addFlashAttribute("message", type + " request submitted successfully!");
+            ra.addFlashAttribute("message", r.getType() + " request submitted successfully!");
         } catch (IOException e) {
-            ra.addFlashAttribute("error", "Failed to upload image.");
+            ra.addFlashAttribute("error", "Failed to upload image. Please try again.");
         }
         return "redirect:/women-products/my-orders";
+    }
+
+    private static String validateRefundBankFields(String holderName, String accountNumber,
+                                                   String ifsc, String branch) {
+        String h = holderName == null ? "" : holderName.trim();
+        if (h.length() < WomenReturnRequest.HOLDER_NAME_MIN
+                || h.length() > WomenReturnRequest.HOLDER_NAME_MAX
+                || !h.matches(WomenReturnRequest.HOLDER_NAME_PATTERN)) {
+            return "Bank holder name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).";
+        }
+        String a = accountNumber == null ? "" : accountNumber.trim();
+        if (!a.matches(WomenReturnRequest.ACCOUNT_PATTERN)) {
+            return "Account number must be 9–18 digits.";
+        }
+        String i = ifsc == null ? "" : ifsc.trim().toUpperCase();
+        if (!i.matches(WomenReturnRequest.IFSC_PATTERN)) {
+            return "Please enter a valid 11-character IFSC code (e.g. SBIN0001234).";
+        }
+        String b = branch == null ? "" : branch.trim();
+        if (b.length() < WomenReturnRequest.BRANCH_MIN || b.length() > WomenReturnRequest.BRANCH_MAX) {
+            return "Branch name must be between " + WomenReturnRequest.BRANCH_MIN
+                    + " and " + WomenReturnRequest.BRANCH_MAX + " characters.";
+        }
+        return null;
     }
 }

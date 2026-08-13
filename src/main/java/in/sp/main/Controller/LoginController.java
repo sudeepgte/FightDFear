@@ -86,6 +86,18 @@ public class LoginController {
                 return "login";
             }
 
+            // Clear other portal sessions so My Dashboard / role nav do not collide
+            session.removeAttribute("loggedDoctor");
+            session.removeAttribute("loggedSalon");
+            session.removeAttribute("loggedStylist");
+            session.removeAttribute("loggedProvider");
+            session.removeAttribute("loggedCentre");
+            session.removeAttribute("loggedSeller");
+            session.removeAttribute("loggedEntrepreneur");
+            session.removeAttribute("loggedInvestor");
+            session.removeAttribute("loggedHost");
+            session.removeAttribute("loggedTrainer");
+            session.removeAttribute("admin");
             session.setAttribute("user", user);
 
             // Generate JWT and add to response

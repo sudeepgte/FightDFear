@@ -315,6 +315,45 @@
             const submitBtn = document.getElementById('submitBtn');
             const inputs = form.querySelectorAll('input, select, textarea');
 
+            const validationRules = {
+                fullName: {
+                    pattern: /^[a-zA-Z\s]{2,50}$/,
+                    message: "Please enter a valid name (letters only, 2-50 characters)."
+                },
+                email: {
+                    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Please enter a valid email address."
+                },
+                phone: {
+                    pattern: /^[6-9]\d{9}$/,
+                    message: "Please enter a valid 10-digit Indian phone number."
+                },
+                password: {
+                    pattern: /^.{6,}$/,
+                    message: "Password must be at least 6 characters long."
+                },
+                aadhaarNumber: {
+                    pattern: /^\d{12}$/,
+                    message: "Please enter exactly 12 digits for Aadhaar."
+                },
+                businessName: {
+                    pattern: /^.{2,100}$/,
+                    message: "Business name must be at least 2 characters."
+                },
+                accountNumber: {
+                    pattern: /^\d{9,18}$/,
+                    message: "Please enter a valid bank account number (9-18 digits)."
+                },
+                ifscCode: {
+                    pattern: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+                    message: "Please enter a valid IFSC code (e.g. SBIN0001234)."
+                },
+                upiId: {
+                    pattern: /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/,
+                    message: "Please enter a valid UPI ID (e.g. name@bank)."
+                }
+            };
+
             inputs.forEach(input => {
                 input.addEventListener('input', function() {
                     validateField(this);
@@ -334,20 +373,56 @@
             function validateField(field) {
                 if (!field.hasAttribute('required') && field.value.trim() === '') {
                     field.classList.remove('is-invalid', 'is-valid');
-                    return;
+                    return true;
                 }
-                
-                if (field.checkValidity()) {
+
+                let isValid = field.checkValidity();
+                let customMessage = "";
+
+                if (isValid && validationRules[field.name]) {
+                    const rule = validationRules[field.name];
+                    if (!rule.pattern.test(field.value.trim())) {
+                        isValid = false;
+                        customMessage = rule.message;
+                    }
+                }
+
+                const feedbackElement = field.nextElementSibling;
+                if (feedbackElement && feedbackElement.classList.contains('invalid-feedback')) {
+                    if (customMessage) {
+                        feedbackElement.textContent = customMessage;
+                    } else if (field.validationMessage) {
+                        // fallback to default HTML5 message if no custom rule failed
+                        feedbackElement.textContent = "Please provide valid input.";
+                    }
+                }
+
+                if (isValid) {
                     field.classList.remove('is-invalid');
                     field.classList.add('is-valid');
                 } else {
                     field.classList.remove('is-valid');
                     field.classList.add('is-invalid');
                 }
+                
+                return isValid;
             }
 
             function checkFormValidity() {
-                if (form.checkValidity()) {
+                let allValid = true;
+                inputs.forEach(input => {
+                    if (input.hasAttribute('required') || input.value.trim() !== '') {
+                        if (validationRules[input.name]) {
+                             if (!validationRules[input.name].pattern.test(input.value.trim())) {
+                                 allValid = false;
+                             }
+                        } else if (!input.checkValidity()) {
+                            allValid = false;
+                        }
+                    }
+                });
+
+                if (allValid && form.checkValidity()) {
                     submitBtn.classList.remove('disabled');
                     submitBtn.removeAttribute('disabled');
                 } else {
@@ -357,10 +432,16 @@
             }
 
             form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
+                let isFormValid = true;
+                inputs.forEach(input => {
+                    if (!validateField(input)) {
+                        isFormValid = false;
+                    }
+                });
+
+                if (!isFormValid || !form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
-                    inputs.forEach(input => validateField(input));
                     const firstInvalid = form.querySelector('.is-invalid, :invalid');
                     if (firstInvalid) {
                         firstInvalid.focus();
