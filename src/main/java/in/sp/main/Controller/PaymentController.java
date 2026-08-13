@@ -375,7 +375,8 @@ public class PaymentController {
                 appt.setUser(user);
                 appt.setDoctor(d);
                 appt.setAppointmentTime(apptTime);
-                appt.setReason(Objects.toString(data.get("reason"), ""));
+                String reason = Objects.toString(data.get("reason"), "").trim();
+                appt.setReason(reason.isEmpty() ? null : reason);
                 appt.setStatus(DoctorAppointmentStatus.PENDING);
                 appt.setConsultationType(cType);
                 if (cType == ConsultationType.VIDEO || cType == ConsultationType.ONLINE) {

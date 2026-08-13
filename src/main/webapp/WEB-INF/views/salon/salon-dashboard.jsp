@@ -138,6 +138,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            /* Confine Bootstrap stretched-link hit areas to each card (not the whole page). */
+            position: relative;
+            z-index: 1;
         }
 
         .stat-card:hover {
@@ -281,7 +284,7 @@
                 <p>Welcome back to your partner dashboard. Here's what's happening today.</p>
             </div>
 
-            <div class="row g-4 mb-5">
+            <div class="row g-4 mb-5 position-relative" style="z-index: 2;">
                 <!-- Bookings -->
                 <div class="col-xl-3 col-md-6">
                     <div class="stat-card">
@@ -306,7 +309,7 @@
                             <h5 class="card-title-custom">Services</h5>
                             <p class="card-desc">Update your service menu, pricing, and specialized treatments.</p>
                         </div>
-                        <a href="${pageContext.request.contextPath}/salon/viewServices" class="btn btn-purple btn-action">Manage Services</a>
+                        <a href="${pageContext.request.contextPath}/salon/viewServices" class="btn btn-purple btn-action position-relative" style="z-index:3;">Manage Services</a>
                     </div>
                 </div>
 
@@ -334,7 +337,7 @@
                             <h5 class="card-title-custom">Settings</h5>
                             <p class="card-desc">Keep your salon information and contact details up to date.</p>
                         </div>
-                        <a href="${pageContext.request.contextPath}/salons/profile" class="btn btn-purple btn-action">Edit Profile</a>
+                        <a href="${pageContext.request.contextPath}/salons/profile" class="btn btn-purple btn-action position-relative" style="z-index:3;">Edit Profile</a>
                     </div>
                 </div>
             </div>
@@ -342,28 +345,28 @@
             <h4 class="fw-bold mb-4">Quick Actions</h4>
             <div class="row g-3">
                 <div class="col-md-4">
-                    <div class="stat-card p-3 flex-row align-items-center gap-3">
+                    <a href="${pageContext.request.contextPath}/salon/addService" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
                         <div class="icon-box bg-glass-purple mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
                             <i class="bi bi-plus-lg"></i>
                         </div>
-                        <a href="${pageContext.request.contextPath}/salon/addService" class="text-decoration-none text-dark fw-semibold stretched-link">Add New Service</a>
-                    </div>
+                        <span>Add New Service</span>
+                    </a>
                 </div>
                 <div class="col-md-4">
-                    <div class="stat-card p-3 flex-row align-items-center gap-3">
+                    <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
                         <div class="icon-box bg-glass-gold mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
                             <i class="bi bi-tag"></i>
                         </div>
-                        <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="text-decoration-none text-dark fw-semibold stretched-link">Create New Offer</a>
-                    </div>
+                        <span>Create New Offer</span>
+                    </a>
                 </div>
                 <div class="col-md-4">
-                    <div class="stat-card p-3 flex-row align-items-center gap-3">
+                    <a href="${pageContext.request.contextPath}/salon/treatments/add" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
                         <div class="icon-box bg-glass-pink mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
                             <i class="bi bi-droplet"></i>
                         </div>
-                        <a href="${pageContext.request.contextPath}/salon/treatments/add" class="text-decoration-none text-dark fw-semibold stretched-link">Add Treatment</a>
-                    </div>
+                        <span>Add Treatment</span>
+                    </a>
                 </div>
             </div>
 

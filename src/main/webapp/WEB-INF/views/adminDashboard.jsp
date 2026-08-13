@@ -567,7 +567,6 @@
                     <a href="${pageContext.request.contextPath}/admin/reported-videos" class="badge bg-light text-dark badge-pill text-decoration-none reported-videos-link" title="View reported videos">
                         Reported Videos: <span id="reportedVideos">-</span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
                 </div>
             </div>
         </div>
@@ -1158,19 +1157,6 @@
                             </div>
                         </div>
                         <a href="${pageContext.request.contextPath}/admin/investment-revenue" class="btn btn-purple w-100 mt-auto">View Revenue</a>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="admin-card">
-                        <div class="rowTop">
-                            <div>
-                                <i class="fas fa-sign-out-alt"></i>
-                                <h5 class="mb-1">Logout</h5>
-                                <p class="muted">End session</p>
-                            </div>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-purple w-100 mt-auto">Logout</a>
                     </div>
                 </div>
 

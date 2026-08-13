@@ -261,6 +261,10 @@
                 <i class="bi bi-person-circle"></i>
                 <span>Stylist Profile</span>
             </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/stylists/services">
+                <i class="bi bi-bag-heart-fill"></i>
+                <span>Services &amp; Packages</span>
+            </a>
             <a class="nav-link-custom" href="${pageContext.request.contextPath}/stylists/dashboard#bookings">
                 <i class="bi bi-calendar-check"></i>
                 <span>My Bookings</span>
@@ -305,72 +309,96 @@
                 </div>
 
                 <div class="profile-body">
-                    <form action="${pageContext.request.contextPath}/stylists/profile/update" method="post" enctype="multipart/form-data">
+                    <c:if test="${not empty message}">
+                        <div class="alert alert-success rounded-4 mb-4">${message}</div>
+                    </c:if>
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger rounded-4 mb-4">${error}</div>
+                    </c:if>
+
+                    <form action="${pageContext.request.contextPath}/stylists/profile/update" method="post" enctype="multipart/form-data" id="stylistProfileForm" novalidate>
                         <input type="hidden" name="id" value="${stylist.id}">
 
                         <div class="row g-4">
                             <div class="col-md-6">
-                                <label class="form-label">First Name</label>
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                    <input type="text" name="firstName" value="${stylist.firstName}" class="form-control form-control-custom editable" readonly required>
+                                    <input type="text" name="firstName" id="firstName" value="${stylist.firstName}"
+                                           class="form-control form-control-custom editable" maxlength="50" readonly required>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-firstName">Enter a valid first name (2–50 letters).</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Last Name</label>
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                    <input type="text" name="lastName" value="${stylist.lastName}" class="form-control form-control-custom editable" readonly required>
+                                    <input type="text" name="lastName" id="lastName" value="${stylist.lastName}"
+                                           class="form-control form-control-custom editable" maxlength="50" readonly required>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-lastName">Enter a valid last name (2–50 letters).</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Email Address</label>
+                                <label class="form-label">Email Address <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                                    <input type="email" name="email" value="${stylist.email}" class="form-control form-control-custom editable" readonly required>
+                                    <input type="email" name="email" id="email" value="${stylist.email}"
+                                           class="form-control form-control-custom editable" maxlength="100" readonly required>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-email">Enter a valid email address.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Phone Number</label>
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                    <input type="text" name="contactNumber" value="${stylist.contactNumber}" class="form-control form-control-custom editable" readonly required>
+                                    <input type="text" name="contactNumber" id="contactNumber" value="${stylist.contactNumber}"
+                                           class="form-control form-control-custom editable" maxlength="10" inputmode="numeric" readonly required>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-contactNumber">Phone number must be exactly 10 digits.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Specialization</label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-scissors"></i></span>
-                                    <input type="text" name="specialization" value="${stylist.specialization}" class="form-control form-control-custom editable" readonly>
+                                    <input type="text" name="specialization" id="specialization" value="${stylist.specialization}"
+                                           class="form-control form-control-custom editable" maxlength="100" readonly>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-specialization">Specialization cannot exceed 100 characters.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Years of Experience</label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-award"></i></span>
-                                    <input type="number" name="experienceInYears" value="${stylist.experienceInYears}" class="form-control form-control-custom editable" readonly>
+                                    <input type="number" name="experienceInYears" id="experienceInYears" value="${stylist.experienceInYears}"
+                                           class="form-control form-control-custom editable" min="0" max="50" readonly>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-experienceInYears">Experience must be between 0 and 50.</div>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Short Bio</label>
                                 <div class="input-group input-group-custom p-0" style="align-items: flex-start;">
                                     <span class="input-group-text pt-3 border-0"><i class="bi bi-chat-left-text"></i></span>
-                                    <textarea name="bio" class="form-control form-control-custom editable pt-3" rows="3" readonly>${stylist.bio}</textarea>
+                                    <textarea name="bio" id="bio" class="form-control form-control-custom editable pt-3" rows="3" maxlength="1000" readonly>${stylist.bio}</textarea>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-bio">Bio cannot exceed 1000 characters.</div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Update Profile Photo</label>
+                                <label class="form-label">Update Profile Photo <span class="text-muted small fw-normal">(JPG/JPEG/PNG, max ${profileImageMaxSizeMb != null ? profileImageMaxSizeMb : 2} MB)</span></label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-image"></i></span>
-                                    <input type="file" name="profileImageFile" id="profileImageInput" class="form-control form-control-custom editable" disabled>
+                                    <input type="file" name="profileImageFile" id="profileImageInput" class="form-control form-control-custom editable"
+                                           accept=".jpg,.jpeg,.png,image/jpeg,image/png" disabled>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-profileImageInput">Use JPG/JPEG/PNG within the size limit.</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Availability Hours</label>
                                 <div class="input-group input-group-custom">
                                     <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                                    <input type="text" name="availabilityHours" value="${stylist.availabilityHours}" class="form-control form-control-custom editable" readonly>
+                                    <input type="text" name="availabilityHours" id="availabilityHours" value="${stylist.availabilityHours}"
+                                           class="form-control form-control-custom editable" maxlength="120" placeholder="e.g. Mon–Sat 10am–7pm" readonly>
                                 </div>
+                                <div class="text-danger small mt-1 d-none field-error" id="err-availabilityHours">Availability hours cannot exceed 120 characters.</div>
                             </div>
                         </div>
 
@@ -397,6 +425,8 @@
     </div>
 
     <script>
+        const maxPhotoBytes = ${profileImageMaxBytes != null ? profileImageMaxBytes : 2097152};
+
         document.getElementById("editBtn").addEventListener("click", function() {
             const editableFields = document.querySelectorAll(".editable");
             editableFields.forEach(field => {
@@ -405,6 +435,67 @@
             });
             document.getElementById("saveBtn").disabled = false;
             this.classList.add("d-none");
+        });
+
+        function showErr(id, show) {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('d-none', !show);
+        }
+
+        function validateProfileForm() {
+            let ok = true;
+            const nameRe = /^[A-Za-z][A-Za-z .'-]{1,49}$/;
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('contactNumber').value.trim();
+            const specialization = document.getElementById('specialization').value.trim();
+            const expRaw = document.getElementById('experienceInYears').value;
+            const bio = document.getElementById('bio').value.trim();
+            const hours = document.getElementById('availabilityHours').value.trim();
+            const photo = document.getElementById('profileImageInput').files[0];
+
+            const firstOk = nameRe.test(firstName);
+            showErr('err-firstName', !firstOk); ok = ok && firstOk;
+
+            const lastOk = nameRe.test(lastName);
+            showErr('err-lastName', !lastOk); ok = ok && lastOk;
+
+            const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 100;
+            showErr('err-email', !emailOk); ok = ok && emailOk;
+
+            const phoneOk = /^\d{10}$/.test(phone);
+            showErr('err-contactNumber', !phoneOk); ok = ok && phoneOk;
+
+            const specOk = specialization.length <= 100;
+            showErr('err-specialization', !specOk); ok = ok && specOk;
+
+            const exp = expRaw === '' ? null : parseInt(expRaw, 10);
+            const expOk = exp === null || (!isNaN(exp) && exp >= 0 && exp <= 50);
+            showErr('err-experienceInYears', !expOk); ok = ok && expOk;
+
+            const bioOk = bio.length <= 1000;
+            showErr('err-bio', !bioOk); ok = ok && bioOk;
+
+            const hoursOk = hours.length <= 120;
+            showErr('err-availabilityHours', !hoursOk); ok = ok && hoursOk;
+
+            let photoOk = true;
+            if (photo) {
+                const name = (photo.name || '').toLowerCase();
+                const typeOk = ['image/jpeg', 'image/jpg', 'image/png'].includes((photo.type || '').toLowerCase())
+                    || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+                photoOk = typeOk && photo.size <= maxPhotoBytes;
+            }
+            showErr('err-profileImageInput', !photoOk); ok = ok && photoOk;
+
+            return ok;
+        }
+
+        document.getElementById('stylistProfileForm').addEventListener('submit', function(e) {
+            if (!validateProfileForm()) {
+                e.preventDefault();
+            }
         });
 
         // Image Preview

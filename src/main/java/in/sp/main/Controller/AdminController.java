@@ -1739,7 +1739,28 @@ public class AdminController {
         Salon salon = salonRepository.findById(id).orElse(null);
         if (salon == null) return "redirect:/admin/salons";
         model.addAttribute("salon", salon);
+        model.addAttribute("salonImageUrl", toPublicUploadPath(salon.getProfileImageUrl()));
         return "adminViewSalonProfile";
+    }
+
+    /** Normalize stored upload paths so admin/user pages can resolve them under the app context. */
+    private static String toPublicUploadPath(String stored) {
+        if (stored == null || stored.isBlank()) {
+            return null;
+        }
+        String path = stored.trim().replace('\\', '/');
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+        int idx = path.toLowerCase().lastIndexOf("/uploads/");
+        if (idx >= 0) {
+            path = path.substring(idx);
+        } else if (path.toLowerCase().startsWith("uploads/")) {
+            path = "/" + path;
+        } else if (!path.startsWith("/")) {
+            path = "/uploads/" + path;
+        }
+        return path;
     }
 
     @GetMapping("/stylists")

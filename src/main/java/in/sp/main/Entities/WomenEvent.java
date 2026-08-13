@@ -57,6 +57,7 @@ public class WomenEvent {
         this.createdAt = LocalDateTime.now();
     }
 
+    @Column(name = "is_virtual", nullable = false)
     private boolean virtual = false;
     private String streamLink;
     private Double boothFee = 0.0;

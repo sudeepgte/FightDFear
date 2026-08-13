@@ -559,7 +559,7 @@
         </nav>
 
         <div class="sidebar-footer">
-          <a href="${pageContext.request.contextPath}/women-products" class="nav-link" target="_blank">
+          <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview" class="nav-link" target="_blank">
             <i class="bi bi-eye"></i> Preview Shop
           </a>
           <a href="${pageContext.request.contextPath}/logout" class="nav-link" style="color: #ef4444; opacity: 1;">
@@ -726,7 +726,7 @@
                                 style="font-size: 0.75rem; opacity: 0.6; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; max-width: 200px;">
                                 ${p.description}</div>
                             </td>
-                            <td>${p.category}</td>
+                            <td>${p.categoryLabel}</td>
                             <td><span style="font-weight: 900; color: #16a34a;">&#8377;${p.price}</span></td>
                             <td>${p.stock} units</td>
                             <td><span
@@ -798,46 +798,53 @@
                     <div class="fdf-form-group" style="margin-bottom: 15px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Product Name
                         *</label><input type="text" name="name" class="form-ctrl" required
-                        placeholder="Enter product name"></div>
+                        minlength="2" maxlength="100"
+                        placeholder="Enter product name (2–100 characters)"></div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:15px;">
                       <div><label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Domain Category
                           *</label>
                         <select name="category" class="form-ctrl" required>
                           <option value="">Select Category</option>
-                          <option value="SKINCARE">Skincare Defense</option>
+                          <option value="SKINCARE">Skincare</option>
                           <option value="HAIRCARE">Haircare</option>
-                          <option value="HYGIENE">Sanitary Hygiene</option>
-                          <option value="CLOTHING">Personal Wear</option>
-                          <option value="ACCESSORIES">Tactical Accessories</option>
-                          <option value="WELLNESS">Wellness Essentials</option>
-                          <option value="OTHER">Other Domains</option>
+                          <option value="HYGIENE">Hygiene</option>
+                          <option value="CLOTHING">Clothing</option>
+                          <option value="ACCESSORIES">Accessories</option>
+                          <option value="WELLNESS">Wellness</option>
+                          <option value="OTHER">Other</option>
                         </select>
                       </div>
                       <div><label
                           style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Brand *</label><input
-                          type="text" name="brand" class="form-ctrl" placeholder="Brand name" required></div>
+                          type="text" name="brand" class="form-ctrl" placeholder="Brand name" required
+                          minlength="1" maxlength="80"></div>
                     </div>
                     <div class="fdf-form-group" style="margin-bottom: 15px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Short
-                        Description</label><textarea name="description" class="form-ctrl" rows="2"
-                        placeholder="Brief description (max 200 chars)"></textarea></div>
+                        Description *</label>
+                      <textarea name="description" id="productShortDescription" class="form-ctrl" rows="2"
+                        required maxlength="22" minlength="1"
+                        placeholder="Brief description (max 22 characters)"></textarea>
+                      <small id="shortDescCounter" style="color: var(--fdf-muted); display:block; margin-top:6px; font-weight:600;">0 / 22</small>
+                    </div>
                     <div class="fdf-form-group" style="margin-bottom: 30px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full
                         Description</label><textarea name="fullDescription" class="form-ctrl" rows="4"
-                        placeholder="Detailed product description..."></textarea></div>
+                        maxlength="5000"
+                        placeholder="Detailed product description (max 5000 characters)"></textarea></div>
 
                     <h4
                       style="margin-bottom: 15px; color: var(--brand-purple-dark); font-weight: 800; font-size: 1.1rem;">
                       <i class="bi bi-tags-fill"></i> Pricing</h4>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:30px;">
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Selling Price
-                          (&#8377;) *</label><input type="number" name="price" step="0.01" min="0.01" class="form-ctrl" required
+                          (&#8377;) *</label><input type="number" name="price" step="0.01" min="0.01" max="1000000" class="form-ctrl" required
                           placeholder="0.00"></div>
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">MRP
-                          (&#8377;)</label><input type="number" name="originalPrice" step="0.01" min="0.01" class="form-ctrl"
+                          (&#8377;)</label><input type="number" name="originalPrice" step="0.01" min="0.01" max="1000000" class="form-ctrl"
                           placeholder="0.00"></div>
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Offer
-                          Badge</label><input type="text" name="offerBadge" class="form-ctrl"
+                          Badge</label><input type="text" name="offerBadge" class="form-ctrl" maxlength="40"
                           placeholder="e.g., 20% OFF, SALE"></div>
                     </div>
 
@@ -846,11 +853,19 @@
                       <i class="bi bi-box-seam-fill"></i> Inventory</h4>
                     <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:30px;">
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Stock Quantity
-                          *</label><input type="number" name="stock" class="form-ctrl" required placeholder="0"></div>
+                          *</label><input type="number" name="stock" class="form-ctrl" required placeholder="0"
+                          min="0" max="1000000" step="1"></div>
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Alert
-                          Level</label><input type="number" name="lowStockAlertLevel" value="5" class="form-ctrl"></div>
+                          Level</label><input type="number" name="lowStockAlertLevel" id="lowStockAlertLevel" value="5" class="form-ctrl"
+                          min="0" max="1000000" step="1" required
+                          onkeydown="if(event.key==='-'||event.key==='e'||event.key==='E'||event.key==='+')event.preventDefault();"
+                          oninput="if(this.value!==''&&Number(this.value)<0)this.value=0;">
+                        <small style="color:var(--fdf-muted); font-size:0.75rem;">Must be 0 or greater (no negatives)</small>
+                      </div>
                       <div><label style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">SKU
-                          Code</label><input type="text" name="sku" class="form-ctrl"
+                          Code</label><input type="text" name="sku" class="form-ctrl" maxlength="50"
+                          pattern="[A-Za-z0-9_-]*"
+                          title="Letters, numbers, hyphens, and underscores only"
                           placeholder="Auto-generated if empty"></div>
                     </div>
 
@@ -860,27 +875,27 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:15px;">
                       <div><label
                           style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Weight/Size</label><input
-                          type="text" name="weightSize" class="form-ctrl" placeholder="e.g., 100ml, 500g, 60 tablets">
+                          type="text" name="weightSize" class="form-ctrl" maxlength="50" placeholder="e.g., 100ml, 500g, 60 tablets">
                       </div>
                       <div><label
                           style="font-size:0.85rem; font-weight:700; text-transform:uppercase;">Manufacturer</label><input
-                          type="text" name="manufacturer" class="form-ctrl" placeholder="Manufacturer name"></div>
+                          type="text" name="manufacturer" class="form-ctrl" maxlength="100" placeholder="Manufacturer name"></div>
                     </div>
                     <div class="fdf-form-group" style="margin-bottom: 15px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Ingredients</label><textarea
-                        name="ingredients" class="form-ctrl" rows="2" placeholder="List of ingredients..."></textarea>
+                        name="ingredients" class="form-ctrl" rows="2" maxlength="2000" placeholder="List of ingredients..."></textarea>
                     </div>
                     <div class="fdf-form-group" style="margin-bottom: 15px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Benefits</label><textarea
-                        name="benefits" class="form-ctrl" rows="2"
+                        name="benefits" class="form-ctrl" rows="2" maxlength="2000"
                         placeholder="Health benefits of the product..."></textarea></div>
                     <div class="fdf-form-group" style="margin-bottom: 15px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Usage
-                        Instructions</label><textarea name="usageInstructions" class="form-ctrl" rows="2"
+                        Instructions</label><textarea name="usageInstructions" class="form-ctrl" rows="2" maxlength="2000"
                         placeholder="How to use this product..."></textarea></div>
                     <div class="fdf-form-group" style="margin-bottom: 30px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Tags (for
-                        search)</label><input type="text" name="tags" class="form-ctrl"
+                        search)</label><input type="text" name="tags" class="form-ctrl" maxlength="200"
                         placeholder="Comma-separated tags, e.g., ayurvedic, herbal, immunity"></div>
 
                     <h4
@@ -888,10 +903,12 @@
                       <i class="bi bi-images"></i> Product Images</h4>
                     <div class="fdf-form-group" style="margin-bottom: 30px;"><label
                         style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Upload Images (Multiple
-                        Allowed)</label><input type="file" name="images" class="form-ctrl" accept="image/*" multiple
+                        Allowed)</label><input type="file" name="images" id="productImages" class="form-ctrl" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif" multiple
                         style="padding:10px;">
-                      <small style="color: var(--fdf-muted); display: block; margin-top: 5px;">JPG, PNG up to 5MB
-                        each</small>
+                      <small style="color: var(--fdf-muted); display: block; margin-top: 5px;">
+                        Hold Ctrl/Cmd to select multiple JPG/PNG files (up to 8, 5MB each). First image is the main photo.
+                      </small>
+                      <small id="selectedImagesInfo" style="color: var(--brand-purple); display: block; margin-top: 6px; font-weight: 700;"></small>
                     </div>
 
                     <h4
@@ -1406,29 +1423,40 @@
                 style="background:none; border:none; font-size:24px; opacity:0.3; cursor:pointer;"><i
                   class="bi bi-x-circle"></i></button>
             </div>
-            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post">
+            <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" novalidate>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name</label>
-                <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
+                <input type="text" name="fullName" id="profileFullName" class="form-ctrl" value="${seller.fullName}"
+                       required minlength="2" maxlength="80"
+                       pattern="[A-Za-z][A-Za-z .'-]{1,79}"
+                       title="2–80 letters only; spaces, apostrophes, periods, hyphens allowed">
               </div>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:15px;">
                 <div>
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name</label>
-                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
+                  <input type="text" name="businessName" id="profileBusinessName" class="form-ctrl" value="${seller.businessName}"
+                         required minlength="2" maxlength="100"
+                         pattern="[A-Za-z0-9][A-Za-z0-9 &amp;.,'()\-]{1,99}"
+                         title="2–100 characters; letters, numbers, spaces, and &amp; . , ' ( ) - allowed">
                 </div>
                 <div>
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone</label>
-                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
+                  <input type="tel" name="phone" id="profilePhone" class="form-ctrl" value="${seller.phone}"
+                         required minlength="10" maxlength="10" pattern="[0-9]{10}"
+                         title="Exactly 10 digits"
+                         oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
               </div>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address</label>
-                <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
+                <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
+                          minlength="10" maxlength="1000">${seller.address}</textarea>
               </div>
               <div class="fdf-form-group" style="margin-bottom: 30px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business
                   Description</label>
-                <textarea name="description" class="form-ctrl" rows="3">${seller.description}</textarea>
+                <textarea name="description" id="profileDescription" class="form-ctrl" rows="3"
+                          maxlength="2000">${seller.description}</textarea>
               </div>
               <button type="submit" class="btn-fdf-action" style="width:100%; padding: 15px; border-radius: 14px;">Save
                 Profile Changes</button>
@@ -1514,6 +1542,113 @@
           </div>
 
           <script>
+            const SHORT_DESC_MAX = 22;
+
+            function updateShortDescCounter() {
+              const el = document.getElementById('productShortDescription');
+              const counter = document.getElementById('shortDescCounter');
+              if (!el || !counter) return;
+              if (el.value.length > SHORT_DESC_MAX) {
+                el.value = el.value.substring(0, SHORT_DESC_MAX);
+              }
+              counter.textContent = el.value.length + ' / ' + SHORT_DESC_MAX;
+              counter.style.color = el.value.length >= SHORT_DESC_MAX ? '#ef4444' : 'var(--fdf-muted)';
+            }
+
+            function validateProductForm(form) {
+              const name = (form.querySelector('[name="name"]').value || '').trim();
+              const brand = (form.querySelector('[name="brand"]').value || '').trim();
+              const category = (form.querySelector('[name="category"]').value || '').trim();
+              const description = (form.querySelector('[name="description"]').value || '').trim();
+              const fullDescription = (form.querySelector('[name="fullDescription"]').value || '').trim();
+              const price = parseFloat(form.querySelector('[name="price"]').value);
+              const originalPriceRaw = form.querySelector('[name="originalPrice"]').value;
+              const originalPrice = originalPriceRaw === '' ? null : parseFloat(originalPriceRaw);
+              const stock = parseInt(form.querySelector('[name="stock"]').value, 10);
+              const alertLevelRaw = form.querySelector('[name="lowStockAlertLevel"]').value;
+              const alertLevel = alertLevelRaw === '' ? NaN : parseInt(alertLevelRaw, 10);
+              const sku = (form.querySelector('[name="sku"]').value || '').trim();
+              const images = form.querySelector('[name="images"]');
+              const isAdd = form.action.indexOf('/products/add') !== -1;
+
+              if (name.length < 2 || name.length > 100) {
+                alert('Product Name must be between 2 and 100 characters.');
+                return false;
+              }
+              if (!category) {
+                alert('Please select a product category.');
+                return false;
+              }
+              if (!brand || brand.length > 80) {
+                alert('Brand is required (max 80 characters).');
+                return false;
+              }
+              if (!description) {
+                alert('Short Description is required.');
+                return false;
+              }
+              if (description.length > SHORT_DESC_MAX) {
+                alert('Short Description must be at most ' + SHORT_DESC_MAX + ' characters.');
+                return false;
+              }
+              if (fullDescription.length > 5000) {
+                alert('Full Description must be at most 5000 characters.');
+                return false;
+              }
+              if (isNaN(price) || price <= 0 || price > 1000000) {
+                alert('Selling price must be greater than 0.');
+                return false;
+              }
+              if (originalPrice != null && !isNaN(originalPrice)) {
+                if (originalPrice <= 0) {
+                  alert('MRP must be greater than 0 when provided.');
+                  return false;
+                }
+                if (originalPrice < price) {
+                  alert('MRP cannot be less than the selling price.');
+                  return false;
+                }
+              }
+              if (isNaN(stock) || stock < 0 || stock > 1000000) {
+                alert('Stock quantity must be 0 or greater.');
+                return false;
+              }
+              if (isNaN(alertLevel) || alertLevel < 0 || alertLevel > 1000000) {
+                alert('Alert Level must be a non-negative number (0 or greater). Negative values are not allowed.');
+                return false;
+              }
+              if (sku && !/^[A-Za-z0-9_-]+$/.test(sku)) {
+                alert('SKU may only contain letters, numbers, hyphens, and underscores.');
+                return false;
+              }
+              if (isAdd && images && images.files.length === 0) {
+                alert('At least one product image is required.');
+                return false;
+              }
+              if (images && images.files && images.files.length > 8) {
+                alert('You can upload at most 8 images per product.');
+                return false;
+              }
+              if (images && images.files) {
+                for (let i = 0; i < images.files.length; i++) {
+                  const f = images.files[i];
+                  if (!f.type || !f.type.startsWith('image/')) {
+                    alert('Only image files (JPG/PNG) are allowed.');
+                    return false;
+                  }
+                  if (f.size > 5 * 1024 * 1024) {
+                    alert('Each product image must be 5MB or smaller.');
+                    return false;
+                  }
+                }
+              }
+              // Normalize trimmed values before submit
+              form.querySelector('[name="name"]').value = name;
+              form.querySelector('[name="brand"]').value = brand;
+              form.querySelector('[name="description"]').value = description;
+              return true;
+            }
+
             function openAddModal() {
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
@@ -1528,6 +1663,7 @@
               form.querySelector('[name="trackInventory"]').checked = true;
               form.querySelector('[name="featured"]').checked = false;
               form.querySelector('[name="images"]').setAttribute('required', 'required');
+              updateShortDescCounter();
 
               modal.style.display = 'flex';
             }
@@ -1544,7 +1680,7 @@
               // Fill fields
               form.querySelector('[name="name"]').value = p.name || '';
               form.querySelector('[name="brand"]').value = p.brand || '';
-              form.querySelector('[name="description"]').value = p.description || '';
+              form.querySelector('[name="description"]').value = (p.description || '').substring(0, SHORT_DESC_MAX);
               form.querySelector('[name="fullDescription"]').value = p.fullDescription || '';
               form.querySelector('[name="price"]').value = p.price || '';
               form.querySelector('[name="originalPrice"]').value = p.originalPrice || '';
@@ -1563,6 +1699,7 @@
               form.querySelector('[name="active"]').checked = p.active;
               form.querySelector('[name="featured"]').checked = p.featured;
               form.querySelector('[name="trackInventory"]').checked = p.trackInventory;
+              updateShortDescCounter();
 
               modal.style.display = 'flex';
             }
@@ -1588,7 +1725,77 @@
               document.querySelector('.sidebar-overlay').classList.toggle('show');
             }
 
+            function validateSellerProfileForm(form) {
+              const fullName = (form.querySelector('[name="fullName"]').value || '').trim();
+              const businessName = (form.querySelector('[name="businessName"]').value || '').trim();
+              const phone = (form.querySelector('[name="phone"]').value || '').trim();
+              const address = (form.querySelector('[name="address"]').value || '').trim();
+              const description = (form.querySelector('[name="description"]').value || '').trim();
+
+              if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(fullName)) {
+                alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).');
+                return false;
+              }
+              if (!/^[A-Za-z0-9][A-Za-z0-9 &.,'()\-]{1,99}$/.test(businessName)) {
+                alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
+                return false;
+              }
+              if (!/^\d{10}$/.test(phone)) {
+                alert('Phone number must be exactly 10 digits.');
+                return false;
+              }
+              if (address.length < 10 || address.length > 1000) {
+                alert('Business Address must be between 10 and 1000 characters.');
+                return false;
+              }
+              if (description.length > 2000) {
+                alert('Business Description must be at most 2000 characters.');
+                return false;
+              }
+              form.querySelector('[name="fullName"]').value = fullName;
+              form.querySelector('[name="businessName"]').value = businessName;
+              form.querySelector('[name="phone"]').value = phone;
+              form.querySelector('[name="address"]').value = address;
+              form.querySelector('[name="description"]').value = description;
+              return true;
+            }
+
             document.addEventListener("DOMContentLoaded", function() {
+              const sellerProfileForm = document.getElementById('sellerProfileForm');
+              if (sellerProfileForm) {
+                sellerProfileForm.addEventListener('submit', function(e) {
+                  if (!validateSellerProfileForm(this)) {
+                    e.preventDefault();
+                  }
+                });
+              }
+              const shortDesc = document.getElementById('productShortDescription');
+              if (shortDesc) {
+                shortDesc.addEventListener('input', updateShortDescCounter);
+                updateShortDescCounter();
+              }
+              const productImages = document.getElementById('productImages');
+              const selectedImagesInfo = document.getElementById('selectedImagesInfo');
+              if (productImages && selectedImagesInfo) {
+                productImages.addEventListener('change', function() {
+                  const count = this.files ? this.files.length : 0;
+                  if (count === 0) {
+                    selectedImagesInfo.textContent = '';
+                  } else if (count === 1) {
+                    selectedImagesInfo.textContent = '1 image selected (will be used as the main photo).';
+                  } else {
+                    selectedImagesInfo.textContent = count + ' images selected — first is the main photo; others appear in the gallery.';
+                  }
+                });
+              }
+              const productForm = document.getElementById('productForm');
+              if (productForm) {
+                productForm.addEventListener('submit', function(e) {
+                  if (!validateProductForm(productForm)) {
+                    e.preventDefault();
+                  }
+                });
+              }
               document.querySelectorAll('.edit-product-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                   const p = {

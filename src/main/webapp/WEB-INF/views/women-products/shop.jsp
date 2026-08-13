@@ -280,6 +280,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .stock-badge.in { background: #fff; color: #10b981; }
+    .stock-badge.low {
+      background: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fdba74;
+    }
     .stock-badge.out { background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(4px); }
 
     .offer-badge {
@@ -378,6 +383,7 @@
       <a href="${pageContext.request.contextPath}/women-products?category=CLOTHING" class="${selectedCategory == 'CLOTHING' ? 'active' : ''}">Clothing</a>
       <a href="${pageContext.request.contextPath}/women-products?category=ACCESSORIES" class="${selectedCategory == 'ACCESSORIES' ? 'active' : ''}">Accessories</a>
       <a href="${pageContext.request.contextPath}/women-products?category=WELLNESS" class="${selectedCategory == 'WELLNESS' ? 'active' : ''}">Wellness</a>
+      <a href="${pageContext.request.contextPath}/women-products?category=OTHER" class="${selectedCategory == 'OTHER' ? 'active' : ''}">Other</a>
     </div>
   </div>
 
@@ -401,17 +407,30 @@
               <div class="product-img-placeholder"><i class="bi bi-gift"></i></div>
             </c:otherwise>
           </c:choose>
-          <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">
-            <i class="bi ${p.stock > 0 ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
-            ${p.stock > 0 ? 'In Stock' : 'Out of Stock'}
-          </span>
+          <c:choose>
+            <c:when test="${p.stock == null || p.stock <= 0}">
+              <span class="stock-badge out">
+                <i class="bi bi-x-circle-fill"></i> Out of Stock
+              </span>
+            </c:when>
+            <c:when test="${p.lowStockAlertLevel != null && p.stock <= p.lowStockAlertLevel}">
+              <span class="stock-badge low">
+                <i class="bi bi-exclamation-triangle-fill"></i> Only ${p.stock} left!
+              </span>
+            </c:when>
+            <c:otherwise>
+              <span class="stock-badge in">
+                <i class="bi bi-check-circle-fill"></i> In Stock
+              </span>
+            </c:otherwise>
+          </c:choose>
           <c:if test="${not empty p.offerBadge}">
             <span class="offer-badge">${p.offerBadge}</span>
           </c:if>
         </a>
         
         <div class="product-body">
-          <div class="product-category">${p.category}</div>
+          <div class="product-category">${p.categoryLabel}</div>
           <div class="product-name">${p.name}</div>
           <div class="product-seller"><i class="bi bi-patch-check-fill text-primary"></i> ${p.seller.businessName}</div>
           

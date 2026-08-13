@@ -332,8 +332,11 @@ public class BeautyServiceController {
      return "user/user-salon-list"; // JSP page
  }
  // 9️⃣ View Salon Details
- @GetMapping("/salon/view")
- public String viewSalon(@RequestParam("id") Long salonId, Model model) {
+ @GetMapping({"/salon/view", "/user/salon/view"})
+ public String viewSalon(@RequestParam(value = "id", required = false) Long salonId, Model model) {
+     if (salonId == null || salonId <= 0) {
+         return "redirect:/user/salons";
+     }
      Optional<Salon> salonOpt = salonRepository.findById(salonId);
      if (salonOpt.isEmpty()) {
          return "redirect:/user/salons";

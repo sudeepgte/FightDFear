@@ -11,7 +11,8 @@
 
     var icon = btn.querySelector("i");
     if (icon) {
-      icon.className = show ? "bi bi-eye" : "bi bi-eye-slash";
+      // Visible password -> eye-slash (click to hide); hidden -> eye (click to show)
+      icon.className = show ? "bi bi-eye-slash" : "bi bi-eye";
     }
   }
 

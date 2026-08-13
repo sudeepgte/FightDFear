@@ -343,29 +343,72 @@ public class FinancialLiteracyController {
     public String registerWorkshop(@RequestParam String workshopId, @RequestParam String fullName,
                                    @RequestParam String mobile, @RequestParam String email,
                                    @RequestParam String city, @RequestParam(required = false) String occupation,
-                                   HttpServletRequest request) {
+                                   HttpServletRequest request,
+                                   org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+        String cleanedWorkshopId = workshopId == null ? "" : workshopId.trim();
+        if (cleanedWorkshopId.isEmpty()) {
+            ra.addFlashAttribute("error", "Invalid workshop. Please try again.");
+            return "redirect:/financial-literacy";
+        }
+
+        String cleanedName = fullName == null ? "" : fullName.trim();
+        if (cleanedName.length() < 2 || cleanedName.length() > 80
+                || !cleanedName.matches("^[A-Za-z][A-Za-z .'-]{1,79}$")) {
+            ra.addFlashAttribute("error",
+                    "Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).");
+            return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
+        }
+
+        String cleanedMobile = mobile == null ? "" : mobile.trim().replaceAll("\\s+", "");
+        if (!cleanedMobile.matches("^\\d{10}$")) {
+            ra.addFlashAttribute("error", "Mobile number must be exactly 10 digits.");
+            return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
+        }
+
+        String cleanedEmail = email == null ? "" : email.trim().toLowerCase();
+        if (cleanedEmail.isEmpty() || cleanedEmail.length() > 100
+                || !cleanedEmail.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            ra.addFlashAttribute("error", "Please enter a valid email address.");
+            return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
+        }
+
+        String cleanedCity = city == null ? "" : city.trim();
+        if (cleanedCity.length() < 2 || cleanedCity.length() > 80
+                || !cleanedCity.matches("^[A-Za-z][A-Za-z .'-]{1,79}$")) {
+            ra.addFlashAttribute("error",
+                    "City must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).");
+            return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
+        }
+
+        String cleanedOccupation = occupation == null ? "" : occupation.trim();
+        if (cleanedOccupation.length() > 100) {
+            ra.addFlashAttribute("error", "Occupation must be at most 100 characters.");
+            return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
+        }
+
         ServletContext servletContext = request.getServletContext();
-        
+
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> registrations = (List<Map<String, Object>>) servletContext.getAttribute("flWorkshopRegistrations");
         if (registrations == null) {
             registrations = new ArrayList<>();
         }
-        
+
         String id = java.util.UUID.randomUUID().toString();
         Map<String, Object> newRegistration = new HashMap<>();
         newRegistration.put("id", id);
-        newRegistration.put("workshopId", workshopId);
-        newRegistration.put("fullName", fullName);
-        newRegistration.put("mobile", mobile);
-        newRegistration.put("email", email);
-        newRegistration.put("city", city);
-        newRegistration.put("occupation", occupation);
-        newRegistration.put("status", "pending"); // pending, approved, rejected
+        newRegistration.put("workshopId", cleanedWorkshopId);
+        newRegistration.put("fullName", cleanedName);
+        newRegistration.put("mobile", cleanedMobile);
+        newRegistration.put("email", cleanedEmail);
+        newRegistration.put("city", cleanedCity);
+        newRegistration.put("occupation", cleanedOccupation.isEmpty() ? null : cleanedOccupation);
+        newRegistration.put("status", "pending");
         registrations.add(newRegistration);
-        
+
         servletContext.setAttribute("flWorkshopRegistrations", registrations);
-        return "redirect:/financial-literacy?registrationSuccess=true";
+        ra.addFlashAttribute("message", "Registration submitted successfully! We will contact you soon.");
+        return "redirect:/financial-literacy/workshop/" + cleanedWorkshopId;
     }
     
     @GetMapping("/admin/registrations")

@@ -114,6 +114,13 @@
             height: 200px;
             background: rgba(255,255,255,0.1);
             border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .welcome-section > * {
+            position: relative;
+            z-index: 1;
         }
 
         .stat-card {
@@ -222,6 +229,10 @@
                 <i class="bi bi-person-circle"></i>
                 <span>Stylist Profile</span>
             </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/stylists/services">
+                <i class="bi bi-bag-heart-fill"></i>
+                <span>Services &amp; Packages</span>
+            </a>
             <a class="nav-link-custom" href="#bookings">
                 <i class="bi bi-calendar-check"></i>
                 <span>My Bookings</span>
@@ -250,15 +261,29 @@
                     <p class="m-0 opacity-75 mt-2">Here's what's happening with your appointments today.</p>
                 </div>
                 <div class="text-start text-md-end">
-                    <div class="badge ${stylist.available ? 'bg-success' : 'bg-danger'} px-3 py-2 rounded-pill mb-3 mb-md-2 d-inline-block">
-                        <i class="bi ${stylist.available ? 'bi-check-circle' : 'bi-pause-circle'} me-1"></i>
-                        ${stylist.available ? 'Accepting Requests' : 'Currently Offline'}
+                    <c:set var="isAvailable" value="${stylist.available == true}" />
+                    <div class="badge ${isAvailable ? 'bg-success' : 'bg-danger'} px-3 py-2 rounded-pill mb-3 mb-md-2 d-inline-block">
+                        <i class="bi ${isAvailable ? 'bi-check-circle' : 'bi-pause-circle'} me-1"></i>
+                        ${isAvailable ? 'Accepting Requests' : 'Currently Offline'}
                     </div>
-                    <a href="${pageContext.request.contextPath}/stylists/toggleAvailability" class="btn btn-light btn-sm rounded-pill px-4 py-2 fw-700 d-block d-md-inline-block">
-                        Toggle Status
-                    </a>
+                    <form action="${pageContext.request.contextPath}/stylists/toggleAvailability" method="post" class="d-inline-block w-100 w-md-auto">
+                        <button type="submit" id="toggleStatusBtn" class="btn btn-light btn-sm rounded-pill px-4 py-2 fw-700 w-100">
+                            Toggle Status
+                        </button>
+                    </form>
                 </div>
             </div>
+
+            <c:if test="${not empty statusMessage}">
+                <div class="alert alert-success rounded-4 shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>${statusMessage}
+                </div>
+            </c:if>
+            <c:if test="${not empty error}">
+                <div class="alert alert-danger rounded-4 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
+                </div>
+            </c:if>
 
             <!-- Stats Row -->
             <div class="row g-4 mb-5">
@@ -296,6 +321,32 @@
                         </div>
                         <h6 class="text-muted fw-600">Pending</h6>
                         <h3 class="fw-800">${pendingBookings != null ? pendingBookings.size() : 0}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row g-4 mb-5">
+                <div class="col-lg-6">
+                    <div class="stat-card d-flex align-items-center justify-content-between gap-3">
+                        <div>
+                            <h5 class="fw-800 mb-1">Services &amp; Packages</h5>
+                            <p class="text-muted small mb-0">Add, edit, or remove the services clients can book from you.</p>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/stylists/services" class="btn btn-primary rounded-pill px-4 fw-700 text-nowrap">
+                            <i class="bi bi-plus-circle me-1"></i> Manage
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="stat-card d-flex align-items-center justify-content-between gap-3">
+                        <div>
+                            <h5 class="fw-800 mb-1">Add a New Service</h5>
+                            <p class="text-muted small mb-0">Create a priced package with duration and product details.</p>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/stylists/services/add" class="btn btn-outline-primary rounded-pill px-4 fw-700 text-nowrap">
+                            <i class="bi bi-bag-plus me-1"></i> Add Service
+                        </a>
                     </div>
                 </div>
             </div>

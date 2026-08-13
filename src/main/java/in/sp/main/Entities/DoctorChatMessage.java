@@ -22,8 +22,17 @@ public class DoctorChatMessage {
     private String senderType; // USER or DOCTOR
     private LocalDateTime timestamp;
 
+    /** False until the doctor opens chats / that conversation (user→doctor messages). */
+    @Column(nullable = false)
+    private boolean readByDoctor = false;
+
     @PrePersist
-    protected void onCreate() { this.timestamp = LocalDateTime.now(); }
+    protected void onCreate() {
+        this.timestamp = LocalDateTime.now();
+        if ("DOCTOR".equalsIgnoreCase(this.senderType)) {
+            this.readByDoctor = true;
+        }
+    }
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -38,4 +47,6 @@ public class DoctorChatMessage {
     public void setSenderType(String senderType) { this.senderType = senderType; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public boolean isReadByDoctor() { return readByDoctor; }
+    public void setReadByDoctor(boolean readByDoctor) { this.readByDoctor = readByDoctor; }
 }

@@ -63,45 +63,62 @@ public class SalonReviewController {
     }
 
     // Save new review
-
     @PostMapping("/reviews/save")
-
     public String saveReview(@RequestParam Long salonId,
-
-                             @RequestParam String userName,
-
-                             @RequestParam int rating,
-
-                             @RequestParam String comment,
-
+                             @RequestParam(required = false) String userName,
+                             @RequestParam(required = false) Integer rating,
+                             @RequestParam(required = false) String comment,
                              RedirectAttributes redirectAttributes) {
- 
+
         Salon salon = salonRepo.findById(salonId).orElse(null);
-
         if (salon == null) {
-
             redirectAttributes.addFlashAttribute("error", "Salon not found!");
-
             return "redirect:/salons";
-
         }
- 
+
+        String cleanedName = userName == null ? "" : userName.trim();
+        String cleanedComment = comment == null ? "" : comment.trim();
+
+        if (cleanedName.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Your Name is required.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (cleanedName.length() < 2 || cleanedName.length() > 50) {
+            redirectAttributes.addFlashAttribute("error", "Your Name must be between 2 and 50 characters.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (!cleanedName.matches("^[A-Za-z]([A-Za-z .'-]*[A-Za-z])?$")) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Your Name may only contain letters, spaces, apostrophes, hyphens, or periods — no numbers.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (rating == null || rating < 1 || rating > 5) {
+            redirectAttributes.addFlashAttribute("error", "Please select a rating between 1 and 5.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (cleanedComment.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Your Comment is required.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (cleanedComment.length() < 10) {
+            redirectAttributes.addFlashAttribute("error", "Your Comment must be at least 10 characters.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+        if (cleanedComment.length() > 1000) {
+            redirectAttributes.addFlashAttribute("error", "Your Comment cannot exceed 1000 characters.");
+            return "redirect:/salon/reviews?id=" + salonId + "#addReview";
+        }
+
         SalonReview review = new SalonReview();
-
         review.setSalon(salon);
-
-        review.setUserName(userName);
-
+        review.setUserName(cleanedName);
         review.setRating(rating);
-
-        review.setComment(comment);
+        review.setComment(cleanedComment);
 
         reviewService.saveReview(review);
- 
+
         redirectAttributes.addFlashAttribute("msg", "Thank you for your feedback!");
-
         return "redirect:/salon/reviews?id=" + salonId;
-
     }
 
 // SalonReviewController.java

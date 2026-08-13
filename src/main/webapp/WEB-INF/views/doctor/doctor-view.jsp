@@ -146,6 +146,38 @@
 
     .review-item:last-child { border-bottom: none; }
 
+    /* Interactive star rating (row-reverse so :checked ~ label fills lower stars) */
+    .rating-stars {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+      gap: 8px;
+      direction: ltr;
+    }
+    .rating-stars input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+    .rating-stars label {
+      cursor: pointer;
+      font-size: 2rem;
+      line-height: 1;
+      color: #d1d5db;
+      transition: color 0.15s ease, transform 0.15s ease;
+      user-select: none;
+    }
+    .rating-stars label:hover,
+    .rating-stars label:hover ~ label,
+    .rating-stars input:checked ~ label {
+      color: #f59e0b;
+    }
+    .rating-stars label:hover {
+      transform: scale(1.12);
+    }
+
     .action-btn-circle {
       width: 50px;
       height: 50px;
@@ -276,7 +308,7 @@
                   <div class="info-grid-item">
                     <div class="text-primary mb-2"><i class="bi bi-building fs-4"></i></div>
                     <div class="small fw-700 text-muted">HOSPITAL</div>
-                    <div class="fw-800">${doctor.hospitalName != null ? doctor.hospitalName : 'SafeHer Clinic'}</div>
+                    <div class="fw-800">${doctor.hospitalName != null ? doctor.hospitalName : 'Fight D Fear Clinic'}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -348,7 +380,14 @@
                     <div class="d-flex justify-content-between mb-2">
                       <div class="fw-800">${r.user.fullName}</div>
                       <div class="text-warning">
-                        <c:forEach begin="1" end="${r.rating}"><i class="bi bi-star-fill"></i></c:forEach>
+                        <c:choose>
+                          <c:when test="${r.rating != null && r.rating >= 1 && r.rating <= 5}">
+                            <c:forEach begin="1" end="${r.rating}"><i class="bi bi-star-fill"></i></c:forEach>
+                          </c:when>
+                          <c:otherwise>
+                            <span class="text-muted small">No rating</span>
+                          </c:otherwise>
+                        </c:choose>
                       </div>
                     </div>
                     <p class="text-muted small mb-0">${r.comment}</p>
@@ -406,6 +445,16 @@
               </div>
             </div>
 
+            <div class="mb-4">
+              <label class="small fw-800 text-muted mb-2 d-block" for="appointmentReason">REASON FOR VISIT</label>
+              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500"
+                        placeholder="Briefly describe your symptoms or reason for consultation (optional)"></textarea>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="small text-muted">Shown to your doctor after booking</span>
+                <span class="small text-muted"><span id="reasonCount">0</span>/500</span>
+              </div>
+            </div>
+
             <div id="selectedSummary" class="mb-4 p-3 bg-soft-pink rounded-3 text-pink small fw-700 text-center d-none">
               <i class="bi bi-clock-fill me-1"></i> <span id="summaryText"></span>
             </div>
@@ -428,17 +477,26 @@
           <h5 class="modal-title fw-900">Your Experience</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form action="${pageContext.request.contextPath}/doctors/review" method="post">
+        <form action="${pageContext.request.contextPath}/doctors/review" method="post" id="doctorReviewForm" novalidate>
           <input type="hidden" name="doctorId" value="${doctor.id}">
           <div class="modal-body p-4">
+            <c:if test="${not empty error}">
+              <div class="alert alert-danger rounded-4 border-0 mb-3">${error}</div>
+            </c:if>
             <div class="mb-4 text-center">
-              <div class="rating-stars fs-2 text-warning">
-                <input type="radio" name="rating" value="5" id="r5" class="d-none" required><label for="r5" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="4" id="r4" class="d-none"><label for="r4" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="3" id="r3" class="d-none"><label for="r3" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="2" id="r2" class="d-none"><label for="r2" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="1" id="r1" class="d-none"><label for="r1" class="cursor-pointer">☆</label>
+              <div class="rating-stars" role="radiogroup" aria-label="Doctor rating" id="doctorRatingGroup">
+                <input type="radio" name="rating" value="5" id="r5" autocomplete="off">
+                <label for="r5" title="5 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="4" id="r4" autocomplete="off">
+                <label for="r4" title="4 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="3" id="r3" autocomplete="off">
+                <label for="r3" title="3 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="2" id="r2" autocomplete="off">
+                <label for="r2" title="2 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="1" id="r1" autocomplete="off">
+                <label for="r1" title="1 star"><i class="bi bi-star-fill"></i></label>
               </div>
+              <div id="ratingError" class="text-danger small fw-700 mt-2" style="display:none;">Please select a star rating.</div>
             </div>
             <textarea name="comment" class="form-control rounded-4 p-3" rows="4" placeholder="How was your visit with Dr. ${doctor.fullName}?"></textarea>
           </div>
@@ -534,6 +592,7 @@
       const doctorId = document.getElementById('doctorId').value;
       const time = document.getElementById('appointmentTime').value;
       const type = document.querySelector('input[name="consultationType"]:checked').value;
+      const reason = (document.getElementById('appointmentReason').value || '').trim();
 
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
@@ -543,7 +602,7 @@
         const order = await res.json();
         const options = {
           key: order.key, amount: order.amount, currency: 'INR',
-          name: 'SafeHer Medical', description: 'Consultation with Dr. ${doctor.fullName}',
+          name: 'Fight D Fear Medical', description: 'Consultation with Dr. ${doctor.fullName}',
           order_id: order.orderId,
           handler: async function(response) {
             const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
@@ -553,7 +612,8 @@
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 type: 'DOCTOR', targetId: doctorId, amount,
-                appointmentTime: time, consultationType: type
+                appointmentTime: time, consultationType: type,
+                reason: reason
               })
             });
             if(verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
@@ -563,7 +623,49 @@
       } catch(e) { alert('Payment failed. Please try again.'); }
     }
 
-    document.addEventListener('DOMContentLoaded', renderDates);
+    document.addEventListener('DOMContentLoaded', function() {
+      renderDates();
+
+      var reasonBox = document.getElementById('appointmentReason');
+      var reasonCount = document.getElementById('reasonCount');
+      if (reasonBox && reasonCount) {
+        reasonBox.addEventListener('input', function() {
+          reasonCount.textContent = reasonBox.value.length;
+        });
+      }
+
+      var reviewForm = document.getElementById('doctorReviewForm');
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+          var selected = reviewForm.querySelector('input[name="rating"]:checked');
+          var err = document.getElementById('ratingError');
+          if (!selected) {
+            e.preventDefault();
+            if (err) err.style.display = 'block';
+            var modalEl = document.getElementById('reviewModal');
+            if (modalEl && window.bootstrap) {
+              bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+            return false;
+          }
+          if (err) err.style.display = 'none';
+        });
+
+        reviewForm.querySelectorAll('input[name="rating"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            var err = document.getElementById('ratingError');
+            if (err) err.style.display = 'none';
+          });
+        });
+      }
+
+      <c:if test="${not empty error}">
+      var modalEl = document.getElementById('reviewModal');
+      if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+      </c:if>
+    });
   </script>
 </body>
 </html>

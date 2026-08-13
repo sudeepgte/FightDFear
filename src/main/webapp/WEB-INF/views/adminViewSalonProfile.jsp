@@ -283,12 +283,25 @@
   <div class="audit-header">
     <div class="salon-img-frame">
       <c:choose>
-        <c:when test="${not empty salon.profileImageUrl}">
-          <img src="${salon.profileImageUrl}" alt="Salon">
+        <c:when test="${not empty salonImageUrl}">
+          <c:choose>
+            <c:when test="${salonImageUrl.startsWith('http://') || salonImageUrl.startsWith('https://')}">
+              <img src="${salonImageUrl}" alt="Salon"
+                   onerror="this.onerror=null;this.style.display='none';var f=this.parentNode.querySelector('.salon-img-fallback');if(f){f.style.display='flex';}">
+            </c:when>
+            <c:otherwise>
+              <c:url var="salonImgSrc" value="${salonImageUrl}"/>
+              <img src="${salonImgSrc}" alt="Salon"
+                   onerror="this.onerror=null;this.style.display='none';var f=this.parentNode.querySelector('.salon-img-fallback');if(f){f.style.display='flex';}">
+            </c:otherwise>
+          </c:choose>
+          <div class="salon-img-fallback h-100 w-100 align-items-center justify-content-center bg-light text-muted fs-1 fw-bold" style="display:none;">
+            <c:out value="${not empty salon.name ? salon.name.substring(0,1) : 'S'}"/>
+          </div>
         </c:when>
         <c:otherwise>
           <div class="h-100 d-flex align-items-center justify-content-center bg-light text-muted fs-1 fw-bold">
-            ${salon.name.substring(0,1)}
+            <c:out value="${not empty salon.name ? salon.name.substring(0,1) : 'S'}"/>
           </div>
         </c:otherwise>
       </c:choose>
@@ -303,9 +316,18 @@
           <span class="status-pill pending"><i class="fas fa-clock me-1"></i> Pending Review</span>
         </c:otherwise>
       </c:choose>
-      <h2>${salon.name}</h2>
+      <h2><c:out value="${salon.name}"/></h2>
       <div class="salon-meta">
-        <i class="fas fa-map-pin me-2"></i> ${salon.address}, ${salon.city}
+        <i class="fas fa-map-pin me-2"></i>
+        <c:choose>
+          <c:when test="${not empty salon.address or not empty salon.city}">
+            <c:if test="${not empty salon.address}"><c:out value="${salon.address}"/></c:if>
+            <c:if test="${not empty salon.address and not empty salon.city}">, </c:if>
+            <c:if test="${not empty salon.city}"><c:out value="${salon.city}"/></c:if>
+            <c:if test="${not empty salon.state}">, <c:out value="${salon.state}"/></c:if>
+          </c:when>
+          <c:otherwise>Address not provided</c:otherwise>
+        </c:choose>
       </div>
     </div>
   </div>
@@ -313,22 +335,62 @@
   <div class="audit-body">
     <div class="data-grid">
       
-      <!-- Section: Details -->
+      <!-- Section: Details — mapped to real Salon entity fields (not swapped/placeholder values) -->
       <div class="data-section">
         <div class="section-heading"><i class="fas fa-building"></i> Business Details</div>
-        <div class="field-row"><span class="field-label">Est. Year</span><span class="field-value">${salon.establishedYear}</span></div>
-        <div class="field-row"><span class="field-label">Working Hours</span><span class="field-value">${salon.availabilityHours}</span></div>
-        <div class="field-row"><span class="field-label">Eco-Friendly</span><span class="field-value">${salon.isEcoFriendly ? 'Yes' : 'No'}</span></div>
-        <div class="field-row"><span class="field-label">Hygiene Cert</span><span class="field-value">${salon.sanitationRating} / 5.0</span></div>
+        <div class="field-row">
+          <span class="field-label">Est. Year</span>
+          <span class="field-value"><c:out value="${not empty salon.establishedYear ? salon.establishedYear : '—'}"/></span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Working Hours</span>
+          <span class="field-value"><c:out value="${not empty salon.availabilityHours ? salon.availabilityHours : '—'}"/></span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Eco-Friendly</span>
+          <span class="field-value">${salon.isEcoFriendly == true ? 'Yes' : 'No'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Certified</span>
+          <span class="field-value">${salon.isCertified == true ? 'Yes' : 'No'}</span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Hygiene Certificate</span>
+          <span class="field-value">
+            <c:choose>
+              <c:when test="${not empty salon.hygieneCertificateUrl and salon.hygieneCertificateUrl != 'mobile-pending'}">
+                <a class="text-primary" target="_blank" rel="noopener"
+                   href="${pageContext.request.contextPath}${salon.hygieneCertificateUrl}">
+                  View uploaded certificate
+                </a>
+              </c:when>
+              <c:when test="${salon.hygieneCertificateUrl == 'mobile-pending'}">
+                Pending upload (mobile registration)
+              </c:when>
+              <c:otherwise>Not uploaded</c:otherwise>
+            </c:choose>
+          </span>
+        </div>
+        <div class="field-row">
+          <span class="field-label">Hygiene Rating</span>
+          <span class="field-value">
+            <c:choose>
+              <c:when test="${salon.sanitationRating != null}">
+                ${salon.sanitationRating} / 5.0
+              </c:when>
+              <c:otherwise>—</c:otherwise>
+            </c:choose>
+          </span>
+        </div>
       </div>
 
       <!-- Section: Security -->
       <div class="data-section">
         <div class="section-heading"><i class="fas fa-lock"></i> Security & Contact</div>
-        <div class="field-row"><span class="field-label">Email</span><span class="field-value">${salon.email}</span></div>
-        <div class="field-row"><span class="field-label">Phone</span><span class="field-value">${salon.phone}</span></div>
-        <div class="field-row"><span class="field-label">Portal ID</span><span class="field-value">${salon.username}</span></div>
-        <div class="field-row"><span class="field-label">Website</span><span class="field-value text-primary">${not empty salon.website ? salon.website : 'None'}</span></div>
+        <div class="field-row"><span class="field-label">Email</span><span class="field-value"><c:out value="${not empty salon.email ? salon.email : '—'}"/></span></div>
+        <div class="field-row"><span class="field-label">Phone</span><span class="field-value"><c:out value="${not empty salon.phone ? salon.phone : '—'}"/></span></div>
+        <div class="field-row"><span class="field-label">Portal ID</span><span class="field-value"><c:out value="${not empty salon.username ? salon.username : '—'}"/></span></div>
+        <div class="field-row"><span class="field-label">Website</span><span class="field-value text-primary"><c:out value="${not empty salon.website ? salon.website : 'None'}"/></span></div>
       </div>
 
       <!-- Section: About -->

@@ -373,11 +373,13 @@
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
-    <!-- Sidebar -->
-    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <!-- Sidebar: user navigation only (doctors stay in portal chrome) -->
+    <c:if test="${not viewerIsDoctor}">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    </c:if>
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -388,9 +390,21 @@
         <!-- Dashboard Header -->
         <div class="glow-header">
             <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
-                    <i class="bi bi-calendar-event"></i> My Appointments
-                </a>
+                <c:choose>
+                    <c:when test="${viewerIsDoctor}">
+                        <a href="${pageContext.request.contextPath}/doctors/dashboard" class="top-btn">
+                            <i class="bi bi-arrow-left"></i> Doctor Dashboard
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="${pageContext.request.contextPath}/doctors/myAppointments?section=prescriptions" class="top-btn">
+                            <i class="bi bi-file-earmark-medical"></i> My Prescriptions
+                        </a>
+                        <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
+                            <i class="bi bi-calendar-event"></i> My Appointments
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </div>
             
             <h1>Find Your Doctor</h1>

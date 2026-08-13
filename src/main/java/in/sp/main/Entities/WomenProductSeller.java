@@ -6,14 +6,32 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "women_product_sellers")
 public class WomenProductSeller {
+    public static final int FULL_NAME_MAX_LENGTH = 80;
+    public static final int FULL_NAME_MIN_LENGTH = 2;
+    /** Letters with optional spaces, apostrophes, periods, or hyphens — no digits. */
+    public static final String FULL_NAME_PATTERN = "^[A-Za-z][A-Za-z .'-]{1,79}$";
+
+    public static final int BUSINESS_NAME_MIN_LENGTH = 2;
+    public static final int BUSINESS_NAME_MAX_LENGTH = 100;
+    /** Starts with letter/digit; allows spaces and common business punctuation (no other symbols). */
+    public static final String BUSINESS_NAME_PATTERN = "^[A-Za-z0-9][A-Za-z0-9 &.,'()\\-]{1,99}$";
+
+    public static final int PHONE_LENGTH = 10;
+    public static final String PHONE_PATTERN = "^\\d{10}$";
+    public static final int ADDRESS_MIN_LENGTH = 10;
+    public static final int ADDRESS_MAX_LENGTH = 1000;
+    public static final int DESCRIPTION_MAX_LENGTH = 2000;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = FULL_NAME_MAX_LENGTH)
     private String fullName;
     private String email;
     private String phone;
     private String password;
+    @Column(length = BUSINESS_NAME_MAX_LENGTH)
     private String businessName;
     @Lob
     @Column(columnDefinition = "TEXT")

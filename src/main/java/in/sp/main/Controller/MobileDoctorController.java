@@ -278,6 +278,7 @@ public class MobileDoctorController {
         if (user != null) {
             msg.setUser(user);
             msg.setSenderType("USER");
+            msg.setReadByDoctor(false);
         } else if (doctor != null) {
             if (!doctor.getId().equals(id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -295,6 +296,7 @@ public class MobileDoctorController {
             if (chatUser == null) return badRequest("Patient not found");
             msg.setUser(chatUser);
             msg.setSenderType("DOCTOR");
+            msg.setReadByDoctor(true);
         } else {
             return unauthorized();
         }

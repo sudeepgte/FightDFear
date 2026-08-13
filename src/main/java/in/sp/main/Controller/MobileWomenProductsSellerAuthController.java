@@ -54,6 +54,16 @@ public class MobileWomenProductsSellerAuthController {
         if (fullName.isBlank() || businessName.isBlank()) {
             return badRequest("fullName and businessName are required");
         }
+        if (fullName.length() < WomenProductSeller.FULL_NAME_MIN_LENGTH
+                || fullName.length() > WomenProductSeller.FULL_NAME_MAX_LENGTH
+                || !fullName.matches(WomenProductSeller.FULL_NAME_PATTERN)) {
+            return badRequest("Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).");
+        }
+        if (businessName.length() < WomenProductSeller.BUSINESS_NAME_MIN_LENGTH
+                || businessName.length() > WomenProductSeller.BUSINESS_NAME_MAX_LENGTH
+                || !businessName.matches(WomenProductSeller.BUSINESS_NAME_PATTERN)) {
+            return badRequest("Business Name must be 2–100 characters and may include letters, numbers, spaces, and & . , ' ( ) - only.");
+        }
         String emailErr = MobileValidation.requireEmail(email);
         if (emailErr != null) return badRequest(emailErr);
         String phoneErr = MobileValidation.requirePhone(phone, true);
@@ -202,7 +212,11 @@ public class MobileWomenProductsSellerAuthController {
         p.setPrice(price);
         p.setOriginalPrice(parseDouble(body.get("originalPrice"), price));
         p.setStock(Math.max(parseInt(body.get("stock"), 0), 0));
-        p.setCategory(category.toUpperCase(Locale.ROOT));
+        String normalizedCategory = in.sp.main.Entities.WomenProduct.normalizeCategory(category);
+        if (normalizedCategory == null) {
+            return badRequest("Invalid category. Use: SKINCARE, HAIRCARE, HYGIENE, CLOTHING, ACCESSORIES, WELLNESS, OTHER");
+        }
+        p.setCategory(normalizedCategory);
         p.setSku(trim(Objects.toString(body.get("sku"), "")));
         p.setWeightSize(trim(Objects.toString(body.get("weightSize"), "")));
         p.setOfferBadge(trim(Objects.toString(body.get("offerBadge"), "")));

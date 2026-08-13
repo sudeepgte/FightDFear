@@ -3,6 +3,7 @@ package in.sp.main.Controller;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -52,6 +53,12 @@ public class SalonController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Value("${app.upload.profile-image.max-size-mb:2}")
+    private int profileImageMaxSizeMb;
+
+    @Value("${app.upload.profile-image.accepted:JPG, JPEG, PNG}")
+    private String profileImageAccepted;
+
     // Show registration form
     @GetMapping("/salons/register")
     public String showSalonRegister() {
@@ -63,12 +70,47 @@ public class SalonController {
     public String registerSalon(
             @RequestParam("name") String name,
             @RequestParam("username") String username,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword,
             @RequestParam("hygieneCertificate") MultipartFile hygieneCertificate,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
             Model model) {
+
+        String cleanedName = name == null ? "" : name.trim();
+        String cleanedUsername = username == null ? "" : username.trim();
+        String cleanedEmail = email == null ? "" : email.trim().toLowerCase();
+        String cleanedPhone = phone == null ? "" : phone.trim();
+
+        if (cleanedName.length() < 3) {
+            model.addAttribute("error", "Salon name must be at least 3 characters.");
+            return "salon/salon-register";
+        }
+        if (cleanedName.length() > Salon.NAME_MAX_LENGTH) {
+            model.addAttribute("error",
+                    "Salon name cannot exceed " + Salon.NAME_MAX_LENGTH + " characters.");
+            return "salon/salon-register";
+        }
+        if (!cleanedUsername.matches(Salon.USERNAME_PATTERN)) {
+            model.addAttribute("error",
+                    "Username must be 3–20 characters and may only contain letters, numbers, and underscores (no spaces or special characters).");
+            return "salon/salon-register";
+        }
+        if (salonRepository.findByUsername(cleanedUsername).isPresent()) {
+            model.addAttribute("error", "Username is already taken. Please choose another.");
+            return "salon/salon-register";
+        }
+        if (cleanedEmail.isEmpty() || cleanedEmail.length() > Salon.EMAIL_MAX_LENGTH
+                || !cleanedEmail.matches(Salon.EMAIL_PATTERN)) {
+            model.addAttribute("error", "Please enter a valid email address.");
+            return "salon/salon-register";
+        }
+        if (!cleanedPhone.matches(Salon.PHONE_PATTERN)) {
+            model.addAttribute("error", "Phone number must be exactly 10 digits.");
+            return "salon/salon-register";
+        }
 
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Passwords do not match!");
@@ -79,8 +121,10 @@ public class SalonController {
             String hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
 
             Salon salon = new Salon();
-            salon.setName(name);
-            salon.setUsername(username); // store username
+            salon.setName(cleanedName);
+            salon.setUsername(cleanedUsername);
+            salon.setEmail(cleanedEmail);
+            salon.setPhone(cleanedPhone);
             salon.setPassword(passwordService.encode(password));
             salon.setHygieneCertificateUrl(hygieneCertificateUrl);
             salon.setBio(bio);
@@ -93,6 +137,9 @@ public class SalonController {
         } catch (IOException e) {
             e.printStackTrace();
             model.addAttribute("error", "Failed to upload hygiene certificate.");
+            return "salon/salon-register";
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("error", "Username is already taken. Please choose another.");
             return "salon/salon-register";
         }
     }
@@ -123,6 +170,14 @@ public class SalonController {
                     model.addAttribute("error", "Your account is pending admin approval. Please wait for the physical business audit.");
                     return "salon/salon-login";
                 }
+                // Clear user/other portals so contact/header "My Dashboard" routes to salon correctly
+                session.removeAttribute("user");
+                session.removeAttribute("loggedDoctor");
+                session.removeAttribute("loggedStylist");
+                session.removeAttribute("loggedProvider");
+                session.removeAttribute("loggedCentre");
+                session.removeAttribute("loggedSeller");
+                session.removeAttribute("admin");
                 session.setAttribute("loggedSalon", salon);
                 
                 // Generate JWT and add to response
@@ -189,70 +244,166 @@ public class SalonController {
         }
         if (salonOpt.isPresent()) {
             model.addAttribute("salon", salonOpt.get());
+            addProfileImageUploadHints(model);
             return "salon/salon-profile"; // loads profile.jsp
         }
 
         return "redirect:/salons/login";
     }
 
+    private void addProfileImageUploadHints(Model model) {
+        model.addAttribute("profileImageMaxSizeMb", profileImageMaxSizeMb);
+        model.addAttribute("profileImageAccepted", profileImageAccepted);
+        model.addAttribute("profileImageMaxBytes", profileImageMaxSizeMb * 1024L * 1024L);
+    }
+
+    private long profileImageMaxBytes() {
+        return profileImageMaxSizeMb * 1024L * 1024L;
+    }
+
     // Update profile
     @PostMapping("/salons/updateProfile")
     public String updateProfile(
-            @ModelAttribute Salon updatedSalon,
-            @RequestParam("profileImage") MultipartFile profileImage,
+            @RequestParam("id") Long id,
+            @RequestParam("name") String name,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "establishedYear", required = false) String establishedYearRaw,
+            @RequestParam(value = "website", required = false) String website,
+            @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             HttpSession session,
             Model model) {
 
-        Optional<Salon> salonOpt = salonRepository.findById(updatedSalon.getId());
-
-        if (salonOpt.isPresent()) {
-            Salon salon = salonOpt.get();
-
-            // Update basic info
-            salon.setName(updatedSalon.getName());
-            salon.setEmail(updatedSalon.getEmail());
-            salon.setPhone(updatedSalon.getPhone());
-            salon.setAddress(updatedSalon.getAddress());
-            salon.setCity(updatedSalon.getCity());
-            salon.setState(updatedSalon.getState());
-            salon.setPincode(updatedSalon.getPincode());
-            salon.setWebsite(updatedSalon.getWebsite());
-
-            // Update optional fields
-            salon.setLatitude(updatedSalon.getLatitude());
-            salon.setLongitude(updatedSalon.getLongitude());
-            salon.setAverageRating(updatedSalon.getAverageRating());
-            salon.setLongitude(updatedSalon.getLongitude());
-            salon.setEstablishedYear(updatedSalon.getEstablishedYear());
-            salon.setBio(updatedSalon.getBio());
-            salon.setAvailabilityHours(updatedSalon.getAvailabilityHours());
-
-            salon.setHygieneCertificateUrl(updatedSalon.getHygieneCertificateUrl());
-
-            // Update checkboxes
-            salon.setIsEcoFriendly(updatedSalon.getIsEcoFriendly() != null ? updatedSalon.getIsEcoFriendly() : false);
-            salon.setIsCertified(updatedSalon.getIsCertified() != null ? updatedSalon.getIsCertified() : false);
-
-            // Handle profile image using FileUploadService
-            if (profileImage != null && !profileImage.isEmpty()) {
-                try {
-                    String profileImageUrl = fileUploadService.saveFile(profileImage);
-                    salon.setProfileImageUrl(profileImageUrl);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    model.addAttribute("error", "Failed to upload profile image.");
-                }
-            }
-
-            salonRepository.save(salon);
-
-            session.setAttribute("loggedSalon", salon);
-            model.addAttribute("salon", salon);
-            model.addAttribute("message", "Profile updated successfully!");
-            return "salon/salon-profile";
+        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
+        if (loggedSalon == null) {
+            return "redirect:/salons/login";
+        }
+        if (id == null || !id.equals(loggedSalon.getId())) {
+            model.addAttribute("error", "Unauthorized profile update.");
+            return "redirect:/salons/profile";
         }
 
-        model.addAttribute("error", "Salon not found!");
+        Optional<Salon> salonOpt = salonRepository.findById(id);
+        if (salonOpt.isEmpty()) {
+            model.addAttribute("error", "Salon not found!");
+            return "redirect:/salons/login";
+        }
+
+        Salon salon = salonOpt.get();
+        String cleanedName = name == null ? "" : name.trim();
+        String cleanedEmail = email == null ? "" : email.trim().toLowerCase();
+        String cleanedPhone = phone == null ? "" : phone.trim();
+        String cleanedAddress = address == null ? "" : address.trim();
+        String cleanedCity = city == null ? "" : city.trim();
+        String cleanedState = state == null ? "" : state.trim();
+        String cleanedPincode = pincode == null ? "" : pincode.trim();
+        String cleanedBio = bio == null ? "" : bio.trim();
+        String cleanedWebsite = website == null ? "" : website.trim();
+        String cleanedHours = availabilityHours == null ? "" : availabilityHours.trim();
+        String cleanedYearRaw = establishedYearRaw == null ? "" : establishedYearRaw.trim();
+
+        if (cleanedName.length() < 3 || cleanedName.length() > Salon.NAME_MAX_LENGTH) {
+            return profileFormError(model, salon, "Salon name must be 3–" + Salon.NAME_MAX_LENGTH + " characters.");
+        }
+        if (cleanedEmail.isEmpty() || cleanedEmail.length() > Salon.EMAIL_MAX_LENGTH
+                || !cleanedEmail.matches(Salon.EMAIL_PATTERN)) {
+            return profileFormError(model, salon, "Please enter a valid email address.");
+        }
+        if (!cleanedPhone.matches(Salon.PHONE_PATTERN)) {
+            return profileFormError(model, salon, "Phone number must be exactly 10 digits.");
+        }
+        if (cleanedAddress.isEmpty()) {
+            return profileFormError(model, salon, "Full Address is required.");
+        }
+        if (cleanedAddress.length() > Salon.ADDRESS_MAX_LENGTH) {
+            return profileFormError(model, salon, "Address cannot exceed " + Salon.ADDRESS_MAX_LENGTH + " characters.");
+        }
+        if (cleanedCity.isEmpty() || cleanedCity.length() < Salon.CITY_STATE_MIN_LENGTH) {
+            return profileFormError(model, salon, "City is required (at least " + Salon.CITY_STATE_MIN_LENGTH + " characters).");
+        }
+        if (cleanedCity.length() > Salon.CITY_STATE_MAX_LENGTH) {
+            return profileFormError(model, salon, "City cannot exceed " + Salon.CITY_STATE_MAX_LENGTH + " characters.");
+        }
+        if (cleanedState.isEmpty() || cleanedState.length() < Salon.CITY_STATE_MIN_LENGTH) {
+            return profileFormError(model, salon, "State is required (at least " + Salon.CITY_STATE_MIN_LENGTH + " characters).");
+        }
+        if (cleanedState.length() > Salon.CITY_STATE_MAX_LENGTH) {
+            return profileFormError(model, salon, "State cannot exceed " + Salon.CITY_STATE_MAX_LENGTH + " characters.");
+        }
+        if (!cleanedPincode.isEmpty() && !cleanedPincode.matches(Salon.PINCODE_PATTERN)) {
+            return profileFormError(model, salon, "Pincode must be exactly " + Salon.PINCODE_LENGTH + " digits.");
+        }
+        if (cleanedBio.length() > Salon.BIO_MAX_LENGTH) {
+            return profileFormError(model, salon, "Bio cannot exceed " + Salon.BIO_MAX_LENGTH + " characters.");
+        }
+        if (cleanedWebsite.length() > Salon.WEBSITE_MAX_LENGTH) {
+            return profileFormError(model, salon, "Website URL cannot exceed " + Salon.WEBSITE_MAX_LENGTH + " characters.");
+        }
+        if (!cleanedWebsite.isEmpty()
+                && !cleanedWebsite.matches("^(https?://)?([\\w-]+\\.)+[\\w-]+(/\\S*)?$")) {
+            return profileFormError(model, salon, "Please enter a valid website URL.");
+        }
+        if (cleanedHours.length() > Salon.HOURS_MAX_LENGTH) {
+            return profileFormError(model, salon, "Working hours cannot exceed " + Salon.HOURS_MAX_LENGTH + " characters.");
+        }
+
+        Integer establishedYear = null;
+        int currentYear = java.time.Year.now().getValue();
+        if (!cleanedYearRaw.isEmpty()) {
+            if (!cleanedYearRaw.matches(Salon.ESTABLISHED_YEAR_PATTERN)) {
+                return profileFormError(model, salon, "Established Year must be exactly 4 digits.");
+            }
+            establishedYear = Integer.parseInt(cleanedYearRaw);
+            if (establishedYear < Salon.ESTABLISHED_YEAR_MIN || establishedYear > currentYear) {
+                return profileFormError(model, salon,
+                        "Established Year must be between " + Salon.ESTABLISHED_YEAR_MIN + " and " + currentYear + ".");
+            }
+        }
+
+        salon.setName(cleanedName);
+        salon.setEmail(cleanedEmail);
+        salon.setPhone(cleanedPhone);
+        salon.setAddress(cleanedAddress);
+        salon.setCity(cleanedCity);
+        salon.setState(cleanedState);
+        salon.setPincode(cleanedPincode.isEmpty() ? null : cleanedPincode);
+        salon.setBio(cleanedBio.isEmpty() ? null : cleanedBio);
+        salon.setEstablishedYear(establishedYear);
+        salon.setWebsite(cleanedWebsite.isEmpty() ? null : cleanedWebsite);
+        salon.setAvailabilityHours(cleanedHours.isEmpty() ? null : cleanedHours);
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String imageError = fileUploadService.validatePngOrJpegImage(profileImage, profileImageMaxBytes());
+            if (imageError != null) {
+                return profileFormError(model, salon, imageError);
+            }
+            try {
+                String profileImageUrl = fileUploadService.saveFile(profileImage);
+                salon.setProfileImageUrl(profileImageUrl);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return profileFormError(model, salon, "Failed to upload profile image.");
+            }
+        }
+
+        salonRepository.save(salon);
+        session.setAttribute("loggedSalon", salon);
+        model.addAttribute("salon", salon);
+        addProfileImageUploadHints(model);
+        model.addAttribute("message", "Profile updated successfully!");
+        return "salon/salon-profile";
+    }
+
+    private String profileFormError(Model model, Salon salon, String error) {
+        model.addAttribute("salon", salon);
+        addProfileImageUploadHints(model);
+        model.addAttribute("error", error);
         return "salon/salon-profile";
     }
 

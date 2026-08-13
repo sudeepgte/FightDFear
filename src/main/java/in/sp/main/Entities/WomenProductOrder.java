@@ -31,13 +31,18 @@ public class WomenProductOrder {
     private Integer rating;
     private String review;
 
+    /** Calculated ETA at order placement (nullable for legacy orders). */
+    private LocalDateTime expectedDeliveryDate;
+
     private LocalDateTime orderTime;
     
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private WomenReturnRequest returnRequest;
 
     @PrePersist
-    protected void onCreate() { this.orderTime = LocalDateTime.now(); }
+    protected void onCreate() {
+        if (this.orderTime == null) this.orderTime = LocalDateTime.now();
+    }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -60,6 +65,8 @@ public class WomenProductOrder {
     public void setStatus(String status) { this.status = status; }
     public String getShippingAddress() { return shippingAddress; }
     public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }
+    public LocalDateTime getExpectedDeliveryDate() { return expectedDeliveryDate; }
+    public void setExpectedDeliveryDate(LocalDateTime expectedDeliveryDate) { this.expectedDeliveryDate = expectedDeliveryDate; }
     public LocalDateTime getOrderTime() { return orderTime; }
     public void setOrderTime(LocalDateTime orderTime) { this.orderTime = orderTime; }
     public WomenReturnRequest getReturnRequest() { return returnRequest; }

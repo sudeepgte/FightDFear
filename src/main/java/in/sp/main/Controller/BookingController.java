@@ -90,46 +90,61 @@ public class BookingController {
                                 @RequestParam String bookingDate, 
                                 @RequestParam 	LocalTime preferredTime, 
                                 HttpSession session,
-                                Model model) {
+                                RedirectAttributes redirectAttributes) {
  
         User loggedUser = (User) session.getAttribute("user");
-        if (loggedUser == null) return "redirect:/login";
+        if (loggedUser == null || loggedUser.getId() == null) return "redirect:/login";
+
+        // Re-load managed user so user_id FK is always persisted correctly
+        User managedUser = userRepository.findById(loggedUser.getId()).orElse(null);
+        if (managedUser == null) return "redirect:/login";
+        session.setAttribute("user", managedUser);
  
         Booking1 booking = new Booking1();
-        booking.setUser(loggedUser);
+        booking.setUser(managedUser);
         booking.setPreferredTime(preferredTime); 
         booking.setBookingDate(LocalDate.parse(bookingDate)); 
-
+        booking.setStatus("PENDING");
         booking.setBookingType(bookingType.toUpperCase());
         booking.setEmergencyContact(emergencyContact);
         booking.setNotes(notes);
+
+        String activeTab = "all";
        
         if (serviceId != null) {
             Service1 service = serviceRepository.findById(serviceId).orElse(null);
             if (service == null) return "redirect:/user/salons";
             booking.setSalon(service.getSalon());
             booking.setService(service);
-            booking.setPrice(service.getPrice());
+            booking.setPrice(service.getPrice() != null ? service.getPrice() : 0.0);
+            activeTab = "services";
         } else if (treatmentId != null) {
             Treatment treatment = treatmentRepository.findById(treatmentId).orElse(null);
             if (treatment == null) return "redirect:/user/salons";
             booking.setSalon(treatment.getSalon());
             booking.setTreatment(treatment);
             booking.setPrice(treatment.getPrice());
+            activeTab = "treatments";
         } else if (offerId != null) {
             Offer offer = offerRepository.findById(offerId).orElse(null);
             if (offer == null) return "redirect:/user/salons";
             booking.setSalon(offer.getSalon());
+            booking.setOffer(offer);
             booking.setPrice(offer.getDiscountedPrice() > 0 ? offer.getDiscountedPrice() : offer.getOriginalPrice());
+            activeTab = "offers";
+        } else {
+            return "redirect:/user/salons";
         }
  
         if ("DOOR".equalsIgnoreCase(bookingType)) {
-            booking.setAddress(address != null ? address : loggedUser.getHomeAddress());
+            booking.setAddress(address != null ? address : managedUser.getHomeAddress());
         } else {
             booking.setAddress(null);
         }
  
         booking1Repository.save(booking);
+        redirectAttributes.addFlashAttribute("activeTab", activeTab);
+        redirectAttributes.addFlashAttribute("bookingSuccess", "Your reservation was confirmed.");
         return "redirect:/booking/myBookings";
     }
  
@@ -137,11 +152,11 @@ public class BookingController {
     @GetMapping("/myBookings")
     public String viewMyBookings(HttpSession session, Model model) {
         User user = (User) session.getAttribute("user");
-        if (user == null) return "redirect:/login";
+        if (user == null || user.getId() == null) return "redirect:/login";
  
-        List<Booking1> allBookings = booking1Repository.findByUser(user);
+        // Query by user ID (not the detached session entity) so bookings always resolve
+        List<Booking1> allBookings = booking1Repository.findByUser_IdOrderByIdDesc(user.getId());
  
-        // FIXED — correct separation
         List<Booking1> serviceBookings = allBookings.stream()
                 .filter(b -> b.getService() != null)
                 .toList();
@@ -149,12 +164,25 @@ public class BookingController {
         List<Booking1> treatmentBookings = allBookings.stream()
                 .filter(b -> b.getTreatment() != null)
                 .toList();
+
+        List<Booking1> offerBookingOnes = allBookings.stream()
+                .filter(b -> b.getOffer() != null)
+                .toList();
  
-        List<OfferBooking> offerBookings = offerbookingRepository.findByUser(user);
+        List<OfferBooking> offerBookings = offerbookingRepository.findByUser_Id(user.getId());
+        if (offerBookings == null) {
+            offerBookings = List.of();
+        }
  
+        model.addAttribute("allBookings", allBookings);
         model.addAttribute("serviceBookings", serviceBookings);
         model.addAttribute("treatmentBookings", treatmentBookings);
+        model.addAttribute("offerBookingOnes", offerBookingOnes);
         model.addAttribute("offerBookings", offerBookings);
+
+        if (!model.containsAttribute("activeTab")) {
+            model.addAttribute("activeTab", "all");
+        }
  
         return "user/myBookings";
     }

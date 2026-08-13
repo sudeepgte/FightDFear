@@ -1,0 +1,95 @@
+@charset "UTF-8";
+
+/* 🔥 Netflix Dark Theme */
+body {
+    background-color: #141414; /* Dark Background */
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+}
+
+/* 🔥 Profile Card */
+.profile-card {
+    max-width: 450px;
+    margin: auto;
+    background: #1c1c1c;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0px 6px 20px rgba(255, 0, 0, 0.6); /* Increased shadow */
+    text-align: center;
+    padding: 25px;
+}
+
+/* 🔥 Profile Image */
+.profile-card img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #e50914; /* Netflix Red */
+    margin-bottom: 15px;
+}
+
+/* 🔥 Name Styling */
+.profile-card h2 {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+/* 🔥 Text Info */
+.profile-card p {
+    font-size: 16px;
+    color: #b3b3b3;
+    margin-bottom: 8px;
+}
+
+/* 🔥 Rating */
+.rating {
+    font-size: 18px;
+    font-weight: bold;
+    color: #f4c10f;
+}
+
+/* 🔥 Stats Container */
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 15px;
+}
+
+.stats {
+    text-align: center;
+}
+
+.stats p {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e50914;
+    margin-bottom: 5px;
+}
+
+.stats small {
+    font-size: 14px;
+    color: #b3b3b3;
+}
+
+/*  Buttons */
+.btn-container {
+    margin-top: 20px;
+}
+
+.btn {
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 16px;
+    background-color: #e50914;
+    border: none;
+    color: white;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background-color: #ff1a1a;
+    color: white;
+}

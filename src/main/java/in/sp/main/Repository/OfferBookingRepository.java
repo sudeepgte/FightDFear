@@ -15,5 +15,7 @@ public interface OfferBookingRepository extends JpaRepository<OfferBooking, Long
 
 	List<OfferBooking> findByUser(User user);
 
+	List<OfferBooking> findByUser_Id(Long userId);
+
 	List<OfferBooking> findBySalon(Salon loggedSalon);
 }

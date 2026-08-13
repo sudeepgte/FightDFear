@@ -6,6 +6,21 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "women_return_requests")
 public class WomenReturnRequest {
+    public static final int HOLDER_NAME_MIN = 2;
+    public static final int HOLDER_NAME_MAX = 80;
+    public static final String HOLDER_NAME_PATTERN = "^[A-Za-z][A-Za-z .'-]{1,79}$";
+    public static final int ACCOUNT_MIN = 9;
+    public static final int ACCOUNT_MAX = 18;
+    public static final String ACCOUNT_PATTERN = "^\\d{9,18}$";
+    public static final String IFSC_PATTERN = "^[A-Z]{4}0[A-Z0-9]{6}$";
+    public static final int BRANCH_MIN = 2;
+    public static final int BRANCH_MAX = 100;
+    public static final int COMMENTS_MAX = 1000;
+    public static final java.util.Set<String> REFUND_REASONS =
+            java.util.Set.of("quality", "defective", "not_needed", "other");
+    public static final java.util.Set<String> EXCHANGE_REASONS =
+            java.util.Set.of("damaged", "wrong_item", "size_issue", "other");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
