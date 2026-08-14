@@ -341,7 +341,6 @@ public class FitnessController {
         return "fitnessTrainerRegister";
     }
 
-    // TRAINER REGISTRATION POST
     @PostMapping("/trainer/register")
     public String submitTrainerRegistration(
             @RequestParam String fullName,
@@ -349,6 +348,7 @@ public class FitnessController {
             @RequestParam String phone,
             @RequestParam String password,
             @RequestParam Integer experience,
+            @RequestParam String bio,
             @RequestParam List<String> specializations,
             @RequestParam String availableTimings,
             @RequestParam Double sessionFees,
@@ -368,6 +368,7 @@ public class FitnessController {
             trainer.setPhone(phone);
             trainer.setPassword(passwordService.encode(password));
             trainer.setExperience(experience);
+            trainer.setBio(bio);
             trainer.setAvailableTimings(availableTimings);
             trainer.setSessionFees(sessionFees);
             trainer.setSpecializations(String.join(",", specializations));
@@ -589,6 +590,7 @@ public class FitnessController {
             @RequestParam Double sessionFees,
             @RequestParam String availableTimings,
             @RequestParam List<String> specializations,
+            @RequestParam(required = false) String bio,
             @RequestParam(required = false) MultipartFile profilePhoto,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
@@ -598,6 +600,7 @@ public class FitnessController {
         trainer.setFullName(fullName.trim());
         trainer.setPhone(phone.trim());
         trainer.setExperience(experience);
+        trainer.setBio(bio);
         trainer.setSessionFees(sessionFees);
         trainer.setAvailableTimings(availableTimings.trim());
         trainer.setSpecializations(String.join(",", specializations));

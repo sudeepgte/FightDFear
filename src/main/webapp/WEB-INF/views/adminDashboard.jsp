@@ -1671,6 +1671,7 @@
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex gap-1">
+                                                                    <a href="${pageContext.request.contextPath}/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1">View Profile Fully</a>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/verify" method="POST">
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="approve" value="true">
@@ -1737,13 +1738,16 @@
                                                                 </c:choose>
                                                             </td>
                                                             <td>
-                                                                <form action="${pageContext.request.contextPath}/admin/fitness/suspend" method="POST">
-                                                                    <input type="hidden" name="id" value="${t.id}">
-                                                                    <input type="hidden" name="suspend" value="${!t.suspended}">
-                                                                    <button type="submit" class="btn btn-sm ${t.suspended ? 'btn-success' : 'btn-outline-danger'} py-1" style="font-size:0.8rem; border-radius:15px;">
-                                                                        ${t.suspended ? 'Activate' : 'Suspend'}
-                                                                    </button>
-                                                                </form>
+                                                                <div class="d-flex gap-1">
+                                                                    <a href="${pageContext.request.contextPath}/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1" style="font-size:0.8rem; border-radius:15px;">View Profile Fully</a>
+                                                                    <form action="${pageContext.request.contextPath}/admin/fitness/suspend" method="POST">
+                                                                        <input type="hidden" name="id" value="${t.id}">
+                                                                        <input type="hidden" name="suspend" value="${!t.suspended}">
+                                                                        <button type="submit" class="btn btn-sm ${t.suspended ? 'btn-success' : 'btn-outline-danger'} py-1" style="font-size:0.8rem; border-radius:15px;">
+                                                                            ${t.suspended ? 'Activate' : 'Suspend'}
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     </c:forEach>

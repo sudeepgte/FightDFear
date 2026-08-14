@@ -118,7 +118,12 @@
                     <div class="col-lg-8">
                         <div class="card-custom">
                             <h4 class="fw-bold mb-3"><i class="bi bi-journal-text text-success me-2"></i> About / Bio</h4>
-                            <p class="text-muted leading-relaxed">Certified coach specialized in safety workouts, strength, prenatal training, and self-defense consultation. Certified documents have been verified by the safety administrative panel.</p>
+                            <p class="text-muted leading-relaxed">
+                                <c:choose>
+                                    <c:when test="${not empty trainer.bio}">${trainer.bio}</c:when>
+                                    <c:otherwise>Certified coach specialized in safety workouts, strength, prenatal training, and self-defense consultation. Certified documents have been verified by the safety administrative panel.</c:otherwise>
+                                </c:choose>
+                            </p>
                             
                             <h5 class="fw-bold mt-4 mb-3">Specializations</h5>
                             <div>

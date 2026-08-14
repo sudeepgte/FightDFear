@@ -23,6 +23,9 @@ public class FitnessTrainer {
     @Column(columnDefinition = "TEXT")
     private String specializations; // Comma separated tags e.g., Yoga, HIIT, Zumba
 
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     private String availableTimings; // e.g., "09:00 - 13:00, 17:00 - 21:00"
     private Double sessionFees = 0.0;
     private String profilePhotoPath;
@@ -58,6 +61,9 @@ public class FitnessTrainer {
 
     public String getSpecializations() { return specializations; }
     public void setSpecializations(String specializations) { this.specializations = specializations; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
     public String getAvailableTimings() { return availableTimings; }
     public void setAvailableTimings(String availableTimings) { this.availableTimings = availableTimings; }

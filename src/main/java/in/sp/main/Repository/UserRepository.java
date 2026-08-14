@@ -30,4 +30,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.verificationStatus = :status AND u.banned = false")
     List<User> findByVerificationStatusAndBannedFalse(@Param("status") VerificationStatus status);
+
+    List<User> findByMartialArtsCenter_Id(Long centerId);
 }

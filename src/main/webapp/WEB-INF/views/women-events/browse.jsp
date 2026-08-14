@@ -437,7 +437,7 @@
 <body>
 
 <!-- Header -->
-<jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
+
 
 <div id="wrapper">
     <!-- Sidebar -->
@@ -763,7 +763,7 @@
         </div>
 
         <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp"/>
+        
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

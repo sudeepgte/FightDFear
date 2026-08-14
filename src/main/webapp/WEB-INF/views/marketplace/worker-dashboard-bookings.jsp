@@ -45,8 +45,12 @@
 </style>
 </head>
 <body>
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" data-skip-global-back="true" style="margin-top: 0; padding-top: 40px;">
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+
 
 <div class="container" style="margin-top: 100px; min-height: 70vh;">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -146,5 +150,7 @@
 </div>
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    </div><!-- /#page-content-wrapper -->
+</div><!-- /#wrapper -->
 </body>
 </html>

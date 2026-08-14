@@ -121,6 +121,9 @@ public class EnrollmentController {
         } catch (IllegalStateException ex) {
             redirectAttributes.addFlashAttribute("message", ex.getMessage());
             return "redirect:/centres/allacceptedcentres";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("message", "Center not found.");
+            return "redirect:/centres/allacceptedcentres";
         }
     }
 

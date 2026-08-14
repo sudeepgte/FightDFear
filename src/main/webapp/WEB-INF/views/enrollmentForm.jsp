@@ -800,7 +800,7 @@
             const dateInput = document.getElementById('startDate');
             if (!dateInput.value) return;
             const date = new Date(dateInput.value);
-            const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+            const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
             const daySelected = daysOfWeek[date.getDay()];
             
             const batchSelect = document.getElementById('batchId');

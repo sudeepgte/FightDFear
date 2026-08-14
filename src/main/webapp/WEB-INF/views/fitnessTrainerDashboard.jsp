@@ -874,6 +874,12 @@
                                 <input type="number" name="experience" class="form-control" value="${trainer.experience}" min="0" max="50" required>
                             </div>
 
+                            <!-- Bio -->
+                            <div class="col-md-12">
+                                <label class="form-label">Professional Bio / About Me *</label>
+                                <textarea name="bio" class="form-control" rows="3" required minlength="10">${trainer.bio}</textarea>
+                            </div>
+
                             <!-- Session Fees -->
                             <div class="col-md-4">
                                 <label class="form-label">Fee per Session (₹) *</label>

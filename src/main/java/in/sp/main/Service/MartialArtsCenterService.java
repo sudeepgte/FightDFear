@@ -25,6 +25,8 @@ import in.sp.main.Repository.SlotRepository;
 import in.sp.main.Repository.AttendanceRepository;
 import in.sp.main.Repository.OnlineClassRepository;
 import in.sp.main.Repository.TrainingSessionRepository;
+import in.sp.main.Repository.UserRepository;
+import in.sp.main.Entities.User;
 import jakarta.servlet.ServletContext;
 
 @Service
@@ -61,6 +63,9 @@ public class MartialArtsCenterService {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ================== Register a new center ==================
     @Transactional
@@ -233,6 +238,13 @@ public class MartialArtsCenterService {
 
         attendanceRepository.deleteAll(attendanceRepository.findByCenter_Id(id));
         enrollmentRepository.deleteByCenterId(id);
+
+        List<User> assignedUsers = userRepository.findByMartialArtsCenter_Id(id);
+        for (User u : assignedUsers) {
+            u.setMartialArtsCenter(null);
+            userRepository.save(u);
+        }
+
         centerRepository.deleteById(id);
         return true;
     }

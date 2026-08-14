@@ -318,7 +318,7 @@ public class MobileMartialArtsCentreController {
         MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
         List<Enrollment> enrollments = centreService.getEnrolledUsersByCenter(center.getId());
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
-        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenter_Id(center.getId());
+        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenterId(center.getId());
 
         List<Map<String, Object>> enrollList = buildEnrollmentMaps(center, enrollments);
         double totalEarnings = enrollments.stream()
