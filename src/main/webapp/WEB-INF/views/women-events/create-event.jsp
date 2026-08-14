@@ -503,7 +503,7 @@
                                     </label>
                                 </div>
                                 <div id="feeInput" style="display:none;">
-                                    <input type="number" name="entryFee" id="entryFeeField" min="1" placeholder="Enter amount in ₹" value="0"/>
+                                    <input type="number" name="entryFee" id="entryFeeField" min="0" placeholder="Enter amount in ₹" value="0"/>
                                     <div class="hint">Fee will be collected at the venue by the organizer.</div>
                                 </div>
                             </div>
@@ -669,7 +669,13 @@ function toggleFee(isFree) {
     const feeInput = document.getElementById('feeInput');
     const feeField = document.getElementById('entryFeeField');
     feeInput.style.display = isFree ? 'none' : 'block';
-    if (isFree) feeField.value = '0';
+    if (isFree) {
+        feeField.value = '0';
+        feeField.min = '0';
+    } else {
+        feeField.min = '1';
+        if (feeField.value === '0') feeField.value = '';
+    }
     feeField.required = !isFree;
 }
 

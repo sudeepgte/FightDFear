@@ -59,6 +59,9 @@ public class WomenEvent {
 
     @Column(name = "is_virtual", nullable = false)
     private boolean virtual = false;
+
+    @Column(name = "virtual", nullable = false)
+    private boolean legacyVirtual = false;
     private String streamLink;
     private Double boothFee = 0.0;
 

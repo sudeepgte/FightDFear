@@ -301,8 +301,8 @@ public class SalonController {
     }
 
     // Update profile
-    @PostMapping("/salons/updateProfile")
-    public String updateProfile(
+    @PostMapping("/salons/updateProfileLegacy")
+    public String updateProfileLegacy(
             @RequestParam("id") Long id,
             @RequestParam("name") String name,
             @RequestParam(value = "email", required = false) String email,

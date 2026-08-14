@@ -19,8 +19,6 @@
 
     <div class="layout">
 
-        <%@ include file="_sidebar.jsp" %>
-
         <!-- Sidebar -->
         <!-- Sidebar -->
         <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
