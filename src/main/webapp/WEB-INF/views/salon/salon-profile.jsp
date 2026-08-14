@@ -239,6 +239,142 @@
         <form action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
             <input type="hidden" name="id" value="${salon.id}">
             
+
+            <div class="profile-card">
+                <c:if test="${not empty message}">
+                    <div class="alert alert-success rounded-4 border-0 mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>${message}
+                    </div>
+                </c:if>
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger rounded-4 border-0 mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
+                    </div>
+                </c:if>
+                <div class="profile-header">
+                    <div class="profile-img-wrapper">
+                        <c:choose>
+                            <c:when test="${not empty salon.profileImageUrl}">
+                                <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Profile" class="profile-img">
+                            </c:when>
+                            <c:otherwise>
+                                <img src="https://ui-avatars.com/api/?name=${salon.name}&background=7C2D5E&color=fff&size=200" alt="Default" class="profile-img">
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="profile-info">
+                        <h3><c:out value="${salon.name}"/></h3>
+                        <p><i class="bi bi-geo-alt-fill me-2"></i><c:out value="${salon.city}, ${salon.state}"/></p>
+                        <div class="mt-3">
+                            <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="bi bi-star-fill me-1"></i> ${salon.averageRating} Rating</span>
+                            <c:if test="${salon.isCertified}"><span class="badge bg-success px-3 py-2 rounded-pill ms-2"><i class="bi bi-patch-check-fill me-1"></i> Certified</span></c:if>
+                        </div>
+                    </div>
+                    <div class="ms-auto">
+                        <button type="button" id="editBtn" class="btn btn-edit-toggle"><i class="bi bi-pencil-square me-2"></i>Edit Profile</button>
+                    </div>
+                </div>
+
+                <form action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data" id="salonProfileForm" novalidate>
+                    <input type="hidden" name="id" value="${salon.id}">
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Salon Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom editable" name="name" id="name"
+                                   value="<c:out value='${salon.name}'/>" readonly required minlength="3" maxlength="255">
+                            <div class="invalid-feedback">Salon name must be 3–255 characters.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username (Permanent)</label>
+                            <input type="text" class="form-control form-control-custom" name="username"
+                                   value="<c:out value='${salon.username}'/>" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control form-control-custom editable" name="email" id="email"
+                                   value="<c:out value='${salon.email}'/>" readonly required maxlength="255">
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control form-control-custom editable" name="phone" id="phone"
+                                   value="<c:out value='${salon.phone}'/>" readonly required pattern="[0-9]{10}"
+                                   minlength="10" maxlength="10" inputmode="numeric">
+                            <div class="invalid-feedback">Phone number must be exactly 10 digits.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Full Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom editable" name="address" id="address"
+                                   value="<c:out value='${salon.address}'/>" readonly required maxlength="500">
+                            <div class="invalid-feedback">Full Address is required (max 500 characters).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">City <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom editable" name="city" id="city"
+                                   value="<c:out value='${salon.city}'/>" readonly required minlength="2" maxlength="100">
+                            <div class="invalid-feedback">City is required (2–100 characters).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">State <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-custom editable" name="state" id="state"
+                                   value="<c:out value='${salon.state}'/>" readonly required minlength="2" maxlength="100">
+                            <div class="invalid-feedback">State is required (2–100 characters).</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" class="form-control form-control-custom editable" name="pincode" id="pincode"
+                                   value="<c:out value='${salon.pincode}'/>" readonly pattern="[0-9]{6}"
+                                   minlength="6" maxlength="6" inputmode="numeric">
+                            <div class="invalid-feedback">Pincode must be exactly 6 digits.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Bio / Description</label>
+                            <textarea class="form-control form-control-custom editable" name="bio" id="bio" rows="3"
+                                      readonly maxlength="2000"><c:out value="${salon.bio}"/></textarea>
+                            <div class="form-text">Optional. Maximum 2000 characters.</div>
+                            <div class="invalid-feedback">Bio cannot exceed 2000 characters.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Change Profile Photo</label>
+                            <input type="file" name="profileImage" id="profileImage"
+                                   class="form-control form-control-custom editable"
+                                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                                   disabled>
+                            <div class="form-text mt-2" style="font-size:0.8rem;color:#6b7280;font-weight:500;line-height:1.4;">
+                                Accepted formats: ${empty profileImageAccepted ? 'JPG, JPEG, PNG' : profileImageAccepted}
+                                | Maximum size: ${empty profileImageMaxSizeMb ? 2 : profileImageMaxSizeMb} MB
+                            </div>
+                            <div class="invalid-feedback" id="profileImageFeedback">
+                                Profile photo must be JPG/JPEG or PNG and at most ${empty profileImageMaxSizeMb ? 2 : profileImageMaxSizeMb} MB.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Established Year</label>
+                            <input type="text" class="form-control form-control-custom editable" name="establishedYear" id="establishedYear"
+                                   value="${salon.establishedYear}" readonly
+                                   inputmode="numeric" pattern="\d{4}" maxlength="4"
+                                   title="Enter a 4-digit year between 1900 and the current year.">
+                            <div class="form-text">Exactly 4 digits. Allowed range: 1900–current year.</div>
+                            <div class="invalid-feedback" id="establishedYearFeedback">Enter a valid 4-digit year (1900–current year).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Website</label>
+                            <input type="text" class="form-control form-control-custom editable" name="website" id="website"
+                                   value="<c:out value='${salon.website}'/>" readonly maxlength="255"
+                                   placeholder="https://www.example.com">
+                            <div class="form-text">Optional. Enter a valid URL (e.g. https://www.mysalon.com).</div>
+                            <div class="invalid-feedback">Please enter a valid website URL.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Availability / Working Hours</label>
+                            <input type="text" class="form-control form-control-custom editable" name="availabilityHours" id="availabilityHours"
+                                   value="<c:out value='${salon.availabilityHours}'/>" readonly maxlength="255"
+                                   placeholder="e.g. Mon-Fri: 10am-8pm, Sat-Sun: 10am-6pm">
+                            <div class="form-text">Optional. Describe when the salon is open (max 255 characters).</div>
+                            <div class="invalid-feedback">Availability cannot exceed 255 characters.</div>
+                        </div>
+
             <!-- Top Header -->
             <div class="top-header">
                 <div class="header-title">
@@ -255,6 +391,7 @@
                             <li class="p-2 border-bottom fw-bold text-center">Notifications</li>
                             <li><a class="dropdown-item text-center text-pink py-2" href="#">View All Notifications</a></li>
                         </ul>
+
                     </div>
 
                     <!-- Messages Dropdown -->
@@ -1131,6 +1268,134 @@
                 }
             });
         });
+
+        const phoneInput = document.getElementById("phone");
+        if (phoneInput) {
+            phoneInput.addEventListener("input", function() {
+                this.value = this.value.replace(/\D/g, "").slice(0, 10);
+            });
+        }
+        const pincodeInput = document.getElementById("pincode");
+        if (pincodeInput) {
+            pincodeInput.addEventListener("input", function() {
+                this.value = this.value.replace(/\D/g, "").slice(0, 6);
+            });
+        }
+        const yearInput = document.getElementById("establishedYear");
+        if (yearInput) {
+            yearInput.addEventListener("input", function() {
+                this.value = this.value.replace(/\D/g, "").slice(0, 4);
+            });
+        }
+
+        document.getElementById("salonProfileForm").addEventListener("submit", function(e) {
+            const name = (document.getElementById("name").value || "").trim();
+            const email = (document.getElementById("email").value || "").trim();
+            const phone = (document.getElementById("phone").value || "").trim();
+            const address = (document.getElementById("address").value || "").trim();
+            const city = (document.getElementById("city").value || "").trim();
+            const state = (document.getElementById("state").value || "").trim();
+            const pincode = (document.getElementById("pincode").value || "").trim();
+            const bio = (document.getElementById("bio").value || "").trim();
+            const yearEl = document.getElementById("establishedYear");
+            const yearRaw = (yearEl.value || "").trim();
+            const currentYear = new Date().getFullYear();
+            const maxPhotoBytes = ${empty profileImageMaxBytes ? 2097152 : profileImageMaxBytes};
+            let valid = true;
+
+            function mark(id, ok) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.toggle("is-invalid", !ok);
+                el.classList.toggle("is-valid", ok);
+                if (!ok) valid = false;
+            }
+
+            mark("name", name.length >= 3 && name.length <= 255);
+            mark("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 255);
+            mark("phone", /^\d{10}$/.test(phone));
+            mark("address", address.length > 0 && address.length <= 500);
+            mark("city", city.length >= 2 && city.length <= 100);
+            mark("state", state.length >= 2 && state.length <= 100);
+            mark("pincode", pincode === "" || /^\d{6}$/.test(pincode));
+            mark("bio", bio.length <= 2000);
+
+            let yearOk = true;
+            if (yearRaw !== "") {
+                if (!/^\d{4}$/.test(yearRaw)) {
+                    yearOk = false;
+                } else {
+                    const year = parseInt(yearRaw, 10);
+                    yearOk = !isNaN(year) && year >= 1900 && year <= currentYear;
+                }
+            }
+            mark("establishedYear", yearOk);
+            if (!yearOk) {
+                const fb = document.getElementById("establishedYearFeedback");
+                if (fb) {
+                    if (yearRaw !== "" && !/^\d{4}$/.test(yearRaw)) {
+                        fb.textContent = "Established Year must be exactly 4 digits.";
+                    } else {
+                        fb.textContent = "Established Year must be between 1900 and " + currentYear + ".";
+                    }
+                }
+            }
+
+            const website = (document.getElementById("website") ? document.getElementById("website").value : "").trim();
+            const hours = (document.getElementById("availabilityHours") ? document.getElementById("availabilityHours").value : "").trim();
+            const websiteOk = website === "" || /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i.test(website);
+            mark("website", websiteOk && website.length <= 255);
+            mark("availabilityHours", hours.length <= 255);
+            const photoEl = document.getElementById("profileImage");
+            if (photoEl && photoEl.files && photoEl.files[0]) {
+                const file = photoEl.files[0];
+                const type = (file.type || "").toLowerCase();
+                const fileName = (file.name || "").toLowerCase();
+                const typeOk = type === "image/jpeg" || type === "image/jpg" || type === "image/png"
+                    || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
+                const sizeOk = file.size <= maxPhotoBytes;
+                const photoOk = typeOk && sizeOk;
+                photoEl.classList.toggle("is-invalid", !photoOk);
+                photoEl.classList.toggle("is-valid", photoOk);
+                if (!photoOk) {
+                    valid = false;
+                    const fb = document.getElementById("profileImageFeedback");
+                    if (fb) {
+                        if (!typeOk) fb.textContent = "Profile photo must be JPG/JPEG or PNG only (PDF and other formats are not allowed).";
+                        else fb.textContent = "Profile photo must be at most " + Math.round(maxPhotoBytes / (1024 * 1024)) + " MB.";
+                    }
+                }
+            }
+
+            if (!valid) {
+                e.preventDefault();
+            }
+        });
+
+        const profileImageInput = document.getElementById("profileImage");
+        if (profileImageInput) {
+            profileImageInput.addEventListener("change", function() {
+                if (!this.files || !this.files[0]) {
+                    this.classList.remove("is-invalid", "is-valid");
+                    return;
+                }
+                const file = this.files[0];
+                const type = (file.type || "").toLowerCase();
+                const fileName = (file.name || "").toLowerCase();
+                const maxPhotoBytes = ${empty profileImageMaxBytes ? 2097152 : profileImageMaxBytes};
+                const typeOk = type === "image/jpeg" || type === "image/jpg" || type === "image/png"
+                    || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
+                const sizeOk = file.size <= maxPhotoBytes;
+                const ok = typeOk && sizeOk;
+                this.classList.toggle("is-invalid", !ok);
+                this.classList.toggle("is-valid", ok);
+                const fb = document.getElementById("profileImageFeedback");
+                if (fb && !ok) {
+                    if (!typeOk) fb.textContent = "Profile photo must be JPG/JPEG or PNG only (PDF and other formats are not allowed).";
+                    else fb.textContent = "Profile photo must be at most " + Math.round(maxPhotoBytes / (1024 * 1024)) + " MB.";
+                }
+            });
+        }
     </script>
 </body>
 </html>

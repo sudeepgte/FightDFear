@@ -63,12 +63,29 @@ public class OfferController {
                             @RequestParam(value = "serviceIds", required = false) List<Long> serviceIds,
                             @RequestParam(value = "startTimeStr", required = false) String startTimeStr,
                             @RequestParam(value = "endTimeStr", required = false) String endTimeStr,
-                            HttpSession session) {
+                            HttpSession session,
+                            Model model) {
         
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
-        if (loggedSalon == null || !loggedSalon.getId().equals(salonId)) return "redirect:/salons/login";
-        
+        if (loggedSalon == null) {
+            return "redirect:/salons/login";
+        }
+        // Always bind to the logged-in salon (ignore spoofed salonId)
+        salonId = loggedSalon.getId();
         Salon salon = salonService.getSalonById(salonId);
+        if (salon == null) {
+            return "redirect:/salons/dashboard";
+        }
+
+        String error = validateOffer(offer);
+        if (error != null) {
+            model.addAttribute("error", error);
+            model.addAttribute("offer", offer);
+            model.addAttribute("salon", salon);
+            model.addAttribute("salonId", salonId);
+            return "salon/add-offer";
+        }
+
         offer.setSalon(salon);
         
         if (startTimeStr != null && !startTimeStr.isEmpty()) {
@@ -89,6 +106,64 @@ public class OfferController {
         offerService.saveOffer(offer);
         session.setAttribute("successMsg", "Offer created successfully!");
         return "redirect:/salon/viewOffers?salonId=" + salonId;
+    }
+
+    private static String validateOffer(Offer offer) {
+        if (offer.getTitle() == null || offer.getTitle().isBlank()) {
+            return "Offer Title is required.";
+        }
+        String title = offer.getTitle().trim();
+        if (title.length() > 255) {
+            return "Offer Title cannot exceed 255 characters.";
+        }
+        offer.setTitle(title);
+
+        if (offer.getDescription() == null || offer.getDescription().isBlank()) {
+            return "Detailed Description is required.";
+        }
+        String description = offer.getDescription().trim();
+        if (description.length() > 500) {
+            return "Detailed Description cannot exceed 500 characters.";
+        }
+        offer.setDescription(description);
+
+        if (offer.getOriginalPrice() <= 0) {
+            return "Original Price must be greater than zero.";
+        }
+        if (offer.getOfferPrice() < 0) {
+            return "Offer Price cannot be negative.";
+        }
+        if (offer.getOfferPrice() >= offer.getOriginalPrice()) {
+            return "Offer Price must be less than the Original Price.";
+        }
+        if (offer.getStartDate() == null) {
+            return "Campaign Start Date is required.";
+        }
+        if (offer.getEndDate() == null) {
+            return "Campaign End Date is required.";
+        }
+        // End date must be strictly after start date
+        if (!offer.getEndDate().isAfter(offer.getStartDate())) {
+            return "Campaign End Date must be after the Campaign Start Date.";
+        }
+
+        double discount = offer.getDiscountPercent();
+        if (discount <= 0 || discount >= 100) {
+            // Fall back to computing from prices when discount missing/invalid but prices are usable
+            if (offer.getOfferPrice() >= 0 && offer.getOfferPrice() < offer.getOriginalPrice()) {
+                discount = ((offer.getOriginalPrice() - offer.getOfferPrice()) / offer.getOriginalPrice()) * 100.0;
+            }
+        }
+        if (discount <= 0 || discount >= 100) {
+            return "Discount must be a number greater than 0 and less than 100.";
+        }
+        discount = Math.round(discount * 100.0) / 100.0;
+        offer.setDiscountPercent(discount);
+
+        // Keep offer price aligned with the entered discount
+        double computedOffer = offer.getOriginalPrice() * (1.0 - (discount / 100.0));
+        offer.setOfferPrice(Math.round(computedOffer * 100.0) / 100.0);
+        return null;
     }
 
     // ✅ Salon views all offers
@@ -123,7 +198,7 @@ public class OfferController {
             model.addAttribute("message", successMsg);
             session.removeAttribute("successMsg");
         }
-        
+        model.addAttribute("salon", loggedSalon);
         return "salon/view-offers";
     }
 

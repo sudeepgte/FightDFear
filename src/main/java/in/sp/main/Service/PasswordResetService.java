@@ -20,6 +20,10 @@ import in.sp.main.Entities.Stylist;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.UserType;
 import in.sp.main.Entities.WomenProductSeller;
+import in.sp.main.Entities.Entrepreneur;
+import in.sp.main.Entities.Investor;
+import in.sp.main.Entities.FitnessTrainer;
+import in.sp.main.Entities.EventHost;
 import in.sp.main.Repository.AdminRepository;
 import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.MartialArtsCenterRepository;
@@ -29,6 +33,10 @@ import in.sp.main.Repository.ServiceProviderRepository;
 import in.sp.main.Repository.StylistRepository;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Repository.WomenProductSellerRepository;
+import in.sp.main.Repository.EntrepreneurRepository;
+import in.sp.main.Repository.InvestorRepository;
+import in.sp.main.Repository.FitnessTrainerRepository;
+import in.sp.main.Repository.EventHostRepository;
 
 @Service
 public class PasswordResetService {
@@ -41,6 +49,10 @@ public class PasswordResetService {
     @Autowired private SalonRepository salonRepository;
     @Autowired private ServiceProviderRepository providerRepository;
     @Autowired private WomenProductSellerRepository sellerRepository;
+    @Autowired private EntrepreneurRepository entrepreneurRepository;
+    @Autowired private InvestorRepository investorRepository;
+    @Autowired private FitnessTrainerRepository fitnessTrainerRepository;
+    @Autowired private EventHostRepository eventHostRepository;
     @Autowired private PasswordResetTokenRepository tokenRepository;
     @Autowired private JavaMailSender mailSender;
     @Autowired private PasswordService passwordService;
@@ -60,6 +72,10 @@ public class PasswordResetService {
         Optional<Salon> salon = salonRepository.findByUsername(normEmail); // Salon uses username
         Optional<ServiceProvider> provider = providerRepository.findByEmail(normEmail);
         Optional<WomenProductSeller> seller = sellerRepository.findByEmail(normEmail);
+        Optional<Entrepreneur> entrepreneur = entrepreneurRepository.findByEmail(normEmail);
+        Optional<Investor> investor = investorRepository.findByEmail(normEmail);
+        Optional<FitnessTrainer> fitnessTrainer = fitnessTrainerRepository.findByEmail(normEmail);
+        Optional<EventHost> eventHost = eventHostRepository.findByEmail(normEmail);
 
         UserType userType = null;
         if (user.isPresent()) userType = UserType.USER;
@@ -70,6 +86,10 @@ public class PasswordResetService {
         else if (salon.isPresent()) userType = UserType.SALON;
         else if (provider.isPresent()) userType = UserType.PROVIDER;
         else if (seller.isPresent()) userType = UserType.SELLER;
+        else if (entrepreneur.isPresent()) userType = UserType.ENTREPRENEUR;
+        else if (investor.isPresent()) userType = UserType.INVESTOR;
+        else if (fitnessTrainer.isPresent()) userType = UserType.FITNESS_TRAINER;
+        else if (eventHost.isPresent()) userType = UserType.EVENT_HOST;
         else return "Email not found";
 
         String token = UUID.randomUUID().toString();
@@ -169,6 +189,30 @@ public class PasswordResetService {
                 sellerRepository.findByEmail(email).ifPresent(seller -> {
                     seller.setPassword(encodedPassword);
                     sellerRepository.save(seller);
+                });
+                break;
+            case ENTREPRENEUR:
+                entrepreneurRepository.findByEmail(email).ifPresent(ent -> {
+                    ent.setPassword(encodedPassword);
+                    entrepreneurRepository.save(ent);
+                });
+                break;
+            case INVESTOR:
+                investorRepository.findByEmail(email).ifPresent(inv -> {
+                    inv.setPassword(encodedPassword);
+                    investorRepository.save(inv);
+                });
+                break;
+            case FITNESS_TRAINER:
+                fitnessTrainerRepository.findByEmail(email).ifPresent(ft -> {
+                    ft.setPassword(encodedPassword);
+                    fitnessTrainerRepository.save(ft);
+                });
+                break;
+            case EVENT_HOST:
+                eventHostRepository.findByEmail(email).ifPresent(eh -> {
+                    eh.setPassword(encodedPassword);
+                    eventHostRepository.save(eh);
                 });
                 break;
         }

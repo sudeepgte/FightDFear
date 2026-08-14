@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -24,6 +28,7 @@ public class MobileDoctorController {
 
     private static final DateTimeFormatter FMT_SPACE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter FMT_T = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
     private DoctorRepository doctorRepo;
@@ -45,6 +50,12 @@ public class MobileDoctorController {
     private in.sp.main.Service.DoctorInstantConsultService instantConsultService;
     @Autowired
     private in.sp.main.Service.PushNotificationService pushNotificationService;
+    @Autowired
+    private in.sp.main.Service.DoctorCareService doctorCareService;
+    @Autowired
+    private in.sp.main.Service.FileUploadService fileUploadService;
+    @Autowired
+    private in.sp.main.Repository.DoctorInstantRequestRepository instantRequestRepository;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
@@ -56,13 +67,18 @@ public class MobileDoctorController {
             @RequestParam(required = false) Boolean online,
             @RequestParam(required = false) Boolean emergency,
             @RequestParam(required = false) Boolean instant,
+            @RequestParam(required = false) String language,
+            @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "20") int size,
+            @RequestParam(required = false, defaultValue = "50") int size,
             HttpSession session) {
-        if (requireUser(session) == null) return unauthorized();
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
         String qLower = q == null ? "" : q.trim().toLowerCase(Locale.ROOT);
         String cityLower = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
         String specLower = specialization == null ? "" : specialization.trim().toLowerCase(Locale.ROOT);
+        String langLower = language == null ? "" : language.trim().toLowerCase(Locale.ROOT);
+        String sortKey = sort == null ? "rating" : sort.trim().toLowerCase(Locale.ROOT);
         int safePage = Math.max(0, page);
         int safeSize = Math.min(50, Math.max(1, size));
 
@@ -83,6 +99,10 @@ public class MobileDoctorController {
                         String s = (d.getSpecialization() == null ? "" : d.getSpecialization()).toLowerCase(Locale.ROOT);
                         if (!s.contains(specLower)) return false;
                     }
+                    if (!langLower.isEmpty()) {
+                        String langs = (d.getLanguages() == null ? "" : d.getLanguages()).toLowerCase(Locale.ROOT);
+                        if (!langs.contains(langLower)) return false;
+                    }
                     double fee = d.getConsultationFee() == null ? 0 : d.getConsultationFee();
                     if (minFee != null && fee < minFee) return false;
                     if (maxFee != null && fee > maxFee) return false;
@@ -94,12 +114,27 @@ public class MobileDoctorController {
                     }
                     return true;
                 })
+                .sorted((a, b) -> {
+                    if ("fee".equals(sortKey)) {
+                        double fa = a.getConsultationFee() == null ? 0 : a.getConsultationFee();
+                        double fb = b.getConsultationFee() == null ? 0 : b.getConsultationFee();
+                        return Double.compare(fa, fb);
+                    }
+                    if ("experience".equals(sortKey)) {
+                        int ea = a.getExperienceYears() == null ? 0 : a.getExperienceYears();
+                        int eb = b.getExperienceYears() == null ? 0 : b.getExperienceYears();
+                        return Integer.compare(eb, ea);
+                    }
+                    double ra = a.getRating() == null ? 0 : a.getRating();
+                    double rb = b.getRating() == null ? 0 : b.getRating();
+                    return Double.compare(rb, ra);
+                })
                 .toList();
         int total = filtered.size();
         int from = Math.min(safePage * safeSize, total);
         int to = Math.min(from + safeSize, total);
         List<Map<String, Object>> items = filtered.subList(from, to).stream()
-                .map(d -> doctorDto(d, null))
+                .map(d -> doctorDto(d, user))
                 .toList();
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("doctors", items);
@@ -142,7 +177,14 @@ public class MobileDoctorController {
             if (apptTime == null) {
                 return badRequest("Appointment time is required");
             }
-            DoctorAppointment appt = bookingService.createRequestBooking(d, user, apptTime, cType, reason, false);
+            Long followUpOf = null;
+            if (body != null && body.get("followUpOfId") != null && !body.get("followUpOfId").isBlank()) {
+                try {
+                    followUpOf = Long.parseLong(body.get("followUpOfId").trim());
+                } catch (Exception ignored) {
+                }
+            }
+            DoctorAppointment appt = bookingService.createRequestBooking(d, user, apptTime, cType, reason, false, followUpOf);
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("message", "Appointment requested");
             data.put("appointmentId", appt.getId());
@@ -240,6 +282,94 @@ public class MobileDoctorController {
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode())
                     .body(Map.of("success", false, "error", ex.getReason() == null ? "Instant consult unavailable" : ex.getReason()));
+        }
+    }
+
+    @GetMapping("/instant/mine")
+    public ResponseEntity<Map<String, Object>> myInstant(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<Map<String, Object>> items = instantRequestRepository.findAll().stream()
+                .filter(r -> user.getId().equals(r.getUserId()))
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .limit(5)
+                .map(r -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("requestId", r.getId());
+                    m.put("status", r.getStatus());
+                    m.put("doctorId", r.getDoctorId());
+                    m.put("appointmentId", r.getAppointmentId());
+                    m.put("expiresAt", r.getExpiresAt() == null ? null : r.getExpiresAt().toString());
+                    m.put("consultationType", r.getConsultationType());
+                    if (r.getDoctorId() != null) {
+                        doctorRepo.findById(r.getDoctorId()).ifPresent(doc -> {
+                            m.put("doctorName", doc.getFullName());
+                            m.put("fee", doc.getVideoFee() != null ? doc.getVideoFee() : doc.getConsultationFee());
+                        });
+                    }
+                    return m;
+                })
+                .toList();
+        return ResponseEntity.ok(ok(Map.of("requests", items)));
+    }
+
+    @PostMapping("/favorites/{doctorId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> addFavorite(@PathVariable Long doctorId, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        doctorCareService.addFavorite(user.getId(), doctorId);
+        return ResponseEntity.ok(ok(Map.of("favourite", true)));
+    }
+
+    @DeleteMapping("/favorites/{doctorId}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> removeFavorite(@PathVariable Long doctorId, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        doctorCareService.removeFavorite(user.getId(), doctorId);
+        return ResponseEntity.ok(ok(Map.of("favourite", false)));
+    }
+
+    @GetMapping("/appointments/{id}/prescription.pdf")
+    public ResponseEntity<byte[]> prescriptionPdf(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        if (user == null && doctor == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null) return ResponseEntity.notFound().build();
+        boolean okUser = user != null && a.getUser() != null && a.getUser().getId().equals(user.getId());
+        boolean okDoc = doctor != null && a.getDoctor() != null && a.getDoctor().getId().equals(doctor.getId());
+        if (!okUser && !okDoc) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        byte[] pdf = doctorCareService.prescriptionPdf(a);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=prescription-" + id + ".pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @PostMapping("/appointments/{id}/reports")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadReport(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null || a.getUser() == null || !a.getUser().getId().equals(user.getId())) {
+            return badRequest("Appointment not found");
+        }
+        try {
+            String path = fileUploadService.saveFile(file);
+            String existing = a.getReportPaths() == null ? "" : a.getReportPaths();
+            a.setReportPaths(existing.isBlank() ? path : existing + "," + path);
+            appointmentRepo.save(a);
+            return ResponseEntity.ok(ok(Map.of("reportPaths", a.getReportPaths(), "path", path)));
+        } catch (Exception ex) {
+            return badRequest("Upload failed");
         }
     }
 
@@ -423,11 +553,18 @@ public class MobileDoctorController {
         if (target == null) return badRequest("Doctor not found");
 
         String message = body == null || body.get("message") == null ? "" : String.valueOf(body.get("message")).trim();
-        if (message.isBlank()) return badRequest("Message is required");
+        String attachment = body == null || body.get("attachmentPath") == null
+                ? ""
+                : String.valueOf(body.get("attachmentPath")).trim();
+        if (message.isBlank() && attachment.isBlank()) return badRequest("Message is required");
+        if (message.isBlank()) message = "📎 Attachment";
 
         DoctorChatMessage msg = new DoctorChatMessage();
         msg.setDoctor(target);
         msg.setMessage(message);
+        if (!attachment.isBlank()) {
+            msg.setAttachmentPath(attachment);
+        }
 
         if (user != null) {
             if (!appointmentService.hasActiveRelationship(target, user)) {
@@ -437,6 +574,7 @@ public class MobileDoctorController {
             }
             msg.setUser(user);
             msg.setSenderType("USER");
+            msg.setReadByDoctor(false);
         } else if (doctor != null) {
             if (!doctor.getId().equals(id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -459,12 +597,36 @@ public class MobileDoctorController {
             }
             msg.setUser(chatUser);
             msg.setSenderType("DOCTOR");
+            msg.setReadByDoctor(true);
         } else {
             return unauthorized();
         }
 
         chatRepo.save(msg);
         return ResponseEntity.status(HttpStatus.CREATED).body(ok(Map.of("message", chatDto(msg))));
+    }
+
+    @PostMapping("/{id}/chat-file")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> chatFile(
+            @PathVariable Long id,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "userId", required = false) Long userId,
+            HttpSession session) {
+        User user = requireUser(session);
+        Doctor doctor = requireDoctor(session);
+        Doctor target = doctorRepo.findById(id).orElse(null);
+        if (target == null) return badRequest("Doctor not found");
+        try {
+            String path = fileUploadService.saveFile(file);
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("message", "📎 " + (file.getOriginalFilename() == null ? "Attachment" : file.getOriginalFilename()));
+            body.put("attachmentPath", path);
+            if (userId != null) body.put("userId", userId);
+            return sendChat(id, body, session);
+        } catch (Exception ex) {
+            return badRequest("Upload failed");
+        }
     }
 
     // ── helpers ──
@@ -508,6 +670,16 @@ public class MobileDoctorController {
         m.put("meetingRoomId", a.getMeetingRoomId());
         m.put("meetingPassword", a.getMeetingPassword());
         m.put("prescriptionText", a.getPrescriptionText());
+        m.put("prescriptionJson", a.getPrescriptionJson());
+        m.put("doctorNotes", a.getDoctorNotes());
+        m.put("reportPaths", a.getReportPaths());
+        m.put("followUpOfId", a.getFollowUpOfId());
+        m.put("canJoin", appointmentService.canJoinVideo(a));
+        boolean freeCancel = a.getAppointmentTime() == null
+                || a.getAppointmentTime().isAfter(java.time.LocalDateTime.now().plusHours(2));
+        m.put("freeCancellation", freeCancel);
+        m.put("cancelPolicy", "Free cancellation until 2 hours before the appointment. After that, the fee is not refunded.");
+        m.put("canFollowUp", a.getStatus() == DoctorAppointmentStatus.COMPLETED);
         m.put("amountPaid", a.getAmountPaid());
         m.put("paymentStatus", a.getPaymentStatus());
         m.put("receiptNumber", a.getReceiptNumber());
@@ -566,6 +738,26 @@ public class MobileDoctorController {
         m.put("availableDays", d.getAvailableDays());
         m.put("startTime", d.getStartTime());
         m.put("endTime", d.getEndTime());
+        m.put("availabilitySlots", parseAvailabilitySlotsSafe(d.getAvailabilitySlots()));
+        m.put("consultationModes", splitModes(d.getConsultationModes()));
+        m.put("hospitalName", d.getHospitalName());
+        m.put("clinicAddress", d.getClinicAddress());
+        m.put("state", d.getState());
+        m.put("pincode", d.getPincode());
+        m.put("googleMapLocation", d.getGoogleMapLocation());
+        m.put("slotDurationMinutes", d.getSlotDurationMinutes() == null ? 30 : d.getSlotDurationMinutes());
+        m.put("bufferMinutes", d.getBufferMinutes() == null ? 0 : d.getBufferMinutes());
+        m.put("breakStart", d.getBreakStart());
+        m.put("breakEnd", d.getBreakEnd());
+        m.put("blockedDates", d.getBlockedDates());
+        m.put("clinicPhotos", d.getClinicPhotos());
+        m.put("clinicLat", d.getClinicLat());
+        m.put("clinicLng", d.getClinicLng());
+        m.put("languages", d.getLanguages());
+        m.put("autoConfirm", Boolean.TRUE.equals(d.getAutoConfirm()));
+        if (viewer != null) {
+            m.put("favourite", doctorCareService.isFavorite(viewer.getId(), d.getId()));
+        }
         m.put("bio", d.getBio());
         m.put("languages", d.getLanguages());
         m.put("services", d.getServices());
@@ -597,6 +789,7 @@ public class MobileDoctorController {
         m.put("senderType", msg.getSenderType());
         m.put("timestamp", msg.getTimestamp() == null ? null : msg.getTimestamp().toString());
         if (msg.getUser() != null) m.put("userId", msg.getUser().getId());
+        m.put("attachmentPath", msg.getAttachmentPath());
         return m;
     }
 
@@ -627,5 +820,31 @@ public class MobileDoctorController {
 
     private static String trim(String v) {
         return v == null ? "" : v.trim();
+    }
+
+    private static List<String> splitModes(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (String part : raw.split("[,|]")) {
+            String m = part.trim().toUpperCase(Locale.ROOT);
+            if (!m.isEmpty()) {
+                out.add(m);
+            }
+        }
+        return out;
+    }
+
+    private static List<Map<String, String>> parseAvailabilitySlotsSafe(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        try {
+            List<Map<String, String>> slots = MAPPER.readValue(raw, new TypeReference<List<Map<String, String>>>() {});
+            return slots == null ? List.of() : slots;
+        } catch (Exception ex) {
+            return List.of();
+        }
     }
 }

@@ -66,6 +66,19 @@ public class Doctor {
     @Column(columnDefinition = "TEXT")
     private String availabilitySlots;
 
+    private Integer slotDurationMinutes = 30;
+    private Integer bufferMinutes = 0;
+    private String breakStart;
+    private String breakEnd;
+    @Column(columnDefinition = "TEXT")
+    private String blockedDates;
+    private Boolean autoConfirm = false;
+    @Column(columnDefinition = "TEXT")
+    private String clinicPhotos;
+    private Double clinicLat;
+    private Double clinicLng;
+    private LocalDateTime payoutRequestedAt;
+
     @Column(length = 500)
     private String languages;
 
@@ -316,4 +329,25 @@ public class Doctor {
 
     public Double getRating() { return rating; }
     public void setRating(Double rating) { this.rating = rating; }
+
+    public Integer getSlotDurationMinutes() { return slotDurationMinutes; }
+    public void setSlotDurationMinutes(Integer slotDurationMinutes) { this.slotDurationMinutes = slotDurationMinutes; }
+    public Integer getBufferMinutes() { return bufferMinutes; }
+    public void setBufferMinutes(Integer bufferMinutes) { this.bufferMinutes = bufferMinutes; }
+    public String getBreakStart() { return breakStart; }
+    public void setBreakStart(String breakStart) { this.breakStart = breakStart; }
+    public String getBreakEnd() { return breakEnd; }
+    public void setBreakEnd(String breakEnd) { this.breakEnd = breakEnd; }
+    public String getBlockedDates() { return blockedDates; }
+    public void setBlockedDates(String blockedDates) { this.blockedDates = blockedDates; }
+    public Boolean getAutoConfirm() { return autoConfirm; }
+    public void setAutoConfirm(Boolean autoConfirm) { this.autoConfirm = autoConfirm; }
+    public String getClinicPhotos() { return clinicPhotos; }
+    public void setClinicPhotos(String clinicPhotos) { this.clinicPhotos = clinicPhotos; }
+    public Double getClinicLat() { return clinicLat; }
+    public void setClinicLat(Double clinicLat) { this.clinicLat = clinicLat; }
+    public Double getClinicLng() { return clinicLng; }
+    public void setClinicLng(Double clinicLng) { this.clinicLng = clinicLng; }
+    public LocalDateTime getPayoutRequestedAt() { return payoutRequestedAt; }
+    public void setPayoutRequestedAt(LocalDateTime payoutRequestedAt) { this.payoutRequestedAt = payoutRequestedAt; }
 }

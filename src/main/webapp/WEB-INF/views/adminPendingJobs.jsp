@@ -122,7 +122,8 @@
             <div class="content">
                 <div class="container-fluid mainInner">
                     
-                    <h2 class="mb-4" style="font-weight: 700; color: var(--primary-purple);">Manage Job Applications</h2>
+                    <h2 class="mb-4" style="font-weight: 700; color: var(--primary-purple);">Women Jobs — Worker Verification</h2>
+                    <p class="text-muted mb-4">Review worker profiles before they appear to clients on Women Jobs.</p>
 
                     <c:if test="${not empty message}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -155,6 +156,7 @@
                                             <th>Phone</th>
                                             <th>Job Category</th>
                                             <th>Sub Category</th>
+                                            <th>Rate</th>
                                             <th>Document</th>
                                             <th>Applied At</th>
                                             <th>Action</th>
@@ -168,10 +170,18 @@
                                                 <td>${app.user.phoneNumber}</td>
                                                 <td><span class="badge bg-info text-dark">${app.jobCategory}</span></td>
                                                 <td>${app.jobSubCategory}</td>
+                                                <td>Rs ${app.hourlyRate}</td>
                                                 <td>
-                                                    <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="bi bi-file-earmark-text"></i> View Proof
-                                                    </a>
+                                                    <c:choose>
+                                                        <c:when test="${not empty app.documentPath}">
+                                                            <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                <i class="bi bi-file-earmark-text"></i> View Proof
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="text-muted small">No document</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                                 <td>${app.appliedAt.toLocalDate()}</td>
                                                 <td>
@@ -200,9 +210,22 @@
                                                                     <hr>
                                                                     <p><strong>Job Category:</strong> ${app.jobCategory}</p>
                                                                     <p><strong>Specific Job:</strong> ${app.jobSubCategory}</p>
+                                                                    <p><strong>Hourly rate:</strong> Rs ${app.hourlyRate}</p>
                                                                     <p><strong>Applied At:</strong> ${app.appliedAt}</p>
+                                                                    <c:if test="${not empty app.note}">
+                                                                        <hr>
+                                                                        <p><strong>Profile details:</strong></p>
+                                                                        <pre style="white-space:pre-wrap; font-family:inherit; font-size:0.85rem; background:#f8fafc; padding:10px; border-radius:8px;">${app.note}</pre>
+                                                                    </c:if>
                                                                     <hr>
-                                                                    <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-text"></i> Open Proof Document</a>
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty app.documentPath}">
+                                                                            <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-text"></i> Open Proof Document</a>
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <span class="text-muted">No proof document uploaded.</span>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
@@ -214,7 +237,7 @@
                                             </tr>
                                         </c:forEach>
                                         <c:if test="${empty pendingApplications}">
-                                            <tr><td colspan="8" class="text-center">No pending applications found.</td></tr>
+                                            <tr><td colspan="9" class="text-center">No pending applications found.</td></tr>
                                         </c:if>
                                     </tbody>
                                 </table>
@@ -266,9 +289,22 @@
                                                                     <hr>
                                                                     <p><strong>Job Category:</strong> ${app.jobCategory}</p>
                                                                     <p><strong>Specific Job:</strong> ${app.jobSubCategory}</p>
+                                                                    <p><strong>Hourly rate:</strong> Rs ${app.hourlyRate}</p>
                                                                     <p><strong>Applied At:</strong> ${app.appliedAt}</p>
+                                                                    <c:if test="${not empty app.note}">
+                                                                        <hr>
+                                                                        <p><strong>Profile details:</strong></p>
+                                                                        <pre style="white-space:pre-wrap; font-family:inherit; font-size:0.85rem; background:#f8fafc; padding:10px; border-radius:8px;">${app.note}</pre>
+                                                                    </c:if>
                                                                     <hr>
-                                                                    <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-text"></i> Open Proof Document</a>
+                                                                    <c:choose>
+                                                                        <c:when test="${not empty app.documentPath}">
+                                                                            <a href="${pageContext.request.contextPath}${app.documentPath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-file-earmark-text"></i> Open Proof Document</a>
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <span class="text-muted">No proof document uploaded.</span>
+                                                                        </c:otherwise>
+                                                                    </c:choose>
                                                                 </div>
                                                                 <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
+import '../../config/martial_arts_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/martial_arts_service.dart';
 import '../../widgets/registration_form_kit.dart';
@@ -61,6 +62,7 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
   bool _consentAccuracy = false;
   bool _consentRules = false;
   bool _consentPayment = false;
+  bool _consentPolicy = false;
   bool _busy = false;
   String? _error;
 
@@ -217,7 +219,7 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
     final startDay = DateTime(start.year, start.month, start.day);
     final todayDay = DateTime(today.year, today.month, today.day);
     if (startDay.isBefore(todayDay)) return false;
-    if (!_consentAccuracy || !_consentRules) return false;
+    if (!_consentAccuracy || !_consentRules || !_consentPolicy) return false;
     if (!_isFree && !_consentPayment) return false;
     if (!_noMedicalConditions && _medicalCtrl.text.trim().isEmpty) return false;
     return true;
@@ -271,6 +273,7 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
       'monthlyFee': _courseFee,
       'consentAccuracy': _consentAccuracy,
       'consentRules': _consentRules,
+      'consentPolicy': _consentPolicy,
     };
   }
 
@@ -772,6 +775,16 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
                 title: const Text(
                   'I agree to centre training rules',
                   style: TextStyle(fontSize: 14),
+                ),
+              ),
+              CheckboxListTile(
+                value: _consentPolicy,
+                onChanged: (v) => setState(() => _consentPolicy = v ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  MartialArtsCatalog.cancelPolicy,
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
               if (_error != null) ...[

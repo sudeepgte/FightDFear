@@ -324,7 +324,7 @@
                 <div class="form-group">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <label style="margin-bottom: 0;">Password</label>
-                        <a href="${pageContext.request.contextPath}/users/forgot-password" style="font-size: 0.8rem; color: #f43f5e; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password" style="font-size: 0.8rem; color: #f43f5e; text-decoration: none; font-weight: 600;">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper">
                         <i class="bi bi-lock prefix-icon"></i>

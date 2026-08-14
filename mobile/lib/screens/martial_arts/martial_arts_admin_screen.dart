@@ -17,9 +17,12 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
   late final MartialArtsAdminService _admin;
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  bool _obscurePassword = true;
   bool _loggedIn = false;
   bool _busy = false;
+  bool _loadingList = false;
   String _tab = 'pending';
+  String? _error;
   List<Map<String, dynamic>> _centres = [];
 
   @override
@@ -27,6 +30,13 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
     super.initState();
     _admin = MartialArtsAdminService(context.read<AuthState>().api);
     _bootstrap();
+  }
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _bootstrap() async {
@@ -51,19 +61,38 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _loadingList = true;
+      _error = null;
+    });
     final res = await _admin.listCentres(status: _tab);
     if (!mounted) return;
-    _centres = (res['centres'] is List)
-        ? (res['centres'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
-        : [];
-    setState(() {});
+    if (res['success'] == true) {
+      _centres = (res['centres'] is List)
+          ? (res['centres'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          : [];
+    } else {
+      _centres = [];
+      _error = res['error']?.toString() ?? 'Could not load centres';
+      if (res['error']?.toString().toLowerCase().contains('login') == true ||
+          res['error']?.toString().toLowerCase().contains('unauthorized') == true) {
+        _loggedIn = false;
+      }
+    }
+    setState(() => _loadingList = false);
+  }
+
+  String _statusLabel(Map<String, dynamic> c) {
+    final label = c['centreProfileStatusLabel']?.toString();
+    if (label != null && label.isNotEmpty) return label;
+    return c['centreProfileStatus']?.toString() ?? (_tab == 'pending' ? 'Pending' : 'Approved');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin — Martial Arts'),
+        title: const Text('Admin — Self-Defense Trainers'),
         actions: [
           if (_loggedIn)
             IconButton(
@@ -84,7 +113,18 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
               child: Column(
                 children: [
                   TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Admin email')),
-                  TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: _busy ? null : _login,
@@ -96,53 +136,119 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
             )
           : Column(
               children: [
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'pending', label: Text('Pending')),
-                    ButtonSegment(value: 'approved', label: Text('Approved')),
-                  ],
-                  selected: {_tab},
-                  onSelectionChanged: (s) {
-                    _tab = s.first;
-                    _load();
-                  },
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'pending', label: Text('Pending')),
+                      ButtonSegment(value: 'approved', label: Text('Approved')),
+                    ],
+                    selected: {_tab},
+                    onSelectionChanged: (s) {
+                      _tab = s.first;
+                      _load();
+                    },
+                  ),
                 ),
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                  ),
                 Expanded(
-                  child: _centres.isEmpty
-                      ? Center(child: Text('No $_tab centres'))
-                      : ListView.builder(
-                          itemCount: _centres.length,
-                          itemBuilder: (_, i) {
-                            final c = _centres[i];
-                            final id = c['id'] is int ? c['id'] as int : int.tryParse('${c['id']}');
-                            return ListTile(
-                              title: Text(c['name']?.toString() ?? ''),
-                              subtitle: Text('${c['location'] ?? ''}\n${c['email'] ?? ''}'),
-                              isThreeLine: true,
-                              trailing: _tab == 'pending' && id != null
-                                  ? Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.check, color: Colors.green),
-                                          onPressed: () async {
-                                            await _admin.approve(id);
-                                            await _load();
-                                          },
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.close, color: Colors.red),
-                                          onPressed: () async {
-                                            await _admin.reject(id);
-                                            await _load();
-                                          },
-                                        ),
-                                      ],
-                                    )
-                                  : null,
-                            );
-                          },
-                        ),
+                  child: _loadingList
+                      ? const Center(child: CircularProgressIndicator())
+                      : _centres.isEmpty
+                          ? Center(child: Text('No $_tab trainers / centres'))
+                          : RefreshIndicator(
+                              onRefresh: _load,
+                              child: ListView.separated(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _centres.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                itemBuilder: (_, i) {
+                                  final c = _centres[i];
+                                  final id = c['id'] is int ? c['id'] as int : int.tryParse('${c['id']}');
+                                  final pct = c['profileCompletionPct'];
+                                  final programs = c['programs'] is List ? c['programs'] as List : const [];
+                                  return Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  c['name']?.toString() ?? '',
+                                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                                ),
+                                              ),
+                                              Chip(
+                                                label: Text(_statusLabel(c), style: const TextStyle(fontSize: 11)),
+                                                visualDensity: VisualDensity.compact,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text('${c['email'] ?? ''} · ${c['phoneNumber'] ?? ''}'),
+                                          Text(c['location']?.toString().isNotEmpty == true
+                                              ? c['location'].toString()
+                                              : 'Location not set'),
+                                          if (pct != null) Text('Profile $pct% · ${programs.length} program(s)'),
+                                          if (_tab == 'pending' && id != null) ...[
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              children: [
+                                                FilledButton.icon(
+                                                  onPressed: () async {
+                                                    final res = await _admin.approve(id);
+                                                    if (!mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          res['success'] == true
+                                                              ? 'Approved'
+                                                              : (res['error']?.toString() ?? 'Approve failed'),
+                                                        ),
+                                                      ),
+                                                    );
+                                                    await _load();
+                                                  },
+                                                  icon: const Icon(Icons.check, size: 18),
+                                                  label: const Text('Approve'),
+                                                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                OutlinedButton.icon(
+                                                  onPressed: () async {
+                                                    final res = await _admin.reject(id);
+                                                    if (!mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                          res['success'] == true
+                                                              ? 'Rejected'
+                                                              : (res['error']?.toString() ?? 'Reject failed'),
+                                                        ),
+                                                      ),
+                                                    );
+                                                    await _load();
+                                                  },
+                                                  icon: const Icon(Icons.close, size: 18, color: Colors.red),
+                                                  label: const Text('Reject'),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                 ),
               ],
             ),

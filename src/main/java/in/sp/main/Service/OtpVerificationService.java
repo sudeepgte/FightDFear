@@ -1,6 +1,7 @@
 package in.sp.main.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +36,12 @@ public class OtpVerificationService {
     @Autowired
     private List<OtpDeliveryChannel> deliveryChannels;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private RateLimitService rateLimitService;
+
     @Value("${otp.expiration-minutes:10}")
     private int expirationMinutes;
 
@@ -60,6 +67,10 @@ public class OtpVerificationService {
             throw new IllegalStateException("SMS OTP is not enabled yet");
         }
 
+        if (channel == OtpChannel.EMAIL) {
+            rateLimitService.checkOrThrow("otp:email:" + normalized, 5, Duration.ofHours(1));
+        }
+
         Optional<EmailOtpVerification> latest = otpRepository
                 .findTopByEmailAndPurposeAndVerifiedFalseOrderByCreatedAtDesc(normalized, purpose);
         if (latest.isPresent()) {
@@ -71,6 +82,26 @@ public class OtpVerificationService {
         }
 
         String code = generateCode();
+        String subject = "Your Fight D Fear verification code";
+        String body = "Your verification code is: " + code + "\n\n"
+                + "This code expires in " + expirationMinutes + " minutes.\n"
+                + "If you did not request this, you can ignore this email.";
+        try {
+            if (channel == OtpChannel.EMAIL) {
+                // Send synchronously so the API does not report "OTP sent" when SMTP fails.
+                emailService.sendEmail(normalized, subject, body);
+            } else {
+                OtpDeliveryChannel delivery = resolveChannel(channel);
+                delivery.send(normalized, subject, body);
+            }
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,
+                    "Could not send verification email. Please try again in a moment.");
+        }
+
         EmailOtpVerification record = new EmailOtpVerification();
         record.setEmail(normalized);
         record.setCodeHash(passwordEncoder.encode(code));
@@ -79,13 +110,6 @@ public class OtpVerificationService {
         record.setVerified(false);
         record.setExpiresAt(LocalDateTime.now().plusMinutes(expirationMinutes));
         otpRepository.save(record);
-
-        OtpDeliveryChannel delivery = resolveChannel(channel);
-        String subject = "Your Fight D Fear verification code";
-        String body = "Your verification code is: " + code + "\n\n"
-                + "This code expires in " + expirationMinutes + " minutes.\n"
-                + "If you did not request this, you can ignore this email.";
-        delivery.send(normalized, subject, body);
     }
 
     @Transactional

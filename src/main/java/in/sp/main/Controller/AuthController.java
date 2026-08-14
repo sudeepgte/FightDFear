@@ -35,12 +35,8 @@ public class AuthController {
         }
 
         try {
-            String response = passwordResetService.createPasswordResetToken(normalizedEmail);
-            if ("Email not found".equals(response)) {
-                model.addAttribute("error", "Email not found. Please enter a registered email address.");
-            } else {
-                model.addAttribute("message", response);
-            }
+            passwordResetService.createPasswordResetToken(normalizedEmail);
+            model.addAttribute("message", "If an account with that email exists, a password reset link has been sent.");
         } catch (Exception ex) {
             model.addAttribute("error", "Unable to process your request right now. Please try again later.");
         }
@@ -54,14 +50,44 @@ public class AuthController {
         return "resetPassword";
     }
 
+    @Autowired
+    private in.sp.main.Repository.PasswordResetTokenRepository tokenRepository;
+
     @RequestMapping(value = "/reset-password", method = POST)
     public String resetPassword(@RequestParam String token, @RequestParam String newPassword, Model model) {
+        String loginView = "login";
+        java.util.Optional<in.sp.main.Entities.PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+        if (tokenOpt.isPresent()) {
+            in.sp.main.Entities.UserType type = tokenOpt.get().getUserType();
+            if (type == in.sp.main.Entities.UserType.FITNESS_TRAINER) {
+                loginView = "fitnessTrainerLogin";
+            } else if (type == in.sp.main.Entities.UserType.CENTRE) {
+                loginView = "centreLogin";
+            } else if (type == in.sp.main.Entities.UserType.DOCTOR) {
+                loginView = "doctorLogin";
+            } else if (type == in.sp.main.Entities.UserType.STYLIST) {
+                loginView = "stylistLogin";
+            } else if (type == in.sp.main.Entities.UserType.SALON) {
+                loginView = "salonLogin";
+            } else if (type == in.sp.main.Entities.UserType.PROVIDER) {
+                loginView = "providerLogin";
+            } else if (type == in.sp.main.Entities.UserType.SELLER) {
+                loginView = "sellerLogin";
+            } else if (type == in.sp.main.Entities.UserType.ENTREPRENEUR) {
+                loginView = "entrepreneurLogin";
+            } else if (type == in.sp.main.Entities.UserType.INVESTOR) {
+                loginView = "investorLogin";
+            } else if (type == in.sp.main.Entities.UserType.EVENT_HOST) {
+                loginView = "eventHostLogin";
+            }
+        }
+        
         String response = passwordResetService.resetPassword(token, newPassword);
         if ("Password reset successful".equals(response)) {
             model.addAttribute("success", response);
         } else {
             model.addAttribute("error", response);
         }
-        return "login";
+        return loginView;
     }
 }

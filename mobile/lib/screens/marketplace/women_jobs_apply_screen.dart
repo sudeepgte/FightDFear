@@ -2,22 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/job_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/module_services.dart';
 import '../../widgets/registration_form_kit.dart';
-import 'job_bookings_screen.dart';
 import '../auth/login_screen.dart';
+import 'women_jobs_application_status_screen.dart';
 
 class WomenJobsApplyScreen extends StatefulWidget {
-  const WomenJobsApplyScreen({super.key});
+  const WomenJobsApplyScreen({
+    super.key,
+    this.asProfileCompletion = false,
+    this.initialCategory,
+    this.onFinished,
+  });
+
+  /// After quick register/login — extra worker details, Skip allowed.
+  final bool asProfileCompletion;
+  final String? initialCategory;
+  final void Function(BuildContext context)? onFinished;
 
   @override
   State<WomenJobsApplyScreen> createState() => _WomenJobsApplyScreenState();
 }
 
 class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
-  String _category = RegOptions.jobCategories.first;
-  final _sub = TextEditingController(text: 'General');
+  String _category = JobCatalog.categories.first;
+  late String _sub;
   final _rate = TextEditingController(text: '200');
   final _salary = TextEditingController();
   final _location = TextEditingController();
@@ -28,16 +39,33 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
   String _workType = RegOptions.workTypes.first;
   final Set<String> _skills = {};
   final Set<String> _availability = {};
-  String? _resume;
-  String? _photo;
-  String? _govId;
-  String? _portfolio;
+  PickedUpload? _document;
   bool _loading = false;
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    final initial = JobCatalog.normalize(widget.initialCategory);
+    if (initial != null && JobCatalog.categories.contains(initial)) {
+      _category = initial;
+    }
+    final subs = JobCatalog.subsFor(_category);
+    _sub = subs.isEmpty ? 'General' : subs.first;
+  }
+
+  void _goNext() {
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const WomenJobsApplicationStatusScreen()),
+      );
+    }
+  }
+
+  @override
   void dispose() {
-    _sub.dispose();
     _rate.dispose();
     _salary.dispose();
     _location.dispose();
@@ -48,10 +76,17 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
   }
 
   Future<void> _submit() async {
+    if (_loading) return;
     final auth = context.read<AuthState>();
     if (!auth.loggedIn) {
-      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
-      if (!auth.loggedIn || !mounted) return;
+      if (widget.asProfileCompletion) {
+        setState(() => _error = 'Please login first.');
+        return;
+      }
+      final loggedIn = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const LoginScreen(popOnSuccess: true)),
+      );
+      if (loggedIn != true || !auth.loggedIn || !mounted) return;
     }
     if (_skills.isEmpty) {
       setState(() => _error = 'Select at least one skill.');
@@ -65,7 +100,8 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
       setState(() => _error = 'Enter valid years of experience.');
       return;
     }
-    if ((_rate.text.trim().isEmpty) || (double.tryParse(_rate.text.trim()) ?? -1) < 0) {
+    final rate = double.tryParse(_rate.text.trim());
+    if (rate == null || rate < 0) {
       setState(() => _error = 'Enter a valid hourly rate.');
       return;
     }
@@ -82,51 +118,73 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
         if (_location.text.trim().isNotEmpty) 'Preferred location: ${_location.text.trim()}',
         'Availability: ${_availability.join(', ')}',
         if (_languages.text.trim().isNotEmpty) 'Languages: ${_languages.text.trim()}',
-        if (_salary.text.trim().isNotEmpty) 'Expected salary: ₹${_salary.text.trim()}',
-        if (_resume != null) 'Resume: $_resume',
-        if (_photo != null) 'Photo: $_photo',
-        if (_govId != null) 'ID: $_govId',
-        if (_portfolio != null) 'Portfolio: $_portfolio',
+        if (_salary.text.trim().isNotEmpty) 'Expected salary: Rs ${_salary.text.trim()}',
       ].where((e) => e.isNotEmpty).join('\n');
 
       final res = await MarketplaceService(auth.api).applyJob(
         category: _category,
-        subCategory: _sub.text.trim().isEmpty ? 'General' : _sub.text.trim(),
-        hourlyRate: double.tryParse(_rate.text.trim()) ?? 0,
+        subCategory: _sub,
+        hourlyRate: rate,
         note: note,
+        documentPath: _document?.path,
+        documentName: _document?.name,
       );
       if (!mounted) return;
       if (res['success'] == true) {
-        await showRegistrationSuccessDialog(
-          context,
-          message:
-              'Application submitted successfully. Your profile is under review and will be visible to employers after admin approval.',
-          onDone: () {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const JobBookingsScreen(workerView: true)),
-            );
-          },
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+            title: const Text('Application submitted'),
+            content: const Text(
+              'Your profile is under review and will be visible to clients after admin approval.',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('View status'),
+              ),
+            ],
+          ),
         );
+        if (!mounted) return;
+        _goNext();
       } else {
         setState(() => _error = res['error']?.toString() ?? 'Apply failed');
       }
     } catch (e) {
-      setState(() => _error = '$e');
+      if (mounted) setState(() => _error = '$e');
     }
     if (mounted) setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final subs = JobCatalog.subsFor(_category);
+    final subValue = subs.contains(_sub) ? _sub : (subs.isEmpty ? _sub : subs.first);
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: const Text('Women Jobs — Apply')),
+      appBar: AppBar(
+        title: Text(widget.asProfileCompletion
+            ? 'Complete worker profile'
+            : 'Women Jobs — Apply'),
+        actions: [
+          if (widget.asProfileCompletion)
+            TextButton(
+              onPressed: _goNext,
+              child: const Text('Skip for now'),
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Apply as a verified worker. Admin approval is required before clients can book you.',
-            style: TextStyle(color: Colors.black54),
+          Text(
+            widget.asProfileCompletion
+                ? 'Add the details employers will see. You can skip and finish this later. Admin approval is required before clients can book you.'
+                : 'Apply as a verified worker. Admin approval is required before clients can book you.',
+            style: const TextStyle(color: Colors.black54),
           ),
           const SizedBox(height: 16),
           if (_error != null)
@@ -135,14 +193,29 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
               child: Text(_error!, style: const TextStyle(color: Colors.red)),
             ),
           DropdownButtonFormField<String>(
-            value: _category,
+            key: ValueKey('cat_$_category'),
+            initialValue: _category,
             decoration: const InputDecoration(labelText: 'Job category *'),
-            items: RegOptions.jobCategories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-            onChanged: (v) => setState(() => _category = v ?? _category),
+            items: JobCatalog.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            onChanged: _loading
+                ? null
+                : (v) => setState(() {
+                      _category = v ?? _category;
+                      final next = JobCatalog.subsFor(_category);
+                      _sub = next.isEmpty ? _sub : next.first;
+                    }),
           ),
-          TextField(controller: _sub, decoration: const InputDecoration(labelText: 'Sub-category')),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            key: ValueKey('sub_$subValue'),
+            initialValue: subValue,
+            decoration: const InputDecoration(labelText: 'Specific role *'),
+            items: subs.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            onChanged: _loading ? null : (v) => setState(() => _sub = v ?? _sub),
+          ),
           TextField(
             controller: _experience,
+            enabled: !_loading,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: const InputDecoration(labelText: 'Years of experience *'),
@@ -158,12 +231,12 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
             }),
           ),
           DropdownButtonFormField<String>(
-            value: _workType,
+            initialValue: _workType,
             decoration: const InputDecoration(labelText: 'Preferred work type *'),
             items: RegOptions.workTypes.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-            onChanged: (v) => setState(() => _workType = v ?? _workType),
+            onChanged: _loading ? null : (v) => setState(() => _workType = v ?? _workType),
           ),
-          TextField(controller: _location, decoration: const InputDecoration(labelText: 'Preferred location')),
+          TextField(controller: _location, enabled: !_loading, decoration: const InputDecoration(labelText: 'Preferred location')),
           ChipMultiSelect(
             label: 'Availability *',
             options: RegOptions.availabilitySlots,
@@ -174,53 +247,38 @@ class _WomenJobsApplyScreenState extends State<WomenJobsApplyScreen> {
                 ..addAll(s);
             }),
           ),
-          TextField(controller: _languages, decoration: const InputDecoration(labelText: 'Languages known')),
+          TextField(controller: _languages, enabled: !_loading, decoration: const InputDecoration(labelText: 'Languages known')),
           TextField(
             controller: _rate,
+            enabled: !_loading,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(labelText: 'Expected hourly rate (₹) *'),
           ),
           if (_workType == 'Full-time')
             TextField(
               controller: _salary,
+              enabled: !_loading,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Expected monthly salary (optional)'),
             ),
           TextField(
             controller: _note,
+            enabled: !_loading,
             maxLines: 3,
             decoration: const InputDecoration(labelText: 'Additional note'),
           ),
           FileUploadTile(
-            label: 'Resume (PDF/image)',
-            fileName: _resume,
+            label: 'Proof document (resume / ID / certificate)',
+            fileName: _document?.name,
+            optional: true,
             onPick: () async {
-              final n = await pickImageName();
-              if (n != null) setState(() => _resume = n);
-            },
-          ),
-          FileUploadTile(
-            label: 'Profile photo',
-            fileName: _photo,
-            onPick: () async {
-              final n = await pickImageName();
-              if (n != null) setState(() => _photo = n);
-            },
-          ),
-          FileUploadTile(
-            label: 'Government ID verification',
-            fileName: _govId,
-            onPick: () async {
-              final n = await pickImageName();
-              if (n != null) setState(() => _govId = n);
-            },
-          ),
-          FileUploadTile(
-            label: 'Portfolio / certificates',
-            fileName: _portfolio,
-            onPick: () async {
-              final n = await pickImageName();
-              if (n != null) setState(() => _portfolio = n);
+              if (_loading) return;
+              try {
+                final picked = await pickDocumentUpload();
+                if (picked != null) setState(() => _document = picked);
+              } catch (e) {
+                if (mounted) setState(() => _error = '$e');
+              }
             },
           ),
           const SizedBox(height: 16),

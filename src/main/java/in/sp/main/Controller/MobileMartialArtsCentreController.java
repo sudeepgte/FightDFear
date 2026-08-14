@@ -6,8 +6,11 @@ import in.sp.main.Config.JwtUtil;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.CertificateService;
+import in.sp.main.Service.CentreProfileService;
+import in.sp.main.Service.CentreRegistrationService;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.MartialArtsCenterService;
+import in.sp.main.Util.MartialArtsDiscoveryFilter;
 import in.sp.main.Service.PasswordService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +68,70 @@ public class MobileMartialArtsCentreController {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Autowired
+    private CentreRegistrationService centreRegistrationService;
+
+    @Autowired
+    private CentreProfileService centreProfileService;
+
+    @Autowired
+    private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
+
+    @PostMapping("/otp/send-email")
+    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
+        try {
+            centreRegistrationService.sendRegistrationOtp(body == null ? null : body.get("email"));
+            return ResponseEntity.ok(Map.of("success", true, "message", "OTP sent to your email"));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(errorMap(ex.getReason() == null ? "Unable to send OTP" : ex.getReason()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorMap(ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/otp/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody Map<String, String> body) {
+        try {
+            centreRegistrationService.verifyRegistrationOtp(
+                    body == null ? null : body.get("email"),
+                    body == null ? null : body.get("otp"));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Email verified"));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(errorMap(ex.getReason() == null ? "Invalid OTP" : ex.getReason()));
+        }
+    }
+
+    @PostMapping("/register-quick")
+    public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, Object> body) {
+        try {
+            boolean accepted = body != null && (
+                    Boolean.TRUE.equals(body.get("acceptedTerms"))
+                            || "true".equalsIgnoreCase(String.valueOf(body.get("acceptedTerms"))));
+            MartialArtsCenter centre = centreRegistrationService.registerQuick(
+                    str(body, "name"),
+                    str(body, "email"),
+                    str(body, "phone"),
+                    str(body, "password"),
+                    str(body, "confirmPassword"),
+                    str(body, "emailOtp"),
+                    accepted,
+                    str(body, "contactPerson"));
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Account created. Login and complete your profile to submit for verification.");
+            res.put("centreId", centre.getId());
+            res.put("centreProfileStatus", centre.getCentreProfileStatus() == null
+                    ? null : centre.getCentreProfileStatus().name());
+            res.put("profileCompletionPct", centre.getProfileCompletionPct());
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(errorMap(ex.getReason() == null ? "Registration failed" : ex.getReason()));
+        }
+    }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> registerCentre(
@@ -266,10 +333,20 @@ public class MobileMartialArtsCentreController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(errorMap("Invalid email or password."));
         }
-        if (!center.isApproved()) {
+        CentreProfileStatus status = center.getCentreProfileStatus();
+        if (status == CentreProfileStatus.SUSPENDED) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(errorMap(
-                            "Your centre is registered but not yet approved by admin. You will be able to sign in after approval."));
+                    .body(errorMap("Your account has been suspended. Contact support."));
+        }
+        // Allow login while profile is incomplete — same as doctor portal.
+        // Only block legacy centres that never started profile completion and were waiting approval
+        // without the new status field? Allow all non-suspended.
+        if (status == null && !center.isApproved()) {
+            // Migrate legacy: treat as incomplete so they can finish profile / wait
+            centreProfileService.setLifecycleStatus(center, CentreProfileStatus.PROFILE_INCOMPLETE);
+            centreProfileService.refreshCompletion(center);
+        } else {
+            centreProfileService.refreshCompletion(center);
         }
 
         session.setAttribute("loggedCentre", center);
@@ -281,7 +358,68 @@ public class MobileMartialArtsCentreController {
         response.put("tokenType", "Bearer");
         response.put("role", "CENTRE");
         response.put("centre", centreDto(center));
+        response.put("needsProfileCompletion",
+                center.getCentreProfileStatus() != CentreProfileStatus.APPROVED
+                        && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL);
+        response.put("canSubmitForVerification",
+                centreProfileService.isReadyForVerification(center)
+                        && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> getProfile(HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.putAll(centreProfileService.profilePayload(center));
+        return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("/profile")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
+        centreProfileService.applyFields(center, body);
+        if (body != null && body.get("availableDaysCsv") != null && !(body.get("availableDays") instanceof List<?>)) {
+            java.util.Set<DayAvailable> set = new java.util.TreeSet<>();
+            for (String d : String.valueOf(body.get("availableDaysCsv")).split(",")) {
+                try {
+                    if (!d.isBlank()) set.add(DayAvailable.valueOf(d.trim().toUpperCase()));
+                } catch (Exception ignored) {}
+            }
+            center.setAvailableDays(set);
+        }
+        centreProfileService.refreshCompletion(center);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Profile saved");
+        res.putAll(centreProfileService.profilePayload(center));
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/submit-verification")
+    public ResponseEntity<Map<String, Object>> submitVerification(HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        try {
+            MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
+            centreRegistrationService.submitForVerification(center);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Submitted for admin verification");
+            res.putAll(centreProfileService.profilePayload(center));
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(errorMap(ex.getReason() == null ? "Submit failed" : ex.getReason()));
+        }
     }
 
     @GetMapping("/me")
@@ -318,7 +456,7 @@ public class MobileMartialArtsCentreController {
         MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
         List<Enrollment> enrollments = centreService.getEnrolledUsersByCenter(center.getId());
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
-        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenter_Id(center.getId());
+        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenterId(center.getId());
 
         List<Map<String, Object>> enrollList = buildEnrollmentMaps(center, enrollments);
         double totalEarnings = enrollments.stream()
@@ -417,7 +555,14 @@ public class MobileMartialArtsCentreController {
             }
             batch.setCenter(center);
             if (body.get("name") != null) batch.setName(body.get("name").toString());
-            if (body.get("style") != null) batch.setStyle(body.get("style").toString());
+            if (body.get("style") != null) {
+                String style = body.get("style").toString().trim();
+                if (!style.isEmpty() && MartialArtsDiscoveryFilter.isFitnessOnlyProgram(style)) {
+                    return badRequest("Gym, Zumba, Yoga and similar programs belong under Fitness & Wellness. "
+                            + "Use Karate, Taekwondo, Self-Defence or other martial arts styles here.");
+                }
+                batch.setStyle(style);
+            }
             if (body.get("instructor") != null) batch.setInstructor(body.get("instructor").toString());
             if (body.get("ageGroup") != null) batch.setAgeGroup(body.get("ageGroup").toString());
             if (body.get("skillLevel") != null) batch.setSkillLevel(body.get("skillLevel").toString());
@@ -429,6 +574,16 @@ public class MobileMartialArtsCentreController {
             if (body.get("location") != null) batch.setLocation(body.get("location").toString());
             if (body.get("timeSlot") != null) batch.setTimeSlot(body.get("timeSlot").toString());
             if (body.get("fee") != null) batch.setFee(Double.parseDouble(body.get("fee").toString()));
+            if (body.get("admissionFee") != null && !body.get("admissionFee").toString().isBlank()) {
+                batch.setAdmissionFee(Double.parseDouble(body.get("admissionFee").toString()));
+            }
+            if (body.get("trialType") != null) batch.setTrialType(body.get("trialType").toString());
+            if (body.get("bufferMinutes") != null && !body.get("bufferMinutes").toString().isBlank()) {
+                batch.setBufferMinutes(Integer.parseInt(body.get("bufferMinutes").toString()));
+            }
+            if (body.get("durationMinutes") != null && !body.get("durationMinutes").toString().isBlank()) {
+                batch.setDurationMinutes(Integer.parseInt(body.get("durationMinutes").toString()));
+            }
             if (body.get("startDate") != null && !body.get("startDate").toString().isBlank()) {
                 batch.setStartDate(java.time.LocalDate.parse(body.get("startDate").toString()));
             }
@@ -484,6 +639,9 @@ public class MobileMartialArtsCentreController {
 
         TrainingStatus status = TrainingStatus.valueOf(statusStr.trim().toUpperCase(Locale.ROOT));
         enrollment.setStatus(status);
+        if (body != null && body.get("coachNotes") != null) {
+            enrollment.setCoachNotes(body.get("coachNotes"));
+        }
         if (status == TrainingStatus.COMPLETED) {
             String artName = enrollment.getMartialArtsType() != null
                     ? enrollment.getMartialArtsType().getName()
@@ -699,6 +857,84 @@ public class MobileMartialArtsCentreController {
         }
     }
 
+    @GetMapping("/students/{enrollmentId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> studentFile(@PathVariable Long enrollmentId, HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        Enrollment e = enrollmentRepository.findById(enrollmentId).orElse(null);
+        if (e == null || e.getCenter() == null || !e.getCenter().getId().equals(centre.getId())) {
+            return badRequest("Enrollment not found");
+        }
+        Long userId = e.getUser() != null ? e.getUser().getId() : -1L;
+        List<Map<String, Object>> history = attendanceRepository.findByUserId(userId).stream().map(a -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("date", a.getAttendanceDate() == null ? null : a.getAttendanceDate().toString());
+            m.put("status", a.getStatus() == null ? null : a.getStatus().name());
+            m.put("notes", a.getNotes());
+            m.put("mode", a.getMode());
+            m.put("batch", a.getBatch() == null ? null : a.getBatch().getName());
+            return m;
+        }).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("student", enrollmentSummary(e));
+        res.put("fullName", e.getFullName());
+        res.put("phone", e.getPhoneNumber());
+        res.put("email", e.getEmail());
+        res.put("age", e.getAge());
+        res.put("gender", e.getGender());
+        res.put("medicalConditions", e.getMedicalConditions());
+        res.put("allergies", e.getAllergies());
+        res.put("coachNotes", e.getCoachNotes());
+        res.put("status", e.getStatus() == null ? "PENDING" : e.getStatus().name());
+        res.put("paymentStatus", e.getPaymentStatus());
+        res.put("batchName", e.getBatch() == null ? null : e.getBatch().getName());
+        res.put("attendanceHistory", history);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/students/{enrollmentId}/notes")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> saveStudentNotes(
+            @PathVariable Long enrollmentId,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        Enrollment e = enrollmentRepository.findById(enrollmentId).orElse(null);
+        if (e == null || e.getCenter() == null || !e.getCenter().getId().equals(centre.getId())) {
+            return badRequest("Enrollment not found");
+        }
+        e.setCoachNotes(body == null ? "" : body.getOrDefault("notes", ""));
+        enrollmentRepository.save(e);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Notes saved");
+        res.put("coachNotes", e.getCoachNotes());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/payout/request")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> requestPayout(HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+        try {
+            MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
+            martialArtsCareService.requestPayout(center);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Payout requested. Funds will be sent to " + center.getUpiId());
+            res.put("payoutBalance", 0);
+            res.put("upiId", center.getUpiId());
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(errorMap(ex.getReason() == null ? "Payout failed" : ex.getReason()));
+        }
+    }
+
     @PostMapping("/online-classes/{id}/start")
     @Transactional
     public ResponseEntity<Map<String, Object>> startOnlineClass(@PathVariable Long id, HttpSession session) {
@@ -710,12 +946,22 @@ public class MobileMartialArtsCentreController {
         if (oc.getCenter() == null || !oc.getCenter().getId().equals(centre.getId())) {
             return badRequest("Not your class");
         }
+        if (!martialArtsCareService.canCentreStart(oc)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMap(
+                    "Live class can be started 15 minutes before the scheduled time. "
+                            + martialArtsCareService.joinWindowHint(oc)));
+        }
+        if (oc.getMeetingLink() == null || oc.getMeetingLink().isBlank()) {
+            oc.setMeetingLink("https://meet.jit.si/kishor-ma-" + oc.getId() + "-" + System.currentTimeMillis());
+        }
         oc.setStatus(OnlineClassStatus.LIVE);
         onlineClassRepository.save(oc);
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("meetingLink", oc.getMeetingLink());
+        res.put("canJoin", true);
+        res.put("joinHint", martialArtsCareService.joinWindowHint(oc));
         return ResponseEntity.ok(res);
     }
 
@@ -768,6 +1014,7 @@ public class MobileMartialArtsCentreController {
             @RequestParam(required = false) String howWeTeach,
             @RequestParam(required = false) String whatWeOffer,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "certificate", required = false) MultipartFile certificate,
             @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
@@ -785,6 +1032,9 @@ public class MobileMartialArtsCentreController {
             if (profileImage != null && !profileImage.isEmpty()) {
                 center.setProfilePhoto(fileUploadService.saveFile(profileImage));
             }
+            if (certificate != null && !certificate.isEmpty()) {
+                center.setTrainerCertificatePath(fileUploadService.saveFile(certificate));
+            }
             if (galleryPhotos != null) {
                 for (MultipartFile photo : galleryPhotos) {
                     if (photo != null && !photo.isEmpty()) {
@@ -792,13 +1042,14 @@ public class MobileMartialArtsCentreController {
                     }
                 }
             }
-            centreRepository.save(center);
+            centreProfileService.refreshCompletion(center);
             session.setAttribute("loggedCentre", center);
 
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Profile updated");
             res.put("centre", centreDto(center));
+            res.putAll(centreProfileService.profilePayload(center));
             return ResponseEntity.ok(res);
         } catch (Exception ex) {
             return badRequest("Update failed: " + ex.getMessage());
@@ -864,6 +1115,8 @@ public class MobileMartialArtsCentreController {
             long presentCount = history.stream()
                     .filter(h -> h.getStatus() == AttendanceStatus.PRESENT).count();
             eMap.put("attendancePercentage", totalAtt == 0 ? 0 : (int) ((double) presentCount / totalAtt * 100));
+            eMap.put("coachNotes", e.getCoachNotes());
+            eMap.put("medicalConditions", e.getMedicalConditions());
             enrollList.add(eMap);
         }
         enrollList.sort((a, b) -> Long.compare((Long) b.get("id"), (Long) a.get("id")));
@@ -951,18 +1204,19 @@ public class MobileMartialArtsCentreController {
         meta.put("attendanceWeek", Math.min(100, (int) Math.round(avgAttendance + 1)));
         meta.put("attendanceMonth", Math.min(100, (int) Math.round(avgAttendance + 2)));
 
-        // Profile completion heuristic.
-        int filled = 0;
-        int total = 6;
-        if (center.getName() != null && !center.getName().isBlank()) filled++;
-        if (center.getLocation() != null && !center.getLocation().isBlank()) filled++;
-        if (center.getAbout() != null && !center.getAbout().isBlank()) filled++;
-        if (center.getProfilePhoto() != null && !center.getProfilePhoto().isBlank()) filled++;
-        if (center.getHowWeTeach() != null && !center.getHowWeTeach().isBlank()) filled++;
-        if (center.getGalleryPhotos() != null && !center.getGalleryPhotos().isEmpty()) filled++;
-        meta.put("profileCompletion", (int) Math.round(100.0 * filled / total));
+        // Profile completion from lifecycle service
+        centreProfileService.refreshCompletion(center);
+        meta.put("profileCompletion", center.getProfileCompletionPct() == null ? 0 : center.getProfileCompletionPct());
+        meta.put("centreProfileStatus", center.getCentreProfileStatus() == null
+                ? null : center.getCentreProfileStatus().name());
+        meta.put("centreProfileStatusLabel", CentreProfileService.statusLabel(center.getCentreProfileStatus()));
+        meta.put("missingItems", centreProfileService.missingItems(center));
+        meta.put("canSubmitForVerification",
+                centreProfileService.isReadyForVerification(center)
+                        && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL
+                        && center.getCentreProfileStatus() != CentreProfileStatus.APPROVED);
         meta.put("hasDetails", center.getAbout() != null && !center.getAbout().isBlank());
-        meta.put("hasPrograms", center.getWhatWeOffer() != null && !center.getWhatWeOffer().isBlank());
+        meta.put("hasPrograms", batchRepository.findByCenterId(center.getId()).size() > 0);
         meta.put("hasGallery", center.getGalleryPhotos() != null && !center.getGalleryPhotos().isEmpty());
 
         // Business insights.
@@ -979,7 +1233,12 @@ public class MobileMartialArtsCentreController {
         meta.put("popularProgram", popular);
         meta.put("bestTrainer", bestTrainer);
         meta.put("highestRevenueProgram", popular);
-        meta.put("rating", 4.8);
+        meta.put("rating", center.getRating() == null || center.getRating() <= 0 ? 4.8 : center.getRating());
+        meta.put("payoutBalance", center.getPayoutBalance() == null ? 0 : center.getPayoutBalance());
+        meta.put("upiId", center.getUpiId());
+        meta.put("bankDetails", center.getBankDetails());
+        meta.put("payoutRequestedAt", center.getPayoutRequestedAt() == null ? null : center.getPayoutRequestedAt().toString());
+        meta.put("blockedDates", center.getBlockedDates());
 
         // Activity + notifications from recent enrollments / batches.
         List<Map<String, Object>> activities = new java.util.ArrayList<>();
@@ -1057,6 +1316,8 @@ public class MobileMartialArtsCentreController {
         m.put("meetingLink", oc.getMeetingLink());
         m.put("status", oc.getStatus() != null ? oc.getStatus().name() : "UPCOMING");
         m.put("batchId", oc.getBatch() != null ? oc.getBatch().getId() : null);
+        m.put("canJoin", martialArtsCareService.canJoin(oc));
+        m.put("joinHint", martialArtsCareService.joinWindowHint(oc));
         return m;
     }
 
@@ -1075,7 +1336,20 @@ public class MobileMartialArtsCentreController {
         m.put("whatWeOffer", c.getWhatWeOffer());
         m.put("galleryPhotos", c.getGalleryPhotos() == null ? List.of() : c.getGalleryPhotos());
         m.put("approved", c.isApproved());
-        m.put("managerName", managerFromEmail(c.getEmail()));
+        m.put("centreProfileStatus", c.getCentreProfileStatus() == null ? null : c.getCentreProfileStatus().name());
+        m.put("centreProfileStatusLabel", CentreProfileService.statusLabel(c.getCentreProfileStatus()));
+        m.put("profileCompletionPct", c.getProfileCompletionPct() == null ? 0 : c.getProfileCompletionPct());
+        m.put("contactPerson", c.getContactPerson());
+        m.put("managerName", c.getContactPerson() != null && !c.getContactPerson().isBlank()
+                ? c.getContactPerson()
+                : managerFromEmail(c.getEmail()));
+        m.put("city", c.getCity());
+        m.put("state", c.getState());
+        m.put("pincode", c.getPincode());
+        m.put("upiId", c.getUpiId());
+        m.put("payoutBalance", c.getPayoutBalance() == null ? 0 : c.getPayoutBalance());
+        m.put("rating", c.getRating() == null ? 0 : c.getRating());
+        m.put("trialAvailable", Boolean.TRUE.equals(c.getTrialAvailable()));
         return m;
     }
 
@@ -1131,6 +1405,13 @@ public class MobileMartialArtsCentreController {
         m.put("fee", b.getFee());
         m.put("timeSlot", b.getTimeSlot());
         m.put("batchType", b.getBatchType());
+        m.put("admissionFee", b.getAdmissionFee());
+        m.put("trialType", b.getTrialType());
+        m.put("bufferMinutes", b.getBufferMinutes() == null ? 0 : b.getBufferMinutes());
+        m.put("durationMinutes", b.getDurationMinutes());
+        m.put("availableDays", b.getAvailableDays());
+        m.put("capacity", b.getCapacity());
+        m.put("seatsLeft", martialArtsCareService.seatsLeft(b));
         return m;
     }
 
@@ -1168,6 +1449,12 @@ public class MobileMartialArtsCentreController {
     }
 
     private static String str(Object v) {
+        return v == null ? "" : v.toString().trim();
+    }
+
+    private static String str(Map<String, ?> body, String key) {
+        if (body == null || key == null) return "";
+        Object v = body.get(key);
         return v == null ? "" : v.toString().trim();
     }
 }

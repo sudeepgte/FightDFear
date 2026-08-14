@@ -175,6 +175,9 @@ public class DoctorDraftService {
         if (fields.containsKey("additionalCertificatePath")) {
             doctor.setAdditionalCertificatePath(blankToNull(asString(fields.get("additionalCertificatePath"))));
         }
+        if (fields.containsKey("clinicPhotos")) doctor.setClinicPhotos(blankToNull(asString(fields.get("clinicPhotos"))));
+        if (fields.containsKey("clinicLat")) doctor.setClinicLat(asDouble(fields.get("clinicLat")));
+        if (fields.containsKey("clinicLng")) doctor.setClinicLng(asDouble(fields.get("clinicLng")));
     }
 
     private static String asString(Object value) {

@@ -66,6 +66,9 @@ public class WomenEventRegistration {
 
     private boolean paid = false;
     private Double amountPaid = 0.0;
+    private Boolean payoutCredited = false;
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
 
     public boolean isPaid() {
         return paid;
@@ -82,4 +85,9 @@ public class WomenEventRegistration {
     public void setAmountPaid(Double amountPaid) {
         this.amountPaid = amountPaid;
     }
+
+    public Boolean getPayoutCredited() { return payoutCredited; }
+    public void setPayoutCredited(Boolean payoutCredited) { this.payoutCredited = payoutCredited; }
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
 }

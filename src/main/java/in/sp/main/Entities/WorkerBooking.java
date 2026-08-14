@@ -42,6 +42,12 @@ public class WorkerBooking {
     private Double totalAmount;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
+    private String cancelReason;
+    @Column(name = "reminder_1h_sent")
+    private Boolean reminder1hSent;
+    private Boolean consentPolicy;
 
     public Long getId() {
         return id;
@@ -114,4 +120,13 @@ public class WorkerBooking {
     public void setTotalAmount(Double totalAmount) {
         this.totalAmount = totalAmount;
     }
+
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+    public Boolean getReminder1hSent() { return reminder1hSent; }
+    public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
+    public Boolean getConsentPolicy() { return consentPolicy; }
+    public void setConsentPolicy(Boolean consentPolicy) { this.consentPolicy = consentPolicy; }
 }

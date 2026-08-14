@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/martial_arts_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
 import '../../services/martial_arts_service.dart';
@@ -37,6 +38,12 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
   late final ModulePaymentCheckout _checkout;
   late final TabController _tabs;
   final _searchCtrl = TextEditingController();
+  final _cityCtrl = TextEditingController();
+  String? _styleFilter;
+  String _sort = 'rating';
+  bool _batchToday = false;
+  bool _onlineOnly = false;
+  double? _feeMax;
 
   bool _loading = true;
   bool _centreLoggedIn = false;
@@ -89,7 +96,63 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
     _checkout.dispose();
     _tabs.dispose();
     _searchCtrl.dispose();
+    _cityCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _openFilters() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+        child: StatefulBuilder(
+          builder: (ctx, setLocal) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Filters', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _cityCtrl,
+                decoration: const InputDecoration(labelText: 'City', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _styleFilter,
+                decoration: const InputDecoration(labelText: 'Style', border: OutlineInputBorder()),
+                items: [
+                  const DropdownMenuItem(value: null, child: Text('Any style')),
+                  ...MartialArtsCatalog.styles.map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                ],
+                onChanged: (v) => setLocal(() => _styleFilter = v),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<double?>(
+                initialValue: _feeMax,
+                decoration: const InputDecoration(labelText: 'Max fee', border: OutlineInputBorder()),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('Any fee')),
+                  DropdownMenuItem(value: 1000, child: Text('Under ₹1000')),
+                  DropdownMenuItem(value: 2000, child: Text('Under ₹2000')),
+                  DropdownMenuItem(value: 4000, child: Text('Under ₹4000')),
+                ],
+                onChanged: (v) => setLocal(() => _feeMax = v),
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _loadCentres();
+                },
+                child: const Text('Apply'),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _payEnrollment(Map<String, dynamic> e) async {
@@ -122,7 +185,15 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
       _error = null;
     });
     try {
-      final res = await _api.listCentres(q: q);
+      final res = await _api.listCentres(
+        q: q ?? _searchCtrl.text,
+        city: _cityCtrl.text,
+        style: _styleFilter,
+        feeMax: _feeMax,
+        batchToday: _batchToday ? true : null,
+        online: _onlineOnly ? true : null,
+        sort: _sort,
+      );
       if (!mounted) return;
       if (res['success'] == true) {
         final raw = res['centres'];
@@ -312,12 +383,12 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Own a training centre?',
+                  'Martial arts & self-defence centre?',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Register your centre or sign in to manage batches & students.',
+                  'Karate, Taekwondo & similar — register here. For Gym or Zumba, use Fitness & Wellness.',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 10),
@@ -344,7 +415,7 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                             MaterialPageRoute(builder: (_) => const MartialArtsCentreRegisterScreen()),
                           );
                         },
-                        child: const Text('Register centre'),
+                        child: const Text('Register trainer'),
                       ),
                       FilledButton(
                         style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
@@ -373,8 +444,8 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
               hintText: 'Search by name or location',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
-                icon: const Icon(Icons.arrow_forward),
-                onPressed: () => _loadCentres(q: _searchCtrl.text),
+                icon: const Icon(Icons.tune),
+                onPressed: _openFilters,
               ),
               filled: true,
               fillColor: Colors.white,
@@ -387,6 +458,41 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
             ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilterChip(
+                label: const Text('Batch today'),
+                selected: _batchToday,
+                onSelected: (v) {
+                  setState(() => _batchToday = v);
+                  _loadCentres();
+                },
+              ),
+              FilterChip(
+                label: const Text('Online'),
+                selected: _onlineOnly,
+                onSelected: (v) {
+                  setState(() => _onlineOnly = v);
+                  _loadCentres();
+                },
+              ),
+              ChoiceChip(
+                label: Text('Sort: $_sort'),
+                selected: true,
+                onSelected: (_) {
+                  setState(() {
+                    _sort = _sort == 'rating' ? 'fee' : (_sort == 'fee' ? 'nearest' : 'rating');
+                  });
+                  _loadCentres();
+                },
+              ),
+            ],
           ),
         ),
         if (!_loading && _error == null)
@@ -457,11 +563,23 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                                   background: const Color(0xFFE0E7FF),
                                   foreground: const Color(0xFF3730A3),
                                 ),
+                                if ((c['rating'] is num) && (c['rating'] as num) > 0)
+                                  DetailTag(
+                                    label: '${c['rating']}★',
+                                    icon: Icons.star,
+                                  ),
                                 DetailTag(
-                                  label: '${c['batchCount'] ?? 0} batches',
+                                  label: c['availabilityLabel']?.toString() ?? '${c['batchCount'] ?? 0} batches',
                                   icon: Icons.groups_outlined,
                                 ),
-                                ...styles.take(3).map((s) => DetailTag(
+                                if (c['trialAvailable'] == true)
+                                  DetailTag(
+                                    label: 'Trial',
+                                    icon: Icons.event_available,
+                                    background: const Color(0xFFDCFCE7),
+                                    foreground: const Color(0xFF166534),
+                                  ),
+                                ...styles.take(2).map((s) => DetailTag(
                                       label: s,
                                       icon: Icons.sports_martial_arts,
                                       background: const Color(0xFFFFE4E6),
@@ -584,6 +702,29 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                       onPressed: () => _payEnrollment(e),
                       style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
                       child: const Text('Pay now'),
+                    ),
+                  ),
+                ],
+                if (e['canCancel'] == true) ...[
+                  const SizedBox(height: 8),
+                  Text(e['cancelPolicy']?.toString() ?? MartialArtsCatalog.cancelPolicy,
+                      style: const TextStyle(fontSize: 11, color: MartialArtsScreen.textGray)),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () async {
+                        final eid = e['enrollmentId'] is int
+                            ? e['enrollmentId'] as int
+                            : int.tryParse('${e['enrollmentId']}');
+                        if (eid == null) return;
+                        final res = await _api.cancelEnrollment(eid);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Done')),
+                        );
+                        if (res['success'] == true) _loadEnrollments();
+                      },
+                      child: const Text('Cancel enrollment'),
                     ),
                   ),
                 ],
@@ -743,11 +884,32 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                 return Card(
                   child: ListTile(
                     title: Text(c['title']?.toString() ?? 'Class'),
-                    subtitle: Text('${c['date'] ?? ''} · ${c['startTime'] ?? ''} · ${c['classStatus'] ?? ''}'),
-                    trailing: link != null && link.isNotEmpty
+                    subtitle: Text(
+                      '${c['date'] ?? ''} · ${c['startTime'] ?? ''} · ${c['classStatus'] ?? ''}\n${c['joinHint'] ?? 'Join 5 min before class'}',
+                    ),
+                    isThreeLine: true,
+                    trailing: (c['canJoin'] == true && link != null && link.isNotEmpty) || classId != null
                         ? IconButton(
                             icon: const Icon(Icons.video_call),
-                            onPressed: () => launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication),
+                            onPressed: () async {
+                              if (classId != null) {
+                                final join = await _api.joinOnlineClass(classId);
+                                final jlink = join['meetingLink']?.toString() ?? link;
+                                if (join['success'] == true && jlink != null && jlink.isNotEmpty) {
+                                  await launchUrl(Uri.parse(jlink), mode: LaunchMode.externalApplication);
+                                  return;
+                                }
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(join['error']?.toString() ?? c['joinHint']?.toString() ?? 'Join window closed')),
+                                  );
+                                }
+                                return;
+                              }
+                              if (link != null && link.isNotEmpty) {
+                                await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+                              }
+                            },
                           )
                         : (key == 'invitations'
                             ? IconButton(

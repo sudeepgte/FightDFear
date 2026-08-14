@@ -22,6 +22,30 @@ public class OfferService {
 
     // Save or update offer
     public void saveOffer(Offer offer) {
+        if (offer == null) {
+            throw new IllegalArgumentException("Offer is required.");
+        }
+        if (offer.getTitle() == null || offer.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Offer Title is required.");
+        }
+        if (offer.getDescription() == null || offer.getDescription().isBlank()) {
+            throw new IllegalArgumentException("Detailed Description is required.");
+        }
+        if (offer.getOriginalPrice() <= 0) {
+            throw new IllegalArgumentException("Original Price must be greater than zero.");
+        }
+        if (offer.getOfferPrice() < 0 || offer.getOfferPrice() >= offer.getOriginalPrice()) {
+            throw new IllegalArgumentException("Offer Price must be less than the Original Price.");
+        }
+        if (offer.getStartDate() == null || offer.getEndDate() == null) {
+            throw new IllegalArgumentException("Campaign start and end dates are required.");
+        }
+        if (!offer.getEndDate().isAfter(offer.getStartDate())) {
+            throw new IllegalArgumentException("Campaign End Date must be after the Campaign Start Date.");
+        }
+        if (offer.getDiscountPercent() <= 0 || offer.getDiscountPercent() >= 100) {
+            throw new IllegalArgumentException("Discount must be a number greater than 0 and less than 100.");
+        }
         offer.setActive(true);
         offerRepository.save(offer);
     }

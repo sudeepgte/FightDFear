@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -239,28 +240,8 @@
     <!-- Layout -->
     <div class="layout">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="mb-4">
-                <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="navlink active">
-                    <i class="fas fa-home"></i> Home
-                </a>
-            </div>
-            
-
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
-                <i class="fas fa-video"></i> Add Session
-            </a>
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Workshops</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" class="navlink">
-                <i class="fas fa-calendar-check"></i> Add Workshop
-            </a>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/registrations" class="navlink">
-                <i class="fas fa-users"></i> View Registrations
-            </a>
-        </div>
+        <!-- Sidebar -->
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <!-- Main Content -->
         <main class="main">
@@ -290,7 +271,19 @@
                                                 <td>${video.title}</td>
                                                 <td>${video.category}</td>
                                                 <td>${video.description}</td>
-                                                <td><a href="${video.videoUrl}" target="_blank">Link</a></td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${empty video.videoUrl}">
+                                                            <span class="text-muted">No URL</span>
+                                                        </c:when>
+                                                        <c:when test="${not fn:startsWith(video.videoUrl, 'http')}">
+                                                            <a href="${pageContext.request.contextPath}${fn:startsWith(video.videoUrl, '/') ? '' : '/'}${video.videoUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-external-link-alt"></i> Link</a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <a href="${video.videoUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-external-link-alt"></i> Link</a>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                             </tr>
                                         </c:forEach>
                                     </tbody>

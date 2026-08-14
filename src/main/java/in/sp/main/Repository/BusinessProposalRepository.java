@@ -11,6 +11,7 @@ import java.util.List;
 public interface BusinessProposalRepository extends JpaRepository<BusinessProposal, Long> {
     List<BusinessProposal> findByEntrepreneur(Entrepreneur entrepreneur);
     List<BusinessProposal> findByStatus(VerificationStatus status);
+    long countByStatus(VerificationStatus status);
     List<BusinessProposal> findByStatusAndCategoryContainingIgnoreCase(VerificationStatus status, String category);
     List<BusinessProposal> findByStatusAndLocationContainingIgnoreCase(VerificationStatus status, String location);
     List<BusinessProposal> findByStatusAndCategoryContainingIgnoreCaseAndLocationContainingIgnoreCase(VerificationStatus status, String category, String location);

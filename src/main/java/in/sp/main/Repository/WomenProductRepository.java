@@ -14,4 +14,6 @@ public interface WomenProductRepository extends JpaRepository<WomenProduct, Long
     List<WomenProduct> findBySellerAndDeletedFalseOrderByCreatedAtDesc(WomenProductSeller seller);
     List<WomenProduct> findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
     List<WomenProduct> findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(String category);
+
+    long countByActiveTrueAndDeletedFalse();
 }

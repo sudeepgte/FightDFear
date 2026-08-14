@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:open_file/open_file.dart';
 
+import '../config/funding_catalog.dart';
+
 enum RegInputType {
   text,
   email,
@@ -467,11 +469,17 @@ class OtpVerifyRow extends StatefulWidget {
     required this.label,
     required this.verified,
     required this.onVerified,
+    this.onSend,
+    this.onVerify,
   });
 
   final String label;
   final bool verified;
   final VoidCallback onVerified;
+  /// When set, sends a real OTP. Return true on success.
+  final Future<bool> Function()? onSend;
+  /// When set, verifies OTP. Return null on success, or an error message.
+  final Future<String?> Function(String otp)? onVerify;
 
   @override
   State<OtpVerifyRow> createState() => _OtpVerifyRowState();
@@ -479,12 +487,105 @@ class OtpVerifyRow extends StatefulWidget {
 
 class _OtpVerifyRowState extends State<OtpVerifyRow> {
   final _otp = TextEditingController();
+  final _otpFocus = FocusNode();
   bool _sent = false;
+  bool _sending = false;
+  bool _verifying = false;
 
   @override
   void dispose() {
     _otp.dispose();
+    _otpFocus.dispose();
     super.dispose();
+  }
+
+  void _revealOtpField({bool focus = true}) {
+    final wasHidden = !_sent;
+    if (!_sent) {
+      setState(() => _sent = true);
+    }
+    if (focus && wasHidden) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _otpFocus.requestFocus();
+      });
+    }
+  }
+
+  Future<void> _handleSend() async {
+    if (_sending || _verifying) return;
+    if (widget.onSend != null) {
+      // Reveal the OTP field immediately — don't wait for SMTP/network.
+      setState(() => _sending = true);
+      _revealOtpField();
+      var ok = false;
+      try {
+        ok = await widget.onSend!();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send OTP: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _sending = false);
+      }
+      if (!mounted) return;
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('OTP sent to your ${widget.label.toLowerCase()}')),
+        );
+        if (!_otpFocus.hasFocus) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _otpFocus.requestFocus();
+          });
+        }
+      }
+      return;
+    }
+    _revealOtpField();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Demo OTP sent for ${widget.label}. Use 123456.')),
+    );
+  }
+
+  Future<void> _handleVerify() async {
+    if (_verifying) return;
+    final code = _otp.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter the OTP code')),
+      );
+      _otpFocus.requestFocus();
+      return;
+    }
+    if (widget.onVerify != null) {
+      setState(() => _verifying = true);
+      String? err;
+      try {
+        err = await widget.onVerify!(code);
+      } catch (e) {
+        err = 'Verification failed: $e';
+      } finally {
+        if (mounted) setState(() => _verifying = false);
+      }
+      if (!mounted) return;
+      if (err == null) {
+        widget.onVerified();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        _otpFocus.requestFocus();
+      }
+      return;
+    }
+    if (code == '123456') {
+      widget.onVerified();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Invalid OTP. Demo code is 123456.')),
+      );
+      _otpFocus.requestFocus();
+    }
   }
 
   @override
@@ -504,13 +605,14 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
           children: [
             Expanded(child: Text('${widget.label} OTP verification')),
             TextButton(
-              onPressed: () {
-                setState(() => _sent = true);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Demo OTP sent for ${widget.label}. Use 123456.')),
-                );
-              },
-              child: Text(_sent ? 'Resend OTP' : 'Send OTP'),
+              onPressed: (_sending || _verifying) ? null : _handleSend,
+              child: _sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(_sent ? 'Resend OTP' : 'Send OTP'),
             ),
           ],
         ),
@@ -520,23 +622,37 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
               Expanded(
                 child: TextField(
                   controller: _otp,
+                  focusNode: _otpFocus,
+                  autofocus: true,
+                  enabled: !_verifying,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(labelText: 'Enter OTP', hintText: '123456'),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) {
+                    if (!_verifying) _handleVerify();
+                  },
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(8),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Enter OTP',
+                    hintText: widget.onVerify == null ? '123456' : '6-digit code',
+                    helperText: _sending
+                        ? 'Sending code… you can type it as soon as it arrives'
+                        : null,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               FilledButton(
-                onPressed: () {
-                  if (_otp.text.trim() == '123456') {
-                    widget.onVerified();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Invalid OTP. Demo code is 123456.')),
-                    );
-                  }
-                },
-                child: const Text('Verify'),
+                onPressed: _verifying ? null : _handleVerify,
+                child: _verifying
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Verify'),
               ),
             ],
           ),
@@ -844,17 +960,7 @@ class RegOptions {
     '₹1Cr+',
   ];
 
-  static const businessCategories = [
-    'Food',
-    'Fashion',
-    'Technology',
-    'Education',
-    'Healthcare',
-    'Beauty',
-    'Handicrafts',
-    'Retail',
-    'Services',
-  ];
+  static const businessCategories = FundingCatalog.categories;
 
   static const sellerCategories = [
     'Fashion',
@@ -887,16 +993,23 @@ class RegOptions {
   ];
 
   static const jobCategories = [
-    'Home Services',
-    'Tutoring',
-    'Beauty & Wellness',
-    'Cooking & Catering',
-    'Tailoring',
-    'Childcare',
-    'Elder Care',
-    'Office Support',
+    'Caregiver',
+    'Babysitting',
+    'Housekeeping',
+    'Cooking',
+    'Beauty & Salon',
+    'Healthcare',
+    'Teaching',
+    'Office Jobs',
     'Retail',
-    'Events',
+    'Hospitality',
+    'Customer Support',
+    'Delivery & Logistics',
+    'Domestic Help',
+    'Tailoring & Fashion',
+    'Digital Jobs',
+    'Freelancing',
+    'Entrepreneurship',
   ];
 
   static const marketplaceCategories = [
@@ -913,6 +1026,9 @@ class RegOptions {
     'Handicraft Seller',
     'Digital Marketing Consultant',
     'Home Baker',
+    'Language Trainer',
+    'Women Products',
+    'Fitness Zumba',
     'Beautician',
     'Makeup Artist',
     'Mehendi Artist',
@@ -921,7 +1037,6 @@ class RegOptions {
     'Fitness Trainer',
     'Dance Instructor',
     'Music Teacher',
-    'Language Trainer',
     'Craft Seller',
     'Handmade Products',
     'Boutique',
@@ -1024,6 +1139,41 @@ class RegOptions {
   static const ageGroups = ['18–25', '26–40', '41–55', 'All ages'];
 
   static const programDurations = ['1 month', '3 months', '6 months', '12 months'];
+
+  static const fitnessSpecializations = [
+    'Gym Training',
+    'Zumba',
+    'Dance Fitness',
+    'Yoga',
+    'Aerobics',
+    'Pilates',
+    'Strength Training',
+    'Cardio Training',
+    'CrossFit',
+    'Functional Training',
+    'HIIT',
+    'Weight Loss Programs',
+    'Weight Gain Programs',
+    'Personal Training',
+    'Prenatal & Postnatal Fitness',
+    'Meditation & Mindfulness',
+    'Nutrition & Diet Consultation',
+    'Home Workout Sessions',
+  ];
+
+  static const martialArtsPrograms = [
+    'Karate',
+    'Taekwondo',
+    'Judo',
+    'Kung Fu',
+    'Self-Defence',
+    'MMA',
+    'Boxing',
+    'Kickboxing',
+    'Muay Thai',
+    'Krav Maga',
+    'Other',
+  ];
 
   static const indianStates = [
     'Andhra Pradesh',

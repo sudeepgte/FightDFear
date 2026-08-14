@@ -439,6 +439,13 @@
                         <div class="strength-label" id="strengthLabel"></div>
                         <div class="field-feedback" id="password-fb"></div>
                     </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Professional Bio / About Me <span class="text-danger">*</span></label>
+                        <div class="input-group-custom">
+                            <textarea id="bio" name="bio" class="form-control" rows="3" placeholder="Tell clients about your coaching style, philosophy, and background..." required oninput="validateBio(this)"></textarea>
+                        </div>
+                        <div class="field-feedback" id="bio-fb" style="margin-top: 5px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -630,6 +637,14 @@
         setValid(el, 'password-fb', 'Password meets requirements.'); return true;
     }
 
+    /* ─── Bio ─── */
+    function validateBio(el) {
+        const v = el.value.trim();
+        if (!v) { setInvalid(el, 'bio-fb', 'Bio is required.'); return false; }
+        if (v.length < 10) { setInvalid(el, 'bio-fb', 'Please write at least 10 characters.'); return false; }
+        setValid(el, 'bio-fb', 'Looks good.'); return true;
+    }
+
     /* ─── Experience ─── */
     function validateExperience(el) {
         const v = el.value.trim();
@@ -703,6 +718,7 @@
             validateEmail(document.getElementById('email')),
             validatePhone(document.getElementById('phone')),
             validatePassword(document.getElementById('passwordInput')),
+            validateBio(document.getElementById('bio')),
             validateExperience(document.getElementById('experience')),
             validateFees(document.getElementById('sessionFees')),
             validateTimings(document.getElementById('availableTimings')),

@@ -274,6 +274,9 @@ body.dd-page {
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
+  text-decoration: none;
+  padding: 0;
+  font-family: inherit;
 }
 
 .dd-topbar-right .notif-btn:hover {
@@ -289,6 +292,226 @@ body.dd-page {
   height: 8px;
   border-radius: 50%;
   background: var(--dd-coral);
+}
+
+.dd-topbar-right .notif-btn .notif-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--dd-coral);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.dd-notif-wrap {
+  position: relative;
+}
+
+.dd-notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(360px, calc(100vw - 32px));
+  background: #fff;
+  border: 1px solid var(--dd-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(30, 27, 75, 0.16);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.dd-notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--dd-border);
+  background: #faf8fd;
+}
+
+.dd-notif-header strong {
+  font-size: 14px;
+  color: var(--dd-text);
+}
+
+.dd-notif-count-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--dd-coral);
+}
+
+.dd-notif-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dd-notif-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--dd-border);
+  transition: background 0.15s;
+}
+
+.dd-notif-item:hover {
+  background: rgba(49, 46, 129, 0.04);
+}
+
+.dd-notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.dd-notif-icon.appointment {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.dd-notif-icon.chat {
+  background: rgba(32, 201, 151, 0.12);
+  color: #0d9668;
+}
+
+.dd-notif-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dd-notif-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dd-text);
+}
+
+.dd-notif-body {
+  font-size: 12px;
+  color: var(--dd-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.dd-notif-empty {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--dd-muted);
+}
+
+.dd-notif-empty i {
+  font-size: 28px;
+  opacity: 0.4;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.dd-notif-empty p {
+  font-size: 13px;
+}
+
+.dd-notif-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--dd-border);
+  background: #faf8fd;
+}
+
+.dd-notif-footer a {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dd-purple-light);
+  text-decoration: none;
+}
+
+.dd-notif-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Payment methods (earnings) */
+.dd-pay-methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.dd-pay-method-card {
+  border: 1px solid var(--dd-border);
+  border-radius: 14px;
+  padding: 16px;
+  background: #faf8fd;
+}
+
+.dd-pay-method-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--dd-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dd-pay-method-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dd-text);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dd-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dd-pay-badge.online {
+  background: rgba(74, 144, 217, 0.12);
+  color: #2563eb;
+}
+
+.dd-pay-badge.paid {
+  background: rgba(32, 201, 151, 0.12);
+  color: #0d9668;
+}
+
+.dd-pay-badge.unpaid {
+  background: rgba(107, 114, 128, 0.12);
+  color: #4b5563;
+}
+
+.dd-payment-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dd-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  word-break: break-all;
+  max-width: 180px;
 }
 
 /* Content area */

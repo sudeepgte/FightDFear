@@ -111,10 +111,31 @@ class DoctorAuthService {
         body: {'status': status},
       );
 
-  Future<Map<String, dynamic>> savePrescription(int id, String prescriptionText) =>
+  Future<Map<String, dynamic>> savePrescription(
+    int id,
+    String prescriptionText, {
+    String? prescriptionJson,
+    String? doctorNotes,
+  }) =>
       _api.post('/api/doctors/provider/appointments/$id/prescription', doctorAuth: true, body: {
         'prescriptionText': prescriptionText,
+        if (prescriptionJson != null) 'prescriptionJson': prescriptionJson,
+        if (doctorNotes != null) 'doctorNotes': doctorNotes,
       });
+
+  Future<Map<String, dynamic>> reschedule(int id, String appointmentTime) =>
+      _api.post('/api/doctors/provider/appointments/$id/reschedule', doctorAuth: true, body: {
+        'appointmentTime': appointmentTime,
+      });
+
+  Future<Map<String, dynamic>> patientFile(int userId) =>
+      _api.get('/api/doctors/provider/patients/$userId', doctorAuth: true);
+
+  Future<Map<String, dynamic>> pingWaiting(int id) =>
+      _api.post('/api/doctors/provider/appointments/$id/waiting', doctorAuth: true);
+
+  Future<Map<String, dynamic>> requestPayout() =>
+      _api.post('/api/doctors/provider/payout/request', doctorAuth: true);
 
   Future<Map<String, dynamic>> joinAppointment(int id, {bool audioOnly = false}) =>
       _api.get('/api/doctors/appointments/$id/join?audioOnly=$audioOnly', doctorAuth: true);
@@ -131,9 +152,29 @@ class DoctorAuthService {
   Future<Map<String, dynamic>> chatHistory(int doctorId, {required int userId}) =>
       _api.get('/api/doctors/$doctorId/chat?userId=$userId', doctorAuth: true);
 
-  Future<Map<String, dynamic>> sendChat(int doctorId, {required int userId, required String message}) =>
+  Future<Map<String, dynamic>> sendChat(
+    int doctorId, {
+    required int userId,
+    required String message,
+    String? attachmentPath,
+  }) =>
       _api.post('/api/doctors/$doctorId/chat', doctorAuth: true, body: {
         'userId': userId,
         'message': message,
+        if (attachmentPath != null) 'attachmentPath': attachmentPath,
       });
+
+  Future<Map<String, dynamic>> uploadChatFile(int doctorId, {required int userId, required String filePath}) async {
+    final name = filePath.split(RegExp(r'[\\/]')).last;
+    final multipart = await http.MultipartFile.fromPath('file', filePath, filename: name);
+    return _api.postMultipart(
+      '/api/doctors/$doctorId/chat-file',
+      doctorAuth: true,
+      fields: {'userId': '$userId'},
+      files: [multipart],
+    );
+  }
+
+  Future<({List<int> bytes, int statusCode, String? filename})> prescriptionPdf(int appointmentId) =>
+      _api.getBytes('/api/doctors/appointments/$appointmentId/prescription.pdf', doctorAuth: true);
 }

@@ -206,9 +206,9 @@
                         
                         <div class="fdf-row">
                             <div class="fdf-group"><label>Phone Number</label><form:input path="phoneNumber" class="fdf-input" type="tel" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required="required"/></div>
-                            <div class="fdf-group"><label>Email Address</label><form:input path="email" type="email" class="fdf-input" placeholder="contact@center.com" required="required"/></div>
+                            <div class="fdf-group"><label>Email Address</label><form:input path="email" type="email" class="fdf-input" placeholder="contact@center.com" required="required" autocomplete="off"/></div>
                         </div>
-                        <div class="fdf-group"><label>Access Password</label><form:password path="password" class="fdf-input" pattern="(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}" placeholder="••••••••" required="required"/></div>
+                        <div class="fdf-group"><label>Access Password</label><form:password path="password" class="fdf-input" pattern="(?=.*[0-9])(?=.*[!@#$%^&*]).{6,}" placeholder="••••••••" required="required" autocomplete="new-password"/></div>
 
                         <div class="fdf-group">
                             <label>Working Days</label>
@@ -276,10 +276,22 @@
     }
     function nextStep(s) {
         const panel = document.getElementById('step' + s);
-        const req = panel.querySelectorAll('[required]');
+        const inputs = panel.querySelectorAll('input, textarea, select');
         let valid = true;
-        req.forEach(el => { if (!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = ''; } });
-        if (valid) showStep(s + 1);
+        inputs.forEach(el => { 
+            if (!el.checkValidity()) { 
+                el.style.borderColor = 'red'; 
+                valid = false; 
+            } else { 
+                el.style.borderColor = ''; 
+            } 
+        });
+        if (!valid) {
+            const firstInvalid = panel.querySelector('input:invalid, textarea:invalid, select:invalid');
+            if (firstInvalid) firstInvalid.reportValidity();
+            return;
+        }
+        showStep(s + 1);
     }
     function prevStep(s) { showStep(s - 1); }
 

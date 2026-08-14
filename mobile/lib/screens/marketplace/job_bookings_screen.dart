@@ -19,6 +19,7 @@ class JobBookingsScreen extends StatefulWidget {
 class _JobBookingsScreenState extends State<JobBookingsScreen> {
   late final JobBookingsService _api;
   bool _loading = true;
+  bool _busy = false;
   String? _error;
   List<Map<String, dynamic>> _bookings = [];
 
@@ -51,14 +52,85 @@ class _JobBookingsScreenState extends State<JobBookingsScreen> {
   }
 
   Future<void> _updateStatus(int id, String status) async {
+    if (_busy) return;
+    setState(() => _busy = true);
     final res = await _api.updateStatus(id, status);
     if (!mounted) return;
+    setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res['success'] == true ? 'Status updated to $status' : '${res['error']}'),
+        content: Text(res['success'] == true
+            ? 'Status updated to $status'
+            : (res['error']?.toString() ?? 'Update failed')),
       ),
     );
     if (res['success'] == true) _load();
+  }
+
+  List<String> _actionsFor(String status) {
+    if (!widget.workerView) return const [];
+    return switch (status) {
+      'PENDING' => const ['ACCEPTED', 'REJECTED'],
+      'ACCEPTED' => const ['COMPLETED'],
+      _ => const [],
+    };
+  }
+
+  void _openDetail(Map<String, dynamic> b) {
+    final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+    final status = (b['status']?.toString() ?? 'PENDING').toUpperCase();
+    final actions = _actionsFor(status);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.workerView
+                    ? (b['clientName']?.toString() ?? 'Booking')
+                    : (b['workerName']?.toString() ?? 'Booking'),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text('Status: $status'),
+              Text('When: ${b['bookingDate'] ?? '—'}'),
+              if (b['serviceType'] != null) Text('Service: ${b['serviceType']}'),
+              if (b['totalAmount'] != null) Text('Amount: ₹${b['totalAmount']}'),
+              if ((b['note']?.toString() ?? '').isNotEmpty) Text('Note: ${b['note']}'),
+              const SizedBox(height: 12),
+              if (actions.isEmpty)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final s in actions)
+                      FilledButton(
+                        onPressed: id == null || _busy
+                            ? null
+                            : () {
+                                Navigator.pop(ctx);
+                                _updateStatus(id, s);
+                              },
+                        child: Text(s),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -66,7 +138,7 @@ class _JobBookingsScreenState extends State<JobBookingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text(widget.workerView ? 'Job Bookings (Worker)' : 'Job Bookings'),
+        title: Text(widget.workerView ? 'Job Bookings (Worker)' : 'My job bookings'),
         backgroundColor: Colors.white,
         foregroundColor: ModuleTheme.navy,
       ),
@@ -78,9 +150,15 @@ class _JobBookingsScreenState extends State<JobBookingsScreen> {
                   onRefresh: _load,
                   child: _bookings.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 80),
-                            Center(child: Text('No job bookings yet.')),
+                          children: [
+                            const SizedBox(height: 80),
+                            Center(
+                              child: Text(
+                                widget.workerView
+                                    ? 'No incoming job bookings yet.'
+                                    : 'No job bookings yet.',
+                              ),
+                            ),
                           ],
                         )
                       : ListView.builder(
@@ -98,7 +176,6 @@ class _JobBookingsScreenState extends State<JobBookingsScreen> {
                             }
                             final b = _bookings[i - 1];
                             final other = b['clientName'] ?? b['workerName'] ?? 'Booking';
-                            final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
                             return DetailListingCard(
                               title: other.toString(),
                               eyebrow: b['serviceType']?.toString() ?? 'Job booking',
@@ -117,32 +194,8 @@ class _JobBookingsScreenState extends State<JobBookingsScreen> {
                                 if (b['note'] != null && '${b['note']}'.isNotEmpty)
                                   DetailTag(label: '${b['note']}', icon: Icons.notes),
                               ],
-                              primaryLabel: widget.workerView ? 'Update status' : 'View booking',
-                              onPrimary: () async {
-                                if (!widget.workerView || id == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('${b['status'] ?? ''} · ${b['note'] ?? ''}')),
-                                  );
-                                  return;
-                                }
-                                final next = await showModalBottomSheet<String>(
-                                  context: context,
-                                  builder: (ctx) => SafeArea(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const ListTile(title: Text('Update booking status')),
-                                        for (final s in ['ACCEPTED', 'REJECTED', 'COMPLETED'])
-                                          ListTile(
-                                            title: Text(s),
-                                            onTap: () => Navigator.pop(ctx, s),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                                if (next != null) _updateStatus(id, next);
-                              },
+                              primaryLabel: widget.workerView ? 'Manage' : 'Details',
+                              onPrimary: () => _openDetail(b),
                             );
                           },
                         ),

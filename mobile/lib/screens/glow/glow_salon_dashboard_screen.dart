@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/glow_provider_auth_service.dart';
-import 'glow_provider_login_screen.dart';
+import '../../widgets/ux_feedback.dart';
+import '../landing/landing_screen.dart';
+import 'glow_salon_profile_completion_screen.dart';
 
 class GlowSalonDashboardScreen extends StatefulWidget {
   const GlowSalonDashboardScreen({super.key});
@@ -28,7 +30,7 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
   void initState() {
     super.initState();
     _auth = GlowProviderAuthService(context.read<AuthState>().api);
-    _tabs = TabController(length: 4, vsync: this);
+    _tabs = TabController(length: 5, vsync: this);
     _tabs.addListener(() {
       if (!_tabs.indexIsChanging) setState(() {});
     });
@@ -60,13 +62,22 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
     if (mounted) setState(() => _loading = false);
   }
 
+  bool get _approved =>
+      _salon?['approved'] == true || _salon?['partnerProfileStatus']?.toString() == 'APPROVED';
+
   Future<void> _logout() async {
     await _auth.logoutSalon();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen()),
+      MaterialPageRoute(builder: (_) => const LandingScreen()),
       (_) => false,
     );
+  }
+
+  void _openProfile() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const GlowSalonProfileCompletionScreen()))
+        .then((_) => _load());
   }
 
   List<Map<String, dynamic>> _list(String key) {
@@ -94,7 +105,12 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
   Widget build(BuildContext context) {
     final pending = (_meta?['pendingCount'] is num) ? (_meta!['pendingCount'] as num).toInt() : 0;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _tabs.index == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _tabs.index != 0) _tabs.animateTo(0);
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -126,10 +142,11 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
         backgroundColor: GlowSalonDashboardScreen.primary,
         elevation: 6,
         onPressed: () {
+          if (!_approved) {
+            _openProfile();
+            return;
+          }
           _tabs.animateTo(2);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add services from the Services tab')),
-          );
         },
         child: const Icon(Icons.add, size: 28),
       ),
@@ -154,7 +171,7 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
               ),
               const SizedBox(width: 56),
               _navItem(2, Icons.spa_outlined, Icons.spa, 'Services', 2),
-              _navItem(3, Icons.person_outline, Icons.person, 'Profile', 3),
+              _navItem(3, Icons.person_outline, Icons.person, 'Profile', 4),
             ],
           ),
         ),
@@ -175,7 +192,27 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _SalonProfileCard(salon: _salon, meta: _meta),
+                      child: Column(
+                        children: [
+                          _SalonProfileCard(salon: _salon, meta: _meta),
+                          if (!_approved) ...[
+                            const SizedBox(height: 10),
+                            ProfileCompletionCard(
+                              percent: (_meta?['profileCompletionPct'] is num)
+                                  ? (_meta!['profileCompletionPct'] as num).toDouble()
+                                  : (_salon?['profileCompletionPct'] is num)
+                                      ? (_salon!['profileCompletionPct'] as num).toDouble()
+                                      : 0,
+                              statusLabel: _salon?['partnerProfileStatusLabel']?.toString()
+                                      ?? _meta?['partnerProfileStatusLabel']?.toString()
+                                      ?? 'Pending',
+                              hint: 'Complete salon details and wait for admin approval before listing services.',
+                              actionLabel: 'Complete profile',
+                              onAction: _openProfile,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                     Material(
                       color: Colors.white,
@@ -192,6 +229,7 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
                           Tab(text: 'Overview'),
                           Tab(text: 'Bookings'),
                           Tab(text: 'Services'),
+                          Tab(text: 'Finance'),
                           Tab(text: 'Settings'),
                         ],
                       ),
@@ -207,16 +245,24 @@ class _GlowSalonDashboardScreenState extends State<GlowSalonDashboardScreen>
                             services: _list('services'),
                             onGoBookings: () => _tabs.animateTo(1),
                             onGoServices: () => _tabs.animateTo(2),
-                            onGoSettings: () => _tabs.animateTo(3),
+                            onGoSettings: () => _tabs.animateTo(4),
                           ),
                           _BookingsTab(auth: _auth, bookings: _list('bookings'), onChanged: _load),
-                          _ServicesTab(auth: _auth, services: _list('services'), onChanged: _load),
+                          _ServicesTab(
+                            auth: _auth,
+                            services: _list('services'),
+                            approved: _approved,
+                            onCompleteProfile: _openProfile,
+                            onChanged: _load,
+                          ),
+                          _FinanceTab(auth: _auth, meta: _meta, onChanged: _load),
                           _SettingsTab(auth: _auth, salon: _salon, onSaved: _load),
                         ],
                       ),
                     ),
                   ],
                 ),
+        ),
     );
   }
 
@@ -448,24 +494,62 @@ class _BookingsTab extends StatelessWidget {
               '${b['status'] ?? ''} · ₹${b['price'] ?? 0}',
             ),
             isThreeLine: true,
-            trailing: PopupMenuButton<String>(
-              onSelected: (status) async {
-                if (id == null) return;
-                final res = await auth.updateBookingStatus(id, status);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(res['message']?.toString() ?? 'Updated')),
-                  );
-                  if (res['success'] == true) onChanged();
-                }
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'CONFIRMED', child: Text('Confirm')),
-                PopupMenuItem(value: 'COMPLETED', child: Text('Complete')),
-                PopupMenuItem(value: 'CANCELLED', child: Text('Cancel')),
-                PopupMenuItem(value: 'REJECTED', child: Text('Reject')),
-              ],
-            ),
+            trailing: id == null
+                ? null
+                : PopupMenuButton<String>(
+                    onSelected: (v) async {
+                      if (v == 'notes') {
+                        final ctrl = TextEditingController(text: b['coachNotes']?.toString() ?? '');
+                        final ok = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Booking notes'),
+                            content: TextField(controller: ctrl, maxLines: 4, decoration: const InputDecoration(hintText: 'Internal notes / history')),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Close')),
+                              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save')),
+                            ],
+                          ),
+                        );
+                        if (ok == true) {
+                          await auth.updateBookingNotes(id, ctrl.text.trim());
+                          onChanged();
+                        }
+                        return;
+                      }
+                      final res = await auth.updateBookingStatus(id, v);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(res['success'] == true
+                                ? (res['message']?.toString() ?? 'Updated')
+                                : (res['error']?.toString() ?? 'Update failed')),
+                          ),
+                        );
+                        if (res['success'] == true) onChanged();
+                      }
+                    },
+                    itemBuilder: (_) {
+                      final status = (b['status']?.toString() ?? 'PENDING').toUpperCase();
+                      final items = <PopupMenuEntry<String>>[
+                        const PopupMenuItem(value: 'notes', child: Text('Add / edit notes')),
+                      ];
+                      if (status == 'PENDING') {
+                        items.addAll(const [
+                          PopupMenuItem(value: 'CONFIRMED', child: Text('Confirm')),
+                          PopupMenuItem(value: 'REJECTED', child: Text('Reject')),
+                          PopupMenuItem(value: 'CANCELLED', child: Text('Cancel')),
+                        ]);
+                      }
+                      if (status == 'CONFIRMED' || status == 'PAID') {
+                        items.addAll(const [
+                          PopupMenuItem(value: 'COMPLETED', child: Text('Complete')),
+                          PopupMenuItem(value: 'CANCELLED', child: Text('Cancel')),
+                        ]);
+                      }
+                      return items;
+                    },
+                  ),
           ),
         );
       },
@@ -473,11 +557,76 @@ class _BookingsTab extends StatelessWidget {
   }
 }
 
+class _FinanceTab extends StatelessWidget {
+  const _FinanceTab({required this.auth, required this.meta, required this.onChanged});
+  final GlowProviderAuthService auth;
+  final Map<String, dynamic>? meta;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final earnings = meta?['earnings'] ?? 0;
+    final payout = meta?['payoutBalance'] ?? 0;
+    final upi = meta?['upiId']?.toString() ?? '';
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.account_balance_wallet_outlined, color: GlowSalonDashboardScreen.primary),
+            title: const Text('Payout balance'),
+            subtitle: Text(upi.isEmpty ? 'Add UPI in Complete Profile to withdraw' : 'UPI: $upi'),
+            trailing: Text('₹$payout', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.payments_outlined),
+            title: const Text('Confirmed earnings'),
+            trailing: Text('₹$earnings', style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: () async {
+            final res = await auth.requestPayout();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(res['success'] == true
+                    ? (res['message']?.toString() ?? 'Requested')
+                    : (res['error']?.toString() ?? 'Payout failed')),
+              ),
+            );
+            if (res['success'] == true) onChanged();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: GlowSalonDashboardScreen.primary,
+            minimumSize: const Size.fromHeight(48),
+          ),
+          child: const Text('Request UPI payout'),
+        ),
+        const SizedBox(height: 12),
+        Text(GlowCatalog.cancelPolicy, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+      ],
+    );
+  }
+}
+
 class _ServicesTab extends StatefulWidget {
-  const _ServicesTab({required this.auth, required this.services, required this.onChanged});
+  const _ServicesTab({
+    required this.auth,
+    required this.services,
+    required this.onChanged,
+    required this.approved,
+    required this.onCompleteProfile,
+  });
   final GlowProviderAuthService auth;
   final List<Map<String, dynamic>> services;
   final VoidCallback onChanged;
+  final bool approved;
+  final VoidCallback onCompleteProfile;
 
   @override
   State<_ServicesTab> createState() => _ServicesTabState();
@@ -489,7 +638,13 @@ class _ServicesTabState extends State<_ServicesTab> {
   Future<void> _edit([Map<String, dynamic>? existing]) async {
     final nameCtrl = TextEditingController(text: existing?['name']?.toString() ?? '');
     final priceCtrl = TextEditingController(text: '${existing?['price'] ?? GlowCatalog.defaultPrice('HAIR')}');
-    final durationCtrl = TextEditingController(text: '${existing?['durationMinutes'] ?? 30}');
+    int duration = (existing?['durationMinutes'] is num)
+        ? (existing!['durationMinutes'] as num).toInt()
+        : 30;
+    int buffer = (existing?['bufferMinutes'] is num)
+        ? (existing!['bufferMinutes'] as num).toInt()
+        : 10;
+    String mode = existing?['serviceMode']?.toString() ?? 'SALON';
     String category = existing?['category']?.toString() ?? GlowCatalog.categories.first.code;
     if (GlowCatalog.byCode(category) == null) category = GlowCatalog.categories.first.code;
 
@@ -540,7 +695,26 @@ class _ServicesTabState extends State<_ServicesTab> {
                 const SizedBox(height: 8),
                 TextField(controller: priceCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price (₹)', border: OutlineInputBorder())),
                 const SizedBox(height: 8),
-                TextField(controller: durationCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Duration (min)', border: OutlineInputBorder())),
+                DropdownButtonFormField<int>(
+                  initialValue: GlowCatalog.durations.contains(duration) ? duration : 30,
+                  decoration: const InputDecoration(labelText: 'Duration (min)', border: OutlineInputBorder()),
+                  items: GlowCatalog.durations.map((d) => DropdownMenuItem(value: d, child: Text('$d min'))).toList(),
+                  onChanged: (v) => setLocal(() => duration = v ?? 30),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  initialValue: GlowCatalog.buffers.contains(buffer) ? buffer : 10,
+                  decoration: const InputDecoration(labelText: 'Buffer (min)', border: OutlineInputBorder()),
+                  items: GlowCatalog.buffers.map((d) => DropdownMenuItem(value: d, child: Text('$d min'))).toList(),
+                  onChanged: (v) => setLocal(() => buffer = v ?? 10),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: GlowCatalog.serviceModes.contains(mode) ? mode : 'SALON',
+                  decoration: const InputDecoration(labelText: 'Mode', border: OutlineInputBorder()),
+                  items: GlowCatalog.serviceModes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                  onChanged: (v) => setLocal(() => mode = v ?? 'SALON'),
+                ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () async {
@@ -549,17 +723,22 @@ class _ServicesTabState extends State<_ServicesTab> {
                       'name': nameCtrl.text.trim(),
                       'category': category,
                       'price': double.tryParse(priceCtrl.text.trim()) ?? GlowCatalog.defaultPrice(category),
-                      'durationMinutes': int.tryParse(durationCtrl.text.trim()) ?? GlowCatalog.defaultDuration(category),
+                      'durationMinutes': duration,
+                      'bufferMinutes': buffer,
+                      'serviceMode': mode,
                     };
                     if (body['name'].toString().isEmpty) return;
+                    final messenger = ScaffoldMessenger.of(this.context);
                     final res = await widget.auth.saveService(body);
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(res['message']?.toString() ?? 'Saved')),
-                      );
-                    }
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(res['success'] == true
+                            ? (res['message']?.toString() ?? 'Saved')
+                            : (res['error']?.toString() ?? 'Save failed')),
+                      ),
+                    );
                     if (res['success'] == true) widget.onChanged();
                   },
                   style: FilledButton.styleFrom(backgroundColor: GlowSalonDashboardScreen.primary),

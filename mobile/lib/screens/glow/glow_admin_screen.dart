@@ -19,6 +19,7 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
   late final GlowAdminService _glow;
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  bool _obscurePassword = true;
   bool _loggedIn = false;
   bool _busy = false;
   String _kind = 'salons';
@@ -92,7 +93,18 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
               child: Column(
                 children: [
                   TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Admin email')),
-                  TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: _busy ? null : _login,
@@ -155,12 +167,17 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
                             final title = _kind == 'salons'
                                 ? (item['name']?.toString() ?? 'Salon')
                                 : '${item['firstName'] ?? ''} ${item['lastName'] ?? ''}'.trim();
-                            final subtitle = _kind == 'salons'
+                            final statusLabel = item['partnerProfileStatusLabel']?.toString();
+                            final baseSubtitle = _kind == 'salons'
                                 ? '${item['city'] ?? ''} · ${item['username'] ?? ''}'
                                 : '${item['email'] ?? ''} · ${item['specialization'] ?? ''}';
+                            final subtitle = (statusLabel != null && statusLabel.isNotEmpty)
+                                ? '$baseSubtitle\n$statusLabel'
+                                : baseSubtitle;
                             return ListTile(
-                              title: Text(title),
+                              title: Text(title.isEmpty ? 'Provider' : title),
                               subtitle: Text(subtitle),
+                              isThreeLine: statusLabel != null && statusLabel.isNotEmpty,
                               trailing: _status == 'pending' && id != null
                                   ? Row(
                                       mainAxisSize: MainAxisSize.min,
@@ -189,7 +206,16 @@ class _GlowAdminScreenState extends State<GlowAdminScreen> {
                                         ),
                                       ],
                                     )
-                                  : null,
+                                  : (statusLabel != null && statusLabel.isNotEmpty
+                                      ? Text(
+                                          statusLabel,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade700,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        )
+                                      : null),
                             );
                           },
                         ),

@@ -46,6 +46,9 @@ public class Service1 {
  
     @Enumerated(EnumType.STRING)
     private SkinType skinType; // only for skin treatments
+
+    private Integer bufferMinutes;
+    private String serviceMode; // SALON, DOOR, BOTH
  
 	public SkinType getSkinType() {
 		return skinType;
@@ -132,11 +135,15 @@ public class Service1 {
     public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
     }
- 
     public String getDescription() {
         if (ingredients != null && !ingredients.isEmpty()) {
             return "Includes: " + ingredients;
         }
         return "Premium Salon Service";
     }
+
+    public Integer getBufferMinutes() { return bufferMinutes; }
+    public void setBufferMinutes(Integer bufferMinutes) { this.bufferMinutes = bufferMinutes; }
+    public String getServiceMode() { return serviceMode; }
+    public void setServiceMode(String serviceMode) { this.serviceMode = serviceMode; }
 }

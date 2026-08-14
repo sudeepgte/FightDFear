@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Doctor Dashboard — SafeHer</title>
+  <title>Doctor Dashboard — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-dashboard.css">
 </head>
@@ -16,7 +16,7 @@
 <aside class="dd-sidebar" id="sidebar">
   <div class="dd-sidebar-brand">
     <div class="brand-icon"><i class="bi bi-heart-pulse"></i></div>
-    <div class="brand-text">SafeHer<small>Doctor Portal</small></div>
+    <div class="brand-text">Fight D Fear<small>Doctor Portal</small></div>
   </div>
   <div class="dd-sidebar-profile">
     <div class="avatar-placeholder">${doctor.fullName.charAt(0)}</div>
@@ -33,10 +33,15 @@
     </a>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" class="dd-nav-item ${section == 'appointments' ? 'active' : ''}">
       <i class="bi bi-calendar-check"></i> Appointments
+
+      <c:if test="${appointmentNotifCount > 0}"><span class="badge-count">${appointmentNotifCount}</span></c:if>
+
       <c:if test="${pendingCount > 0}"><span class="badge-count" id="sidebar-appt-badge" style="background-color: var(--dd-coral, #ff6b6b);">${pendingCount}</span></c:if>
+
     </a>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats" class="dd-nav-item ${section == 'chats' ? 'active' : ''}">
       <i class="bi bi-chat-dots"></i> Chats
+      <c:if test="${unreadChatCount > 0}"><span class="badge-count">${unreadChatCount}</span></c:if>
     </a>
     <div class="dd-nav-label">Management</div>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=profile" class="dd-nav-item ${section == 'profile' ? 'active' : ''}">
@@ -82,6 +87,43 @@
       </div>
     </div>
     <div class="dd-topbar-right">
+
+      <div class="dd-notif-wrap">
+        <button type="button" class="notif-btn" id="notifToggle" aria-label="Notifications" aria-expanded="false" aria-controls="notifPanel">
+          <i class="bi bi-bell"></i>
+          <c:if test="${notificationCount > 0}"><span class="dot"></span><span class="notif-count">${notificationCount}</span></c:if>
+        </button>
+        <div class="dd-notif-panel" id="notifPanel" hidden>
+          <div class="dd-notif-header">
+            <strong>Notifications</strong>
+            <c:if test="${notificationCount > 0}"><span class="dd-notif-count-label">${notificationCount} new</span></c:if>
+          </div>
+          <div class="dd-notif-list">
+            <c:choose>
+              <c:when test="${empty notifications}">
+                <div class="dd-notif-empty">
+                  <i class="bi bi-bell-slash"></i>
+                  <p>No new notifications</p>
+                </div>
+              </c:when>
+              <c:otherwise>
+                <c:forEach var="n" items="${notifications}">
+                  <a class="dd-notif-item" href="${pageContext.request.contextPath}${n.href}">
+                    <span class="dd-notif-icon ${n.type}"><i class="bi ${n.icon}"></i></span>
+                    <span class="dd-notif-text">
+                      <span class="dd-notif-title">${n.title}</span>
+                      <span class="dd-notif-body">${n.body}</span>
+                    </span>
+                  </a>
+                </c:forEach>
+              </c:otherwise>
+            </c:choose>
+          </div>
+          <div class="dd-notif-footer">
+            <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments">View appointments</a>
+            <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats">View chats</a>
+          </div>
+
       <style>
         .notif-item:hover { background: rgba(0,0,0,0.02); }
       </style>
@@ -114,6 +156,7 @@
               </div>
             </c:otherwise>
           </c:choose>
+
         </div>
       </div>
     </div>
@@ -123,6 +166,11 @@
     <c:if test="${not empty message}">
       <div style="padding:14px 20px;border-radius:12px;background:rgba(32,201,151,0.1);border:1px solid rgba(32,201,151,0.2);color:#0d9668;font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:8px">
         <i class="bi bi-check-circle"></i> ${message}
+      </div>
+    </c:if>
+    <c:if test="${not empty error}">
+      <div style="padding:14px 20px;border-radius:12px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);color:#be123c;font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-exclamation-circle"></i> ${error}
       </div>
     </c:if>
 
@@ -515,10 +563,19 @@
       </div>
 
       <!-- Fee Breakdown -->
+
+      <div class="dd-section" id="feesView">
+        <div class="dd-section-header">
+          <h2><i class="bi bi-wallet2"></i> Fee Breakdown</h2>
+          <button type="button" class="dd-btn-edit" onclick="document.getElementById('feesView').style.display='none';document.getElementById('feesEdit').style.display='block';">
+            <i class="bi bi-pencil-square"></i> Edit
+          </button>
+
       <div class="dd-section" id="feeBreakdownView">
         <div class="dd-section-header">
           <h2><i class="bi bi-wallet2"></i> Fee Breakdown</h2>
           <button onclick="document.getElementById('feeBreakdownView').style.display='none';document.getElementById('feeBreakdownEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit</button>
+
         </div>
         <div class="dd-section-body padded">
           <div class="dd-profile-grid">
@@ -526,8 +583,69 @@
             <div class="dd-profile-item"><span class="label">Chat Fee</span><span class="value">&#8377; ${doctor.chatFee != null ? doctor.chatFee : '—'}</span></div>
             <div class="dd-profile-item"><span class="label">Call Fee</span><span class="value">&#8377; ${doctor.callFee != null ? doctor.callFee : '—'}</span></div>
             <div class="dd-profile-item"><span class="label">Video Fee</span><span class="value">&#8377; ${doctor.videoFee != null ? doctor.videoFee : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">UPI ID</span><span class="value">${doctor.upiId != null ? doctor.upiId : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">Bank Details</span><span class="value">${doctor.bankDetails != null ? doctor.bankDetails : '—'}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dd-section" id="feesEdit" style="display:none">
+        <div class="dd-section-header">
+          <h2><i class="bi bi-pencil-square"></i> Edit Fee Breakdown</h2>
+          <button type="button" class="dd-btn-edit" onclick="document.getElementById('feesEdit').style.display='none';document.getElementById('feesView').style.display='block';">
+            <i class="bi bi-x-lg"></i> Cancel
+          </button>
+        </div>
+        <div class="dd-section-body padded">
+          <form action="${pageContext.request.contextPath}/doctors/update-fees" method="post">
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field">
+                <label>Consultation Fee (₹)</label>
+                <input type="number" name="consultationFee" min="0" step="1" value="${doctor.consultationFee != null ? doctor.consultationFee : ''}" required>
+              </div>
+              <div class="dd-edit-field">
+                <label>Chat Fee (₹)</label>
+                <input type="number" name="chatFee" min="0" step="1" value="${doctor.chatFee != null ? doctor.chatFee : ''}">
+              </div>
+              <div class="dd-edit-field">
+                <label>Call Fee (₹)</label>
+                <input type="number" name="callFee" min="0" step="1" value="${doctor.callFee != null ? doctor.callFee : ''}">
+              </div>
+              <div class="dd-edit-field">
+                <label>Video Fee (₹)</label>
+                <input type="number" name="videoFee" min="0" step="1" value="${doctor.videoFee != null ? doctor.videoFee : ''}">
+              </div>
+              <div class="dd-edit-field">
+                <label>UPI ID</label>
+                <input type="text" name="upiId" maxlength="100" placeholder="doctor@upi" value="${doctor.upiId != null ? doctor.upiId : ''}">
+              </div>
+              <div class="dd-edit-field" style="grid-column: 1 / -1;">
+                <label>Bank Details</label>
+                <textarea name="bankDetails" rows="3" maxlength="500" placeholder="Account name, number, IFSC, bank name">${doctor.bankDetails != null ? doctor.bankDetails : ''}</textarea>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:10px">
+              <button type="submit" class="dd-btn-save"><i class="bi bi-check-circle"></i> Save Fees</button>
+              <button type="button" class="dd-btn-cancel" onclick="document.getElementById('feesEdit').style.display='none';document.getElementById('feesView').style.display='block';">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="dd-section">
+        <div class="dd-section-header"><h2><i class="bi bi-credit-card-2-front"></i> Payment Methods</h2></div>
+        <div class="dd-section-body padded">
+          <div class="dd-pay-methods">
+            <div class="dd-pay-method-card">
+              <div class="dd-pay-method-title"><i class="bi bi-phone"></i> UPI</div>
+              <div class="dd-pay-method-value">${not empty doctor.upiId ? doctor.upiId : 'Not configured'}</div>
+            </div>
+            <div class="dd-pay-method-card">
+              <div class="dd-pay-method-title"><i class="bi bi-bank"></i> Bank Transfer</div>
+              <div class="dd-pay-method-value">${not empty doctor.bankDetails ? doctor.bankDetails : 'Not configured'}</div>
+            </div>
+            <div class="dd-pay-method-card">
+              <div class="dd-pay-method-title"><i class="bi bi-shield-check"></i> Online Bookings</div>
+              <div class="dd-pay-method-value">Razorpay (patient payments)</div>
+            </div>
           </div>
         </div>
       </div>
@@ -571,6 +689,8 @@
               <th>Type</th>
               <th>Status</th>
               <th>Payment Method</th>
+              <th>Payment ID</th>
+
               <th style="text-align:right">Amount</th>
             </tr></thead><tbody>
               <c:forEach var="a" items="${appointments}">
@@ -601,6 +721,22 @@
                       <c:otherwise><span class="dd-badge cancelled"><span class="dot"></span> Cancelled</span></c:otherwise>
                     </c:choose>
                   </td>
+
+                  <td>
+                    <c:choose>
+                      <c:when test="${not empty a.razorpayPaymentId}">
+                        <span class="dd-pay-badge online"><i class="bi bi-credit-card"></i> Razorpay</span>
+                      </c:when>
+                      <c:when test="${a.amountPaid != null && a.amountPaid > 0}">
+                        <span class="dd-pay-badge paid"><i class="bi bi-check2-circle"></i> Paid</span>
+                      </c:when>
+                      <c:otherwise>
+                        <span class="dd-pay-badge unpaid"><i class="bi bi-dash-circle"></i> Unpaid</span>
+                      </c:otherwise>
+                    </c:choose>
+                  </td>
+                  <td class="dd-payment-id">${not empty a.razorpayPaymentId ? a.razorpayPaymentId : '—'}</td>
+
                   <td style="font-size:13px; font-weight: 500;">
                     <c:choose>
                       <c:when test="${a.razorpayPaymentId != null}">
@@ -612,6 +748,7 @@
                       </c:otherwise>
                     </c:choose>
                   </td>
+
                   <td style="text-align:right;font-weight:700;color:#20c997">
                     <c:choose>
                       <c:when test="${a.amountPaid != null && a.amountPaid > 0}">&#8377;${a.amountPaid}</c:when>
@@ -688,30 +825,75 @@
               <input type="text" id="prescPatientName" readonly style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;background:var(--dd-bg);outline:none;font-family:'Poppins',sans-serif;">
             </div>
             <div style="margin-bottom:20px;">
+
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--dd-muted);margin-bottom:6px;">Prescription / Rx</label>
+              <textarea name="prescriptionText" id="prescText" rows="6" required maxlength="2000"
+                        placeholder="Write medicines, dosage, and instructions here..."
+                        style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;outline:none;font-family:'Poppins',sans-serif;resize:vertical;"></textarea>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                <span id="prescLimitMsg" style="font-size:11px;color:#be123c;font-weight:600;display:none;">Maximum 2000 characters allowed.</span>
+                <span style="font-size:11px;color:var(--dd-muted);margin-left:auto;"><span id="prescCount">0</span>/2000</span>
+              </div>
+
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                 <label style="font-size:12px;font-weight:600;color:var(--dd-muted);">Prescription / Rx</label>
                 <span id="charCount" style="font-size:10px;font-weight:500;color:var(--dd-muted);">0 / 500</span>
               </div>
               <textarea name="prescriptionText" id="prescText" rows="6" maxlength="500" required placeholder="Write medicines, dosage, and instructions here..." style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;outline:none;font-family:'Poppins',sans-serif;resize:vertical;" oninput="document.getElementById('charCount').textContent = this.value.length + ' / 500'"></textarea>
+
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
               <button type="button" onclick="closePrescriptionModal()" style="padding:10px 20px;border:none;border-radius:999px;background:rgba(107,114,128,0.1);color:var(--dd-muted);font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
-              <button type="submit" style="padding:10px 20px;border:none;border-radius:999px;background:var(--dd-gradient);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(123,44,191,0.2);">Save Prescription</button>
+              <button type="submit" id="prescSaveBtn" style="padding:10px 20px;border:none;border-radius:999px;background:var(--dd-gradient);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(123,44,191,0.2);">Save Prescription</button>
             </div>
           </form>
         </div>
       </div>
       <script>
+      var PRESCRIPTION_MAX = 2000;
+      function updatePrescCounter() {
+          var ta = document.getElementById('prescText');
+          var count = document.getElementById('prescCount');
+          var msg = document.getElementById('prescLimitMsg');
+          var btn = document.getElementById('prescSaveBtn');
+          if (!ta || !count) return;
+          var len = ta.value.length;
+          count.textContent = len;
+          if (len >= PRESCRIPTION_MAX) {
+            if (msg) msg.style.display = 'inline';
+            count.style.color = '#be123c';
+          } else {
+            if (msg) msg.style.display = 'none';
+            count.style.color = '';
+          }
+          if (btn) btn.disabled = len === 0 || len > PRESCRIPTION_MAX;
+      }
       function openPrescriptionModal(apptId) {
           var dataElem = document.getElementById('presc-data-' + apptId);
           document.getElementById('prescriptionForm').action = '${pageContext.request.contextPath}/doctors/appointments/' + apptId + '/prescription';
           document.getElementById('prescPatientName').value = dataElem.getAttribute('data-patient-name');
           document.getElementById('prescText').value = dataElem.value;
           document.getElementById('prescriptionModal').style.display = 'flex';
+          updatePrescCounter();
       }
       function closePrescriptionModal() {
           document.getElementById('prescriptionModal').style.display = 'none';
       }
+      document.getElementById('prescText').addEventListener('input', updatePrescCounter);
+      document.getElementById('prescriptionForm').addEventListener('submit', function(e) {
+          var text = document.getElementById('prescText').value.trim();
+          if (!text) {
+            e.preventDefault();
+            alert('Prescription text is required.');
+            return false;
+          }
+          if (text.length > PRESCRIPTION_MAX) {
+            e.preventDefault();
+            document.getElementById('prescLimitMsg').style.display = 'inline';
+            alert('Prescription cannot exceed ' + PRESCRIPTION_MAX + ' characters.');
+            return false;
+          }
+      });
       </script>
     </c:if>
 
@@ -720,6 +902,39 @@
 
 <script>
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show');}
+
+
+(function() {
+  var toggle = document.getElementById('notifToggle');
+  var panel = document.getElementById('notifPanel');
+  if (!toggle || !panel) return;
+
+  function closePanel() {
+    panel.hidden = true;
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openPanel() {
+    panel.hidden = false;
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+
+  toggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (panel.hidden) openPanel(); else closePanel();
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!panel.hidden && !panel.contains(e.target) && !toggle.contains(e.target)) {
+      closePanel();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closePanel();
+  });
+})();
 
 function toggleNotifications() {
   const dropdown = document.getElementById('notifDropdown');
@@ -826,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 });
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>

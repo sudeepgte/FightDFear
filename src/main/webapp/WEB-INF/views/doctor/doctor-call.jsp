@@ -25,7 +25,7 @@
 </head>
 <body>
   <div class="call-header">
-    <div class="brand"><i class="bi bi-heart-pulse"></i> SafeHer</div>
+    <div class="brand"><i class="bi bi-heart-pulse"></i> Fight D Fear</div>
     <div class="call-info">
       <span>Dr. ${doctor.fullName}</span>
       <span class="badge ${audioOnly ? 'voice' : 'video'}">

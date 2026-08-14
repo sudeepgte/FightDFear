@@ -3,7 +3,18 @@ package in.sp.main.Controller;
 import in.sp.main.Config.JwtUtil;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
+import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.ServiceProviderProfileService;
+import in.sp.main.Service.ServiceProviderRegistrationService;
+import in.sp.main.Service.WomenLawyerCareService;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import in.sp.main.Util.LawyerCategories;
 import in.sp.main.Util.MobileValidation;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +47,76 @@ public class MobileMarketplaceProviderAuthController {
     private PasswordService passwordService;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private ServiceProviderRegistrationService providerRegistrationService;
+    @Autowired
+    private ServiceProviderProfileService providerProfileService;
+    @Autowired
+    private MarketplaceMessageRepository messageRepo;
+    @Autowired
+    private WomenLawyerCareService lawyerCareService;
+    @Autowired
+    private FileUploadService fileUploadService;
 
+    @PostMapping("/otp/send-email")
+    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
+        try {
+            providerRegistrationService.sendRegistrationOtp(body == null ? null : body.get("email"));
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "OTP sent to your email");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/otp/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody Map<String, String> body) {
+        try {
+            providerRegistrationService.verifyRegistrationOtp(
+                    body == null ? null : body.get("email"),
+                    body == null ? null : body.get("otp"));
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Email verified");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/register-quick")
+    public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, Object> body) {
+        try {
+            boolean accepted = body != null && (
+                    Boolean.TRUE.equals(body.get("acceptedTerms"))
+                            || "true".equalsIgnoreCase(String.valueOf(body.get("acceptedTerms"))));
+            ServiceProvider p = providerRegistrationService.registerQuick(
+                    str(body, "fullName"),
+                    str(body, "email"),
+                    str(body, "phone"),
+                    str(body, "password"),
+                    str(body, "confirmPassword"),
+                    str(body, "emailOtp"),
+                    accepted,
+                    str(body, "category"));
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Account created. Login and complete your profile to submit for verification.");
+            res.put("providerId", p.getId());
+            res.put("partnerProfileStatus", p.getPartnerProfileStatus() == null
+                    ? null : p.getPartnerProfileStatus().name());
+            res.put("profileCompletionPct", p.getProfileCompletionPct());
+            return ResponseEntity.status(HttpStatus.CREATED).body(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    /**
+     * Legacy full registration — kept for older clients.
+     */
     @PostMapping("/register")
     public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> body) {
         String fullName = trim(body == null ? null : body.get("fullName"));
@@ -83,21 +163,25 @@ public class MobileMarketplaceProviderAuthController {
         p.setDescription(description.isBlank() ? null : description);
         p.setLocationText(locationText.isBlank() ? null : locationText);
         p.setIdentityDocumentPath("mobile-pending");
-        p.setVerificationStatus(VerificationStatus.PENDING);
         p.setRating(0.0);
+        providerProfileService.setLifecycleStatus(p, PartnerProfileStatus.REGISTERED);
         try {
             providerRepo.save(p);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(error("Could not save service partner: " + ex.getMessage()));
         }
+        providerProfileService.setLifecycleStatus(p, PartnerProfileStatus.PROFILE_INCOMPLETE);
+        providerProfileService.refreshCompletion(p);
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
-        res.put("message", "Registration submitted. Await admin verification at Marketplace Providers.");
+        res.put("message", "Registration submitted. Complete your profile and await admin verification.");
         res.put("providerId", p.getId());
         res.put("status", "PENDING");
         res.put("category", category.name());
+        res.put("partnerProfileStatus", p.getPartnerProfileStatus() == null
+                ? null : p.getPartnerProfileStatus().name());
         return ResponseEntity.status(HttpStatus.CREATED).body(res);
     }
 
@@ -117,8 +201,37 @@ public class MobileMarketplaceProviderAuthController {
             providerRepo.save(p);
         });
         if (!ok) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("Invalid password"));
-        if (p.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("Your account is pending admin verification"));
+
+        if (p.getPartnerProfileStatus() == PartnerProfileStatus.SUSPENDED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(error("Your provider account has been suspended"));
+        }
+        String expectedCategory = trim(body == null ? null : body.get("expectedCategory"));
+        if (!expectedCategory.isBlank()) {
+            ProviderCategory want = ProviderCategory.fromFlexible(expectedCategory);
+            if (want != null && p.getCategory() != want) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(
+                        want == ProviderCategory.WOMEN_LAWYER
+                                ? "This login is for Women Lawyer accounts. Use Service Partner login for other categories."
+                                : "This account does not match this portal. Use the matching Join Us / Login option."));
+            }
+        } else if (p.getCategory() == ProviderCategory.WOMEN_LAWYER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(
+                    "This is a Women Lawyer account. Use Login → Women Lawyer Login."));
+        }
+
+        PartnerProfileStatus status = p.getPartnerProfileStatus();
+        if (status == null) {
+            if (p.getVerificationStatus() == VerificationStatus.VERIFIED) {
+                providerProfileService.setLifecycleStatus(p, PartnerProfileStatus.APPROVED);
+            } else if (p.getVerificationStatus() == VerificationStatus.REJECTED) {
+                providerProfileService.setLifecycleStatus(p, PartnerProfileStatus.REJECTED);
+            } else {
+                providerProfileService.setLifecycleStatus(p, PartnerProfileStatus.PROFILE_INCOMPLETE);
+            }
+            providerProfileService.refreshCompletion(p);
+        } else {
+            providerProfileService.refreshCompletion(p);
         }
 
         session.setAttribute("loggedProvider", p);
@@ -129,7 +242,132 @@ public class MobileMarketplaceProviderAuthController {
         res.put("tokenType", "Bearer");
         res.put("role", "PROVIDER");
         res.put("provider", providerSummary(p));
+        res.put("needsProfileCompletion",
+                PartnerLifecycleSupport.needsProfileCompletion(p.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification",
+                providerProfileService.isReadyForVerification(p)
+                        && p.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> getProfile(HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        p = providerRepo.findById(p.getId()).orElse(p);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.putAll(providerProfileService.profilePayload(p));
+        return ResponseEntity.ok(res);
+    }
+
+    @PutMapping("/profile")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateProfile(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        p = providerRepo.findById(p.getId()).orElse(p);
+        if (body != null) {
+            if (body.get("fullName") != null) p.setFullName(String.valueOf(body.get("fullName")).trim());
+            if (body.get("phone") != null) p.setPhone(String.valueOf(body.get("phone")).trim());
+            if (body.get("description") != null) {
+                String v = String.valueOf(body.get("description")).trim()
+                        .replace("₹", "Rs ").replace("\u20B9", "Rs ");
+                p.setDescription(v.isBlank() ? null : v);
+            }
+            if (body.get("locationText") != null) {
+                String v = String.valueOf(body.get("locationText")).trim()
+                        .replace("₹", "Rs ").replace("\u20B9", "Rs ");
+                p.setLocationText(v.isBlank() ? null : v);
+            }
+            if (body.get("identityDocumentPath") != null) {
+                String v = String.valueOf(body.get("identityDocumentPath")).trim();
+                p.setIdentityDocumentPath(v.isBlank() ? null : v);
+            }
+            if (body.get("category") != null && p.getCategory() != ProviderCategory.WOMEN_LAWYER) {
+                String raw = String.valueOf(body.get("category")).trim();
+                if (raw.isBlank()) {
+                    p.setCategory(null);
+                } else {
+                    ProviderCategory cat = ProviderCategory.fromFlexible(raw);
+                    if (cat == null) {
+                        return badRequest("Invalid category: " + raw);
+                    }
+                    if (cat == ProviderCategory.WOMEN_LAWYER) {
+                        return badRequest("Women Lawyer accounts must register from Join Us → Women Lawyer.");
+                    }
+                    p.setCategory(cat);
+                }
+            }
+            if (body.get("practiceAreas") != null) {
+                Object rawAreas = body.get("practiceAreas");
+                String joined = rawAreas instanceof List<?> list
+                        ? String.join(", ", list.stream().map(String::valueOf).toList())
+                        : String.valueOf(rawAreas);
+                p.setPracticeAreas(LawyerCategories.normalizeList(joined));
+            }
+            if (body.get("barCouncilId") != null) {
+                String v = String.valueOf(body.get("barCouncilId")).trim();
+                p.setBarCouncilId(v.isBlank() ? null : v);
+            }
+            Object yearsRaw = body.get("experienceYears") != null ? body.get("experienceYears") : body.get("yearsExperience");
+            if (yearsRaw != null && !String.valueOf(yearsRaw).isBlank()) {
+                try {
+                    int years = Integer.parseInt(String.valueOf(yearsRaw).trim());
+                    if (years < 0 || years > 60) return badRequest("Years of experience must be 0–60");
+                    p.setExperienceYears(years);
+                } catch (Exception e) {
+                    return badRequest("Invalid experienceYears");
+                }
+            }
+            if (body.get("languages") != null) {
+                Object rawLang = body.get("languages");
+                String joined = rawLang instanceof List<?> list
+                        ? String.join(", ", list.stream().map(String::valueOf).map(String::trim)
+                                .filter(s -> !s.isEmpty()).toList())
+                        : String.valueOf(rawLang).trim();
+                p.setLanguages(joined.isBlank() ? null : joined);
+            }
+            if (body.get("consultationFee") != null && !String.valueOf(body.get("consultationFee")).isBlank()) {
+                try {
+                    double fee = Double.parseDouble(String.valueOf(body.get("consultationFee")).trim()
+                            .replace("₹", "").replace("Rs", "").trim());
+                    if (fee < 0) return badRequest("Consultation fee cannot be negative");
+                    p.setConsultationFee(fee);
+                } catch (Exception e) {
+                    return badRequest("Invalid consultationFee");
+                }
+            }
+            if (body.get("consultationMode") != null) {
+                p.setConsultationMode(LawyerCategories.normalizeMode(String.valueOf(body.get("consultationMode"))));
+            }
+            providerProfileService.applyExtraFields(p, body);
+        }
+        providerProfileService.refreshCompletion(p);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Profile saved");
+        res.putAll(providerProfileService.profilePayload(p));
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/submit-verification")
+    public ResponseEntity<Map<String, Object>> submitVerification(HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        try {
+            ServiceProvider provider = providerRepo.findById(p.getId()).orElse(p);
+            providerRegistrationService.submitForVerification(provider);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Submitted for admin verification");
+            res.putAll(providerProfileService.profilePayload(provider));
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
     }
 
     @GetMapping("/me")
@@ -144,6 +382,10 @@ public class MobileMarketplaceProviderAuthController {
             m.put("status", b.getStatus() == null ? null : b.getStatus().name());
             m.put("requestedTime", b.getRequestedTime() == null ? null : b.getRequestedTime().toString());
             m.put("note", b.getNote());
+            m.put("coachNotes", b.getCoachNotes());
+            m.put("totalAmount", b.getTotalAmount());
+            m.put("cancelPolicy", WomenLawyerCareService.CANCEL_POLICY);
+            m.put("canCancelFree", lawyerCareService.canCancelFree(b));
             if (b.getUser() != null) {
                 m.put("clientName", b.getUser().getFullName());
                 m.put("clientPhone", b.getUser().getPhoneNumber());
@@ -167,9 +409,13 @@ public class MobileMarketplaceProviderAuthController {
             return m;
         }).toList();
 
-        double totalEarnings = enrollmentRepo.findByProviderId(p.getId()).stream()
+        double classEarnings = enrollmentRepo.findByProviderId(p.getId()).stream()
                 .filter(e -> "PAID".equalsIgnoreCase(e.getPaymentStatus()))
                 .mapToDouble(e -> e.getAmountPaid() == null ? 0.0 : e.getAmountPaid())
+                .sum();
+        double consultEarnings = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
+                .filter(b -> b.getStatus() == ProviderBookingStatus.PAID || b.getStatus() == ProviderBookingStatus.COMPLETED)
+                .mapToDouble(b -> b.getTotalAmount() == null ? 0.0 : b.getTotalAmount())
                 .sum();
 
         return ResponseEntity.ok(ok(Map.of(
@@ -177,8 +423,78 @@ public class MobileMarketplaceProviderAuthController {
                 "bookings", bookings,
                 "classes", classes,
                 "enrollments", enrollments,
-                "totalEarnings", totalEarnings
+                "totalEarnings", classEarnings + consultEarnings,
+                "payoutBalance", p.getPayoutBalance(),
+                "upiId", p.getUpiId() == null ? "" : p.getUpiId(),
+                "cancelPolicy", WomenLawyerCareService.CANCEL_POLICY,
+                "canCreateClass", p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED
         )));
+    }
+
+    @PostMapping("/payout/request")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> requestPayout(HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        try {
+            return ResponseEntity.ok(lawyerCareService.requestPayout(providerRepo.findById(p.getId()).orElse(p)));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/photos")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadPhotos(
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
+            HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        p = providerRepo.findById(p.getId()).orElse(p);
+        try {
+            if (profileImage != null && !profileImage.isEmpty()) {
+                p.setProfileImageUrl(fileUploadService.saveFile(profileImage));
+            }
+            if (galleryPhotos != null) {
+                List<String> existing = new ArrayList<>();
+                if (p.getGalleryPhotos() != null && !p.getGalleryPhotos().isBlank()) {
+                    existing.addAll(Arrays.asList(p.getGalleryPhotos().split(",")));
+                }
+                for (MultipartFile photo : galleryPhotos) {
+                    if (photo != null && !photo.isEmpty()) {
+                        existing.add(fileUploadService.saveFile(photo));
+                    }
+                }
+                p.setGalleryPhotos(String.join(",", existing.stream().map(String::trim).filter(s -> !s.isEmpty()).toList()));
+            }
+            providerRepo.save(p);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Photos saved");
+            res.put("profileImageUrl", p.getProfileImageUrl());
+            res.put("galleryPhotos", p.getGalleryPhotos());
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(error("Upload failed: " + ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/bookings/{id}/notes")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateNotes(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        ProviderBooking b = bookingRepo.findById(id).orElse(null);
+        if (b == null || b.getProvider() == null || !b.getProvider().getId().equals(p.getId())) {
+            return badRequest("Booking not found");
+        }
+        b.setCoachNotes(body == null ? "" : body.getOrDefault("coachNotes", ""));
+        bookingRepo.save(b);
+        return ResponseEntity.ok(ok(Map.of("message", "Notes saved", "coachNotes", b.getCoachNotes())));
     }
 
     @PostMapping("/bookings/{id}/status")
@@ -189,20 +505,35 @@ public class MobileMarketplaceProviderAuthController {
             HttpSession session) {
         ServiceProvider p = requireProvider(session);
         if (p == null) return unauthorized();
+        if (p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(
+                    "Your profile must be approved before you can manage bookings."));
+        }
         ProviderBooking b = bookingRepo.findById(id).orElse(null);
         if (b == null || b.getProvider() == null || !b.getProvider().getId().equals(p.getId())) {
             return badRequest("Booking not found");
         }
         String statusRaw = trim(body == null ? null : body.get("status")).toUpperCase(Locale.ROOT);
-        ProviderBookingStatus status;
+        if ("ACCEPTED".equals(statusRaw)) statusRaw = "CONFIRMED";
+        if ("REJECTED".equals(statusRaw)) statusRaw = "CANCELLED";
+        ProviderBookingStatus next;
         try {
-            status = ProviderBookingStatus.valueOf(statusRaw);
+            next = ProviderBookingStatus.valueOf(statusRaw);
         } catch (Exception e) {
-            return badRequest("Invalid booking status");
+            return badRequest("Invalid booking status. Use CONFIRMED, CANCELLED, or COMPLETED.");
         }
-        b.setStatus(status);
+        ProviderBookingStatus current = b.getStatus() == null ? ProviderBookingStatus.PENDING : b.getStatus();
+        boolean allowed = switch (current) {
+            case PENDING -> next == ProviderBookingStatus.CONFIRMED || next == ProviderBookingStatus.CANCELLED;
+            case CONFIRMED, PAID -> next == ProviderBookingStatus.COMPLETED || next == ProviderBookingStatus.CANCELLED;
+            default -> false;
+        };
+        if (!allowed) {
+            return badRequest("Cannot change booking from " + current.name() + " to " + next.name());
+        }
+        b.setStatus(next);
         bookingRepo.save(b);
-        return ResponseEntity.ok(ok(Map.of("message", "Booking updated", "status", status.name())));
+        return ResponseEntity.ok(ok(Map.of("message", "Booking updated", "status", next.name())));
     }
 
     @PostMapping("/classes")
@@ -210,6 +541,10 @@ public class MobileMarketplaceProviderAuthController {
     public ResponseEntity<Map<String, Object>> addClass(@RequestBody Map<String, Object> body, HttpSession session) {
         ServiceProvider p = requireProvider(session);
         if (p == null) return unauthorized();
+        if (p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(
+                    "Your profile must be approved before you can add classes."));
+        }
 
         String className = trim(Objects.toString(body.get("className"), ""));
         String dateTimeRaw = trim(Objects.toString(body.get("dateTime"), ""));
@@ -217,17 +552,24 @@ public class MobileMarketplaceProviderAuthController {
             return badRequest("className and dateTime are required");
         }
 
+        LocalDateTime dt = parseDateTime(dateTimeRaw);
+        if (dt == null) return badRequest("Invalid dateTime format. Use yyyy-MM-dd'T'HH:mm");
+        if (dt.isBefore(LocalDateTime.now())) return badRequest("Class date/time cannot be in the past");
+
+        double price = parseDouble(body.get("price"), 0.0);
+        if (price < 0) return badRequest("Price cannot be negative");
+        int seats = parseInt(body.get("availableSeats"), 0);
+        if (seats <= 0) return badRequest("Seats must be greater than zero");
+
         ProviderClass pc = new ProviderClass();
         pc.setProvider(p);
         pc.setClassName(className);
         pc.setDescription(trim(Objects.toString(body.get("description"), "")));
         pc.setDuration(trim(Objects.toString(body.get("duration"), "")));
-        LocalDateTime dt = parseDateTime(dateTimeRaw);
-        if (dt == null) return badRequest("Invalid dateTime format");
         pc.setDateTime(dt);
         pc.setMode(trim(Objects.toString(body.get("mode"), "Live")));
-        pc.setPrice(parseDouble(body.get("price"), 0.0));
-        pc.setAvailableSeats(Math.max(parseInt(body.get("availableSeats"), 0), 0));
+        pc.setPrice(price);
+        pc.setAvailableSeats(seats);
         pc.setMeetingLink(trim(Objects.toString(body.get("meetingLink"), "")));
         ProviderCategory cat = p.getCategory();
         String categoryRaw = trim(Objects.toString(body.get("category"), ""));
@@ -242,6 +584,41 @@ public class MobileMarketplaceProviderAuthController {
                 "message", "Class added",
                 "classItem", classDto(pc)
         )));
+    }
+
+    @GetMapping("/bookings/{id}/messages")
+    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable Long id, HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        ProviderBooking booking = bookingRepo.findById(id).orElse(null);
+        if (booking == null || booking.getProvider() == null || !booking.getProvider().getId().equals(p.getId())) {
+            return badRequest("Booking not found");
+        }
+        var items = messageRepo.findByBookingOrderByTimestampAsc(booking).stream().map(this::messageDto).toList();
+        return ResponseEntity.ok(ok(Map.of("messages", items)));
+    }
+
+    @PostMapping("/bookings/{id}/messages")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> sendBookingMessage(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        ProviderBooking booking = bookingRepo.findById(id).orElse(null);
+        if (booking == null || booking.getProvider() == null || !booking.getProvider().getId().equals(p.getId())) {
+            return badRequest("Booking not found");
+        }
+        if (booking.getStatus() != ProviderBookingStatus.CONFIRMED
+                && booking.getStatus() != ProviderBookingStatus.PAID) {
+            return badRequest("Chat is available after you confirm this booking");
+        }
+        String content = trim(Objects.toString(body == null ? null : body.get("content"), ""));
+        if (content.isBlank()) return badRequest("Message cannot be empty");
+        MarketplaceMessage msg = new MarketplaceMessage(booking, content, "PROVIDER");
+        messageRepo.save(msg);
+        return ResponseEntity.ok(ok(Map.of("message", "Sent", "item", messageDto(msg))));
     }
 
     private ServiceProvider requireProvider(HttpSession session) {
@@ -273,6 +650,11 @@ public class MobileMarketplaceProviderAuthController {
 
     private static String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private static String str(Map<String, Object> body, String key) {
+        if (body == null || body.get(key) == null) return "";
+        return String.valueOf(body.get(key)).trim();
     }
 
     private static double parseDouble(Object value, double fallback) {
@@ -317,6 +699,27 @@ public class MobileMarketplaceProviderAuthController {
         m.put("locationText", p.getLocationText());
         m.put("rating", p.getRating());
         m.put("verificationStatus", p.getVerificationStatus() == null ? null : p.getVerificationStatus().name());
+        m.put("partnerProfileStatus", p.getPartnerProfileStatus() == null
+                ? null : p.getPartnerProfileStatus().name());
+        m.put("partnerProfileStatusLabel", ServiceProviderProfileService.statusLabel(p.getPartnerProfileStatus()));
+        m.put("profileCompletionPct", p.getProfileCompletionPct() == null ? 0 : p.getProfileCompletionPct());
+        m.put("canCreateClass", p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED);
+        m.put("rejectionReason", p.getRejectionReason());
+        m.put("changesRequestedNote", p.getChangesRequestedNote());
+        m.put("missingItems", providerProfileService.missingItems(p));
+        m.put("canSubmitForVerification",
+                providerProfileService.isReadyForVerification(p)
+                        && p.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+        ServiceProviderProfileService.putLawyerFields(m, p);
+        return m;
+    }
+
+    private Map<String, Object> messageDto(MarketplaceMessage msg) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", msg.getId());
+        m.put("content", msg.getContent());
+        m.put("senderRole", msg.getSenderRole());
+        m.put("timestamp", msg.getTimestamp() == null ? null : msg.getTimestamp().getTime());
         return m;
     }
 
@@ -335,4 +738,3 @@ public class MobileMarketplaceProviderAuthController {
         return m;
     }
 }
-

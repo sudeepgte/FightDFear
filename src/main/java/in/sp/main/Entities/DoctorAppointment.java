@@ -2,6 +2,7 @@ package in.sp.main.Entities;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -59,8 +60,23 @@ public class DoctorAppointment {
     private String cancelledBy;
     private String cancelReason;
     
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String prescriptionText;
+
+    @Column(columnDefinition = "TEXT")
+    private String prescriptionJson;
+
+    @Column(columnDefinition = "TEXT")
+    private String doctorNotes;
+
+    @Column(columnDefinition = "TEXT")
+    private String reportPaths;
+
+    private Long followUpOfId;
+    @Column(name = "reminder_24h_sent")
+    private Boolean reminder24hSent = false;
+    @Column(name = "reminder_1h_sent")
+    private Boolean reminder1hSent = false;
 
     public Long getId() {
         return id;
@@ -153,5 +169,18 @@ public class DoctorAppointment {
     public void setCancelledBy(String cancelledBy) { this.cancelledBy = cancelledBy; }
     public String getCancelReason() { return cancelReason; }
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+
+    public String getPrescriptionJson() { return prescriptionJson; }
+    public void setPrescriptionJson(String prescriptionJson) { this.prescriptionJson = prescriptionJson; }
+    public String getDoctorNotes() { return doctorNotes; }
+    public void setDoctorNotes(String doctorNotes) { this.doctorNotes = doctorNotes; }
+    public String getReportPaths() { return reportPaths; }
+    public void setReportPaths(String reportPaths) { this.reportPaths = reportPaths; }
+    public Long getFollowUpOfId() { return followUpOfId; }
+    public void setFollowUpOfId(Long followUpOfId) { this.followUpOfId = followUpOfId; }
+    public Boolean getReminder24hSent() { return reminder24hSent; }
+    public void setReminder24hSent(Boolean reminder24hSent) { this.reminder24hSent = reminder24hSent; }
+    public Boolean getReminder1hSent() { return reminder1hSent; }
+    public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
 }
 

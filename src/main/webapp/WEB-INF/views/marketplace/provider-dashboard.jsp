@@ -1158,87 +1158,6 @@
                                                         <div class="fw-bold text-dark" style="font-size: 0.95rem;">${c.className}</div>
                                                         <div class="text-muted small"><i class="bi bi-clock me-1"></i> ${c.dateTime}</div>
 
-        <!-- 3. CLIENTS SECTION -->
-        <div id="clients-section" class="dashboard-section" style="display: none;">
-            <div class="top-nav">
-                <div class="greeting">
-                    <h2>My Clients & Students</h2>
-                    <p class="text-muted m-0">Review 1-on-1 private sessions and track enrolled students across all classes.</p>
-                </div>
-                <div class="d-flex gap-3 align-items-center">
-                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
-                        <i class="bi bi-bell"></i>
-                    </button>
-                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
-                        <i class="bi bi-box-arrow-right me-1"></i> Logout
-                    </a>
-                </div>
-            </div>
-
-            <div class="row g-4">
-                <!-- One-on-One Bookings Requests -->
-                <div class="col-12">
-                    <div class="glass-card">
-                        <div class="card-header-custom">
-                            <h4>One-on-One Sessions</h4>
-                            <span class="badge bg-purple-mid" style="background: var(--p-purple-mid);">${bookings.size()} Requests</span>
-                        </div>
-                        
-                        <c:if test="${empty bookings}">
-                            <div class="text-center py-5">
-                                <p class="text-muted small m-0">No private booking requests found.</p>
-                            </div>
-                        </c:if>
-                        
-                        <c:if test="${not empty bookings}">
-                            <div class="table-responsive">
-                                <table class="table premium-table align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>Client</th>
-                                            <th>Note/Request Details</th>
-                                            <th>Schedule Time</th>
-                                            <th>Status</th>
-                                            <th style="min-width: 180px;">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    <c:forEach var="b" items="${bookings}">
-                                        <tr>
-                                            <td>
-                                                <div class="fw-600">${b.user.fullName}</div>
-                                                <div class="small text-muted">#USR-${b.user.id}</div>
-                                            </td>
-                                            <td>
-                                                <div class="small text-muted" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${b.note}">${not empty b.note ? b.note : 'No session note provided'}</div>
-                                            </td>
-                                            <td>
-                                                <div class="small fw-500">${b.requestedTime}</div>
-                                            </td>
-                                            <td>
-                                                <span class="status-pill status-${b.status}">${b.status}</span>
-                                            </td>
-                                            <td id="booking-actions-${b.id}">
-                                                <div class="d-flex flex-column gap-2">
-                                                    <div class="d-flex gap-2 align-items-center">
-                                                        <select class="form-select form-select-sm fdf-input" id="status-select-${b.id}" style="width: 120px; background-color: var(--p-purple-dark) !important; color: var(--p-text-main) !important; border: 1px solid var(--p-glass-border) !important;">
-                                                            <option value="PENDING" ${b.status.name() == 'PENDING' ? 'selected' : ''}>PENDING</option>
-                                                            <option value="CONFIRMED" ${b.status.name() == 'CONFIRMED' ? 'selected' : ''}>CONFIRM</option>
-                                                            <option value="COMPLETED" ${b.status.name() == 'COMPLETED' ? 'selected' : ''}>COMPLETE</option>
-                                                            <option value="CANCELLED" ${b.status.name() == 'CANCELLED' ? 'selected' : ''}>CANCEL</option>
-                                                        </select>
-                                                        <button class="btn btn-sm btn-premium py-1 px-3 d-flex align-items-center justify-content-center" onclick="updateStatus(${b.id})" title="Update Status"><i class="bi bi-check-lg" style="font-size: 1rem;"></i></button>
-                                                    </div>
-                                                    
-                                                    <div id="comm-buttons-${b.id}" class="${b.status.name() == 'CONFIRMED' ? 'd-flex' : 'd-none'} gap-2">
-                                                        <button class="btn btn-sm btn-info w-100 py-1 px-2 rounded-3 text-white" onclick="openChat(${b.id}, '${b.user.fullName}')">
-                                                            <i class="bi bi-chat-dots-fill me-1"></i> Chat
-                                                        </button>
-                                                        <button class="btn btn-sm btn-danger w-100 py-1 px-2 rounded-3" onclick="startVideoCall(${b.id}, '${b.user.fullName}')">
-                                                            <i class="bi bi-camera-video-fill me-1"></i> Video
-                                                        </button>
-
-                                                    </div>
                                                     <span class="badge-mode ${c.mode == 'Live' ? 'badge-mode-live' : 'badge-mode-rec'}">${c.mode}</span>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center pt-2 border-top">
@@ -1610,104 +1529,16 @@
                                     </c:if>
                                 </c:forEach>
                                 <c:if test="${!hasPaid}">
-
-                                    </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </c:if>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. EARNINGS SECTION -->
-        <div id="earnings-section" class="dashboard-section" style="display: none;">
-            <div class="top-nav">
-                <div class="greeting">
-                    <h2>Earnings Ledger & Payouts</h2>
-                    <p class="text-muted m-0">Monitor class sales, completed booking logs, and request instant bank settlements.</p>
-                </div>
-                <div class="d-flex gap-3 align-items-center">
-                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
-                        <i class="bi bi-bell"></i>
-                    </button>
-                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
-                        <i class="bi bi-box-arrow-right me-1"></i> Logout
-                    </a>
-                </div>
-            </div>
-
-            <!-- Earnings stats -->
-            <div class="stats-grid">
-                <div class="stat-card" style="background: linear-gradient(135deg, rgba(219, 39, 119, 0.1) 0%, rgba(74, 30, 56, 0.3) 100%);">
-                    <div class="stat-value">₹${totalEarnings}</div>
-                    <div class="stat-label">Settled Revenue</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">
-                        <c:set var="paidCount" value="0"/>
-                        <c:forEach var="e" items="${enrollments}">
-                            <c:if test="${e.paymentStatus == 'PAID'}">
-                                <c:set var="paidCount" value="${paidCount + 1}"/>
-                            </c:if>
-                        </c:forEach>
-                        ${paidCount}
-                    </div>
-                    <div class="stat-label">Paid Class Bookings</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">
-                        <c:set var="pendingCount" value="0"/>
-                        <c:forEach var="e" items="${enrollments}">
-                            <c:if test="${e.paymentStatus != 'PAID'}">
-                                <c:set var="pendingCount" value="${pendingCount + 1}"/>
-                            </c:if>
-                        </c:forEach>
-                        ${pendingCount}
-                    </div>
-                    <div class="stat-label">Pending / Unpaid</div>
-                </div>
-            </div>
-
-            <!-- Premium ledger -->
-            <div class="glass-card">
-                <div class="card-header-custom">
-                    <h4>Premium Transaction Ledger</h4>
-                    <span class="badge bg-success" style="background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2);">Verified Transactions</span>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table premium-table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Transaction ID</th>
-                                <th>Client/Student</th>
-                                <th>Purchased Item</th>
-                                <th>Billing Date</th>
-                                <th>Settled Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:set var="hasPaid" value="false"/>
-                            <c:forEach var="e" items="${enrollments}">
-                                <c:if test="${e.paymentStatus == 'PAID'}">
-                                    <c:set var="hasPaid" value="true"/>
-
-                                    <tr>
-                                        <td colspan="6" class="text-center py-5">
-                                            <div class="empty-state-icon"><i class="bi bi-wallet2"></i></div>
-                                            <div class="empty-state-title">No earnings available yet.</div>
-                                            <div class="empty-state-desc">Settled student payments will appear in this ledger.</div>
-                                        </td>
-                                    </tr>
+                                    <tr><td colspan="6" class="text-center py-5 text-muted">No paid transactions found</td></tr>
                                 </c:if>
                             </tbody>
                         </table>
                     </div>
+
+                    </div>
                 </div>
             </div>
+        </div>
 
             <!-- 5. PROFILE SUMMARY TAB -->
             <div id="profile-section" class="dashboard-section" style="display: none;">

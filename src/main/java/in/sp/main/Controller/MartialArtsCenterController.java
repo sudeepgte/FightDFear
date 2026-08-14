@@ -230,14 +230,7 @@ public class MartialArtsCenterController {
         model.addAttribute("user", user);
         model.addAttribute("activeTab", "explore");
 
-        // Sorting days for all centers chronologically
-        for (MartialArtsCenter c : centers) {
-            if (c.getAvailableDays() != null) {
-                List<DayAvailable> sortedList = new ArrayList<>(c.getAvailableDays());
-                sortedList.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
-                c.setAvailableDays(new LinkedHashSet<>(sortedList));
-            }
-        }
+        // Removed dangerous PersistentSet modification
 
         return "userMartialDashboard";
     }
@@ -256,14 +249,23 @@ public class MartialArtsCenterController {
                                      RedirectAttributes redirectAttributes) {
         try {
             MartialArtsCenter center = centreService.getApprovedCenterById(id);
-            List<DayAvailable> sortedDays = new ArrayList<>(center.getAvailableDays());
-            sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+            if (center == null) {
+                redirectAttributes.addFlashAttribute("message", "Center not found or not approved.");
+                return "redirect:/centres/allacceptedcentres";
+            }
+            List<DayAvailable> sortedDays = new ArrayList<>();
+            if (center.getAvailableDays() != null) {
+                sortedDays.addAll(center.getAvailableDays());
+                sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+            }
 
             // Build enrolled count map for capacity display on each batch
             java.util.Map<Long, Long> enrolledCountByBatch = new java.util.HashMap<>();
-            for (MartialArtsBatch batch : center.getBatches()) {
-                long count = enrollmentRepository.countPaidByBatchId(batch.getId());
-                enrolledCountByBatch.put(batch.getId(), count);
+            if (center.getBatches() != null) {
+                for (MartialArtsBatch batch : center.getBatches()) {
+                    long count = enrollmentRepository.countPaidByBatchId(batch.getId());
+                    enrolledCountByBatch.put(batch.getId(), count);
+                }
             }
 
             model.addAttribute("center", center);
@@ -387,7 +389,7 @@ public class MartialArtsCenterController {
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
         List<Map<String, Object>> enrollList = buildEnrollmentMaps(center, enrollments);
         res.put("meta", buildDashboardMeta(center, batches, enrollments, enrollList));
-        res.put("batches", buildBatchMaps(batches, onlineClassRepository.findByCenter_Id(center.getId())));
+        res.put("batches", buildBatchMaps(batches, onlineClassRepository.findByCenterId(center.getId())));
         res.put("enrollments", enrollList);
         return res;
     }
@@ -501,7 +503,7 @@ public class MartialArtsCenterController {
 
         List<Enrollment> enrollments = centreService.getEnrolledUsersByCenter(center.getId());
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
-        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenter_Id(center.getId());
+        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenterId(center.getId());
 
         double totalEarnings = enrollments.stream()
                 .filter(e -> e.getAmountPaid() != null)
