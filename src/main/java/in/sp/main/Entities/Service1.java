@@ -128,12 +128,18 @@ public class Service1 {
 	public void setStylist(Stylist stylist) {
 		this.stylist = stylist;
 	}
-	public String getPhotoUrl() {
+    public String getPhotoUrl() {
         return photoUrl;
     }
  
     public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
+    }
+    public String getDescription() {
+        if (ingredients != null && !ingredients.isEmpty()) {
+            return "Includes: " + ingredients;
+        }
+        return "Premium Salon Service";
     }
 
     public Integer getBufferMinutes() { return bufferMinutes; }

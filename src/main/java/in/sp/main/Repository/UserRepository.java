@@ -3,6 +3,7 @@ package in.sp.main.Repository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,9 @@ import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    java.util.Optional<User> findByEmail(String email);
+    // Add method to find user by email (used for login)
+    Optional<User> findByEmail(String email);
+    Optional<User> findByPhoneNumber(String phoneNumber);
 
     List<User> findByVerificationStatus(VerificationStatus status);
 

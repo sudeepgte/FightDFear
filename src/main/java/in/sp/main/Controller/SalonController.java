@@ -24,8 +24,10 @@ import in.sp.main.Service.SalonService;
 import in.sp.main.Repository.SalonRepository;
 import in.sp.main.Repository.ServiceRepository;
 import in.sp.main.Repository.StylistRepository;
+import in.sp.main.Repository.Booking1Repository;
 import jakarta.servlet.http.HttpSession;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,6 +64,11 @@ public class SalonController {
     @Autowired
     private in.sp.main.Repository.BookingRepository bookingRepository;
 
+    @Autowired
+    private in.sp.main.Repository.Booking1Repository booking1Repository;
+
+    @Autowired
+    private in.sp.main.Repository.OfferRepository offerRepository;
 
     // Show registration form
     @GetMapping("/salons/register")
@@ -230,39 +237,203 @@ public class SalonController {
         
         Long salonId = loggedSalon.getId();
         
-        // Date range for today
-        java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
-        java.time.LocalDateTime endOfDay = java.time.LocalDate.now().atTime(java.time.LocalTime.MAX);
+        // Today's date
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime startOfDay = today.atStartOfDay();
+        java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
         
-        long todayAppts = bookingRepository.countBySalonIdAndBookingTimeBetween(salonId, startOfDay, endOfDay);
-        long completedAppts = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.COMPLETED, startOfDay, endOfDay);
-        Double todayRevenue = bookingRepository.sumRevenueBySalonIdAndDate(salonId, startOfDay, endOfDay);
-        long totalBookings = bookingRepository.countBySalonId(salonId);
+        // --- Old Booking entity counts (instant bookings) ---
+        long oldTodayAppts = bookingRepository.countBySalonIdAndBookingTimeBetween(salonId, startOfDay, endOfDay);
+        long oldCompletedAppts = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.COMPLETED, startOfDay, endOfDay);
+        Double oldTodayRevenue = bookingRepository.sumRevenueBySalonIdAndDate(salonId, startOfDay, endOfDay);
+        long oldTotalBookings = bookingRepository.countBySalonId(salonId);
         
+        // --- Booking1 entity counts (customer bookings via online form) ---
+        long newTodayAppts = booking1Repository.countBySalonAndBookingDate(loggedSalon, today);
+        long newCompletedAppts = booking1Repository.countBySalonAndStatusAndBookingDate(loggedSalon, "COMPLETED", today);
+        Double newTodayRevenue = booking1Repository.sumRevenueBySalonAndDate(loggedSalon, today);
+        long newTotalBookings = booking1Repository.countBySalon(loggedSalon);
+        
+        // Merge counts from both booking systems
+        long todayAppts = oldTodayAppts + newTodayAppts;
+        long completedAppts = oldCompletedAppts + newCompletedAppts;
+        double todayRevenue = (oldTodayRevenue != null ? oldTodayRevenue : 0.0) + (newTodayRevenue != null ? newTodayRevenue : 0.0);
+        long totalBookings = oldTotalBookings + newTotalBookings;
+        
+        // Average rating from old booking system
         List<Object[]> avgResultList = bookingRepository.getAverageRatingAndCount(salonId);
         Double avgRating = 0.0;
         long totalReviews = 0;
         if (avgResultList != null && !avgResultList.isEmpty()) {
             Object[] avgResult = avgResultList.get(0);
-            if (avgResult[0] != null) {
-                avgRating = ((Number) avgResult[0]).doubleValue();
-            }
-            if (avgResult[1] != null) {
-                totalReviews = ((Number) avgResult[1]).longValue();
-            }
+            if (avgResult[0] != null) avgRating = ((Number) avgResult[0]).doubleValue();
+            if (avgResult[1] != null) totalReviews = ((Number) avgResult[1]).longValue();
         }
-        
         avgRating = Math.round(avgRating * 10.0) / 10.0;
         
         model.addAttribute("todayApptsCount", todayAppts);
         model.addAttribute("completedApptsCount", completedAppts);
-        model.addAttribute("todayRevenue", todayRevenue != null ? todayRevenue : 0.0);
+        model.addAttribute("todayRevenue", todayRevenue);
         model.addAttribute("totalBookingsCount", totalBookings);
         model.addAttribute("averageRating", avgRating);
         model.addAttribute("totalReviews", totalReviews);
         
+        // --- Calculate Today's Real Hours ---
+        String todayHours = "09:00 AM - 09:00 PM"; // Default fallback
+        try {
+            if (loggedSalon.getOperatingHoursJson() != null && !loggedSalon.getOperatingHoursJson().isEmpty()) {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, String> hoursMap = mapper.readValue(loggedSalon.getOperatingHoursJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+                String dayName = today.getDayOfWeek().name().toLowerCase();
+                if (hoursMap.containsKey(dayName)) {
+                    String val = hoursMap.get(dayName);
+                    if (val != null && val.contains(" - ")) {
+                        String[] parts = val.split(" - ");
+                        java.time.format.DateTimeFormatter format12 = java.time.format.DateTimeFormatter.ofPattern("hh:mm a");
+                        todayHours = java.time.LocalTime.parse(parts[0]).format(format12) + " - " + java.time.LocalTime.parse(parts[1]).format(format12);
+                    } else if (val != null) {
+                        todayHours = val; // e.g. "Closed"
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore parse errors, fallback to default
+        }
+        model.addAttribute("todayHours", todayHours);
+        
+        // Top services from old booking system
         List<Object[]> topServices = bookingRepository.findTopServicesBySalonId(salonId);
         model.addAttribute("topServices", topServices);
+        
+        // Fetch salon offers to display in the dashboard
+        List<in.sp.main.Entities.Offer> salonOffers = offerRepository.findBySalonId(salonId);
+        model.addAttribute("salonOffers", salonOffers);
+        
+        // --- Business Overview (This Week) ---
+        java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        java.time.LocalDate sunday = monday.plusDays(6);
+        java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+        java.time.LocalDateTime endOfWeek = sunday.atTime(java.time.LocalTime.MAX);
+        
+        // Old booking system week stats
+        long oldWeekTotal = bookingRepository.countBySalonIdAndBookingTimeBetween(salonId, startOfWeek, endOfWeek);
+        long oldWeekCompleted = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.COMPLETED, startOfWeek, endOfWeek);
+        long oldWeekPending = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.PENDING, startOfWeek, endOfWeek);
+        Double oldWeekRevenue = bookingRepository.sumRevenueBySalonIdAndDate(salonId, startOfWeek, endOfWeek);
+        if (oldWeekRevenue == null) oldWeekRevenue = 0.0;
+        
+        // New booking system week stats
+        long newWeekTotal = booking1Repository.countBySalonAndBookingDateBetween(loggedSalon, monday, sunday);
+        long newWeekCompleted = booking1Repository.countBySalonAndStatusAndBookingDateBetween(loggedSalon, "COMPLETED", monday, sunday);
+        long newWeekPending = booking1Repository.countBySalonAndStatusAndBookingDateBetween(loggedSalon, "PENDING", monday, sunday);
+        Double newWeekRevenue = booking1Repository.sumRevenueBySalonAndDateBetween(loggedSalon, monday, sunday);
+        if (newWeekRevenue == null) newWeekRevenue = 0.0;
+        
+        long weekTotalAppts = oldWeekTotal + newWeekTotal;
+        long weekCompletedAppts = oldWeekCompleted + newWeekCompleted;
+        long weekPendingAppts = oldWeekPending + newWeekPending;
+        long weekOtherAppts = weekTotalAppts - weekCompletedAppts - weekPendingAppts;
+        if (weekOtherAppts < 0) weekOtherAppts = 0;
+        double weekRevenue = oldWeekRevenue + newWeekRevenue;
+        
+        // Daily revenue bars (merged)
+        List<Double> dailyRevenue = new java.util.ArrayList<>();
+        double maxDaily = 1.0;
+        for (int i = 0; i < 7; i++) {
+            java.time.LocalDate dayDate = monday.plusDays(i);
+            java.time.LocalDateTime sdl = dayDate.atStartOfDay();
+            java.time.LocalDateTime edl = dayDate.atTime(java.time.LocalTime.MAX);
+            Double oldDayRev = bookingRepository.sumRevenueBySalonIdAndDate(salonId, sdl, edl);
+            Double newDayRev = booking1Repository.sumRevenueBySalonAndDate(loggedSalon, dayDate);
+            double merged = (oldDayRev != null ? oldDayRev : 0.0) + (newDayRev != null ? newDayRev : 0.0);
+            dailyRevenue.add(merged);
+            if (merged > maxDaily) maxDaily = merged;
+        }
+        List<Integer> dailyRevenueHeights = new java.util.ArrayList<>();
+        for (Double rev : dailyRevenue) {
+            int height = (int) Math.max(10, (rev / maxDaily) * 100);
+            dailyRevenueHeights.add(height);
+        }
+        
+        // Donut chart percentages
+        double cPct = weekTotalAppts == 0 ? 0 : ((double) weekCompletedAppts / weekTotalAppts) * 100;
+        double pPct = weekTotalAppts == 0 ? 0 : ((double) weekPendingAppts / weekTotalAppts) * 100;
+        double oPct = weekTotalAppts == 0 ? 0 : ((double) weekOtherAppts / weekTotalAppts) * 100;
+        int offsetCompleted = 25;
+        int offsetPending = (100 - (int) cPct + 25) % 100;
+        int offsetOther = (100 - (int) cPct - (int) pPct + 25) % 100;
+        
+        model.addAttribute("weekTotalAppts", weekTotalAppts);
+        model.addAttribute("weekCompletedAppts", weekCompletedAppts);
+        model.addAttribute("weekPendingAppts", weekPendingAppts);
+        model.addAttribute("weekOtherAppts", weekOtherAppts);
+        model.addAttribute("weekRevenue", weekRevenue);
+        model.addAttribute("dailyRevenue", dailyRevenue);
+        model.addAttribute("dailyRevenueHeights", dailyRevenueHeights);
+        model.addAttribute("cPct", String.format("%.0f", cPct));
+        model.addAttribute("pPct", String.format("%.0f", pPct));
+        model.addAttribute("oPct", String.format("%.0f", oPct));
+        model.addAttribute("offsetCompleted", offsetCompleted);
+        model.addAttribute("offsetPending", offsetPending);
+        model.addAttribute("offsetOther", offsetOther);
+        // --- End Business Overview ---
+        
+        // Calendar events - merge both booking systems
+        List<in.sp.main.Entities.Booking> allBookingsList = bookingRepository.findBySalonId(salonId);
+        java.util.List<java.util.Map<String, Object>> calendarEvents = new java.util.ArrayList<>();
+        for (in.sp.main.Entities.Booking b : allBookingsList) {
+            java.util.Map<String, Object> event = new java.util.HashMap<>();
+            String serviceName = "Service";
+            if (b.getSalonService() != null) serviceName = b.getSalonService().getName();
+            else if (b.getService() != null) serviceName = b.getService().getName();
+            String userName = b.getUser() != null && b.getUser().getFullName() != null ? b.getUser().getFullName() : "Client";
+            event.put("title", userName + " - " + serviceName);
+            if (b.getBookingTime() != null) {
+                event.put("start", b.getBookingTime().toString());
+                event.put("end", b.getBookingTime().plusMinutes(60).toString());
+            }
+            if (in.sp.main.Entities.BookingStatus.COMPLETED.equals(b.getStatus())) event.put("color", "#10b981");
+            else if (in.sp.main.Entities.BookingStatus.PENDING.equals(b.getStatus())) event.put("color", "#f59e0b");
+            else if (in.sp.main.Entities.BookingStatus.CANCELLED.equals(b.getStatus())) event.put("color", "#ef4444");
+            else event.put("color", "#3b82f6");
+            calendarEvents.add(event);
+        }
+        // Add Booking1 to calendar
+        List<in.sp.main.Entities.Booking1> allBooking1List = booking1Repository.findBySalon(loggedSalon);
+        for (in.sp.main.Entities.Booking1 b1 : allBooking1List) {
+            if (b1.getBookingDate() != null && b1.getPreferredTime() != null) {
+                java.util.Map<String, Object> event = new java.util.HashMap<>();
+                String sn = "Service";
+                if (b1.getService() != null) sn = b1.getService().getName();
+                else if (b1.getTreatment() != null) sn = b1.getTreatment().getServiceName();
+                String un = b1.getUser() != null && b1.getUser().getFullName() != null ? b1.getUser().getFullName() : "Client";
+                event.put("title", un + " - " + sn);
+                java.time.LocalDateTime startDT = java.time.LocalDateTime.of(b1.getBookingDate(), b1.getPreferredTime());
+                event.put("start", startDT.toString());
+                event.put("end", startDT.plusMinutes(60).toString());
+                String st = b1.getStatus() != null ? b1.getStatus() : "PENDING";
+                if ("COMPLETED".equals(st)) event.put("color", "#10b981");
+                else if ("PENDING".equals(st)) event.put("color", "#f59e0b");
+                else if ("CANCELLED".equals(st) || "REJECTED".equals(st)) event.put("color", "#ef4444");
+                else event.put("color", "#3b82f6");
+                calendarEvents.add(event);
+            }
+        }
+        try {
+            model.addAttribute("calendarEventsJson", new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(calendarEvents));
+        } catch (Exception e) {}
+        
+        // Today's schedule from Booking1 (real customer appointments for today)
+        List<in.sp.main.Entities.Booking1> todayBookingsList = booking1Repository.findBySalonAndBookingDate(loggedSalon, today);
+        model.addAttribute("todayBookings", todayBookingsList);
+        
+        // Recent appointments (last 5 from Booking1, ordered by date desc)
+        List<in.sp.main.Entities.Booking1> recentAll = booking1Repository.findBySalonOrderByBookingDateDesc(loggedSalon);
+        model.addAttribute("recentBookings1", recentAll.size() > 5 ? recentAll.subList(0, 5) : recentAll);
+        
+        // Today's date display
+        String todayDisplay = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, EEEE"));
+        model.addAttribute("todayDate", todayDisplay);
         
         model.addAttribute("salon", loggedSalon);
         return "salon/salon-dashboard";
@@ -778,7 +949,7 @@ public class SalonController {
     // ===========================
     // 3️⃣ List all stylists of this salon
     // ===========================
-    @GetMapping("/myStylists")
+    @GetMapping({"/myStylists", "/salon/stylists"})
     public String listSalonStylists(HttpSession session, Model model) {
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
         if (loggedSalon == null) return "redirect:/salons/login";
@@ -808,11 +979,11 @@ public class SalonController {
                 return "salon/salon-stylist-view"; // JSP page
             } else {
                 model.addAttribute("error", "You cannot view this stylist.");
-                return "redirect:/salons/myStylists";
+                return "redirect:/salon/stylists";
             }
         }
         model.addAttribute("error", "Stylist not found.");
-        return "redirect:/salons/myStylists";
+        return "redirect:/salon/stylists";
     }
 
     // ===========================
@@ -833,7 +1004,7 @@ public class SalonController {
             }
         }
 
-        return "redirect:/salons/myStylists";
+        return "redirect:/salon/stylists";
     }
 	/*--------------------------------------------------------------------------------------------------*/
     
@@ -929,11 +1100,27 @@ public class SalonController {
         }
 
         try {
-        	 salonservice.deleteService(id, loggedSalon.getId());
-            redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
-        } catch (DataIntegrityViolationException e) {
+            Optional<Service1> serviceOpt = serviceRepository.findById(id);
+            if (serviceOpt.isPresent() && serviceOpt.get().getSalon().getId().equals(loggedSalon.getId())) {
+                serviceRepository.removeFromAllPackages(id);
+                serviceRepository.removeFromAllOffers(id);
+                serviceRepository.deleteBookingsForService(id);
+                serviceRepository.deleteOldBookingsForService(id);
+                serviceRepository.deleteOldBookingsForStylistService(id);
+                
+                serviceRepository.forceDeleteService(id);
+                redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Service not found or unauthorized.");
+            }
+        } catch (Exception e) {
+            String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                errorMsg += " -> " + (cause.getMessage() != null ? cause.getMessage() : cause.getClass().getName());
+            }
             redirectAttributes.addFlashAttribute("errorMessage",
-                "Cannot delete this service because it has existing bookings!");
+                "Cannot delete this service. Error: " + errorMsg.replace("\"", "'").replace("\n", " "));
         }
 
         return "redirect:/salon/viewServices";

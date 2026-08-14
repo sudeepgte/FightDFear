@@ -42,6 +42,7 @@ public class ProviderBooking {
     @Column(columnDefinition = "TEXT")
     private String coachNotes;
     private String cancelReason;
+    @Column(name = "reminder_1h_sent")
     private Boolean reminder1hSent;
     private Boolean consentPolicy;
 

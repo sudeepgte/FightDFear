@@ -133,6 +133,19 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             return "USER".equals(role) || "PROVIDER".equals(role);
         }
 
+        Long salonDestId = extractTrailingId(destination, "/topic/salon/chat/");
+        if (salonDestId != null) {
+            if ("SALON".equals(role)) {
+                return userId != null && userId.equals(salonDestId);
+            }
+            return "USER".equals(role);
+        }
+        
+        Long salonNotifId = extractTrailingId(destination, "/topic/salon/notifications/");
+        if (salonNotifId != null) {
+            return "SALON".equals(role) && userId != null && userId.equals(salonNotifId);
+        }
+
         // Deny unknown sensitive topics by default
         return false;
     }

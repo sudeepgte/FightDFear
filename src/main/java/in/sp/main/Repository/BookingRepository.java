@@ -21,6 +21,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	List<Booking> findByStylistIdAndStatus(Long stylistId, BookingStatus confirmed);
     List<Booking> findBySalonIdAndBookingTimeBetween(Long salonId, LocalDateTime start, LocalDateTime end);
     List<Booking> findBySalonIdAndStatus(Long salonId, BookingStatus status);
+    
+    List<Booking> findBySalonIdAndUserId(Long salonId, Long userId);
+    List<Booking> findBySalonIdAndUserIdOrderByBookingTimeDesc(Long salonId, Long userId);
 
     @org.springframework.data.jpa.repository.Query("SELECT b.salonService.name, COUNT(b) as bookingCount FROM Booking b WHERE b.salon.id = :salonId AND b.salonService IS NOT NULL GROUP BY b.salonService.name ORDER BY bookingCount DESC")
     List<Object[]> findTopServicesBySalonId(@org.springframework.data.repository.query.Param("salonId") Long salonId);

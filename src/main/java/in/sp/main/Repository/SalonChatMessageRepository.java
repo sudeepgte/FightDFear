@@ -11,4 +11,5 @@ import in.sp.main.Entities.SalonChatMessage;
 public interface SalonChatMessageRepository extends JpaRepository<SalonChatMessage, Long> {
     List<SalonChatMessage> findBySalonIdOrderByTimestampAsc(Long salonId);
     List<SalonChatMessage> findBySalonIdAndUserIdOrderByTimestampAsc(Long salonId, Long userId);
+    long countBySalonIdAndIsReadFalseAndSenderRoleNot(Long salonId, String senderRole);
 }

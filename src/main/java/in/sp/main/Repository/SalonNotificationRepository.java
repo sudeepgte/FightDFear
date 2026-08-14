@@ -11,4 +11,5 @@ import in.sp.main.Entities.SalonNotification;
 public interface SalonNotificationRepository extends JpaRepository<SalonNotification, Long> {
     List<SalonNotification> findBySalonIdOrderByTimestampDesc(Long salonId);
     List<SalonNotification> findBySalonIdAndIsReadFalseOrderByTimestampDesc(Long salonId);
+    long countBySalonIdAndIsReadFalse(Long salonId);
 }

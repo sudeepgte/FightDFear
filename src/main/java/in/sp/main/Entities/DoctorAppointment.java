@@ -2,6 +2,7 @@ package in.sp.main.Entities;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -59,20 +60,22 @@ public class DoctorAppointment {
     private String cancelledBy;
     private String cancelReason;
     
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String prescriptionText;
 
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String prescriptionJson;
 
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String doctorNotes;
 
-    @jakarta.persistence.Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String reportPaths;
 
     private Long followUpOfId;
+    @Column(name = "reminder_24h_sent")
     private Boolean reminder24hSent = false;
+    @Column(name = "reminder_1h_sent")
     private Boolean reminder1hSent = false;
 
     public Long getId() {
