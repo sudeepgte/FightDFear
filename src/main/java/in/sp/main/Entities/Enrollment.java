@@ -82,6 +82,7 @@ public class Enrollment {
     private String paymentStatus;
     @Column(columnDefinition = "TEXT")
     private String coachNotes;
+    @Column(name = "reminder_1h_sent")
     private Boolean reminder1hSent;
     private String cancelReason;
     private Boolean transferUsed;
