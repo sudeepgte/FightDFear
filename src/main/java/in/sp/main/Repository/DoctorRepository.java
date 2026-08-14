@@ -16,6 +16,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     Optional<Doctor> findByPhone(String phone);
     Optional<Doctor> findByMedicalRegNumber(String medicalRegNumber);
     List<Doctor> findByVerificationStatus(VerificationStatus status);
+    long countByVerificationStatus(VerificationStatus status);
     List<Doctor> findByDoctorProfileStatus(DoctorProfileStatus status);
     List<Doctor> findByDoctorProfileStatusIn(List<DoctorProfileStatus> statuses);
     List<Doctor> findByHasPendingReverificationTrue();

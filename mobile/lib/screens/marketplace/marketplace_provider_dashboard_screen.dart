@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/marketplace_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/marketplace_provider_auth_service.dart';
 import '../../widgets/module_theme.dart';
-import 'marketplace_provider_login_screen.dart';
+import '../landing/landing_screen.dart';
+import 'marketplace_booking_chat_screen.dart';
+import 'marketplace_provider_profile_completion_screen.dart';
 
 class MarketplaceProviderDashboardScreen extends StatefulWidget {
   const MarketplaceProviderDashboardScreen({super.key});
@@ -23,13 +26,15 @@ class _MarketplaceProviderDashboardScreenState
     extends State<MarketplaceProviderDashboardScreen> {
   int _tab = 0;
   bool _loading = true;
-  bool _available = true;
+  bool _busy = false;
+  int? _busyBookingId;
   String? _error;
   Map<String, dynamic> _provider = {};
   List<Map<String, dynamic>> _bookings = [];
   List<Map<String, dynamic>> _classes = [];
   List<Map<String, dynamic>> _enrollments = [];
   double _earnings = 0;
+  bool _canCreateClass = false;
 
   @override
   void initState() {
@@ -53,6 +58,9 @@ class _MarketplaceProviderDashboardScreenState
         _earnings = (res['totalEarnings'] is num)
             ? (res['totalEarnings'] as num).toDouble()
             : 0;
+        _canCreateClass = res['canCreateClass'] == true ||
+            _provider['canCreateClass'] == true ||
+            (_provider['partnerProfileStatus']?.toString() == 'APPROVED');
       } else {
         _error = res['error']?.toString() ?? 'Failed to load';
       }
@@ -66,80 +74,224 @@ class _MarketplaceProviderDashboardScreenState
     await context.read<AuthState>().api.clearToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const MarketplaceProviderLoginScreen()),
+      MaterialPageRoute(builder: (_) => const LandingScreen()),
       (_) => false,
     );
   }
 
   Future<void> _updateBookingStatus(int id, String status) async {
+    if (_busyBookingId != null) return;
+    setState(() => _busyBookingId = id);
     final api = MarketplaceProviderAuthService(context.read<AuthState>().api);
     final res = await api.updateBookingStatus(id, status);
     if (!mounted) return;
+    setState(() => _busyBookingId = null);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(res['success'] == true ? 'Status updated' : '${res['error']}'),
+        content: Text(res['success'] == true
+            ? 'Status updated to $status'
+            : (res['error']?.toString() ?? 'Update failed')),
       ),
     );
     if (res['success'] == true) _load();
   }
 
+  bool get _approved {
+    final s = _provider['partnerProfileStatus']?.toString() ?? '';
+    return _canCreateClass || s == 'APPROVED';
+  }
+
+  String get _statusLabel =>
+      _provider['partnerProfileStatusLabel']?.toString() ??
+      (_approved ? 'Approved' : 'Pending verification');
+
+  int get _profilePct {
+    final v = _provider['profileCompletionPct'];
+    if (v is num) return v.round();
+    return int.tryParse('$v') ?? 0;
+  }
+
   Future<void> _addClass() async {
+    if (!_approved) {
+      _toast('Add Class is available after admin approval.');
+      return;
+    }
+    if (_busy) return;
+
     final name = TextEditingController();
     final desc = TextEditingController();
     final duration = TextEditingController(text: '60 min');
-    final dt = TextEditingController();
-    final mode = TextEditingController(text: 'Live');
     final price = TextEditingController(text: '0');
     final seats = TextEditingController(text: '20');
     final link = TextEditingController();
+    DateTime? pickedDate;
+    TimeOfDay? pickedTime;
+    var mode = 'Live';
+    String? formError;
 
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Class / Service'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: name, decoration: const InputDecoration(labelText: 'Class Name')),
-              TextField(controller: desc, decoration: const InputDecoration(labelText: 'Description')),
-              TextField(controller: duration, decoration: const InputDecoration(labelText: 'Duration')),
-              TextField(
-                controller: dt,
-                decoration: const InputDecoration(labelText: 'DateTime yyyy-MM-ddTHH:mm'),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setLocal) => AlertDialog(
+            title: const Text('Add Class / Service'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (formError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(formError!, style: const TextStyle(color: Colors.red)),
+                    ),
+                  TextField(controller: name, decoration: const InputDecoration(labelText: 'Class name *')),
+                  TextField(controller: desc, maxLines: 2, decoration: const InputDecoration(labelText: 'Description')),
+                  TextField(controller: duration, decoration: const InputDecoration(labelText: 'Duration')),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                            final d = await showDatePicker(
+                              context: ctx,
+                              initialDate: pickedDate ?? DateTime.now().add(const Duration(days: 1)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (d != null) setLocal(() => pickedDate = d);
+                          },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'Date *', suffixIcon: Icon(Icons.calendar_today_outlined)),
+                      child: Text(pickedDate == null
+                          ? 'Select date'
+                          : '${pickedDate!.year}-${pickedDate!.month.toString().padLeft(2, '0')}-${pickedDate!.day.toString().padLeft(2, '0')}'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                            final t = await showTimePicker(
+                              context: ctx,
+                              initialTime: pickedTime ?? const TimeOfDay(hour: 10, minute: 0),
+                            );
+                            if (t != null) setLocal(() => pickedTime = t);
+                          },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(labelText: 'Time *', suffixIcon: Icon(Icons.schedule)),
+                      child: Text(pickedTime == null ? 'Select time' : pickedTime!.format(ctx)),
+                    ),
+                  ),
+                  DropdownButtonFormField<String>(
+                    initialValue: mode,
+                    decoration: const InputDecoration(labelText: 'Mode'),
+                    items: const [
+                      DropdownMenuItem(value: 'Live', child: Text('Live')),
+                      DropdownMenuItem(value: 'Online', child: Text('Online')),
+                      DropdownMenuItem(value: 'Offline', child: Text('Offline')),
+                    ],
+                    onChanged: (v) => setLocal(() => mode = v ?? mode),
+                  ),
+                  TextField(
+                    controller: price,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Price (₹) *'),
+                  ),
+                  TextField(
+                    controller: seats,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Seats *'),
+                  ),
+                  TextField(controller: link, decoration: const InputDecoration(labelText: 'Meeting link')),
+                ],
               ),
-              TextField(controller: mode, decoration: const InputDecoration(labelText: 'Mode')),
-              TextField(controller: price, decoration: const InputDecoration(labelText: 'Price')),
-              TextField(controller: seats, decoration: const InputDecoration(labelText: 'Seats')),
-              TextField(controller: link, decoration: const InputDecoration(labelText: 'Meeting link')),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: MarketplaceProviderDashboardScreen.primary),
+                onPressed: () {
+                        if (name.text.trim().isEmpty) {
+                          setLocal(() => formError = 'Enter a class name.');
+                          return;
+                        }
+                        if (pickedDate == null || pickedTime == null) {
+                          setLocal(() => formError = 'Pick a date and time.');
+                          return;
+                        }
+                        final p = double.tryParse(price.text.trim());
+                        if (p == null || p < 0) {
+                          setLocal(() => formError = 'Enter a valid price (0 or more).');
+                          return;
+                        }
+                        final s = int.tryParse(seats.text.trim());
+                        if (s == null || s <= 0) {
+                          setLocal(() => formError = 'Seats must be greater than zero.');
+                          return;
+                        }
+                        final dt = DateTime(
+                          pickedDate!.year,
+                          pickedDate!.month,
+                          pickedDate!.day,
+                          pickedTime!.hour,
+                          pickedTime!.minute,
+                        );
+                        if (dt.isBefore(DateTime.now())) {
+                          setLocal(() => formError = 'Date/time cannot be in the past.');
+                          return;
+                        }
+                        Navigator.pop(ctx, true);
+                      },
+                child: const Text('Save'),
+              ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: MarketplaceProviderDashboardScreen.primary),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+        );
+      },
     );
-    if (ok != true || !mounted) return;
+
+    String fmt(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}T${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+
+    final payloadOk = ok == true && pickedDate != null && pickedTime != null;
+    final dateTime = payloadOk
+        ? DateTime(pickedDate!.year, pickedDate!.month, pickedDate!.day, pickedTime!.hour, pickedTime!.minute)
+        : null;
+    final className = name.text.trim();
+    final description = desc.text.trim();
+    final durationText = duration.text.trim();
+    final priceVal = double.tryParse(price.text.trim()) ?? 0.0;
+    final seatsVal = int.tryParse(seats.text.trim()) ?? 0;
+    final meetingLink = link.text.trim();
+    final modeVal = mode;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final c in [name, desc, duration, price, seats, link]) {
+        c.dispose();
+      }
+    });
+
+    if (!payloadOk || dateTime == null || !mounted) return;
+    setState(() => _busy = true);
     final api = MarketplaceProviderAuthService(context.read<AuthState>().api);
     final res = await api.addClass({
-      'className': name.text.trim(),
-      'description': desc.text.trim(),
-      'duration': duration.text.trim(),
-      'dateTime': dt.text.trim(),
-      'mode': mode.text.trim(),
-      'price': double.tryParse(price.text.trim()) ?? 0.0,
-      'availableSeats': int.tryParse(seats.text.trim()) ?? 0,
-      'meetingLink': link.text.trim(),
+      'className': className,
+      'description': description,
+      'duration': durationText,
+      'dateTime': fmt(dateTime),
+      'mode': modeVal,
+      'price': priceVal,
+      'availableSeats': seatsVal,
+      'meetingLink': meetingLink,
     });
     if (!mounted) return;
+    setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res['success'] == true ? 'Class added' : '${res['error']}')),
+      SnackBar(
+        content: Text(res['success'] == true
+            ? 'Class added'
+            : (res['error']?.toString() ?? 'Could not add class')),
+      ),
     );
     if (res['success'] == true) _load();
   }
@@ -150,7 +302,7 @@ class _MarketplaceProviderDashboardScreenState
     return parts.isEmpty ? 'Partner' : parts.first;
   }
 
-  String get _category => (_provider['category']?.toString() ?? 'SERVICE').replaceAll('_', ' ');
+  String get _category => MarketplaceCatalog.labelFor(_provider['category']?.toString());
   String get _location => _provider['locationText']?.toString() ?? 'Location not set';
   String get _phone => _provider['phone']?.toString() ?? '';
   double get _rating => (_provider['rating'] is num) ? (_provider['rating'] as num).toDouble() : 0;
@@ -181,7 +333,9 @@ class _MarketplaceProviderDashboardScreenState
       backgroundColor: MarketplaceProviderDashboardScreen.softBg,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: MarketplaceProviderDashboardScreen.primary,
+        backgroundColor: _approved
+            ? MarketplaceProviderDashboardScreen.primary
+            : const Color(0xFF94A3B8),
         elevation: 6,
         onPressed: _addClass,
         child: const Icon(Icons.add, size: 28, color: Colors.white),
@@ -441,12 +595,16 @@ class _MarketplaceProviderDashboardScreenState
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
+                            color: _approved ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            'Verified Provider',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
+                          child: Text(
+                            _statusLabel,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: _approved ? const Color(0xFF166534) : const Color(0xFFB45309),
+                            ),
                           ),
                         ),
                       ],
@@ -474,39 +632,15 @@ class _MarketplaceProviderDashboardScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              GestureDetector(
-                onTap: () => setState(() => _available = !_available),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _available ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(20),
+              if (!_approved)
+                Expanded(
+                  child: Text(
+                    'Complete your profile and wait for admin approval before adding classes.',
+                    style: TextStyle(fontSize: 12, color: MarketplaceProviderDashboardScreen.muted),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _available ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _available ? 'Available Today' : 'Unavailable',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: _available ? const Color(0xFF166534) : MarketplaceProviderDashboardScreen.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const Spacer(),
+                )
+              else
+                const Spacer(),
               Text(
                 '${_classes.length} services',
                 style: const TextStyle(fontSize: 12, color: MarketplaceProviderDashboardScreen.muted, fontWeight: FontWeight.w600),
@@ -516,31 +650,24 @@ class _MarketplaceProviderDashboardScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              _metaStat('Experience', _experienceLabel()),
-              _metaStat('Member', 'Active'),
-              _metaStat('Profile', '88%'),
+              _metaStat('Category', _category),
+              _metaStat('Status', _approved ? 'Live' : 'Review'),
+              _metaStat('Profile', '$_profilePct%'),
             ],
           ),
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: const LinearProgressIndicator(
-              value: 0.88,
+            child: LinearProgressIndicator(
+              value: (_profilePct.clamp(0, 100)) / 100,
               minHeight: 6,
-              backgroundColor: Color(0xFFFCE7F3),
+              backgroundColor: const Color(0xFFFCE7F3),
               color: MarketplaceProviderDashboardScreen.primary,
             ),
           ),
         ],
       ),
     );
-  }
-
-  String _experienceLabel() {
-    final desc = _provider['description']?.toString() ?? '';
-    final m = RegExp(r'Experience:\s*(\d+)').firstMatch(desc);
-    if (m != null) return '${m.group(1)}+ yrs';
-    return '—';
   }
 
   Widget _metaStat(String label, String value) {
@@ -557,14 +684,12 @@ class _MarketplaceProviderDashboardScreenState
 
   Widget _statsGrid() {
     final items = [
-      _StatItem(Icons.account_balance_wallet_outlined, "Today's Earnings", '₹${_earnings.toStringAsFixed(0)}', const Color(0xFFFCE7F3)),
-      _StatItem(Icons.calendar_today_outlined, "Today's Bookings", '${_bookings.length}', const Color(0xFFE0E7FF)),
+      _StatItem(Icons.account_balance_wallet_outlined, 'Paid earnings', '₹${_earnings.toStringAsFixed(0)}', const Color(0xFFFCE7F3)),
+      _StatItem(Icons.calendar_today_outlined, 'Bookings', '${_bookings.length}', const Color(0xFFE0E7FF)),
       _StatItem(Icons.star_outline_rounded, 'Rating', _rating > 0 ? _rating.toStringAsFixed(1) : 'New', const Color(0xFFFEF3C7)),
-      _StatItem(Icons.groups_outlined, 'Active Clients', '${_bookings.map((b) => b['clientName']).toSet().length}', const Color(0xFFDCFCE7)),
-      _StatItem(Icons.check_circle_outline, 'Completed Jobs', '$_completedJobs', const Color(0xFFE0F2FE)),
-      _StatItem(Icons.mail_outline, 'Unread Messages', '0', const Color(0xFFFFE4E6)),
-      _StatItem(Icons.favorite_border, 'Favorites', '0', const Color(0xFFFCE7F3)),
-      _StatItem(Icons.visibility_outlined, 'Profile Views', '—', const Color(0xFFF1F5F9)),
+      _StatItem(Icons.groups_outlined, 'Clients', '${_bookings.map((b) => b['clientName']).toSet().length}', const Color(0xFFDCFCE7)),
+      _StatItem(Icons.check_circle_outline, 'Completed', '$_completedJobs', const Color(0xFFE0F2FE)),
+      _StatItem(Icons.school_outlined, 'Classes', '${_classes.length}', const Color(0xFFE0F2FE)),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -625,9 +750,11 @@ class _MarketplaceProviderDashboardScreenState
   Widget _quickActions() {
     final actions = <({IconData icon, String label, Color color, VoidCallback onTap})>[
       (icon: Icons.add_circle_outline, label: 'Add Service', color: MarketplaceProviderDashboardScreen.primary, onTap: _addClass),
-      (icon: Icons.event_available_outlined, label: 'Availability', color: const Color(0xFF16A34A), onTap: () => setState(() => _available = !_available)),
-      (icon: Icons.currency_rupee, label: 'Pricing', color: const Color(0xFFF97316), onTap: () => _toast('Set pricing from your profile')),
-      (icon: Icons.photo_library_outlined, label: 'Portfolio', color: const Color(0xFF8B5CF6), onTap: () => setState(() => _tab = 3)),
+      (icon: Icons.edit_outlined, label: 'Profile', color: const Color(0xFF8B5CF6), onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const MarketplaceProviderProfileCompletionScreen(),
+        )).then((_) => _load());
+      }),
       (icon: Icons.chat_bubble_outline, label: 'Messages', color: const Color(0xFF3B82F6), onTap: () => setState(() => _tab = 2)),
       (icon: Icons.bar_chart_rounded, label: 'Reports', color: const Color(0xFFEF4444), onTap: () => _toast('Reports coming soon')),
     ];
@@ -730,35 +857,50 @@ class _MarketplaceProviderDashboardScreenState
             Text(note, style: const TextStyle(fontSize: 12, color: MarketplaceProviderDashboardScreen.muted)),
           ],
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    final bid = id is int ? id : int.tryParse('$id');
-                    if (bid != null) _updateBookingStatus(bid, 'ACCEPTED');
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: MarketplaceProviderDashboardScreen.primary,
-                    side: const BorderSide(color: MarketplaceProviderDashboardScreen.primary),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          Builder(builder: (_) {
+            final bid = id is int ? id : int.tryParse('$id');
+            final pending = status == 'PENDING' || status == 'REQUESTED';
+            final confirmed = status == 'CONFIRMED';
+            final busy = bid != null && _busyBookingId == bid;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (pending) ...[
+                  OutlinedButton(
+                    onPressed: busy || bid == null ? null : () => _updateBookingStatus(bid, 'CONFIRMED'),
+                    child: Text(busy ? 'Updating…' : 'Accept'),
                   ),
-                  child: const Text('Accept'),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  onPressed: () => setState(() => _tab = 2),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: MarketplaceProviderDashboardScreen.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  FilledButton(
+                    onPressed: busy || bid == null ? null : () => _updateBookingStatus(bid, 'CANCELLED'),
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFBE123C)),
+                    child: const Text('Reject'),
                   ),
-                  child: const Text('Chat'),
-                ),
-              ),
-            ],
-          ),
+                ],
+                if (confirmed) ...[
+                  FilledButton(
+                    onPressed: busy || bid == null ? null : () => _updateBookingStatus(bid, 'COMPLETED'),
+                    style: FilledButton.styleFrom(backgroundColor: MarketplaceProviderDashboardScreen.primary),
+                    child: const Text('Complete'),
+                  ),
+                  OutlinedButton(
+                    onPressed: bid == null
+                        ? null
+                        : () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => MarketplaceBookingChatScreen(
+                                bookingId: bid,
+                                asProvider: true,
+                                peerName: client,
+                              ),
+                            ));
+                          },
+                    child: const Text('Chat'),
+                  ),
+                ],
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -778,6 +920,7 @@ class _MarketplaceProviderDashboardScreenState
         fg = const Color(0xFF3730A3);
         break;
       case 'REJECTED':
+      case 'CANCELLED':
         bg = const Color(0xFFFFE4E6);
         fg = const Color(0xFFBE123C);
         break;
@@ -883,9 +1026,9 @@ class _MarketplaceProviderDashboardScreenState
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _earnCol('Today', '₹${_earnings.toStringAsFixed(0)}'),
-                  _earnCol('This Week', '₹${(_earnings * 1.2).toStringAsFixed(0)}'),
-                  _earnCol('This Month', '₹${(_earnings * 3).toStringAsFixed(0)}'),
+                  _earnCol('Paid total', '₹${_earnings.toStringAsFixed(0)}'),
+                  _earnCol('Bookings', '${_bookings.length}'),
+                  _earnCol('Classes', '${_classes.length}'),
                 ],
               ),
             ],
@@ -1069,24 +1212,62 @@ class _MarketplaceProviderDashboardScreenState
   }
 
   Widget _messagesTab() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.chat_bubble_outline, size: 56, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            const Text('Messages', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: MarketplaceProviderDashboardScreen.navy)),
-            const SizedBox(height: 6),
-            const Text(
-              'Client chats will appear here once messaging is enabled for your bookings.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: MarketplaceProviderDashboardScreen.muted),
+    final chats = _bookings.where((b) {
+      final s = (b['status']?.toString() ?? '').toUpperCase();
+      return s == 'CONFIRMED';
+    }).toList();
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: chats.isEmpty
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
+              children: const [
+                Icon(Icons.chat_bubble_outline, size: 56, color: Color(0xFFCBD5E1)),
+                SizedBox(height: 12),
+                Text(
+                  'No chats yet',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: MarketplaceProviderDashboardScreen.navy),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  'Accept a booking to open chat with that client. Messaging is only available for confirmed bookings.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: MarketplaceProviderDashboardScreen.muted),
+                ),
+              ],
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              itemCount: chats.length,
+              itemBuilder: (_, i) {
+                final b = chats[i];
+                final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+                final client = b['clientName']?.toString() ?? 'Client';
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFFFE4E6),
+                      child: Text(client.isNotEmpty ? client[0].toUpperCase() : 'C'),
+                    ),
+                    title: Text(client),
+                    subtitle: Text(b['requestedTime']?.toString() ?? 'Confirmed booking'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: id == null
+                        ? null
+                        : () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => MarketplaceBookingChatScreen(
+                                bookingId: id,
+                                asProvider: true,
+                                peerName: client,
+                              ),
+                            ));
+                          },
+                  ),
+                );
+              },
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1119,6 +1300,15 @@ class _MarketplaceProviderDashboardScreenState
           subtitle: Text(_location),
           tileColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.tonal(
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const MarketplaceProviderProfileCompletionScreen(),
+            )).then((_) => _load());
+          },
+          child: const Text('Edit profile'),
         ),
         const SizedBox(height: 20),
         OutlinedButton.icon(

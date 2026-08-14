@@ -5,8 +5,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Appointments — SafeHer</title>
+  <title>My Appointments — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -39,6 +40,8 @@
 
     /* Main Layout */
     .ma-main{margin:24px 24px 0;padding:0 0 24px;display:grid;grid-template-columns:var(--sidebar-w) 1fr;gap:24px;align-items:stretch;min-height:calc(100vh - 260px)}
+    .ma-page-footer{margin-top:8px;width:100%}
+    .ma-page-footer .footer{margin:0}
 
     /* Sidebar */
     .ma-sidebar{position:sticky;top:24px;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);overflow:hidden;display:flex;flex-direction:column}
@@ -142,7 +145,7 @@
   <!-- Sidebar -->
   <aside class="ma-sidebar">
     <nav class="ma-sidebar-nav">
-      <button class="ma-sidebar-btn active" onclick="filterAppts(this,'all')">
+      <button class="ma-sidebar-btn ${empty section || section != 'prescriptions' ? 'active' : ''}" onclick="filterAppts(this,'all')">
         <i class="bi bi-grid"></i><span>All</span>
       </button>
       <button class="ma-sidebar-btn" onclick="filterAppts(this,'pending')">
@@ -153,6 +156,9 @@
       </button>
       <button class="ma-sidebar-btn" onclick="filterAppts(this,'completed')">
         <i class="bi bi-trophy"></i><span>Completed</span>
+      </button>
+      <button class="ma-sidebar-btn ${section == 'prescriptions' ? 'active' : ''}" onclick="filterAppts(this,'prescriptions')">
+        <i class="bi bi-file-earmark-medical"></i><span>Prescriptions</span>
       </button>
       <a class="ma-sidebar-btn" href="${pageContext.request.contextPath}/doctors/list">
         <i class="bi bi-search"></i><span>Find Doctors</span>
@@ -169,6 +175,14 @@
     <c:if test="${not empty param.message}">
       <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> Appointment booked successfully! Awaiting doctor confirmation.</div>
     </c:if>
+    <c:if test="${not empty error}">
+      <div class="ma-flash" style="background:rgba(244,63,94,0.1);color:#be123c;border-color:rgba(244,63,94,0.2)">
+        <i class="bi bi-exclamation-circle-fill"></i> ${error}
+      </div>
+    </c:if>
+    <c:if test="${not empty message}">
+      <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> ${message}</div>
+    </c:if>
 
     <c:if test="${empty appointments}">
       <div class="ma-empty">
@@ -182,7 +196,7 @@
     <c:if test="${not empty appointments}">
       <div class="ma-appt-list" id="apptList">
         <c:forEach var="a" items="${appointments}">
-          <div class="ma-appt-card" data-status="${a.status}">
+          <div class="ma-appt-card" data-status="${a.status}" data-has-rx="${not empty a.prescriptionText}">
             <div class="ma-doc-avatar">
               <c:choose>
                 <c:when test="${not empty a.doctor.profilePhotoPath}">
@@ -233,17 +247,34 @@
                   data-address="<c:out value='${a.doctor.clinicAddress}'/>"
                   data-date="<c:out value='${a.appointmentTime}'/>"
                   data-patient-name="<c:out value='${a.user.fullName}'/>"><c:out value="${a.prescriptionText}" /></textarea>
-                <button type="button" class="ma-join-btn" style="background:#312e81;" onclick="viewPrescription('${a.id}')">
-                  <i class="bi bi-file-earmark-medical"></i> View Rx
+                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view" class="ma-join-btn" style="background:#312e81;text-decoration:none;">
+                  <i class="bi bi-eye"></i> View Rx
+                </a>
+                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/download" class="ma-join-btn" style="background:#0d9668;text-decoration:none;">
+                  <i class="bi bi-download"></i> Download
+                </a>
+                <button type="button" class="ma-join-btn" style="background:#1e1b4b;" onclick="viewPrescription('${a.id}')">
+                  <i class="bi bi-printer"></i> Print Preview
                 </button>
               </c:if>
             </div>
           </div>
         </c:forEach>
       </div>
+      <div class="ma-empty" id="filterEmpty" style="display:none;" aria-live="polite">
+        <i class="bi bi-calendar-x" id="filterEmptyIcon"></i>
+        <h3 id="filterEmptyTitle">No appointments</h3>
+        <p id="filterEmptyText">There are no appointments in this category.</p>
+        <a href="${pageContext.request.contextPath}/doctors/list"><i class="bi bi-search"></i> Browse Doctors</a>
+      </div>
     </c:if>
 
   </div>
+</div>
+
+<%-- Global app footer (consistent with doctors list and other user pages) --%>
+<div class="ma-page-footer">
+  <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
 </div>
 
 <div id="rxModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;">
@@ -326,18 +357,69 @@
 <script>
 function filterAppts(btn, status) {
   var btns = document.querySelectorAll('.ma-sidebar-btn');
-  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   btn.classList.add('active');
 
   var cards = document.querySelectorAll('.ma-appt-card');
-  for(var i=0;i<cards.length;i++){
-    if(status === 'all') {
-      cards[i].style.display = 'flex';
+  var visible = 0;
+  for (var i = 0; i < cards.length; i++) {
+    var show = false;
+    if (status === 'all') {
+      show = true;
+    } else if (status === 'prescriptions') {
+      show = cards[i].getAttribute('data-has-rx') === 'true';
     } else {
-      cards[i].style.display = cards[i].getAttribute('data-status').toLowerCase() === status ? 'flex' : 'none';
+      show = cards[i].getAttribute('data-status').toLowerCase() === status;
     }
+    cards[i].style.display = show ? 'flex' : 'none';
+    if (show) visible++;
+  }
+
+  var emptyEl = document.getElementById('filterEmpty');
+  var listEl = document.getElementById('apptList');
+  if (!emptyEl || !listEl) return;
+
+  var messages = {
+    pending: {
+      title: 'No pending appointments',
+      text: 'You do not have any appointments awaiting doctor confirmation.'
+    },
+    confirmed: {
+      title: 'No confirmed appointments',
+      text: 'You do not have any confirmed appointments right now.'
+    },
+    completed: {
+      title: 'No completed appointments',
+      text: 'Completed consultations will appear here.'
+    },
+    prescriptions: {
+      title: 'No prescriptions yet',
+      text: 'When your doctor writes a prescription, it will show up here.'
+    },
+    all: {
+      title: 'No appointments',
+      text: 'There are no appointments to display.'
+    }
+  };
+
+  if (visible === 0) {
+    var msg = messages[status] || messages.all;
+    document.getElementById('filterEmptyTitle').textContent = msg.title;
+    document.getElementById('filterEmptyText').textContent = msg.text;
+    emptyEl.style.display = 'flex';
+    listEl.style.display = 'none';
+  } else {
+    emptyEl.style.display = 'none';
+    listEl.style.display = 'flex';
   }
 }
+
+<c:if test="${section == 'prescriptions'}">
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.querySelector('.ma-sidebar-btn[onclick*="prescriptions"]');
+  if (btn) filterAppts(btn, 'prescriptions');
+});
+</c:if>
 
 function viewPrescription(apptId) {
     var dataElem = document.getElementById('rx-data-' + apptId);
@@ -345,7 +427,7 @@ function viewPrescription(apptId) {
     
     document.getElementById('rxDocName').innerText = docName;
     document.getElementById('rxDocSpec').innerText = dataElem.getAttribute('data-doc-spec') || 'Specialist';
-    document.getElementById('rxHospName').innerText = dataElem.getAttribute('data-hosp-name') || 'SafeHer Clinic';
+    document.getElementById('rxHospName').innerText = dataElem.getAttribute('data-hosp-name') || 'Fight D Fear Clinic';
     document.getElementById('rxAddress').innerText = dataElem.getAttribute('data-address') || '—';
     document.getElementById('rxDate').innerText = dataElem.getAttribute('data-date') || '—';
     document.getElementById('rxPatientName').innerText = dataElem.getAttribute('data-patient-name') || 'Patient';

@@ -746,6 +746,12 @@
                     <p class="title mb-0">Fight D Fear Admin Dashboard</p>
                 </div>
                 <div class="meta">
+
+
+                    <a href="${pageContext.request.contextPath}/admin/reported-videos" class="badge bg-light text-dark badge-pill text-decoration-none reported-videos-link" title="View reported videos">
+                        Reported Videos: <span id="reportedVideos">-</span>
+                    </a>
+
                 </div>
             </div>
         </div>
@@ -1155,10 +1161,14 @@
                             <div>
                                 <i class="fas fa-book"></i>
                                 <h5 class="mb-1">Financial Literacy</h5>
-                                <p class="muted">Manage learning content</p>
+                                <p class="muted">Approve educators &amp; content</p>
                             </div>
+                            <span class="badge bg-warning text-dark badge-pill">
+                                <span id="pendingEducatorsCount">-</span>
+                            </span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-purple w-100 mt-auto">Manage</a>
+                        <a href="${pageContext.request.contextPath}/admin/pending-educators" class="btn btn-purple w-100 mt-auto">Review Educators</a>
+                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-outline-secondary w-100 mt-2">Manage content</a>
                     </div>
                 </div>
 
@@ -1273,7 +1283,23 @@
                                 <span id="pendingTrainersCount">-</span>
                             </span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/admin/adminDashboard#fitnessOversightTabs" class="btn btn-purple w-100 mt-auto">Review Trainers</a>
+                        <a href="${pageContext.request.contextPath}/admin/pending-trainers" class="btn btn-purple w-100 mt-auto">Review Trainers</a>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="admin-card" style="border-top: 4px solid #f43f5e;">
+                        <div class="rowTop">
+                            <div>
+                                <i class="fas fa-briefcase" style="color: #f43f5e;"></i>
+                                <h5 class="mb-1">Women Jobs</h5>
+                                <p class="muted">Verify worker applications</p>
+                            </div>
+                            <span class="badge bg-warning text-dark badge-pill" title="Pending job applications">
+                                <span id="pendingJobApplicationsCount">-</span>
+                            </span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/job-applications" class="btn btn-purple w-100 mt-auto">Review Workers</a>
                     </div>
                 </div>
 
@@ -1287,6 +1313,38 @@
                             </div>
                         </div>
                         <a href="${pageContext.request.contextPath}/admin/pending-sellers" class="btn btn-purple w-100 mt-auto">Review Sellers</a>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="admin-card">
+                        <div class="rowTop">
+                            <div>
+                                <i class="fas fa-motorcycle" style="color: #f43f5e;"></i>
+                                <h5 class="mb-1">Delivery Partners</h5>
+                                <p class="muted">Verify delivery guys</p>
+                            </div>
+                            <span class="badge bg-warning text-dark badge-pill">
+                                <span id="pendingDeliveryPartnersCount">-</span>
+                            </span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/pending-delivery-partners" class="btn btn-purple w-100 mt-auto">Review Delivery</a>
+                    </div>
+                </div>
+
+                <div class="col-md-3 col-sm-6">
+                    <div class="admin-card" style="border-top: 4px solid #8b5cf6;">
+                        <div class="rowTop">
+                            <div>
+                                <i class="fas fa-video" style="color: #8b5cf6;"></i>
+                                <h5 class="mb-1">Creator Hub</h5>
+                                <p class="muted">Approve creator applications</p>
+                            </div>
+                            <span class="badge bg-warning text-dark badge-pill">
+                                <span id="pendingCreatorsCount">-</span>
+                            </span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/pending-creators" class="btn btn-purple w-100 mt-auto">Review Creators</a>
                     </div>
                 </div>
 
@@ -1342,19 +1400,6 @@
                             </div>
                         </div>
                         <a href="${pageContext.request.contextPath}/admin/investment-revenue" class="btn btn-purple w-100 mt-auto">View Revenue</a>
-                    </div>
-                </div>
-
-                <div class="col-md-3 col-sm-6">
-                    <div class="admin-card">
-                        <div class="rowTop">
-                            <div>
-                                <i class="fas fa-sign-out-alt"></i>
-                                <h5 class="mb-1">Logout</h5>
-                                <p class="muted">End session</p>
-                            </div>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-purple w-100 mt-auto">Logout</a>
                     </div>
                 </div>
 
@@ -1488,7 +1533,42 @@
 
                             <!-- CREATOR BADGES -->
                             <div class="tab-pane fade" id="verifyContent" role="tabpanel">
-                                <h6 class="text-secondary mt-2">Eligible Creators (Reward Points > 100)</h6>
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-2 mb-2">
+                                    <h6 class="text-secondary mb-0">Pending Creator applications (Join Us)</h6>
+                                    <a href="${pageContext.request.contextPath}/admin/pending-creators" class="btn btn-sm btn-outline-primary">Open full queue</a>
+                                </div>
+                                <div class="table-responsive mb-4">
+                                    <table class="table align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Email</th>
+                                                <th>Category / City</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach var="c" items="${creatorsVerificationList}">
+                                                <tr>
+                                                    <td>${c.fullName}</td>
+                                                    <td>${c.email}</td>
+                                                    <td class="small">${empty c.creatorCategory ? '—' : c.creatorCategory}<br><span class="text-muted">${empty c.creatorCity ? '' : c.creatorCity}</span></td>
+                                                    <td><span class="badge bg-warning text-dark">${empty c.creatorProfileStatus ? 'INCOMPLETE' : c.creatorProfileStatus}</span></td>
+                                                    <td>
+                                                        <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/approve" method="post" class="d-inline">
+                                                            <button type="submit" class="btn btn-sm btn-warning text-dark font-weight-bold">Approve &amp; Badge</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            </c:forEach>
+                                            <c:if test="${empty creatorsVerificationList}">
+                                                <tr><td colspan="5" class="text-muted text-center small">No pending creator applications.</td></tr>
+                                            </c:if>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <h6 class="text-secondary mt-2">Eligible Creators (Reward Points &gt; 100)</h6>
                                 <div class="table-responsive mb-4">
                                     <table class="table align-middle">
                                         <thead>
@@ -1500,18 +1580,18 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <c:forEach var="c" items="${creatorsVerificationList}">
+                                            <c:forEach var="c" items="${eligibleCreatorsByPoints}">
                                                 <tr>
                                                     <td>${c.fullName}</td>
                                                     <td>${c.email}</td>
                                                     <td><strong class="text-warning">${c.rewardPoints}</strong></td>
                                                     <td>
-                                                        <button class="btn btn-sm btn-warning text-dark font-weight-bold" onclick="hubBadge(${c.id}, true)">Verify & Badge</button>
+                                                        <button class="btn btn-sm btn-warning text-dark font-weight-bold" onclick="hubBadge(${c.id}, true)">Verify &amp; Badge</button>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
-                                            <c:if test="${empty creatorsVerificationList}">
-                                                <tr><td colspan="4" class="text-muted text-center small">No pending creators eligible.</td></tr>
+                                            <c:if test="${empty eligibleCreatorsByPoints}">
+                                                <tr><td colspan="4" class="text-muted text-center small">No pending creators eligible by points.</td></tr>
                                             </c:if>
                                         </tbody>
                                     </table>
@@ -1823,6 +1903,10 @@
         setText("pendingDoctorsCount", data.pendingDoctors);
         setText("pendingWomenProductsCount", data.pendingWomenProducts);
         setText("pendingTrainersCount", data.pendingTrainers);
+        setText("pendingJobApplicationsCount", data.pendingJobApplications);
+        setText("pendingDeliveryPartnersCount", data.pendingDeliveryPartners);
+        setText("pendingCreatorsCount", data.pendingCreators);
+        setText("pendingEducatorsCount", data.pendingEducators);
 
         // Safety Row
         setText("stat-activeSos", data.totalLiveSos);

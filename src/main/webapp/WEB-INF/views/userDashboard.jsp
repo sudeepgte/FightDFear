@@ -81,13 +81,18 @@
         display: flex;
         gap: 25px;
         align-items: flex-start;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     .main-col {
         flex: 1;
         min-width: 0;
+        max-width: 100%;
     }
     .right-col {
         width: 320px;
+        max-width: 100%;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -99,12 +104,13 @@
         overflow: hidden;
     }
     
-    /* 4 Stat Cards */
+    /* 4 Stat Cards — fit available cards without empty grid tracks */
     .stat-cards-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
         margin-bottom: 25px;
+        width: 100%;
     }
     .stat-card-new {
         background: #fff;
@@ -163,11 +169,39 @@
         box-shadow: var(--shadow-sm);
         margin-bottom: 25px;
     }
+    /* Charts grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+        margin-bottom: 25px;
+        width: 100%;
+    }
+    .charts-grid > .panel-new {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
     .panel-header-flex {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
         margin-bottom: 20px;
+    }
+
+    /* Bottom grid */
+    .bottom-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 20px;
+        width: 100%;
+    }
+    .bottom-grid > .panel-new {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
     .panel-title {
         font-size: 1.1rem;
@@ -192,10 +226,12 @@
     .charts-grid > .panel-new {
         min-width: 0;
     }
+
     .chart-container {
         position: relative;
         height: 250px;
         width: 100%;
+
         min-width: 0;
     }
     
@@ -204,6 +240,10 @@
         display: grid;
         grid-template-columns: 2fr 1fr;
         gap: 20px;
+
+        max-width: 100%;
+        box-sizing: border-box;
+
     }
     
     /* Lists */

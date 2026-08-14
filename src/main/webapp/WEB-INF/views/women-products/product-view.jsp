@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,197 +9,202 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${product.name} — Fight D Fear Shop</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
   <style>
+    :root {
+      --pv-bg: #fffcfd;
+      --card-bg: #ffffff;
+    }
     body {
       font-family: 'Poppins', sans-serif;
-      background: #fffcfd;
+      background: var(--pv-bg);
       color: var(--fdf-text);
       min-height: 100vh;
-      padding: 40px 20px;
+      margin: 0;
+    }
+    .pv-hero {
+      background: #fff;
+      border-bottom: 1px solid var(--fdf-border);
+      padding: 28px 20px 24px;
+    }
+    .pv-hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
     }
     .back-link {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       color: var(--brand-purple);
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      margin-bottom: 30px;
-      transition: all 0.3s ease;
-      padding: 8px 16px;
+      margin-bottom: 16px;
+      padding: 8px 14px;
       background: #fff;
       border-radius: 999px;
       border: 1px solid var(--fdf-border);
       box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
     }
     .back-link:hover {
       background: var(--brand-purple);
       color: #fff;
-      transform: translateX(-5px);
     }
-    
-    .product-detail-container {
-      background: #fff;
-      border-radius: 30px;
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-      border: 1px solid var(--fdf-border);
+    .pv-page-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+      font-weight: 900;
+      color: var(--brand-purple-darker);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pv-page-title i { color: var(--brand-pink); }
+    .pv-page-subtitle {
+      margin: 8px 0 0;
+      color: var(--fdf-muted);
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .pv-container {
       max-width: 1100px;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1.2fr;
+      padding: 28px 20px 40px;
     }
-    
+
+    .product-detail-container {
+      background: var(--card-bg);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--fdf-border);
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
+      align-items: stretch;
+    }
+
     .product-image-side {
       position: relative;
-      background: #fdf2f8;
+      background: linear-gradient(165deg, #fdf2f8 0%, #f5f3ff 55%, #fff 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 30px;
-    }
-    .product-image-side img {
-      width: 100%;
-      height: 100%;
-      max-height: 500px;
-      object-fit: contain;
-      border-radius: 20px;
-      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
+      padding: 28px;
+      border-right: 1px solid var(--fdf-border);
     }
     .placeholder-icon {
-      font-size: 120px;
+      font-size: 100px;
       background: var(--gradient-primary);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
-      opacity: 0.3;
+      opacity: 0.35;
+      text-align: center;
     }
 
     .product-info-side {
-      padding: 50px;
+      padding: 36px 40px;
       display: flex;
       flex-direction: column;
     }
     .category-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
       color: var(--brand-pink);
       text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 12px;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
     }
     .product-title {
       font-family: 'Montserrat', sans-serif;
-      font-size: 34px;
+      font-size: clamp(1.5rem, 2.8vw, 2rem);
       font-weight: 900;
       color: var(--brand-purple-darker);
-      line-height: 1.2;
-      margin-bottom: 16px;
+      line-height: 1.25;
+      margin: 0 0 10px;
     }
     .seller-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
-      background: #f5f3ff;
-      border-radius: 999px;
-      font-size: 14px;
+      padding: 10px 16px;
+      background: #fafafa;
+      border-radius: 12px;
+      font-size: 13px;
       color: var(--fdf-muted);
-      margin-bottom: 30px;
+      border: 1px solid var(--fdf-border);
+      width: fit-content;
+      max-width: 100%;
     }
     .seller-badge strong { color: var(--brand-purple); }
 
-    .price-section {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .price-section .current {
-      font-size: 36px;
-      font-weight: 900;
-      color: var(--brand-purple-dark);
-    }
-    .price-section .original {
-      font-size: 18px;
-      color: #9ca3af;
-      text-decoration: line-through;
-    }
-    .price-section .disc-tag {
-      background: #fee2e2;
-      color: #ef4444;
-      padding: 6px 14px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
     .product-desc {
-      font-size: 16px;
-      line-height: 1.8;
+      font-size: 15px;
+      line-height: 1.75;
       color: #4b5563;
-      margin-bottom: 35px;
-      border-top: 1px solid #f3f4f6;
-      padding-top: 25px;
+      margin: 0 0 8px;
     }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 40px;
-    }
-    .status-pill.in { background: #ecfdf5; color: #059669; border: 1px solid #10b98133; }
-    .status-pill.out { background: #fef2f2; color: #dc2626; border: 1px solid #ef444433; }
 
     .btn-group {
       display: flex;
-      gap: 15px;
-      margin-top: auto;
+      gap: 12px;
+      margin-top: 8px;
+      align-items: stretch;
+    }
+    .btn-group form {
+      display: flex;
+      margin: 0;
+    }
+    .btn-group form.cart-form { flex: 2; }
+    .btn-group form.wish-form { flex: 0 0 auto; }
+    .btn-group form .btn-fdf-main,
+    .btn-group form .btn-fdf-secondary {
+      width: 100%;
     }
     .btn-fdf-main {
-      flex: 2;
       background: var(--gradient-primary);
       color: #fff;
       border: none;
-      padding: 18px;
-      border-radius: 16px;
-      font-size: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      font-size: 15px;
       font-weight: 800;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      transition: all 0.3s;
-      box-shadow: 0 10px 20px rgba(124, 45, 94, 0.2);
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 20px rgba(124, 45, 94, 0.18);
+      font-family: inherit;
     }
     .btn-fdf-main:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 30px rgba(124, 45, 94, 0.3);
-      filter: brightness(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(124, 45, 94, 0.28);
+      filter: brightness(1.05);
+      color: #fff;
     }
     .btn-fdf-secondary {
-      flex: 1;
       background: #fff;
       color: var(--brand-purple);
       border: 2px solid var(--fdf-border);
-      padding: 18px;
-      border-radius: 16px;
+      padding: 14px 18px;
+      border-radius: 14px;
       font-size: 16px;
       font-weight: 800;
       cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: all 0.3s;
+      gap: 8px;
+      transition: all 0.25s ease;
+      min-width: 56px;
+      font-family: inherit;
     }
     .btn-fdf-secondary:hover {
       border-color: var(--brand-purple);
@@ -211,7 +217,6 @@
       color: var(--brand-pink);
     }
 
-    /* New Specific Styles for the matched layout */
     .brand-top {
       font-size: 11px;
       font-weight: 800;
@@ -223,60 +228,95 @@
     .ratings-block {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
       font-size: 13px;
       color: #6b7280;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
     }
     .ratings-block i { color: #f59e0b; }
-    
+
     .price-box {
-      background: #fafafa;
-      border-radius: 12px;
-      padding: 16px 20px;
+      background: #f8fafc;
+      border: 1px solid #eef2f7;
+      border-radius: 14px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .price-box .current { font-size: 28px; font-weight: 900; color: #16a34a; }
-    .price-box .original { font-size: 16px; color: #9ca3af; text-decoration: line-through; }
-    
+    .price-box .current {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--brand-purple-dark);
+      line-height: 1;
+    }
+    .price-box .original {
+      font-size: 15px;
+      color: #9ca3af;
+      text-decoration: line-through;
+    }
+    .price-box .disc-tag {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .stock-text {
       color: #16a34a;
       font-weight: 700;
       font-size: 14px;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
     }
+    .stock-text.low {
+      color: #c2410c;
+      background: #fff7ed;
+      border: 1px solid #fdba74;
+      padding: 8px 14px;
+      border-radius: 10px;
+    }
+    .stock-text.out { color: #dc2626; }
 
     .highlights-box {
-      margin-top: 30px;
+      margin-top: 8px;
+      padding: 18px;
+      background: #fafafa;
+      border-radius: 14px;
+      border: 1px solid #f0f0f0;
     }
     .highlights-box h4 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--brand-purple-dark);
-      margin-bottom: 15px;
+      margin: 0 0 12px;
     }
     .highlight-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       font-size: 14px;
       color: #4b5563;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      line-height: 1.45;
     }
-    .highlight-item i { color: #16a34a; font-size: 16px; }
+    .highlight-item:last-child { margin-bottom: 0; }
+    .highlight-item i { color: #16a34a; font-size: 15px; margin-top: 2px; flex-shrink: 0; }
     .highlight-item strong { color: var(--brand-purple-dark); }
 
     .delivery-box {
-      background: #fafafa;
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 30px;
+      background: #f8fafc;
+      border: 1px solid #eef2f7;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 16px;
     }
     .delivery-box h4 {
       font-size: 14px;
@@ -284,29 +324,48 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 12px;
+      margin: 0 0 12px;
+      color: var(--brand-purple-dark);
     }
     .pincode-input-group {
       display: flex;
       gap: 10px;
+      align-items: stretch;
     }
     .pincode-input {
       flex: 1;
-      padding: 12px 16px;
+      min-width: 0;
+      padding: 12px 14px;
       border: 1px solid var(--fdf-border);
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 14px;
       outline: none;
+      font-family: inherit;
+      background: #fff;
+    }
+    .pincode-input:focus {
+      border-color: var(--brand-purple);
+      box-shadow: 0 0 0 3px rgba(124, 45, 94, 0.12);
     }
     .pincode-btn {
-      background: #166534;
-      color: #fff;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
+      background: var(--brand-purple) !important;
+      color: #fff !important;
+      border: none !important;
+      padding: 12px 18px;
+      border-radius: 10px;
       font-weight: 700;
       cursor: pointer;
+      flex-shrink: 0;
+      min-width: 148px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: filter 0.2s ease;
     }
+    .pincode-btn:hover { filter: brightness(1.08); }
     .delivery-msg {
       margin-top: 12px;
       font-size: 13px;
@@ -316,43 +375,60 @@
     .delivery-msg.success { color: #16a34a; display: block; }
     .delivery-msg.error { color: #dc2626; display: block; }
 
-    /* Additional Sections Styling */
-    .product-meta {
+    .detail-sections {
+      margin-top: 28px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      margin-top: 15px;
-      margin-bottom: 20px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid #f3f4f6;
+      flex-direction: column;
+      gap: 16px;
     }
-    .meta-item {
-      font-size: 13px;
-      color: #6b7280;
+    .detail-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      border: 1px solid var(--fdf-border);
+      box-shadow: var(--shadow-sm);
+      padding: 24px 28px;
     }
-    .meta-item strong {
-      color: var(--brand-purple-dark);
-      font-weight: 700;
+    .detail-card h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--brand-purple-darker);
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
+    .detail-card h3 i { color: var(--brand-pink); }
+    .detail-card .detail-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #4b5563;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .tags-container {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 15px;
+      margin-top: 14px;
+      margin-bottom: 4px;
     }
     .tag-badge {
       background: #fdf2f8;
       color: var(--brand-pink);
-      padding: 4px 12px;
+      padding: 5px 12px;
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
+      border: 1px solid #fce7f3;
     }
-    
+
     .tabs-section {
-      margin-top: 50px;
-      background: #fff;
-      border-radius: 30px;
+      margin-top: 28px;
+      margin-bottom: 40px;
+      background: var(--card-bg);
+      border-radius: 20px;
       box-shadow: var(--shadow-sm);
       border: 1px solid var(--fdf-border);
       overflow: hidden;
@@ -361,81 +437,72 @@
       display: flex;
       border-bottom: 1px solid var(--fdf-border);
       overflow-x: auto;
+      background: #fafafa;
     }
     .tab-btn {
       flex: 1;
-      padding: 20px;
+      padding: 18px 20px;
       background: transparent;
       border: none;
       font-size: 15px;
       font-weight: 700;
-      color: var(--fdf-muted);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
-      min-width: 150px;
-    }
-    .tab-btn.active {
       color: var(--brand-purple);
-      border-bottom-color: var(--brand-purple);
-      background: #fdf2f855;
+      cursor: default;
+      border-bottom: 3px solid var(--brand-purple);
+      min-width: 150px;
+      font-family: inherit;
     }
     .tab-content {
-      padding: 40px;
-      display: none;
+      padding: 28px;
+      display: block;
       font-size: 15px;
       line-height: 1.8;
       color: #4b5563;
     }
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
 
-    /* Gallery Styling */
     .gallery-container {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 14px;
       width: 100%;
     }
     .main-img-box {
       background: #fff;
-      border-radius: 20px;
-      height: 400px;
+      border-radius: 18px;
+      height: 420px;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
       border: 1px solid var(--fdf-border);
+      box-shadow: var(--shadow-sm);
     }
     .main-img-box img {
       width: 100%;
       height: 100%;
       object-fit: contain;
+      padding: 12px;
     }
     .thumb-strip {
       display: flex;
       gap: 10px;
       overflow-x: auto;
-      padding-bottom: 10px;
+      padding-bottom: 4px;
     }
     .thumb-box {
-      width: 80px;
-      height: 80px;
+      width: 72px;
+      height: 72px;
       border-radius: 12px;
       border: 2px solid transparent;
       overflow: hidden;
       cursor: pointer;
-      opacity: 0.7;
-      transition: all 0.3s;
+      opacity: 0.75;
+      transition: all 0.25s ease;
       flex-shrink: 0;
       background: #fff;
+      box-shadow: var(--shadow-sm);
     }
+    .thumb-box:hover { opacity: 1; }
     .thumb-box.active {
       border-color: var(--brand-pink);
       opacity: 1;
@@ -444,58 +511,90 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
+      padding: 4px;
+    }
+
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(260px, 2fr);
+      gap: 28px;
+    }
+    .review-summary {
+      padding: 20px;
+      background: #fafafa;
+      border-radius: 16px;
+      border: 1px solid #f0f0f0;
+      height: fit-content;
+    }
+    .review-item {
+      padding: 18px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .review-item:last-child { border-bottom: none; }
+
+    .pv-footer {
+      text-align: center;
+      color: var(--fdf-muted);
+      font-size: 13px;
+      padding: 12px 20px 40px;
     }
 
     @media (max-width: 992px) {
       .product-detail-container { grid-template-columns: 1fr; }
-      .product-info-side { padding: 30px; }
-      .product-image-side { height: auto; padding: 20px; }
-      .main-img-box { height: 350px; }
+      .product-image-side {
+        border-right: none;
+        border-bottom: 1px solid var(--fdf-border);
+        padding: 20px;
+      }
+      .product-info-side { padding: 28px 24px; }
+      .main-img-box { height: 340px; }
       .reviews-grid { grid-template-columns: 1fr; gap: 20px; }
     }
-    
+
     @media (max-width: 768px) {
-      body { padding: 20px 10px; }
-      .product-detail-container { border-radius: 20px; }
-      .product-info-side { padding: 20px; }
-      .product-title { font-size: 26px; }
-      .main-img-box { height: 280px; }
-      .price-box { flex-wrap: wrap; }
-      .price-box .current { font-size: 24px; }
-      .btn-group { flex-direction: column; gap: 10px; }
-      .btn-fdf-main, .btn-fdf-secondary { padding: 15px; }
-      .tab-btn { padding: 15px 10px; font-size: 14px; min-width: 130px; }
-      .tab-content { padding: 20px; }
+      .pv-hero { padding: 20px 16px 18px; }
+      .pv-container { padding: 20px 14px 32px; }
+      .product-detail-container { border-radius: 18px; }
+      .product-info-side { padding: 20px 16px; }
+      .main-img-box { height: 260px; }
+      .btn-group { flex-direction: column; }
+      .btn-group form.wish-form { width: 100%; }
+      .btn-group form.wish-form .btn-fdf-secondary { width: 100%; }
       .pincode-input-group { flex-direction: column; }
-    }
-    
-    .reviews-grid {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 40px;
+      .pincode-btn { width: 100%; min-width: 0; }
+      .detail-card { padding: 18px; }
+      .tab-content { padding: 18px; }
+      .thumb-box { width: 64px; height: 64px; }
     }
   </style>
 </head>
 <body>
-  <div style="max-width:1100px; margin: 0 auto;">
-    <a href="${pageContext.request.contextPath}/women-products" class="back-link">
-      <i class="bi bi-arrow-left"></i> Explore More Products
-    </a>
-    
+  <header class="pv-hero">
+    <div class="pv-hero-inner">
+      <a href="${pageContext.request.contextPath}/women-products" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Shop
+      </a>
+      <h1 class="pv-page-title"><i class="bi bi-bag-heart-fill"></i> Product Details</h1>
+      <p class="pv-page-subtitle">Review product information, pricing, and availability before you buy.</p>
+    </div>
+  </header>
+
+  <div class="pv-container">
     <div class="product-detail-container">
       <div class="product-image-side">
         <div class="gallery-container">
           <c:choose>
-            <c:when test="${not empty product.imagePath}">
+            <c:when test="${not empty productImageUrl}">
               <div class="main-img-box">
-                <img id="mainImage" src="${pageContext.request.contextPath}${product.imagePath}" alt="${product.name}">
+                <img id="mainImage" src="${pageContext.request.contextPath}${productImageUrl}" alt="${product.name}"
+                     onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=&quot;placeholder-icon&quot;><i class=&quot;bi bi-gift-fill&quot;></i></div>';">
               </div>
-              <c:if test="${not empty product.additionalImagePaths}">
+              <c:if test="${not empty additionalImageUrls}">
                 <div class="thumb-strip">
-                  <div class="thumb-box active" onclick="changeImage(this, '${pageContext.request.contextPath}${product.imagePath}')">
-                    <img src="${pageContext.request.contextPath}${product.imagePath}" alt="Thumbnail">
+                  <div class="thumb-box active" onclick="changeImage(this, '${pageContext.request.contextPath}${productImageUrl}')">
+                    <img src="${pageContext.request.contextPath}${productImageUrl}" alt="Thumbnail">
                   </div>
-                  <c:forEach var="addImg" items="${fn:split(product.additionalImagePaths, ',')}">
+                  <c:forEach var="addImg" items="${additionalImageUrls}">
                     <div class="thumb-box" onclick="changeImage(this, '${pageContext.request.contextPath}${addImg}')">
                       <img src="${pageContext.request.contextPath}${addImg}" alt="Thumbnail">
                     </div>
@@ -505,33 +604,57 @@
             </c:when>
             <c:otherwise>
               <div class="placeholder-icon"><i class="bi bi-gift-fill"></i></div>
+              <p style="margin-top:12px; color:var(--fdf-muted); font-weight:600; text-align:center;">No product image available</p>
             </c:otherwise>
           </c:choose>
         </div>
       </div>
-      
+
       <div class="product-info-side">
+        <div class="category-label">${product.categoryLabel}</div>
         <c:if test="${not empty product.brand}">
           <div class="brand-top">${product.brand}</div>
         </c:if>
-        <h1 class="product-title" style="margin-bottom: 8px;">${product.name}</h1>
-        
+        <h2 class="product-title">${product.name}</h2>
+
         <div class="ratings-block" onclick="document.getElementById('reviewsSection').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
           <div>
             <c:forEach begin="1" end="5" var="i">
               <i class="bi ${i <= avgRating ? 'bi-star-fill' : (i - avgRating < 1 ? 'bi-star-half' : 'bi-star')}"></i>
             </c:forEach>
           </div>
-          <span>${avgRating} (${reviewCount} reviews) | ${fn:length(reviews)} sold</span>
+          <span>${avgRating} (${reviewCount} reviews)</span>
         </div>
 
         <div class="price-box">
-          <span class="current">&#8377;${product.price}</span>
+          <span class="current">&#8377;<fmt:formatNumber value="${product.price}" maxFractionDigits="2" minFractionDigits="0"/></span>
           <c:if test="${product.originalPrice != null && product.originalPrice > product.price}">
-            <span class="original">&#8377;${product.originalPrice}</span>
-            <span style="background:#ef4444; color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:800;">${Math.round((1 - product.price / product.originalPrice) * 100)}% OFF</span>
+            <span class="original">&#8377;<fmt:formatNumber value="${product.originalPrice}" maxFractionDigits="2" minFractionDigits="0"/></span>
+            <c:set var="discPct" value="${((product.originalPrice - product.price) / product.originalPrice) * 100}" />
+            <span class="disc-tag"><fmt:formatNumber value="${discPct}" maxFractionDigits="0"/>% OFF</span>
           </c:if>
         </div>
+
+
+        <c:choose>
+          <c:when test="${product.stock == null || product.stock <= 0}">
+            <div class="stock-text out"><i class="bi bi-x-circle-fill"></i> Out of Stock</div>
+          </c:when>
+          <c:when test="${product.lowStockAlertLevel != null && product.stock <= product.lowStockAlertLevel}">
+            <div class="stock-text low">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              Hurry — only ${product.stock} left in stock!
+            </div>
+          </c:when>
+          <c:otherwise>
+            <div class="stock-text"><i class="bi bi-check-circle-fill"></i> In Stock (${product.stock} available)</div>
+          </c:otherwise>
+        </c:choose>
+
+        <c:if test="${not empty product.description}">
+          <div class="product-desc">${product.description}</div>
+        </c:if>
+
 
         <!-- Stock Availability Indicator Container -->
         <div id="stockContainer" style="margin-bottom: 20px;">
@@ -574,9 +697,10 @@
         
         <div class="product-desc" style="border:none; padding:0; margin-bottom:15px; font-size:14px;">${product.description}</div>
         
+
         <div class="highlights-box">
           <h4>Highlights</h4>
-          <div class="highlight-item"><i class="bi bi-tag-fill"></i> Category: <strong>${product.category}</strong></div>
+          <div class="highlight-item"><i class="bi bi-tag-fill"></i> Category: <strong>${product.categoryLabel}</strong></div>
           <c:if test="${not empty product.brand}">
             <div class="highlight-item"><i class="bi bi-patch-check-fill"></i> Brand: <strong>${product.brand}</strong></div>
           </c:if>
@@ -592,24 +716,41 @@
         <div class="delivery-box">
           <h4><i class="bi bi-truck"></i> Delivery</h4>
           <div class="pincode-input-group">
-            <input type="text" id="pincodeInput" class="pincode-input" placeholder="Enter pincode" maxlength="6" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-            <button class="pincode-btn" onclick="checkDelivery()">Check</button>
+            <input type="text" id="pincodeInput" class="pincode-input" placeholder="Enter 6-digit pincode"
+                   maxlength="6" inputmode="numeric" autocomplete="postal-code"
+                   aria-label="Delivery pincode"
+                   oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <button type="button" id="checkDeliveryBtn" class="pincode-btn" onclick="checkDelivery()">
+              <i class="bi bi-search"></i> Check Delivery
+            </button>
           </div>
-          <div id="deliveryMsg" class="delivery-msg"></div>
+          <div id="deliveryMsg" class="delivery-msg" role="status" aria-live="polite"></div>
         </div>
-        
-        <div class="seller-badge" style="margin-top: 30px; margin-bottom: 15px; background: #fff; border: 1px solid var(--fdf-border);">
-          <i class="bi bi-shop"></i> 
-          Seller Information: <strong>${product.seller.businessName}</strong>
+
+        <div class="seller-badge" style="margin-top: 16px;">
+          <i class="bi bi-shop"></i>
+          Sold by <strong>${product.seller.businessName}</strong>
         </div>
 
         <c:if test="${not empty product.tags}">
-          <div class="tags-container" style="margin-bottom: 25px;">
+          <div class="tags-container">
             <c:forEach var="tag" items="${fn:split(product.tags, ',')}">
               <span class="tag-badge">#${fn:trim(tag)}</span>
             </c:forEach>
           </div>
         </c:if>
+
+
+        <div class="btn-group" style="margin-top:20px;">
+          <c:if test="${product.stock > 0}">
+            <form class="cart-form" action="${pageContext.request.contextPath}/women-products/cart/add" method="post">
+              <input type="hidden" name="productId" value="${product.id}">
+              <button type="submit" class="btn-fdf-main">
+                <i class="bi bi-cart-plus-fill"></i> Add to Cart
+              </button>
+            </form>
+          </c:if>
+          <form class="wish-form" action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
 
         <div class="btn-group" style="margin-top:20px; gap:12px;">
           <!-- Buy Now Form -->
@@ -631,8 +772,9 @@
           </form>
           
           <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post" style="flex: 1;">
+
             <input type="hidden" name="productId" value="${product.id}">
-            <button type="submit" class="btn-fdf-secondary ${inWishlist ? 'active' : ''}">
+            <button type="submit" class="btn-fdf-secondary ${inWishlist ? 'active' : ''}" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
               <i class="bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}"></i>
             </button>
           </form>
@@ -640,48 +782,56 @@
       </div>
     </div>
 
-    <!-- Tabs Section -->
-    <div class="tabs-section">
-      <div class="tabs-header">
-        <c:if test="${not empty product.fullDescription}"><button class="tab-btn active" onclick="openTab(event, 'desc')">Product Description</button></c:if>
-        <c:if test="${not empty product.ingredients}"><button class="tab-btn ${empty product.fullDescription ? 'active' : ''}" onclick="openTab(event, 'ing')">Ingredients</button></c:if>
-        <c:if test="${not empty product.benefits}"><button class="tab-btn ${empty product.fullDescription && empty product.ingredients ? 'active' : ''}" onclick="openTab(event, 'ben')">Benefits</button></c:if>
-        <c:if test="${not empty product.usageInstructions}"><button class="tab-btn ${empty product.fullDescription && empty product.ingredients && empty product.benefits ? 'active' : ''}" onclick="openTab(event, 'use')">How to Use</button></c:if>
+    <c:set var="hasFullDesc" value="${not empty fullDescription}" />
+    <c:set var="hasIngredients" value="${not empty ingredients}" />
+    <c:set var="hasBenefits" value="${not empty benefits}" />
+    <c:set var="hasUsage" value="${not empty usageInstructions}" />
+    <c:if test="${hasFullDesc or hasIngredients or hasBenefits or hasUsage}">
+      <div class="detail-sections">
+        <c:if test="${hasFullDesc}">
+          <section class="detail-card">
+            <h3><i class="bi bi-card-text"></i> Product Description</h3>
+            <div class="detail-body"><c:out value="${fullDescription}" /></div>
+          </section>
+        </c:if>
+        <c:if test="${hasIngredients}">
+          <section class="detail-card" id="ingredientsSection">
+            <h3><i class="bi bi-flask"></i> Ingredients</h3>
+            <div class="detail-body"><c:out value="${ingredients}" /></div>
+          </section>
+        </c:if>
+        <c:if test="${hasBenefits}">
+          <section class="detail-card" id="benefitsSection">
+            <h3><i class="bi bi-heart-pulse"></i> Benefits</h3>
+            <div class="detail-body"><c:out value="${benefits}" /></div>
+          </section>
+        </c:if>
+        <c:if test="${hasUsage}">
+          <section class="detail-card" id="usageSection">
+            <h3><i class="bi bi-info-circle"></i> How to Use</h3>
+            <div class="detail-body"><c:out value="${usageInstructions}" /></div>
+          </section>
+        </c:if>
       </div>
-      
-      <c:if test="${not empty product.fullDescription}">
-        <div id="desc" class="tab-content active">${product.fullDescription}</div>
-      </c:if>
-      <c:if test="${not empty product.ingredients}">
-        <div id="ing" class="tab-content ${empty product.fullDescription ? 'active' : ''}">${product.ingredients}</div>
-      </c:if>
-      <c:if test="${not empty product.benefits}">
-        <div id="ben" class="tab-content ${empty product.fullDescription && empty product.ingredients ? 'active' : ''}">${product.benefits}</div>
-      </c:if>
-      <c:if test="${not empty product.usageInstructions}">
-        <div id="use" class="tab-content ${empty product.fullDescription && empty product.ingredients && empty product.benefits ? 'active' : ''}">${product.usageInstructions}</div>
-      </c:if>
-    </div>
+    </c:if>
 
-    <!-- Reviews Section -->
-    <div id="reviewsSection" class="tabs-section" style="margin-top: 30px; margin-bottom: 60px;">
+    <div id="reviewsSection" class="tabs-section">
       <div class="tabs-header">
-        <button class="tab-btn active">Customer Ratings & Reviews</button>
+        <button type="button" class="tab-btn">Customer Ratings &amp; Reviews</button>
       </div>
-      <div class="tab-content active">
+      <div class="tab-content">
         <c:choose>
           <c:when test="${not empty reviews}">
             <div class="reviews-grid">
-              <!-- Rating Summary -->
-              <div style="padding: 20px; background: #fafafa; border-radius: 20px; height: fit-content;">
+              <div class="review-summary">
                 <div style="font-size: 48px; font-weight: 900; color: var(--brand-purple-dark); line-height: 1;">${avgRating}</div>
-                <div style="color: #ffca08; margin: 10px 0; font-size: 20px;">
+                <div style="color: #f59e0b; margin: 10px 0; font-size: 20px;">
                   <c:forEach begin="1" end="5" var="i">
                     <i class="bi ${i <= avgRating ? 'bi-star-fill' : (i - avgRating < 1 ? 'bi-star-half' : 'bi-star')}"></i>
                   </c:forEach>
                 </div>
                 <div style="font-size: 14px; font-weight: 700; color: var(--fdf-muted); margin-bottom: 20px;">Based on ${reviewCount} reviews</div>
-                
+
                 <div style="display: flex; flex-direction: column; gap: 8px;">
                   <c:forEach begin="1" end="5" var="i">
                     <c:set var="starLevel" value="${6-i}" />
@@ -699,11 +849,10 @@
                 </div>
               </div>
 
-              <!-- Reviews List -->
-              <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
                 <c:forEach var="r" items="${reviews}">
-                  <div style="padding: 20px; border-bottom: 1px solid #f0f0f0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <div class="review-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 12px; flex-wrap: wrap;">
                       <div style="display: flex; align-items: center; gap: 12px;">
                         <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;">
                           ${not empty r.user.fullName ? r.user.fullName.substring(0,1) : 'U'}
@@ -713,7 +862,7 @@
                           <div style="font-size: 11px; color: #9ca3af; font-weight: 600;"><i class="bi bi-patch-check-fill" style="color:#16a34a"></i> Verified Purchase</div>
                         </div>
                       </div>
-                      <div style="color: #ffca08; font-size: 12px;">
+                      <div style="color: #f59e0b; font-size: 12px;">
                         <c:forEach begin="1" end="${r.rating}"><i class="bi bi-star-fill"></i></c:forEach>
                         <c:forEach begin="${r.rating + 1}" end="5"><i class="bi bi-star" style="color: #ddd;"></i></c:forEach>
                       </div>
@@ -734,62 +883,63 @@
         </c:choose>
       </div>
     </div>
-
   </div>
-  
+
   <script>
     function changeImage(element, src) {
-      document.getElementById('mainImage').src = src;
+      const main = document.getElementById('mainImage');
+      if (main) main.src = src;
       document.querySelectorAll('.thumb-box').forEach(el => el.classList.remove('active'));
       element.classList.add('active');
     }
 
-    function openTab(evt, tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      
-      document.getElementById(tabId).classList.add('active');
-      if (evt && evt.currentTarget) {
-        evt.currentTarget.classList.add('active');
-      } else if (window.event && window.event.srcElement) {
-        window.event.srcElement.classList.add('active');
-      }
-    }
-
     function checkDelivery() {
-      const input = document.getElementById('pincodeInput').value.trim();
+      const inputEl = document.getElementById('pincodeInput');
+      const input = (inputEl.value || '').trim();
       const msgBox = document.getElementById('deliveryMsg');
-      
-      const fakePincodes = ['111111', '222222', '333333', '444444', '555555', '666666', '777777', '888888', '999999', '123456', '654321'];
-      if (/^[1-8]\d{5}$/.test(input) && !fakePincodes.includes(input)) {
-        // Deterministic pseudo-random days based on pincode
-        let sum = 0;
-        for (let i = 0; i < input.length; i++) {
-          sum += parseInt(input.charAt(i));
-        }
-        
-        // Base days between 2 and 7
-        let daysToAdd = (sum % 6) + 2;
-        
-        // Special fast delivery for certain prefixes (e.g., major metros like 56 for BLR, 11 for DEL, 40 for MUM, 60 for CHN)
-        const prefix = input.substring(0, 2);
-        if (['56', '11', '40', '60'].includes(prefix)) {
-          daysToAdd = (sum % 2) + 1; // 1 to 2 days
-        }
-        
-        const deliveryDate = new Date();
-        deliveryDate.setDate(deliveryDate.getDate() + daysToAdd);
-        
-        const options = { weekday: 'long', day: 'numeric', month: 'short' };
-        const dateString = deliveryDate.toLocaleDateString('en-IN', options);
-        
-        msgBox.className = 'delivery-msg success';
-        msgBox.innerHTML = '<i class="bi bi-check-circle-fill"></i> Arriving by <strong>' + dateString + '</strong>';
-      } else {
+
+      if (!/^\d{6}$/.test(input)) {
         msgBox.className = 'delivery-msg error';
         msgBox.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> Please enter a valid 6-digit pincode.';
+        return;
       }
+
+      const fakePincodes = ['000000', '111111', '222222', '333333', '444444', '555555', '666666', '777777', '888888', '999999'];
+      if (fakePincodes.includes(input) || !/^[1-9]\d{5}$/.test(input)) {
+        msgBox.className = 'delivery-msg error';
+        msgBox.innerHTML = '<i class="bi bi-x-circle-fill"></i> Sorry, delivery is not available for this pincode.';
+        return;
+      }
+
+      let sum = 0;
+      for (let i = 0; i < input.length; i++) {
+        sum += parseInt(input.charAt(i), 10);
+      }
+      let daysToAdd = (sum % 6) + 2;
+      const prefix = input.substring(0, 2);
+      if (['56', '11', '40', '60', '70', '50'].includes(prefix)) {
+        daysToAdd = (sum % 2) + 1;
+      }
+
+      const deliveryDate = new Date();
+      deliveryDate.setDate(deliveryDate.getDate() + daysToAdd);
+      const dateString = deliveryDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+
+      msgBox.className = 'delivery-msg success';
+      msgBox.innerHTML = '<i class="bi bi-check-circle-fill"></i> Delivery available — arriving by <strong>' + dateString + '</strong>.';
     }
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const pincodeInput = document.getElementById('pincodeInput');
+      if (pincodeInput) {
+        pincodeInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            checkDelivery();
+          }
+        });
+      }
 
     // Dynamic Quantity Input Synchronization
     function updateQtyInputs(inputEl, maxStock) {
@@ -884,13 +1034,12 @@
 
     document.addEventListener("DOMContentLoaded", function() {
       setInterval(pollProductStock, 3000);
+
     });
   </script>
 
-  <footer style="margin-top: 60px; text-align: center; color: var(--fdf-muted); font-size: 14px; padding-bottom: 40px;">
-    <p>Safeher Shop — Empowering women through secure and verified marketplace.</p>
+  <footer class="pv-footer">
+    <p>Safeher Shop — Empowering women through a secure and verified marketplace.</p>
   </footer>
 </body>
 </html>
-
-

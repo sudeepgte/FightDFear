@@ -105,6 +105,16 @@ class _MartialArtsCentreScreenState extends State<MartialArtsCentreScreen> {
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: [
+          IconButton(
+            icon: Icon(c?['favorite'] == true ? Icons.favorite : Icons.favorite_border, color: MartialArtsCentreScreen.primary),
+            onPressed: () async {
+              final id = widget.centreId;
+              final res = c?['favorite'] == true
+                  ? await _api.removeFavorite(id)
+                  : await _api.addFavorite(id);
+              if (res['success'] == true) _load();
+            },
+          ),
           if (c?['phoneNumber'] != null)
             IconButton(
               icon: const Icon(Icons.phone_outlined),
@@ -159,9 +169,27 @@ class _MartialArtsCentreScreenState extends State<MartialArtsCentreScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        c?['location']?.toString() ?? '',
+                        [c?['city'], c?['state'], c?['pincode'], c?['location']]
+                            .where((e) => e != null && '$e'.trim().isNotEmpty)
+                            .join(', '),
                         style: const TextStyle(color: MartialArtsCentreScreen.textGray),
                       ),
+                      if (c?['availabilityLabel'] != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          '${c!['availabilityLabel']}',
+                          style: const TextStyle(fontWeight: FontWeight.w700, color: MartialArtsCentreScreen.primary),
+                        ),
+                      ],
+                      if (c?['trialAvailable'] == true)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 6),
+                          child: Text('Trial class available', style: TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                      if ((c?['rating'] is num) && (c!['rating'] as num) > 0)
+                        Text(
+                          '${c['rating']}★ · ${(c['count'] ?? ((c['reviews'] is List) ? (c['reviews'] as List).length : 0))} reviews',
+                        ),
                       if (c?['about'] != null && '${c!['about']}'.isNotEmpty) ...[
                         const SizedBox(height: 16),
                         const Text(
@@ -186,6 +214,34 @@ class _MartialArtsCentreScreenState extends State<MartialArtsCentreScreen> {
                           style: const TextStyle(height: 1.4, color: MartialArtsCentreScreen.textGray),
                         ),
                       ],
+                      if (c?['galleryPhotos'] is List && (c!['galleryPhotos'] as List).isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        const Text('Photos', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 110,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: (c['galleryPhotos'] as List)
+                                .map((p) => Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.network(
+                                          _mediaUrl(p.toString()),
+                                          width: 140,
+                                          height: 110,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, _, _) => const SizedBox(width: 140),
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      _ReviewsBlock(centre: c!, api: _api, onChanged: _load),
                       const SizedBox(height: 20),
                       const Text(
                         'Batches',
@@ -277,10 +333,16 @@ class _BatchCard extends StatelessWidget {
           if (batch['seatsLeft'] != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Seats left: ${batch['seatsLeft']}',
+              (batch['seatsLeft'] is num && (batch['seatsLeft'] as num) <= 0)
+                  ? 'No seats this week'
+                  : 'Seats left: ${batch['seatsLeft']}',
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ],
+          if (batch['batchToday'] == true)
+            const Text('Batch today', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+          if (batch['trialType'] != null && batch['trialType'].toString() != 'None')
+            Text('Trial: ${batch['trialType']}', style: const TextStyle(fontSize: 12)),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -290,11 +352,87 @@ class _BatchCard extends StatelessWidget {
                 backgroundColor: MartialArtsCentreScreen.primary,
                 disabledBackgroundColor: Colors.grey.shade300,
               ),
-              child: Text(full ? 'Batch full' : 'Enroll'),
+              child: Text(full ? 'No seats this week' : 'Enroll'),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ReviewsBlock extends StatefulWidget {
+  const _ReviewsBlock({required this.centre, required this.api, required this.onChanged});
+  final Map<String, dynamic> centre;
+  final MartialArtsService api;
+  final VoidCallback onChanged;
+
+  @override
+  State<_ReviewsBlock> createState() => _ReviewsBlockState();
+}
+
+class _ReviewsBlockState extends State<_ReviewsBlock> {
+  int _rating = 5;
+  final _comment = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _comment.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reviews = (widget.centre['reviews'] is List)
+        ? (widget.centre['reviews'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+        : <Map<String, dynamic>>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Reviews & ratings', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        const SizedBox(height: 8),
+        if (reviews.isEmpty) const Text('No reviews yet', style: TextStyle(color: MartialArtsCentreScreen.textGray)),
+        ...reviews.take(5).map((r) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text('${r['userName'] ?? 'Member'} · ${r['rating'] ?? ''}★'),
+              subtitle: Text(r['comment']?.toString() ?? ''),
+            )),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(
+            5,
+            (i) => IconButton(
+              onPressed: () => setState(() => _rating = i + 1),
+              icon: Icon(i < _rating ? Icons.star : Icons.star_border, color: Colors.amber),
+            ),
+          ),
+        ),
+        TextField(
+          controller: _comment,
+          decoration: const InputDecoration(labelText: 'Your review', border: OutlineInputBorder()),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton(
+          onPressed: _busy
+              ? null
+              : () async {
+                  final id = widget.centre['id'] is int
+                      ? widget.centre['id'] as int
+                      : int.tryParse('${widget.centre['id']}');
+                  if (id == null) return;
+                  setState(() => _busy = true);
+                  final res = await widget.api.addReview(id, rating: _rating, comment: _comment.text.trim());
+                  if (!mounted) return;
+                  setState(() => _busy = false);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Done')),
+                  );
+                  if (res['success'] == true) widget.onChanged();
+                },
+          child: const Text('Submit review'),
+        ),
+      ],
     );
   }
 }

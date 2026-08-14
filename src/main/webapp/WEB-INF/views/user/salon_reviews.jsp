@@ -255,16 +255,27 @@
         <!-- Write Review Card -->
         <div class="write-review-card" id="addReview">
             <h3><i class="fas fa-pen me-2"></i>Write Your Review</h3>
-            <form action="${pageContext.request.contextPath}/salon/reviews/save" method="post">
+            <c:if test="${not empty error}">
+                <div class="alert alert-danger rounded-3" role="alert"><c:out value="${error}"/></div>
+            </c:if>
+            <c:if test="${not empty msg}">
+                <div class="alert alert-success rounded-3" role="alert"><c:out value="${msg}"/></div>
+            </c:if>
+            <form id="salonReviewForm" action="${pageContext.request.contextPath}/salon/reviews/save" method="post" novalidate>
                 <input type="hidden" name="salonId" value="${salon.id}">
 
                 <div class="mb-3">
-                    <label for="userName" class="form-label fw-semibold">Your Name</label>
-                    <input type="text" name="userName" id="userName" class="form-control" placeholder="Enter your name" required>
+                    <label for="userName" class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+                    <input type="text" name="userName" id="userName" class="form-control"
+                           placeholder="Enter your name" required minlength="2" maxlength="50"
+                           pattern="[A-Za-z]([A-Za-z .'-]*[A-Za-z])?"
+                           title="Letters only (spaces, apostrophes, hyphens allowed). No numbers.">
+                    <div class="form-text">2–50 characters. Letters only — no numbers or special symbols.</div>
+                    <div class="invalid-feedback">Please enter a valid name (letters only, 2–50 characters).</div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="rating" class="form-label fw-semibold">Rating</label>
+                    <label for="rating" class="form-label fw-semibold">Rating <span class="text-danger">*</span></label>
                     <select name="rating" id="rating" class="form-select" required>
                         <option value="">Select Rating</option>
                         <option value="5">⭐⭐⭐⭐⭐ — Excellent</option>
@@ -273,12 +284,16 @@
                         <option value="2">⭐⭐ — Fair</option>
                         <option value="1">⭐ — Poor</option>
                     </select>
+                    <div class="invalid-feedback">Please select a rating.</div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="comment" class="form-label fw-semibold">Your Comment</label>
+                    <label for="comment" class="form-label fw-semibold">Your Comment <span class="text-danger">*</span></label>
                     <textarea name="comment" id="comment" class="form-control" rows="4"
-                              placeholder="Share your experience with this salon..." required></textarea>
+                              placeholder="Share your experience with this salon..."
+                              required minlength="10" maxlength="1000"></textarea>
+                    <div class="form-text">Required. Between 10 and 1000 characters.</div>
+                    <div class="invalid-feedback">Comment must be 10–1000 characters.</div>
                 </div>
 
                 <button type="submit" class="btn btn-submit-review">
@@ -290,5 +305,30 @@
     </div><!-- /reviews-page -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('salonReviewForm');
+            if (!form) return;
+            const nameEl = document.getElementById('userName');
+            nameEl.addEventListener('input', function () {
+                this.value = this.value.replace(/[^A-Za-z .'-]/g, '');
+            });
+            form.addEventListener('submit', function (e) {
+                const name = (nameEl.value || '').trim();
+                const rating = document.getElementById('rating').value;
+                const comment = (document.getElementById('comment').value || '').trim();
+                let ok = true;
+                function mark(el, valid) {
+                    el.classList.toggle('is-invalid', !valid);
+                    el.classList.toggle('is-valid', valid);
+                    if (!valid) ok = false;
+                }
+                mark(nameEl, /^[A-Za-z]([A-Za-z .'-]*[A-Za-z])?$/.test(name) && name.length >= 2 && name.length <= 50);
+                mark(document.getElementById('rating'), rating !== '' && Number(rating) >= 1 && Number(rating) <= 5);
+                mark(document.getElementById('comment'), comment.length >= 10 && comment.length <= 1000);
+                if (!ok) e.preventDefault();
+            });
+        })();
+    </script>
 </body>
 </html>

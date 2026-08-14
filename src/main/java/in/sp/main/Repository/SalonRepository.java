@@ -1,5 +1,6 @@
 package in.sp.main.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.Salon;
 
 @Repository
@@ -31,5 +33,15 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
 	                              @Param("salonId") Long salonId);
 
     List<Salon> findByApproved(boolean approved);
-	}
+
+    long countByApproved(boolean approved);
+
+    List<Salon> findByPartnerProfileStatus(PartnerProfileStatus status);
+
+    List<Salon> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
+
+    long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
+
+    List<Salon> findByPartnerProfileStatusIsNull();
+}
 

@@ -1,8 +1,11 @@
 package in.sp.main.Entities;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -371,6 +374,52 @@ public class User {
     private boolean bannedCreator = false;
     private int adViewsClaimed = 0;
 
+    @Enumerated(EnumType.STRING)
+    private PartnerProfileStatus creatorProfileStatus;
+    private String creatorCategory;
+    private String creatorCity;
+    private String creatorBio;
+    private String creatorHandle;
+    private Integer creatorProfileCompletionPct;
+    private java.time.LocalDateTime creatorSubmittedForVerificationAt;
+    private String creatorRejectionReason;
+    private String creatorChangesRequestedNote;
+
+    private String creatorDesignation;
+    private String creatorWhatsapp;
+    @Column(columnDefinition = "TEXT")
+    private String creatorAddress;
+    private String creatorState;
+    private String creatorPincode;
+    private Double creatorLatitude;
+    private Double creatorLongitude;
+    @Column(columnDefinition = "TEXT")
+    private String creatorAudience;
+    private Boolean creatorDoorService = false;
+    @Column(columnDefinition = "TEXT")
+    private String creatorFacilities;
+    private String creatorOpenDays;
+    private LocalTime creatorOpenTime;
+    private LocalTime creatorCloseTime;
+    private LocalTime creatorBreakStart;
+    private LocalTime creatorBreakEnd;
+    @Column(columnDefinition = "TEXT")
+    private String creatorBlockedDates;
+    private String creatorCredentialNumber;
+    private String creatorSessionMode;
+    private Integer creatorDurationMinutes;
+    private Integer creatorBufferMinutes;
+    private Double creatorTypicalPrice;
+    private String creatorUpiId;
+    @Column(columnDefinition = "TEXT")
+    private String creatorBankDetails;
+    private Double creatorPayoutBalance = 0.0;
+    private LocalDateTime creatorPayoutRequestedAt;
+    @Column(columnDefinition = "TEXT")
+    private String creatorGalleryPhotos;
+    private Double creatorRating = 0.0;
+    private Integer creatorReviewCount = 0;
+
     public boolean isVerifiedCreator() { return verifiedCreator; }
     public void setVerifiedCreator(boolean verifiedCreator) { this.verifiedCreator = verifiedCreator; }
     public Double getCreatorSubscriptionPrice() { return creatorSubscriptionPrice; }
@@ -381,6 +430,84 @@ public class User {
     public void setBannedCreator(boolean bannedCreator) { this.bannedCreator = bannedCreator; }
     public int getAdViewsClaimed() { return adViewsClaimed; }
     public void setAdViewsClaimed(int adViewsClaimed) { this.adViewsClaimed = adViewsClaimed; }
+
+    public PartnerProfileStatus getCreatorProfileStatus() { return creatorProfileStatus; }
+    public void setCreatorProfileStatus(PartnerProfileStatus creatorProfileStatus) { this.creatorProfileStatus = creatorProfileStatus; }
+    public String getCreatorCategory() { return creatorCategory; }
+    public void setCreatorCategory(String creatorCategory) { this.creatorCategory = creatorCategory; }
+    public String getCreatorCity() { return creatorCity; }
+    public void setCreatorCity(String creatorCity) { this.creatorCity = creatorCity; }
+    public String getCreatorBio() { return creatorBio; }
+    public void setCreatorBio(String creatorBio) { this.creatorBio = creatorBio; }
+    public String getCreatorHandle() { return creatorHandle; }
+    public void setCreatorHandle(String creatorHandle) { this.creatorHandle = creatorHandle; }
+    public Integer getCreatorProfileCompletionPct() { return creatorProfileCompletionPct; }
+    public void setCreatorProfileCompletionPct(Integer creatorProfileCompletionPct) { this.creatorProfileCompletionPct = creatorProfileCompletionPct; }
+    public java.time.LocalDateTime getCreatorSubmittedForVerificationAt() { return creatorSubmittedForVerificationAt; }
+    public void setCreatorSubmittedForVerificationAt(java.time.LocalDateTime creatorSubmittedForVerificationAt) {
+        this.creatorSubmittedForVerificationAt = creatorSubmittedForVerificationAt;
+    }
+    public String getCreatorRejectionReason() { return creatorRejectionReason; }
+    public void setCreatorRejectionReason(String creatorRejectionReason) { this.creatorRejectionReason = creatorRejectionReason; }
+    public String getCreatorChangesRequestedNote() { return creatorChangesRequestedNote; }
+    public void setCreatorChangesRequestedNote(String creatorChangesRequestedNote) { this.creatorChangesRequestedNote = creatorChangesRequestedNote; }
+
+    public String getCreatorDesignation() { return creatorDesignation; }
+    public void setCreatorDesignation(String creatorDesignation) { this.creatorDesignation = creatorDesignation; }
+    public String getCreatorWhatsapp() { return creatorWhatsapp; }
+    public void setCreatorWhatsapp(String creatorWhatsapp) { this.creatorWhatsapp = creatorWhatsapp; }
+    public String getCreatorAddress() { return creatorAddress; }
+    public void setCreatorAddress(String creatorAddress) { this.creatorAddress = creatorAddress; }
+    public String getCreatorState() { return creatorState; }
+    public void setCreatorState(String creatorState) { this.creatorState = creatorState; }
+    public String getCreatorPincode() { return creatorPincode; }
+    public void setCreatorPincode(String creatorPincode) { this.creatorPincode = creatorPincode; }
+    public Double getCreatorLatitude() { return creatorLatitude; }
+    public void setCreatorLatitude(Double creatorLatitude) { this.creatorLatitude = creatorLatitude; }
+    public Double getCreatorLongitude() { return creatorLongitude; }
+    public void setCreatorLongitude(Double creatorLongitude) { this.creatorLongitude = creatorLongitude; }
+    public String getCreatorAudience() { return creatorAudience; }
+    public void setCreatorAudience(String creatorAudience) { this.creatorAudience = creatorAudience; }
+    public Boolean getCreatorDoorService() { return creatorDoorService; }
+    public void setCreatorDoorService(Boolean creatorDoorService) { this.creatorDoorService = creatorDoorService; }
+    public String getCreatorFacilities() { return creatorFacilities; }
+    public void setCreatorFacilities(String creatorFacilities) { this.creatorFacilities = creatorFacilities; }
+    public String getCreatorOpenDays() { return creatorOpenDays; }
+    public void setCreatorOpenDays(String creatorOpenDays) { this.creatorOpenDays = creatorOpenDays; }
+    public LocalTime getCreatorOpenTime() { return creatorOpenTime; }
+    public void setCreatorOpenTime(LocalTime creatorOpenTime) { this.creatorOpenTime = creatorOpenTime; }
+    public LocalTime getCreatorCloseTime() { return creatorCloseTime; }
+    public void setCreatorCloseTime(LocalTime creatorCloseTime) { this.creatorCloseTime = creatorCloseTime; }
+    public LocalTime getCreatorBreakStart() { return creatorBreakStart; }
+    public void setCreatorBreakStart(LocalTime creatorBreakStart) { this.creatorBreakStart = creatorBreakStart; }
+    public LocalTime getCreatorBreakEnd() { return creatorBreakEnd; }
+    public void setCreatorBreakEnd(LocalTime creatorBreakEnd) { this.creatorBreakEnd = creatorBreakEnd; }
+    public String getCreatorBlockedDates() { return creatorBlockedDates; }
+    public void setCreatorBlockedDates(String creatorBlockedDates) { this.creatorBlockedDates = creatorBlockedDates; }
+    public String getCreatorCredentialNumber() { return creatorCredentialNumber; }
+    public void setCreatorCredentialNumber(String creatorCredentialNumber) { this.creatorCredentialNumber = creatorCredentialNumber; }
+    public String getCreatorSessionMode() { return creatorSessionMode; }
+    public void setCreatorSessionMode(String creatorSessionMode) { this.creatorSessionMode = creatorSessionMode; }
+    public Integer getCreatorDurationMinutes() { return creatorDurationMinutes; }
+    public void setCreatorDurationMinutes(Integer creatorDurationMinutes) { this.creatorDurationMinutes = creatorDurationMinutes; }
+    public Integer getCreatorBufferMinutes() { return creatorBufferMinutes; }
+    public void setCreatorBufferMinutes(Integer creatorBufferMinutes) { this.creatorBufferMinutes = creatorBufferMinutes; }
+    public Double getCreatorTypicalPrice() { return creatorTypicalPrice; }
+    public void setCreatorTypicalPrice(Double creatorTypicalPrice) { this.creatorTypicalPrice = creatorTypicalPrice; }
+    public String getCreatorUpiId() { return creatorUpiId; }
+    public void setCreatorUpiId(String creatorUpiId) { this.creatorUpiId = creatorUpiId; }
+    public String getCreatorBankDetails() { return creatorBankDetails; }
+    public void setCreatorBankDetails(String creatorBankDetails) { this.creatorBankDetails = creatorBankDetails; }
+    public Double getCreatorPayoutBalance() { return creatorPayoutBalance == null ? 0d : creatorPayoutBalance; }
+    public void setCreatorPayoutBalance(Double creatorPayoutBalance) { this.creatorPayoutBalance = creatorPayoutBalance; }
+    public LocalDateTime getCreatorPayoutRequestedAt() { return creatorPayoutRequestedAt; }
+    public void setCreatorPayoutRequestedAt(LocalDateTime creatorPayoutRequestedAt) { this.creatorPayoutRequestedAt = creatorPayoutRequestedAt; }
+    public String getCreatorGalleryPhotos() { return creatorGalleryPhotos; }
+    public void setCreatorGalleryPhotos(String creatorGalleryPhotos) { this.creatorGalleryPhotos = creatorGalleryPhotos; }
+    public Double getCreatorRating() { return creatorRating == null ? 0d : creatorRating; }
+    public void setCreatorRating(Double creatorRating) { this.creatorRating = creatorRating; }
+    public Integer getCreatorReviewCount() { return creatorReviewCount == null ? 0 : creatorReviewCount; }
+    public void setCreatorReviewCount(Integer creatorReviewCount) { this.creatorReviewCount = creatorReviewCount; }
 
     @Override
     public boolean equals(Object o) {

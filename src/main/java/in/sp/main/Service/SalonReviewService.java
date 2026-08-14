@@ -25,9 +25,24 @@ public class SalonReviewService {
     private SalonReviewRepository reviewRepo;
  
     public void saveReview(SalonReview review) {
-
+        if (review == null) {
+            throw new IllegalArgumentException("Review is required.");
+        }
+        String name = review.getUserName() == null ? "" : review.getUserName().trim();
+        String comment = review.getComment() == null ? "" : review.getComment().trim();
+        if (name.length() < 2 || name.length() > 50
+                || !name.matches("^[A-Za-z]([A-Za-z .'-]*[A-Za-z])?$")) {
+            throw new IllegalArgumentException("Your Name is invalid.");
+        }
+        if (review.getRating() < 1 || review.getRating() > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5.");
+        }
+        if (comment.length() < 10 || comment.length() > 1000) {
+            throw new IllegalArgumentException("Comment must be between 10 and 1000 characters.");
+        }
+        review.setUserName(name);
+        review.setComment(comment);
         reviewRepo.save(review);
-
     }
  
     public List<SalonReview> getReviewsBySalonId(Long salonId) {

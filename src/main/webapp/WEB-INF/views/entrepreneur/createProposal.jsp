@@ -207,11 +207,10 @@
                 <i class="bi bi-file-earmark-plus"></i> Create Proposal
             </a>
             
-            <!-- Imported Navbar Buttons -->
-            <a href="${pageContext.request.contextPath}/user/bookings" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/entrepreneur/bookings" class="sidebar-link">
                 <i class="bi bi-calendar-check"></i> My Bookings
             </a>
-            <a href="${pageContext.request.contextPath}/users/wallet" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/entrepreneur/wallet" class="sidebar-link">
                 <i class="bi bi-wallet2"></i> Wallet
             </a>
             <c:if test="${not empty user}">

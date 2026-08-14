@@ -96,15 +96,15 @@
                     <h5 class="card-title">${service.name}</h5>
                     <p class="card-text">
                         <strong>Category:</strong> ${service.category}<br>
-                        <strong>Price:</strong> ₹${service.price}<br>
+                        <strong>Price:</strong> &#8377;${service.price}<br>
                         <strong>Duration:</strong> ${service.durationMinutes} min<br>
                         <strong>Salon:</strong> ${service.salon.name}<br>
                         <strong>Contact:</strong> ${service.salon.phone}<br>
                         <strong>Address:</strong> ${service.salon.address}
                     </p>
                     <div class="card-buttons">
-                        <a href="${pageContext.request.contextPath}/salon/viewSalonProfile?id=${service.salon.id}" class="btn btn-outline-primary btn-sm">View Parlour Profile</a>
-                        <a href="${pageContext.request.contextPath}/booking?serviceId=${service.id}" class="btn btn-custom btn-book">Book Now</a>
+                        <a href="${pageContext.request.contextPath}/user/salon/view?id=${service.salon.id}" class="btn btn-outline-primary btn-sm">View Parlour Profile</a>
+                        <a href="${pageContext.request.contextPath}/booking/new?serviceId=${service.id}" class="btn btn-custom btn-book">Book Now</a>
                         
                     </div>
                 </div>

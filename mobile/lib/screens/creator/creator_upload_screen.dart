@@ -4,20 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/creator_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/creator_hub_service.dart';
 
 class CreatorUploadScreen extends StatefulWidget {
   const CreatorUploadScreen({super.key});
 
-  static const _categories = [
-    'Safety Awareness',
-    'Entrepreneurship',
-    'Financial Literacy',
-    'Skill Development',
-    'Inspirational',
-    'Entertainment',
-  ];
+  static const _categories = CreatorCatalog.categories;
 
   @override
   State<CreatorUploadScreen> createState() => _CreatorUploadScreenState();
@@ -143,7 +137,7 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
               items: CreatorUploadScreen._categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (v) => setState(() => _category = v ?? _category),

@@ -45,6 +45,9 @@ public class MobileMartialArtsExtrasController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
+
     @GetMapping("/training-journey")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> trainingJourney(HttpSession session) {
@@ -362,6 +365,12 @@ public class MobileMartialArtsExtrasController {
         map.put("classStatus", oc.getStatus() != null ? oc.getStatus().name() : "UPCOMING");
         map.put("recordingLink", oc.getRecordingLink());
         map.put("centerName", oc.getCenter() != null ? oc.getCenter().getName() : "Dojo");
+        boolean canJoin = martialArtsCareService.canJoin(oc);
+        map.put("canJoin", canJoin);
+        map.put("joinHint", martialArtsCareService.joinWindowHint(oc));
+        if (canJoin) {
+            map.put("meetingLink", oc.getMeetingLink());
+        }
         return map;
     }
 

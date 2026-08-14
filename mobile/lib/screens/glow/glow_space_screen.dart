@@ -4,13 +4,8 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
-import '../../services/glow_provider_auth_service.dart';
 import '../../services/glow_space_service.dart';
 import '../../widgets/detail_listing_card.dart';
-import 'glow_admin_screen.dart';
-import 'glow_provider_login_screen.dart';
-import 'glow_provider_signup_screen.dart';
-import 'glow_salon_dashboard_screen.dart';
 import 'glow_space_salon_detail_screen.dart';
 
 class GlowSpaceScreen extends StatefulWidget {
@@ -27,7 +22,6 @@ class GlowSpaceScreen extends StatefulWidget {
 class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     with SingleTickerProviderStateMixin {
   late final GlowSpaceService _api;
-  late final GlowProviderAuthService _providerAuth;
   late final TabController _tabs;
   late final Razorpay _razorpay;
   bool _loading = true;
@@ -40,20 +34,25 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   String _section = 'CATEGORIES';
   String? _selectedCategory;
   int? _pendingPayBookingId;
+  final _cityFilter = TextEditingController();
+  bool _availableToday = false;
+  bool _doorOnly = false;
+  String _sort = 'rating';
+  List<Map<String, dynamic>> _favorites = [];
 
   @override
   void initState() {
     super.initState();
     final api = context.read<AuthState>().api;
     _api = GlowSpaceService(api);
-    _providerAuth = GlowProviderAuthService(api);
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
-      if (_tabs.index == 1) _loadBookings();
+      if (_tabs.index == 1) _loadFavorites();
+      if (_tabs.index == 2) _loadBookings();
     });
     _loadExplore();
   }
@@ -61,6 +60,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   @override
   void dispose() {
     _razorpay.clear();
+    _cityFilter.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -78,7 +78,13 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
       _error = null;
     });
     try {
-      final salonsRes = await _api.salons();
+      final salonsRes = await _api.salons(
+        city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        category: _selectedCategory,
+        availableToday: _availableToday ? true : null,
+        doorService: _doorOnly ? true : null,
+        sort: _sort,
+      );
       final servicesRes = await _api.services();
       final offersRes = await _api.offers();
       if (!mounted) return;
@@ -107,6 +113,16 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     if (mounted) setState(() => _loadingBookings = false);
   }
 
+  Future<void> _loadFavorites() async {
+    try {
+      final res = await _api.favorites();
+      if (!mounted) return;
+      if (res['success'] == true) {
+        setState(() => _favorites = _toList(res['salons']));
+      }
+    } catch (_) {}
+  }
+
   List<Map<String, dynamic>> _toList(dynamic raw) =>
       raw is List ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : <Map<String, dynamic>>[];
 
@@ -124,8 +140,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     required int itemId,
     required String title,
   }) async {
-    final dateCtrl = TextEditingController(text: DateTime.now().add(const Duration(days: 1)).toString().split(' ').first);
-    final timeCtrl = TextEditingController(text: '11:00');
+    DateTime date = DateTime.now().add(const Duration(days: 1));
+    String time = '11:00';
     final addressCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     String bookingType = 'ONLINE';
@@ -139,10 +155,33 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
-                const SizedBox(height: 8),
-                TextField(controller: timeCtrl, decoration: const InputDecoration(labelText: 'Time (HH:mm)')),
-                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Date'),
+                  subtitle: Text('${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: date,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 60)),
+                    );
+                    if (picked != null) setLocal(() => date = picked);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Time'),
+                  subtitle: Text(time),
+                  trailing: const Icon(Icons.schedule),
+                  onTap: () async {
+                    final picked = await showTimePicker(context: ctx, initialTime: const TimeOfDay(hour: 11, minute: 0));
+                    if (picked != null) {
+                      setLocal(() => time = GlowCatalog.formatTime(picked));
+                    }
+                  },
+                ),
                 DropdownButtonFormField<String>(
                   initialValue: bookingType,
                   items: const [
@@ -158,6 +197,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                 ],
                 const SizedBox(height: 8),
                 TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)')),
+                const SizedBox(height: 8),
+                Text(GlowCatalog.cancelPolicy, style: const TextStyle(fontSize: 11, color: GlowSpaceScreen.textGray)),
               ],
             ),
           ),
@@ -173,8 +214,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     final res = await _api.createBooking(
       itemType: itemType,
       itemId: itemId,
-      bookingDate: dateCtrl.text.trim(),
-      preferredTime: timeCtrl.text.trim(),
+      bookingDate: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      preferredTime: time,
       bookingType: bookingType,
       address: addressCtrl.text.trim(),
       notes: notesCtrl.text.trim(),
@@ -191,7 +232,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           SnackBar(content: Text(res['message']?.toString() ?? 'Booking created')),
         );
       }
-      _tabs.animateTo(1);
+      _tabs.animateTo(2);
       await _loadBookings();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -257,39 +298,6 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         backgroundColor: Colors.white,
         foregroundColor: GlowSpaceScreen.navy,
         title: const Text('Glow Space', style: TextStyle(fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            tooltip: 'Admin Glow',
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GlowAdminScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Salon portal',
-            icon: const Icon(Icons.storefront_outlined),
-            onPressed: () async {
-              if (await _providerAuth.isSalonLoggedIn()) {
-                if (!mounted) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GlowSalonDashboardScreen()),
-                );
-              } else {
-                if (!mounted) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen()),
-                );
-              }
-            },
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GlowProviderSignupScreen()),
-            ),
-            style: TextButton.styleFrom(foregroundColor: GlowSpaceScreen.primary),
-            child: const Text('Join'),
-          ),
-        ],
         bottom: TabBar(
           controller: _tabs,
           labelColor: GlowSpaceScreen.primary,
@@ -297,6 +305,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           indicatorColor: GlowSpaceScreen.primary,
           tabs: const [
             Tab(text: 'Explore'),
+            Tab(text: 'Favourites'),
             Tab(text: 'My Bookings'),
           ],
         ),
@@ -305,6 +314,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         controller: _tabs,
         children: [
           _buildExplore(),
+          _buildFavorites(),
           _buildBookings(),
         ],
       ),
@@ -341,6 +351,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             if (v == 'CATEGORIES') _selectedCategory = null;
           }),
         ),
+        if (_section == 'SALONS') _salonFilters(),
         if (_section == 'SERVICES' || _selectedCategory != null) _categoryFilterChips(),
         Expanded(
           child: RefreshIndicator(
@@ -358,6 +369,94 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _salonFilters() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Column(
+        children: [
+          TextField(
+            controller: _cityFilter,
+            decoration: InputDecoration(
+              hintText: 'City',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _loadExplore),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onSubmitted: (_) => _loadExplore(),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            children: [
+              FilterChip(
+                label: const Text('Available today'),
+                selected: _availableToday,
+                onSelected: (v) {
+                  setState(() => _availableToday = v);
+                  _loadExplore();
+                },
+              ),
+              FilterChip(
+                label: const Text('Door service'),
+                selected: _doorOnly,
+                onSelected: (v) {
+                  setState(() => _doorOnly = v);
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Top rated'),
+                selected: _sort == 'rating',
+                onSelected: (_) {
+                  setState(() => _sort = 'rating');
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Fee'),
+                selected: _sort == 'fee',
+                onSelected: (_) {
+                  setState(() => _sort = 'fee');
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Nearest'),
+                selected: _sort == 'nearest',
+                onSelected: (_) {
+                  setState(() => _sort = 'nearest');
+                  _loadExplore();
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavorites() {
+    if (_favorites.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadFavorites,
+        child: ListView(
+          children: const [
+            SizedBox(height: 140),
+            Center(child: Text('No favourites yet — tap the heart on a salon')),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadFavorites,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: _favorites.map(_salonTile).toList(),
+      ),
     );
   }
 
@@ -583,6 +682,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           final salon = b['salon'] is Map ? Map<String, dynamic>.from(b['salon'] as Map) : <String, dynamic>{};
           final item = b['item'] is Map ? Map<String, dynamic>.from(b['item'] as Map) : <String, dynamic>{};
           final type = b['itemType']?.toString() ?? '';
+          final status = (b['status']?.toString() ?? 'PENDING').toUpperCase();
           final itemTitle = item['name']?.toString() ?? item['serviceName']?.toString() ?? item['title']?.toString() ?? type;
           return Container(
             padding: const EdgeInsets.all(12),
@@ -609,6 +709,15 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                     if (b['price'] != null) _statusChip('₹${b['price']}', color: Colors.teal),
                   ],
                 ),
+                const SizedBox(height: 8),
+                _trackRow('Placed', true),
+                _trackRow('Confirmed', const ['CONFIRMED', 'PAID', 'COMPLETED'].contains(status)),
+                _trackRow('Completed', status == 'COMPLETED'),
+                if (status == 'CANCELLED' || status == 'REJECTED')
+                  Text(
+                    status == 'REJECTED' ? 'This booking was rejected.' : 'This booking was cancelled.',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFFBE123C)),
+                  ),
                 if (b['paymentRequired'] == true) ...[
                   const SizedBox(height: 8),
                   Align(
@@ -624,6 +733,24 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                     ),
                   ),
                 ],
+                if ((b['canCancel'] == true || status == 'PENDING') &&
+                    (b['id'] is int || int.tryParse('${b['id']}') != null))
+                  TextButton(
+                    onPressed: () async {
+                      final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+                      if (id == null) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      final res = await _api.cancelBooking(id);
+                      if (!mounted) return;
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(res['success'] == true
+                            ? 'Booking cancelled'
+                            : (res['error']?.toString() ?? 'Cancel failed')),
+                      ));
+                      if (res['success'] == true) _loadBookings();
+                    },
+                    child: Text(b['canCancelFree'] == true ? 'Cancel (free)' : 'Cancel booking'),
+                  ),
               ],
             ),
           );
@@ -653,6 +780,12 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             background: const Color(0xFFFEF3C7),
             foreground: const Color(0xFFB45309),
           ),
+        if (s['startingFee'] != null && s['startingFee'] != 0)
+          DetailTag(label: 'From ₹${s['startingFee']}', icon: Icons.currency_rupee),
+        if (s['availableToday'] == true)
+          DetailTag(label: 'Today', icon: Icons.event_available, background: const Color(0xFFDCFCE7), foreground: const Color(0xFF166534)),
+        if (s['nextSlot'] is Map)
+          DetailTag(label: '${(s['nextSlot'] as Map)['label'] ?? 'Next slot'}', icon: Icons.schedule),
         if (s['availabilityHours'] != null)
           DetailTag(label: '${s['availabilityHours']}', icon: Icons.access_time),
       ],
@@ -699,6 +832,20 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                 itemId: id,
                 title: o['title']?.toString() ?? 'Offer',
               ),
+    );
+  }
+
+  Widget _trackRow(String label, bool done) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(done ? Icons.check_circle : Icons.radio_button_unchecked,
+              size: 14, color: done ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1)),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: done ? const Color(0xFF166534) : GlowSpaceScreen.textGray)),
+        ],
+      ),
     );
   }
 

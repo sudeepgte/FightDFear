@@ -242,12 +242,12 @@
                           <td>
                               <c:choose>
                                 <c:when test="${not empty v.identityDocument && (fn:startsWith(v.identityDocument, 'http://') || fn:startsWith(v.identityDocument, 'https://'))}">
-                                  <a href="<c:out value='${v.identityDocument}'/>" target="_blank" rel="noopener noreferrer" class="btn-view-media">
+                                  <a href="${v.identityDocument}" target="_blank" rel="noopener noreferrer" class="btn-view-media">
                                     <i class="fas fa-id-card me-1"></i> View ID
                                   </a>
                                 </c:when>
                                 <c:when test="${not empty v.identityDocument && fn:startsWith(v.identityDocument, '/')}">
-                                  <a href="${pageContext.request.contextPath}<c:out value='${v.identityDocument}'/>" target="_blank" rel="noopener noreferrer" class="btn-view-media">
+                                  <a href="${pageContext.request.contextPath}${v.identityDocument}" target="_blank" rel="noopener noreferrer" class="btn-view-media">
                                     <i class="fas fa-id-card me-1"></i> View ID
                                   </a>
                                 </c:when>

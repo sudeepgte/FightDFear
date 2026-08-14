@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../config/seller_catalog.dart';
 import '../../services/auth_state.dart';
+import '../../services/payment_service.dart';
 import '../../services/women_products_service.dart';
 import '../../widgets/detail_listing_card.dart';
+import '../../widgets/module_payment_checkout.dart';
+import 'order_live_tracking_screen.dart';
 import 'women_product_detail_screen.dart';
 
 class WomenProductsScreen extends StatefulWidget {
@@ -20,6 +24,7 @@ class WomenProductsScreen extends StatefulWidget {
 class _WomenProductsScreenState extends State<WomenProductsScreen>
     with SingleTickerProviderStateMixin {
   late final WomenProductsService _api;
+  late final ModulePaymentCheckout _checkout;
   late final TabController _tabs;
 
   bool _loadingProducts = true;
@@ -27,15 +32,11 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   bool _loadingOrders = false;
   String? _error;
   String _category = '';
-  final _categoryOptions = const [
-    (value: '', label: 'All Products', icon: Icons.grid_view_rounded),
-    (value: 'SKINCARE', label: 'Skincare', icon: Icons.spa_outlined),
-    (value: 'HAIRCARE', label: 'Haircare', icon: Icons.content_cut),
-    (value: 'HYGIENE', label: 'Hygiene', icon: Icons.clean_hands_outlined),
-    (value: 'CLOTHING', label: 'Clothing', icon: Icons.checkroom_outlined),
-    (value: 'ACCESSORIES', label: 'Accessories', icon: Icons.watch_outlined),
-    (value: 'WELLNESS', label: 'Wellness', icon: Icons.favorite_outline),
-  ];
+  final _cityFilter = TextEditingController();
+  bool _inStock = false;
+  String _sort = 'newest';
+  double? _maxPrice;
+  final _categoryOptions = SellerCatalog.browseFilters;
 
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _cartItems = [];
@@ -45,7 +46,13 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   @override
   void initState() {
     super.initState();
-    _api = WomenProductsService(context.read<AuthState>().api);
+    final api = context.read<AuthState>().api;
+    _api = WomenProductsService(api);
+    _checkout = ModulePaymentCheckout(PaymentService(api));
+    _checkout.bind(
+      onSuccess: (r) => _checkout.handleSuccess(context, r),
+      onError: (r) => _checkout.handleError(r),
+    );
     _tabs = TabController(length: 3, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
@@ -61,6 +68,8 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   @override
   void dispose() {
     _tabs.dispose();
+    _cityFilter.dispose();
+    _checkout.dispose();
     super.dispose();
   }
 
@@ -77,7 +86,13 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
       _error = null;
     });
     try {
-      final res = await _api.listProducts(category: _category.isEmpty ? null : _category);
+      final res = await _api.listProducts(
+        category: _category.isEmpty ? null : _category,
+        city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        maxPrice: _maxPrice,
+        inStock: _inStock ? true : null,
+        sort: _sort,
+      );
       if (!mounted) return;
       if (res['success'] == true) {
         final raw = res['products'];
@@ -141,28 +156,60 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
 
   Future<void> _placeOrder() async {
     final ctrl = TextEditingController();
+    String method = 'COD';
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delivery address'),
-        content: TextField(
-          controller: ctrl,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: 'Enter full shipping address',
-            border: OutlineInputBorder(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Checkout'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: ctrl,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter full shipping address',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'COD', label: Text('Cash on delivery')),
+                    ButtonSegment(value: 'ONLINE', label: Text('Pay online')),
+                  ],
+                  selected: {method},
+                  onSelectionChanged: (s) => setLocal(() => method = s.first),
+                ),
+                const Text(
+                  SellerCatalog.cancelPolicy,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(method == 'ONLINE' ? 'Place & pay' : 'Place COD'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Place COD')),
-        ],
       ),
     );
     if (ok != true) return;
     final address = ctrl.text.trim();
-    if (address.isEmpty) return;
-    final res = await _api.placeCodOrder(shippingAddress: address);
+    if (address.length < 8) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a complete delivery address.')),
+      );
+      return;
+    }
+    final res = await _api.placeCodOrder(shippingAddress: address, paymentMethod: method);
     if (!mounted) return;
     if (res['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,11 +218,94 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
       _tabs.animateTo(2);
       await _loadCart();
       await _loadOrders();
+      if (res['paymentRequired'] == true) {
+        for (final o in _orders) {
+          if (o['needsPayment'] == true) {
+            await _payOrder(o);
+          }
+        }
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res['error']?.toString() ?? 'Could not place order')),
       );
     }
+  }
+
+  Future<void> _payOrder(Map<String, dynamic> o) async {
+    final id = o['id'] is int ? o['id'] as int : int.tryParse('${o['id']}');
+    final amount = (o['totalPrice'] is num) ? (o['totalPrice'] as num).toDouble() : 0.0;
+    if (id == null || amount <= 0) return;
+    await _checkout.pay(
+      context: context,
+      amount: amount,
+      description: 'Women Products · Order #$id',
+      verifyPayload: (response) => {
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+        'type': 'WOMEN_PRODUCT',
+        'orderId': id,
+        'targetId': id,
+        'amount': amount,
+      },
+      onSuccess: () {
+        _loadOrders();
+      },
+    );
+  }
+
+  Future<void> _writeReview(Map<String, dynamic> o) async {
+    final id = o['id'] is int ? o['id'] as int : int.tryParse('${o['id']}');
+    if (id == null) return;
+    int rating = 5;
+    final comment = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Rate this order'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                initialValue: rating,
+                decoration: const InputDecoration(labelText: 'Rating', border: OutlineInputBorder()),
+                items: List.generate(
+                  5,
+                  (i) => DropdownMenuItem(value: i + 1, child: Text('${i + 1} star${i == 0 ? '' : 's'}')),
+                ),
+                onChanged: (v) => setLocal(() => rating = v ?? 5),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: comment,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'How was the product and delivery?',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final res = await _api.rateOrder(id, rating: rating, review: comment.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['success'] == true
+            ? 'Thanks for the review'
+            : (res['error']?.toString() ?? 'Could not save review')),
+      ),
+    );
+    if (res['success'] == true) _loadOrders();
   }
 
   @override
@@ -223,11 +353,73 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
           },
         ),
         Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: TextField(
+            controller: _cityFilter,
+            decoration: InputDecoration(
+              hintText: 'City',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _loadProducts),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onSubmitted: (_) => _loadProducts(),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+          child: Wrap(
+            spacing: 6,
+            children: [
+              FilterChip(
+                label: const Text('In stock'),
+                selected: _inStock,
+                onSelected: (v) {
+                  setState(() => _inStock = v);
+                  _loadProducts();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Newest'),
+                selected: _sort == 'newest',
+                onSelected: (_) {
+                  setState(() => _sort = 'newest');
+                  _loadProducts();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Top rated'),
+                selected: _sort == 'rating',
+                onSelected: (_) {
+                  setState(() => _sort = 'rating');
+                  _loadProducts();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Price'),
+                selected: _sort == 'price',
+                onSelected: (_) {
+                  setState(() => _sort = 'price');
+                  _loadProducts();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Under ₹500'),
+                selected: _maxPrice == 500,
+                onSelected: (on) {
+                  setState(() => _maxPrice = on ? 500 : null);
+                  _loadProducts();
+                },
+              ),
+            ],
+          ),
+        ),
+        Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Showing ${_products.length} products',
+              'Showing ${_products.length} products from approved shops',
               style: const TextStyle(color: WomenProductsScreen.textGray, fontSize: 13),
             ),
           ),
@@ -427,7 +619,7 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
                 FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: WomenProductsScreen.primary),
                   onPressed: _placeOrder,
-                  child: const Text('Place COD order'),
+                  child: const Text('Checkout'),
                 ),
               ],
             ),
@@ -459,6 +651,11 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
         itemBuilder: (context, i) {
           final o = _orders[i];
           final product = o['product'] is Map ? Map<String, dynamic>.from(o['product'] as Map) : <String, dynamic>{};
+          final id = o['id'] is int ? o['id'] as int : int.tryParse('${o['id']}');
+          final status = (o['status']?.toString() ?? 'PLACED').toUpperCase();
+          final canCancel = o['canCancel'] == true;
+          final needsPayment = o['needsPayment'] == true;
+          final canReview = o['canReview'] == true;
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -479,19 +676,101 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
                 Wrap(
                   spacing: 8,
                   children: [
-                    _chip(o['status']?.toString() ?? 'PLACED', WomenProductsScreen.primary),
+                    _chip(status, status == 'CANCELLED' ? const Color(0xFFBE123C) : WomenProductsScreen.primary),
                     _chip(o['paymentMethod']?.toString() ?? 'COD', Colors.green),
                   ],
                 ),
+                const SizedBox(height: 8),
+                if (status == 'CANCELLED')
+                  const Text('This order was cancelled.', style: TextStyle(fontSize: 12, color: Color(0xFFBE123C)))
+                else ...[
+                  _trackRow('Placed', true),
+                  _trackRow('Confirmed', _passed(status, const ['CONFIRMED', 'READY_FOR_PICKUP', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'])),
+                  _trackRow('Packed for pickup', _passed(status, const ['READY_FOR_PICKUP', 'ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'])),
+                  _trackRow('Assigned to delivery', _passed(status, const ['ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'])),
+                  _trackRow('Out for delivery', _passed(status, const ['OUT_FOR_DELIVERY', 'DELIVERED'])),
+                  _trackRow('Delivered', status == 'DELIVERED'),
+                ],
+                if ((o['deliveryName']?.toString() ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text('Delivery: ${o['deliveryName']} ${o['deliveryPhone'] ?? ''}',
+                      style: const TextStyle(fontSize: 12, color: WomenProductsScreen.textGray)),
+                ],
+                if ((o['trackingNote']?.toString() ?? '').isNotEmpty)
+                  Text(o['trackingNote'].toString(),
+                      style: const TextStyle(fontSize: 12, color: WomenProductsScreen.textGray)),
                 const SizedBox(height: 6),
                 Text(
                   o['orderTime']?.toString() ?? '',
                   style: const TextStyle(fontSize: 12, color: WomenProductsScreen.textGray),
                 ),
+                if (id != null && (o['canLiveTrack'] == true ||
+                    status == 'ASSIGNED' ||
+                    status == 'OUT_FOR_DELIVERY' ||
+                    status == 'DELIVERED'))
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => OrderLiveTrackingScreen(
+                          orderId: id,
+                          fetchTrack: () => _api.trackOrder(id),
+                        ),
+                      ));
+                    },
+                    icon: const Icon(Icons.map_outlined, size: 18),
+                    label: Text(status == 'DELIVERED' ? 'View route' : 'Live track'),
+                  ),
+                if (needsPayment && id != null)
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: WomenProductsScreen.primary),
+                    onPressed: () => _payOrder(o),
+                    child: const Text('Pay now'),
+                  ),
+                if (canReview && id != null)
+                  OutlinedButton(
+                    onPressed: () => _writeReview(o),
+                    child: const Text('Write a review'),
+                  ),
+                if (canCancel && id != null)
+                  TextButton(
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final res = await _api.cancelOrder(id);
+                      if (!mounted) return;
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(res['success'] == true
+                            ? 'Order cancelled'
+                            : (res['error']?.toString() ?? 'Cancel failed')),
+                      ));
+                      if (res['success'] == true) _loadOrders();
+                    },
+                    child: const Text('Cancel order'),
+                  ),
+                if ((o['cancelPolicy']?.toString() ?? '').isNotEmpty)
+                  Text(
+                    o['cancelPolicy'].toString(),
+                    style: const TextStyle(fontSize: 11, color: WomenProductsScreen.textGray),
+                  ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  bool _passed(String status, List<String> after) => after.contains(status);
+
+  Widget _trackRow(String label, bool done) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(done ? Icons.check_circle : Icons.radio_button_unchecked,
+              size: 14, color: done ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1)),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: done ? const Color(0xFF166534) : WomenProductsScreen.textGray)),
+        ],
       ),
     );
   }

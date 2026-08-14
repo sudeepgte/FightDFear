@@ -3,34 +3,38 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/landing_service.dart';
+import '../../services/module_services.dart';
+import '../../widgets/module_theme.dart';
 import '../safety/contacts_screen.dart';
 import '../creator/creator_hub_screen.dart';
+import '../creator/creator_portal_login_screen.dart';
 import '../safety/danger_map_screen.dart';
 import '../doctors/doctor_portal_login_screen.dart';
 import '../entrepreneur/entrepreneur_portal_login_screen.dart';
 import '../events/event_host_portal_login_screen.dart';
+import '../financial/financial_educator_portal_login_screen.dart';
 import '../financial/financial_literacy_screen.dart';
 import '../fitness/fitness_trainer_portal_login_screen.dart';
+import '../fitness/fitness_wellness_screen.dart';
 import '../glow/glow_provider_login_screen.dart';
-import '../glow/glow_provider_signup_screen.dart';
 import '../glow/glow_space_screen.dart';
 import '../safety/home_screen.dart';
 import '../investor/investor_portal_login_screen.dart';
 import '../marketplace/job_bookings_screen.dart';
 import 'landing_notifications_screen.dart';
 import '../auth/login_screen.dart';
-import '../marketplace/marketplace_provider_login_screen.dart';
 import '../martial_arts/martial_arts_admin_screen.dart';
 import '../martial_arts/martial_arts_centre_login_screen.dart';
-import '../martial_arts/martial_arts_centre_register_screen.dart';
 import '../martial_arts/martial_arts_screen.dart';
 import '../doctors/women_doctors_screen.dart';
 import '../marketplace/provider_catalog_screen.dart';
 import '../auth/register_screen.dart';
 import '../user/user_dashboard_screen.dart';
 import '../events/women_events_screen.dart';
-import '../marketplace/women_jobs_apply_screen.dart';
+import '../marketplace/women_jobs_portal_login_screen.dart';
+import '../marketplace/women_lawyer_portal_login_screen.dart';
 import '../marketplace/women_marketplace_screen.dart';
+import '../products/delivery_portal_login_screen.dart';
 import '../products/women_products_screen.dart';
 import '../products/women_products_seller_login_screen.dart';
 
@@ -53,18 +57,19 @@ class _LandingScreenState extends State<LandingScreen> {
   final _search = TextEditingController();
   int _navIndex = 0;
 
-  final _quickKey = GlobalKey();
   final _communityKey = GlobalKey();
   final _offersKey = GlobalKey();
 
   late final LandingService _landingApi;
   bool _feedLoading = true;
+  String? _feedError;
   int _unreadNotifications = 0;
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _whatsNew = [];
   List<Map<String, dynamic>> _nearby = [];
   List<Map<String, dynamic>> _offers = [];
   List<Map<String, dynamic>> _community = [];
+  final _modulesKey = GlobalKey();
 
   @override
   void initState() {
@@ -78,8 +83,32 @@ class _LandingScreenState extends State<LandingScreen> {
     return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
+  /// Drop empty / obvious placeholder titles. Real published junk still surfaces via empty states.
+  List<Map<String, dynamic>> _published(List<Map<String, dynamic>> items, {String titleKey = 'title'}) {
+    return items.where((e) {
+      final title = (e[titleKey] ?? e['name'] ?? '').toString().trim();
+      if (title.length < 3) return false;
+      if (RegExp(r'^(test|dummy|asdf|qwerty|xxx+|lorem)\b', caseSensitive: false).hasMatch(title)) {
+        return false;
+      }
+      final lettersOnly = title.replaceAll(RegExp(r'[^a-zA-Z]'), '');
+      if (!title.contains(' ') &&
+          lettersOnly.length >= 8 &&
+          lettersOnly.length <= 14 &&
+          !RegExp(r'[aeiouAEIOU]').hasMatch(lettersOnly)) {
+        return false;
+      }
+      return true;
+    }).take(6).toList();
+  }
+
   Future<void> _loadLandingData({bool showSpinner = true}) async {
-    if (showSpinner && mounted) setState(() => _feedLoading = true);
+    if (showSpinner && mounted) {
+      setState(() {
+        _feedLoading = true;
+        _feedError = null;
+      });
+    }
     try {
       final results = await Future.wait([
         _landingApi.feed(),
@@ -90,18 +119,24 @@ class _LandingScreenState extends State<LandingScreen> {
       final notif = results[1];
       if (feed['success'] == true) {
         _stats = feed['stats'] is Map ? Map<String, dynamic>.from(feed['stats'] as Map) : {};
-        _whatsNew = _asMapList(feed['whatsNew']);
-        _nearby = _asMapList(feed['nearby']);
-        _offers = _asMapList(feed['offers']);
-        _community = _asMapList(feed['community']);
+        _whatsNew = _published(_asMapList(feed['whatsNew']));
+        _nearby = _published(_asMapList(feed['nearby']));
+        _offers = _published(_asMapList(feed['offers']));
+        _community = _published(_asMapList(feed['community']), titleKey: 'description');
+        if (_community.isEmpty) {
+          _community = _published(_asMapList(feed['community']));
+        }
+        _feedError = null;
+      } else {
+        _feedError = feed['error']?.toString() ?? 'Could not load landing content';
       }
       if (notif['success'] == true) {
         _unreadNotifications = (notif['unreadCount'] is num)
             ? (notif['unreadCount'] as num).toInt()
             : int.tryParse('${notif['unreadCount']}') ?? 0;
       }
-    } catch (_) {
-      // Keep empty/fallback UI if backend is offline.
+    } catch (e) {
+      _feedError = e.toString();
     }
     if (mounted) setState(() => _feedLoading = false);
   }
@@ -171,7 +206,7 @@ class _LandingScreenState extends State<LandingScreen> {
           );
         });
       default:
-        _scrollTo(_quickKey);
+        _scrollTo(_modulesKey);
     }
   }
 
@@ -196,19 +231,28 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'martial_arts':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MartialArtsCentreRegisterScreen()),
+          MaterialPageRoute(builder: (_) => const MartialArtsCentreLoginScreen(startRegister: true)),
         );
         return;
       case 'salon':
       case 'glow':
       case 'stylist':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const GlowProviderSignupScreen()),
+          MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen(startRegister: true)),
         );
         return;
       case 'service_partner':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MarketplaceProviderLoginScreen(startRegister: true)),
+          MaterialPageRoute(
+            builder: (_) => const WomenJobsPortalLoginScreen(startRegister: true),
+          ),
+        );
+        return;
+      case 'women_lawyer':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WomenLawyerPortalLoginScreen(startRegister: true),
+          ),
         );
         return;
       case 'marketplace_seller':
@@ -218,7 +262,9 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'women_jobs':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const WomenJobsApplyScreen()),
+          MaterialPageRoute(
+            builder: (_) => const WomenJobsPortalLoginScreen(startRegister: true),
+          ),
         );
         return;
       case 'entrepreneur':
@@ -241,6 +287,21 @@ class _LandingScreenState extends State<LandingScreen> {
           MaterialPageRoute(builder: (_) => const FitnessTrainerPortalLoginScreen(startRegister: true)),
         );
         return;
+      case 'delivery':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen(startRegister: true)),
+        );
+        return;
+      case 'creator':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
+        );
+        return;
+      case 'financial':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen(startRegister: true)),
+        );
+        return;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${_joinUsLabel(value)} — coming soon on mobile')),
@@ -256,12 +317,16 @@ class _LandingScreenState extends State<LandingScreen> {
       'salon' || 'glow' => 'Glow Space',
       'stylist' => 'Glow Space',
       'service_partner' => 'Service Partner',
+      'women_lawyer' => 'Women Lawyer',
       'marketplace_seller' => 'Product Seller',
       'women_jobs' => 'Women Jobs',
       'entrepreneur' => 'Entrepreneur',
       'investor' => 'Investor',
       'event_host' => 'Event Host',
       'fitness_trainer' => 'Fitness Trainer',
+      'delivery' => 'Delivery Guy',
+      'creator' => 'Creator Hub',
+      'financial' => 'Financial Educator',
       _ => 'Registration',
     };
   }
@@ -290,7 +355,17 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'service_partner':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MarketplaceProviderLoginScreen()),
+          MaterialPageRoute(builder: (_) => const WomenJobsPortalLoginScreen()),
+        );
+        return;
+      case 'women_lawyer':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const WomenLawyerPortalLoginScreen()),
+        );
+        return;
+      case 'women_jobs':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const WomenJobsPortalLoginScreen()),
         );
         return;
       case 'marketplace_seller':
@@ -318,6 +393,21 @@ class _LandingScreenState extends State<LandingScreen> {
           MaterialPageRoute(builder: (_) => const FitnessTrainerPortalLoginScreen()),
         );
         return;
+      case 'delivery':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen()),
+        );
+        return;
+      case 'creator':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen()),
+        );
+        return;
+      case 'financial':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen()),
+        );
+        return;
       case 'admin':
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const MartialArtsAdminScreen()),
@@ -338,11 +428,16 @@ class _LandingScreenState extends State<LandingScreen> {
       'salon' || 'glow' => 'Glow Space Login',
       'stylist' => 'Glow Space Login',
       'service_partner' => 'Service Partner Login',
+      'women_lawyer' => 'Women Lawyer Login',
+      'women_jobs' => 'Women Jobs Login',
       'marketplace_seller' => 'Product Seller Login',
       'entrepreneur' => 'Entrepreneur Login',
       'investor' => 'Investor Login',
       'event_host' => 'Event Host Login',
       'fitness_trainer' => 'Fitness Trainer Login',
+      'delivery' => 'Delivery Guy Login',
+      'creator' => 'Creator Hub Login',
+      'financial' => 'Financial Educator Login',
       'admin' => 'Admin Login',
       _ => 'Login',
     };
@@ -401,11 +496,32 @@ class _LandingScreenState extends State<LandingScreen> {
       });
 
   void _openJobs() => _requireLoginThen(() {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const JobBookingsScreen()));
+        _openJobsAfterLogin();
       });
+
+  Future<void> _openJobsAfterLogin() async {
+    try {
+      final res = await MarketplaceService(context.read<AuthState>().api).myJobApplication();
+      if (!mounted) return;
+      if (res['isVerifiedWorker'] == true) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const JobBookingsScreen(workerView: true)),
+        );
+        return;
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const WomenMarketplaceScreen()),
+    );
+  }
 
   void _openFinancial() => _requireLoginThen(() {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FinancialLiteracyScreen()));
+      });
+
+  void _openFitness() => _requireLoginThen(() {
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FitnessWellnessScreen()));
       });
 
   void _openContacts() => _requireLoginThen(() {
@@ -437,6 +553,57 @@ class _LandingScreenState extends State<LandingScreen> {
     _JoinUsDropdown.showSheet(context, (v) => _handleJoinUsSelection(context, v));
   }
 
+  void _showAllModules() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        final items = <(IconData, String, VoidCallback)>[
+          (Icons.monitor_heart_outlined, 'Doctors', _openDoctors),
+          (Icons.work_outline, 'Jobs', _openJobs),
+          (Icons.event_outlined, 'Events', _openWomenEvents),
+          (Icons.menu_book_outlined, 'Education', _openFinancial),
+          (Icons.storefront_outlined, 'Marketplace', _openWomenMarketplace),
+          (Icons.fitness_center_outlined, 'Fitness', _openFitness),
+          (Icons.spa_outlined, 'Glow Space', _openGlowSpace),
+          (Icons.sports_martial_arts_outlined, 'Self Defence', _openMartialArts),
+          (Icons.gavel_outlined, 'Legal Help', _openLegal),
+          (Icons.map_outlined, 'Danger Map', _openDangerMap),
+          (Icons.shopping_bag_outlined, 'Women Products', () {
+            _requireLoginThen(() {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const WomenProductsScreen()),
+              );
+            });
+          }),
+          (Icons.video_camera_front_outlined, 'Creator Hub', () => _openFeedRoute('community')),
+          (Icons.headset_mic_outlined, 'Trusted Contacts', _openContacts),
+        ];
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text('All modules', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              ),
+              for (final m in items)
+                ListTile(
+                  leading: Icon(m.$1, color: LandingScreen.primary),
+                  title: Text(m.$2),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    m.$3();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _scrollTo(GlobalKey key) {
     final ctx = key.currentContext;
     if (ctx == null) return;
@@ -454,7 +621,7 @@ class _LandingScreenState extends State<LandingScreen> {
       case 0:
         _scroll.animateTo(0, duration: const Duration(milliseconds: 350), curve: Curves.easeOut);
       case 1:
-        _scrollTo(_quickKey);
+        _scrollTo(_modulesKey);
       case 2:
         _openSos();
       case 3:
@@ -493,7 +660,7 @@ class _LandingScreenState extends State<LandingScreen> {
     } else if (query.contains('help')) {
       _openContacts();
     } else {
-      _scrollTo(_quickKey);
+      _scrollTo(_modulesKey);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Showing modules for “$q”')),
       );
@@ -528,89 +695,49 @@ class _LandingScreenState extends State<LandingScreen> {
                   onNotifications: _openNotifications,
                 ),
               ),
-            // Hero
             SliverToBoxAdapter(
               child: _HeroBanner(
+                ctaLabel: auth.loggedIn ? 'Open my dashboard' : 'Explore',
                 onExplore: () {
                   if (auth.loggedIn) {
                     _openDashboard();
                   } else {
-                    _scrollTo(_quickKey);
+                    _scrollTo(_modulesKey);
                   }
                 },
               ),
             ),
-            // SOS
             SliverToBoxAdapter(
               child: _SosBanner(
                 onSendSos: _openSos,
                 onContacts: _openContacts,
               ),
             ),
-            // Quick access
+            if (_feedError != null)
+              SliverToBoxAdapter(
+                child: _FeedErrorBanner(onRetry: () => _loadLandingData()),
+              ),
             SliverToBoxAdapter(
-              child: KeyedSubtree(
-                key: _quickKey,
-                child: _QuickAccessGrid(
-                  onSos: _openSos,
-                  onMap: _openDangerMap,
-                  onDoctors: _openDoctors,
-                  onMarketplace: _openWomenMarketplace,
-                  onGlow: _openGlowSpace,
-                  onDefense: _openMartialArts,
-                  onEvents: _openWomenEvents,
-                  onJobs: _openJobs,
-                  onLegal: _openLegal,
-                  onHelpline: _openContacts,
-                ),
-              ),
+              child: _StatsStrip(stats: _stats, loading: _feedLoading, error: _feedError != null),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 4)),
-            if (_feedLoading)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
-                ),
-              ),
-            SliverToBoxAdapter(child: _StatsStrip(stats: _stats)),
             SliverToBoxAdapter(
               child: _WhatsNewSection(
                 items: _whatsNew,
+                loading: _feedLoading,
+                error: _feedError != null,
                 onOpen: _openFeedRoute,
-                onDefense: _openMartialArts,
-                onGlow: _openGlowSpace,
-                onEvents: _openWomenEvents,
+                onViewAll: _openWomenEvents,
+                onRetry: () => _loadLandingData(),
               ),
             ),
             SliverToBoxAdapter(
               child: _NearbySection(
                 items: _nearby,
+                loading: _feedLoading,
+                error: _feedError != null,
                 onOpen: _openFeedRoute,
-                onDoctors: _openDoctors,
-                onGlow: _openGlowSpace,
-                onDefense: _openMartialArts,
-                onLegal: _openLegal,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: KeyedSubtree(
-                key: _communityKey,
-                child: _CommunitySection(
-                  items: _community,
-                  onOpenCommunity: () => _openFeedRoute('community'),
-                ),
-              ),
-            ),
-            // Tips section stays as-is below
-            SliverToBoxAdapter(
-              child: _TipsAndCategories(
-                onFinancial: _openFinancial,
-                onDefense: _openMartialArts,
-                onDoctors: _openDoctors,
-                onJobs: _openJobs,
-                onLegal: _openLegal,
-                onEvents: _openWomenEvents,
+                onViewAll: _openDoctors,
+                onRetry: () => _loadLandingData(),
               ),
             ),
             SliverToBoxAdapter(
@@ -618,12 +745,40 @@ class _LandingScreenState extends State<LandingScreen> {
                 key: _offersKey,
                 child: _OffersSection(
                   items: _offers,
+                  loading: _feedLoading,
+                  error: _feedError != null,
                   onGlow: _openGlowSpace,
-                  onDefense: _openMartialArts,
-                  onMarketplace: _openWomenMarketplace,
+                  onRetry: () => _loadLandingData(),
                 ),
               ),
             ),
+            SliverToBoxAdapter(
+              child: KeyedSubtree(
+                key: _modulesKey,
+                child: _PopularCategories(
+                  onDoctors: _openDoctors,
+                  onJobs: _openJobs,
+                  onEvents: _openWomenEvents,
+                  onFinancial: _openFinancial,
+                  onMarketplace: _openWomenMarketplace,
+                  onFitness: _openFitness,
+                  onViewAll: _showAllModules,
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: KeyedSubtree(
+                key: _communityKey,
+                child: _CommunitySection(
+                  items: _community,
+                  loading: _feedLoading,
+                  error: _feedError != null,
+                  onOpenCommunity: () => _openFeedRoute('community'),
+                  onRetry: () => _loadLandingData(),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: _SafetyTipCard()),
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
@@ -671,17 +826,17 @@ class _Header extends StatelessWidget {
           Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: ColoredBox(
                   color: Colors.white,
                   child: Image.asset(
                     'assets/images/fightdfear-logo.jpg',
-                    height: 52,
-                    width: 52,
+                    height: 40,
+                    width: 40,
                     fit: BoxFit.contain,
                     errorBuilder: (_, _, _) => Container(
-                      height: 52,
-                      width: 52,
+                      height: 40,
+                      width: 40,
                       color: LandingScreen.primary,
                       alignment: Alignment.center,
                       child: const Text('FD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -694,18 +849,18 @@ class _Header extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Fight D Fear',
+                    Text('FightDFear',
                         style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: LandingScreen.navy)),
-                    Text('Your Safety is Our Priority',
+                    Text('Safety · Community · Opportunity',
                         style: TextStyle(fontSize: 11, color: LandingScreen.textGray, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
               if (loggedIn)
-                FilledButton.tonal(
+                IconButton(
+                  tooltip: 'My Dashboard',
                   onPressed: onDashboard,
-                  style: FilledButton.styleFrom(foregroundColor: LandingScreen.primary),
-                  child: const Text('My Dashboard'),
+                  icon: const Icon(Icons.person_outline, color: LandingScreen.navy),
                 )
               else ...[
                 OutlinedButton(
@@ -763,7 +918,7 @@ class _Header extends StatelessWidget {
             onSubmitted: onSearch,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search doctors, events, jobs, shops & more...',
+              hintText: 'Search doctors, events, jobs…',
               hintStyle: const TextStyle(fontSize: 13, color: LandingScreen.textGray),
               prefixIcon: const Icon(Icons.search, color: LandingScreen.textGray),
               filled: true,
@@ -794,18 +949,19 @@ class _Header extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.onExplore});
+  const _HeroBanner({required this.onExplore, required this.ctaLabel});
 
   final VoidCallback onExplore;
+  final String ctaLabel;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         child: AspectRatio(
-          aspectRatio: 16 / 11,
+          aspectRatio: 16 / 9,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -815,7 +971,7 @@ class _HeroBanner extends StatelessWidget {
                 errorBuilder: (_, _, _) => Container(
                   color: const Color(0xFFFFE4E6),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.groups_rounded, size: 64, color: LandingScreen.primary),
+                  child: const Icon(Icons.groups_rounded, size: 56, color: LandingScreen.primary),
                 ),
               ),
               const DecoratedBox(
@@ -823,41 +979,42 @@ class _HeroBanner extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x22000000), Color(0xCC000000)],
+                    colors: [Color(0x33000000), Color(0xBB000000)],
                   ),
                 ),
               ),
               Positioned(
-                left: 20,
-                right: 20,
-                bottom: 20,
+                left: 16,
+                right: 16,
+                bottom: 16,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Together, We Stay Safe.',
+                      'Discover FightDFear',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 26,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                         height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     const Text(
-                      'Emergency support, verified professionals, community and wellness – all in one place.',
-                      style: TextStyle(color: Color(0xFFFFE4E6), fontSize: 13, height: 1.35),
+                      'Safety · Empowerment · Community · Services',
+                      style: TextStyle(color: Color(0xFFFFE4E6), fontSize: 12, fontWeight: FontWeight.w600),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     FilledButton.icon(
                       onPressed: onExplore,
                       style: FilledButton.styleFrom(
                         backgroundColor: LandingScreen.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        minimumSize: const Size(0, 44),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
                       icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-                      label: const Text('Explore Now', style: TextStyle(fontWeight: FontWeight.w800)),
+                      label: Text(ctaLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
                     ),
                   ],
                 ),
@@ -959,124 +1116,129 @@ class _SosBanner extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// Quick access
-// ═══════════════════════════════════════════════════════════════════════════
-
-class _QuickAccessGrid extends StatelessWidget {
-  const _QuickAccessGrid({
-    required this.onSos,
-    required this.onMap,
-    required this.onDoctors,
-    required this.onMarketplace,
-    required this.onGlow,
-    required this.onDefense,
-    required this.onEvents,
-    required this.onJobs,
-    required this.onLegal,
-    required this.onHelpline,
-  });
-
-  final VoidCallback onSos;
-  final VoidCallback onMap;
-  final VoidCallback onDoctors;
-  final VoidCallback onMarketplace;
-  final VoidCallback onGlow;
-  final VoidCallback onDefense;
-  final VoidCallback onEvents;
-  final VoidCallback onJobs;
-  final VoidCallback onLegal;
-  final VoidCallback onHelpline;
+class _FeedErrorBanner extends StatelessWidget {
+  const _FeedErrorBanner({required this.onRetry});
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final items = <_QuickTileData>[
-      _QuickTileData('SOS', Icons.warning_amber_rounded, const Color(0xFFEF4444), onSos),
-      _QuickTileData('Safe Map', Icons.map_outlined, const Color(0xFF8B5CF6), onMap),
-      _QuickTileData('Doctors', Icons.monitor_heart_outlined, const Color(0xFF22C55E), onDoctors),
-      _QuickTileData('Marketplace', Icons.storefront_outlined, const Color(0xFFF97316), onMarketplace),
-      _QuickTileData('Glow Space', Icons.spa_outlined, const Color(0xFFEC4899), onGlow),
-      _QuickTileData('Self Defence', Icons.sports_martial_arts_outlined, const Color(0xFF3B82F6), onDefense),
-      _QuickTileData('Women Events', Icons.event_outlined, const Color(0xFFF43F5E), onEvents),
-      _QuickTileData('Jobs', Icons.work_outline, const Color(0xFF16A34A), onJobs),
-      _QuickTileData('Legal Help', Icons.gavel_outlined, const Color(0xFF7C3AED), onLegal),
-      _QuickTileData('Helpline', Icons.headset_mic_outlined, const Color(0xFF0D9488), onHelpline),
-    ];
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF1F2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: LandingScreen.primary.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.wifi_off_rounded, color: LandingScreen.primary),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Could not load latest content.',
+                style: TextStyle(fontWeight: FontWeight.w600, color: LandingScreen.navy, fontSize: 13),
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader(this.title, {this.subtitle, this.actionLabel, this.onAction, this.padEnd = true});
+  final String title;
+  final String? subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool padEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(right: padEnd ? 16 : 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(
-                child: Text('Quick Access',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: LandingScreen.navy)),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: LandingScreen.navy),
+                ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('View All', style: TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w700)),
-              ),
+              if (actionLabel != null)
+                TextButton(
+                  onPressed: onAction,
+                  child: Text(actionLabel!, style: const TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w700)),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: items.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 8,
-              childAspectRatio: 0.78,
-            ),
-            itemBuilder: (_, i) {
-              final t = items[i];
-              return InkWell(
-                onTap: t.onTap,
-                borderRadius: BorderRadius.circular(16),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: t.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(t.icon, color: t.color, size: 24),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      t.label,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: LandingScreen.navy,
-                        height: 1.15,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+          if (subtitle != null)
+            Text(subtitle!, style: const TextStyle(fontSize: 12, color: LandingScreen.textGray, height: 1.3)),
         ],
       ),
     );
   }
 }
 
-class _QuickTileData {
-  const _QuickTileData(this.label, this.icon, this.color, this.onTap);
-  final String label;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
+class _InlineState extends StatelessWidget {
+  const _InlineState({
+    required this.loading,
+    required this.error,
+    required this.empty,
+    required this.emptyMessage,
+    this.onRetry,
+    this.actionLabel,
+    this.onAction,
+    this.height = 96,
+  });
+
+  final bool loading;
+  final bool error;
+  final bool empty;
+  final String emptyMessage;
+  final VoidCallback? onRetry;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!loading && !error && !empty) return const SizedBox.shrink();
+    return Container(
+      constraints: BoxConstraints(minHeight: height),
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      alignment: Alignment.centerLeft,
+      child: loading
+          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  error ? 'Could not load this section.' : emptyMessage,
+                  style: const TextStyle(color: LandingScreen.textGray, fontSize: 13),
+                ),
+                if (error && onRetry != null)
+                  TextButton(onPressed: onRetry, child: const Text('Retry'))
+                else if (!error && actionLabel != null)
+                  TextButton(onPressed: onAction, child: Text(actionLabel!)),
+              ],
+            ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1084,52 +1246,60 @@ class _QuickTileData {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _StatsStrip extends StatelessWidget {
-  const _StatsStrip({required this.stats});
+  const _StatsStrip({required this.stats, required this.loading, required this.error});
 
   final Map<String, dynamic> stats;
+  final bool loading;
+  final bool error;
 
-  String _n(String key, String fallback) {
+  String _n(String key) {
     final v = stats[key];
-    if (v is num) return '${v.toInt()}+';
-    if (v != null && '$v'.isNotEmpty) return '$v+';
-    return fallback;
+    if (v is num) return '${v.toInt()}';
+    if (v != null && '$v'.trim().isNotEmpty) return '$v';
+    return '0';
   }
 
   @override
   Widget build(BuildContext context) {
+    if (error && stats.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final statsRows = [
-      (Icons.event_available_outlined, _n('events', '800'), 'Events Organized'),
-      (Icons.monitor_heart_outlined, _n('doctors', '450'), 'Verified Doctors'),
-      (Icons.sports_martial_arts_outlined, _n('centres', '120'), 'Training Centres'),
-      (Icons.spa_outlined, _n('salons', '200'), 'Glow Salons'),
-      (Icons.storefront_outlined, _n('providers', '5K'), 'Marketplace Sellers'),
+      (Icons.event_available_outlined, _n('events'), 'Events'),
+      (Icons.monitor_heart_outlined, _n('doctors'), 'Doctors'),
+      (Icons.sports_martial_arts_outlined, _n('centres'), 'Centres'),
+      (Icons.spa_outlined, _n('salons'), 'Glow salons'),
+      (Icons.storefront_outlined, _n('providers'), 'Providers'),
     ];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(16, 4, 0, 8),
       child: SizedBox(
-        height: 84,
+        height: 78,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.only(right: 16),
           itemCount: statsRows.length,
           separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (_, i) {
             final s = statsRows[i];
             return Container(
-              width: 140,
-              padding: const EdgeInsets.all(12),
+              width: 118,
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFCE7F3)),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(s.$1, size: 18, color: LandingScreen.primary),
+                  Icon(s.$1, size: 16, color: LandingScreen.primary),
                   const Spacer(),
-                  Text(s.$2, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: LandingScreen.navy)),
-                  Text(s.$3, style: const TextStyle(fontSize: 10, color: LandingScreen.textGray, fontWeight: FontWeight.w600)),
+                  Text(
+                    loading && stats.isEmpty ? '—' : s.$2,
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: LandingScreen.navy),
+                  ),
+                  Text(s.$3, style: const TextStyle(fontSize: 11, color: LandingScreen.textGray, fontWeight: FontWeight.w600)),
                 ],
               ),
             );
@@ -1147,168 +1317,160 @@ class _StatsStrip extends StatelessWidget {
 class _WhatsNewSection extends StatelessWidget {
   const _WhatsNewSection({
     required this.items,
+    required this.loading,
+    required this.error,
     required this.onOpen,
-    required this.onDefense,
-    required this.onGlow,
-    required this.onEvents,
+    required this.onViewAll,
+    required this.onRetry,
   });
 
   final List<Map<String, dynamic>> items;
+  final bool loading;
+  final bool error;
   final ValueChanged<String?> onOpen;
-  final VoidCallback onDefense;
-  final VoidCallback onGlow;
-  final VoidCallback onEvents;
+  final VoidCallback onViewAll;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final cards = items.isNotEmpty
-        ? items.map((e) {
-            final route = e['route']?.toString();
-            return _PromoCardData(
-              badge: e['badge']?.toString() ?? 'New',
-              title: e['title']?.toString() ?? 'Update',
-              subtitle: e['subtitle']?.toString() ?? '',
-              cta: e['cta']?.toString() ?? 'Open',
-              color: switch (route) {
-                'glow' => const Color(0xFFEC4899),
-                'martial_arts' => const Color(0xFF3B82F6),
-                'events' => const Color(0xFFF43F5E),
-                _ => LandingScreen.primary,
-              },
-              icon: switch (route) {
-                'glow' => Icons.spa,
-                'martial_arts' => Icons.sports_martial_arts,
-                'events' => Icons.event,
-                _ => Icons.auto_awesome,
-              },
-              onTap: () => onOpen(route),
-            );
-          }).toList()
-        : [
-            _PromoCardData(
-              badge: 'Explore',
-              title: 'Self Defence Centres',
-              subtitle: 'Find verified academies',
-              cta: 'Book Now',
-              color: const Color(0xFF3B82F6),
-              icon: Icons.sports_martial_arts,
-              onTap: onDefense,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 0, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader("What's new", actionLabel: 'View all', onAction: onViewAll),
+          const SizedBox(height: 8),
+          if (loading || error || items.isEmpty)
+            _InlineState(
+              loading: loading && items.isEmpty,
+              error: error && items.isEmpty,
+              empty: !loading && !error && items.isEmpty,
+              emptyMessage: 'No published updates right now.',
+              onRetry: onRetry,
+              actionLabel: 'Browse events',
+              onAction: onViewAll,
+            )
+          else
+            SizedBox(
+              height: 196,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final e = items[i];
+                  final route = e['route']?.toString();
+                  return _FeedCard(
+                    badge: e['badge']?.toString() ?? e['kind']?.toString() ?? 'New',
+                    title: e['title']?.toString() ?? 'Update',
+                    subtitle: e['subtitle']?.toString() ?? '',
+                    cta: e['cta']?.toString() ?? 'Open',
+                    imageUrl: (e['image'] ?? e['imageUrl'] ?? e['photoUrl'])?.toString(),
+                    icon: switch (route) {
+                      'glow' => Icons.spa_outlined,
+                      'martial_arts' => Icons.sports_martial_arts_outlined,
+                      'events' => Icons.event_outlined,
+                      'doctors' => Icons.monitor_heart_outlined,
+                      'marketplace' => Icons.storefront_outlined,
+                      _ => Icons.auto_awesome_outlined,
+                    },
+                    onTap: () => onOpen(route),
+                  );
+                },
+              ),
             ),
-            _PromoCardData(
-              badge: 'Glow',
-              title: 'Glow Space',
-              subtitle: 'Salon & wellness offers',
-              cta: 'Grab Now',
-              color: const Color(0xFFEC4899),
-              icon: Icons.spa,
-              onTap: onGlow,
-            ),
-            _PromoCardData(
-              badge: 'Events',
-              title: 'Women Events',
-              subtitle: 'Upcoming community events',
-              cta: 'Register Now',
-              color: const Color(0xFFF43F5E),
-              icon: Icons.directions_run,
-              onTap: onEvents,
-            ),
-          ];
-
-    return _HorizontalSection(
-      title: "What's New",
-      children: [for (final c in cards) _PromoCard(data: c)],
+        ],
+      ),
     );
   }
 }
 
-class _PromoCardData {
-  const _PromoCardData({
+class _FeedCard extends StatelessWidget {
+  const _FeedCard({
     required this.badge,
     required this.title,
     required this.subtitle,
     required this.cta,
-    required this.color,
     required this.icon,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String badge;
   final String title;
   final String subtitle;
   final String cta;
-  final Color color;
   final IconData icon;
   final VoidCallback onTap;
-}
-
-class _PromoCard extends StatelessWidget {
-  const _PromoCard({required this.data});
-  final _PromoCardData data;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFCE7F3)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 100,
-            width: double.infinity,
-            color: data.color.withValues(alpha: 0.15),
-            child: Stack(
-              children: [
-                Center(child: Icon(data.icon, size: 42, color: data.color)),
-                Positioned(
-                  left: 10,
-                  top: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: data.color,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: Text(data.badge,
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+    final url = imageUrl?.trim() ?? '';
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 196,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 88,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(
+                    color: LandingScreen.primary.withValues(alpha: 0.08),
+                    child: url.isEmpty
+                        ? Icon(icon, size: 32, color: LandingScreen.primary)
+                        : ModuleTheme.networkImage(url, fit: BoxFit.cover, error: Icon(icon, color: LandingScreen.primary)),
                   ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(data.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: LandingScreen.navy)),
-                Text(data.subtitle, style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: data.onTap,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: LandingScreen.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  Positioned(
+                    left: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: LandingScreen.navy.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        badge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                      ),
                     ),
-                    child: Text(data.cta, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: LandingScreen.navy)),
+                  if (subtitle.isNotEmpty)
+                    Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
+                  const SizedBox(height: 8),
+                  Text(cta, style: const TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w700, fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1321,19 +1483,19 @@ class _PromoCard extends StatelessWidget {
 class _NearbySection extends StatelessWidget {
   const _NearbySection({
     required this.items,
+    required this.loading,
+    required this.error,
     required this.onOpen,
-    required this.onDoctors,
-    required this.onGlow,
-    required this.onDefense,
-    required this.onLegal,
+    required this.onViewAll,
+    required this.onRetry,
   });
 
   final List<Map<String, dynamic>> items;
+  final bool loading;
+  final bool error;
   final ValueChanged<String?> onOpen;
-  final VoidCallback onDoctors;
-  final VoidCallback onGlow;
-  final VoidCallback onDefense;
-  final VoidCallback onLegal;
+  final VoidCallback onViewAll;
+  final VoidCallback onRetry;
 
   IconData _icon(String? name) {
     return switch (name) {
@@ -1347,82 +1509,87 @@ class _NearbySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final list = items.isNotEmpty
-        ? items
-        : [
-            {'title': 'Women Doctors', 'subtitle': 'Verified care', 'rating': '4.8', 'route': 'doctors', 'icon': 'local_hospital'},
-            {'title': 'Glow Salons', 'subtitle': 'Beauty & spa', 'rating': '4.7', 'route': 'glow', 'icon': 'spa'},
-            {'title': 'Self Defence', 'subtitle': 'Training centres', 'rating': '4.6', 'route': 'martial_arts', 'icon': 'sports_martial_arts'},
-            {'title': 'Legal Help', 'subtitle': 'Women lawyers', 'rating': '4.9', 'route': 'legal', 'icon': 'gavel'},
-          ];
-
-    return _HorizontalSection(
-      title: 'Nearby Services',
-      height: 150,
-      children: [
-        for (final i in list)
-          InkWell(
-            onTap: () {
-              final route = i['route']?.toString();
-              if (route == 'legal') {
-                onLegal();
-              } else if (route != null) {
-                onOpen(route);
-              } else {
-                onDoctors();
-              }
-            },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFCE7F3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 56,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: LandingScreen.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(_icon(i['icon']?.toString()), color: LandingScreen.primary),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    i['title']?.toString() ?? 'Service',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: LandingScreen.navy),
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          i['subtitle']?.toString() ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: LandingScreen.textGray),
-                        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 0, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            'Nearby & verified',
+            subtitle: 'Curated verified listings. GPS nearby is not available yet.',
+            actionLabel: 'View all',
+            onAction: onViewAll,
+          ),
+          const SizedBox(height: 8),
+          if (loading || error || items.isEmpty)
+            _InlineState(
+              loading: loading && items.isEmpty,
+              error: error && items.isEmpty,
+              empty: !loading && !error && items.isEmpty,
+              emptyMessage: 'No nearby listings available right now.',
+              onRetry: onRetry,
+              actionLabel: 'Find a doctor',
+              onAction: onViewAll,
+              height: 110,
+            )
+          else
+            SizedBox(
+              height: 138,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final item = items[i];
+                  return InkWell(
+                    onTap: () => onOpen(item['route']?.toString()),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      width: 156,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      if (i['rating'] != null) ...[
-                        const Icon(Icons.star, size: 12, color: Color(0xFFF59E0B)),
-                        Text(' ${i['rating']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
-                      ],
-                    ],
-                  ),
-                ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(_icon(item['icon']?.toString()), color: LandingScreen.primary),
+                          const Spacer(),
+                          Text(
+                            item['title']?.toString() ?? 'Listing',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: LandingScreen.navy),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  item['kind']?.toString() ?? item['subtitle']?.toString() ?? '',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: LandingScreen.textGray),
+                                ),
+                              ),
+                              if (item['rating'] != null) ...[
+                                const Icon(Icons.star, size: 12, color: Color(0xFFF59E0B)),
+                                Text(' ${item['rating']}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1432,98 +1599,110 @@ class _NearbySection extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _CommunitySection extends StatelessWidget {
-  const _CommunitySection({required this.items, required this.onOpenCommunity});
+  const _CommunitySection({
+    required this.items,
+    required this.loading,
+    required this.error,
+    required this.onOpenCommunity,
+    required this.onRetry,
+  });
 
   final List<Map<String, dynamic>> items;
+  final bool loading;
+  final bool error;
   final VoidCallback onOpenCommunity;
+  final VoidCallback onRetry;
+
+  String _when(String? raw) {
+    final dt = DateTime.tryParse((raw ?? '').replaceFirst(' ', 'T'));
+    if (dt == null) return '';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final posts = items.isNotEmpty
-        ? items
-        : [
-            {
-              'author': 'Fight D Fear',
-              'description': 'Share your safety journey and join Creator Hub discussions.',
-              'likes': 0,
-              'comments': 0,
-            },
-          ];
-
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text('From the Community',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: LandingScreen.navy)),
-              ),
-              TextButton(
-                onPressed: onOpenCommunity,
-                child: const Text('Open Hub', style: TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w700)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          for (final p in posts.take(5))
-            InkWell(
-              onTap: onOpenCommunity,
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFCE7F3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+          _SectionHeader('From the community', actionLabel: 'View all', onAction: onOpenCommunity, padEnd: false),
+          const SizedBox(height: 8),
+          if (loading || error || items.isEmpty)
+            _InlineState(
+              loading: loading && items.isEmpty,
+              error: error && items.isEmpty,
+              empty: !loading && !error && items.isEmpty,
+              emptyMessage: 'No community posts yet.',
+              onRetry: onRetry,
+              actionLabel: 'Open Creator Hub',
+              onAction: onOpenCommunity,
+            )
+          else
+            for (final p in items.take(4))
+              InkWell(
+                onTap: onOpenCommunity,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: LandingScreen.primary.withValues(alpha: 0.12),
-                        child: Text(
-                          () {
-                            final a = (p['author'] ?? p['title'] ?? 'F').toString();
-                            return a.isEmpty ? 'F' : a[0].toUpperCase();
-                          }(),
-                          style: const TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w800),
-                        ),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: LandingScreen.primary.withValues(alpha: 0.12),
+                            child: Text(
+                              () {
+                                final a = (p['author'] ?? p['title'] ?? 'F').toString().trim();
+                                return a.isEmpty ? 'F' : a[0].toUpperCase();
+                              }(),
+                              style: const TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              p['author']?.toString() ?? p['title']?.toString() ?? 'Community',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w800, color: LandingScreen.navy),
+                            ),
+                          ),
+                          if ((p['category']?.toString() ?? '').isNotEmpty)
+                            Text(p['category'].toString(), style: const TextStyle(fontSize: 11, color: LandingScreen.textGray)),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          p['author']?.toString() ?? p['title']?.toString() ?? 'Community',
-                          style: const TextStyle(fontWeight: FontWeight.w800, color: LandingScreen.navy),
-                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        p['description']?.toString() ?? p['title']?.toString() ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: LandingScreen.navy, height: 1.35, fontSize: 13),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.favorite_border, size: 16, color: LandingScreen.textGray),
+                          Text(' ${p['likes'] ?? 0}', style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
+                          const SizedBox(width: 14),
+                          const Icon(Icons.chat_bubble_outline, size: 16, color: LandingScreen.textGray),
+                          Text(' ${p['comments'] ?? 0}', style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
+                          const Spacer(),
+                          Text(_when(p['createdAt']?.toString()), style: const TextStyle(fontSize: 11, color: LandingScreen.textGray)),
+                        ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    p['description']?.toString() ?? p['title']?.toString() ?? '',
-                    style: const TextStyle(color: LandingScreen.navy, height: 1.35),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      const Icon(Icons.favorite_border, size: 16, color: LandingScreen.textGray),
-                      Text(' ${p['likes'] ?? 0}', style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
-                      const SizedBox(width: 14),
-                      const Icon(Icons.chat_bubble_outline, size: 16, color: LandingScreen.textGray),
-                      Text(' ${p['comments'] ?? 0}', style: const TextStyle(fontSize: 12, color: LandingScreen.textGray)),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-            ),
         ],
       ),
     );
@@ -1534,100 +1713,113 @@ class _CommunitySection extends StatelessWidget {
 // Tips + categories
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _TipsAndCategories extends StatelessWidget {
-  const _TipsAndCategories({
-    required this.onFinancial,
-    required this.onDefense,
+class _PopularCategories extends StatelessWidget {
+  const _PopularCategories({
     required this.onDoctors,
     required this.onJobs,
-    required this.onLegal,
     required this.onEvents,
+    required this.onFinancial,
+    required this.onMarketplace,
+    required this.onFitness,
+    required this.onViewAll,
   });
 
-  final VoidCallback onFinancial;
-  final VoidCallback onDefense;
   final VoidCallback onDoctors;
   final VoidCallback onJobs;
-  final VoidCallback onLegal;
   final VoidCallback onEvents;
+  final VoidCallback onFinancial;
+  final VoidCallback onMarketplace;
+  final VoidCallback onFitness;
+  final VoidCallback onViewAll;
 
   @override
   Widget build(BuildContext context) {
     final cats = [
-      ('Mental Wellness', Icons.psychology_outlined, onDoctors),
-      ('Fitness', Icons.fitness_center_outlined, onDefense),
-      ('Women Health', Icons.favorite_outline, onDoctors),
-      ('Career Growth', Icons.work_outline, onJobs),
-      ('Legal Awareness', Icons.gavel_outlined, onLegal),
-      ('Entrepreneurship', Icons.lightbulb_outline, onEvents),
-      ('Financial Literacy', Icons.menu_book_outlined, onFinancial),
+      (Icons.monitor_heart_outlined, 'Doctors', onDoctors),
+      (Icons.work_outline, 'Jobs', onJobs),
+      (Icons.event_outlined, 'Events', onEvents),
+      (Icons.menu_book_outlined, 'Education', onFinancial),
+      (Icons.storefront_outlined, 'Marketplace', onMarketplace),
+      (Icons.fitness_center_outlined, 'Fitness', onFitness),
     ];
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFFCE7F3)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: LandingScreen.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.shield_outlined, color: LandingScreen.primary),
-                    ),
-                    const SizedBox(width: 10),
-                    const Text('Safety Tip of the Day',
-                        style: TextStyle(fontWeight: FontWeight.w900, color: LandingScreen.navy)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Share your live location with a trusted person while traveling alone.',
-                  style: TextStyle(color: LandingScreen.textGray, height: 1.4),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: onDefense,
-                  child: const Text('View More Tips',
-                      style: TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text('Popular Categories',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: LandingScreen.navy)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          _SectionHeader('Popular categories', actionLabel: 'View all', onAction: onViewAll, padEnd: false),
+          const SizedBox(height: 8),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            childAspectRatio: 1.35,
             children: [
               for (final c in cats)
-                ActionChip(
-                  avatar: Icon(c.$2, size: 16, color: LandingScreen.primary),
-                  label: Text(c.$1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                  onPressed: c.$3,
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFFFCE7F3)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+                InkWell(
+                  onTap: c.$3,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(c.$1, color: LandingScreen.primary),
+                        const SizedBox(height: 6),
+                        Text(c.$2, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: LandingScreen.navy)),
+                      ],
+                    ),
+                  ),
                 ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SafetyTipCard extends StatelessWidget {
+  const _SafetyTipCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.shield_outlined, color: LandingScreen.primary),
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Safety tip', style: TextStyle(fontWeight: FontWeight.w800, color: LandingScreen.navy)),
+                  SizedBox(height: 4),
+                  Text(
+                    'Share your live location with a trusted contact while travelling alone.',
+                    style: TextStyle(color: LandingScreen.textGray, height: 1.35, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1640,101 +1832,83 @@ class _TipsAndCategories extends StatelessWidget {
 class _OffersSection extends StatelessWidget {
   const _OffersSection({
     required this.items,
+    required this.loading,
+    required this.error,
     required this.onGlow,
-    required this.onDefense,
-    required this.onMarketplace,
+    required this.onRetry,
   });
 
   final List<Map<String, dynamic>> items;
+  final bool loading;
+  final bool error;
   final VoidCallback onGlow;
-  final VoidCallback onDefense;
-  final VoidCallback onMarketplace;
-
-  @override
-  Widget build(BuildContext context) {
-    final offers = items.isNotEmpty
-        ? items
-            .map((o) => (
-                  o['title']?.toString() ?? 'Offer',
-                  o['discountLabel']?.toString() ?? 'Special',
-                  onGlow,
-                  const Color(0xFFEC4899),
-                ))
-            .toList()
-        : [
-            ('Glow Space', 'Offers', onGlow, const Color(0xFFEC4899)),
-            ('Self Defence', 'Training', onDefense, const Color(0xFF3B82F6)),
-            ('Marketplace', 'Services', onMarketplace, const Color(0xFFF97316)),
-          ];
-
-    return _HorizontalSection(
-      title: 'Offers & Discounts',
-      height: 110,
-      children: [
-        for (final o in offers)
-          InkWell(
-            onTap: o.$3,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 12),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [o.$4, o.$4.withValues(alpha: 0.75)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(o.$1,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                  const Spacer(),
-                  Text(o.$2,
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _HorizontalSection extends StatelessWidget {
-  const _HorizontalSection({
-    required this.title,
-    required this.children,
-    this.height = 230,
-  });
-
-  final String title;
-  final List<Widget> children;
-  final double height;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 0, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 0, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Text(title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: LandingScreen.navy)),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: height,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: children,
+          _SectionHeader('Offers', actionLabel: items.isEmpty ? null : 'View all', onAction: items.isEmpty ? null : onGlow),
+          const SizedBox(height: 8),
+          if (loading || error || items.isEmpty)
+            _InlineState(
+              loading: loading && items.isEmpty,
+              error: error && items.isEmpty,
+              empty: !loading && !error && items.isEmpty,
+              emptyMessage: 'No offers available right now.',
+              onRetry: onRetry,
+              height: 88,
+            )
+          else
+            SizedBox(
+              height: 108,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(right: 16),
+                itemCount: items.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final o = items[i];
+                  final discount = o['discountLabel']?.toString() ?? '';
+                  return InkWell(
+                    onTap: onGlow,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      width: 168,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (discount.isNotEmpty)
+                            Text(discount, style: const TextStyle(color: LandingScreen.primary, fontWeight: FontWeight.w900)),
+                          Text(
+                            o['title']?.toString() ?? 'Offer',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w700, color: LandingScreen.navy),
+                          ),
+                          const Spacer(),
+                          Text(
+                            o['salonName']?.toString() ?? 'Glow Space',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, color: LandingScreen.textGray),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -1846,12 +2020,16 @@ class _LoginDropdown {
     _LoginOption(value: 'doctor', label: 'Women Doctor Login', icon: Icons.monitor_heart_outlined, available: true),
     _LoginOption(value: 'martial_arts', label: 'Self-Defense Center Login', icon: Icons.sports_martial_arts_outlined, available: true),
     _LoginOption(value: 'glow', label: 'Glow Space Login', icon: Icons.spa_outlined, available: true),
-    _LoginOption(value: 'service_partner', label: 'Service Partner Login', icon: Icons.handshake_outlined, available: true),
+    _LoginOption(value: 'women_lawyer', label: 'Women Lawyer Login', icon: Icons.gavel_outlined, available: true),
+    _LoginOption(value: 'women_jobs', label: 'Women Jobs Login', icon: Icons.work_outline, available: true),
     _LoginOption(value: 'marketplace_seller', label: 'Product Seller Login', icon: Icons.storefront_outlined, available: true),
     _LoginOption(value: 'entrepreneur', label: 'Entrepreneur Login', icon: Icons.lightbulb_outline, available: true),
     _LoginOption(value: 'investor', label: 'Investor Login', icon: Icons.trending_up, available: true),
     _LoginOption(value: 'event_host', label: 'Event Host Login', icon: Icons.event_available_outlined, available: true),
     _LoginOption(value: 'fitness_trainer', label: 'Fitness Trainer Login', icon: Icons.fitness_center_outlined, available: true),
+    _LoginOption(value: 'delivery', label: 'Delivery Guy Login', icon: Icons.delivery_dining_outlined, available: true),
+    _LoginOption(value: 'creator', label: 'Creator Hub Login', icon: Icons.video_camera_front_outlined, available: true),
+    _LoginOption(value: 'financial', label: 'Financial Educator Login', icon: Icons.menu_book_outlined, available: true),
     _LoginOption(value: 'admin', label: 'Admin Login', icon: Icons.admin_panel_settings_outlined, available: true),
   ];
 
@@ -1891,12 +2069,14 @@ class _JoinUsOption {
     required this.value,
     required this.label,
     required this.icon,
+    this.subtitle,
     this.available = false,
   });
 
   final String value;
   final String label;
   final IconData icon;
+  final String? subtitle;
   final bool available;
 }
 
@@ -1904,15 +2084,18 @@ class _JoinUsDropdown {
   static const options = [
     _JoinUsOption(value: 'member', label: 'Join as Member', icon: Icons.person_outline, available: true),
     _JoinUsOption(value: 'doctor', label: 'Women Doctor', icon: Icons.monitor_heart_outlined, available: true),
-    _JoinUsOption(value: 'martial_arts', label: 'Self-Defense Trainer', icon: Icons.sports_martial_arts_outlined, available: true),
+    _JoinUsOption(value: 'martial_arts', label: 'Self-Defense Trainer', subtitle: 'Karate, Taekwondo & martial arts centres', icon: Icons.sports_martial_arts_outlined, available: true),
     _JoinUsOption(value: 'glow', label: 'Glow Space', icon: Icons.spa_outlined, available: true),
-    _JoinUsOption(value: 'service_partner', label: 'Service Partner', icon: Icons.handshake_outlined, available: true),
-    _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', icon: Icons.storefront_outlined, available: true),
+    _JoinUsOption(value: 'women_lawyer', label: 'Women Lawyer', subtitle: 'Dedicated lawyer registration — consultations & advocacy', icon: Icons.gavel_outlined, available: true),
+    _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', subtitle: 'List products, photos, stock & orders', icon: Icons.storefront_outlined, available: true),
+    _JoinUsOption(value: 'delivery', label: 'Delivery Guy', subtitle: 'Pick up and deliver Women Products orders', icon: Icons.delivery_dining_outlined, available: true),
     _JoinUsOption(value: 'women_jobs', label: 'Women Jobs', icon: Icons.work_outline, available: true),
     _JoinUsOption(value: 'entrepreneur', label: 'Entrepreneur', icon: Icons.lightbulb_outline, available: true),
     _JoinUsOption(value: 'investor', label: 'Investor', icon: Icons.trending_up, available: true),
     _JoinUsOption(value: 'event_host', label: 'Event Host', icon: Icons.event_available_outlined, available: true),
-    _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', icon: Icons.fitness_center_outlined, available: true),
+    _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', subtitle: 'Gym, Zumba, Yoga & wellness coaching', icon: Icons.fitness_center_outlined, available: true),
+    _JoinUsOption(value: 'creator', label: 'Creator Hub', subtitle: 'Publish videos, reels & stories after admin approval', icon: Icons.video_camera_front_outlined, available: true),
+    _JoinUsOption(value: 'financial', label: 'Financial Educator', subtitle: 'Publish videos, live sessions & workshops after admin approval', icon: Icons.menu_book_outlined, available: true),
   ];
 
   static Future<void> showSheet(BuildContext context, ValueChanged<String> onSelected) async {
@@ -1932,6 +2115,7 @@ class _JoinUsDropdown {
               (o) => ListTile(
                 leading: Icon(o.icon, color: LandingScreen.primary),
                 title: Text(o.label),
+                subtitle: o.subtitle == null ? null : Text(o.subtitle!, style: const TextStyle(fontSize: 12)),
                 trailing: o.available
                     ? const Text('Open', style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.w700))
                     : null,

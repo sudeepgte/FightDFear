@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -57,6 +58,10 @@ public class MobileDoctorAuthController {
     private DoctorVerificationService doctorVerificationService;
     @Autowired
     private DoctorAppointmentService doctorAppointmentService;
+    @Autowired
+    private in.sp.main.Service.DoctorBookingService bookingService;
+    @Autowired
+    private in.sp.main.Service.DoctorCareService careService;
     @Autowired
     private in.sp.main.Service.DoctorInstantConsultService instantConsultService;
     @Autowired
@@ -289,6 +294,7 @@ public class MobileDoctorAuthController {
         res.put("doctor", doctorSummary(d));
         res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
         res.put("profileCompletionPct", d.getProfileCompletionPct());
+        res.put("needsProfileCompletion", needsProfileCompletion(d));
         return ResponseEntity.ok(res);
     }
 
@@ -475,6 +481,8 @@ public class MobileDoctorAuthController {
             m.put("amountPaid", a.getAmountPaid());
             m.put("meetingRoomId", a.getMeetingRoomId());
             m.put("prescriptionText", a.getPrescriptionText());
+            m.put("prescriptionJson", a.getPrescriptionJson());
+            m.put("canJoin", doctorAppointmentService.canJoinVideo(a));
             if (a.getUser() != null) {
                 User u = a.getUser();
                 m.put("userId", u.getId());
@@ -766,7 +774,7 @@ public class MobileDoctorAuthController {
     @Transactional
     public ResponseEntity<Map<String, Object>> savePrescription(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body,
+            @RequestBody Map<String, Object> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
@@ -774,14 +782,131 @@ public class MobileDoctorAuthController {
         if (a == null || a.getDoctor() == null || !a.getDoctor().getId().equals(d.getId())) {
             return badRequest("Appointment not found");
         }
-        String text = trim(body == null ? null : body.get("prescriptionText"));
-        if (text.isBlank()) return badRequest("prescriptionText is required");
+        String text = body == null || body.get("prescriptionText") == null ? "" : String.valueOf(body.get("prescriptionText")).trim();
+        Object json = body == null ? null : body.get("prescriptionJson");
+        String jsonStr = json == null ? "" : String.valueOf(json).trim();
+        if (text.isBlank() && jsonStr.isBlank()) return badRequest("Add at least one medicine or advice");
+        if (!jsonStr.isBlank()) {
+            a.setPrescriptionJson(jsonStr);
+            if (text.isBlank()) {
+                text = jsonStr;
+            }
+        }
         a.setPrescriptionText(text);
+        if (body != null && body.get("doctorNotes") != null) {
+            a.setDoctorNotes(String.valueOf(body.get("doctorNotes")).trim());
+        }
         appointmentRepo.save(a);
+        if (a.getUser() != null) {
+            pushNotificationService.notifyUser(
+                    a.getUser().getId(),
+                    "Prescription ready",
+                    "Dr. " + d.getFullName() + " sent your prescription",
+                    Map.of("type", "PRESCRIPTION", "appointmentId", String.valueOf(a.getId())));
+        }
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("message", "Prescription saved");
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/appointments/{id}/reschedule")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rescheduleByDoctor(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        try {
+            LocalDateTime when = in.sp.main.Controller.MobileDoctorController.parseAppointmentTime(
+                    body == null ? null : body.get("appointmentTime"));
+            a = doctorAppointmentService.rescheduleByDoctor(a, d, when, doctorBookingService());
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("appointmentTime", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/appointments/{id}/waiting")
+    public ResponseEntity<Map<String, Object>> pingWaiting(@PathVariable Long id, HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
+        if (a == null || a.getDoctor() == null || !a.getDoctor().getId().equals(d.getId())) {
+            return badRequest("Appointment not found");
+        }
+        doctorCareService().pingDoctorWaiting(a);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Patient notified"));
+    }
+
+    @GetMapping("/patients/{userId}")
+    public ResponseEntity<Map<String, Object>> patientFile(@PathVariable Long userId, HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        List<Map<String, Object>> visits = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d).stream()
+                .filter(a -> a.getUser() != null && userId.equals(a.getUser().getId()))
+                .map(a -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", a.getId());
+                    m.put("appointmentTime", a.getAppointmentTime() == null ? null : a.getAppointmentTime().toString());
+                    m.put("status", a.getStatus() == null ? null : a.getStatus().name());
+                    m.put("reason", a.getReason());
+                    m.put("prescriptionText", a.getPrescriptionText());
+                    m.put("prescriptionJson", a.getPrescriptionJson());
+                    m.put("doctorNotes", a.getDoctorNotes());
+                    m.put("reportPaths", a.getReportPaths());
+                    return m;
+                })
+                .toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("visits", visits);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/payout/request")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> requestPayout(HttpSession session) {
+        Doctor d = requireDoctor(session);
+        if (d == null) return unauthorized();
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        if (d.getUpiId() == null || d.getUpiId().isBlank()) {
+            return badRequest("Add a UPI ID before requesting payout");
+        }
+        d.setPayoutRequestedAt(java.time.LocalDateTime.now());
+        doctorRepo.save(d);
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Payout request recorded. Accounts will transfer to your UPI.",
+                "payoutBalance", d.getPayoutBalance() == null ? 0 : d.getPayoutBalance()));
+    }
+
+    private in.sp.main.Service.DoctorBookingService doctorBookingService() {
+        return bookingService;
+    }
+
+    private in.sp.main.Service.DoctorCareService doctorCareService() {
+        return careService;
+    }
+
+    private static boolean needsProfileCompletion(Doctor d) {
+        if (d == null) {
+            return true;
+        }
+        DoctorProfileStatus status = d.getDoctorProfileStatus();
+        if (status == null) {
+            return true;
+        }
+        return status == DoctorProfileStatus.REGISTERED
+                || status == DoctorProfileStatus.PROFILE_INCOMPLETE
+                || status == DoctorProfileStatus.READY_FOR_VERIFICATION
+                || status == DoctorProfileStatus.CHANGES_REQUESTED
+                || status == DoctorProfileStatus.REJECTED;
     }
 
     private Doctor requireDoctor(HttpSession session) {

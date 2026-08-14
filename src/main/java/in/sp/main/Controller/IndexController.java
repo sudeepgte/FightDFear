@@ -1,5 +1,6 @@
 package in.sp.main.Controller;
 
+import in.sp.main.Repository.TreatmentRepository;
 import in.sp.main.Service.IndexTemplatesFeedService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -17,6 +18,9 @@ public class IndexController {
 
     @Autowired
     private IndexTemplatesFeedService indexTemplatesFeedService;
+
+    @Autowired
+    private TreatmentRepository treatmentRepository;
 
     // ✅ Home / Templates Page
     @GetMapping("/templates")
@@ -76,7 +80,7 @@ public class IndexController {
     @GetMapping("/pricing")
     public String pricing(Model model) {
         model.addAttribute("pageTitle", "Pricing Plans");
-      
+        model.addAttribute("treatments", treatmentRepository.findAll());
         return "index/pricing";
     }
 

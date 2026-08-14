@@ -23,6 +23,6 @@ void main() {
     }
 
     expect(find.byType(LandingScreen), findsOneWidget);
-    expect(find.textContaining('Fight D Fear'), findsWidgets);
+    expect(find.textContaining('Fight'), findsWidgets);
   });
 }

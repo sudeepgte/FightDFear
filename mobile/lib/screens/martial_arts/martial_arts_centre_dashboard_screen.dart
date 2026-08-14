@@ -6,10 +6,19 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
+import '../../widgets/registration_form_kit.dart';
+import '../../widgets/ux_feedback.dart';
+import 'martial_arts_centre_profile_completion_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
 
 class MartialArtsCentreDashboardScreen extends StatefulWidget {
-  const MartialArtsCentreDashboardScreen({super.key});
+  const MartialArtsCentreDashboardScreen({
+    super.key,
+    this.openProfileCompletion = false,
+  });
+
+  /// When true (e.g. after login with incomplete profile), open completion screen once.
+  final bool openProfileCompletion;
 
   static const Color primary = Color(0xFFF43F5E);
   static const Color navy = Color(0xFF1E1B4B);
@@ -31,11 +40,23 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
   void initState() {
     super.initState();
     _auth = CentreAuthService(context.read<AuthState>().api);
-    _tabs = TabController(length: 6, vsync: this);
+    _tabs = TabController(length: 7, vsync: this);
     _tabs.addListener(() {
       if (!_tabs.indexIsChanging) setState(() {});
     });
-    _load();
+    _load().then((_) {
+      if (!mounted || !widget.openProfileCompletion) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openProfileCompletion();
+      });
+    });
+  }
+
+  Future<void> _openProfileCompletion() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MartialArtsCentreProfileCompletionScreen()),
+    );
+    if (mounted) _load();
   }
 
   @override
@@ -165,16 +186,9 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
               _navItem(1, Icons.groups_outlined, Icons.groups, 'Students', 2),
               _navItem(2, Icons.fitness_center_outlined, Icons.fitness_center, 'Batches', 1),
               const SizedBox(width: 56),
-              _navItem(4, Icons.payments_outlined, Icons.payments, 'Finance', 4),
-              _navItem(
-                3,
-                Icons.chat_bubble_outline,
-                Icons.chat_bubble,
-                'Messages',
-                2,
-                badge: notifications.isNotEmpty ? '${notifications.length.clamp(1, 9)}' : null,
-              ),
-              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 5),
+              _navItem(4, Icons.videocam_outlined, Icons.videocam, 'Live', 4),
+              _navItem(3, Icons.payments_outlined, Icons.payments, 'Finance', 5),
+              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 6),
             ],
           ),
         ),
@@ -213,6 +227,7 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                           Tab(text: 'Batches'),
                           Tab(text: 'Students'),
                           Tab(text: 'Attendance'),
+                          Tab(text: 'Live'),
                           Tab(text: 'Finance'),
                           Tab(text: 'More'),
                         ],
@@ -231,12 +246,14 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                             onGoStudents: () => _tabs.animateTo(2),
                             onGoAttendance: () => _tabs.animateTo(3),
                             onGoLive: () => _tabs.animateTo(4),
-                            onGoSettings: () => _tabs.animateTo(5),
+                            onGoSettings: () => _tabs.animateTo(6),
+                            onCompleteProfile: _openProfileCompletion,
                           ),
                           _BatchesTab(auth: _auth, batches: _list('batches'), onChanged: _load),
                           _StudentsTab(auth: _auth, students: _list('enrollments'), onChanged: _load),
                           _AttendanceTab(auth: _auth, batches: _list('batches')),
                           _LiveClassesTab(auth: _auth, classes: _list('onlineClasses'), batches: _list('batches'), onChanged: _load),
+                          _FinanceTab(auth: _auth, meta: _meta, centre: _centre, onChanged: _load),
                           _SettingsTab(auth: _auth, centre: _centre, onSaved: _load),
                         ],
                       ),
@@ -252,8 +269,8 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
       1 => _tabs.index == 2,
       2 => _tabs.index == 1,
       4 => _tabs.index == 4,
-      3 => false,
-      5 => _tabs.index == 5,
+      3 => _tabs.index == 5,
+      5 => _tabs.index == 6,
       _ => false,
     };
     return Expanded(
@@ -508,6 +525,7 @@ class _OverviewTab extends StatelessWidget {
     required this.onGoAttendance,
     required this.onGoLive,
     required this.onGoSettings,
+    required this.onCompleteProfile,
   });
 
   final Map<String, dynamic>? meta;
@@ -518,6 +536,7 @@ class _OverviewTab extends StatelessWidget {
   final VoidCallback onGoAttendance;
   final VoidCallback onGoLive;
   final VoidCallback onGoSettings;
+  final VoidCallback onCompleteProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -526,12 +545,35 @@ class _OverviewTab extends StatelessWidget {
     final events = _asMaps(meta?['events']);
     final revenue = _asMaps(meta?['revenueSeries']);
     final attendancePct = _metaNum(meta?['attendanceWeek'] ?? meta?['avgAttendance']).toDouble().clamp(0, 100);
-    final completion = _metaNum(meta?['profileCompletion']).toDouble().clamp(0, 100);
+    final completion = _metaNum(meta?['profileCompletion']).toDouble().clamp(0, 100).toDouble();
+    final status = meta?['centreProfileStatus']?.toString() ?? '';
+    final statusLabel = meta?['centreProfileStatusLabel']?.toString() ?? 'Profile Incomplete';
+    final canSubmit = meta?['canSubmitForVerification'] == true;
+    final missing = (meta?['missingItems'] is List)
+        ? (meta!['missingItems'] as List).map((e) => e.toString()).toList()
+        : <String>[];
+    final showCompletionCard = status != 'APPROVED' || completion < 100;
     final topPrograms = _topPrograms();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       children: [
+        if (showCompletionCard) ...[
+          ProfileCompletionCard(
+            percent: completion,
+            statusLabel: statusLabel,
+            hint: ProfileCompletionCard.hintFromMissing(missing),
+            actionLabel: canSubmit ? 'Review & Submit' : 'Complete Profile',
+            onAction: onCompleteProfile,
+            trailing: missing.isEmpty
+                ? null
+                : Text(
+                    'Missing: ${missing.take(3).join(', ')}${missing.length > 3 ? '...' : ''}',
+                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  ),
+          ),
+          const SizedBox(height: 12),
+        ],
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -856,8 +898,10 @@ class _OverviewTab extends StatelessWidget {
                     _checkItem('Programs', meta?['hasPrograms'] == true),
                     _checkItem('Gallery', meta?['hasGallery'] == true),
                     _checkItem('Documents', meta?['hasDetails'] == true),
-                    _checkItem('Add More Photos', meta?['hasGallery'] == true, muted: meta?['hasGallery'] != true),
-                    TextButton(onPressed: onGoSettings, child: const Text('Complete profile')),
+                    TextButton(
+                      onPressed: onCompleteProfile,
+                      child: Text(canSubmit ? 'Review & Submit' : 'Complete profile'),
+                    ),
                   ],
                 ),
               ),
@@ -1220,7 +1264,7 @@ class _BatchesTab extends StatefulWidget {
 
 class _BatchesTabState extends State<_BatchesTab> {
   static const _dayChips = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _programs = ['Karate', 'Yoga', 'Fitness', 'Self-Defence', 'Taekwondo', 'Other'];
+  static const _programs = RegOptions.martialArtsPrograms;
 
   Future<void> _pickTime(TextEditingController ctrl) async {
     final now = TimeOfDay.now();
@@ -1252,6 +1296,13 @@ class _BatchesTabState extends State<_BatchesTab> {
     if (!_programs.contains(program)) program = 'Other';
     String batchType = existing?['batchType']?.toString() ?? 'Offline';
     String status = existing?['status']?.toString() ?? 'Active';
+    String trialType = existing?['trialType']?.toString().isNotEmpty == true
+        ? existing!['trialType'].toString()
+        : 'None';
+    int bufferMinutes = existing?['bufferMinutes'] is num
+        ? (existing!['bufferMinutes'] as num).toInt()
+        : int.tryParse('${existing?['bufferMinutes'] ?? 0}') ?? 0;
+    final admissionCtrl = TextEditingController(text: '${existing?['admissionFee'] ?? 0}');
     final selectedDays = <String>{
       ...(existing?['availableDays']?.toString() ?? 'Mon,Tue,Wed,Thu,Fri')
           .split(RegExp(r'[,/ ]+'))
@@ -1458,6 +1509,32 @@ class _BatchesTabState extends State<_BatchesTab> {
                     child: Text('0 (read-only)'),
                   ),
                   const SizedBox(height: 8),
+                  TextField(
+                    controller: admissionCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Admission fee (₹)', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    value: bufferMinutes,
+                    decoration: const InputDecoration(labelText: 'Buffer minutes', border: OutlineInputBorder()),
+                    items: const [0, 5, 10, 15]
+                        .map((m) => DropdownMenuItem(value: m, child: Text('$m min')))
+                        .toList(),
+                    onChanged: (v) => setLocal(() => bufferMinutes = v ?? 0),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: trialType,
+                    decoration: const InputDecoration(labelText: 'Trial class', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'None', child: Text('None')),
+                      DropdownMenuItem(value: 'Free 1 class', child: Text('Free 1 class')),
+                      DropdownMenuItem(value: 'Paid trial', child: Text('Paid trial')),
+                    ],
+                    onChanged: (v) => setLocal(() => trialType = v ?? trialType),
+                  ),
+                  const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: batchType,
                     decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
@@ -1521,6 +1598,9 @@ class _BatchesTabState extends State<_BatchesTab> {
                               'endDate': endDateCtrl.text.trim(),
                               'notes': notesCtrl.text.trim(),
                               'currentEnrollment': existing?['currentEnrollment'] ?? 0,
+                              'admissionFee': double.tryParse(admissionCtrl.text.trim()) ?? 0,
+                              'bufferMinutes': bufferMinutes,
+                              'trialType': trialType,
                             };
                             final res = await widget.auth.saveBatch(body);
                             if (!ctx.mounted) return;
@@ -1622,6 +1702,66 @@ class _StudentsTab extends StatefulWidget {
 class _StudentsTabState extends State<_StudentsTab> {
   final _search = TextEditingController();
 
+  Future<void> _openStudentFile(int id, Map<String, dynamic> s) async {
+    final res = await widget.auth.studentFile(id);
+    if (!mounted) return;
+    final notesCtrl = TextEditingController(text: (res['coachNotes'] ?? s['coachNotes'] ?? '').toString());
+    final history = (res['attendanceHistory'] is List)
+        ? (res['attendanceHistory'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+        : <Map<String, dynamic>>[];
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(res['fullName']?.toString() ?? s['traineeName']?.toString() ?? 'Student',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+              Text('${res['batchName'] ?? s['batchName'] ?? ''} · ${res['status'] ?? ''}'),
+              Text('${res['phone'] ?? ''} · ${res['email'] ?? ''}'),
+              if (res['medicalConditions'] != null) Text('Health: ${res['medicalConditions']}'),
+              const SizedBox(height: 12),
+              const Text('Attendance history', style: TextStyle(fontWeight: FontWeight.w700)),
+              if (history.isEmpty)
+                const Text('No attendance yet', style: TextStyle(color: Color(0xFF64748B)))
+              else
+                ...history.take(20).map((h) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('${h['date'] ?? ''} · ${h['status'] ?? ''}'),
+                      subtitle: Text('${h['batch'] ?? h['mode'] ?? ''} ${h['notes'] ?? ''}'),
+                    )),
+              const SizedBox(height: 8),
+              TextField(
+                controller: notesCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Coach notes', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: () async {
+                  final saved = await widget.auth.saveStudentNotes(id, notesCtrl.text.trim());
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(saved['message']?.toString() ?? 'Saved')),
+                  );
+                  if (saved['success'] == true) widget.onChanged();
+                },
+                child: const Text('Save notes'),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _search.dispose();
@@ -1676,7 +1816,13 @@ class _StudentsTabState extends State<_StudentsTab> {
                           children: [
                             Text(s['traineeName']?.toString() ?? 'Student', style: const TextStyle(fontWeight: FontWeight.w700)),
                             Text('${s['batchName'] ?? ''} · $status · ${s['paymentStatus'] ?? ''}'),
+                            if (s['attendancePercentage'] != null)
+                              Text('Attendance ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12)),
                             const SizedBox(height: 8),
+                            TextButton(
+                              onPressed: eid == null ? null : () => _openStudentFile(eid, s),
+                              child: const Text('Open student file'),
+                            ),
                             Wrap(
                               spacing: 8,
                               children: ['APPROVED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED'].map((st) {
@@ -1891,9 +2037,47 @@ class _LiveClassesTabState extends State<_LiveClassesTab> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title')),
-              TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date')),
-              TextField(controller: startCtrl, decoration: const InputDecoration(labelText: 'Start time')),
-              TextField(controller: endCtrl, decoration: const InputDecoration(labelText: 'End time')),
+              TextField(
+                controller: dateCtrl,
+                readOnly: true,
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) {
+                    dateCtrl.text =
+                        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                  }
+                },
+                decoration: const InputDecoration(labelText: 'Date'),
+              ),
+              TextField(
+                controller: startCtrl,
+                readOnly: true,
+                onTap: () async {
+                  final t = await showTimePicker(context: ctx, initialTime: const TimeOfDay(hour: 10, minute: 0));
+                  if (t != null) {
+                    startCtrl.text =
+                        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                  }
+                },
+                decoration: const InputDecoration(labelText: 'Start time'),
+              ),
+              TextField(
+                controller: endCtrl,
+                readOnly: true,
+                onTap: () async {
+                  final t = await showTimePicker(context: ctx, initialTime: const TimeOfDay(hour: 11, minute: 0));
+                  if (t != null) {
+                    endCtrl.text =
+                        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                  }
+                },
+                decoration: const InputDecoration(labelText: 'End time'),
+              ),
               TextField(controller: linkCtrl, decoration: const InputDecoration(labelText: 'Meeting link')),
             ],
           ),
@@ -1958,13 +2142,21 @@ class _LiveClassesTabState extends State<_LiveClassesTab> {
                     return Card(
                       child: ListTile(
                         title: Text(c['title']?.toString() ?? c['name']?.toString() ?? 'Class'),
-                        subtitle: Text('${c['date'] ?? ''} · ${c['status'] ?? ''}'),
+                        subtitle: Text(
+                          '${c['date'] ?? ''} · ${c['status'] ?? ''}\n${c['joinHint'] ?? 'Join window: 5 min before to 15 min after start'}',
+                        ),
+                        isThreeLine: true,
                         trailing: PopupMenuButton<String>(
                           onSelected: (v) async {
                             if (cid == null) return;
                             Map<String, dynamic> res;
                             if (v == 'start') {
                               res = await widget.auth.startOnlineClass(cid);
+                              if (res['success'] != true && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(res['error']?.toString() ?? 'Join window closed')),
+                                );
+                              }
                               final link = res['meetingLink']?.toString();
                               if (link != null && link.isNotEmpty) {
                                 await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
@@ -1986,6 +2178,60 @@ class _LiveClassesTabState extends State<_LiveClassesTab> {
                     );
                   },
                 ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FinanceTab extends StatelessWidget {
+  const _FinanceTab({required this.auth, this.meta, this.centre, required this.onChanged});
+  final CentreAuthService auth;
+  final Map<String, dynamic>? meta;
+  final Map<String, dynamic>? centre;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final earnings = meta?['totalEarnings'] ?? 0;
+    final balance = meta?['payoutBalance'] ?? centre?['payoutBalance'] ?? 0;
+    final upi = (meta?['upiId'] ?? centre?['upiId'] ?? '').toString();
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text('Finance & payouts', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            title: const Text('Gross enrollments'),
+            trailing: Text('₹$earnings', style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ),
+        Card(
+          child: ListTile(
+            title: const Text('Wallet / payout balance'),
+            subtitle: Text(upi.isEmpty ? 'Add UPI ID in Complete Profile' : 'UPI: $upi'),
+            trailing: Text('₹$balance', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF16A34A))),
+          ),
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: () async {
+            final res = await auth.requestPayout();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Done')),
+            );
+            if (res['success'] == true) onChanged();
+          },
+          icon: const Icon(Icons.account_balance_wallet_outlined),
+          label: const Text('Request UPI payout'),
+          style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Payouts are sent to your UPI ID. Live classes stay on the Live tab — this tab is earnings only.',
+          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
         ),
       ],
     );

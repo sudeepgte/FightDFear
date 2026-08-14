@@ -14,7 +14,7 @@ class ApiClient {
   static const _adminTokenKey = 'admin_auth_token';
   static const _salonTokenKey = 'salon_auth_token';
   static const _stylistTokenKey = 'stylist_auth_token';
-  static const _timeout = Duration(seconds: 8);
+  static const _browseTimeout = Duration(seconds: 8);
   static const _uploadTimeout = Duration(seconds: 120);
 
   Future<String?> getToken() async {
@@ -162,13 +162,19 @@ class ApiClient {
     bool auth = false,
     bool doctorAuth = false,
     bool centreAuth = false,
+    bool salonAuth = false,
     void Function(double progress)? onProgress,
   }) async {
     final req = http.MultipartRequest('POST', _uri(path));
     req.fields.addAll(fields);
     req.files.addAll(files);
     req.headers['Accept'] = 'application/json';
-    if (centreAuth) {
+    if (salonAuth) {
+      final token = await getSalonToken();
+      if (token != null && token.isNotEmpty) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
+    } else if (centreAuth) {
       final token = await getCentreToken();
       if (token != null && token.isNotEmpty) {
         req.headers['Authorization'] = 'Bearer $token';
@@ -245,7 +251,7 @@ class ApiClient {
           ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -271,7 +277,7 @@ class ApiClient {
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -290,7 +296,7 @@ class ApiClient {
           headers: headers,
           body: fields,
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -301,6 +307,8 @@ class ApiClient {
     bool doctorAuth = false,
     bool centreAuth = false,
     bool adminAuth = false,
+    bool salonAuth = false,
+    bool stylistAuth = false,
     Duration? timeout,
   }) async {
     final res = await http
@@ -311,10 +319,12 @@ class ApiClient {
             doctorAuth: doctorAuth,
             centreAuth: centreAuth,
             adminAuth: adminAuth,
+            salonAuth: salonAuth,
+            stylistAuth: stylistAuth,
           ),
           body: body == null ? null : jsonEncode(body),
         )
-        .timeout(timeout ?? _timeout);
+        .timeout(timeout ?? _browseTimeout);
     return _decode(res);
   }
 
@@ -335,7 +345,7 @@ class ApiClient {
       adminAuth: adminAuth,
     ));
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await req.send().timeout(timeout ?? _timeout);
+    final streamed = await req.send().timeout(timeout ?? _browseTimeout);
     final res = await http.Response.fromStream(streamed);
     return _decode(res);
   }
@@ -360,7 +370,7 @@ class ApiClient {
             stylistAuth: stylistAuth,
           ),
         )
-        .timeout(_timeout);
+        .timeout(_browseTimeout);
     return _decode(res);
   }
 
@@ -368,9 +378,10 @@ class ApiClient {
   Future<({List<int> bytes, int statusCode, String? filename})> getBytes(
     String path, {
     bool auth = true,
+    bool doctorAuth = false,
   }) async {
     final res = await http
-        .get(_uri(path), headers: await _headers(auth: auth))
+        .get(_uri(path), headers: await _headers(auth: auth, doctorAuth: doctorAuth))
         .timeout(_uploadTimeout);
     String? filename;
     final cd = res.headers['content-disposition'];

@@ -12,6 +12,7 @@
 # app.doctor.commission-percent=15
 # google.maps.apiKey=
 #
-# On the testing/production server, set real values via environment / .env:
-#   JWT_SECRET, DB_PASSWORD, MAIL_*, RAZORPAY_*, RAZORPAY_WEBHOOK_SECRET,
-#   PAYMENT_MOCK=false, GOOGLE_MAPS_API_KEY, TWILIO_*
+# On the testing/production server, use spring.profiles.active=prod and set via .env:
+#   SPRING_PROFILES_ACTIVE=prod
+#   JWT_SECRET, DB_URL, DB_USERNAME, DB_PASSWORD, MAIL_*, RAZORPAY_*,
+#   RAZORPAY_WEBHOOK_SECRET, PAYMENT_MOCK=false, GOOGLE_MAPS_API_KEY, TWILIO_*

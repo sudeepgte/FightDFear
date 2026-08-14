@@ -255,6 +255,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 label: 'Email',
                 verified: _emailOtpOk,
                 onVerified: () => setState(() => _emailOtpOk = true),
+                onSend: () async {
+                  final email = _email.text.trim();
+                  if (!RegValidators.isEmail(email)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Enter a valid email first')),
+                    );
+                    return false;
+                  }
+                  final res = await context.read<AuthState>().api.post(
+                    '/api/auth/otp/send-email',
+                    auth: false,
+                    body: {'email': email.toLowerCase()},
+                    timeout: const Duration(seconds: 30),
+                  );
+                  if (res['success'] == true) return true;
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(res['error']?.toString() ?? 'Failed to send OTP')),
+                    );
+                  }
+                  return false;
+                },
+                onVerify: (otp) async {
+                  final res = await context.read<AuthState>().api.post(
+                    '/api/auth/otp/verify-email',
+                    auth: false,
+                    body: {
+                      'email': _email.text.trim().toLowerCase(),
+                      'otp': otp,
+                    },
+                  );
+                  if (res['success'] == true) return null;
+                  return res['error']?.toString() ?? 'Invalid or expired OTP';
+                },
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -451,7 +485,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 _canSubmit
                     ? 'Ready to submit'
-                    : 'Complete required fields, verify OTPs (demo: 123456), and accept Terms to enable Register.',
+                    : 'Complete required fields, verify the email OTP sent to your inbox, and accept Terms to enable Register.',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 textAlign: TextAlign.center,
               ),

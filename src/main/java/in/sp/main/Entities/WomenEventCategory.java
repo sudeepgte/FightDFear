@@ -1,6 +1,10 @@
 package in.sp.main.Entities;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public enum WomenEventCategory {
     HEALTH_WELLNESS("Health & Wellness"),
@@ -20,6 +24,17 @@ public enum WomenEventCategory {
         return displayName;
     }
 
+    public static List<Map<String, String>> asCatalog() {
+        List<Map<String, String>> list = new ArrayList<>();
+        for (WomenEventCategory c : values()) {
+            Map<String, String> row = new LinkedHashMap<>();
+            row.put("code", c.name());
+            row.put("label", c.displayName);
+            list.add(row);
+        }
+        return list;
+    }
+
     public static WomenEventCategory fromFlexible(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String key = raw.trim().toUpperCase(Locale.ROOT)
@@ -31,12 +46,19 @@ public enum WomenEventCategory {
             return WomenEventCategory.valueOf(key);
         } catch (Exception ignored) {
             return switch (key) {
-                case "HEALTH", "WELLNESS", "HEALTH_WELLNESS", "HEALTH_AND_WELLNESS" -> HEALTH_WELLNESS;
-                case "ENTREPRENEURSHIP", "CAREER", "ENTREPRENEURSHIP_CAREER", "ENTREPRENEURSHIP_AND_CAREER" -> ENTREPRENEURSHIP_CAREER;
-                case "FITNESS", "SPORTS", "FITNESS_SPORTS", "FITNESS_AND_SPORTS" -> FITNESS_SPORTS;
-                case "EDUCATION", "SKILLS", "TECHNOLOGY", "EDUCATION_SKILLS", "EDUCATION_AND_SKILLS" -> EDUCATION_SKILLS;
-                case "CULTURAL", "SOCIAL", "COMMUNITY", "SOCIAL_COMMUNITY", "SOCIAL_AND_COMMUNITY" -> SOCIAL_COMMUNITY;
-                case "SELF_DEFENCE", "SELFDEFENCE", "SAFETY", "AWARENESS", "SAFETY_AWARENESS", "SAFETY_AND_AWARENESS" -> SAFETY_AWARENESS;
+                case "HEALTH", "WELLNESS", "HEALTH_WELLNESS", "HEALTH_AND_WELLNESS",
+                     "HEALTH_CAMP", "MENTAL_WELLNESS", "YOGA", "BLOOD_DONATION" -> HEALTH_WELLNESS;
+                case "ENTREPRENEURSHIP", "CAREER", "ENTREPRENEURSHIP_CAREER", "ENTREPRENEURSHIP_AND_CAREER",
+                     "CAREER_FAIR", "STARTUP_MEETUP", "BUSINESS_NETWORKING", "LEADERSHIP_TRAINING",
+                     "FINANCIAL_LITERACY" -> ENTREPRENEURSHIP_CAREER;
+                case "FITNESS", "SPORTS", "FITNESS_SPORTS", "FITNESS_AND_SPORTS", "MARATHON" -> FITNESS_SPORTS;
+                case "EDUCATION", "SKILLS", "TECHNOLOGY", "EDUCATION_SKILLS", "EDUCATION_AND_SKILLS",
+                     "EDUCATION_WORKSHOP", "CODING_BOOTCAMP", "LEGAL_AWARENESS", "PARENTING" -> EDUCATION_SKILLS;
+                case "CULTURAL", "SOCIAL", "COMMUNITY", "SOCIAL_COMMUNITY", "SOCIAL_AND_COMMUNITY",
+                     "CULTURAL_EVENT", "MUSIC_FESTIVAL", "ART_EXHIBITION", "FASHION_SHOW",
+                     "COMMUNITY_SERVICE", "WOMEN_EMPOWERMENT" -> SOCIAL_COMMUNITY;
+                case "SELF_DEFENCE", "SELFDEFENCE", "SELF_DEFENSE", "SAFETY", "AWARENESS",
+                     "SAFETY_AWARENESS", "SAFETY_AND_AWARENESS", "WOMEN_SAFETY" -> SAFETY_AWARENESS;
                 default -> null;
             };
         }

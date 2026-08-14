@@ -176,9 +176,15 @@
                             <div class="fg">
                                 <label>Organizer Type *</label>
                                 <select name="organizerType" required>
-                                    <c:forEach var="t" items="${'NGO,Government,College,Company,Community,Gym,Hospital,Fitness Trainer,Women Entrepreneur'.split(',')}">
-                                        <option value="${t}" ${host.organizerType == t ? 'selected' : ''}>${t}</option>
-                                    </c:forEach>
+                                    <option value="NGO" <c:if test="${host.organizerType eq 'NGO'}">selected="selected"</c:if>>NGO</option>
+                                    <option value="Government" <c:if test="${host.organizerType eq 'Government'}">selected="selected"</c:if>>Government</option>
+                                    <option value="College" <c:if test="${host.organizerType eq 'College'}">selected="selected"</c:if>>College / University</option>
+                                    <option value="Company" <c:if test="${host.organizerType eq 'Company'}">selected="selected"</c:if>>Company</option>
+                                    <option value="Community" <c:if test="${host.organizerType eq 'Community'}">selected="selected"</c:if>>Community</option>
+                                    <option value="Gym" <c:if test="${host.organizerType eq 'Gym'}">selected="selected"</c:if>>Gym / Fitness Centre</option>
+                                    <option value="Hospital" <c:if test="${host.organizerType eq 'Hospital'}">selected="selected"</c:if>>Hospital / Clinic</option>
+                                    <option value="Fitness Trainer" <c:if test="${host.organizerType eq 'Fitness Trainer'}">selected="selected"</c:if>>Fitness Trainer</option>
+                                    <option value="Women Entrepreneur" <c:if test="${host.organizerType eq 'Women Entrepreneur'}">selected="selected"</c:if>>Women Entrepreneur</option>
                                 </select>
                             </div>
                         </div>

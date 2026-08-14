@@ -132,43 +132,50 @@
             </div>
         </c:if>
 
-        <form action="${pageContext.request.contextPath}/entrepreneur/register" method="post" enctype="multipart/form-data">
+        <form action="${pageContext.request.contextPath}/entrepreneur/register" method="post" enctype="multipart/form-data" id="registerForm" class="needs-validation" novalidate>
             
             <!-- SECTION 1: Personal Details -->
             <div class="mb-5">
                 <h4 class="section-title"><i class="bi bi-person-fill"></i> 1. Personal Details</h4>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Full Name *</label>
-                        <input type="text" name="fullName" class="form-control" placeholder="Enter your full name" required>
+                        <input type="text" name="fullName" class="form-control" placeholder="Enter your full name" minlength="2" required>
+                        <div class="invalid-feedback">Please enter your full name.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Email Address *</label>
                         <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+                        <div class="invalid-feedback">Please enter a valid email address.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Phone Number *</label>
                         <input type="tel" name="phone" class="form-control" placeholder="10-digit number" pattern="[0-9]{10}" required>
+                        <div class="invalid-feedback">Please enter a valid 10-digit phone number.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Password *</label>
-                        <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters" required>
+                        <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
+                        <div class="invalid-feedback">Password must be at least 6 characters long.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Date of Birth *</label>
                         <input type="date" name="dob" class="form-control" required>
+                        <div class="invalid-feedback">Please select your date of birth.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Gender *</label>
                         <select name="gender" class="form-select" required>
                             <option value="">Select Gender</option>
                             <option value="FEMALE">Female</option>
                             <option value="OTHER">Other</option>
                         </select>
+                        <div class="invalid-feedback">Please select your gender.</div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 position-relative">
                         <label class="form-label fw-semibold">Profile Photo *</label>
                         <input type="file" name="profilePhoto" class="form-control" accept="image/*" required>
+                        <div class="invalid-feedback">Please upload a profile photo.</div>
                     </div>
                 </div>
             </div>
@@ -177,13 +184,15 @@
             <div class="mb-5">
                 <h4 class="section-title"><i class="bi bi-shield-check"></i> 2. Aadhaar Verification</h4>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Aadhaar Number *</label>
                         <input type="text" name="aadhaarNumber" class="form-control" placeholder="12-digit Aadhaar" pattern="[0-9]{12}" required>
+                        <div class="invalid-feedback">Please enter a valid 12-digit Aadhaar number.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Aadhaar Document Upload *</label>
                         <input type="file" name="aadhaarDoc" class="form-control" accept="image/*,.pdf" required>
+                        <div class="invalid-feedback">Please upload your Aadhaar document.</div>
                     </div>
                 </div>
             </div>
@@ -192,11 +201,12 @@
             <div class="mb-5">
                 <h4 class="section-title"><i class="bi bi-briefcase-fill"></i> 3. Business Details</h4>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Business Name *</label>
                         <input type="text" name="businessName" class="form-control" placeholder="Enter business name" required>
+                        <div class="invalid-feedback">Please enter your business name.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Business Category *</label>
                         <select name="businessCategory" class="form-select" required>
                             <option value="">Select Business Category</option>
@@ -211,26 +221,32 @@
                             <option value="Soap Making">Soap Making</option>
                             <option value="Dairy Business">Dairy Business</option>
                         </select>
+                        <div class="invalid-feedback">Please select a business category.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Business Location *</label>
                         <input type="text" name="businessLocation" class="form-control" placeholder="City or Area" required>
+                        <div class="invalid-feedback">Please enter your business location.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Business Experience (Years) *</label>
                         <input type="number" name="businessExperience" class="form-control" min="0" placeholder="Years of experience" required>
+                        <div class="invalid-feedback">Please enter your business experience.</div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Investment Needed ($) *</label>
-                        <input type="number" name="investmentNeeded" class="form-control" min="1" placeholder="Amount needed in USD" required>
+                    <div class="col-md-6 position-relative">
+                        <label class="form-label fw-semibold">Investment Needed (₹) *</label>
+                        <input type="number" name="investmentNeeded" class="form-control" min="1" placeholder="Amount needed in INR" required>
+                        <div class="invalid-feedback">Please enter a valid investment amount.</div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Expected Monthly Income ($) *</label>
-                        <input type="number" name="expectedMonthlyIncome" class="form-control" min="1" placeholder="Expected income in USD" required>
+                    <div class="col-md-6 position-relative">
+                        <label class="form-label fw-semibold">Expected Monthly Income (₹) *</label>
+                        <input type="number" name="expectedMonthlyIncome" class="form-control" min="1" placeholder="Expected income in INR" required>
+                        <div class="invalid-feedback">Please enter a valid expected income.</div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 position-relative">
                         <label class="form-label fw-semibold">Business Description *</label>
-                        <textarea name="businessDescription" class="form-control" rows="4" placeholder="Describe your business model and target customers..." required></textarea>
+                        <textarea name="businessDescription" class="form-control" rows="4" minlength="20" placeholder="Describe your business model and target customers..." required></textarea>
+                        <div class="invalid-feedback">Please provide a business description (at least 20 characters).</div>
                     </div>
                 </div>
             </div>
@@ -239,15 +255,17 @@
             <div class="mb-5">
                 <h4 class="section-title"><i class="bi bi-images"></i> 4. Media & Documents</h4>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Business Photos (Multi-select) *</label>
                         <input type="file" name="photos" class="form-control" accept="image/*" multiple required>
+                        <div class="invalid-feedback">Please upload at least one business photo.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Verification Documents (Multi-select) *</label>
                         <input type="file" name="documents" class="form-control" accept=".pdf,.doc,.docx" multiple required>
+                        <div class="invalid-feedback">Please upload verification documents.</div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 position-relative">
                         <label class="form-label fw-semibold">Video Pitch (Optional)</label>
                         <input type="file" name="videoPitch" class="form-control" accept="video/*">
                         <div class="form-text text-muted">A short 1-2 minute video explaining your business concept.</div>
@@ -259,26 +277,30 @@
             <div class="mb-5">
                 <h4 class="section-title"><i class="bi bi-bank2"></i> 5. Bank & Payout Details</h4>
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Bank Name *</label>
                         <input type="text" name="bankName" class="form-control" placeholder="e.g. JPMorgan Chase" required>
+                        <div class="invalid-feedback">Please enter your bank name.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">Account Number *</label>
                         <input type="text" name="accountNumber" class="form-control" placeholder="Enter bank account number" required>
+                        <div class="invalid-feedback">Please enter your account number.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">IFSC Code / Bank Code *</label>
                         <input type="text" name="ifscCode" class="form-control" placeholder="e.g. IFSC/Routing Code" required>
+                        <div class="invalid-feedback">Please enter your bank code.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 position-relative">
                         <label class="form-label fw-semibold">UPI ID *</label>
                         <input type="text" name="upiId" class="form-control" placeholder="e.g. mobile@upi or email@payout" required>
+                        <div class="invalid-feedback">Please enter your UPI ID.</div>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-register">Submit Registration</button>
+            <button type="submit" class="btn btn-register" id="submitBtn">Submit Registration</button>
         </form>
 
         <p class="back-link">
@@ -287,5 +309,154 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('registerForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const inputs = form.querySelectorAll('input, select, textarea');
+
+            const validationRules = {
+                fullName: {
+                    pattern: /^[a-zA-Z\s]{2,50}$/,
+                    message: "Please enter a valid name (letters only, 2-50 characters)."
+                },
+                email: {
+                    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Please enter a valid email address."
+                },
+                phone: {
+                    pattern: /^[6-9]\d{9}$/,
+                    message: "Please enter a valid 10-digit Indian phone number."
+                },
+                password: {
+                    pattern: /^.{6,}$/,
+                    message: "Password must be at least 6 characters long."
+                },
+                aadhaarNumber: {
+                    pattern: /^\d{12}$/,
+                    message: "Please enter exactly 12 digits for Aadhaar."
+                },
+                businessName: {
+                    pattern: /^.{2,100}$/,
+                    message: "Business name must be at least 2 characters."
+                },
+                accountNumber: {
+                    pattern: /^\d{9,18}$/,
+                    message: "Please enter a valid bank account number (9-18 digits)."
+                },
+                ifscCode: {
+                    pattern: /^[A-Z]{4}0[A-Z0-9]{6}$/,
+                    message: "Please enter a valid IFSC code (e.g. SBIN0001234)."
+                },
+                upiId: {
+                    pattern: /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/,
+                    message: "Please enter a valid UPI ID (e.g. name@bank)."
+                }
+            };
+
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateField(this);
+                    checkFormValidity();
+                });
+                
+                input.addEventListener('change', function() {
+                    validateField(this);
+                    checkFormValidity();
+                });
+                
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+            });
+
+            function validateField(field) {
+                if (!field.hasAttribute('required') && field.value.trim() === '') {
+                    field.classList.remove('is-invalid', 'is-valid');
+                    return true;
+                }
+
+                let isValid = field.checkValidity();
+                let customMessage = "";
+
+                if (isValid && validationRules[field.name]) {
+                    const rule = validationRules[field.name];
+                    if (!rule.pattern.test(field.value.trim())) {
+                        isValid = false;
+                        customMessage = rule.message;
+                    }
+                }
+
+                const feedbackElement = field.nextElementSibling;
+                if (feedbackElement && feedbackElement.classList.contains('invalid-feedback')) {
+                    if (customMessage) {
+                        feedbackElement.textContent = customMessage;
+                    } else if (field.validationMessage) {
+                        // fallback to default HTML5 message if no custom rule failed
+                        feedbackElement.textContent = "Please provide valid input.";
+                    }
+                }
+
+                if (isValid) {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                } else {
+                    field.classList.remove('is-valid');
+                    field.classList.add('is-invalid');
+                }
+                
+                return isValid;
+            }
+
+            function checkFormValidity() {
+                let allValid = true;
+                inputs.forEach(input => {
+                    if (input.hasAttribute('required') || input.value.trim() !== '') {
+                        if (validationRules[input.name]) {
+                             if (!validationRules[input.name].pattern.test(input.value.trim())) {
+                                 allValid = false;
+                             }
+                        } else if (!input.checkValidity()) {
+                            allValid = false;
+                        }
+                    }
+                });
+
+                if (allValid && form.checkValidity()) {
+                    submitBtn.classList.remove('disabled');
+                    submitBtn.removeAttribute('disabled');
+                } else {
+                    submitBtn.classList.add('disabled');
+                    submitBtn.setAttribute('disabled', 'true');
+                }
+            }
+
+            form.addEventListener('submit', function (event) {
+                let isFormValid = true;
+                inputs.forEach(input => {
+                    if (!validateField(input)) {
+                        isFormValid = false;
+                    }
+                });
+
+                if (!isFormValid || !form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
+                    if (firstInvalid) {
+                        firstInvalid.focus();
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                } else {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.style.pointerEvents = 'none';
+                    submitBtn.style.opacity = '0.8';
+                }
+                form.classList.add('was-validated');
+            }, false);
+            
+            checkFormValidity();
+        });
+    </script>
 </body>
 </html>

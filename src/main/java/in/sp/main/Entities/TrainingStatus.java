@@ -5,5 +5,8 @@ public enum TrainingStatus {
     PENDING,
     APPROVED,
     IN_PROGRESS,
-    COMPLETED
+    COMPLETED,
+    CANCELLED,
+    TRANSFERRED,
+    REJECTED
 }

@@ -99,16 +99,23 @@
             height: 380px;
             position: relative;
             overflow: hidden;
+            background: #f1f5f9;
         }
         .salon-hero-img {
+            display: block;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            opacity: 1;
+            visibility: visible;
+            position: relative;
+            z-index: 1;
         }
         .salon-hero-badge {
             position: absolute;
             top: 20px;
             left: 20px;
+            z-index: 2;
             background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(10px);
             color: #ffffff;
@@ -117,6 +124,9 @@
             padding: 6px 16px;
             border-radius: 30px;
             letter-spacing: 0.5px;
+        }
+        @media (max-width: 991.98px) {
+            .salon-hero-img-wrap { height: 260px; }
         }
         .salon-details-panel {
             padding: 40px;
@@ -247,9 +257,13 @@
             border-color: rgba(244, 63, 94, 0.3);
         }
         .service-card-img {
+            display: block;
             height: 220px;
             width: 100%;
             object-fit: cover;
+            opacity: 1;
+            visibility: visible;
+            background: #f8fafc;
         }
         .service-card-body {
             padding: 24px;
@@ -348,6 +362,7 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.06);
         }
         .stylist-avatar {
+            display: block;
             width: 110px;
             height: 110px;
             border-radius: 50%;
@@ -355,6 +370,9 @@
             margin: 0 auto 16px;
             border: 4px solid #fff5f8;
             box-shadow: 0 8px 20px rgba(244, 63, 94, 0.15);
+            opacity: 1;
+            visibility: visible;
+            background: #f8fafc;
         }
 
         /* ===== FOOTER ===== */
@@ -407,13 +425,22 @@
                     <span class="salon-hero-badge"><i class="bi bi-check-circle-fill me-1 text-success"></i> Verified Salon</span>
                     <c:choose>
                         <c:when test="${not empty salon.profileImageUrl}">
-                            <img src="${pageContext.request.contextPath}/${salon.profileImageUrl.startsWith('/') ? salon.profileImageUrl.substring(1) : salon.profileImageUrl}"
-                                 class="salon-hero-img" alt="${salon.name}"
-                                 onerror="this.src='${pageContext.request.contextPath}/beauty/images/default-salon.jpg';">
+                            <c:choose>
+                                <c:when test="${salon.profileImageUrl.startsWith('http://') || salon.profileImageUrl.startsWith('https://')}">
+                                    <c:set var="salonHeroSrc" value="${salon.profileImageUrl}"/>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:url var="salonHeroSrc" value="${salon.profileImageUrl.startsWith('/') ? salon.profileImageUrl : '/'.concat(salon.profileImageUrl)}"/>
+                                </c:otherwise>
+                            </c:choose>
+                            <img src="${salonHeroSrc}"
+                                 class="salon-hero-img" alt="<c:out value='${salon.name}'/>"
+                                 loading="eager"
+                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80';">
                         </c:when>
                         <c:otherwise>
-                            <img src="${pageContext.request.contextPath}/beauty/images/default-salon.jpg"
-                                 class="salon-hero-img" alt="${salon.name}">
+                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80"
+                                 class="salon-hero-img" alt="<c:out value='${salon.name}'/>" loading="eager">
                         </c:otherwise>
                     </c:choose>
                 </div>
@@ -439,9 +466,23 @@
                         <p><i class="bi bi-telephone-fill me-2 text-rose"></i> <strong>Phone:</strong> ${salon.phone}</p>
                         <p><i class="bi bi-envelope-fill me-2 text-rose"></i> <strong>Email:</strong> ${salon.email}</p>
                         <c:if test="${not empty salon.website}">
-                            <p><i class="bi bi-globe me-2 text-rose"></i> <strong>Website:</strong> <a href="${salon.website}" target="_blank" class="text-decoration-none">${salon.website}</a></p>
+                            <p><i class="bi bi-globe me-2 text-rose"></i> <strong>Website:</strong>
+                                <c:choose>
+                                    <c:when test="${salon.website.startsWith('http://') || salon.website.startsWith('https://')}">
+                                        <a href="<c:out value='${salon.website}'/>" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><c:out value="${salon.website}"/></a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="https://<c:out value='${salon.website}'/>" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><c:out value="${salon.website}"/></a>
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
                         </c:if>
-                        <p><i class="bi bi-clock-fill me-2 text-rose"></i> <strong>Availability:</strong> ${salon.availabilityHours}</p>
+                        <p><i class="bi bi-clock-fill me-2 text-rose"></i> <strong>Availability:</strong>
+                            <c:choose>
+                                <c:when test="${not empty salon.availabilityHours}"><c:out value="${salon.availabilityHours}"/></c:when>
+                                <c:otherwise><span class="text-muted">Not specified</span></c:otherwise>
+                            </c:choose>
+                        </p>
                         <c:if test="${not empty salon.bio}">
                             <p class="mt-2 text-dark"><strong>About:</strong> ${salon.bio}</p>
                         </c:if>
@@ -488,7 +529,7 @@
         <div class="section-tabs">
             <a href="#services-section" class="section-tab-btn active"><i class="bi bi-scissors me-1"></i> Services (${not empty serviceList ? serviceList.size() : 0})</a>
             <c:if test="${not empty treatmentList}">
-                <a href="#treatments-section" class="section-tab-btn"><i class="bi bi-stars me-1"></i> Treatments (${treatmentList.size()})</a>
+                <a href="#treatments-section" class="section-tab-btn"><i class="bi bi-stars me-1"></i> Pricing Treatments (${treatmentList.size()})</a>
             </c:if>
             <c:if test="${not empty offerList}">
                 <a href="#offers-section" class="section-tab-btn"><i class="bi bi-percent me-1"></i> Offers & Deals (${offerList.size()})</a>
@@ -512,10 +553,20 @@
                                 <div class="service-card">
                                     <c:choose>
                                         <c:when test="${not empty service.photoUrl}">
-                                            <img src="${pageContext.request.contextPath}${service.photoUrl}" alt="${service.name}" class="service-card-img" onerror="this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500';">
+                                            <c:choose>
+                                                <c:when test="${service.photoUrl.startsWith('http://') || service.photoUrl.startsWith('https://')}">
+                                                    <c:set var="svcImg" value="${service.photoUrl}"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:url var="svcImg" value="${service.photoUrl.startsWith('/') ? service.photoUrl : '/'.concat(service.photoUrl)}"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <img src="${svcImg}" alt="<c:out value='${service.name}'/>" class="service-card-img"
+                                                 loading="lazy"
+                                                 onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80';">
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500" alt="${service.name}" class="service-card-img">
+                                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80" alt="<c:out value='${service.name}'/>" class="service-card-img" loading="lazy">
                                         </c:otherwise>
                                     </c:choose>
                                     
@@ -529,7 +580,7 @@
 
                                         <div class="service-meta-row">
                                             <div>
-                                                <span class="price-text">₹<fmt:formatNumber value="${service.price}" type="number"/></span>
+                                                <span class="price-text">&#8377;<fmt:formatNumber value="${service.price}" type="number"/></span>
                                                 <span class="duration-chip d-block"><i class="bi bi-clock me-1"></i> ${service.durationMinutes} mins</span>
                                             </div>
 
@@ -561,35 +612,35 @@
             </c:choose>
         </section>
 
-        <!-- ===== 2. SPECIAL TREATMENTS SECTION ===== -->
+        <!-- ===== 2. PRICING TREATMENTS SECTION ===== -->
         <c:if test="${not empty treatmentList}">
             <section id="treatments-section" class="mb-5">
                 <h2 class="section-heading-title">
-                    <i class="bi bi-stars text-rose"></i> Specialized Treatments
+                    <i class="bi bi-stars text-rose"></i> Pricing Treatments
                 </h2>
+                <p class="text-muted mb-4">Select a treatment plan to view details and continue to booking.</p>
 
                 <div class="row g-4">
                     <c:forEach var="treatment" items="${treatmentList}">
                         <div class="col-md-6 col-lg-4">
-                            <div class="service-card p-4">
-                                <div class="d-flex align-items-center gap-3 mb-3">
-                                    <div class="bg-soft-pink text-rose rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="bi bi-sparkles fs-4"></i>
-                                    </div>
-                                    <div>
-                                        <h4 class="m-0 fw-bold fs-5">${treatment.serviceName}</h4>
-                                        <span class="text-muted small"><i class="bi bi-clock me-1"></i> ${treatment.duration} mins</span>
-                                    </div>
+                            <div class="service-card p-4 h-100 d-flex flex-column">
+                                <div class="text-center mb-3">
+                                    <h4 class="m-0 fw-bold fs-5">${treatment.serviceName}</h4>
+                                    <span class="price-text d-block mt-3">
+                                        <sup style="font-size: 1rem; top: -0.4em;">&#8377;</sup>
+                                        <fmt:formatNumber value="${treatment.price}" type="number" maxFractionDigits="0"/>
+                                    </span>
+                                    <span class="text-muted small d-block mt-1">
+                                        <i class="bi bi-clock me-1"></i> ${treatment.duration} mins
+                                    </span>
                                 </div>
 
-                                <p class="text-muted small mb-4 flex-grow-1">${treatment.description}</p>
+                                <p class="text-muted small mb-4 flex-grow-1 text-center">${treatment.description}</p>
 
-                                <div class="d-flex align-items-center justify-content-between pt-3 border-top">
-                                    <span class="price-text">₹<fmt:formatNumber value="${treatment.price}"/></span>
-                                    <a href="${pageContext.request.contextPath}/booking/new?treatmentId=${treatment.id}" class="btn btn-action-primary btn-sm px-4">
-                                        Book Treatment
-                                    </a>
-                                </div>
+                                <a href="${pageContext.request.contextPath}/booking/new?treatmentId=${treatment.id}"
+                                   class="btn btn-action-primary w-100 py-3 fw-semibold">
+                                    Get Started
+                                </a>
                             </div>
                         </div>
                     </c:forEach>
@@ -646,12 +697,21 @@
                             <div class="stylist-card">
                                 <c:choose>
                                     <c:when test="${not empty stylist.profileImage}">
-                                        <img src="${pageContext.request.contextPath}${stylist.profileImage.startsWith('/') ? stylist.profileImage : '/'.concat(stylist.profileImage)}"
-                                             alt="${stylist.firstName}" class="stylist-avatar"
-                                             onerror="this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300';">
+                                        <c:choose>
+                                            <c:when test="${stylist.profileImage.startsWith('http://') || stylist.profileImage.startsWith('https://')}">
+                                                <c:set var="stylistImg" value="${stylist.profileImage}"/>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:url var="stylistImg" value="${stylist.profileImage.startsWith('/') ? stylist.profileImage : '/'.concat(stylist.profileImage)}"/>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <img src="${stylistImg}"
+                                             alt="<c:out value='${stylist.firstName}'/>" class="stylist-avatar"
+                                             loading="lazy"
+                                             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80';">
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300" alt="${stylist.firstName}" class="stylist-avatar">
+                                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" alt="<c:out value='${stylist.firstName}'/>" class="stylist-avatar" loading="lazy">
                                     </c:otherwise>
                                 </c:choose>
 

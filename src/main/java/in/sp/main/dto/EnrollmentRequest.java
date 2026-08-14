@@ -39,6 +39,7 @@ public class EnrollmentRequest {
     // Consent
     private boolean consentAccuracy;
     private boolean consentRules;
+    private boolean consentPolicy;
 
     // Getters and Setters
     public Long getCenterId() { return centerId; }
@@ -109,4 +110,7 @@ public class EnrollmentRequest {
 
     public boolean isConsentRules() { return consentRules; }
     public void setConsentRules(boolean consentRules) { this.consentRules = consentRules; }
+
+    public boolean isConsentPolicy() { return consentPolicy; }
+    public void setConsentPolicy(boolean consentPolicy) { this.consentPolicy = consentPolicy; }
 }

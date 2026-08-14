@@ -241,28 +241,8 @@
     <!-- Layout -->
     <div class="layout">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="mb-4">
-                <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="navlink">
-                    <i class="fas fa-home"></i> Home
-                </a>
-            </div>
-            
-
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
-                <i class="fas fa-video"></i> Add Session
-            </a>
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Workshops</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" class="navlink">
-                <i class="fas fa-calendar-check"></i> Add Workshop
-            </a>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/registrations" class="navlink active">
-                <i class="fas fa-users"></i> View Registrations
-            </a>
-        </div>
+        <!-- Sidebar -->
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <!-- Main Content -->
         <main class="main">
