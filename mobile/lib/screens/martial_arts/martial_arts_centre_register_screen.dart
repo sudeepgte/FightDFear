@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
+import '../../widgets/registration_form_kit.dart';
 import 'martial_arts_centre_login_screen.dart';
 
 /// Quick Self-Defense Trainer / Centre registration — few fields + email OTP.
@@ -342,23 +343,21 @@ class _MartialArtsCentreRegisterScreenState extends State<MartialArtsCentreRegis
             ),
           ],
           const SizedBox(height: 12),
-          TextField(
+          ObscurePasswordField(
             controller: _password,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Password *',
-              helperText: 'Min 6 chars, include number + special character',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Password *',
+            showStrength: true,
+            filled: true,
+            prefixIcon: Icons.lock_outline,
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
-          TextField(
+          ObscurePasswordField(
             controller: _confirm,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Confirm password *',
-              border: OutlineInputBorder(),
-            ),
+            label: 'Confirm password *',
+            filled: true,
+            prefixIcon: Icons.lock_outline,
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 8),
           CheckboxListTile(

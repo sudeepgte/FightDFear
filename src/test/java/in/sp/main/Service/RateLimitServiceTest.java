@@ -39,4 +39,10 @@ class RateLimitServiceTest {
         }
         assertFalse(rateLimitService.tryAcquire(key, 5, window));
     }
+
+    @Test
+    void checkOrThrowWorksWithoutOuterTransaction() {
+        String key = "test:login:" + System.nanoTime();
+        assertDoesNotThrow(() -> rateLimitService.checkOrThrow(key, 10, Duration.ofMinutes(15)));
+    }
 }

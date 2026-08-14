@@ -648,7 +648,15 @@ public class PaymentController {
                 if (targetId == null && data.get("targetId") != null) {
                     targetId = Long.parseLong(data.get("targetId").toString());
                 }
+                if (targetId == null) {
+                    responseMap.put("error", "Doctor id is missing from this payment order.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
                 Doctor d = doctorRepo.findById(targetId).orElse(null);
+                if (d == null) {
+                    responseMap.put("error", "Doctor not found.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
 
                 String consultTypeStr = pending.consultationType() != null && !pending.consultationType().isBlank()
                         ? pending.consultationType()
@@ -660,11 +668,8 @@ public class PaymentController {
                         : (data.get("appointmentTime") == null ? "" : data.get("appointmentTime").toString());
                 LocalDateTime apptTime = MobileDoctorController.parseAppointmentTime(apptTimeStr);
                 if (apptTime == null) {
-                    try {
-                        apptTime = LocalDateTime.parse(apptTimeStr, formatterSpace);
-                    } catch (Exception ex) {
-                        apptTime = LocalDateTime.parse(apptTimeStr, formatterT);
-                    }
+                    responseMap.put("error", "Invalid appointmentTime");
+                    return ResponseEntity.badRequest().body(responseMap);
                 }
 
                 String reason = pending.reason() != null && !pending.reason().isBlank()

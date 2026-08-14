@@ -5,6 +5,7 @@ import '../../config/marketplace_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/marketplace_provider_auth_service.dart';
 import '../../widgets/registration_form_kit.dart';
+import '../../widgets/profile_completion_actions.dart';
 import '../../widgets/ux_feedback.dart';
 
 /// Complete marketplace provider profile after quick registration.
@@ -212,14 +213,15 @@ class _MarketplaceProviderProfileCompletionScreenState
         foregroundColor: MarketplaceProviderProfileCompletionScreen.navy,
         title: const Text(
           'Complete Partner Profile',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        actions: [
-          TextButton(
-            onPressed: _goToDashboard,
-            child: const Text('Skip for now'),
-          ),
-        ],
+        actions: ProfileCompletionActions.appBar(
+          onSkip: _loading ? null : _goToDashboard,
+          onSave: (_loading || _saving) ? null : _saveProfile,
+          saving: _saving,
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
+import '../../services/journey_service.dart';
+import '../../services/module_services.dart';
+import '../../services/sos_service.dart';
 import '../safety/buddy_mode_screen.dart';
 import '../safety/contacts_screen.dart';
 import '../safety/danger_map_screen.dart';
@@ -10,6 +13,7 @@ import '../glow/glow_space_screen.dart';
 import '../safety/home_screen.dart';
 import '../marketplace/job_bookings_screen.dart';
 import '../safety/journey_screen.dart';
+import '../landing/landing_notifications_screen.dart';
 import '../landing/landing_screen.dart';
 import '../martial_arts/martial_arts_screen.dart';
 import 'profile_screen.dart';
@@ -20,10 +24,11 @@ import '../creator/creator_hub_screen.dart';
 import '../creator/video_feed_screen.dart';
 import '../wallet/wallet_screen.dart';
 import '../events/women_events_screen.dart';
+import '../doctors/women_doctors_screen.dart';
 import '../marketplace/women_marketplace_screen.dart';
 import '../products/women_products_screen.dart';
 
-/// Post-login user dashboard — mobile safety hub modeled on web userDashboard.jsp.
+/// Personal post-login hub — what is happening with this user's Fight D Fear account.
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
 
@@ -35,32 +40,18 @@ class UserDashboardScreen extends StatefulWidget {
   State<UserDashboardScreen> createState() => _UserDashboardScreenState();
 }
 
-enum _ModuleStatus { available, comingSoon }
-
-class _DashboardModule {
-  const _DashboardModule({
-    required this.title,
-    required this.icon,
-    required this.status,
-    this.subtitle,
-    this.workerOnly = false,
-    this.emergency = false,
-    this.onTap,
-  });
-
-  final String title;
-  final IconData icon;
-  final String? subtitle;
-  final _ModuleStatus status;
-  final bool workerOnly;
-  final bool emergency;
-  final VoidCallback? onTap;
-}
-
 class _UserDashboardScreenState extends State<UserDashboardScreen> {
   bool _loading = true;
   String? _error;
-  Map<String, dynamic>? _data;
+
+  Map<String, dynamic>? _dashboard;
+  List<Map<String, dynamic>> _appointments = [];
+  List<Map<String, dynamic>> _contacts = [];
+  List<Map<String, dynamic>> _broadcasts = [];
+  bool _sosActive = false;
+  bool _journeyActive = false;
+  int _unread = 0;
+  bool _isWorker = false;
 
   @override
   void initState() {
@@ -69,24 +60,59 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 
   Future<void> _load() async {
+    final auth = context.read<AuthState>();
+    if (!auth.loggedIn) {
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LandingScreen()),
+        (_) => false,
+      );
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
+
+    final api = auth.api;
     try {
-      final res = await context.read<AuthState>().api.get('/api/me/dashboard');
+      final results = await Future.wait([
+        api.get('/api/me/dashboard'),
+        DoctorService(api).myAppointments(),
+        api.get('/api/me/trusted-contacts'),
+        SosService(api).getActive(),
+        JourneyService(api).getActive(),
+      ]);
       if (!mounted) return;
-      if (res['success'] == true) {
+
+      final dash = results[0];
+      if (dash['success'] != true) {
         setState(() {
-          _data = res;
+          _error = dash['error']?.toString() ?? 'Failed to load dashboard';
           _loading = false;
         });
-      } else {
-        setState(() {
-          _error = res['error']?.toString() ?? 'Failed to load dashboard';
-          _loading = false;
-        });
+        return;
       }
+
+      _dashboard = dash;
+      _isWorker = dash['isWorker'] == true;
+      _unread = _asInt(dash['unreadBroadcastCount']);
+      _broadcasts = _asMaps(dash['recentBroadcasts']);
+
+      final appts = results[1];
+      _appointments = appts['success'] == true ? _asMaps(appts['appointments']) : [];
+
+      final contacts = results[2];
+      _contacts = contacts['success'] == true ? _asMaps(contacts['contacts']) : [];
+
+      final sos = results[3];
+      _sosActive = sos['success'] == true && sos['active'] == true;
+
+      final journey = results[4];
+      _journeyActive = journey['success'] == true && journey['active'] == true;
+
+      setState(() => _loading = false);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -96,10 +122,71 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
-  void _comingSoon(String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label — coming soon on mobile')),
-    );
+  static int _asInt(dynamic v) {
+    if (v is num) return v.toInt();
+    return int.tryParse('$v') ?? 0;
+  }
+
+  static List<Map<String, dynamic>> _asMaps(dynamic raw) {
+    if (raw is! List) return [];
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  static DateTime? _parseDt(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    return DateTime.tryParse(raw.trim().replaceFirst(' ', 'T'));
+  }
+
+  List<Map<String, dynamic>> get _recentActivity {
+    final now = DateTime.now();
+    final items = _appointments.where((a) {
+      final st = (a['status']?.toString() ?? '').toUpperCase();
+      if (st == 'CANCELLED' || st == 'COMPLETED') return true;
+      final t = _parseDt(a['appointmentTime']?.toString());
+      return t != null && t.isBefore(now);
+    }).toList()
+      ..sort((a, b) {
+        final ta = _parseDt(a['appointmentTime']?.toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final tb = _parseDt(b['appointmentTime']?.toString()) ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return tb.compareTo(ta);
+      });
+    return items.take(3).toList();
+  }
+
+  Map<String, dynamic>? get _nextAppointment {
+    final now = DateTime.now().subtract(const Duration(hours: 1));
+    final upcoming = _appointments.where((a) {
+      final st = (a['status']?.toString() ?? '').toUpperCase();
+      if (st == 'CANCELLED' || st == 'COMPLETED') return false;
+      final t = _parseDt(a['appointmentTime']?.toString());
+      return t != null && !t.isBefore(now);
+    }).toList()
+      ..sort((a, b) {
+        final ta = _parseDt(a['appointmentTime']?.toString()) ?? DateTime.now();
+        final tb = _parseDt(b['appointmentTime']?.toString()) ?? DateTime.now();
+        return ta.compareTo(tb);
+      });
+    return upcoming.isEmpty ? null : upcoming.first;
+  }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  String _contextLine(String name) {
+    if (_sosActive) return 'An SOS is active. Open Safety Centre if you need to update it.';
+    if (_journeyActive) return 'A safety journey is in progress.';
+    if (_nextAppointment != null) return 'You have an upcoming appointment.';
+    if (_unread > 0) return 'You have $_unread unread update${_unread == 1 ? '' : 's'}.';
+    return 'Your safety hub is ready, $name.';
+  }
+
+  String _firstName(String full) {
+    final parts = full.trim().split(RegExp(r'\s+'));
+    return parts.isEmpty ? 'there' : parts.first;
   }
 
   Future<void> _signOut() async {
@@ -111,387 +198,129 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     );
   }
 
-  List<_DashboardModule> _safetyModules() {
-    void push(Widget screen) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-    }
-
-    return [
-      _DashboardModule(
-        title: 'SOS Emergency',
-        icon: Icons.warning_amber_rounded,
-        subtitle: 'Instant help alert',
-        status: _ModuleStatus.available,
-        emergency: true,
-        onTap: () => push(const HomeScreen()),
-      ),
-      _DashboardModule(
-        title: 'Trusted Contacts',
-        icon: Icons.contacts_outlined,
-        subtitle: 'People notified during SOS',
-        status: _ModuleStatus.available,
-        onTap: () => push(const ContactsScreen()),
-      ),
-      _DashboardModule(
-        title: 'Danger Map',
-        icon: Icons.map_outlined,
-        subtitle: 'Reported danger points',
-        status: _ModuleStatus.available,
-        onTap: () => push(const DangerMapScreen()),
-      ),
-      _DashboardModule(
-        title: 'Journey Safety Tracker',
-        icon: Icons.pin_drop_outlined,
-        subtitle: 'Check-in timer with contact alerts',
-        status: _ModuleStatus.available,
-        onTap: () => push(const JourneyScreen()),
-      ),
-      _DashboardModule(
-        title: 'Buddy Mode',
-        icon: Icons.directions_walk_outlined,
-        subtitle: 'Walk with a verified buddy',
-        status: _ModuleStatus.available,
-        onTap: () => push(const BuddyModeScreen()),
-      ),
-      _DashboardModule(
-        title: 'Routine Reminders',
-        icon: Icons.alarm_outlined,
-        subtitle: 'Daily safety check-ins',
-        status: _ModuleStatus.available,
-        onTap: () => push(const RemindersScreen()),
-      ),
-    ];
-  }
-
-  /// Mirrors web userDashboard.jsp sidebar order (excluding active Dashboard link).
-  List<_DashboardModule> _sidebarModules() {
-    return [
-      _DashboardModule(
-        title: 'Creator Hub',
-        icon: Icons.video_camera_front_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const CreatorHubScreen()),
-      ),
-      _DashboardModule(
-        title: 'Job Bookings',
-        icon: Icons.work_outline,
-        subtitle: 'Verified worker bookings',
-        status: _ModuleStatus.available,
-        workerOnly: true,
-        onTap: () => _pushScreen(const JobBookingsScreen()),
-      ),
-      _DashboardModule(
-        title: 'Your Profile',
-        icon: Icons.person_outline,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProfileScreen()),
-      ),
-      _DashboardModule(
-        title: 'Martial Arts Centres',
-        icon: Icons.sports_martial_arts_outlined,
-        subtitle: 'Browse centres & enroll',
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const MartialArtsScreen()),
-      ),
-      _DashboardModule(
-        title: 'View Videos',
-        icon: Icons.play_circle_outline,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const VideoFeedScreen(
-          title: 'View Videos',
-          mode: VideoFeedMode.videos,
-        )),
-      ),
-      _DashboardModule(
-        title: 'Glow Space',
-        icon: Icons.auto_awesome_outlined,
-        subtitle: 'Salons, treatments & offers',
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const GlowSpaceScreen()),
-      ),
-      _DashboardModule(
-        title: 'Reels',
-        icon: Icons.movie_creation_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const VideoFeedScreen(
-          title: 'Reels',
-          mode: VideoFeedMode.reels,
-        )),
-      ),
-      _DashboardModule(
-        title: 'My Wallet',
-        icon: Icons.account_balance_wallet_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WalletScreen()),
-      ),
-      _DashboardModule(
-        title: 'Women Doctors',
-        icon: Icons.monitor_heart_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Doctors',
-          kind: CatalogKind.doctors,
-        )),
-      ),
-      _DashboardModule(
-        title: 'Women Marketplace',
-        icon: Icons.storefront_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WomenMarketplaceScreen()),
-      ),
-      _DashboardModule(
-        title: 'Financial Literacy Hub',
-        icon: Icons.menu_book_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const FinancialLiteracyScreen()),
-      ),
-      _DashboardModule(
-        title: 'Women Lawyers',
-        icon: Icons.gavel_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Lawyers',
-          kind: CatalogKind.lawyers,
-        )),
-      ),
-      _DashboardModule(
-        title: 'Fitness & Wellness',
-        icon: Icons.fitness_center_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const FitnessWellnessScreen()),
-      ),
-      _DashboardModule(
-        title: 'Women Events',
-        icon: Icons.event_outlined,
-        subtitle: 'Community events & tickets',
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WomenEventsScreen()),
-      ),
-      _DashboardModule(
-        title: 'Women Products',
-        icon: Icons.shopping_bag_outlined,
-        subtitle: 'Shop essentials safely',
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WomenProductsScreen()),
-      ),
-    ];
-  }
-
-  List<_DashboardModule> _visibleSidebarModules(bool isWorker) {
-    return _sidebarModules()
-        .where((m) => !m.workerOnly || isWorker)
-        .map((m) {
-          if (m.status == _ModuleStatus.comingSoon && m.onTap == null) {
-            return _DashboardModule(
-              title: m.title,
-              icon: m.icon,
-              subtitle: m.subtitle,
-              status: m.status,
-              workerOnly: m.workerOnly,
-              onTap: () => _comingSoon(m.title),
-            );
-          }
-          return m;
-        })
-        .toList();
-  }
-
-  void _closeDrawerIfOpen() {
+  void _push(Widget screen) {
     final scaffold = Scaffold.maybeOf(context);
-    if (scaffold?.isDrawerOpen ?? false) {
-      Navigator.of(context).pop();
-    }
-  }
-
-  void _pushScreen(Widget screen) {
-    _closeDrawerIfOpen();
+    if (scaffold?.isDrawerOpen ?? false) Navigator.of(context).pop();
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
-  /// Full sidebar nav — matches web userDashboard.jsp order.
-  List<_SidebarNavItem> _sidebarNavItems(bool isWorker) {
-    return [
-      _SidebarNavItem(
-        title: 'Dashboard',
-        icon: Icons.home_outlined,
-        active: true,
-        onTap: _closeDrawerIfOpen,
-      ),
-      _SidebarNavItem(
-        title: 'Creator Hub',
-        icon: Icons.video_camera_front_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const CreatorHubScreen()),
-      ),
-      if (isWorker)
-        _SidebarNavItem(
-          title: 'Job Bookings',
-          icon: Icons.work_outline,
-          iconColor: const Color(0xFF22C55E),
-          status: _ModuleStatus.available,
-          onTap: () => _pushScreen(const JobBookingsScreen()),
+  void _openNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LandingNotificationsScreen(
+          onOpenRoute: (route) {
+            switch (route) {
+              case 'sos':
+                _push(const HomeScreen());
+              case 'events':
+                _push(const WomenEventsScreen());
+              case 'community':
+                _push(const CreatorHubScreen());
+              case 'glow':
+                _push(const GlowSpaceScreen());
+              case 'martial_arts':
+                _push(const MartialArtsScreen());
+              case 'marketplace':
+                _push(const WomenMarketplaceScreen());
+              case 'doctors':
+                _push(const WomenDoctorsScreen());
+              case 'login':
+                break;
+            }
+          },
         ),
-      _SidebarNavItem(
-        title: 'SOS Emergency',
-        icon: Icons.warning_amber_rounded,
-        iconColor: UserDashboardScreen.primary,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const HomeScreen()),
       ),
-      _SidebarNavItem(
-        title: 'Trusted Contacts',
-        icon: Icons.contacts_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ContactsScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Danger Map',
-        icon: Icons.map_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const DangerMapScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Your Profile',
-        icon: Icons.person_outline,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProfileScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Martial Arts Centres',
-        icon: Icons.sports_martial_arts_outlined,
-        onTap: () => _pushScreen(const MartialArtsScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'View Videos',
-        icon: Icons.play_circle_outline,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const VideoFeedScreen(
-          title: 'View Videos',
-          mode: VideoFeedMode.videos,
-        )),
-      ),
-      _SidebarNavItem(
-        title: 'Glow Space',
-        icon: Icons.auto_awesome_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const GlowSpaceScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Reels',
-        icon: Icons.movie_creation_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const VideoFeedScreen(
-          title: 'Reels',
-          mode: VideoFeedMode.reels,
-        )),
-      ),
-      _SidebarNavItem(
-        title: 'My Wallet',
-        icon: Icons.account_balance_wallet_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WalletScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Buddy Mode',
-        icon: Icons.directions_walk_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const BuddyModeScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Women Doctors',
-        icon: Icons.monitor_heart_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Doctors',
-          kind: CatalogKind.doctors,
-        )),
-      ),
-      _SidebarNavItem(
-        title: 'Women Marketplace',
-        icon: Icons.storefront_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WomenMarketplaceScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Financial Literacy Hub',
-        icon: Icons.menu_book_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const FinancialLiteracyScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Women Lawyers',
-        icon: Icons.gavel_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const ProviderCatalogScreen(
-          title: 'Women Lawyers',
-          kind: CatalogKind.lawyers,
-        )),
-      ),
-      _SidebarNavItem(
-        title: 'Fitness & Wellness',
-        icon: Icons.fitness_center_outlined,
-        iconColor: const Color(0xFF22C55E),
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const FitnessWellnessScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Women Events',
-        icon: Icons.event_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const WomenEventsScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Women Products',
-        icon: Icons.shopping_bag_outlined,
-        onTap: () => _pushScreen(const WomenProductsScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Journey Safety Tracker',
-        icon: Icons.pin_drop_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const JourneyScreen()),
-      ),
-      _SidebarNavItem(
-        title: 'Routine Reminders',
-        icon: Icons.alarm_outlined,
-        status: _ModuleStatus.available,
-        onTap: () => _pushScreen(const RemindersScreen()),
-      ),
+    ).then((_) {
+      if (mounted) _load();
+    });
+  }
+
+  void _showAllModules() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        final items = _allModules();
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text('All modules', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              ),
+              for (final m in items)
+                ListTile(
+                  leading: Icon(m.icon, color: UserDashboardScreen.primary),
+                  title: Text(m.title),
+                  subtitle: m.subtitle == null ? null : Text(m.subtitle!),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    m.onTap();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  List<_DashLink> _allModules() {
+    return [
+      _DashLink('Women Doctors', Icons.monitor_heart_outlined, () => _push(const WomenDoctorsScreen())),
+      _DashLink('Jobs', Icons.work_outline, () => _push(_isWorker ? const JobBookingsScreen(workerView: true) : const WomenMarketplaceScreen()), subtitle: _isWorker ? 'Your job bookings' : 'Find work & services'),
+      _DashLink('Women Events', Icons.event_outlined, () => _push(const WomenEventsScreen())),
+      _DashLink('Glow Space', Icons.spa_outlined, () => _push(const GlowSpaceScreen())),
+      _DashLink('Fitness & Wellness', Icons.fitness_center_outlined, () => _push(const FitnessWellnessScreen())),
+      _DashLink('Marketplace', Icons.storefront_outlined, () => _push(const WomenMarketplaceScreen())),
+      _DashLink('Self Defence', Icons.sports_martial_arts_outlined, () => _push(const MartialArtsScreen())),
+      _DashLink('Women Lawyers', Icons.gavel_outlined, () => _push(const ProviderCatalogScreen(title: 'Women Lawyers', kind: CatalogKind.lawyers))),
+      _DashLink('Women Products', Icons.shopping_bag_outlined, () => _push(const WomenProductsScreen())),
+      _DashLink('Financial Literacy', Icons.menu_book_outlined, () => _push(const FinancialLiteracyScreen())),
+      _DashLink('Creator Hub', Icons.video_camera_front_outlined, () => _push(const CreatorHubScreen())),
+      _DashLink('Videos', Icons.play_circle_outline, () => _push(const VideoFeedScreen(title: 'View Videos', mode: VideoFeedMode.videos))),
+      _DashLink('Reels', Icons.movie_creation_outlined, () => _push(const VideoFeedScreen(title: 'Reels', mode: VideoFeedMode.reels))),
+      _DashLink('Wallet', Icons.account_balance_wallet_outlined, () => _push(const WalletScreen())),
+      _DashLink('Reminders', Icons.alarm_outlined, () => _push(const RemindersScreen())),
+      _DashLink('Profile', Icons.person_outline, () => _push(const ProfileScreen())),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthState>();
-    final name = _data?['name']?.toString() ?? auth.name ?? 'User';
-    final isWorker = _data?['isWorker'] == true;
+    final fullName = _dashboard?['name']?.toString() ?? auth.name ?? 'there';
+    final first = _firstName(fullName);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: _DashboardDrawer(
-        name: name,
-        email: auth.email ?? '',
-        isWorker: isWorker,
-        items: _sidebarNavItems(isWorker),
+        name: fullName,
+        isWorker: _isWorker,
+        items: _allModules(),
         onSignOut: () {
-          _closeDrawerIfOpen();
+          final scaffold = Scaffold.maybeOf(context);
+          if (scaffold?.isDrawerOpen ?? false) Navigator.of(context).pop();
           _signOut();
         },
       ),
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            tooltip: 'Open menu',
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
-        ),
         title: const Text('My Dashboard'),
         backgroundColor: Colors.white,
         foregroundColor: UserDashboardScreen.navy,
         elevation: 0,
         actions: [
+          IconButton(
+            tooltip: 'Notifications',
+            onPressed: _openNotifications,
+            icon: Badge(
+              isLabelVisible: _unread > 0,
+              label: Text(_unread > 99 ? '99+' : '$_unread'),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+          ),
           IconButton(
             tooltip: 'Refresh',
             onPressed: _loading ? null : _load,
@@ -521,13 +350,16 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   ),
                 )
               : RefreshIndicator(
+                  color: UserDashboardScreen.primary,
                   onRefresh: _load,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
                     children: [
                       Text(
-                        'Welcome back, $name',
+                        '${_greeting()}, $first',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
                               color: UserDashboardScreen.navy,
@@ -535,76 +367,83 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        auth.email ?? '',
-                        style: const TextStyle(color: UserDashboardScreen.textGray),
+                        _contextLine(first),
+                        style: const TextStyle(color: UserDashboardScreen.textGray, height: 1.35),
                       ),
-                      if (isWorker) ...[
+                      if (_isWorker) ...[
                         const SizedBox(height: 8),
-                        Chip(
-                          label: const Text('Verified Worker'),
-                          backgroundColor: UserDashboardScreen.primary.withValues(alpha: 0.1),
-                          labelStyle: const TextStyle(
-                            color: UserDashboardScreen.primary,
-                            fontWeight: FontWeight.w600,
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Chip(
+                            visualDensity: VisualDensity.compact,
+                            label: const Text('Verified Worker'),
+                            backgroundColor: UserDashboardScreen.primary.withValues(alpha: 0.1),
+                            labelStyle: const TextStyle(
+                              color: UserDashboardScreen.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ],
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              label: 'Safety Alerts',
-                              value: '${_data?['unreadBroadcastCount'] ?? 0}',
-                              subtitle: 'unread',
-                              icon: Icons.notifications_active_outlined,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              label: 'Self-Defense',
-                              value: '${_data?['approvedCentreCount'] ?? 0}',
-                              subtitle: 'centres',
-                              icon: Icons.sports_martial_arts_outlined,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              label: 'Requests',
-                              value: '${_data?['pendingRequestCount'] ?? 0}',
-                              subtitle: 'pending',
-                              icon: Icons.people_outline,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 16),
+                      _StatusRow(
+                        unread: _unread,
+                        contacts: _contacts.length,
+                        pending: _asInt(_dashboard?['pendingRequestCount']),
                       ),
-                      const SizedBox(height: 28),
-                      Text(
-                        'Recent Safety Alerts',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: UserDashboardScreen.navy,
-                            ),
+                      const SizedBox(height: 16),
+                      _AppointmentCard(
+                        appointment: _nextAppointment,
+                        onView: () => _push(const WomenDoctorsScreen()),
+                        onFind: () => _push(const WomenDoctorsScreen()),
                       ),
                       const SizedBox(height: 12),
-                      _AlertsSection(broadcasts: _data?['recentBroadcasts']),
-                      const SizedBox(height: 28),
-                      _SectionHeader(
-                        title: 'Safety & Emergency',
-                        subtitle: 'Priority — tap to open working tools',
+                      _SafetyCard(
+                        sosActive: _sosActive,
+                        journeyActive: _journeyActive,
+                        contactCount: _contacts.length,
+                        alertCount: _unread,
+                        onOpenSafety: () => _push(const HomeScreen()),
+                        onContacts: () => _push(const ContactsScreen()),
                       ),
-                      const SizedBox(height: 8),
-                      _ModuleList(modules: _safetyModules()),
-                      const SizedBox(height: 28),
-                      _SectionHeader(
-                        title: 'All Modules',
-                        subtitle: 'Same as web dashboard sidebar',
+                      const SizedBox(height: 20),
+                      const _SectionTitle('Safety actions'),
+                      const SizedBox(height: 10),
+                      _SafetyActions(
+                        onSos: () => _push(const HomeScreen()),
+                        onContacts: () => _push(const ContactsScreen()),
+                        onMap: () => _push(const DangerMapScreen()),
+                        onJourney: () => _push(const JourneyScreen()),
+                        onBuddy: () => _push(const BuddyModeScreen()),
                       ),
-                      const SizedBox(height: 8),
-                      _ModuleList(modules: _visibleSidebarModules(isWorker)),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 22),
+                      _SectionTitle('Explore', actionLabel: 'View all', onAction: _showAllModules),
+                      const SizedBox(height: 10),
+                      _ExploreGrid(
+                        isWorker: _isWorker,
+                        onDoctors: () => _push(const WomenDoctorsScreen()),
+                        onJobs: () => _push(_isWorker ? const JobBookingsScreen(workerView: true) : const WomenMarketplaceScreen()),
+                        onEvents: () => _push(const WomenEventsScreen()),
+                        onGlow: () => _push(const GlowSpaceScreen()),
+                        onFitness: () => _push(const FitnessWellnessScreen()),
+                        onMarketplace: () => _push(const WomenMarketplaceScreen()),
+                      ),
+                      const SizedBox(height: 22),
+                      _SectionTitle('Notifications', actionLabel: 'View all', onAction: _openNotifications),
+                      const SizedBox(height: 10),
+                      _NotificationsPreview(
+                        items: _broadcasts,
+                        unread: _unread,
+                        onOpen: _openNotifications,
+                      ),
+                      const SizedBox(height: 22),
+                      _SectionTitle('Recent activity', actionLabel: 'Doctors', onAction: () => _push(const WomenDoctorsScreen())),
+                      const SizedBox(height: 10),
+                      _RecentActivity(
+                        items: _recentActivity,
+                        onOpen: () => _push(const WomenDoctorsScreen()),
+                      ),
                     ],
                   ),
                 ),
@@ -612,53 +451,549 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 }
 
-class _SidebarNavItem {
-  const _SidebarNavItem({
-    required this.title,
-    required this.icon,
-    required this.onTap,
-    this.active = false,
-    this.status = _ModuleStatus.comingSoon,
-    this.iconColor,
-  });
-
+class _DashLink {
+  const _DashLink(this.title, this.icon, this.onTap, {this.subtitle});
   final String title;
   final IconData icon;
   final VoidCallback onTap;
-  final bool active;
-  final _ModuleStatus status;
-  final Color? iconColor;
+  final String? subtitle;
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {this.actionLabel, this.onAction});
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: UserDashboardScreen.navy,
+            ),
+          ),
+        ),
+        if (actionLabel != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(actionLabel!, style: const TextStyle(fontWeight: FontWeight.w700)),
+          ),
+      ],
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow({required this.unread, required this.contacts, required this.pending});
+  final int unread;
+  final int contacts;
+  final int pending;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget cell(String value, String label, IconData icon) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: UserDashboardScreen.primary),
+              const SizedBox(height: 6),
+              Text(value, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: UserDashboardScreen.navy)),
+              Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: UserDashboardScreen.textGray)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        cell('$unread', 'Unread', Icons.notifications_active_outlined),
+        const SizedBox(width: 8),
+        cell('$contacts', 'Contacts', Icons.contacts_outlined),
+        const SizedBox(width: 8),
+        cell('$pending', 'Requests', Icons.people_outline),
+      ],
+    );
+  }
+}
+
+class _AppointmentCard extends StatelessWidget {
+  const _AppointmentCard({required this.appointment, required this.onView, required this.onFind});
+  final Map<String, dynamic>? appointment;
+  final VoidCallback onView;
+  final VoidCallback onFind;
+
+  static String _mode(String? raw) {
+    return switch ((raw ?? '').toUpperCase()) {
+      'VIDEO' => 'Video consultation',
+      'ONLINE' => 'Online / chat',
+      'OFFLINE' => 'Home visit',
+      'CLINIC' => 'In clinic',
+      _ => raw == null || raw.isEmpty ? 'Consultation' : raw,
+    };
+  }
+
+  static String _when(String? raw) {
+    final dt = DateTime.tryParse((raw ?? '').replaceFirst(' ', 'T'));
+    if (dt == null) return 'Scheduled';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final label = day == today
+        ? 'Today'
+        : day == today.add(const Duration(days: 1))
+            ? 'Tomorrow'
+            : '${dt.day}/${dt.month}/${dt.year}';
+    final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final m = dt.minute.toString().padLeft(2, '0');
+    final ap = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$label · $h:$m $ap';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final a = appointment;
+    if (a == null) {
+      return _EmptyCard(
+        title: 'Upcoming appointment',
+        message: 'No upcoming appointments',
+        action: 'Find a Doctor',
+        onTap: onFind,
+      );
+    }
+    final doctor = a['doctor'] is Map ? Map<String, dynamic>.from(a['doctor'] as Map) : <String, dynamic>{};
+    final name = doctor['fullName']?.toString() ?? 'Doctor';
+    final spec = doctor['specialization']?.toString() ?? '';
+    final status = a['status']?.toString() ?? '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Upcoming appointment', style: TextStyle(fontWeight: FontWeight.w800, color: UserDashboardScreen.navy)),
+          const SizedBox(height: 10),
+          Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: UserDashboardScreen.navy)),
+          if (spec.isNotEmpty) Text(spec, style: const TextStyle(color: UserDashboardScreen.textGray, fontSize: 13)),
+          const SizedBox(height: 8),
+          Text(_when(a['appointmentTime']?.toString()), style: const TextStyle(fontWeight: FontWeight.w600, color: UserDashboardScreen.navy)),
+          Text(_mode(a['consultationType']?.toString()), style: const TextStyle(color: UserDashboardScreen.textGray, fontSize: 13)),
+          if (status.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Chip(
+              visualDensity: VisualDensity.compact,
+              label: Text(status),
+              labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: UserDashboardScreen.primary),
+              backgroundColor: UserDashboardScreen.primary.withValues(alpha: 0.08),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton(
+              onPressed: onView,
+              style: FilledButton.styleFrom(backgroundColor: UserDashboardScreen.primary),
+              child: const Text('View appointment'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SafetyCard extends StatelessWidget {
+  const _SafetyCard({
+    required this.sosActive,
+    required this.journeyActive,
+    required this.contactCount,
+    required this.alertCount,
+    required this.onOpenSafety,
+    required this.onContacts,
+  });
+
+  final bool sosActive;
+  final bool journeyActive;
+  final int contactCount;
+  final int alertCount;
+  final VoidCallback onOpenSafety;
+  final VoidCallback onContacts;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = sosActive
+        ? 'SOS active'
+        : journeyActive
+            ? 'Journey in progress'
+            : alertCount > 0
+                ? 'Updates available'
+                : "You're all clear";
+    final detail = sosActive
+        ? 'Open Safety Centre to manage your alert.'
+        : journeyActive
+            ? 'Check in from Journey Tracker when you arrive safely.'
+            : contactCount == 0
+                ? 'Add trusted contacts so SOS can reach help fast.'
+                : '$contactCount trusted contact${contactCount == 1 ? '' : 's'} ready.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: sosActive ? const Color(0xFFFFF1F2) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: sosActive ? UserDashboardScreen.primary.withValues(alpha: 0.35) : const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(sosActive ? Icons.warning_amber_rounded : Icons.shield_outlined, color: UserDashboardScreen.primary),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('Safety status', style: TextStyle(fontWeight: FontWeight.w800, color: UserDashboardScreen.navy)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(status, style: const TextStyle(fontWeight: FontWeight.w700, color: UserDashboardScreen.navy)),
+          const SizedBox(height: 2),
+          Text(detail, style: const TextStyle(color: UserDashboardScreen.textGray, fontSize: 13, height: 1.35)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              FilledButton(
+                onPressed: onOpenSafety,
+                style: FilledButton.styleFrom(backgroundColor: UserDashboardScreen.primary),
+                child: const Text('Safety Centre'),
+              ),
+              const SizedBox(width: 8),
+              TextButton(onPressed: onContacts, child: const Text('Contacts')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SafetyActions extends StatelessWidget {
+  const _SafetyActions({
+    required this.onSos,
+    required this.onContacts,
+    required this.onMap,
+    required this.onJourney,
+    required this.onBuddy,
+  });
+
+  final VoidCallback onSos;
+  final VoidCallback onContacts;
+  final VoidCallback onMap;
+  final VoidCallback onJourney;
+  final VoidCallback onBuddy;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (Icons.sos, 'SOS', onSos, true),
+      (Icons.contacts_outlined, 'Contacts', onContacts, false),
+      (Icons.map_outlined, 'Map', onMap, false),
+      (Icons.pin_drop_outlined, 'Journey', onJourney, false),
+      (Icons.directions_walk_outlined, 'Buddy', onBuddy, false),
+    ];
+    return Row(
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: items[i].$3,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: items[i].$4 ? UserDashboardScreen.primary : Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: items[i].$4 ? null : Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(items[i].$1, color: items[i].$4 ? Colors.white : UserDashboardScreen.primary, size: 22),
+                    const SizedBox(height: 6),
+                    Text(
+                      items[i].$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: items[i].$4 ? Colors.white : UserDashboardScreen.navy,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ExploreGrid extends StatelessWidget {
+  const _ExploreGrid({
+    required this.isWorker,
+    required this.onDoctors,
+    required this.onJobs,
+    required this.onEvents,
+    required this.onGlow,
+    required this.onFitness,
+    required this.onMarketplace,
+  });
+
+  final bool isWorker;
+  final VoidCallback onDoctors;
+  final VoidCallback onJobs;
+  final VoidCallback onEvents;
+  final VoidCallback onGlow;
+  final VoidCallback onFitness;
+  final VoidCallback onMarketplace;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (Icons.monitor_heart_outlined, 'Doctors', onDoctors),
+      (Icons.work_outline, isWorker ? 'My Jobs' : 'Jobs', onJobs),
+      (Icons.event_outlined, 'Events', onEvents),
+      (Icons.spa_outlined, 'Glow', onGlow),
+      (Icons.fitness_center_outlined, 'Fitness', onFitness),
+      (Icons.storefront_outlined, 'Market', onMarketplace),
+    ];
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.15,
+      children: [
+        for (final i in items)
+          InkWell(
+            onTap: i.$3,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(i.$1, color: UserDashboardScreen.primary),
+                  const SizedBox(height: 6),
+                  Text(i.$2, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: UserDashboardScreen.navy)),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NotificationsPreview extends StatelessWidget {
+  const _NotificationsPreview({required this.items, required this.unread, required this.onOpen});
+  final List<Map<String, dynamic>> items;
+  final int unread;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return _EmptyCard(
+        title: null,
+        message: unread == 0 ? "You're all caught up." : 'No notification details yet.',
+        action: 'Open inbox',
+        onTap: onOpen,
+      );
+    }
+    return Column(
+      children: [
+        for (final n in items.take(3))
+          InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    n['title']?.toString() ?? 'Update',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: UserDashboardScreen.navy),
+                  ),
+                  if ((n['message']?.toString() ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      n['message'].toString(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: UserDashboardScreen.textGray, fontSize: 13),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RecentActivity extends StatelessWidget {
+  const _RecentActivity({required this.items, required this.onOpen});
+  final List<Map<String, dynamic>> items;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return _EmptyCard(
+        message: 'Your activity will appear here',
+        action: 'Find a Doctor',
+        onTap: onOpen,
+      );
+    }
+    return Column(
+      children: [
+        for (final a in items)
+          InkWell(
+            onTap: onOpen,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.event_available_outlined, color: UserDashboardScreen.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          () {
+                            final doctor = a['doctor'] is Map ? Map<String, dynamic>.from(a['doctor'] as Map) : <String, dynamic>{};
+                            final name = doctor['fullName']?.toString() ?? 'Doctor';
+                            return 'Doctor booking · $name';
+                          }(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700, color: UserDashboardScreen.navy),
+                        ),
+                        Text(
+                          a['status']?.toString() ?? 'Booking',
+                          style: const TextStyle(fontSize: 12, color: UserDashboardScreen.textGray),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _EmptyCard extends StatelessWidget {
+  const _EmptyCard({this.title, required this.message, required this.action, required this.onTap});
+  final String? title;
+  final String message;
+  final String action;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title != null) ...[
+            Text(title!, style: const TextStyle(fontWeight: FontWeight.w800, color: UserDashboardScreen.navy)),
+            const SizedBox(height: 8),
+          ],
+          Text(message, style: const TextStyle(color: UserDashboardScreen.textGray)),
+          const SizedBox(height: 8),
+          TextButton(onPressed: onTap, child: Text(action)),
+        ],
+      ),
+    );
+  }
 }
 
 class _DashboardDrawer extends StatelessWidget {
   const _DashboardDrawer({
     required this.name,
-    required this.email,
     required this.isWorker,
     required this.items,
     required this.onSignOut,
   });
 
-  static const Color sidebarPurple = Color(0xFF1E1B4B);
-  static const Color sidebarText = Color(0xB3FFFFFF);
-
   final String name;
-  final String email;
   final bool isWorker;
-  final List<_SidebarNavItem> items;
+  final List<_DashLink> items;
   final VoidCallback onSignOut;
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: 280,
-      backgroundColor: sidebarPurple,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(32),
-          bottomRight: Radius.circular(12),
-        ),
-      ),
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -668,494 +1003,38 @@ class _DashboardDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.layers_outlined, color: Colors.white, size: 22),
-                      const SizedBox(width: 10),
-                      RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontFamily: 'Roboto',
-                          ),
-                          children: [
-                            TextSpan(text: 'Rubick '),
-                            TextSpan(
-                              text: 'FightDFire',
-                              style: TextStyle(fontWeight: FontWeight.w400, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  if (email.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      email,
-                      style: const TextStyle(color: sidebarText, fontSize: 12),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                  const Text('Fight D Fear', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: UserDashboardScreen.navy)),
+                  const SizedBox(height: 8),
+                  Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, color: UserDashboardScreen.navy)),
                   if (isWorker) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: UserDashboardScreen.primary.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Verified Worker',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 6),
+                    const Text('Verified Worker', style: TextStyle(color: UserDashboardScreen.primary, fontWeight: FontWeight.w700, fontSize: 12)),
                   ],
                 ],
               ),
             ),
-            const Divider(color: Color(0x33FFFFFF), height: 1, indent: 20, endIndent: 20),
+            const Divider(height: 1),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return _SidebarTile(item: items[index]);
-                },
+              child: ListView(
+                children: [
+                  for (final m in items)
+                    ListTile(
+                      leading: Icon(m.icon, color: UserDashboardScreen.primary),
+                      title: Text(m.title),
+                      onTap: m.onTap,
+                    ),
+                ],
               ),
             ),
-            const Divider(color: Color(0x33FFFFFF), height: 1, indent: 20, endIndent: 20),
+            const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.logout, color: sidebarText, size: 22),
-              title: const Text(
-                'Sign out',
-                style: TextStyle(color: sidebarText, fontWeight: FontWeight.w500),
-              ),
+              leading: const Icon(Icons.logout, color: UserDashboardScreen.textGray),
+              title: const Text('Sign out'),
               onTap: onSignOut,
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SidebarTile extends StatelessWidget {
-  const _SidebarTile({required this.item});
-
-  final _SidebarNavItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final active = item.active;
-    final available = item.status == _ModuleStatus.available;
-    final textColor = active ? Colors.white : _DashboardDrawer.sidebarText;
-    final iconColor = item.iconColor ?? (active ? Colors.white : _DashboardDrawer.sidebarText);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: item.onTap,
-        child: Stack(
-          children: [
-            if (active)
-              Positioned(
-                left: 0,
-                top: 8,
-                bottom: 8,
-                child: Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: UserDashboardScreen.primary,
-                    borderRadius: const BorderRadius.horizontal(
-                      right: Radius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              child: Row(
-                children: [
-                  Icon(item.icon, size: 20, color: iconColor),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: TextStyle(
-                        color: textColor,
-                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  if (available && !active)
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF22C55E),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.subtitle});
-
-  final String title;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: UserDashboardScreen.navy,
-              ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 2),
-          Text(
-            subtitle!,
-            style: const TextStyle(
-              fontSize: 12,
-              color: UserDashboardScreen.textGray,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ModuleList extends StatelessWidget {
-  const _ModuleList({required this.modules});
-
-  final List<_DashboardModule> modules;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: modules.map((m) => _ModuleTile(module: m)).toList(),
-    );
-  }
-}
-
-class _ModuleTile extends StatelessWidget {
-  const _ModuleTile({required this.module});
-
-  final _DashboardModule module;
-
-  @override
-  Widget build(BuildContext context) {
-    final available = module.status == _ModuleStatus.available;
-    final bg = module.emergency
-        ? UserDashboardScreen.primary
-        : Colors.white;
-    final fg = module.emergency ? Colors.white : UserDashboardScreen.navy;
-    final iconColor = module.emergency ? Colors.white : UserDashboardScreen.primary;
-    final subtitleColor =
-        module.emergency ? Colors.white70 : UserDashboardScreen.textGray;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        elevation: module.emergency ? 0 : 0,
-        child: InkWell(
-          onTap: module.onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: module.emergency
-                  ? null
-                  : Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: module.emergency
-                  ? const [
-                      BoxShadow(
-                        color: Color(0x33F43F5E),
-                        blurRadius: 8,
-                        offset: Offset(0, 3),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: module.emergency
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : UserDashboardScreen.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(module.icon, color: iconColor, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        module.title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: fg,
-                        ),
-                      ),
-                      if (module.subtitle != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          module.subtitle!,
-                          style: TextStyle(fontSize: 11, color: subtitleColor),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                _StatusChip(
-                  available: available,
-                  onDark: module.emergency,
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right,
-                  color: module.emergency ? Colors.white70 : UserDashboardScreen.textGray,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.available, required this.onDark});
-
-  final bool available;
-  final bool onDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final label = available ? 'Open' : 'Soon';
-    final bg = available
-        ? (onDark ? Colors.white.withValues(alpha: 0.25) : const Color(0xFFDCFCE7))
-        : (onDark ? Colors.white.withValues(alpha: 0.15) : const Color(0xFFF1F5F9));
-    final fg = available
-        ? (onDark ? Colors.white : const Color(0xFF166534))
-        : (onDark ? Colors.white70 : UserDashboardScreen.textGray);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: fg,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: UserDashboardScreen.primary, size: 22),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: UserDashboardScreen.navy,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: UserDashboardScreen.navy,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: const TextStyle(fontSize: 10, color: UserDashboardScreen.textGray),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AlertsSection extends StatelessWidget {
-  const _AlertsSection({this.broadcasts});
-
-  final dynamic broadcasts;
-
-  @override
-  Widget build(BuildContext context) {
-    final list = broadcasts is List ? broadcasts as List : <dynamic>[];
-    if (list.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Text(
-          'No safety alerts yet. Check back for community updates.',
-          style: TextStyle(color: UserDashboardScreen.textGray),
-        ),
-      );
-    }
-    return Column(
-      children: list.map((raw) {
-        final b = Map<String, dynamic>.from(raw as Map);
-        final type = b['type']?.toString() ?? 'INFO';
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: type == 'ALERT' || type == 'WARNING'
-                  ? UserDashboardScreen.primary.withValues(alpha: 0.3)
-                  : Colors.transparent,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      b['title']?.toString() ?? 'Alert',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: UserDashboardScreen.navy,
-                      ),
-                    ),
-                  ),
-                  if (type.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: UserDashboardScreen.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        type,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: UserDashboardScreen.primary,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              if (b['message'] != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  b['message'].toString(),
-                  style: const TextStyle(
-                    color: UserDashboardScreen.textGray,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-              if (b['sentAt'] != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  b['sentAt'].toString(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: UserDashboardScreen.textGray,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      }).toList(),
     );
   }
 }

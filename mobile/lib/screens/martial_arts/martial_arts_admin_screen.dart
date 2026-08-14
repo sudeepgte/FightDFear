@@ -17,6 +17,7 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
   late final MartialArtsAdminService _admin;
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  bool _obscurePassword = true;
   bool _loggedIn = false;
   bool _busy = false;
   bool _loadingList = false;
@@ -112,7 +113,18 @@ class _MartialArtsAdminScreenState extends State<MartialArtsAdminScreen> {
               child: Column(
                 children: [
                   TextField(controller: _emailCtrl, decoration: const InputDecoration(labelText: 'Admin email')),
-                  TextField(controller: _passCtrl, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword ? 'Show password' : 'Hide password',
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: _busy ? null : _login,

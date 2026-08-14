@@ -30,7 +30,6 @@ class DoctorCatalog {
     'BDS',
     'MDS',
     'PhD',
-    'Other',
   ];
 
   static const languages = [

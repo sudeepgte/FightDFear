@@ -56,10 +56,9 @@ public class PaymentPendingOrderService {
 
     @Transactional(readOnly = true)
     public Optional<PaymentPendingOrder> findPendingForUser(String orderId, Long userId) {
-        expireStalePendingOrders();
         return pendingOrderRepository.findByRazorpayOrderId(orderId)
                 .filter(p -> "PENDING".equalsIgnoreCase(p.getStatus()))
-                .filter(p -> p.getExpiresAt().isAfter(LocalDateTime.now()))
+                .filter(p -> p.getExpiresAt() == null || p.getExpiresAt().isAfter(LocalDateTime.now()))
                 .filter(p -> userId.equals(p.getUserId()));
     }
 

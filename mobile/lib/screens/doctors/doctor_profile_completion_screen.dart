@@ -1,22 +1,19 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../config/maps_config.dart';
 
 import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
 class DoctorProfileCompletionScreen extends StatefulWidget {
@@ -53,7 +50,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
 
   final _fullName = TextEditingController();
   final _specializationOther = TextEditingController();
-  final _qualificationOther = TextEditingController();
+  final _qualificationCustom = TextEditingController();
   final _medicalReg = TextEditingController();
   final _experience = TextEditingController();
   final _hospital = TextEditingController();
@@ -69,8 +66,8 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   final _videoFee = TextEditingController();
 
   String? _specialization;
-  String? _qualification;
   String? _state;
+  final Set<String> _qualifications = {};
   final Set<String> _languages = {};
   final Set<String> _servicesOffered = {};
 
@@ -108,7 +105,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   void dispose() {
     _fullName.dispose();
     _specializationOther.dispose();
-    _qualificationOther.dispose();
+    _qualificationCustom.dispose();
     _medicalReg.dispose();
     _experience.dispose();
     _hospital.dispose();
@@ -164,8 +161,9 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     _fullName.text = p['fullName']?.toString() ?? '';
     _specialization = _pickOrOther(p['specialization']?.toString() ?? '', DoctorCatalog.specializations, _specializationOther);
     if ((_specialization ?? '').isEmpty) _specialization = null;
-    _qualification = _pickOrOther(p['qualification']?.toString() ?? '', DoctorCatalog.qualifications, _qualificationOther);
-    if ((_qualification ?? '').isEmpty) _qualification = null;
+    _qualifications
+      ..clear()
+      ..addAll(DoctorCatalog.splitCsv(p['qualification']).where((e) => e.isNotEmpty && e.toLowerCase() != 'other'));
     _medicalReg.text = p['medicalRegNumber']?.toString() ?? '';
     _experience.text = p['experienceYears']?.toString() ?? '';
     _hospital.text = p['hospitalName']?.toString() ?? '';
@@ -270,24 +268,6 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   String _formatTime(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-  Future<void> _useCurrentClinicLocation() async {
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-      if (mounted) setState(() => _error = 'Location permission is required to pin the clinic');
-      return;
-    }
-    final pos = await Geolocator.getCurrentPosition();
-    if (!mounted) return;
-    setState(() {
-      _clinicLat = pos.latitude;
-      _clinicLng = pos.longitude;
-      _mapLocation.text = 'https://maps.google.com/?q=${pos.latitude},${pos.longitude}';
-    });
-  }
-
   String? _docUrl(String? path) {
     if (path == null || path.trim().isEmpty) return null;
     if (path.startsWith('http')) return path;
@@ -301,8 +281,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
 
   String get _resolvedSpecialization =>
       _specialization == 'Other' ? _specializationOther.text.trim() : (_specialization ?? '').trim();
-  String get _resolvedQualification =>
-      _qualification == 'Other' ? _qualificationOther.text.trim() : (_qualification ?? '').trim();
+  String get _resolvedQualification => _qualifications.join(', ');
   String get _resolvedState =>
       _state == 'Other' ? _stateOther.text.trim() : (_state ?? '').trim();
 
@@ -417,6 +396,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
           }
         },
       );
+      if (mounted) _leave();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -644,6 +624,71 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         ),
         items: items.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
         onChanged: onChanged,
+      ),
+    );
+  }
+
+  void _addCustomQualification() {
+    final value = _qualificationCustom.text.trim();
+    if (value.isEmpty) return;
+    setState(() {
+      _qualifications.add(value);
+      _qualificationCustom.clear();
+    });
+  }
+
+  Widget _qualificationPicker() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '1.3 Qualifications *',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E1B4B)),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Select every degree you hold. You can also type a custom qualification.',
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          _chipGroup(
+            options: DoctorCatalog.qualifications,
+            selected: _qualifications,
+            onChanged: (v, on) => setState(() {
+              if (on) {
+                _qualifications.add(v);
+              } else {
+                _qualifications.remove(v);
+              }
+            }),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _qualificationCustom,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _addCustomQualification(),
+                  decoration: InputDecoration(
+                    labelText: 'Add another degree',
+                    hintText: 'e.g. MRCOG, Fellowship',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: _addCustomQualification,
+                child: const Text('Add'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1047,23 +1092,12 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Complete Doctor Profile'),
-        actions: [
-          TextButton(
-            onPressed: _loading ? null : _leave,
-            child: const Text('Skip for now'),
-          ),
-          TextButton(
-            onPressed: (_loading || _saving) ? null : _saveProfile,
-            child: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
-          ),
-        ],
+        title: const Text('Complete Doctor Profile', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: ProfileCompletionActions.appBar(
+          onSkip: _loading ? null : _leave,
+          onSave: (_loading || _saving) ? null : _saveProfile,
+          saving: _saving,
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -1087,16 +1121,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                   ),
                   if (_specialization == 'Other')
                     _field(_specializationOther, '1.2', 'Enter specialization', required: true),
-                  _dropdown(
-                    number: '1.3',
-                    label: 'Qualification',
-                    value: _qualification,
-                    options: DoctorCatalog.qualifications,
-                    required: true,
-                    onChanged: (v) => setState(() => _qualification = v),
-                  ),
-                  if (_qualification == 'Other')
-                    _field(_qualificationOther, '1.3', 'Enter qualification', required: true),
+                  _qualificationPicker(),
                   _field(_medicalReg, '1.4', 'Medical registration number', required: true),
                   _field(
                     _experience,
@@ -1137,54 +1162,16 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     hint: 'Paste Google Maps link (optional)',
                   ),
                   const SizedBox(height: 8),
-                  Text('2.7 Pin clinic on map', style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                  const SizedBox(height: 6),
-                  OutlinedButton.icon(
-                    onPressed: _useCurrentClinicLocation,
-                    icon: const Icon(Icons.my_location),
-                    label: const Text('Use current location'),
-                  ),
-                  if (_clinicLat != null && _clinicLng != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 8),
-                      child: Text(
-                        'Pinned: ${_clinicLat!.toStringAsFixed(5)}, ${_clinicLng!.toStringAsFixed(5)}',
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                      ),
-                    ),
-                  SizedBox(
-                    height: 180,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: GoogleMap(
-                        key: ValueKey('${_clinicLat}_$_clinicLng'),
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            _clinicLat ?? MapsConfig.defaultLat,
-                            _clinicLng ?? MapsConfig.defaultLng,
-                          ),
-                          zoom: 14,
-                        ),
-                        markers: {
-                          if (_clinicLat != null && _clinicLng != null)
-                            Marker(
-                              markerId: const MarkerId('clinic'),
-                              position: LatLng(_clinicLat!, _clinicLng!),
-                            ),
-                        },
-                        onTap: (pos) => setState(() {
-                          _clinicLat = pos.latitude;
-                          _clinicLng = pos.longitude;
-                          _mapLocation.text =
-                              'https://maps.google.com/?q=${pos.latitude},${pos.longitude}';
-                        }),
-                        myLocationButtonEnabled: false,
-                        zoomControlsEnabled: false,
-                        gestureRecognizers: {
-                          Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-                        },
-                      ),
-                    ),
+                  ProfileLocationPicker(
+                    lat: _clinicLat,
+                    lng: _clinicLng,
+                    mapLinkController: _mapLocation,
+                    pinLabel: '2.7 Pin clinic on map',
+                    onPinned: (lat, lng) => setState(() {
+                      _clinicLat = lat;
+                      _clinicLng = lng;
+                    }),
+                    onError: (msg) => setState(() => _error = msg),
                   ),
                 ]),
                 _section('3', 'Consultation Modes', [

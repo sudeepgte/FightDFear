@@ -1,18 +1,15 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../config/glow_catalog.dart';
-import '../../config/maps_config.dart';
 import '../../services/auth_state.dart';
 import '../../services/glow_provider_auth_service.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
 class GlowSalonProfileCompletionScreen extends StatefulWidget {
@@ -327,22 +324,6 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     final picked = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 10, minute: 0));
     if (picked != null) setState(() => apply(picked));
   }
-
-  Future<void> _useCurrentLocation() async {
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-    if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-      if (mounted) setState(() => _error = 'Location permission is needed to pin the salon');
-      return;
-    }
-    final pos = await Geolocator.getCurrentPosition();
-    setState(() {
-      _lat = pos.latitude;
-      _lng = pos.longitude;
-      _mapLocation.text = 'https://maps.google.com/?q=${pos.latitude},${pos.longitude}';
-    });
-  }
-
   Future<void> _addBlockedDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -388,6 +369,9 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     }
   }
 
+
+  void _skip() => ProfileCompletionActions.skip(context, widget.onFinished);
+
   @override
   Widget build(BuildContext context) {
     final pct = (_profile['profileCompletionPct'] is num) ? (_profile['profileCompletionPct'] as num).toDouble() : 0.0;
@@ -401,7 +385,12 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: GlowSalonProfileCompletionScreen.navy,
-        title: const Text('Complete Salon Profile', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Complete Salon Profile', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w700)),
+      actions: ProfileCompletionActions.appBar(
+        onSkip: _loading ? null : _skip,
+        onSave: (_loading || _saving) ? null : _saveProfile,
+        saving: _saving,
+      ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -474,40 +463,16 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
                   _field(_pincode, '2.5', 'Pincode', required: true, keyboardType: TextInputType.number, maxLength: 6, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                   _field(_mapLocation, '2.6', 'Google Maps location', hint: 'Paste Maps link (optional)'),
                   const SizedBox(height: 8),
-                  const Text('2.7 Pin salon on map', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 6),
-                  OutlinedButton.icon(onPressed: _useCurrentLocation, icon: const Icon(Icons.my_location), label: const Text('Use current location')),
-                  if (_lat != null && _lng != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4, bottom: 8),
-                      child: Text('Pinned: ${_lat!.toStringAsFixed(5)}, ${_lng!.toStringAsFixed(5)}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                    ),
-                  SizedBox(
-                    height: 180,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: GoogleMap(
-                        key: ValueKey('${_lat}_$_lng'),
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(_lat ?? MapsConfig.defaultLat, _lng ?? MapsConfig.defaultLng),
-                          zoom: 14,
-                        ),
-                        markers: {
-                          if (_lat != null && _lng != null)
-                            Marker(markerId: const MarkerId('salon'), position: LatLng(_lat!, _lng!)),
-                        },
-                        onTap: (pos) => setState(() {
-                          _lat = pos.latitude;
-                          _lng = pos.longitude;
-                          _mapLocation.text = 'https://maps.google.com/?q=${pos.latitude},${pos.longitude}';
-                        }),
-                        myLocationButtonEnabled: false,
-                        zoomControlsEnabled: false,
-                        gestureRecognizers: {
-                          Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer()),
-                        },
-                      ),
-                    ),
+                  ProfileLocationPicker(
+                    lat: _lat,
+                    lng: _lng,
+                    mapLinkController: _mapLocation,
+                    pinLabel: '2.7 Pin salon on map',
+                    onPinned: (lat, lng) => setState(() {
+                      _lat = lat;
+                      _lng = lng;
+                    }),
+                    onError: (msg) => setState(() => _error = msg),
                   ),
                 ]),
                 _section('3', 'Categories', [

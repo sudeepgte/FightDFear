@@ -31,6 +31,7 @@ public class RateLimitService {
         return true;
     }
 
+    @Transactional
     public void checkOrThrow(String key, int limit, Duration window) {
         if (!tryAcquire(key, limit, window)) {
             throw new RateLimitExceededException("Too many requests. Please try again later.");
