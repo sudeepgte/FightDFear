@@ -66,20 +66,41 @@ public class SalonRealTimeController {
     }
 
     @GetMapping("/chat")
-    public ResponseEntity<List<SalonChatMessage>> getChatMessages(HttpSession session) {
+    public ResponseEntity<?> getChatMessages(HttpSession session, @org.springframework.web.bind.annotation.RequestParam(required = false) Long salonId) {
         Salon salon = (Salon) session.getAttribute("loggedSalon");
-        if (salon == null) return ResponseEntity.status(401).build();
+        if (salon != null) {
+            List<SalonChatMessage> messages = chatMessageRepository.findBySalonIdOrderByTimestampAsc(salon.getId());
+            return ResponseEntity.ok(messages.stream().map(this::toPayload).toList());
+        }
         
-        List<SalonChatMessage> messages = chatMessageRepository.findBySalonIdOrderByTimestampAsc(salon.getId());
-        return ResponseEntity.ok(messages);
+        in.sp.main.Entities.User user = (in.sp.main.Entities.User) session.getAttribute("user");
+        if (user != null && salonId != null) {
+            List<SalonChatMessage> messages = chatMessageRepository.findBySalonIdAndUserIdOrderByTimestampAsc(salonId, user.getId());
+            return ResponseEntity.ok(messages.stream().map(this::toPayload).toList());
+        }
+        
+        return ResponseEntity.status(401).build();
+    }
+
+    private ChatPayload toPayload(SalonChatMessage msg) {
+        ChatPayload p = new ChatPayload();
+        p.setId(msg.getId());
+        if (msg.getSalon() != null) p.setSalonId(msg.getSalon().getId());
+        if (msg.getUser() != null) {
+            p.setUserId(msg.getUser().getId());
+            p.setUserName(msg.getUser().getFullName());
+            p.setUserEmail(msg.getUser().getEmail());
+        }
+        p.setSenderRole(msg.getSenderRole());
+        p.setMessage(msg.getMessage());
+        if (msg.getTimestamp() != null) {
+            p.setTimestamp(msg.getTimestamp().toString());
+        }
+        return p;
     }
 
     // --- WebSocket STOMP Endpoints ---
 
-    /**
-     * Handled incoming message from Salon or User.
-     * Payload expected: { "salonId": 1, "userId": 2, "senderRole": "SALON", "message": "Hello!" }
-     */
     @MessageMapping("/salon/chat")
     public void processSalonChat(@Payload ChatPayload payload) {
         SalonChatMessage msg = new SalonChatMessage();
@@ -91,26 +112,51 @@ public class SalonRealTimeController {
         
         msg.setSenderRole(payload.getSenderRole());
         msg.setMessage(payload.getMessage());
-        
         SalonChatMessage saved = chatMessageRepository.save(msg);
         
+        if ("USER".equals(payload.getSenderRole()) && msg.getSalon() != null) {
+            SalonNotification notif = new SalonNotification();
+            notif.setSalon(msg.getSalon());
+            notif.setTitle("New Message from " + (msg.getUser() != null ? msg.getUser().getFullName() : "Client"));
+            notif.setMessage(payload.getMessage());
+            SalonNotification savedNotif = notificationRepository.save(notif);
+            
+            // Broadcast notification in real-time
+            messagingTemplate.convertAndSend("/topic/salon/notifications/" + msg.getSalon().getId(), savedNotif);
+        }
+        
+        // Broadcast a safe DTO to prevent LazyInitializationException on User entity
+        ChatPayload responsePayload = toPayload(saved);
+        
         // Broadcast to Salon
-        messagingTemplate.convertAndSend("/topic/salon/chat/" + payload.getSalonId(), saved);
+        messagingTemplate.convertAndSend("/topic/salon/chat/" + payload.getSalonId(), responsePayload);
     }
     
     public static class ChatPayload {
+        private Long id;
         private Long salonId;
         private Long userId;
+        private String userName;
+        private String userEmail;
         private String senderRole;
         private String message;
+        private String timestamp;
         
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
         public Long getSalonId() { return salonId; }
         public void setSalonId(Long salonId) { this.salonId = salonId; }
         public Long getUserId() { return userId; }
         public void setUserId(Long userId) { this.userId = userId; }
+        public String getUserName() { return userName; }
+        public void setUserName(String userName) { this.userName = userName; }
+        public String getUserEmail() { return userEmail; }
+        public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
         public String getSenderRole() { return senderRole; }
         public void setSenderRole(String senderRole) { this.senderRole = senderRole; }
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
+        public String getTimestamp() { return timestamp; }
+        public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
     }
 }

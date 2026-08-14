@@ -43,6 +43,9 @@ public class BookingController {
  
     @Autowired
     private OfferRepository offerRepository;
+    
+    @Autowired
+    private SalonNotificationRepository salonNotificationRepository;
 
     // Show booking form
     @GetMapping("/new")
@@ -128,8 +131,15 @@ public class BookingController {
         } else {
             booking.setAddress(null);
         }
- 
         booking1Repository.save(booking);
+        
+        SalonNotification notif = new SalonNotification();
+        notif.setSalon(booking.getSalon());
+        notif.setTitle("New Booking Alert");
+        String serviceName = booking.getService() != null ? booking.getService().getName() : (booking.getTreatment() != null ? booking.getTreatment().getServiceName() : "a service");
+        notif.setMessage("You have a new booking from " + loggedUser.getFullName() + " for " + serviceName + " on " + booking.getBookingDate() + " at " + booking.getPreferredTime() + ".");
+        salonNotificationRepository.save(notif);
+        
         return "redirect:/booking/myBookings";
     }
  
@@ -195,6 +205,7 @@ public class BookingController {
         model.addAttribute("bookings", bookings);  
         model.addAttribute("offerBookings", offerBookings); 
         model.addAttribute("salon", loggedSalon); // Added this line
+        model.addAttribute("today", LocalDate.now()); // Added for date comparison
 
         return "salon/viewBookings";
     }
@@ -216,8 +227,12 @@ public class BookingController {
             Booking1 booking = booking1Repository.findById(bookingId).orElse(null);
 
             if (booking != null && booking.getSalon().getId().equals(loggedSalon.getId())) {
-                booking.setStatus(status.toUpperCase());
-                booking1Repository.save(booking);
+                if ("COMPLETED".equalsIgnoreCase(status) && booking.getBookingDate() != null && booking.getBookingDate().isAfter(LocalDate.now())) {
+                    // Cannot complete future booking
+                } else {
+                    booking.setStatus(status.toUpperCase());
+                    booking1Repository.save(booking);
+                }
             }
         }
 
@@ -227,8 +242,12 @@ public class BookingController {
             OfferBooking offerBooking = offerbookingRepository.findById(bookingId).orElse(null);
 
             if (offerBooking != null && offerBooking.getSalon().getId().equals(loggedSalon.getId())) {
-                offerBooking.setStatus(status.toUpperCase());
-                offerbookingRepository.save(offerBooking);
+                if ("COMPLETED".equalsIgnoreCase(status) && offerBooking.getDate() != null && offerBooking.getDate().isAfter(LocalDate.now())) {
+                    // Cannot complete future booking
+                } else {
+                    offerBooking.setStatus(status.toUpperCase());
+                    offerbookingRepository.save(offerBooking);
+                }
             }
         }
 

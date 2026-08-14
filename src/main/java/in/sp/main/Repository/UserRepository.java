@@ -13,6 +13,7 @@ import in.sp.main.Entities.VerificationStatus;
 public interface UserRepository extends JpaRepository<User, Long> {
  // Add method to find user by email (used for login)
     Optional<User> findByEmail(String email);
+    Optional<User> findByPhoneNumber(String phoneNumber);
 
     // Purpose: admin verification screens + buddy matching (verified-only filter).
     List<User> findByVerificationStatus(VerificationStatus status);

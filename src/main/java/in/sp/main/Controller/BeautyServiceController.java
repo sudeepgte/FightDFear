@@ -23,6 +23,12 @@ public class BeautyServiceController {
     private SalonRepository salonRepository;
 
     @Autowired
+    private SalonPackageRepository salonPackageRepository;
+
+    @Autowired
+    private SalonMembershipRepository salonMembershipRepository;
+
+    @Autowired
     private StylistRepository stylistRepository;
 
     @Autowired
@@ -373,12 +379,18 @@ public class BeautyServiceController {
      // ✅ Fetch salon offers
      List<Offer> offerList = offerRepository.findBySalonId(salonId);
 
+     // ✅ Fetch packages and memberships
+     List<SalonPackage> packages = salonPackageRepository.findBySalonId(salonId);
+     List<SalonMembership> memberships = salonMembershipRepository.findBySalonId(salonId);
+
      // ✅ Add all data to model
      model.addAttribute("salon", salon);
      model.addAttribute("stylists", stylists);
      model.addAttribute("serviceList", serviceList);
      model.addAttribute("treatmentList", treatmentList);
      model.addAttribute("offerList", offerList);
+     model.addAttribute("packages", packages);
+     model.addAttribute("memberships", memberships);
      model.addAttribute("averageRating", average);
 
      return "user/user-salon-view";

@@ -125,7 +125,7 @@ public class Service1 {
 	public void setStylist(Stylist stylist) {
 		this.stylist = stylist;
 	}
-	public String getPhotoUrl() {
+    public String getPhotoUrl() {
         return photoUrl;
     }
  
@@ -133,5 +133,10 @@ public class Service1 {
         this.photoUrl = photoUrl;
     }
  
-    // getters & setters
+    public String getDescription() {
+        if (ingredients != null && !ingredients.isEmpty()) {
+            return "Includes: " + ingredients;
+        }
+        return "Premium Salon Service";
+    }
 }

@@ -68,6 +68,8 @@
         .status-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
         .status-confirmed { background: rgba(16, 185, 129, 0.1); color: #059669; }
         .status-rejected { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        .status-completed { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+        .status-cancelled { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
 
         .service-type-pill {
             display: inline-block;
@@ -182,7 +184,7 @@
                             <c:forEach var="b" items="${serviceBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card">
-                                        <div class="booking-status ${b.status eq 'CONFIRMED' ? 'status-confirmed' : (b.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                        <div class="booking-status ${b.status eq 'CONFIRMED' ? 'status-confirmed' : (b.status eq 'COMPLETED' ? 'status-completed' : (b.status eq 'REJECTED' || b.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
                                             ${b.status != null ? b.status : 'PENDING'}
                                         </div>
                                         <span class="service-type-pill">${b.bookingType} Booking</span>
@@ -231,7 +233,7 @@
                             <c:forEach var="t" items="${treatmentBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card">
-                                        <div class="booking-status ${t.status eq 'CONFIRMED' ? 'status-confirmed' : (t.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                        <div class="booking-status ${t.status eq 'CONFIRMED' ? 'status-confirmed' : (t.status eq 'COMPLETED' ? 'status-completed' : (t.status eq 'REJECTED' || t.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
                                             ${t.status != null ? t.status : 'PENDING'}
                                         </div>
                                         <span class="service-type-pill">${t.bookingType} Treatment</span>
@@ -274,7 +276,9 @@
                             <c:forEach var="o" items="${offerBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card" style="border-left: 6px solid var(--brand-pink);">
-                                        <div class="booking-status status-confirmed">REDEEMED</div>
+                                        <div class="booking-status ${o.status eq 'CONFIRMED' ? 'status-confirmed' : (o.status eq 'COMPLETED' ? 'status-completed' : (o.status eq 'REJECTED' || o.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
+                                            ${o.status != null ? o.status : 'PENDING'}
+                                        </div>
                                         <span class="service-type-pill" style="background: var(--brand-pink); color: white;">PROMOTION</span>
                                         <h3 class="booking-title">${o.offer.title}</h3>
                                         <span class="salon-name">${o.salon.name}</span>

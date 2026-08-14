@@ -949,6 +949,31 @@
             top: 0;
             z-index: 999;
         }
+        /* Offer Cards */
+        .offer-card { background: white; border-radius: 24px; padding: 25px; border: 1px solid var(--fdf-border); transition: all 0.3s ease; height: 100%; position: relative; display: flex; flex-direction: column; }
+        .offer-card:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
+        .offer-status { position: absolute; top: 20px; right: 20px; padding: 5px 15px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+        .status-Active { background: rgba(32, 201, 151, 0.15); color: #20c997; }
+        .status-Scheduled { background: rgba(13, 110, 253, 0.15); color: #0d6efd; }
+        .status-Expired { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
+        .status-Paused { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .offer-title { font-weight: 800; color: var(--brand-purple-darker); margin-bottom: 5px; padding-right: 90px; font-size: 1.25rem; }
+        .offer-type { font-size: 0.85rem; color: var(--brand-purple); font-weight: 700; text-transform: uppercase; margin-bottom: 15px; }
+        .offer-desc { color: #6c757d; font-size: 0.9rem; margin-bottom: 15px; flex-grow: 1; }
+        .price-tag { background: #f8f5ff; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .price-label { font-size: 0.8rem; color: #6c757d; font-weight: 600; }
+        .strike-price { text-decoration: line-through; color: #888; font-size: 0.9rem; font-weight: 600; }
+        .final-price { color: #157347; font-weight: 800; font-size: 1.2rem; }
+        .usage-stats { display: flex; justify-content: space-between; border-top: 1px dashed #eee; padding-top: 15px; margin-bottom: 15px; font-size: 0.85rem; }
+        .usage-stat-val { font-weight: 700; color: #333; }
+        .offer-actions { display: flex; gap: 8px; }
+        .btn-action { flex: 1; padding: 8px; border-radius: 10px; font-weight: 600; border: none; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-pause { background: rgba(255, 193, 7, 0.1); color: #d39e00; }
+        .btn-pause:hover { background: #ffc107; color: white; }
+        .btn-resume { background: rgba(32, 201, 151, 0.1); color: #20c997; }
+        .btn-resume:hover { background: #20c997; color: white; }
+        .btn-archive { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+        .btn-archive:hover { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
@@ -985,7 +1010,7 @@
                     <i class="bi bi-calendar-check"></i>
                     <span>Appointments</span>
                 </a>
-                <a class="nav-link-custom" href="#calendar" onclick="alert('Opening Calendar View...')">
+                <a class="nav-link-custom" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal">
                     <i class="bi bi-calendar3"></i>
                     <span>Calendar</span>
                 </a>
@@ -997,39 +1022,29 @@
                     <i class="bi bi-people"></i>
                     <span>Staff / Stylists</span>
                 </a>
-                <a class="nav-link-custom" href="#clients" onclick="alert('Opening Client Database...')">
-                    <i class="bi bi-person-heart"></i>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients">
+                    <i class="bi bi-people-fill"></i>
                     <span>Clients</span>
                 </a>
-                <a class="nav-link-custom" href="#walkin" onclick="alert('Opening Walk-in Client Queue...')">
-                    <i class="bi bi-person-lines-fill"></i>
-                    <span>Walk-in Clients</span>
-                </a>
-                <a class="nav-link-custom" href="#packages" onclick="alert('Opening Packages & Memberships...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages">
                     <i class="bi bi-box-seam"></i>
                     <span>Packages & Memberships</span>
                 </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}">
-                    <i class="bi bi-megaphone"></i>
-                    <span>Promotions</span>
-                </a>
+                
                 <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}">
                     <i class="bi bi-percent"></i>
                     <span>Offers & Discounts</span>
                 </a>
-                <a class="nav-link-custom" href="#billing" onclick="alert('Opening Billing & Invoices...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing">
                     <i class="bi bi-receipt"></i>
                     <span>Billing & Invoices</span>
                 </a>
-                <a class="nav-link-custom" href="#payments" onclick="alert('Opening Payments & Payouts...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments">
                     <i class="bi bi-credit-card-2-front"></i>
                     <span>Payments & Payouts</span>
                 </a>
-                <a class="nav-link-custom" href="#loyalty" onclick="alert('Opening Loyalty Program Dashboard...')">
-                    <i class="bi bi-gem"></i>
-                    <span>Loyalty Program</span>
-                </a>
-                <a class="nav-link-custom" href="#inventory" onclick="alert('Opening Salon Inventory System...')">
+                
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory">
                     <i class="bi bi-box"></i>
                     <span>Inventory</span>
                 </a>
@@ -1037,16 +1052,16 @@
                     <i class="bi bi-star-half"></i>
                     <span>Reviews & Feedback</span>
                 </a>
-                <a class="nav-link-custom" href="#analytics" onclick="alert('Opening Reports & Business Analytics...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics">
                     <i class="bi bi-bar-chart-line"></i>
                     <span>Reports & Analytics</span>
                 </a>
 
-                <a class="nav-link-custom" href="#settings" onclick="alert('Opening Salon Settings...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/settings">
                     <i class="bi bi-sliders"></i>
                     <span>Settings</span>
                 </a>
-                <a class="nav-link-custom" href="#support" onclick="alert('Opening Help & Support Center...')">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/support">
                     <i class="bi bi-question-circle"></i>
                     <span>Help & Support</span>
                 </a>
@@ -1067,8 +1082,8 @@
             <!-- Dashboard Header -->
             <div class="dashboard-header">
                 <div class="header-title-box">
-                    <h2>Welcome back, ${empty salon.name ? 'Priya' : salon.name}! ✨</h2>
-                    <p>Manage your beauty, wellness & hairstyling business in one place.</p>
+                    <h2>Welcome back, ${sessionScope.loggedSalon.name}! ✨</h2>
+                    <p>Manage your beauty, wellness in one place.</p>
                 </div>
                 
                 <div class="search-bar-wrapper d-none d-md-block">
@@ -1082,14 +1097,22 @@
                         <span>New Appointment</span>
                     </button>
                     
-                    <div class="icon-btn-circle">
-                        <i class="bi bi-bell"></i>
-                        <span class="badge-dot">5</span>
+                    <div class="dropdown">
+                        <div class="icon-btn-circle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;" id="notifDropdownToggle" onclick="markNotificationsRead()">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge-dot" id="notif-badge" style="display:none;">0</span>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="notifDropdownToggle" style="width: 320px; max-height: 400px; overflow-y: auto;" id="notifDropdownList">
+                            <li><h6 class="dropdown-header">Recent Notifications</h6></li>
+                            <li id="empty-notif" class="text-center p-3 text-muted" style="display: none;">No new notifications</li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center text-primary" href="${pageContext.request.contextPath}/salon/notifications">View All</a></li>
+                        </ul>
                     </div>
 
-                    <div class="icon-btn-circle">
+                    <div class="icon-btn-circle" onclick="location.href='${pageContext.request.contextPath}/salon/messages'" style="cursor:pointer;">
                         <i class="bi bi-chat-right-text"></i>
-                        <span class="badge-dot">3</span>
+                        <span class="badge-dot" id="msg-badge" style="display:none;">0</span>
                     </div>
 
                     <div class="profile-btn d-none d-sm-flex" onclick="location.href='${pageContext.request.contextPath}/salons/profile'">
@@ -1112,7 +1135,7 @@
                 <div class="status-badge">
                     <span class="status-indicator"></span>
                     <span>Salon Status: OPEN</span>
-                    <span style="font-size:0.7rem; color:var(--fdf-text-muted); font-weight:600; margin-left:4px;">(Hours: ${empty salon.availabilityHours ? '09:00 AM - 09:00 PM' : salon.availabilityHours})</span>
+                    <span style="font-size:0.7rem; color:var(--fdf-text-muted); font-weight:600; margin-left:4px;">(Hours: ${todayHours})</span>
                 </div>
             </div>
 
@@ -1281,21 +1304,31 @@
                                     <c:forEach items="${todayBookings}" var="bkg" end="5">
                                         <div class="timeline-item">
                                             <div class="timeline-time">
-                                                ${bkg.bookingTime.toLocalTime().toString()}
+                                                ${bkg.preferredTime}
                                             </div>
                                             <div class="timeline-info">
-                                                <h6>${bkg.user.name != null ? bkg.user.name : 'Client'}</h6>
-                                                <span>${bkg.service.name} • Staff: ${bkg.stylist.firstName}</span>
+                                                <h6>${not empty bkg.user.fullName ? bkg.user.fullName : 'Client'}</h6>
+                                                <span>
+                                                    <c:choose>
+                                                        <c:when test="${bkg.service != null}">${bkg.service.name}</c:when>
+                                                        <c:when test="${bkg.treatment != null}">${bkg.treatment.serviceName}</c:when>
+                                                        <c:otherwise>Service</c:otherwise>
+                                                    </c:choose>
+                                                    • ${bkg.bookingType}
+                                                </span>
                                             </div>
                                             <c:choose>
                                                 <c:when test="${bkg.status == 'COMPLETED'}">
                                                     <span class="timeline-status status-confirmed" style="background:#e6fcf5;color:#0ca678;">Completed</span>
                                                 </c:when>
-                                                <c:when test="${bkg.status == 'PENDING'}">
-                                                    <span class="timeline-status status-walkin" style="background:#fdf2f8;color:#db2777;">Pending</span>
+                                                <c:when test="${bkg.status == 'CONFIRMED'}">
+                                                    <span class="timeline-status status-inprogress" style="background:#e7f5ff;color:#1c7ed6;">Confirmed</span>
+                                                </c:when>
+                                                <c:when test="${bkg.status == 'REJECTED' or bkg.status == 'CANCELLED'}">
+                                                    <span class="timeline-status" style="background:#fff5f5;color:#ef4444;">${bkg.status}</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="timeline-status status-inprogress" style="background:#e7f5ff;color:#1c7ed6;">${bkg.status}</span>
+                                                    <span class="timeline-status status-walkin" style="background:#fdf2f8;color:#db2777;">Pending</span>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -1317,17 +1350,17 @@
                         
                         <div class="mb-4">
                             <span style="font-size:0.75rem; color:var(--fdf-text-muted); font-weight:600;">REVENUE</span>
-                            <h4 style="font-weight:800; color:var(--fdf-pink); margin-top:2px;">₹2,18,750 <span style="font-size:0.75rem; color:#10b981; font-weight:700; margin-left:6px;"><i class="bi bi-arrow-up"></i> 16%</span></h4>
+                            <h4 style="font-weight:800; color:var(--fdf-pink); margin-top:2px;">₹${weekRevenue} <span style="font-size:0.75rem; color:#10b981; font-weight:700; margin-left:6px;"><i class="bi bi-arrow-up"></i> This Week</span></h4>
                             
                             <!-- Custom SVG Line Chart representation -->
                             <div class="revenue-chart-box">
-                                <div class="chart-bar" style="height: 40%;" data-val="₹15k"><div class="chart-label">Mon</div></div>
-                                <div class="chart-bar" style="height: 55%;" data-val="₹22k"><div class="chart-label">Tue</div></div>
-                                <div class="chart-bar" style="height: 48%;" data-val="₹18k"><div class="chart-label">Wed</div></div>
-                                <div class="chart-bar" style="height: 70%;" data-val="₹31k"><div class="chart-label">Thu</div></div>
-                                <div class="chart-bar" style="height: 62%;" data-val="₹25k"><div class="chart-label">Fri</div></div>
-                                <div class="chart-bar" style="height: 85%;" data-val="₹42k"><div class="chart-label">Sat</div></div>
-                                <div class="chart-bar" style="height: 95%;" data-val="₹48k"><div class="chart-label">Sun</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[0]}%;" data-val="₹${dailyRevenue[0]}"><div class="chart-label">Mon</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[1]}%;" data-val="₹${dailyRevenue[1]}"><div class="chart-label">Tue</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[2]}%;" data-val="₹${dailyRevenue[2]}"><div class="chart-label">Wed</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[3]}%;" data-val="₹${dailyRevenue[3]}"><div class="chart-label">Thu</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[4]}%;" data-val="₹${dailyRevenue[4]}"><div class="chart-label">Fri</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[5]}%;" data-val="₹${dailyRevenue[5]}"><div class="chart-label">Sat</div></div>
+                                <div class="chart-bar" style="height: ${dailyRevenueHeights[6]}%;" data-val="₹${dailyRevenue[6]}"><div class="chart-label">Sun</div></div>
                             </div>
                         </div>
 
@@ -1336,22 +1369,27 @@
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <span style="font-size:0.75rem; color:var(--fdf-text-muted); font-weight:600;">APPOINTMENTS</span>
-                                <h4 style="font-weight:800; margin-top:2px; font-size:1.4rem;">${todayCount != null ? todayCount : 142}</h4>
+                                <h4 style="font-weight:800; margin-top:2px; font-size:1.4rem;">${weekTotalAppts}</h4>
                                 <ul class="donut-legend mt-2">
-                                    <li><span class="legend-color" style="background:#10b981;"></span> Completed (${completedCount != null ? completedCount : 98})</li>
-                                    <li><span class="legend-color" style="background:#3b82f6;"></span> Pending (${pendingCount != null ? pendingCount : 32})</li>
-                                    <li><span class="legend-color" style="background:#ef4444;"></span> Others (${(todayCount != null ? todayCount : 142) - (completedCount != null ? completedCount : 98) - (pendingCount != null ? pendingCount : 32)})</li>
+                                    <li><span class="legend-color" style="background:#10b981;"></span> Completed (${weekCompletedAppts})</li>
+                                    <li><span class="legend-color" style="background:#3b82f6;"></span> Pending (${weekPendingAppts})</li>
+                                    <li><span class="legend-color" style="background:#ef4444;"></span> Others (${weekOtherAppts})</li>
                                 </ul>
                             </div>
                             <div class="chart-donut-wrapper d-flex align-items-center justify-content-center">
                                 <svg width="100" height="100" viewBox="0 0 42 42" class="donut">
                                     <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
                                     <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f1f5f9" stroke-width="4"></circle>
-                                    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="4" stroke-dasharray="69 31" stroke-dashoffset="25"></circle>
-                                    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="4" stroke-dasharray="22 78" stroke-dashoffset="56"></circle>
-                                    <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" stroke-width="4" stroke-dasharray="9 91" stroke-dashoffset="34"></circle>
+                                    <c:if test="${weekTotalAppts == 0}">
+                                    	<circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="100 0" stroke-dashoffset="0"></circle>
+                                    </c:if>
+                                    <c:if test="${weekTotalAppts > 0}">
+                                        <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="4" stroke-dasharray="${cPct} ${100 - cPct}" stroke-dashoffset="${offsetCompleted}"></circle>
+                                        <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="4" stroke-dasharray="${pPct} ${100 - pPct}" stroke-dashoffset="${offsetPending}"></circle>
+                                        <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#ef4444" stroke-width="4" stroke-dasharray="${oPct} ${100 - oPct}" stroke-dashoffset="${offsetOther}"></circle>
+                                    </c:if>
                                     <g class="chart-text">
-                                        <text x="50%" y="54%" class="chart-number" text-anchor="middle" font-size="6" font-weight="800" fill="var(--fdf-text-dark)">${todayCount != null ? todayCount : 142}</text>
+                                        <text x="50%" y="54%" class="chart-number" text-anchor="middle" font-size="6" font-weight="800" fill="var(--fdf-text-dark)">${weekTotalAppts}</text>
                                     </g>
                                 </svg>
                             </div>
@@ -1360,25 +1398,102 @@
                 </div>
             </div>
 
-            <!-- Special Offers Banner -->
-            <div class="anti-gravity-banner" style="background: linear-gradient(135deg, #fff1f2 0%, #fce7f3 100%); border-color: #fbcfe8;">
-                <div class="ag-left">
-                    <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&auto=format&fit=crop&q=60" alt="Special Offers" class="ag-img" style="border-radius: 16px;">
-                    <div class="ag-content">
-                        <h4 style="color: var(--fdf-text-dark);">SPECIAL OFFERS <span style="background: var(--fdf-pink); color: white;">Boost Your Sales!</span></h4>
-                        <p style="color: var(--fdf-text-muted);">Create and promote exclusive packages and discounts. Salons with active offers see a 34% increase in online bookings.</p>
-                        <button class="btn-pink-gradient py-2 px-4" style="box-shadow:none; font-size:0.82rem;" onclick="location.href='${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}'">Create New Offer</button>
+            <!-- Special Offers Section -->
+            <c:choose>
+                <c:when test="${not empty salonOffers}">
+                    <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
+                        <h5 class="fw-bold mb-0" style="font-family:'Montserrat'; font-size:1.05rem;">Special Offers</h5>
+                        <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="btn-add-new px-3 py-1" style="font-size:0.85rem; border-radius: 8px;">
+                            <i class="bi bi-plus-lg"></i> Create Offer
+                        </a>
                     </div>
-                </div>
-                <div class="ag-right">
-                    <div class="benefits-grid">
-                        <div class="benefit-item" style="color:#db2777;"><i class="bi bi-graph-up-arrow"></i> Increase Bookings</div>
-                        <div class="benefit-item" style="color:#db2777;"><i class="bi bi-people-fill"></i> Attract New Clients</div>
-                        <div class="benefit-item" style="color:#db2777;"><i class="bi bi-star-fill"></i> Reward Loyalty</div>
-                        <div class="benefit-item" style="color:#db2777;"><i class="bi bi-calendar-check-fill"></i> Fill Empty Slots</div>
+                    <div class="row g-4 mb-4">
+                        <c:forEach var="offer" items="${salonOffers}">
+                            <div class="col-xl-4 col-md-6">
+                                <div class="offer-card">
+                                    <c:set var="status" value="${offer.dynamicStatus}" />
+                                    <div class="offer-status status-${status}">${status}</div>
+                                    
+                                    <h4 class="offer-title">${offer.title}</h4>
+                                    <div class="offer-type"><i class="bi bi-tag-fill me-1"></i> ${offer.offerType}</div>
+                                    
+                                    <p class="offer-desc">${offer.description}</p>
+                                    
+                                    <div class="price-tag">
+                                        <div>
+                                            <div class="price-label">Original</div>
+                                            <div class="strike-price">₹${offer.originalPrice}</div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="price-label">Offer Price</div>
+                                            <div class="final-price">₹${offer.discountedPrice > 0 ? offer.discountedPrice : offer.originalPrice}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="usage-stats">
+                                        <div><i class="bi bi-calendar-event me-1"></i> Valid: <span class="usage-stat-val">${offer.startDate} to ${offer.endDate}</span></div>
+                                    </div>
+                                    <div class="usage-stats">
+                                        <div><i class="bi bi-person-check me-1"></i> Used: <span class="usage-stat-val">${offer.usageCount} times</span></div>
+                                        <c:if test="${offer.totalUsageLimit > 0}">
+                                            <div>Limit: <span class="usage-stat-val">${offer.totalUsageLimit}</span></div>
+                                        </c:if>
+                                    </div>
+        
+                                    <div class="offer-actions mt-auto pt-3">
+                                        <c:choose>
+                                            <c:when test="${status == 'Paused'}">
+                                                <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+                                                    <input type="hidden" name="offerId" value="${offer.id}">
+                                                    <input type="hidden" name="salonId" value="${salon.id}">
+                                                    <input type="hidden" name="status" value="Resume">
+                                                    <input type="hidden" name="redirect" value="/salons/dashboard">
+                                                    <button type="submit" class="btn-action btn-resume w-100"><i class="bi bi-play-circle me-1"></i> Resume</button>
+                                                </form>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+                                                    <input type="hidden" name="offerId" value="${offer.id}">
+                                                    <input type="hidden" name="salonId" value="${salon.id}">
+                                                    <input type="hidden" name="status" value="Paused">
+                                                    <input type="hidden" name="redirect" value="/salons/dashboard">
+                                                    <button type="submit" class="btn-action btn-pause w-100" ${status == 'Expired' ? 'disabled' : ''}><i class="bi bi-pause-circle me-1"></i> Pause</button>
+                                                </form>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <form action="${pageContext.request.contextPath}/salon/deleteOffer" method="POST" class="m-0 flex-grow-1" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+                                            <input type="hidden" name="offerId" value="${offer.id}">
+                                            <input type="hidden" name="salonId" value="${salon.id}">
+                                            <input type="hidden" name="redirect" value="/salons/dashboard">
+                                            <button type="submit" class="btn-action btn-archive w-100"><i class="bi bi-trash me-1"></i> Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
                     </div>
-                </div>
-            </div>
+                </c:when>
+                <c:otherwise>
+                    <!-- Special Offers Banner (Empty State) -->
+                    <div class="anti-gravity-banner" style="background: linear-gradient(135deg, #fff1f2 0%, #fce7f3 100%); border-color: #fbcfe8;">
+                        <div class="ag-left">
+                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=300&auto=format&fit=crop&q=60" alt="Special Offers" class="ag-img" style="border-radius: 16px;">
+                            <div class="ag-content">
+                                <h4 style="color: var(--fdf-text-dark);">SPECIAL OFFERS <span style="background: var(--fdf-pink); color: white;">Boost Your Sales!</span></h4>
+                                <p style="color: var(--fdf-text-muted);">Create and promote exclusive packages and discounts. Salons with active offers see a 34% increase in online bookings.</p>
+                                <button class="btn-pink-gradient py-2 px-4" style="box-shadow:none; font-size:0.82rem;" onclick="location.href='${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}'">Create New Offer</button>
+                            </div>
+                        </div>
+                        <div class="ag-right">
+                            <div class="benefits-grid">
+                                <div class="benefit-item" style="color:#db2777;"><i class="bi bi-graph-up-arrow"></i> Increase Bookings</div>
+                                <div class="benefit-item" style="color:#db2777;"><i class="bi bi-people-fill"></i> Attract New Clients</div>
+                                <div class="benefit-item" style="color:#db2777;"><i class="bi bi-calendar-check-fill"></i> Fill Empty Slots</div>
+                            </div>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
 
             <!-- Quick Actions -->
             <h5 class="fw-bold mb-3" style="font-family:'Montserrat'; font-size:1.05rem;">Quick Actions</h5>
@@ -1392,16 +1507,16 @@
                 <a href="${pageContext.request.contextPath}/salon/addService" class="qa-btn">
                     <i class="bi bi-plus-square"></i> Add Service
                 </a>
-                <a href="#createPackage" class="qa-btn" onclick="alert('Opening Package Creator...')">
-                    <i class="bi bi-gift"></i> Create Package
+                <a href="${pageContext.request.contextPath}/salon/loyalty" class="qa-btn">
+                    <i class="bi bi-gift"></i> Loyalty Settings
                 </a>
                 <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="qa-btn">
                     <i class="bi bi-tag"></i> Add Offer
                 </a>
-                <a href="#generateInvoice" class="qa-btn" onclick="alert('Loading POS Billing System...')">
+                <a href="${pageContext.request.contextPath}/salon/billing" class="qa-btn">
                     <i class="bi bi-file-earmark-spreadsheet"></i> Generate Invoice
                 </a>
-                <a href="#addExpense" class="qa-btn" onclick="alert('Opening Expense Tracker...')">
+                <a href="${pageContext.request.contextPath}/salon/payments" class="qa-btn">
                     <i class="bi bi-cash-stack"></i> Add Expense
                 </a>
             </div>
@@ -1428,24 +1543,36 @@
                                 </thead>
                                 <tbody>
                                     <c:choose>
-                                        <c:when test="${not empty todayBookings}">
-                                            <c:forEach items="${todayBookings}" var="b" end="4">
+                                        <c:when test="${not empty recentBookings1}">
+                                            <c:forEach items="${recentBookings1}" var="b" end="4">
                                                 <tr>
                                                     <td>
                                                         <div class="avatar-info">
                                                             <img src="${pageContext.request.contextPath}/assets/images/img1.jpg" alt="Client" onerror="this.src='https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=60'">
-                                                            <h6>${b.user.name != null ? b.user.name : 'Client'}</h6>
+                                                            <h6>${not empty b.user.fullName ? b.user.fullName : 'Client'}</h6>
                                                         </div>
                                                     </td>
-                                                    <td>${b.service.name}</td>
-                                                    <td>${b.bookingTime.toLocalDate().toString()}, ${b.bookingTime.toLocalTime().toString()}</td>
+                                                    <td>
+                                                        <c:choose>
+                                                            <c:when test="${b.service != null}">${b.service.name}</c:when>
+                                                            <c:when test="${b.treatment != null}">${b.treatment.serviceName}</c:when>
+                                                            <c:otherwise>Service</c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <td>${b.bookingDate}, ${b.preferredTime}</td>
                                                     <td>
                                                         <c:choose>
                                                             <c:when test="${b.status == 'COMPLETED'}">
                                                                 <span class="timeline-status status-confirmed" style="background:#e6fcf5;color:#0ca678;">Completed</span>
                                                             </c:when>
+                                                            <c:when test="${b.status == 'CONFIRMED'}">
+                                                                <span class="timeline-status status-inprogress" style="background:#e7f5ff;color:#1c7ed6;">Confirmed</span>
+                                                            </c:when>
+                                                            <c:when test="${b.status == 'REJECTED' or b.status == 'CANCELLED'}">
+                                                                <span class="timeline-status" style="background:#fff5f5;color:#ef4444;">${b.status}</span>
+                                                            </c:when>
                                                             <c:otherwise>
-                                                                <span class="timeline-status status-inprogress" style="background:#e7f5ff;color:#1c7ed6;">${b.status}</span>
+                                                                <span class="timeline-status status-walkin" style="background:#fdf2f8;color:#db2777;">Pending</span>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </td>
@@ -1453,7 +1580,7 @@
                                             </c:forEach>
                                         </c:when>
                                         <c:otherwise>
-                                            <tr><td colspan="4" class="text-center text-muted">No appointments today.</td></tr>
+                                            <tr><td colspan="4" class="text-center text-muted">No appointments yet.</td></tr>
                                         </c:otherwise>
                                     </c:choose>
                                 </tbody>
@@ -1799,8 +1926,29 @@
         </div>
     </div>
 
+    <!-- Calendar Modal -->
+    <div class="modal fade" id="calendarModal" tabindex="-1" aria-labelledby="calendarModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.1);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--fdf-border); padding: 20px 24px;">
+                    <h5 class="modal-title fw-bold" id="calendarModalLabel" style="color: var(--fdf-text-dark); font-family: 'Montserrat', sans-serif;"><i class="bi bi-calendar3" style="color: var(--fdf-pink);"></i> Booking Calendar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" style="padding: 24px; background: #fafafc; min-height: 600px;">
+                    <div id="bookingCalendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <!-- SockJS and STOMP for Real-Time WebSockets -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const tabs = document.querySelectorAll(".service-tab");
@@ -1811,17 +1959,181 @@
                     tabs.forEach(t => t.classList.remove("active"));
                     tab.classList.add("active");
                     
-                    const filter = tab.getAttribute("data-filter");
+                    const filter = tab.dataset.filter;
                     items.forEach(item => {
-                        if (filter === "All" || item.getAttribute("data-supercat") === filter) {
-                            item.style.display = "flex";
+                        if (filter === "all" || item.dataset.category === filter) {
+                            item.style.display = "block";
                         } else {
                             item.style.display = "none";
                         }
                     });
                 });
             });
+            
+            // Calendar Initialization
+            var calendarEl = document.getElementById('bookingCalendar');
+            var eventsData = ${calendarEventsJson != null ? calendarEventsJson : "[]"};
+            
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'dayGridMonth',
+              headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              },
+              events: eventsData,
+              eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+              }
+            });
+            
+            // Render calendar only when modal is shown to fix sizing issues
+            const calendarModal = document.getElementById('calendarModal');
+            if (calendarModal) {
+                calendarModal.addEventListener('shown.bs.modal', function () {
+                    calendar.render();
+                });
+            }
         });
+    </script>
+    
+    <!-- Custom Toast Notification Container -->
+    <div id="customToastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999; margin-top: 20px; transition: transform 0.3s ease-in-out, opacity 0.3s; transform: translateX(100%); opacity: 0;">
+        <div class="toast align-items-center text-white bg-primary border-0 shadow-lg d-block" style="width: 350px; border-radius: 12px;">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center gap-3 p-3 w-100">
+                    <i class="bi bi-bell-fill fs-3 text-warning"></i>
+                    <div style="flex: 1;">
+                        <strong class="me-auto d-block" id="toastTitle" style="font-size: 1rem; margin-bottom: 2px;">New Notification</strong>
+                        <div id="toastMessage" style="font-size: 0.85rem; opacity: 0.9;"></div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-2" onclick="hideCustomToast()" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let toastTimeout;
+        let stompClient = null;
+
+        function showCustomToast(title, message) {
+            $('#toastTitle').text(title);
+            $('#toastMessage').text(message);
+            const container = $('#customToastContainer');
+            container.css({ 'transform': 'translateX(0)', 'opacity': '1' });
+            
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideCustomToast, 5000);
+        }
+        
+        function hideCustomToast() {
+            $('#customToastContainer').css({ 'transform': 'translateX(100%)', 'opacity': '0' });
+        }
+
+        function fetchBadgeCounts() {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/api/salon/badges/counts',
+                method: 'GET',
+                success: function(data) {
+                    if (data.notifications > 0) {
+                        $('#notif-badge').text(data.notifications).show();
+                    } else {
+                        $('#notif-badge').hide();
+                    }
+                    
+                    if (data.messages > 0) {
+                        $('#msg-badge').text(data.messages).show();
+                    } else {
+                        $('#msg-badge').hide();
+                    }
+                }
+            });
+        }
+
+        function updateNotificationDropdown(notifications) {
+            const list = $('#notifDropdownList');
+            list.find('.notif-item').remove();
+            
+            if (notifications && notifications.length > 0) {
+                $('#empty-notif').hide();
+                notifications.slice(0, 5).forEach(n => {
+                    const bgClass = n.read ? '' : 'bg-light';
+                    const time = new Date(n.timestamp).toLocaleString();
+                    const li = `<li class="notif-item">
+                        <a class="dropdown-item py-2 px-3 \${bgClass}" href="${pageContext.request.contextPath}/salon/notifications">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1 text-dark fw-bold" style="font-size: 0.9rem;">\${n.title}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">\${time}</small>
+                            </div>
+                            <p class="mb-1 text-muted text-wrap" style="font-size: 0.8rem; white-space: normal;">\${n.message}</p>
+                        </a>
+                    </li>`;
+                    $(li).insertAfter('#empty-notif');
+                });
+            } else {
+                $('#empty-notif').show();
+            }
+        }
+
+        $(document).ready(function() {
+            // Initial fetch of badge counts
+            fetchBadgeCounts();
+            
+            // Connect to STOMP for true real-time push notifications
+            const socket = new SockJS('${pageContext.request.contextPath}/ws-chat');
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null; // Disable debug logging
+            
+            stompClient.connect({}, function (frame) {
+                console.log('Connected to real-time notifications');
+                const salonId = '${sessionScope.loggedSalon.id}';
+                
+                // Subscribe to notifications topic
+                stompClient.subscribe('/topic/salon/notifications/' + salonId, function (message) {
+                    const notif = JSON.parse(message.body);
+                    console.log("New real-time notification!", notif);
+                    
+                    // Show toast popup immediately!
+                    showCustomToast(notif.title, notif.message);
+                    
+                    // Update the badge counts
+                    fetchBadgeCounts();
+                    
+                    // If dropdown was opened, refresh it
+                    if ($('#notifDropdownList').is(':visible')) {
+                        $('#notifDropdownToggle').trigger('click');
+                    }
+                });
+            }, function(error) {
+                console.error('STOMP connection error:', error);
+                // Fallback to polling if websocket fails
+                setInterval(fetchBadgeCounts, 15000);
+            });
+
+            // Fetch recent notifications when dropdown is opened
+            $('#notifDropdownToggle').on('click', function() {
+                $.ajax({
+                    url: '${pageContext.request.contextPath}/api/salon/notifications',
+                    method: 'GET',
+                    success: function(notifications) {
+                        updateNotificationDropdown(notifications);
+                    }
+                });
+            });
+        });
+
+        function markNotificationsRead() {
+            if ($('#notif-badge').is(':visible')) {
+                $.post('${pageContext.request.contextPath}/api/salon/notifications/mark-read', function() {
+                    $('#notif-badge').hide();
+                    lastNotifCount = 0; // reset local tracker
+                });
+            }
+        }
     </script>
 </body>
 </html>
+
