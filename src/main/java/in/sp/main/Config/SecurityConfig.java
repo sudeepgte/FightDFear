@@ -163,7 +163,11 @@ public class SecurityConfig {
             "/fitness/trainer/login",
             "/fitness/trainer/register",
             "/fitness/trainer/register/**",
+            "/trainer/**",
+            "/trainer/login",
+            "/trainer/register",
             "/error",
+
             "/payment/webhook/razorpay",
             "/actuator/health",
             "/actuator/health/**",

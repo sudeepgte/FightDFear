@@ -1805,8 +1805,9 @@
                     <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="/investor/login" class="dropdown-item">Investor</a>
                     <a href="/host/login" class="dropdown-item">Event Host</a>
-                    <a href="/trainer/login" class="dropdown-item">Fitness Trainer</a>
+                    <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
+
             </div>
             <a href="/users/register" class="btn-sos-nav">🆘 Emergency SOS</a>
             <button class="mobile-menu-btn">☰</button>
