@@ -228,50 +228,72 @@
             </div>
 
             <div class="form-card">
-                <form action="${pageContext.request.contextPath}/salon/saveOffer" method="post">
-                    <input type="hidden" name="salonId" value="${sessionScope.loggedSalon.id}" />
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger rounded-4 mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i><c:out value="${error}"/>
+                    </div>
+                </c:if>
+                <form id="offerForm" action="${pageContext.request.contextPath}/salon/saveOffer" method="post">
+                    <input type="hidden" name="salonId" value="${not empty salonId ? salonId : (not empty salon ? salon.id : sessionScope.loggedSalon.id)}" />
 
                     <h5 class="section-title"><i class="bi bi-info-circle-fill me-2"></i>Offer Details</h5>
                     <div class="row g-4 mb-5">
                         <div class="col-12">
-                            <label class="form-label">Offer Title</label>
-                            <input type="text" name="title" class="form-control form-control-custom" placeholder="e.g. Summer Special 20% Off Haircuts" required>
+                            <label class="form-label">Offer Title <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control form-control-custom"
+                                   value="<c:out value='${offer.title}'/>"
+                                   maxlength="255" placeholder="e.g. Summer Special 20% Off Haircuts" required>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Detailed Description</label>
-                            <textarea name="description" class="form-control form-control-custom" rows="3" placeholder="Describe what this offer includes..." required></textarea>
+                            <label class="form-label">Detailed Description <span class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control form-control-custom" rows="3"
+                                      maxlength="500" placeholder="Describe what this offer includes..." required><c:out value="${offer.description}"/></textarea>
+                            <div class="form-text">Required. Maximum 500 characters.</div>
                         </div>
                     </div>
 
                     <h5 class="section-title"><i class="bi bi-tag-fill me-2"></i>Pricing & Discount</h5>
                     <div class="row g-4 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label">Original Price (₹)</label>
-                            <input type="number" id="originalPrice" name="originalPrice" class="form-control form-control-custom" step="0.01" oninput="calculateDiscount()" required>
+                            <label class="form-label">Original Price (₹) <span class="text-danger">*</span></label>
+                            <input type="number" id="originalPrice" name="originalPrice" class="form-control form-control-custom"
+                                   step="0.01" min="0.01" value="${offer.originalPrice > 0 ? offer.originalPrice : ''}"
+                                   oninput="onOriginalOrOfferChange()" required title="Original price must be greater than zero.">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Offer Price (₹)</label>
-                            <input type="number" id="offerPrice" name="offerPrice" class="form-control form-control-custom" step="0.01" oninput="calculateDiscount()" required>
+                            <label class="form-label">Offer Price (₹) <span class="text-danger">*</span></label>
+                            <input type="number" id="offerPrice" name="offerPrice" class="form-control form-control-custom"
+                                   step="0.01" min="0" value="${offer.offerPrice > 0 ? offer.offerPrice : (offer.offerPrice == 0 && offer.originalPrice > 0 ? 0 : '')}"
+                                   oninput="onOriginalOrOfferChange()" required title="Offer price must be less than the original price.">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Discount Calculated (%)</label>
-                            <input type="number" id="discountPercent" name="discountPercent" class="form-control form-control-custom" readonly style="background-color: #f1f3f5;">
+                            <label class="form-label">Discount (%) <span class="text-danger">*</span></label>
+                            <input type="number" id="discountPercent" name="discountPercent" class="form-control form-control-custom"
+                                   step="0.01" min="0.01" max="99.99"
+                                   value="${offer.discountPercent > 0 ? offer.discountPercent : ''}"
+                                   oninput="onDiscountChange()" required
+                                   title="Enter a discount between 0.01 and 99.99.">
+                            <div class="form-text">Enter a number from 0.01 to 99.99. Offer price updates automatically.</div>
                         </div>
                     </div>
 
                     <div id="pricePreviewBox" class="price-preview-box d-none">
                         <div id="pricePreview"></div>
                     </div>
+                    <div id="dateError" class="alert alert-danger rounded-4 d-none" role="alert"></div>
 
                     <h5 class="section-title"><i class="bi bi-calendar-range-fill me-2"></i>Validity Period</h5>
                     <div class="row g-4 mb-5">
                         <div class="col-md-6">
-                            <label class="form-label">Campaign Start Date</label>
-                            <input type="date" name="startDate" class="form-control form-control-custom" required>
+                            <label class="form-label">Campaign Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="startDate" id="startDate" class="form-control form-control-custom"
+                                   value="${offer.startDate}" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Campaign End Date</label>
-                            <input type="date" name="endDate" class="form-control form-control-custom" required>
+                            <label class="form-label">Campaign End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="endDate" id="endDate" class="form-control form-control-custom"
+                                   value="${offer.endDate}" required>
+                            <div class="form-text">Must be after the Campaign Start Date.</div>
                         </div>
                     </div>
 
@@ -287,32 +309,129 @@
     </div>
 
     <script>
-        function calculateDiscount() {
-            const original = parseFloat(document.getElementById('originalPrice').value) || 0;
-            const offer = parseFloat(document.getElementById('offerPrice').value) || 0;
+        function updatePreview(original, offer, discount) {
             const previewBox = document.getElementById('pricePreviewBox');
             const previewText = document.getElementById('pricePreview');
-            const discountInput = document.getElementById('discountPercent');
-
-            if (original > offer && offer > 0) {
-                const d = ((original - offer) / original) * 100;
-                discountInput.value = d.toFixed(2);
+            if (original > offer && offer >= 0 && original > 0 && discount > 0) {
                 previewBox.classList.remove('d-none');
-                previewText.innerHTML = `
-                    <span class="strike-price">₹${original}</span> 
-                    <i class="bi bi-arrow-right mx-2 text-muted"></i>
-                    <span class="final-price">₹${offer}</span>
-                    <div class="badge bg-danger ms-2">${d.toFixed(1)}% OFF</div>
-                `;
+                previewText.innerHTML =
+                    '<span class="strike-price">₹' + original.toFixed(2) + '</span>' +
+                    '<i class="bi bi-arrow-right mx-2 text-muted"></i>' +
+                    '<span class="final-price">₹' + offer.toFixed(2) + '</span>' +
+                    '<div class="badge bg-danger ms-2">' + discount.toFixed(1) + '% OFF</div>';
             } else {
-                discountInput.value = "";
                 previewBox.classList.add('d-none');
             }
         }
+
+        function onOriginalOrOfferChange() {
+            const original = parseFloat(document.getElementById('originalPrice').value);
+            const offer = parseFloat(document.getElementById('offerPrice').value);
+            const discountInput = document.getElementById('discountPercent');
+            if (!isNaN(original) && original > 0 && !isNaN(offer) && offer >= 0 && offer < original) {
+                const d = ((original - offer) / original) * 100;
+                discountInput.value = d.toFixed(2);
+                updatePreview(original, offer, d);
+            } else {
+                updatePreview(original || 0, offer || 0, 0);
+            }
+        }
+
+        function onDiscountChange() {
+            const original = parseFloat(document.getElementById('originalPrice').value);
+            const discount = parseFloat(document.getElementById('discountPercent').value);
+            const offerInput = document.getElementById('offerPrice');
+            if (!isNaN(original) && original > 0 && !isNaN(discount) && discount > 0 && discount < 100) {
+                const offer = original * (1 - (discount / 100));
+                offerInput.value = offer.toFixed(2);
+                updatePreview(original, offer, discount);
+            } else {
+                updatePreview(original || 0, parseFloat(offerInput.value) || 0, discount || 0);
+            }
+        }
+
+        function dayAfter(isoDate) {
+            const d = new Date(isoDate + 'T00:00:00');
+            d.setDate(d.getDate() + 1);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return yyyy + '-' + mm + '-' + dd;
+        }
+
+        (function initOfferForm() {
+            const start = document.getElementById('startDate');
+            const end = document.getElementById('endDate');
+            const form = document.getElementById('offerForm');
+            const dateError = document.getElementById('dateError');
+            if (!start || !end || !form) return;
+
+            function syncEndMin() {
+                if (start.value) {
+                    end.min = dayAfter(start.value);
+                } else {
+                    end.removeAttribute('min');
+                }
+            }
+
+            function showDateError(msg) {
+                if (!dateError) return;
+                if (msg) {
+                    dateError.textContent = msg;
+                    dateError.classList.remove('d-none');
+                } else {
+                    dateError.textContent = '';
+                    dateError.classList.add('d-none');
+                }
+            }
+
+            start.addEventListener('change', function () {
+                syncEndMin();
+                if (end.value && end.value <= start.value) {
+                    showDateError('Campaign End Date must be after the Campaign Start Date.');
+                    end.setCustomValidity('Campaign End Date must be after the Campaign Start Date.');
+                } else {
+                    showDateError('');
+                    end.setCustomValidity('');
+                }
+            });
+            end.addEventListener('change', function () {
+                if (start.value && end.value && end.value <= start.value) {
+                    showDateError('Campaign End Date must be after the Campaign Start Date.');
+                    end.setCustomValidity('Campaign End Date must be after the Campaign Start Date.');
+                } else {
+                    showDateError('');
+                    end.setCustomValidity('');
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                syncEndMin();
+                const discount = parseFloat(document.getElementById('discountPercent').value);
+                if (isNaN(discount) || discount <= 0 || discount >= 100) {
+                    e.preventDefault();
+                    document.getElementById('discountPercent').setCustomValidity('Discount must be greater than 0 and less than 100.');
+                    document.getElementById('discountPercent').reportValidity();
+                    return;
+                }
+                document.getElementById('discountPercent').setCustomValidity('');
+                if (!start.value || !end.value || end.value <= start.value) {
+                    e.preventDefault();
+                    showDateError('Campaign End Date must be after the Campaign Start Date.');
+                    end.setCustomValidity('Campaign End Date must be after the Campaign Start Date.');
+                    end.reportValidity();
+                    return;
+                }
+                end.setCustomValidity('');
+                showDateError('');
+            });
+
+            syncEndMin();
+            onOriginalOrOfferChange();
+        })();
     </script>
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

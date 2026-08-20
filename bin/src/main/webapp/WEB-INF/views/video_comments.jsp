@@ -288,51 +288,99 @@
         animation: shimmer 1.5s infinite;
         pointer-events: none;
     }
-</style>
-</head>
+</style><body class="bg-light m-0 p-0">
 
-<body class="container mt-4">
-
-<h3>💬 Comments for: ${video.title}</h3>
-<hr>
-
-<c:if test="${empty comments}">
-    <p>No comments yet.</p>
-</c:if>
-
-<div id="comments-container">
-<c:forEach var="comment" items="${comments}">
-    <div class="card mb-3" data-comment-id="${comment.id}">
-        <div class="card-body">
-            <h6 class="card-title">👤 ${comment.user.fullName}</h6>
-            <p class="card-text">${comment.text}</p>
-            <small class="text-muted">🕒 ${comment.commentedAt}</small>
-
-            <!-- Reply form -->
-            <form class="reply-form" data-comment-id="${comment.id}">
-                <div class="input-group mt-2">
-                    <input type="text" class="form-control reply-text" placeholder="Write a reply...">
-                    <button type="submit" class="btn btn-primary btn-sm">Reply</button>
-                </div>
-            </form>
-
-            <!-- Display replies -->
-            <c:forEach var="reply" items="${comment.replies}">
-                <div class="card mt-2 reply-card" data-comment-id="${reply.id}">
-                    <div class="card-body">
-                        <h6 class="card-title">↳ ${reply.user.fullName}</h6>
-                        <p class="card-text">${reply.text}</p>
-                        <small class="text-muted">🕒 ${reply.commentedAt}</small>
-                    </div>
-                </div>
-            </c:forEach>
-
-        </div>
+<div class="bg-white shadow-sm mx-auto" style="max-width: 500px; min-height: 100vh; position: relative; padding-bottom: 100px;">
+    
+    <!-- Top Bar -->
+    <div class="d-flex justify-content-between align-items-center sticky-top bg-white p-3 border-bottom shadow-sm">
+        <h5 class="m-0 fw-bold">Comments</h5>
+        <a href="${pageContext.request.contextPath}/video/reels" class="btn btn-sm btn-light fw-bold px-3 py-1 text-dark" style="border-radius:20px; border: 1px solid #ddd;">Close</a>
     </div>
-</c:forEach>
+
+    <!-- Comments List -->
+    <div id="comments-container" class="p-3">
+        <c:if test="${empty comments}">
+            <p class="text-center text-muted my-5">No comments yet. Start the conversation!</p>
+        </c:if>
+
+        <c:forEach var="comment" items="${comments}">
+            <div class="d-flex mb-4" data-comment-id="${comment.id}">
+                <!-- Avatar -->
+                <img src="${pageContext.request.contextPath}${not empty comment.user.profilePhoto ? comment.user.profilePhoto : '/assets/img/default-avatar.png'}" alt="Avatar" class="rounded-circle me-3 mt-1" style="width: 32px; height: 32px; object-fit: cover; background: #eee;">
+                
+                <!-- Comment Body -->
+                <div class="flex-grow-1">
+                    <div>
+                        <span class="fw-bold me-1" style="font-size: 0.9rem;">${comment.user.fullName}</span>
+                        <span style="font-size: 0.9rem; color: #262626;">${comment.text}</span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">
+                        <span class="me-3">2h</span>
+                        <a href="javascript:void(0)" class="text-muted text-decoration-none me-3" onclick="$(this).closest('.flex-grow-1').find('.reply-form-container').slideToggle();">Reply</a>
+                    </div>
+
+                    <!-- Hidden Reply Form -->
+                    <div class="reply-form-container mt-2 mb-3" style="display: none;">
+                        <form class="reply-form" data-comment-id="${comment.id}">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="font-size:0.8rem; border-radius: 20px 0 0 20px;">↳ Replying to @${comment.user.fullName}</span>
+                                <input type="text" class="form-control border-start-0 reply-text" placeholder="Write a reply..." style="font-size:0.8rem;" required>
+                                <button type="submit" class="btn btn-link text-danger text-decoration-none fw-bold" style="border:1px solid #dee2e6; border-left:none; border-radius: 0 20px 20px 0;">➤</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Nested Replies -->
+                    <c:if test="${not empty comment.replies}">
+                        <div class="mt-2">
+                            <a href="javascript:void(0)" class="text-muted text-decoration-none fw-bold" style="font-size:0.75rem;" onclick="$(this).next('.replies-list').slideToggle();">
+                                ―― View ${comment.replies.size()} replies
+                            </a>
+                            <div class="replies-list mt-3" style="display: none;">
+                                <c:forEach var="reply" items="${comment.replies}">
+                                    <div class="d-flex mb-3" data-comment-id="${reply.id}">
+                                        <img src="${pageContext.request.contextPath}${not empty reply.user.profilePhoto ? reply.user.profilePhoto : '/assets/img/default-avatar.png'}" alt="Avatar" class="rounded-circle me-2 mt-1" style="width: 24px; height: 24px; object-fit: cover; background: #eee;">
+                                        <div class="flex-grow-1">
+                                            <div>
+                                                <span class="fw-bold me-1" style="font-size: 0.9rem;">${reply.user.fullName}</span>
+                                                <span style="font-size: 0.9rem; color: #262626;">${reply.text}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">
+                                                <span class="me-3">1h</span>
+                                                <a href="javascript:void(0)" class="text-muted text-decoration-none">Reply</a>
+                                            </div>
+                                        </div>
+                                        <div class="ms-3 text-center">
+                                            <i class="bi bi-heart text-muted" style="font-size: 0.7rem; cursor:pointer;" onclick="this.classList.toggle('text-danger'); this.classList.toggle('bi-heart-fill'); this.classList.toggle('bi-heart');"></i>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </div>
+                    </c:if>
+                </div>
+                
+                <!-- Like Heart (Main Comment) -->
+                <div class="ms-3 text-center pt-2">
+                    <i class="bi bi-heart text-muted" style="font-size: 0.8rem; cursor:pointer;" onclick="this.classList.toggle('text-danger'); this.classList.toggle('bi-heart-fill'); this.classList.toggle('bi-heart');"></i>
+                </div>
+            </div>
+        </c:forEach>
+    </div>
+
+    <!-- Fixed Bottom Comment Bar -->
+    <div class="fixed-bottom bg-white border-top shadow-lg p-2" style="max-width: 500px; margin: 0 auto;">
+        <form id="add-comment-form" class="d-flex align-items-center w-100 m-0 py-1 px-2" style="background:#f1f2f6; border-radius:30px;">
+            <img src="${pageContext.request.contextPath}${not empty currentUser.profilePhoto ? currentUser.profilePhoto : '/assets/img/default-avatar.png'}" class="rounded-circle me-2 ms-1" style="width: 32px; height: 32px; object-fit: cover; background:#ddd;" alt="Avatar">
+            <input type="text" id="comment-text" class="form-control bg-transparent border-0 flex-grow-1 shadow-none" placeholder="Add a comment..." style="font-size:0.95rem; outline:none;" autocomplete="off" required>
+            <button type="submit" class="btn btn-link text-danger text-decoration-none fw-bold px-2 py-0" style="font-size: 1.1rem;">➤</button>
+        </form>
+    </div>
 </div>
 
-<a href="${pageContext.request.contextPath}/video/reels" class="btn btn-secondary mt-3">⬅ Back to Reels</a>
+<div style="height: 100px;"></div>
 
 <script>
 $(document).ready(function() {
@@ -345,7 +393,7 @@ $(document).ready(function() {
 
         $.post('${pageContext.request.contextPath}/video/comment', { videoId: videoId, commentText: text }, function(data) {
             if (!data.error) {
-                location.reload(); // or append dynamically
+                location.reload();
             } else {
                 alert(data.error);
             }
@@ -363,17 +411,47 @@ $(document).ready(function() {
         $.post('${pageContext.request.contextPath}/video/comment', { videoId: videoId, commentText: text, parentId: parentId }, function(data) {
             if (!data.error) {
                 // Append reply dynamically
-                const replyHtml = `
-                    <div class="card mt-2 reply-card">
-                        <div class="card-body">
-                            <h6 class="card-title">↳ ${data.user}</h6>
-                            <p class="card-text">${data.text}</p>
-                            <small class="text-muted">🕒 just now</small>
-                        </div>
-                    </div>
-                `;
-                form.after(replyHtml);
+                const avatarUrl = '${pageContext.request.contextPath}' + ('${not empty currentUser.profilePhoto ? currentUser.profilePhoto : "/assets/img/default-avatar.png"}');
+                const replyHtml = '<div class="d-flex mb-3" data-comment-id="' + data.id + '">' +
+                    '<img src="' + avatarUrl + '" alt="Avatar" class="rounded-circle me-2 mt-1" style="width: 24px; height: 24px; object-fit: cover; background: #eee;">' +
+                    '<div class="flex-grow-1">' +
+                        '<div>' +
+                            '<span class="fw-bold me-1" style="font-size: 0.9rem;">' + data.user + '</span>' +
+                            '<span style="font-size: 0.9rem; color: #262626;">' + data.text + '</span>' +
+                        '</div>' +
+                        '<div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">' +
+                            '<span class="me-3">now</span>' +
+                            '<a href="javascript:void(0)" class="text-muted text-decoration-none">Reply</a>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="ms-3 text-center">' +
+                        '<i class="bi bi-heart text-muted" style="font-size: 0.7rem; cursor:pointer;" onclick="this.classList.toggle(\'text-danger\'); this.classList.toggle(\'bi-heart-fill\'); this.classList.toggle(\'bi-heart\');"></i>' +
+                    '</div>' +
+                '</div>';
+                
+                // If replies list exists, append to it and reveal it. Otherwise create it.
+                let repliesList = form.closest('.flex-grow-1').find('.replies-list');
+                if (repliesList.length > 0) {
+                    repliesList.append(replyHtml);
+                    if (!repliesList.is(":visible")) {
+                        repliesList.slideDown();
+                    }
+                } else {
+                    // Create new replies list section
+                    const newRepliesSection = '<div class="mt-2">' +
+                        '<a href="javascript:void(0)" class="text-muted text-decoration-none fw-bold" style="font-size:0.75rem;" onclick="$(this).next(\'.replies-list\').slideToggle();">' +
+                            '―― View replies' +
+                        '</a>' +
+                        '<div class="replies-list mt-3">' +
+                            replyHtml +
+                        '</div>' +
+                    '</div>';
+                    form.closest('.reply-form-container').after(newRepliesSection);
+                }
+                
                 form.find('.reply-text').val('');
+                form.closest('.reply-form-container').slideUp();
+
             } else {
                 alert(data.error);
             }

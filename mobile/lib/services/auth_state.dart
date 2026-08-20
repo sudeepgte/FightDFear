@@ -31,13 +31,19 @@ class AuthState extends ChangeNotifier {
     return 'Cannot reach server ($apiBaseUrl). Details: $e';
   }
 
-  Future<bool> pingServer() async {
+  Future<bool> pingServer([String? customUrl]) async {
     try {
-      final res = await _client.get('/api/auth/health', auth: false, timeout: const Duration(seconds: 8));
+      final client = customUrl == null ? _client : ApiClient(customUrl);
+      final res = await client.get('/api/auth/health', auth: false, timeout: const Duration(seconds: 8));
       return res['success'] == true;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> setServerUrl(String? url) async {
+    await _client.setCustomBaseUrl(url);
+    notifyListeners();
   }
 
   Future<void> bootstrap() async {

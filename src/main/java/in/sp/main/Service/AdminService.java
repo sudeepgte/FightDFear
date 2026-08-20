@@ -35,7 +35,9 @@ public class AdminService {
     }
 
     public Admin loginAdmin(String email, String password) {
-        Optional<Admin> opt = adminRepository.findByEmail(email);
+        if (email == null || password == null) return null;
+        Optional<Admin> opt = adminRepository.findByEmailIgnoreCase(email.trim())
+                .or(() -> adminRepository.findByEmail(email.trim()));
         if (opt.isEmpty()) return null;
         Admin admin = opt.get();
         boolean ok = passwordService.matchesAndUpgrade(password, admin.getPassword(), hashed -> {

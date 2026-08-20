@@ -68,6 +68,8 @@
         .status-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
         .status-confirmed { background: rgba(16, 185, 129, 0.1); color: #059669; }
         .status-rejected { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        .status-completed { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+        .status-cancelled { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
 
         .service-type-pill {
             display: inline-block;
@@ -159,30 +161,109 @@
     </div>
 
     <div class="container">
+        <c:if test="${not empty bookingSuccess}">
+            <div class="alert alert-success rounded-4 shadow-sm mt-3" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>${bookingSuccess}
+            </div>
+        </c:if>
+
+        <c:set var="tab" value="${empty activeTab ? 'all' : activeTab}" />
+
         <!-- Navigation Tabs -->
         <ul class="nav nav-tabs nav-tabs-custom" id="bookingTabs" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button">Services</button>
+                <button class="nav-link ${tab == 'all' ? 'active' : ''}" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button">All</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" id="treatments-tab" data-bs-toggle="tab" data-bs-target="#treatments" type="button">Treatments</button>
+                <button class="nav-link ${tab == 'services' ? 'active' : ''}" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button">Services</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link" id="offers-tab" data-bs-toggle="tab" data-bs-target="#offers" type="button">Exclusive Offers</button>
+                <button class="nav-link ${tab == 'treatments' ? 'active' : ''}" id="treatments-tab" data-bs-toggle="tab" data-bs-target="#treatments" type="button">Treatments</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link ${tab == 'offers' ? 'active' : ''}" id="offers-tab" data-bs-toggle="tab" data-bs-target="#offers" type="button">Exclusive Offers</button>
             </li>
         </ul>
 
         <div class="tab-content" id="bookingTabContent">
+
+            <!-- All Appointments -->
+            <div class="tab-pane fade ${tab == 'all' ? 'show active' : ''}" id="all">
+                <c:choose>
+                    <c:when test="${not empty allBookings || not empty offerBookings}">
+                        <div class="row">
+                            <c:forEach var="b" items="${allBookings}">
+                                <div class="col-lg-6">
+                                    <div class="booking-card">
+                                        <div class="booking-status ${b.status eq 'CONFIRMED' ? 'status-confirmed' : (b.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                            ${b.status != null ? b.status : 'PENDING'}
+                                        </div>
+                                        <span class="service-type-pill">
+                                            <c:choose>
+                                                <c:when test="${b.service != null}">Service</c:when>
+                                                <c:when test="${b.treatment != null}">Treatment</c:when>
+                                                <c:when test="${b.offer != null}">Offer</c:when>
+                                                <c:otherwise>Booking</c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                        <h3 class="booking-title">
+                                            <c:choose>
+                                                <c:when test="${b.service != null}">${b.service.name}</c:when>
+                                                <c:when test="${b.treatment != null}">${b.treatment.serviceName}</c:when>
+                                                <c:when test="${b.offer != null}">${b.offer.title}</c:when>
+                                                <c:otherwise>Appointment #${b.id}</c:otherwise>
+                                            </c:choose>
+                                        </h3>
+                                        <span class="salon-name">${b.salon != null ? b.salon.name : 'Salon'}</span>
+                                        <div class="row">
+                                            <div class="col-sm-6">
+                                                <div class="info-item"><i class="bi bi-calendar3"></i> ${b.bookingDate}</div>
+                                                <div class="info-item"><i class="bi bi-clock"></i> ${b.preferredTime}</div>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <div class="info-item"><i class="bi bi-geo-alt"></i> ${b.bookingType eq 'DOOR' ? b.address : 'Parlour Visit'}</div>
+                                                <div class="info-item"><i class="bi bi-telephone"></i> ${b.emergencyContact}</div>
+                                            </div>
+                                        </div>
+                                        <div class="price-display">&#8377;${b.price}</div>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                            <c:forEach var="o" items="${offerBookings}">
+                                <div class="col-lg-6">
+                                    <div class="booking-card" style="border-left: 6px solid var(--brand-pink);">
+                                        <div class="booking-status ${o.status eq 'CONFIRMED' ? 'status-confirmed' : (o.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                            ${o.status != null ? o.status : 'PENDING'}
+                                        </div>
+                                        <span class="service-type-pill" style="background: var(--brand-pink); color: white;">PROMOTION</span>
+                                        <h3 class="booking-title">${o.offer.title}</h3>
+                                        <span class="salon-name">${o.salon.name}</span>
+                                        <div class="price-display">&#8377;${o.originalPrice}</div>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-x text-muted" style="font-size: 4rem;"></i>
+                            <h3 class="fw-800 mt-4">No Appointments Yet</h3>
+                            <p class="text-muted">Your confirmed reservations will appear here.</p>
+                            <a href="${pageContext.request.contextPath}/services" class="btn btn-purple rounded-pill px-5 mt-3">Explore Services</a>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
             
             <!-- Service Bookings -->
-            <div class="tab-pane fade show active" id="services">
+            <div class="tab-pane fade ${tab == 'services' ? 'show active' : ''}" id="services">
                 <c:choose>
                     <c:when test="${not empty serviceBookings}">
                         <div class="row">
                             <c:forEach var="b" items="${serviceBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card">
-                                        <div class="booking-status ${b.status eq 'CONFIRMED' ? 'status-confirmed' : (b.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                        <div class="booking-status ${b.status eq 'CONFIRMED' ? 'status-confirmed' : (b.status eq 'COMPLETED' ? 'status-completed' : (b.status eq 'REJECTED' || b.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
                                             ${b.status != null ? b.status : 'PENDING'}
                                         </div>
                                         <span class="service-type-pill">${b.bookingType} Booking</span>
@@ -206,7 +287,7 @@
                                             </div>
                                         </c:if>
 
-                                        <div class="price-display">₹${b.price}</div>
+                                        <div class="price-display">&#8377;${b.price}</div>
                                     </div>
                                 </div>
                             </c:forEach>
@@ -224,14 +305,14 @@
             </div>
 
             <!-- Treatment Bookings -->
-            <div class="tab-pane fade" id="treatments">
+            <div class="tab-pane fade ${tab == 'treatments' ? 'show active' : ''}" id="treatments">
                 <c:choose>
                     <c:when test="${not empty treatmentBookings}">
                         <div class="row">
                             <c:forEach var="t" items="${treatmentBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card">
-                                        <div class="booking-status ${t.status eq 'CONFIRMED' ? 'status-confirmed' : (t.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                        <div class="booking-status ${t.status eq 'CONFIRMED' ? 'status-confirmed' : (t.status eq 'COMPLETED' ? 'status-completed' : (t.status eq 'REJECTED' || t.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
                                             ${t.status != null ? t.status : 'PENDING'}
                                         </div>
                                         <span class="service-type-pill">${t.bookingType} Treatment</span>
@@ -249,7 +330,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="price-display">₹${t.price}</div>
+                                        <div class="price-display">&#8377;${t.price}</div>
                                     </div>
                                 </div>
                             </c:forEach>
@@ -260,21 +341,23 @@
                             <i class="bi bi-sparkles text-muted" style="font-size: 4rem;"></i>
                             <h3 class="fw-800 mt-4">No Specialized Treatments</h3>
                             <p class="text-muted">Ready for a glow-up? Check out our treatments.</p>
-                            <a href="${pageContext.request.contextPath}/treatments" class="btn btn-purple rounded-pill px-5 mt-3">View Treatments</a>
+                            <a href="${pageContext.request.contextPath}/user/salons" class="btn btn-purple rounded-pill px-5 mt-3">View Salons</a>
                         </div>
                     </c:otherwise>
                 </c:choose>
             </div>
 
             <!-- Offer Bookings -->
-            <div class="tab-pane fade" id="offers">
+            <div class="tab-pane fade ${tab == 'offers' ? 'show active' : ''}" id="offers">
                 <c:choose>
-                    <c:when test="${not empty offerBookings}">
+                    <c:when test="${not empty offerBookings || not empty offerBookingOnes}">
                         <div class="row">
                             <c:forEach var="o" items="${offerBookings}">
                                 <div class="col-lg-6">
                                     <div class="booking-card" style="border-left: 6px solid var(--brand-pink);">
-                                        <div class="booking-status status-confirmed">REDEEMED</div>
+                                        <div class="booking-status ${o.status eq 'CONFIRMED' ? 'status-confirmed' : (o.status eq 'COMPLETED' ? 'status-completed' : (o.status eq 'REJECTED' || o.status eq 'CANCELLED' ? 'status-rejected' : 'status-pending'))}">
+                                            ${o.status != null ? o.status : 'PENDING'}
+                                        </div>
                                         <span class="service-type-pill" style="background: var(--brand-pink); color: white;">PROMOTION</span>
                                         <h3 class="booking-title">${o.offer.title}</h3>
                                         <span class="salon-name">${o.salon.name}</span>
@@ -282,10 +365,27 @@
                                         <div class="mb-4 small text-muted">${o.offer.description}</div>
                                         
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="text-decoration-line-through text-muted small">₹${o.originalPrice}</div>
-                                            <div class="price-display mt-0 text-pink">₹${o.originalPrice - (o.originalPrice * o.offer.discountPercent / 100)}</div>
-                                            <span class="badge bg-soft-pink text-pink">${o.offer.discountPercent}% OFF</span>
+                                            <div class="text-decoration-line-through text-muted small">&#8377;${o.originalPrice}</div>
+                                            <c:if test="${o.offer != null}">
+                                                <div class="price-display mt-0 text-pink">&#8377;${o.originalPrice - (o.originalPrice * o.offer.discountPercent / 100)}</div>
+                                                <span class="badge bg-soft-pink text-pink">${o.offer.discountPercent}% OFF</span>
+                                            </c:if>
                                         </div>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                            <c:forEach var="ob" items="${offerBookingOnes}">
+                                <div class="col-lg-6">
+                                    <div class="booking-card" style="border-left: 6px solid var(--brand-pink);">
+                                        <div class="booking-status ${ob.status eq 'CONFIRMED' ? 'status-confirmed' : (ob.status eq 'REJECTED' ? 'status-rejected' : 'status-pending')}">
+                                            ${ob.status != null ? ob.status : 'PENDING'}
+                                        </div>
+                                        <span class="service-type-pill" style="background: var(--brand-pink); color: white;">PROMOTION</span>
+                                        <h3 class="booking-title">${ob.offer.title}</h3>
+                                        <span class="salon-name">${ob.salon.name}</span>
+                                        <div class="info-item"><i class="bi bi-calendar3"></i> ${ob.bookingDate}</div>
+                                        <div class="info-item"><i class="bi bi-clock"></i> ${ob.preferredTime}</div>
+                                        <div class="price-display">&#8377;${ob.price}</div>
                                     </div>
                                 </div>
                             </c:forEach>

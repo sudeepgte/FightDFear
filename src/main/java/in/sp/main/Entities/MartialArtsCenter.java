@@ -94,6 +94,12 @@ public class MartialArtsCenter {
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
+    public String getPhone() { return phoneNumber; }
+    public void setPhone(String phone) { this.phoneNumber = phone; }
+
+    public String getContactPerson() { return contactPerson; }
+    public void setContactPerson(String contactPerson) { this.contactPerson = contactPerson; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 

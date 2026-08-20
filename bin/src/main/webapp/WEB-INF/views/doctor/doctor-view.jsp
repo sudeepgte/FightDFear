@@ -146,6 +146,38 @@
 
     .review-item:last-child { border-bottom: none; }
 
+    /* Interactive star rating (row-reverse so :checked ~ label fills lower stars) */
+    .rating-stars {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+      gap: 8px;
+      direction: ltr;
+    }
+    .rating-stars input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+    .rating-stars label {
+      cursor: pointer;
+      font-size: 2rem;
+      line-height: 1;
+      color: #d1d5db;
+      transition: color 0.15s ease, transform 0.15s ease;
+      user-select: none;
+    }
+    .rating-stars label:hover,
+    .rating-stars label:hover ~ label,
+    .rating-stars input:checked ~ label {
+      color: #f59e0b;
+    }
+    .rating-stars label:hover {
+      transform: scale(1.12);
+    }
+
     .action-btn-circle {
       width: 50px;
       height: 50px;
@@ -168,6 +200,33 @@
       width: 100%;
       box-shadow: 0 10px 25px rgba(219, 39, 119, 0.2);
     }
+    
+    .rating-stars {
+      display: inline-flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+    }
+    .rating-stars input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .rating-stars label {
+      cursor: pointer;
+      color: #d1d5db;
+      font-size: 2.5rem;
+      padding: 0 5px;
+      transition: color 0.2s;
+    }
+    .rating-stars label:before {
+      content: '★';
+    }
+    .rating-stars input:checked ~ label,
+    .rating-stars label:hover,
+    .rating-stars label:hover ~ label {
+      color: #fbbf24;
+    }
   </style>
 </head>
   <header id="header" class="header d-flex align-items-center sticky-top">
@@ -178,7 +237,6 @@
           <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
           <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
           <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-          <li><a href="${pageContext.request.contextPath}/users/dashboard" class="btn-dashboard"><i class="fas fa-th-large"></i> Back to Dashboard</a></li>
           <li class="nav-profile">
               <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="d-flex align-items-center">
                   <img src="${pageContext.request.contextPath}${not empty user.profilePhoto ? user.profilePhoto : '/images/default-profile.png'}" 
@@ -224,7 +282,7 @@
             <div class="vr mx-2"></div>
             <div class="text-end">
               <div class="small text-muted fw-600">CONSULTATION FEE</div>
-              <div class="fs-3 fw-900 text-purple">₹${doctor.consultationFee != null ? doctor.consultationFee : 500}</div>
+              <div class="fs-3 fw-900 text-purple" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</div>
             </div>
           </div>
         </div>
@@ -276,7 +334,7 @@
                   <div class="info-grid-item">
                     <div class="text-primary mb-2"><i class="bi bi-building fs-4"></i></div>
                     <div class="small fw-700 text-muted">HOSPITAL</div>
-                    <div class="fw-800">${doctor.hospitalName != null ? doctor.hospitalName : 'SafeHer Clinic'}</div>
+                    <div class="fw-800">${doctor.hospitalName != null ? doctor.hospitalName : 'Fight D Fear Clinic'}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -348,7 +406,14 @@
                     <div class="d-flex justify-content-between mb-2">
                       <div class="fw-800">${r.user.fullName}</div>
                       <div class="text-warning">
-                        <c:forEach begin="1" end="${r.rating}"><i class="bi bi-star-fill"></i></c:forEach>
+                        <c:choose>
+                          <c:when test="${r.rating != null && r.rating >= 1 && r.rating <= 5}">
+                            <c:forEach begin="1" end="${r.rating}"><i class="bi bi-star-fill"></i></c:forEach>
+                          </c:when>
+                          <c:otherwise>
+                            <span class="text-muted small">No rating</span>
+                          </c:otherwise>
+                        </c:choose>
                       </div>
                     </div>
                     <p class="text-muted small mb-0">${r.comment}</p>
@@ -368,8 +433,11 @@
           
           <form id="bookingForm" onsubmit="event.preventDefault(); initiatePayment();">
             <input type="hidden" id="doctorId" value="${doctor.id}">
-            <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 500.0}">
+            <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
             <input type="hidden" id="appointmentTime" value="">
+            <input type="hidden" id="clinicFee" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
+            <input type="hidden" id="videoFee" value="${doctor.videoFee != null ? doctor.videoFee : (doctor.consultationFee != null ? doctor.consultationFee : 0)}">
+            <input type="hidden" id="chatFee" value="${doctor.chatFee != null ? doctor.chatFee : (doctor.consultationFee != null ? doctor.consultationFee : 0)}">
 
             <div class="mb-4">
               <label class="small fw-800 text-muted mb-2 d-block">PATIENT NAME *</label>
@@ -406,14 +474,29 @@
               </div>
             </div>
 
+            <div class="mb-4">
+
+              <label class="small fw-800 text-muted mb-2 d-block" for="appointmentReason">REASON FOR VISIT</label>
+              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500"
+                        placeholder="Briefly describe your symptoms or reason for consultation (optional)"></textarea>
+              <div class="d-flex justify-content-between mt-1">
+                <span class="small text-muted">Shown to your doctor after booking</span>
+                <span class="small text-muted"><span id="reasonCount">0</span>/500</span>
+              </div>
+
+              <label class="small fw-800 text-muted mb-2 d-block">REASON FOR VISIT</label>
+              <textarea id="reason" class="form-control rounded-3 py-2" rows="2" placeholder="Briefly describe your symptoms or reason for visit (optional)"></textarea>
+
+            </div>
+
             <div id="selectedSummary" class="mb-4 p-3 bg-soft-pink rounded-3 text-pink small fw-700 text-center d-none">
               <i class="bi bi-clock-fill me-1"></i> <span id="summaryText"></span>
             </div>
 
             <button type="submit" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6">
-              Book Appointment & Pay ₹${doctor.consultationFee != null ? doctor.consultationFee : 500}
+              Book Appointment
             </button>
-            <p class="text-center mt-3 small text-muted"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
+            <p class="text-center mt-3 small text-muted" id="payHint"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
           </form>
         </div>
       </div>
@@ -428,17 +511,35 @@
           <h5 class="modal-title fw-900">Your Experience</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
-        <form action="${pageContext.request.contextPath}/doctors/review" method="post">
+        <form action="${pageContext.request.contextPath}/doctors/review" method="post" id="doctorReviewForm" novalidate>
           <input type="hidden" name="doctorId" value="${doctor.id}">
           <div class="modal-body p-4">
+            <c:if test="${not empty error}">
+              <div class="alert alert-danger rounded-4 border-0 mb-3">${error}</div>
+            </c:if>
             <div class="mb-4 text-center">
-              <div class="rating-stars fs-2 text-warning">
-                <input type="radio" name="rating" value="5" id="r5" class="d-none" required><label for="r5" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="4" id="r4" class="d-none"><label for="r4" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="3" id="r3" class="d-none"><label for="r3" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="2" id="r2" class="d-none"><label for="r2" class="cursor-pointer">☆</label>
-                <input type="radio" name="rating" value="1" id="r1" class="d-none"><label for="r1" class="cursor-pointer">☆</label>
+
+              <div class="rating-stars" role="radiogroup" aria-label="Doctor rating" id="doctorRatingGroup">
+                <input type="radio" name="rating" value="5" id="r5" autocomplete="off">
+                <label for="r5" title="5 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="4" id="r4" autocomplete="off">
+                <label for="r4" title="4 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="3" id="r3" autocomplete="off">
+                <label for="r3" title="3 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="2" id="r2" autocomplete="off">
+                <label for="r2" title="2 stars"><i class="bi bi-star-fill"></i></label>
+                <input type="radio" name="rating" value="1" id="r1" autocomplete="off">
+                <label for="r1" title="1 star"><i class="bi bi-star-fill"></i></label>
+
+              <div class="rating-stars text-warning">
+                <input type="radio" name="rating" value="5" id="r5" required><label for="r5"></label>
+                <input type="radio" name="rating" value="4" id="r4"><label for="r4"></label>
+                <input type="radio" name="rating" value="3" id="r3"><label for="r3"></label>
+                <input type="radio" name="rating" value="2" id="r2"><label for="r2"></label>
+                <input type="radio" name="rating" value="1" id="r1"><label for="r1"></label>
+
               </div>
+              <div id="ratingError" class="text-danger small fw-700 mt-2" style="display:none;">Please select a star rating.</div>
             </div>
             <textarea name="comment" class="form-control rounded-4 p-3" rows="4" placeholder="How was your visit with Dr. ${doctor.fullName}?"></textarea>
           </div>
@@ -461,6 +562,39 @@
     var daysMap = { "sunday":0, "monday":1, "tuesday":2, "wednesday":3, "thursday":4, "friday":5, "saturday":6 };
     var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase()).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
 
+    function currentFee() {
+      var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
+      var clinic = parseFloat(document.getElementById('clinicFee').value || '0');
+      var video = parseFloat(document.getElementById('videoFee').value || '0');
+      var chat = parseFloat(document.getElementById('chatFee').value || '0');
+      if (type === 'VIDEO') return isNaN(video) ? 0 : video;
+      if (type === 'ONLINE') return isNaN(chat) ? 0 : chat;
+      return isNaN(clinic) ? 0 : clinic;
+    }
+
+    function syncFeeUi() {
+      var fee = currentFee();
+      document.getElementById('amount').value = fee;
+      var btn = document.getElementById('payBtn');
+      var hint = document.getElementById('payHint');
+      var header = document.getElementById('headerFeeDisplay');
+      if (header) header.innerText = '₹' + fee;
+      if (fee > 0) {
+        btn.innerText = 'Book Appointment & Pay ₹' + fee;
+        if (hint) hint.innerHTML = '<i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay';
+      } else {
+        btn.innerText = 'Request Free Booking';
+        if (hint) hint.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> No payment required for this mode';
+      }
+    }
+
+    function localDateISO(d) {
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
     function renderDates() {
       var dateScroll = document.getElementById('dateScroll');
       if(!availableDays.length) {
@@ -474,7 +608,7 @@
       var count = 0;
       while(count < 14) {
         if(availableDays.includes(d.getDay())) {
-          var dateISO = d.toISOString().split('T')[0];
+          var dateISO = localDateISO(d);
           var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
           html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
                     <div class="small fw-700 opacity-50">\${dayName}</div>
@@ -489,13 +623,14 @@
       } else {
          dateScroll.innerHTML = html;
       }
+      syncFeeUi();
     }
 
     var selectedDateObj = null;
     function selectDate(el, dateISO) {
       document.querySelectorAll('.day-selector-item').forEach(i => i.classList.remove('active'));
       el.classList.add('active');
-      selectedDateObj = new Date(dateISO);
+      selectedDateObj = new Date(dateISO + 'T00:00:00');
       renderTimeSlots();
     }
 
@@ -521,29 +656,85 @@
     function selectTime(el, t24, t12) {
       document.querySelectorAll('.time-slot-pill').forEach(i => i.classList.remove('selected'));
       el.classList.add('selected');
-      var fullTime = selectedDateObj.toISOString().split('T')[0] + ' ' + t24;
+      var fullTime = localDateISO(selectedDateObj) + ' ' + t24;
       document.getElementById('appointmentTime').value = fullTime;
       document.getElementById('summaryText').innerText = selectedDateObj.toDateString() + ' at ' + t12;
       document.getElementById('selectedSummary').classList.remove('d-none');
       document.getElementById('payBtn').disabled = false;
       document.getElementById('payBtn').style.opacity = '1';
+      syncFeeUi();
+    }
+
+    async function bookFree(doctorId, time, type) {
+      const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: '' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+      } else {
+        alert(data.error || 'Unable to book appointment');
+      }
     }
 
     async function initiatePayment() {
+      syncFeeUi();
       const amount = document.getElementById('amount').value;
       const doctorId = document.getElementById('doctorId').value;
       const time = document.getElementById('appointmentTime').value;
       const type = document.querySelector('input[name="consultationType"]:checked').value;
 
+      const reason = (document.getElementById('appointmentReason').value || '').trim();
+
+      const reason = document.getElementById('reason').value;
+      const fee = parseFloat(amount || '0');
+
+      if (!time) {
+        alert('Please select date and time');
+        return;
+      }
+
+      if (fee <= 0) {
+        await bookFree(doctorId, time, type);
+        return;
+      }
+
+
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
           method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({amount, type:'DOCTOR'})
+          body: JSON.stringify({
+            type: 'DOCTOR',
+            targetId: doctorId,
+            consultationType: type,
+            appointmentTime: time,
+            amount: amount
+          })
         });
         const order = await res.json();
+        if (!res.ok || !order.orderId) {
+          alert(order.error || 'Unable to create payment order');
+          return;
+        }
+        if (order.mock) {
+          const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+              razorpay_order_id: order.orderId,
+              razorpay_payment_id: 'mock_pay_' + Date.now(),
+              razorpay_signature: 'mock_sig',
+              type: 'DOCTOR', targetId: doctorId, amount,
+              appointmentTime: time, consultationType: type
+            })
+          });
+          if (verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+          else alert('Verification failed');
+          return;
+        }
         const options = {
           key: order.key, amount: order.amount, currency: 'INR',
-          name: 'SafeHer Medical', description: 'Consultation with Dr. ${doctor.fullName}',
+          name: 'Fight D Fear Medical', description: 'Consultation with Dr. ${doctor.fullName}',
           order_id: order.orderId,
           handler: async function(response) {
             const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
@@ -552,8 +743,14 @@
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+
                 type: 'DOCTOR', targetId: doctorId, amount,
+                appointmentTime: time, consultationType: type,
+                reason: reason
+
+                type: 'DOCTOR', targetId: doctorId, amount, reason: reason,
                 appointmentTime: time, consultationType: type
+
               })
             });
             if(verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
@@ -563,7 +760,56 @@
       } catch(e) { alert('Payment failed. Please try again.'); }
     }
 
-    document.addEventListener('DOMContentLoaded', renderDates);
+    document.addEventListener('DOMContentLoaded', function() {
+      renderDates();
+
+
+      var reasonBox = document.getElementById('appointmentReason');
+      var reasonCount = document.getElementById('reasonCount');
+      if (reasonBox && reasonCount) {
+        reasonBox.addEventListener('input', function() {
+          reasonCount.textContent = reasonBox.value.length;
+        });
+      }
+
+      var reviewForm = document.getElementById('doctorReviewForm');
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+          var selected = reviewForm.querySelector('input[name="rating"]:checked');
+          var err = document.getElementById('ratingError');
+          if (!selected) {
+            e.preventDefault();
+            if (err) err.style.display = 'block';
+            var modalEl = document.getElementById('reviewModal');
+            if (modalEl && window.bootstrap) {
+              bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+            return false;
+          }
+          if (err) err.style.display = 'none';
+        });
+
+        reviewForm.querySelectorAll('input[name="rating"]').forEach(function(radio) {
+          radio.addEventListener('change', function() {
+            var err = document.getElementById('ratingError');
+            if (err) err.style.display = 'none';
+          });
+        });
+      }
+
+      <c:if test="${not empty error}">
+      var modalEl = document.getElementById('reviewModal');
+      if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+      </c:if>
+
+      document.querySelectorAll('input[name="consultationType"]').forEach(function(el) {
+        el.addEventListener('change', syncFeeUi);
+      });
+      syncFeeUi();
+
+    });
   </script>
 </body>
 </html>

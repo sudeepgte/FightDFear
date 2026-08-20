@@ -199,56 +199,22 @@
 </head>
 <body>
 
-<div class="topbar">
-  <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
-  <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
-    <i class="fas fa-sign-out-alt"></i> Logout
-  </a>
-</div>
+    <!-- Topbar -->
+    <div class="topbar" style="background: #1e1b4b; color: white; padding: 14px 18px; font-weight: 600; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div class="container-fluid px-2">
+            <div class="wrap" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <h5 class="mb-0 text-white" style="font-weight: 600;">Fight D Fear Admin</h5>
+                <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-outline-light" style="border:1px solid rgba(255,255,255,0.3); border-radius:7px; font-weight:600;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
 
-<div class="layout">
-  <aside class="sidebar">
-    <div class="brand-label">Admin Menu</div>
-    <div class="sec-title">Dashboard</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/adminDashboard"><i class="fas fa-home"></i> Home</a>
-
-    <div class="sec-title">Moderation</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/sos"><i class="fas fa-broadcast-tower"></i> SOS Monitoring</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/reported-videos"><i class="fas fa-flag"></i> Reported Videos</a>
-    <a class="nl" href="${pageContext.request.contextPath}/qna/admin/questions"><i class="fas fa-question-circle"></i> Q&amp;A Panel</a>
-
-    <div class="sec-title">Approvals</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/users">
-        <i class="fas fa-user-cog"></i> User Management
-        <c:if test="${side_pendingUsers > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem; padding: 0.25em 0.6em;">${side_pendingUsers}</span>
-        </c:if>
-    </a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/martialManagement">
-        <i class="fas fa-dumbbell"></i> Martial Arts Centres
-        <c:if test="${side_pendingCentres > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem; padding: 0.25em 0.6em;">${side_pendingCentres}</span>
-        </c:if>
-    </a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-doctors">
-        <i class="fas fa-user-md"></i> Doctor Verification
-        <c:if test="${side_pendingDoctors > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem; padding: 0.25em 0.6em;">${side_pendingDoctors}</span>
-        </c:if>
-    </a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-sellers">
-        <i class="fas fa-shopping-bag"></i> Seller Verification
-        <c:if test="${side_pendingSellers > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto" style="font-size: 0.65rem; padding: 0.25em 0.6em;">${side_pendingSellers}</span>
-        </c:if>
-    </a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-suggestions"><i class="fas fa-users"></i> Volunteer Suggestions</a>
-    <a class="nl" href="${pageContext.request.contextPath}/video/videoManagement"><i class="fas fa-video"></i> Video Library</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/videos"><i class="fas fa-gift"></i> Video Rewards</a>
-
-    <div class="sec-title">Account</div>
-    <a class="nl active" href="${pageContext.request.contextPath}/admin/profile/${admin.id}"><i class="fas fa-user"></i> Profile</a>
-  </aside>
+    <!-- Layout -->
+    <div class="layout" style="display: flex; min-height: calc(100vh - 58px);">
+        <!-- Sidebar -->
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
   <main class="main">
     <div class="mainInner">

@@ -271,7 +271,7 @@
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>Full Name</label>
-                                <input type="text" id="fullName" name="fullName" class="fdf-input" placeholder="e.g. Dr. Priya Sharma">
+                                <input type="text" id="fullName" name="fullName" class="fdf-input" placeholder="e.g. Dr. Priya Sharma" maxlength="50">
                                 <div class="error-msg">Minimum 3 characters (alphabets only).</div>
                             </div>
                             <div class="fdf-group">

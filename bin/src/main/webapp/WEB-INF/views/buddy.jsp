@@ -196,7 +196,7 @@
 </style>
 </head>
 <body>
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
@@ -333,7 +333,7 @@
 </div>
 
 <div style="position: relative; z-index: 10; margin-top: 4rem;">
-  <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+  
 </div>
 
 <script>

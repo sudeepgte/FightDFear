@@ -231,27 +231,54 @@
             </c:if>
             <c:if test="${empty userRegistration}">
                 <h3><i class="fas fa-edit me-2" style="color: var(--fl-pink);"></i>Register for Workshop</h3>
-                <form id="registrationForm" action="${pageContext.request.contextPath}/financial-literacy/workshop/register" method="POST">
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                        <i class="fas fa-exclamation-circle"></i> ${error}
+                    </div>
+                </c:if>
+                <c:if test="${not empty message}">
+                    <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+                        <i class="fas fa-check-circle"></i> ${message}
+                    </div>
+                </c:if>
+                <form id="registrationForm" action="${pageContext.request.contextPath}/financial-literacy/workshop/register" method="POST" novalidate>
                     <input type="hidden" name="workshopId" value="${workshop.id}">
                     <div class="mb-3">
-                        <label for="fullName" class="form-label">Full Name</label>
-                        <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" required>
+                        <label for="fullName" class="form-label">Full Name *</label>
+                        <input type="text" class="form-control" id="fullName" name="fullName"
+                               placeholder="Enter your full name"
+                               required minlength="2" maxlength="80"
+                               pattern="[A-Za-z][A-Za-z .'-]{1,79}"
+                               title="2–80 letters; spaces, apostrophes, periods, hyphens allowed">
                     </div>
                     <div class="mb-3">
-                        <label for="mobile" class="form-label">Mobile Number</label>
-                        <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Enter your mobile number" required>
+                        <label for="mobile" class="form-label">Mobile Number *</label>
+                        <input type="text" class="form-control" id="mobile" name="mobile"
+                               placeholder="10-digit mobile number"
+                               required minlength="10" maxlength="10" pattern="[0-9]{10}"
+                               inputmode="numeric"
+                               title="Exactly 10 digits"
+                               oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                     </div>
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="Enter your email"
+                               required maxlength="100"
+                               title="Valid email address required">
                     </div>
                     <div class="mb-3">
-                        <label for="city" class="form-label">City</label>
-                        <input type="text" class="form-control" id="city" name="city" placeholder="Enter your city" required>
+                        <label for="city" class="form-label">City *</label>
+                        <input type="text" class="form-control" id="city" name="city"
+                               placeholder="Enter your city"
+                               required minlength="2" maxlength="80"
+                               pattern="[A-Za-z][A-Za-z .'-]{1,79}"
+                               title="2–80 letters; spaces, apostrophes, periods, hyphens allowed">
                     </div>
                     <div class="mb-3">
                         <label for="occupation" class="form-label">Occupation (Optional)</label>
-                        <input type="text" class="form-control" id="occupation" name="occupation" placeholder="Enter your occupation">
+                        <input type="text" class="form-control" id="occupation" name="occupation"
+                               placeholder="Enter your occupation" maxlength="100">
                     </div>
                     <div class="text-center">
                         <button type="submit" class="register-btn">
@@ -259,6 +286,11 @@
                         </button>
                     </div>
                 </form>
+            </c:if>
+            <c:if test="${not empty userRegistration and not empty message}">
+                <div class="alert alert-success d-flex align-items-center gap-2 mt-3" role="alert">
+                    <i class="fas fa-check-circle"></i> ${message}
+                </div>
             </c:if>
         </div>
     </main>
@@ -268,11 +300,48 @@
     <!-- Bootstrap JS -->
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
-        function registerWorkshop(event) {
-            event.preventDefault();
-            alert('Registration successful! We will contact you soon.');
-            document.getElementById('registrationForm').reset();
-        }
+        (function () {
+            var form = document.getElementById('registrationForm');
+            if (!form) return;
+            form.addEventListener('submit', function (e) {
+                var fullName = (form.fullName.value || '').trim();
+                var mobile = (form.mobile.value || '').trim();
+                var email = (form.email.value || '').trim();
+                var city = (form.city.value || '').trim();
+                var occupation = (form.occupation.value || '').trim();
+
+                if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(fullName)) {
+                    alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).');
+                    e.preventDefault();
+                    return;
+                }
+                if (!/^\d{10}$/.test(mobile)) {
+                    alert('Mobile number must be exactly 10 digits.');
+                    e.preventDefault();
+                    return;
+                }
+                if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email) || email.length > 100) {
+                    alert('Please enter a valid email address.');
+                    e.preventDefault();
+                    return;
+                }
+                if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(city)) {
+                    alert('City must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).');
+                    e.preventDefault();
+                    return;
+                }
+                if (occupation.length > 100) {
+                    alert('Occupation must be at most 100 characters.');
+                    e.preventDefault();
+                    return;
+                }
+                form.fullName.value = fullName;
+                form.mobile.value = mobile;
+                form.email.value = email;
+                form.city.value = city;
+                form.occupation.value = occupation;
+            });
+        })();
     </script>
 </body>
 </html>

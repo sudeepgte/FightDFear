@@ -110,6 +110,8 @@ public class SecurityConfig {
             "/api/financial-literacy/educator/login",
             "/api/financial-literacy/educator/login/**",
             "/api/landing/**",
+            "/api/admin/login",
+            "/api/admin/login/**",
             "/api/martial-arts/centre/register",
             "/api/martial-arts/centre/register-lite",
             "/api/martial-arts/centre/register-quick",

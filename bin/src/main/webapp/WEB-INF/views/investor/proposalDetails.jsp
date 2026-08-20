@@ -32,19 +32,25 @@
         }
 
         #sidebar-wrapper {
-            min-width: 260px;
-            max-width: 260px;
+            width: 210px;
+            min-width: 210px;
+            max-width: 210px;
             background: var(--navy-dark);
             color: white;
-            min-height: 100vh;
-            border-top-right-radius: 40px;
-            padding-top: 30px;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            border-radius: 0;
+            padding: 20px 0;
+            margin: 0;
+            z-index: 1000;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
         }
 
         .sidebar-heading {
-            padding: 10px 25px 25px;
-            font-size: 1.2rem;
+            padding: 10px 20px 20px;
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -55,15 +61,16 @@
         .sidebar-link {
             background: transparent;
             color: rgba(255,255,255,0.7);
-            padding: 14px 25px;
-            font-size: 0.95rem;
+            padding: 10px 20px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
             font-weight: 500;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             text-decoration: none;
             transition: all 0.3s;
-            border-left: 4px solid transparent;
+            border-left: 3px solid transparent;
         }
 
         .sidebar-link:hover, .sidebar-link.active {
@@ -74,17 +81,20 @@
 
         #page-content-wrapper {
             flex: 1;
-            padding: 40px;
+            margin-left: 210px;
+            padding: 16px 20px;
+            overflow-y: auto;
+            min-height: 100vh;
         }
 
         .details-container {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
-            max-width: 1000px;
-            margin: 0 auto;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+            width: 100%;
+            margin: 0;
         }
 
         .masked-blur {
@@ -120,29 +130,146 @@
             object-fit: cover;
             box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
+
+        /* Proposal title centered */
+        .proposal-title-block {
+            text-align: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.07);
+            margin-bottom: 20px;
+        }
+        .proposal-title-block h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy-dark);
+            margin-bottom: 4px;
+        }
+        .proposal-title-block p {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+
+        /* Video pitch: no extra space below */
+        .video-pitch-wrapper {
+            margin-top: 12px;
+            margin-bottom: 0;
+        }
+        .video-pitch-wrapper .ratio {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        /* Funding section */
+        .funding-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Row inside details: no extra gap */
+        .content-row {
+            margin-top: 0;
+        }
+
+        @media (max-width: 992px) {
+            #wrapper {
+                flex-direction: column !important;
+            }
+            #sidebar-wrapper {
+                min-width: 100% !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                position: static !important;
+                border-radius: 0 !important;
+                padding: 14px 12px !important;
+            }
+            #sidebar-wrapper .mt-1 {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                flex-direction: row !important;
+                gap: 6px !important;
+            }
+            .sidebar-link {
+                padding: 7px 12px !important;
+                border-radius: 20px !important;
+                border-left: none !important;
+                background: rgba(255,255,255,0.05) !important;
+                display: inline-flex !important;
+                white-space: nowrap !important;
+                margin-bottom: 0 !important;
+                font-size: 0.8rem !important;
+            }
+            .sidebar-link:hover, .sidebar-link.active {
+                border-left-color: transparent !important;
+                background: var(--coral) !important;
+            }
+            #page-content-wrapper {
+                margin-left: 0 !important;
+                padding: 14px 12px !important;
+            }
+            .details-container {
+                padding: 16px 14px !important;
+                border-radius: 12px !important;
+            }
+            .proposal-title-block h3 {
+                font-size: 1.2rem !important;
+            }
+            .col-lg-8, .col-lg-4 {
+                padding-left: 8px !important;
+                padding-right: 8px !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .sidebar-heading {
+                font-size: 1rem !important;
+            }
+            .details-container {
+                padding: 12px 10px !important;
+            }
+        }
     </style>
 </head>
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div style="display: none; visibility: hidden;">
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+</div>
 
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
+        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2">
             <i class="bi bi-wallet2"></i> Investor Panel
         </div>
-        <div class="mt-3">
+        <div class="mt-1 d-flex flex-column">
+            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
+                <i class="bi bi-house"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link active">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-calendar2-check"></i> My Bookings
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-wallet2"></i> Wallet
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+                <i class="bi bi-person"></i> Profile
+            </a>
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
                 <i class="bi bi-shield-check"></i> Safety Hub Home
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-5">
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-3">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -151,28 +278,26 @@
     <!-- Page Content -->
     <div id="page-content-wrapper">
         <div class="details-container">
-            <div class="mb-4">
-                <a href="${pageContext.request.contextPath}/investor/marketplace" class="text-secondary text-decoration-none">
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/investor/marketplace" class="text-secondary text-decoration-none small">
                     <i class="bi bi-arrow-left"></i> Back to Marketplace
                 </a>
             </div>
 
-            <!-- Top Header Details -->
-            <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
-                <div>
-                    <h3 class="fw-bold" style="color: var(--navy-dark);">${proposal.title}</h3>
-                    <p class="text-muted mb-0">${proposal.category} | <i class="bi bi-geo-alt"></i> ${proposal.location}</p>
-                </div>
+            <!-- Top Header Details — CENTERED -->
+            <div class="proposal-title-block">
+                <h3>${proposal.title}</h3>
+                <p>${proposal.category} <i class="bi bi-dot"></i> <i class="bi bi-geo-alt"></i> ${proposal.location}</p>
                 <c:if test="${investor.subscribed}">
-                    <a href="${pageContext.request.contextPath}/investor/chat/${proposal.entrepreneur.id}?proposalId=${proposal.id}" class="btn btn-primary rounded-pill px-4" style="background-color: var(--primary); border: none;">
+                    <a href="${pageContext.request.contextPath}/investor/chat/${proposal.entrepreneur.id}?proposalId=${proposal.id}" class="btn btn-primary rounded-pill px-4 mt-2" style="background-color: var(--primary); border: none; font-size:0.85rem;">
                         <i class="bi bi-chat-dots-fill"></i> Chat with Entrepreneur
                     </a>
                 </c:if>
             </div>
 
             <!-- Funding Progress Bar -->
-            <div class="mb-5 bg-light p-4 rounded-4">
-                <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-graph-up-arrow"></i> Funding Target</h5>
+            <div class="funding-section">
+                <h5 class="fw-bold mb-3" style="color: var(--navy-dark); font-size:1rem;"><i class="bi bi-graph-up-arrow"></i> Funding Target</h5>
                 <div class="d-flex justify-content-between mb-2 fw-semibold" style="font-size:0.95rem;">
                     <span class="text-success">₹${proposal.amountRaised} Raised</span>
                     <span class="text-navy">₹${proposal.fundingNeeded} Target</span>
@@ -189,10 +314,10 @@
             </div>
 
             <!-- Business Details & Sidebar Column -->
-            <div class="row g-4">
+            <div class="row g-3 content-row align-items-start">
                 <!-- Main Content Column -->
                 <div class="col-lg-8">
-                    <div class="panel">
+                    <div class="panel pb-0 mb-0">
                         <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-file-text-fill"></i> Project Description</h5>
                         <p class="text-secondary" style="line-height:1.7; font-size:0.95rem;">
                             ${proposal.description}
@@ -212,16 +337,18 @@
 
                         <!-- Video Pitch Player -->
                         <c:if test="${not empty proposal.videoPitch}">
-                            <h5 class="fw-bold mb-3 mt-4" style="color: var(--navy-dark);"><i class="bi bi-play-btn-fill"></i> Video Pitch</h5>
-                            <div class="ratio ratio-16x9 rounded-3 overflow-hidden border shadow-sm mt-3" style="max-width:100%;">
-                                <video controls class="w-100">
-                                    <source src="${pageContext.request.contextPath}${proposal.videoPitch}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
+                            <h5 class="fw-bold mb-2 mt-3" style="color: var(--navy-dark); font-size:1rem;"><i class="bi bi-play-btn-fill"></i> Video Pitch</h5>
+                            <div class="video-pitch-wrapper">
+                                <div class="ratio ratio-16x9">
+                                    <video controls class="w-100 h-100" style="display:block;">
+                                        <source src="${pageContext.request.contextPath}${proposal.videoPitch}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
                             </div>
                         </c:if>
-                    </div>
-                </div>
+                    </div><!-- end panel -->
+                </div><!-- end col-lg-8 -->
 
                 <!-- Right Sidebar Column -->
                 <div class="col-lg-4">

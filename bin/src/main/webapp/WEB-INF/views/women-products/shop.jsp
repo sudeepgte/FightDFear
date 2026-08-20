@@ -280,6 +280,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .stock-badge.in { background: #fff; color: #10b981; }
+    .stock-badge.low {
+      background: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fdba74;
+    }
     .stock-badge.out { background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(4px); }
 
     .offer-badge {
@@ -378,6 +383,7 @@
       <a href="${pageContext.request.contextPath}/women-products?category=CLOTHING" class="${selectedCategory == 'CLOTHING' ? 'active' : ''}">Clothing</a>
       <a href="${pageContext.request.contextPath}/women-products?category=ACCESSORIES" class="${selectedCategory == 'ACCESSORIES' ? 'active' : ''}">Accessories</a>
       <a href="${pageContext.request.contextPath}/women-products?category=WELLNESS" class="${selectedCategory == 'WELLNESS' ? 'active' : ''}">Wellness</a>
+      <a href="${pageContext.request.contextPath}/women-products?category=OTHER" class="${selectedCategory == 'OTHER' ? 'active' : ''}">Other</a>
     </div>
   </div>
 
@@ -401,17 +407,54 @@
               <div class="product-img-placeholder"><i class="bi bi-gift"></i></div>
             </c:otherwise>
           </c:choose>
-          <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">
-            <i class="bi ${p.stock > 0 ? 'bi-check-circle-fill' : 'bi-x-circle-fill'}"></i>
-            ${p.stock > 0 ? 'In Stock' : 'Out of Stock'}
-          </span>
+          <c:choose>
+
+            <c:when test="${p.stock == null || p.stock <= 0}">
+              <span class="stock-badge out">
+                <i class="bi bi-x-circle-fill"></i> Out of Stock
+              </span>
+            </c:when>
+            <c:when test="${p.lowStockAlertLevel != null && p.stock <= p.lowStockAlertLevel}">
+              <span class="stock-badge low">
+                <i class="bi bi-exclamation-triangle-fill"></i> Only ${p.stock} left!
+              </span>
+            </c:when>
+            <c:otherwise>
+              <span class="stock-badge in">
+                <i class="bi bi-check-circle-fill"></i> In Stock
+              </span>
+            </c:otherwise>
+          </c:choose>
           <c:if test="${not empty p.offerBadge}">
             <span class="offer-badge">${p.offerBadge}</span>
           </c:if>
+
+            <c:when test="${p.stock > 5}">
+              <span class="stock-badge in" style="background:#ecfdf5; color:#059669;"><i class="bi bi-check-circle-fill"></i> In Stock</span>
+            </c:when>
+            <c:when test="${p.stock >= 2 && p.stock <= 5}">
+              <span class="stock-badge in" style="background:#fffbe0; color:#d97706;"><i class="bi bi-exclamation-triangle-fill"></i> Only ${p.stock} left in stock</span>
+            </c:when>
+            <c:when test="${p.stock == 1}">
+              <span class="stock-badge in" style="background:#fef2f2; color:#dc2626; border:1px solid #fca5a5;"><i class="bi bi-fire" style="color:#ef4444;"></i> Only 1 left in stock!</span>
+            </c:when>
+            <c:otherwise>
+              <span class="stock-badge out" style="background:#fee2e2; color:#991b1b;"><i class="bi bi-x-circle-fill"></i> Out of Stock</span>
+            </c:otherwise>
+          </c:choose>
+          <c:choose>
+            <c:when test="${p.originalPrice != null && p.originalPrice > p.price}">
+              <span class="offer-badge">${Math.round((1 - p.price / p.originalPrice) * 100)}% OFF</span>
+            </c:when>
+            <c:when test="${not empty p.offerBadge && p.offerBadge != '15'}">
+              <span class="offer-badge">${p.offerBadge}</span>
+            </c:when>
+          </c:choose>
+
         </a>
         
         <div class="product-body">
-          <div class="product-category">${p.category}</div>
+          <div class="product-category">${p.categoryLabel}</div>
           <div class="product-name">${p.name}</div>
           <div class="product-seller"><i class="bi bi-patch-check-fill text-primary"></i> ${p.seller.businessName}</div>
           

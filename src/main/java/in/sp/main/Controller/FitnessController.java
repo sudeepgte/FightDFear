@@ -347,47 +347,53 @@ public class FitnessController {
             @RequestParam String email,
             @RequestParam String phone,
             @RequestParam String password,
-            @RequestParam Integer experience,
-            @RequestParam String bio,
-            @RequestParam List<String> specializations,
-            @RequestParam String availableTimings,
-            @RequestParam Double sessionFees,
-            @RequestParam MultipartFile profilePhoto,
-            @RequestParam MultipartFile certificationDoc,
+            @RequestParam(required = false) Integer experience,
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) List<String> specializations,
+            @RequestParam(required = false) String availableTimings,
+            @RequestParam(required = false) Double sessionFees,
+            @RequestParam(required = false) MultipartFile profilePhoto,
+            @RequestParam(required = false) MultipartFile certificationDoc,
             RedirectAttributes redirectAttributes) {
 
-        if (fitnessTrainerRepository.findByEmail(email).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "An account with this email already exists.");
-            return "redirect:/fitness/trainer/register";
+        if (fitnessTrainerRepository.findByEmail(email.trim().toLowerCase()).isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "An account with this email already exists. Please sign in.");
+            return "redirect:/fitness/trainer/login";
         }
 
         try {
             FitnessTrainer trainer = new FitnessTrainer();
-            trainer.setFullName(fullName);
+            trainer.setFullName(fullName.trim());
             trainer.setEmail(email.trim().toLowerCase());
-            trainer.setPhone(phone);
+            trainer.setPhone(phone.trim());
             trainer.setPassword(passwordService.encode(password));
-            trainer.setExperience(experience);
-            trainer.setBio(bio);
-            trainer.setAvailableTimings(availableTimings);
-            trainer.setSessionFees(sessionFees);
-            trainer.setSpecializations(String.join(",", specializations));
+            trainer.setExperience(experience != null ? experience : 0);
+            trainer.setBio(bio != null ? bio.trim() : "");
+            trainer.setAvailableTimings(availableTimings != null ? availableTimings : "");
+            trainer.setSessionFees(sessionFees != null ? sessionFees : 0.0);
+            trainer.setSpecializations(specializations != null ? String.join(",", specializations) : "");
             trainer.setVerificationStatus(VerificationStatus.PENDING);
+            trainer.setPartnerProfileStatus(PartnerProfileStatus.REGISTERED);
+            trainer.setProfileCompletionPct(0);
             trainer.setSuspended(false);
 
-            if (!profilePhoto.isEmpty()) {
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
                 trainer.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
             }
-            if (!certificationDoc.isEmpty()) {
+            if (certificationDoc != null && !certificationDoc.isEmpty()) {
                 trainer.setCertificationsPath(fileUploadService.saveFile(certificationDoc));
             }
 
             fitnessTrainerRepository.save(trainer);
-            redirectAttributes.addFlashAttribute("success", "Registration submitted successfully! Please wait for Admin review.");
+            redirectAttributes.addFlashAttribute("registeredEmail", email.trim().toLowerCase());
+            redirectAttributes.addFlashAttribute("message", "Account created successfully! Please sign in to complete your profile and submit for verification.");
             return "redirect:/fitness/trainer/login";
 
         } catch (IOException e) {
-            redirectAttributes.addFlashAttribute("error", "File upload failed. Please try again.");
+            redirectAttributes.addFlashAttribute("error", "File upload failed: " + e.getMessage());
+            return "redirect:/fitness/trainer/register";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Registration failed: " + e.getMessage());
             return "redirect:/fitness/trainer/register";
         }
     }
@@ -414,13 +420,7 @@ public class FitnessController {
                 fitnessTrainerRepository.save(trainer);
             });
             if (ok) {
-                if (trainer.getVerificationStatus() == VerificationStatus.PENDING) {
-                    redirectAttributes.addFlashAttribute("error", "Your account is pending verification by admin.");
-                    return "redirect:/fitness/trainer/login";
-                } else if (trainer.getVerificationStatus() == VerificationStatus.REJECTED) {
-                    redirectAttributes.addFlashAttribute("error", "Your certification credentials were rejected.");
-                    return "redirect:/fitness/trainer/login";
-                } else if (trainer.isSuspended()) {
+                if (trainer.isSuspended()) {
                     redirectAttributes.addFlashAttribute("error", "Your trainer account has been suspended.");
                     return "redirect:/fitness/trainer/login";
                 }
@@ -441,6 +441,17 @@ public class FitnessController {
 
         redirectAttributes.addFlashAttribute("error", "Invalid credentials!");
         return "redirect:/fitness/trainer/login";
+    }
+
+    // TRAINER PROFILE COMPLETION GET
+    @GetMapping("/trainer/profile-completion")
+    public String showTrainerProfileCompletion(HttpSession session, Model model) {
+        FitnessTrainer sessionTrainer = (FitnessTrainer) session.getAttribute("loggedTrainer");
+        if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
+        model.addAttribute("trainer", trainer);
+        return "fitnessTrainerProfileCompletion";
     }
 
     // TRAINER LOGOUT

@@ -18,7 +18,7 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -70,6 +70,9 @@
         .status-CONFIRMED { background: #ebfbee; color: #37b24d; }
         .status-COMPLETED { background: #e7f5ff; color: #228be6; }
         .status-CANCELLED { background: #fff5f5; color: #fa5252; }
+        .status-ACCEPTED { background: #e0f2fe; color: #0284c7; }
+        .status-PAID { background: #fef9c3; color: #ca8a04; }
+        .status-REJECTED { background: #fee2e2; color: #ef4444; }
 
         .nav-tabs-custom {
             display: flex;
@@ -161,6 +164,9 @@
 <body>
 
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
 
     <div class="header-bg">
         <div class="container d-flex justify-content-between align-items-center">
@@ -706,6 +712,8 @@
             bootstrap.Modal.getInstance(document.getElementById('videoModal')).hide();
         }
     </script>
+    </div>
+</div>
 </body>
 </html>
 

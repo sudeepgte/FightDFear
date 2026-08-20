@@ -219,30 +219,68 @@
 
     <!-- ======= Header ======= -->
     <header id="header" class="header d-flex align-items-center sticky-top shadow-sm" style="background: white;">
-        <div class="container-fluid container-xl d-flex align-items-center">
-            <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto">
-                <h1 style="color: var(--primary-red); font-weight: 800; margin: 0;">Fight D Fear</h1>
+        <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+            <a href="${pageContext.request.contextPath}/users/dashboard" class="logo d-flex align-items-center text-decoration-none">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 36px; width: 36px; border-radius: 8px; object-fit: cover; margin-right: 10px;">
+                <span style="color: var(--primary-red); font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;">Fight D Fear</span>
             </a>
             <nav id="navmenu" class="navmenu">
-                <ul>
-                    <li><a href="${pageContext.request.contextPath}/users/dashboard">Dashboard</a></li>
-                    <li><a href="${pageContext.request.contextPath}/centres/allacceptedcentres">Centres</a></li>
-                    <li><a href="${pageContext.request.contextPath}/video/reels">Reels</a></li>
+                <ul class="d-flex align-items-center list-unstyled mb-0 gap-3">
+                    <li><a href="${pageContext.request.contextPath}/users/dashboard" class="text-decoration-none text-dark fw-semibold">Dashboard</a></li>
+                    <li><a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="text-decoration-none text-dark fw-semibold">Martial Arts Centres</a></li>
+                    <li><a href="${pageContext.request.contextPath}/video/reels" class="text-decoration-none text-dark fw-semibold">Training Reels</a></li>
                 </ul>
-                <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
             </nav>
-            <a class="btn btn-danger btn-sm rounded-pill px-4 ms-3" href="${pageContext.request.contextPath}/logout">Logout</a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="${pageContext.request.contextPath}/centres/details/${center.id}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i class="bi bi-arrow-left"></i> Back to Centre
+                </a>
+                <a class="btn btn-danger btn-sm rounded-pill px-4" href="${pageContext.request.contextPath}/logout">Logout</a>
+            </div>
         </div>
     </header>
 
-    <div class="enrollment-header text-center">
+    <div class="enrollment-header text-center pb-5">
         <div class="container">
-            <h1 class="display-5 fw-bold mb-2">Enrollment Form</h1>
-            <p class="lead opacity-75">Fill in your details to enroll in our training program</p>
+            <h1 class="display-6 fw-bold mb-2 text-white">Martial Arts Trainee Enrollment</h1>
+            <p class="lead opacity-75 text-white mb-4">Official registration and batch admission form for verified academy training</p>
         </div>
     </div>
 
-    <main class="container my-5">
+    <!-- Selected Program & Centre Context Card -->
+    <div class="container position-relative" style="z-index: 10; margin-top: -36px; margin-bottom: 24px;">
+        <div class="card border-0 shadow-sm rounded-4 p-4" style="background: #FFFFFF; border: 1px solid #E2E8F0 !important;">
+            <div class="row align-items-center g-3">
+                <div class="col-lg-5">
+                    <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1 fw-bold text-uppercase mb-2" style="font-size:0.75rem;">
+                        <i class="bi bi-shield-shaded me-1"></i> Verified Training Centre
+                    </span>
+                    <h3 class="fw-bold mb-1" style="color: #0F172A;">${center.name}</h3>
+                    <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${not empty center.location ? center.location : 'Campus Dojo'}</p>
+                </div>
+                <div class="col-lg-7">
+                    <div class="p-3 rounded-3" style="background: #F8FAFC; border: 1px solid #E2E8F0;">
+                        <div class="row g-2 text-center text-md-start">
+                            <div class="col-4">
+                                <span class="d-block text-muted small" style="font-size:0.75rem; font-weight:700;">PROGRAM / STYLE</span>
+                                <strong id="topSelectedStyle" style="color:#0F172A;">--</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="d-block text-muted small" style="font-size:0.75rem; font-weight:700;">SELECTED BATCH</span>
+                                <strong id="topSelectedBatch" style="color:#0F172A;">--</strong>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span class="d-block text-muted small" style="font-size:0.75rem; font-weight:700;">MONTHLY FEE</span>
+                                <strong id="topSelectedFee" style="color:#16A34A; font-size:1.15rem;">--</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <main class="container my-4">
         <div class="row g-4">
             
             <!-- Left Side: Form -->
@@ -301,9 +339,13 @@
                             <span>2. Emergency Contact Details</span>
                         </div>
                         <div class="row g-3">
-                            <div class="col-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Emergency Contact Name *</label>
                                 <input type="text" id="eName" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Contact Number *</label>
+                                <input type="tel" id="ePhone" class="form-control" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
                             </div>
                         </div>
                     </div>
@@ -412,15 +454,15 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Medical Conditions / Injuries</label>
-                                <textarea id="medical" class="form-control" rows="2" placeholder="Specify if any"></textarea>
+                                <textarea id="medical" class="form-control" rows="2" placeholder="Specify if any" maxlength="300"></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Allergies</label>
-                                <textarea id="allergies" class="form-control" rows="2" placeholder="Specify if any"></textarea>
+                                <textarea id="allergies" class="form-control" rows="2" placeholder="Specify if any" maxlength="300"></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Fitness Notes / Restrictions</label>
-                                <textarea id="fitnessNotes" class="form-control" rows="2" placeholder="Any notes for the trainer"></textarea>
+                                <textarea id="fitnessNotes" class="form-control" rows="2" placeholder="Any notes for the trainer" maxlength="500"></textarea>
                             </div>
                         </div>
                     </div>
@@ -447,7 +489,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Proposed Start Date *</label>
                                 <!-- Issue 137: Only allow future dates for proposed start date -->
-                                <input type="date" id="startDate" class="form-control" required onchange="updateSummary()">
+                                <input type="date" id="startDate" class="form-control" required onchange="validateStartDay(); updateSummary()">
                             </div>
                         </div>
                     </div>
@@ -659,12 +701,40 @@
             const batchSelect = document.getElementById('batchId');
             const batchOpt = batchSelect.options[batchSelect.selectedIndex];
 
-            if (batchSelect.value) {
-                document.getElementById('sStyle').innerText = batchOpt.dataset.style;
-                document.getElementById('sLevel').innerText = batchOpt.dataset.level;
-                document.getElementById('sBatch').innerText = batchOpt.text;
-                document.getElementById('sSlot').innerText = batchOpt.dataset.slot;
-                document.getElementById('sFee').innerText = parseFloat(batchOpt.dataset.fee).toLocaleString();
+            if (batchSelect.value && batchOpt) {
+                const style = batchOpt.dataset.style || '--';
+                const level = batchOpt.dataset.level || '--';
+                const batchName = batchOpt.text || '--';
+                const slot = batchOpt.dataset.slot || '--';
+                const feeVal = parseFloat(batchOpt.dataset.fee || '0');
+                const feeFormatted = feeVal > 0 ? ('₹ ' + feeVal.toLocaleString()) : 'FREE';
+
+                document.getElementById('sStyle').innerText = style;
+                document.getElementById('sLevel').innerText = level;
+                document.getElementById('sBatch').innerText = batchName;
+                document.getElementById('sSlot').innerText = slot;
+                document.getElementById('sFee').innerText = feeVal.toLocaleString();
+
+                // Top persistent card sync
+                const topStyle = document.getElementById('topSelectedStyle');
+                const topBatch = document.getElementById('topSelectedBatch');
+                const topFee = document.getElementById('topSelectedFee');
+                if (topStyle) topStyle.innerText = style;
+                if (topBatch) topBatch.innerText = batchName;
+                if (topFee) topFee.innerText = feeFormatted;
+            } else {
+                document.getElementById('sStyle').innerText = 'Not selected';
+                document.getElementById('sLevel').innerText = '--';
+                document.getElementById('sBatch').innerText = '--';
+                document.getElementById('sSlot').innerText = '--';
+                document.getElementById('sFee').innerText = '0.00';
+
+                const topStyle = document.getElementById('topSelectedStyle');
+                const topBatch = document.getElementById('topSelectedBatch');
+                const topFee = document.getElementById('topSelectedFee');
+                if (topStyle) topStyle.innerText = '--';
+                if (topBatch) topBatch.innerText = 'Please select a batch';
+                if (topFee) topFee.innerText = '--';
             }
 
             document.getElementById('sGoal').innerText = document.getElementById('goal').value || '--';
@@ -710,6 +780,7 @@
                 email: document.getElementById('email').value,
                 address: document.getElementById('address').value,
                 emergencyName: document.getElementById('eName').value,
+                emergencyPhone: document.getElementById('ePhone') ? document.getElementById('ePhone').value : null,
                 skillLevel: document.getElementById('skillLevel').value,
                 preferredDays: Array.from(document.querySelectorAll('.day-check:checked')).map(c => c.value),
                 goal: document.getElementById('goal').value,
@@ -790,6 +861,24 @@
                 updateSummary();
             }
         });
+
+        function validateStartDay() {
+            const dateInput = document.getElementById('startDate');
+            if (!dateInput.value) return;
+            const date = new Date(dateInput.value);
+            const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            const daySelected = daysOfWeek[date.getDay()];
+            
+            const batchSelect = document.getElementById('batchId');
+            if (batchSelect && batchSelect.value) {
+                const option = batchSelect.options[batchSelect.selectedIndex];
+                const availableDaysStr = option.dataset.days ? option.dataset.days.toUpperCase() : '';
+                if (availableDaysStr && !availableDaysStr.includes(daySelected)) {
+                    alert("Please select a date that falls on the trainer's scheduled days: " + availableDaysStr);
+                    dateInput.value = "";
+                }
+            }
+        }
 
         async function initiateRazorpay(enrollmentId, amount) {
             try {

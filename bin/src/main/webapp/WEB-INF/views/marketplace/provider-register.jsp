@@ -8,7 +8,7 @@
   <title>Provider Registration</title>
   <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
@@ -192,7 +192,7 @@
                         </div>
                         <div class="fdf-row">
                             <div class="fdf-group"><label>Phone</label><input class="fdf-input" type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required></div>
-                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="••••••••" required></div>
+                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="Min. 8 characters" minlength="8" required></div>
                         </div>
                         <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Professional Details</button>
                     </div>
@@ -205,12 +205,45 @@
                                 <label>Category</label>
                                 <select class="fdf-input" name="category" id="categorySelect" required>
                                     <option value="" disabled ${empty param.category ? 'selected' : ''}>Choose a category</option>
-                                    <option value="TUTOR" ${param.category == 'TUTOR' ? 'selected' : ''}>Tutor</option>
-                                    <option value="HOME_BAKER" ${param.category == 'HOME_BAKER' ? 'selected' : ''}>Home Baker</option>
-                                    <option value="LANGUAGE_TRAINER" ${param.category == 'LANGUAGE_TRAINER' ? 'selected' : ''}>Language Trainer</option>
-                                    <option value="WOMEN_PRODUCTS" ${param.category == 'WOMEN_PRODUCTS' ? 'selected' : ''}>Women Products</option>
-                                    <option value="WOMEN_LAWYER" ${param.category == 'WOMEN_LAWYER' ? 'selected' : ''}>Women Lawyer</option>
-                                    <option value="FITNESS_ZUMBA" ${param.category == 'FITNESS_ZUMBA' ? 'selected' : ''}>Fitness Zumba</option>
+                                    <c:forEach var="cat" items="${providerCategories}">
+                                        <option value="${cat.name()}" ${param.category == cat.name() ? 'selected' : ''}>${cat.displayName}</option>
+                                    </c:forEach>
+                                    <c:if test="${empty providerCategories}">
+                                        <option value="TUTOR" ${param.category == 'TUTOR' ? 'selected' : ''}>Tutor</option>
+                                        <option value="TAILOR" ${param.category == 'TAILOR' ? 'selected' : ''}>Tailor</option>
+                                        <option value="HOME_COOK" ${param.category == 'HOME_COOK' ? 'selected' : ''}>Home Cook</option>
+                                        <option value="CATERING_SERVICE" ${param.category == 'CATERING_SERVICE' ? 'selected' : ''}>Catering Service</option>
+                                        <option value="EVENT_PLANNER" ${param.category == 'EVENT_PLANNER' ? 'selected' : ''}>Event Planner</option>
+                                        <option value="BABYSITTER" ${param.category == 'BABYSITTER' ? 'selected' : ''}>Babysitter</option>
+                                        <option value="PET_CARE" ${param.category == 'PET_CARE' ? 'selected' : ''}>Pet Care</option>
+                                        <option value="DIETITIAN" ${param.category == 'DIETITIAN' ? 'selected' : ''}>Dietitian</option>
+                                        <option value="HOME_CLEANER" ${param.category == 'HOME_CLEANER' ? 'selected' : ''}>Home Cleaner</option>
+                                        <option value="INTERIOR_DESIGNER" ${param.category == 'INTERIOR_DESIGNER' ? 'selected' : ''}>Interior Designer</option>
+                                        <option value="HANDICRAFT_SELLER" ${param.category == 'HANDICRAFT_SELLER' ? 'selected' : ''}>Handicraft Seller</option>
+                                        <option value="DIGITAL_MARKETING_CONSULTANT" ${param.category == 'DIGITAL_MARKETING_CONSULTANT' ? 'selected' : ''}>Digital Marketing Consultant</option>
+                                        <option value="HOME_BAKER" ${param.category == 'HOME_BAKER' ? 'selected' : ''}>Home Baker</option>
+                                        <option value="LANGUAGE_TRAINER" ${param.category == 'LANGUAGE_TRAINER' ? 'selected' : ''}>Language Trainer</option>
+                                        <option value="WOMEN_PRODUCTS" ${param.category == 'WOMEN_PRODUCTS' ? 'selected' : ''}>Women Products</option>
+                                        <option value="WOMEN_LAWYER" ${param.category == 'WOMEN_LAWYER' ? 'selected' : ''}>Women Lawyer</option>
+                                        <option value="FITNESS_ZUMBA" ${param.category == 'FITNESS_ZUMBA' ? 'selected' : ''}>Fitness / Zumba</option>
+                                        <option value="BEAUTICIAN" ${param.category == 'BEAUTICIAN' ? 'selected' : ''}>Beautician</option>
+                                        <option value="MAKEUP_ARTIST" ${param.category == 'MAKEUP_ARTIST' ? 'selected' : ''}>Makeup Artist</option>
+                                        <option value="MEHENDI_ARTIST" ${param.category == 'MEHENDI_ARTIST' ? 'selected' : ''}>Mehendi Artist</option>
+                                        <option value="PHOTOGRAPHER" ${param.category == 'PHOTOGRAPHER' ? 'selected' : ''}>Photographer</option>
+                                        <option value="YOGA_TRAINER" ${param.category == 'YOGA_TRAINER' ? 'selected' : ''}>Yoga Trainer</option>
+                                        <option value="FITNESS_TRAINER" ${param.category == 'FITNESS_TRAINER' ? 'selected' : ''}>Fitness Trainer</option>
+                                        <option value="DANCE_INSTRUCTOR" ${param.category == 'DANCE_INSTRUCTOR' ? 'selected' : ''}>Dance Instructor</option>
+                                        <option value="MUSIC_TEACHER" ${param.category == 'MUSIC_TEACHER' ? 'selected' : ''}>Music Teacher</option>
+                                        <option value="CRAFT_SELLER" ${param.category == 'CRAFT_SELLER' ? 'selected' : ''}>Craft Seller</option>
+                                        <option value="HANDMADE_PRODUCTS" ${param.category == 'HANDMADE_PRODUCTS' ? 'selected' : ''}>Handmade Products</option>
+                                        <option value="BOUTIQUE" ${param.category == 'BOUTIQUE' ? 'selected' : ''}>Boutique</option>
+                                        <option value="FASHION_DESIGNER" ${param.category == 'FASHION_DESIGNER' ? 'selected' : ''}>Fashion Designer</option>
+                                        <option value="FREELANCER" ${param.category == 'FREELANCER' ? 'selected' : ''}>Freelancer</option>
+                                        <option value="GRAPHIC_DESIGNER" ${param.category == 'GRAPHIC_DESIGNER' ? 'selected' : ''}>Graphic Designer</option>
+                                        <option value="CONTENT_WRITER" ${param.category == 'CONTENT_WRITER' ? 'selected' : ''}>Content Writer</option>
+                                        <option value="MARTIAL_ARTS" ${param.category == 'MARTIAL_ARTS' ? 'selected' : ''}>Martial Arts</option>
+                                        <option value="FEMALE_DOCTORS" ${param.category == 'FEMALE_DOCTORS' ? 'selected' : ''}>Female Doctors</option>
+                                    </c:if>
                                 </select>
                             </div>
                             <div class="fdf-group"><label>Location</label><input class="fdf-input" name="locationText" placeholder="City / Area" required></div>

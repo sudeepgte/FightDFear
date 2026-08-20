@@ -147,6 +147,14 @@
                 <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
                 <h2>Join our Ecosystem</h2>
 
+                <c:if test="${not empty success}">
+                    <div style="background:#ecfdf5; color:#047857; padding:15px 20px; border-radius:14px; font-size:0.9rem; margin-bottom:25px; font-weight:600; border:1px solid #a7f3d0;">
+                        <i class="bi bi-check-circle-fill me-2"></i> ${success}
+                        <div style="margin-top:10px; font-weight:500;">
+                            <a href="${pageContext.request.contextPath}/women-products/seller/login" style="color:#047857; font-weight:800;">Go to Seller Login</a>
+                        </div>
+                    </div>
+                </c:if>
                 <c:if test="${not empty error}"><div style="background:#fef2f2; color:#b91c1c; padding:15px 20px; border-radius:14px; font-size:0.9rem; margin-bottom:25px; font-weight:600; border:1px solid #fee2e2;"><i class="bi bi-shield-exclamation me-2"></i> ${error}</div></c:if>
 
                 <form method="post" action="${pageContext.request.contextPath}/women-products/seller/register" enctype="multipart/form-data" id="sellerForm">
@@ -156,13 +164,21 @@
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>Full Name</label>
-                                <input type="text" name="fullName" id="fullName" class="fdf-input" placeholder="Your Name" required>
-                                <div class="error-msg">Name must be at least 3 characters.</div>
+                                <input type="text" name="fullName" id="fullName" class="fdf-input"
+                                       placeholder="Your Name" maxlength="80" minlength="2"
+                                       pattern="[A-Za-z][A-Za-z .'-]{1,79}"
+                                       title="2–80 letters only; spaces, apostrophes, periods, and hyphens allowed"
+                                       required>
+                                <div class="error-msg">Full Name must be 2–80 letters only (no numbers or special symbols).</div>
                             </div>
                             <div class="fdf-group">
                                 <label>Business Name</label>
-                                <input type="text" name="businessName" id="businessName" class="fdf-input" placeholder="Brand Name" required>
-                                <div class="error-msg">Business name is required.</div>
+                                <input type="text" name="businessName" id="businessName" class="fdf-input"
+                                       placeholder="Brand Name" maxlength="100" minlength="2"
+                                       pattern="[A-Za-z0-9][A-Za-z0-9 &amp;.,'()\-]{1,99}"
+                                       title="2–100 characters; letters, numbers, spaces, and &amp; . , ' ( ) - allowed"
+                                       required>
+                                <div class="error-msg">Business Name must be 2–100 characters (letters/numbers; spaces and &amp; . , ' ( ) - allowed).</div>
                             </div>
                         </div>
                         <div class="fdf-row">
@@ -254,7 +270,12 @@
             if (el.hasAttribute('required') && !val && el.type !== 'file') isValid = false;
             if (el.type === 'file' && el.hasAttribute('required') && el.files.length === 0) isValid = false;
             
-            if (isValid && el.id === 'fullName') isValid = val.length >= 3;
+            if (isValid && el.id === 'fullName') {
+                isValid = /^[A-Za-z][A-Za-z .'-]{1,79}$/.test(val) && val.length <= 80;
+            }
+            if (isValid && el.id === 'businessName') {
+                isValid = val.length >= 2 && val.length <= 100 && /^[A-Za-z0-9][A-Za-z0-9 &.,'()-]{1,99}$/.test(val);
+            }
             if (isValid && el.id === 'phone') isValid = /^[6-9]\d{9}$/.test(val);
             if (isValid && el.id === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
             if (isValid && el.id === 'password') isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val) && /[!@#$%^&*(),.?":{}|<>]/.test(val);

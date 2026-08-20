@@ -350,10 +350,10 @@
     <div id="sidebar-wrapper">
         <div class="sidebar-heading" style="flex-direction:column; align-items:flex-start; gap:2px; padding:14px 18px 12px;">
             <div style="display:flex; align-items:center; gap:8px;">
-                <i class="bi bi-activity" style="color:rgba(255,255,255,0.85); font-size:1rem;"></i>
-                <span style="font-size:0.92rem; font-weight:700;">Fitness Trainer</span>
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 24px; width: 24px; border-radius: 6px; object-fit: cover;">
+                <span style="font-size:0.92rem; font-weight:700;">Coach Studio</span>
             </div>
-            <div style="font-size:0.78rem; color:rgba(255,255,255,0.55); padding-left:24px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">${trainer.fullName}</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.55); padding-left:32px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">${trainer.fullName}</div>
         </div>
         <div class="nav flex-column nav-pills" id="studioTab">
             <button class="list-group-item active" onclick="switchTab('requestsContent', this)" type="button">
@@ -406,6 +406,16 @@
                 <p class="text-muted small mt-1 mb-0" style="text-align:center;">Manage your schedule, classes, and coaching requests.</p>
             </div>
         </div>
+
+        <c:if test="${trainer.verificationStatus != 'VERIFIED' && trainer.partnerProfileStatus != 'APPROVED'}">
+            <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 mb-4 rounded-4 shadow-sm" style="background:#FFFBEB; border: 1px solid #FCD34D;">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Trainer Profile Verification Pending</h5>
+                    <p class="mb-0 text-muted" style="font-size:0.9rem;">Your trainer account is awaiting admin verification. Class & workout creation is locked until verified.</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/fitness/trainer/profile-completion" class="btn btn-warning fw-bold text-dark px-4 rounded-pill shadow-sm" style="white-space:nowrap;">Complete Profile <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </c:if>
 
         <c:if test="${not empty success}">
             <div class="alert alert-success alert-dismissible fade show mb-4" style="border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">

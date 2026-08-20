@@ -36,5 +36,22 @@ public class DatabaseSchemaUpdate implements CommandLineRunner {
         } catch (Exception e) {
             System.err.println("Note: Could not sync service_providers legacy columns: " + e.getMessage());
         }
+
+        // Seed default Super Admin account if none exists
+        try {
+            var count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM admin", Integer.class);
+            if (count == null || count == 0) {
+                // BCrypt hash for "Admin@123"
+                String hash = "$2a$10$7R0Z.yO1Vd4c.xKqP7.mqu91jW1NqZ1kE3hP7e4wLzX3Y1.t7Vzqu";
+                // Insert default admin
+                jdbcTemplate.update(
+                    "INSERT INTO admin (name, email, password) VALUES (?, ?, ?)",
+                    "Super Admin", "admin@gmail.com", "Admin@123"
+                );
+                System.out.println("Default Super Admin seeded: admin@gmail.com / Admin@123");
+            }
+        } catch (Exception e) {
+            System.err.println("Note: Could not check/seed default admin: " + e.getMessage());
+        }
     }
 }
