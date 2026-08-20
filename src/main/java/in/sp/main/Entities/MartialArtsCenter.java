@@ -164,8 +164,6 @@ public class MartialArtsCenter {
         this.changesRequestedNote = changesRequestedNote;
     }
 
-    public String getContactPerson() { return contactPerson; }
-    public void setContactPerson(String contactPerson) { this.contactPerson = contactPerson; }
 
     public String getAbout() { return about; }
     public void setAbout(String about) { this.about = about; }
