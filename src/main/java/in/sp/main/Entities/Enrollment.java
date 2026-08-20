@@ -179,4 +179,19 @@ public class Enrollment {
     public void setTransferUsed(Boolean transferUsed) { this.transferUsed = transferUsed; }
     public java.time.LocalDateTime getEnrolledAt() { return enrolledAt; }
     public void setEnrolledAt(java.time.LocalDateTime enrolledAt) { this.enrolledAt = enrolledAt; }
-}
+
+    // Renewal and Belt Progression Fields
+    private LocalDate nextRenewalDate;
+    private String renewalStatus = "ACTIVE"; // ACTIVE, DUE_SOON, DUE, GRACE_PERIOD, EXPIRED
+    private String billingCycle = "MONTHLY"; // MONTHLY, QUARTERLY, ANNUAL
+    private String currentBelt = "White";
+
+    public LocalDate getNextRenewalDate() { return nextRenewalDate; }
+    public void setNextRenewalDate(LocalDate nextRenewalDate) { this.nextRenewalDate = nextRenewalDate; }
+    public String getRenewalStatus() { return renewalStatus; }
+    public void setRenewalStatus(String renewalStatus) { this.renewalStatus = renewalStatus; }
+    public String getBillingCycle() { return billingCycle; }
+    public void setBillingCycle(String billingCycle) { this.billingCycle = billingCycle; }
+    public String getCurrentBelt() { return currentBelt; }
+    public void setCurrentBelt(String currentBelt) { this.currentBelt = currentBelt; }
+}

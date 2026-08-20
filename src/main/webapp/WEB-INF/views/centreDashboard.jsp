@@ -872,6 +872,12 @@
             <button class="nav-item" onclick="switchTab('attendance', this)">
                 <i class="bi bi-qr-code-scan"></i> QR Attendance
             </button>
+            <button class="nav-item" onclick="switchTab('grading', this)">
+                <i class="bi bi-award-fill"></i> Belt Grading & Skills
+            </button>
+            <button class="nav-item" onclick="switchTab('instructors', this)">
+                <i class="bi bi-person-badge-fill"></i> Instructor Staff
+            </button>
             <button class="nav-item" onclick="switchTab('live', this)">
                 <i class="bi bi-camera-video-fill"></i> Live Training
             </button>
@@ -882,6 +888,7 @@
                 <i class="bi bi-gear-fill"></i> Centre Settings
             </button>
         </div>
+
 
         <div class="sidebar-footer">
             <a href="${pageContext.request.contextPath}/centres/logout" class="btn-logout">
@@ -1262,24 +1269,125 @@
                 </div>
             </div>
 
-            <!-- Tab 4: Attendance -->
+            <!-- Tab 4: QR Attendance -->
             <div id="tab-attendance" class="tab-section">
                 <div class="content-panel">
                     <div class="panel-header">
-                        <div class="panel-title"><i class="bi bi-qr-code-scan text-danger"></i> QR Attendance & Daily Session Log</div>
+                        <div class="panel-title"><i class="bi bi-qr-code-scan text-danger"></i> Dynamic QR Attendance Engine</div>
+                        <a href="${pageContext.request.contextPath}/centres/attendance" class="btn-card-action" style="text-decoration:none;">
+                            <i class="bi bi-table me-1"></i> Open Full Roster Sheet
+                        </a>
                     </div>
-                    <div style="text-align: center; padding: 32px 16px;">
-                        <div style="width: 120px; height: 120px; margin: 0 auto 16px; background: var(--bg-page); border: 2px dashed var(--primary); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--primary);">
-                            <i class="bi bi-qr-code"></i>
+                    
+                    <!-- Session Generator Form -->
+                    <div style="background: var(--bg-page); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end;">
+                            <div>
+                                <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Select Training Batch *</label>
+                                <select id="qrBatchSelect" class="form-input-custom" style="background:white;">
+                                    <c:forEach var="b" items="${batches}">
+                                        <option value="${b.id}">${b.name} (${b.style} · ${b.timeSlot})</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Validity Window</label>
+                                <select id="qrDurationSelect" class="form-input-custom" style="background:white;">
+                                    <option value="15">15 Minutes (Standard Class Start)</option>
+                                    <option value="30">30 Minutes</option>
+                                    <option value="60">60 Minutes (Full Class Duration)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button type="button" class="btn-quick-add" onclick="generateQrSession()" style="width: 100%; justify-content: center;">
+                                    <i class="bi bi-qr-code"></i> Generate Active Session QR
+                                </button>
+                            </div>
                         </div>
-                        <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-bottom: 6px;">Daily QR Attendance Ready</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-gray); max-width: 420px; margin: 0 auto 16px;">Generate real-time QR code at class start for contactless trainee scanning and verified attendance logs.</p>
-                        <button class="btn-quick-add" style="margin: 0 auto;">Generate Session QR</button>
+                    </div>
+
+                    <!-- Active QR Display Area -->
+                    <div id="activeQrContainer" style="display: none; background: #FFFFFF; border: 2px solid var(--primary); border-radius: 20px; padding: 32px 24px; text-align: center; max-width: 520px; margin: 0 auto; box-shadow: 0 10px 30px rgba(244,63,94,0.1);">
+                        <span class="badge-custom badge-approved" style="margin-bottom: 12px; display: inline-block;">
+                            <i class="bi bi-broadcast me-1"></i> Live QR Session Active
+                        </span>
+                        <h3 id="qrBatchName" style="font-size: 1.2rem; font-weight: 800; color: var(--navy); margin-bottom: 4px;"></h3>
+                        <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 20px;">Students can scan this QR code using the Fight D Fear mobile app or enter the code to mark attendance.</p>
+                        
+                        <div style="background: #FFFFFF; padding: 16px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-bottom: 16px;">
+                            <img id="qrCodeImage" src="" alt="Session QR Code" style="width: 200px; height: 200px; display: block;">
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase;">Session Check-in Code:</span>
+                            <div id="qrTokenDisplay" style="font-family: monospace; font-size: 1.3rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin-top: 4px;"></div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
+                            <button type="button" class="btn-card-action" onclick="generateQrSession()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Refresh QR
+                            </button>
+                            <button type="button" class="btn-card-action danger" onclick="closeActiveQrSession()" style="background:#DC2626;color:white;">
+                                <i class="bi bi-stop-circle me-1"></i> End Session
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 5: Live Classes -->
+            <!-- Tab 5: Belt Grading & Skill Assessments -->
+            <div id="tab-grading" class="tab-section">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="bi bi-award-fill text-danger"></i> Belt Grading & Skill Assessments</div>
+                        <button class="btn-quick-add" onclick="openScheduleGradingModal()">
+                            <i class="bi bi-calendar-plus me-1"></i> Schedule Belt Exam
+                        </button>
+                    </div>
+
+                    <div style="margin-bottom: 24px; color: var(--text-gray); font-size: 0.9rem;">
+                        Evaluate student forms, katas, striking, grappling, and sparring. Submitting a passed assessment promotes the trainee's official belt rank and generates a digital certificate.
+                    </div>
+
+                    <!-- Grading Table -->
+                    <div class="table-responsive-custom">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Discipline</th>
+                                    <th>Rank Target</th>
+                                    <th>Scheduled / Exam Date</th>
+                                    <th>Overall Score</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gradingTableBody">
+                                <tr><td colspan="7" style="text-align:center; padding: 24px; color: var(--text-gray);">Loading grading assessments...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Instructor Staff -->
+            <div id="tab-instructors" class="tab-section">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div class="panel-title"><i class="bi bi-person-badge-fill text-danger"></i> Instructor Staff Roster</div>
+                        <button class="btn-quick-add" onclick="openAddInstructorModal()">
+                            <i class="bi bi-person-plus me-1"></i> Add Instructor
+                        </button>
+                    </div>
+                    
+                    <div id="instructorGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px;">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 7: Live Classes -->
             <div id="tab-live" class="tab-section">
                 <div class="content-panel">
                     <div class="panel-header">
@@ -1289,7 +1397,7 @@
                 </div>
             </div>
 
-            <!-- Tab 6: Finance -->
+            <!-- Tab 8: Finance -->
             <div id="tab-finance" class="tab-section">
                 <div class="content-panel">
                     <div class="panel-header">
@@ -1313,7 +1421,7 @@
                 </div>
             </div>
 
-            <!-- Tab 7: Profile -->
+            <!-- Tab 9: Profile -->
             <div id="tab-profile" class="tab-section">
                 <div class="content-panel">
                     <div class="panel-header">
@@ -1325,6 +1433,7 @@
                     </a>
                 </div>
             </div>
+
 
         </div>
     </div>
@@ -1539,7 +1648,172 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- JAVASCRIPT: TAB & BATCH MANAGEMENT CONTROLLER -->
+    <!-- SCHEDULE BELT GRADING MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="scheduleGradingOverlay">
+        <div class="modal-window" style="max-width: 540px;">
+            <div class="modal-header-custom">
+                <h3><i class="bi bi-calendar-plus me-2"></i> Schedule Belt Examination</h3>
+                <button type="button" class="btn-modal-close" onclick="closeScheduleGradingModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="scheduleGradingForm" onsubmit="handleScheduleGradingSubmit(event)">
+                <div class="modal-body-custom">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Select Student / Trainee *</label>
+                        <select id="gradStudentSelect" class="form-input-custom" required>
+                            <c:forEach var="e" items="${enrollments}">
+                                <c:if test="${e.user != null}">
+                                    <option value="${e.user.id}">${not empty e.fullName ? e.fullName : e.user.fullName} (${e.batch != null ? e.batch.name : 'Enrolled'}) · Current: ${not empty e.currentBelt ? e.currentBelt : 'White'}</option>
+                                </c:if>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Discipline / Style *</label>
+                            <select id="gradDisciplineSelect" class="form-input-custom" required>
+                                <option value="Karate">Karate</option>
+                                <option value="Taekwondo">Taekwondo</option>
+                                <option value="Judo">Judo</option>
+                                <option value="Boxing">Boxing</option>
+                                <option value="MMA">MMA</option>
+                                <option value="Kickboxing">Kickboxing</option>
+                                <option value="Self-Defence">Self-Defence / Krav Maga</option>
+                                <option value="Kung Fu">Kung Fu</option>
+                                <option value="Kalaripayattu">Kalaripayattu</option>
+                                <option value="Other">Other Martial Art</option>
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Target Belt Rank *</label>
+                            <select id="gradTargetBelt" class="form-input-custom" required>
+                                <option value="Yellow">Yellow Belt</option>
+                                <option value="Orange">Orange Belt</option>
+                                <option value="Green">Green Belt</option>
+                                <option value="Blue">Blue Belt</option>
+                                <option value="Purple">Purple Belt</option>
+                                <option value="Brown">Brown Belt</option>
+                                <option value="Red">Red Belt</option>
+                                <option value="Black">Black Belt (1st Dan)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Examination Date *</label>
+                            <input type="date" id="gradDate" class="form-input-custom" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Examiner / Master Trainer</label>
+                            <input type="text" id="gradTrainer" class="form-input-custom" value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}" placeholder="Trainer Name">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-card-action" onclick="closeScheduleGradingModal()">Cancel</button>
+                    <button type="submit" id="btnSubmitScheduleGrading" class="btn-quick-add">
+                        <i class="bi bi-check-circle-fill"></i> Schedule Examination
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CONDUCT & SCORE ASSESSMENT MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="scoreGradingOverlay">
+        <div class="modal-window" style="max-width: 620px;">
+            <div class="modal-header-custom">
+                <h3 id="scoreModalTitle"><i class="bi bi-award me-2"></i> Grade Student Technique</h3>
+                <button type="button" class="btn-modal-close" onclick="closeScoreGradingModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="scoreGradingForm" onsubmit="handleScoreGradingSubmit(event)">
+                <div class="modal-body-custom">
+                    <input type="hidden" id="scoreAssessmentId">
+                    <div id="scoreCriteriaContainer" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+                        <!-- Injected discipline-specific sliders -->
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Examiner Feedback / Technique Remarks</label>
+                        <textarea id="scoreRemarks" class="form-input-custom" rows="2" placeholder="e.g. Excellent kata precision; work on hip rotation during roundhouse kicks."></textarea>
+                    </div>
+                    <div style="background: #F8FAFC; padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-weight: 700; color: var(--navy); font-size: 0.9rem; display:block;">Instant Promotion & Certificate</span>
+                            <span style="font-size: 0.78rem; color: var(--text-gray);">If score is ≥ 60%, automatically promote student and issue digital certificate.</span>
+                        </div>
+                        <input type="checkbox" id="scoreAutoPromote" checked style="width: 18px; height: 18px; accent-color: var(--primary);">
+                    </div>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-card-action" onclick="closeScoreGradingModal()">Cancel</button>
+                    <button type="submit" id="btnSubmitScore" class="btn-quick-add">
+                        <i class="bi bi-award-fill"></i> Submit Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ADD INSTRUCTOR MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="addInstructorOverlay">
+        <div class="modal-window" style="max-width: 500px;">
+            <div class="modal-header-custom">
+                <h3><i class="bi bi-person-plus me-2"></i> Add Instructor Staff</h3>
+                <button type="button" class="btn-modal-close" onclick="closeAddInstructorModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="addInstructorForm" onsubmit="handleAddInstructorSubmit(event)">
+                <div class="modal-body-custom">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Instructor Full Name *</label>
+                        <input type="text" id="instName" class="form-input-custom" placeholder="e.g. Sensei Rahul Sharma" required>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Designation *</label>
+                            <input type="text" id="instDesignation" class="form-input-custom" placeholder="e.g. Chief Instructor / Black Belt Coach" value="Instructor" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Experience</label>
+                            <input type="text" id="instExp" class="form-input-custom" placeholder="e.g. 5+ years" value="3+ years">
+                        </div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Specialization / Core Style</label>
+                        <input type="text" id="instSpec" class="form-input-custom" placeholder="e.g. Kumite, Katas & Self-Defense" value="General Martial Arts">
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Phone Number</label>
+                            <input type="tel" id="instPhone" class="form-input-custom" placeholder="10 digits">
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Email Address</label>
+                            <input type="email" id="instEmail" class="form-input-custom" placeholder="coach@example.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-card-action" onclick="closeAddInstructorModal()">Cancel</button>
+                    <button type="submit" id="btnSubmitInst" class="btn-quick-add">
+                        <i class="bi bi-check-circle-fill"></i> Save Instructor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- JAVASCRIPT: TAB, QR, BELT GRADING & STAFF CONTROLLERS -->
     <!-- ========================================================================= -->
     <script>
         const contextPath = '${pageContext.request.contextPath}';
@@ -1550,29 +1824,308 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
             const target = document.getElementById('tab-' + tabId);
-            if (target) {
-                target.classList.add('active');
-            }
-            if (btn) {
-                btn.classList.add('active');
+            if (target) target.classList.add('active');
+            if (btn) btn.classList.add('active');
+
+            if (tabId === 'grading') {
+                loadGradingAssessments();
+            } else if (tabId === 'instructors') {
+                loadInstructors();
             }
         }
 
-        // Filter batches by style chip
-        function filterBatchesByStyle(style) {
-            document.querySelectorAll('.discipline-chip').forEach(c => c.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.querySelectorAll('.batch-card').forEach(card => {
-                const cardStyle = card.getAttribute('data-style');
-                if (!style || style === 'All' || cardStyle.toLowerCase().includes(style.toLowerCase())) {
-                    card.style.display = 'flex';
+        // ==========================================
+        // DYNAMIC QR ATTENDANCE
+        // ==========================================
+        let currentQrSessionId = null;
+
+        function generateQrSession() {
+            const batchId = document.getElementById('qrBatchSelect').value;
+            const duration = document.getElementById('qrDurationSelect').value;
+            if (!batchId) { alert('Please select a batch first'); return; }
+
+            fetch(contextPath + '/centres/api/qr-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ batchId: batchId, duration: duration })
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    currentQrSessionId = res.sessionId;
+                    document.getElementById('activeQrContainer').style.display = 'block';
+                    document.getElementById('qrBatchName').innerText = res.batchName + ' (' + res.sessionDate + ')';
+                    document.getElementById('qrTokenDisplay').innerText = res.token;
+                    
+                    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(res.token);
+                    document.getElementById('qrCodeImage').src = qrUrl;
+                    window.scrollTo({ top: document.getElementById('activeQrContainer').offsetTop - 60, behavior: 'smooth' });
                 } else {
-                    card.style.display = 'none';
+                    alert(res.error || 'Failed to start QR session');
+                }
+            })
+            .catch(err => alert('QR request error: ' + err));
+        }
+
+        function closeActiveQrSession() {
+            if (!currentQrSessionId) return;
+            fetch(contextPath + '/centres/api/qr-session/' + currentQrSessionId + '/close', { method: 'POST' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || 'QR session closed');
+                    document.getElementById('activeQrContainer').style.display = 'none';
+                    currentQrSessionId = null;
+                });
+        }
+
+        // ==========================================
+        // BELT GRADING & SKILL ASSESSMENTS
+        // ==========================================
+        function loadGradingAssessments() {
+            fetch(contextPath + '/centres/api/gradings')
+                .then(r => r.json())
+                .then(res => {
+                    const tbody = document.getElementById('gradingTableBody');
+                    if (!res.success || !res.gradings || res.gradings.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-gray);"><i class="bi bi-info-circle me-1"></i> No belt grading examinations scheduled yet. Click <strong>Schedule Belt Exam</strong> to evaluate a trainee.</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    res.gradings.forEach(g => {
+                        const statusClass = g.status === 'PROMOTED' ? 'badge-approved' : (g.status === 'PASSED' ? 'badge-approved' : (g.status === 'FAILED' ? 'badge-rejected' : 'badge-pending'));
+                        html += '<tr>' +
+                            '<td><strong>' + (g.studentName || 'Student') + '</strong></td>' +
+                            '<td>' + (g.discipline || 'Martial Arts') + '</td>' +
+                            '<td><span style="font-weight:700; color:var(--primary);">' + (g.targetBelt || 'Yellow') + ' Belt</span> <span style="font-size:0.75rem; color:var(--text-gray);">(from ' + (g.previousBelt || 'White') + ')</span></td>' +
+                            '<td>' + (g.assessmentDate || g.scheduledDate || 'Scheduled') + '</td>' +
+                            '<td>' + (g.overallScore != null ? '<strong>' + g.overallScore + '/100</strong>' : '—') + '</td>' +
+                            '<td><span class="badge-custom ' + statusClass + '">' + g.status + '</span></td>' +
+                            '<td style="text-align:right;">';
+                        
+                        if (g.status === 'SCHEDULED') {
+                            html += '<button class="btn-card-action primary" onclick="openScoreGradingModal(' + g.id + ', \'' + g.discipline + '\', \'' + g.studentName + '\')"><i class="bi bi-pencil-square"></i> Grade</button>';
+                        } else if (g.status === 'PASSED') {
+                            html += '<button class="btn-card-action primary" onclick="approvePromotion(' + g.id + ')"><i class="bi bi-check-circle"></i> Approve Promotion</button>';
+                        } else if (g.status === 'PROMOTED' && g.certificatePath) {
+                            html += '<span class="badge-custom badge-approved"><i class="bi bi-award-fill me-1"></i> Certified</span>';
+                        }
+                        html += '</td></tr>';
+                    });
+                    tbody.innerHTML = html;
+                })
+                .catch(() => {
+                    document.getElementById('gradingTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--error); padding:20px;">Could not load assessments</td></tr>';
+                });
+        }
+
+        function openScheduleGradingModal() {
+            document.getElementById('gradDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('scheduleGradingOverlay').classList.add('open');
+        }
+
+        function closeScheduleGradingModal() {
+            document.getElementById('scheduleGradingOverlay').classList.remove('open');
+        }
+
+        function handleScheduleGradingSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                studentId: document.getElementById('gradStudentSelect').value,
+                discipline: document.getElementById('gradDisciplineSelect').value,
+                targetBelt: document.getElementById('gradTargetBelt').value,
+                scheduledDate: document.getElementById('gradDate').value,
+                trainerName: document.getElementById('gradTrainer').value.trim()
+            };
+
+            fetch(contextPath + '/centres/api/gradings/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    closeScheduleGradingModal();
+                    loadGradingAssessments();
+                    alert('Belt grading exam scheduled successfully!');
+                } else {
+                    alert(res.error || 'Failed to schedule');
                 }
             });
         }
 
-        // Day chip toggle
+        function openScoreGradingModal(id, discipline, studentName) {
+            document.getElementById('scoreAssessmentId').value = id;
+            document.getElementById('scoreModalTitle').innerHTML = '<i class="bi bi-award me-2"></i> Grade ' + studentName + ' (' + discipline + ')';
+            
+            fetch(contextPath + '/centres/api/grading/criteria?discipline=' + encodeURIComponent(discipline))
+                .then(r => r.json())
+                .then(res => {
+                    const container = document.getElementById('scoreCriteriaContainer');
+                    let html = '';
+                    const criteria = res.criteria || ['Stance', 'Technique', 'Execution', 'Conditioning', 'Discipline'];
+                    criteria.forEach((c, idx) => {
+                        const safeId = 'crit_' + idx;
+                        html += '<div>' +
+                            '<div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700; color:var(--navy); margin-bottom:4px;">' +
+                            '<span>' + c + '</span>' +
+                            '<span id="val_' + safeId + '" style="color:var(--primary); font-weight:800;">80/100</span>' +
+                            '</div>' +
+                            '<input type="range" id="' + safeId + '" data-name="' + c + '" min="0" max="100" value="80" style="width:100%; accent-color:var(--primary);" oninput="document.getElementById(\'val_' + safeId + '\').innerText = this.value + \'/100\'">' +
+                            '</div>';
+                    });
+                    container.innerHTML = html;
+                    document.getElementById('scoreGradingOverlay').classList.add('open');
+                });
+        }
+
+        function closeScoreGradingModal() {
+            document.getElementById('scoreGradingOverlay').classList.remove('open');
+        }
+
+        function handleScoreGradingSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('scoreAssessmentId').value;
+            const scores = {};
+            document.querySelectorAll('#scoreCriteriaContainer input[type="range"]').forEach(input => {
+                scores[input.getAttribute('data-name')] = parseInt(input.value);
+            });
+
+            const payload = {
+                scores: scores,
+                remarks: document.getElementById('scoreRemarks').value.trim(),
+                autoPromote: document.getElementById('scoreAutoPromote').checked
+            };
+
+            fetch(contextPath + '/centres/api/gradings/' + id + '/score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    closeScoreGradingModal();
+                    loadGradingAssessments();
+                    alert(res.message);
+                } else {
+                    alert(res.error || 'Failed to submit score');
+                }
+            });
+        }
+
+        function approvePromotion(id) {
+            if (confirm('Approve promotion and issue official digital Belt Promotion Certificate?')) {
+                fetch(contextPath + '/centres/api/gradings/' + id + '/promote', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            loadGradingAssessments();
+                            alert(res.message);
+                        } else {
+                            alert(res.error || 'Approval failed');
+                        }
+                    });
+            }
+        }
+
+        // ==========================================
+        // INSTRUCTOR STAFF ROSTER
+        // ==========================================
+        function loadInstructors() {
+            fetch(contextPath + '/centres/api/instructors')
+                .then(r => r.json())
+                .then(res => {
+                    const grid = document.getElementById('instructorGrid');
+                    if (!res.success || !res.instructors || res.instructors.length === 0) {
+                        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding:32px; background:var(--bg-page); border-radius:16px; color:var(--text-gray);">' +
+                            '<i class="bi bi-person-badge" style="font-size:2rem; display:block; margin-bottom:8px;"></i> No additional assistant instructors registered yet.<br>Click <strong>Add Instructor</strong> to build your coaching staff.</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    res.instructors.forEach(inst => {
+                        html += '<div style="background:white; border:1px solid var(--border-color); border-radius:16px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,0.02);">' +
+                            '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">' +
+                            '<div><h4 style="font-size:1rem; font-weight:800; color:var(--navy); margin-bottom:2px;">' + inst.name + '</h4>' +
+                            '<span style="font-size:0.8rem; font-weight:700; color:var(--primary);">' + (inst.designation || 'Instructor') + '</span></div>' +
+                            '<button class="btn-card-action danger" onclick="removeInstructor(' + inst.id + ')" style="padding:4px 8px; font-size:0.75rem;"><i class="bi bi-trash"></i></button>' +
+                            '</div>' +
+                            '<div style="font-size:0.82rem; color:var(--text-gray); line-height:1.5;">' +
+                            '<div><strong>Specialization:</strong> ' + (inst.specialization || 'General') + '</div>' +
+                            '<div><strong>Experience:</strong> ' + (inst.experienceYears || '1+ yrs') + '</div>' +
+                            (inst.phone ? '<div><strong>Phone:</strong> ' + inst.phone + '</div>' : '') +
+                            (inst.email ? '<div><strong>Email:</strong> ' + inst.email + '</div>' : '') +
+                            '</div></div>';
+                    });
+                    grid.innerHTML = html;
+                });
+        }
+
+        function openAddInstructorModal() {
+            document.getElementById('addInstructorOverlay').classList.add('open');
+        }
+
+        function closeAddInstructorModal() {
+            document.getElementById('addInstructorOverlay').classList.remove('open');
+        }
+
+        function handleAddInstructorSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('instName').value.trim(),
+                designation: document.getElementById('instDesignation').value.trim(),
+                experienceYears: document.getElementById('instExp').value.trim(),
+                specialization: document.getElementById('instSpec').value.trim(),
+                phone: document.getElementById('instPhone').value.trim(),
+                email: document.getElementById('instEmail').value.trim()
+            };
+
+            fetch(contextPath + '/centres/api/instructors', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    closeAddInstructorModal();
+                    loadInstructors();
+                    alert('Instructor added successfully!');
+                } else {
+                    alert(res.error || 'Failed to add instructor');
+                }
+            });
+        }
+
+        function removeInstructor(id) {
+            if (confirm('Remove instructor from your centre roster?')) {
+                fetch(contextPath + '/centres/api/instructors/' + id, { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            loadInstructors();
+                        } else {
+                            alert(res.error || 'Failed to remove');
+                        }
+                    });
+            }
+        }
+
+        // ==========================================
+        // BATCH MANAGEMENT CONTROLLER
+        // ==========================================
+        function openAddBatchModal() {
+            document.getElementById('batchForm').reset();
+            document.getElementById('batchId').value = '';
+            document.getElementById('batchModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i> Create Martial Arts Batch';
+            document.getElementById('btnSubmitBatch').innerHTML = '<i class="bi bi-check-circle-fill"></i> Save / Create Batch';
+            document.getElementById('btnSubmitBatch').disabled = false;
+            setDayChipsFromCSV('Mon,Tue,Wed,Thu,Fri');
+            document.getElementById('batchModalOverlay').classList.add('open');
+        }
+
         function toggleDayChip(el) {
             el.classList.toggle('selected');
             updateSelectedDaysInput();
@@ -1599,18 +2152,6 @@
             updateSelectedDaysInput();
         }
 
-        // Open Add Modal
-        function openAddBatchModal() {
-            document.getElementById('batchForm').reset();
-            document.getElementById('batchId').value = '';
-            document.getElementById('batchModalTitle').innerHTML = '<i class="bi bi-plus-circle me-2"></i> Create Martial Arts Batch';
-            document.getElementById('btnSubmitBatch').innerHTML = '<i class="bi bi-check-circle-fill"></i> Save / Create Batch';
-            document.getElementById('btnSubmitBatch').disabled = false;
-            setDayChipsFromCSV('Mon,Tue,Wed,Thu,Fri');
-            document.getElementById('batchModalOverlay').classList.add('open');
-        }
-
-        // Open Edit Modal
         function openEditBatchModal(id) {
             fetch(contextPath + '/centres/batches/details/' + id)
                 .then(r => r.json())
@@ -1625,7 +2166,6 @@
                     document.getElementById('batchName').value = b.name || '';
                     document.getElementById('batchInstructor').value = b.instructor || '';
                     
-                    // Parse timeslot
                     if (b.timeSlot && b.timeSlot.includes('-')) {
                         const parts = b.timeSlot.split('-');
                         document.getElementById('batchStartTime').value = parts[0].trim();
@@ -1656,10 +2196,8 @@
             document.getElementById('batchModalOverlay').classList.remove('open');
         }
 
-        // Save / Update Batch AJAX
         function handleBatchFormSubmit(e) {
             e.preventDefault();
-            const form = document.getElementById('batchForm');
             const startTime = document.getElementById('batchStartTime').value.trim();
             const endTime = document.getElementById('batchEndTime').value.trim();
             const timeSlot = startTime + ' - ' + endTime;
@@ -1711,14 +2249,7 @@
                 btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Save / Create Batch';
                 if (res.success) {
                     closeBatchModal();
-                    // Show notification with '+ Add Another Batch' option
-                    const banner = document.getElementById('batchSuccessBanner');
-                    if (banner) {
-                        banner.style.display = 'flex';
-                        banner.innerHTML = '<div><i class="bi bi-check-circle-fill text-success me-2"></i> Batch <strong>' + name + '</strong> saved successfully!</div>' +
-                            '<button type="button" class="btn-card-action primary" onclick="openAddBatchModal()"><i class="bi bi-plus-circle"></i> + Add Another Batch</button>';
-                    }
-                    setTimeout(() => { window.location.reload(); }, 600);
+                    window.location.reload();
                 } else {
                     alert(res.message || 'Failed to save batch');
                 }
@@ -1730,7 +2261,6 @@
             });
         }
 
-        // Open Batch Details Modal
         function openBatchDetailsModal(id) {
             fetch(contextPath + '/centres/batches/details/' + id)
                 .then(r => r.json())
@@ -1765,23 +2295,6 @@
             document.getElementById('batchDetailsOverlay').classList.remove('open');
         }
 
-        // Toggle Status
-        function toggleBatchStatus(id, currentStatus) {
-            const nextStatus = currentStatus === 'Active' ? 'Closed' : 'Active';
-            if (confirm('Change batch status to ' + nextStatus + '?')) {
-                fetch(contextPath + '/centres/batches/status/' + id + '?status=' + nextStatus, { method: 'POST' })
-                    .then(r => r.json())
-                    .then(res => {
-                        if (res.success) {
-                            window.location.reload();
-                        } else {
-                            alert(res.message || 'Could not change status');
-                        }
-                    });
-            }
-        }
-
-        // Delete Batch Dialog
         let activeDeleteId = null;
         function confirmDeleteBatch(id, name) {
             activeDeleteId = id;

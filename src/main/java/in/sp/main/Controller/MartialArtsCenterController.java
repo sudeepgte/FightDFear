@@ -8,7 +8,10 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -72,6 +75,19 @@ public class MartialArtsCenterController {
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
 
+
+    @Autowired
+    private in.sp.main.Service.QrAttendanceService qrAttendanceService;
+
+    @Autowired
+    private in.sp.main.Service.BeltGradingService beltGradingService;
+
+    @Autowired
+    private in.sp.main.Repository.CentreInstructorRepository instructorRepository;
+
+    @Autowired
+    private in.sp.main.Service.OtpVerificationService otpVerificationService;
+
     public MartialArtsCenterController(MartialArtsCenterService centreService, ObjectMapper objectMapper) {
         this.centreService = centreService;
         this.objectMapper = objectMapper;
@@ -118,6 +134,13 @@ public class MartialArtsCenterController {
                 redirectAttributes.addFlashAttribute("error", "Email already exists. Please sign in.");
                 return "redirect:/centres/login";
             }
+
+            // Enforce verified Email OTP (parity with mobile)
+            if (!otpVerificationService.consumeVerifiedOtp(email, OtpPurpose.CENTRE_REGISTER, 15)) {
+                redirectAttributes.addFlashAttribute("error", "Email verification required. Please verify your OTP before registering.");
+                return "redirect:/centres/registerCentre";
+            }
+
 
             if (center.getPhoneNumber() == null || !center.getPhoneNumber().trim().matches("^\\d{10}$")) {
                 redirectAttributes.addFlashAttribute("error", "Phone number must be exactly 10 digits.");
@@ -1243,4 +1266,254 @@ public class MartialArtsCenterController {
         }
         return response;
     }
+
+    // ==========================================
+    // QR ATTENDANCE SESSIONS (CENTRE / TRAINER)
+    // ==========================================
+
+    @PostMapping("/api/qr-session")
+    @ResponseBody
+    public ResponseEntity<?> createQrSession(@RequestBody Map<String, Object> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Long batchId = Long.parseLong(body.get("batchId").toString());
+            String dateStr = (String) body.get("date");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            int duration = body.get("duration") != null ? Integer.parseInt(body.get("duration").toString()) : 15;
+
+            QrAttendanceSession qrSession = qrAttendanceService.createOrRefreshSession(centre, batchId, date, duration);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("batchId", batchId);
+            res.put("batchName", qrSession.getBatch().getName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("active", qrSession.isActive());
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/api/qr-session")
+    @ResponseBody
+    public ResponseEntity<?> getActiveQrSession(@RequestParam Long batchId, @RequestParam(required = false) String date, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        LocalDate sessionDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now();
+        Optional<QrAttendanceSession> opt = qrAttendanceService.getActiveSession(batchId, sessionDate);
+
+        if (opt.isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", false, "active", false, "message", "No active QR session for this batch today"));
+        }
+
+        QrAttendanceSession s = opt.get();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("active", true);
+        res.put("sessionId", s.getId());
+        res.put("token", s.getToken());
+        res.put("batchName", s.getBatch().getName());
+        res.put("sessionDate", s.getSessionDate().toString());
+        res.put("expiresAt", s.getExpiresAt().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/api/qr-session/{id}/close")
+    @ResponseBody
+    public ResponseEntity<?> closeQrSession(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            qrAttendanceService.closeSession(id, centre);
+            return ResponseEntity.ok(Map.of("success", true, "message", "QR attendance session closed successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    // ==========================================
+    // BELT GRADING & SKILL ASSESSMENTS (CENTRE)
+    // ==========================================
+
+    @GetMapping("/api/grading/criteria")
+    @ResponseBody
+    public ResponseEntity<?> getGradingCriteria(@RequestParam(required = false) String discipline) {
+        List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
+        List<String> belts = beltGradingService.getBeltHierarchy(discipline);
+        return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
+    }
+
+    @GetMapping("/api/gradings")
+    @ResponseBody
+    public ResponseEntity<?> getCentreGradings(HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        List<Map<String, Object>> list = beltGradingService.getCentreGradingHistory(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "gradings", list));
+    }
+
+    @PostMapping("/api/gradings/schedule")
+    @ResponseBody
+    public ResponseEntity<?> scheduleGrading(@RequestBody Map<String, Object> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Long studentId = Long.parseLong(body.get("studentId").toString());
+            Long batchId = body.get("batchId") != null ? Long.parseLong(body.get("batchId").toString()) : null;
+            String discipline = (String) body.get("discipline");
+            String targetBelt = (String) body.get("targetBelt");
+            String dateStr = (String) body.get("scheduledDate");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            String trainer = (String) body.get("trainerName");
+
+            BeltGradingAssessment assessment = beltGradingService.scheduleGrading(
+                    centre, studentId, batchId, discipline, targetBelt, date, trainer
+            );
+            return ResponseEntity.ok(Map.of("success", true, "message", "Grading scheduled successfully", "assessment", beltGradingService.assessmentSummary(assessment)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/gradings/{id}/score")
+    @ResponseBody
+    public ResponseEntity<?> conductAssessment(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Map<String, Integer> criteriaScores = (Map<String, Integer>) body.get("scores");
+            String remarks = (String) body.get("remarks");
+            String examinerNotes = (String) body.get("examinerNotes");
+            String trainerName = (String) body.get("trainerName");
+            boolean autoPromote = body.get("autoPromote") != null && Boolean.parseBoolean(body.get("autoPromote").toString());
+
+            BeltGradingAssessment assessment = beltGradingService.conductAndScoreAssessment(
+                    centre, id, criteriaScores, remarks, examinerNotes, trainerName, autoPromote
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", assessment.getPassed() ? "Assessment passed! " + (autoPromote ? "Student promoted & Certificate generated." : "Awaiting approval.") : "Assessment submitted as Failed.",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/gradings/{id}/promote")
+    @ResponseBody
+    public ResponseEntity<?> approveAndPromote(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            BeltGradingAssessment assessment = beltGradingService.approveAndPromote(centre, id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Belt promotion approved! Digital Certificate generated.",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    // ==========================================
+    // INSTRUCTOR STAFF MANAGEMENT (CENTRE)
+    // ==========================================
+
+    @GetMapping("/api/instructors")
+    @ResponseBody
+    public ResponseEntity<?> getInstructors(HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        List<CentreInstructor> list = instructorRepository.findByCenter_IdAndActiveTrue(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "instructors", list));
+    }
+
+    @PostMapping("/api/instructors")
+    @ResponseBody
+    public ResponseEntity<?> createInstructor(@RequestBody Map<String, String> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        String name = body.get("name");
+        if (name == null || name.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Instructor name is required"));
+        }
+
+        CentreInstructor inst = new CentreInstructor();
+        inst.setCenter(centre);
+        inst.setName(name.trim());
+        inst.setEmail(body.get("email"));
+        inst.setPhone(body.get("phone"));
+        inst.setDesignation(body.getOrDefault("designation", "Instructor"));
+        inst.setSpecialization(body.getOrDefault("specialization", "General Martial Arts"));
+        inst.setExperienceYears(body.getOrDefault("experienceYears", "1+ years"));
+        inst.setActive(true);
+        instructorRepository.save(inst);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor added successfully", "instructor", inst));
+    }
+
+    @DeleteMapping("/api/instructors/{id}")
+    @ResponseBody
+    public ResponseEntity<?> removeInstructor(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        CentreInstructor inst = instructorRepository.findById(id).orElse(null);
+        if (inst == null || !inst.getCenter().getId().equals(centre.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Instructor not found"));
+        }
+        inst.setActive(false);
+        instructorRepository.save(inst);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor removed successfully"));
+    }
+
+    // ==========================================
+    // STUDENT RENEWAL & GRACE PERIOD
+    // ==========================================
+
+    @PostMapping("/api/enrollments/{id}/renewal")
+    @ResponseBody
+    public ResponseEntity<?> updateRenewal(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        Enrollment e = enrollmentRepository.findById(id).orElse(null);
+        if (e == null || e.getCenter() == null || !e.getCenter().getId().equals(centre.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Enrollment not found"));
+        }
+
+        String renewalStatus = body.get("renewalStatus");
+        String nextDueDateStr = body.get("nextRenewalDate");
+
+        if (renewalStatus != null) e.setRenewalStatus(renewalStatus);
+        if (nextDueDateStr != null && !nextDueDateStr.isBlank()) {
+            e.setNextRenewalDate(LocalDate.parse(nextDueDateStr));
+        }
+        enrollmentRepository.save(e);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Renewal status updated"));
+    }
 }
+
