@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ModuleTheme {
   static const Color primary = Color(0xFFF43F5E);
@@ -31,6 +32,29 @@ class ModuleTheme {
           ],
         ),
       ),
+    );
+  }
+
+  /// Cached network image for listing avatars and product thumbnails.
+  static Widget networkImage(
+    String url, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+    Widget? placeholder,
+    Widget? error,
+  }) {
+    if (url.isEmpty) {
+      return error ?? const SizedBox.shrink();
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: width,
+      height: height,
+      fit: fit,
+      placeholder: (_, __) =>
+          placeholder ?? const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      errorWidget: (_, __, ___) => error ?? const Icon(Icons.broken_image_outlined),
     );
   }
 }

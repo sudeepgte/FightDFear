@@ -6,23 +6,32 @@ class SosService {
 
   final ApiClient _api;
 
-  Future<Map<String, dynamic>> getActive() => _api.get('/api/sos/active');
+  static const _sosTimeout = Duration(seconds: 30);
+
+  Future<Map<String, dynamic>> getActive() =>
+      _api.get('/api/sos/active', timeout: _sosTimeout);
 
   Future<Map<String, dynamic>> trigger({
     required double latitude,
     required double longitude,
   }) {
-    return _api.post('/api/sos/trigger', body: {
-      'latitude': latitude.toString(),
-      'longitude': longitude.toString(),
-    });
+    return _api.post(
+      '/api/sos/trigger',
+      body: {
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+      },
+      // Trigger can notify contacts/email — allow longer than default API timeout.
+      timeout: _sosTimeout,
+    );
   }
 
   Future<Map<String, dynamic>> getStatus(int sosId) =>
-      _api.get('/api/sos/status/$sosId');
+      _api.get('/api/sos/status/$sosId', timeout: _sosTimeout);
 
   Future<Map<String, dynamic>> cancel(int sosId) =>
-      _api.post('/api/sos/cancel/$sosId', body: <String, dynamic>{});
+      _api.post('/api/sos/cancel/$sosId', body: <String, dynamic>{}, timeout: _sosTimeout);
 
-  Future<Map<String, dynamic>> history() => _api.get('/api/sos/history');
+  Future<Map<String, dynamic>> history() =>
+      _api.get('/api/sos/history', timeout: _sosTimeout);
 }

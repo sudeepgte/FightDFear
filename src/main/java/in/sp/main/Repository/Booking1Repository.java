@@ -60,4 +60,6 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
     List<Booking1> findByBookingDateBetweenAndStatusInIgnoreCase(
             LocalDate from, LocalDate to, Collection<String> statuses);
+
+    boolean existsByUser_IdAndSalon_IdAndStatusIgnoreCase(Long userId, Long salonId, String status);
 }
