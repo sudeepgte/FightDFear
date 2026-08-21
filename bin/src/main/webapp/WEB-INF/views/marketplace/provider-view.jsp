@@ -14,7 +14,7 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -188,16 +188,26 @@
 </head>
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
 
     <div class="profile-header">
         <div class="container">
             <a href="${pageContext.request.contextPath}/marketplace/list?category=${provider.category}" class="back-link">
-                <i class="bi bi-arrow-left"></i> Back to ${provider.category}s
+                <i class="bi bi-arrow-left"></i> Back to ${not empty categoryLabel ? categoryLabel : provider.category}s
             </a>
             <div class="d-flex align-items-center">
-                <div class="profile-avatar-large">
-                    ${provider.fullName.charAt(0)}
-                </div>
+                <c:choose>
+                    <c:when test="${not empty provider.profilePhoto}">
+                        <img src="${pageContext.request.contextPath}${provider.profilePhoto}" alt="${provider.fullName}" class="rounded-4 me-4 border shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
+                    </c:when>
+                    <c:otherwise>
+                        <div class="profile-avatar-large">
+                            ${provider.fullName.charAt(0)}
+                        </div>
+                    </c:otherwise>
+                </c:choose>
                 <div class="provider-info">
                     <div class="d-flex align-items-center">
                         <h1>${provider.fullName}</h1>
@@ -207,12 +217,29 @@
                         <i class="bi bi-geo-alt-fill text-danger me-1"></i> ${provider.locationText} &bull; 
                         <span class="ms-2"><i class="fas fa-star text-warning"></i> <b>${provider.rating > 0 ? provider.rating : 'New'}</b></span>
                     </div>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <c:if test="${not empty provider.qualification}">
+                            <span class="badge bg-light text-dark border px-3 py-2"><i class="bi bi-award me-1 text-primary"></i> ${provider.qualification}</span>
+                        </c:if>
+                        <c:if test="${not empty provider.experience}">
+                            <span class="badge bg-light text-dark border px-3 py-2"><i class="bi bi-clock-history me-1 text-success"></i> ${provider.experience}</span>
+                        </c:if>
+                        <c:if test="${not empty provider.availableDays}">
+                            <span class="badge bg-light text-dark border px-3 py-2"><i class="bi bi-calendar-check me-1 text-info"></i> ${provider.availableDays}</span>
+                        </c:if>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="container mb-5">
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </c:if>
         <c:if test="${not empty message}">
             <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> ${message}
@@ -367,6 +394,8 @@
             }
         });
     </script>
+    </div>
+</div>
 </body>
 </html>
 

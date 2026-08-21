@@ -88,6 +88,12 @@ public class AdminController {
     private EntrepreneurProfileService entrepreneurProfileService;
 
     @Autowired
+    private CentreProfileService centreProfileService;
+
+    @Autowired
+    private MartialArtsCenterRepository centreRepository;
+
+    @Autowired
     private InvestorProfileService investorProfileService;
 
     @Autowired
@@ -2714,6 +2720,66 @@ public class AdminController {
         fitnessTrainerRepository.save(trainer);
         ra.addFlashAttribute("message", "Changes requested from trainer.");
         return "redirect:/admin/pending-trainers";
+    }
+
+    // ==========================================
+    // COMPLETE PROVIDER PROFILE REVIEW ENDPOINTS
+    // ==========================================
+
+    @GetMapping({"/fitness/trainer/{id}", "/trainers/{id}"})
+    public String viewFitnessTrainerReviewProfile(@PathVariable Long id, Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+        if (trainer == null) {
+            return "redirect:/admin/pending-trainers";
+        }
+        model.addAttribute("trainer", trainer);
+        return "adminFitnessTrainerProfile";
+    }
+
+    @PostMapping("/centres/{id}/approve")
+    @Transactional
+    public String approveCentreDirect(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        return approveCentre(id, session, redirectAttributes);
+    }
+
+    @PostMapping("/centres/{id}/reject")
+    @Transactional
+    public String rejectCentreWithReason(@PathVariable Long id,
+                                         @RequestParam(value = "reason", required = false) String reason,
+                                         HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
+        if (centre == null) {
+            ra.addFlashAttribute("error", "Centre not found.");
+            return "redirect:/admin/martialManagement";
+        }
+        centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.REJECTED);
+        centre.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        centreRepository.save(centre);
+        ra.addFlashAttribute("message", "Centre application rejected.");
+        return "redirect:/admin/martialManagement";
+    }
+
+    @PostMapping("/centres/{id}/request-changes")
+    @Transactional
+    public String requestCentreChanges(@PathVariable Long id,
+                                       @RequestParam(value = "note", required = false) String note,
+                                       HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
+        if (centre == null) {
+            ra.addFlashAttribute("error", "Centre not found.");
+            return "redirect:/admin/martialManagement";
+        }
+        centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.CHANGES_REQUESTED);
+        centre.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        centre.setRejectionReason(null);
+        centreRepository.save(centre);
+        ra.addFlashAttribute("message", "Changes requested from centre.");
+        return "redirect:/admin/martialManagement";
     }
 }
 

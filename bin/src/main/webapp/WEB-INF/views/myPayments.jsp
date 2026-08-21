@@ -29,13 +29,12 @@
             background-color: var(--bg-light);
             color: #1E293B;
             margin: 0;
-            display: flex;
         }
 
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
-            background: var(--primary-dark);
+            background: var(--primary-purple);
             color: white;
             position: fixed;
             left: 0;
@@ -46,7 +45,7 @@
             z-index: 1000;
         }
 
-        .sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
         .sidebar-logo span { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
 
         .nav-menu { list-style: none; padding: 0; margin: 0; }
@@ -65,6 +64,16 @@
 
         .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
         .nav-link.active { background: var(--primary-red); color: white; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
+
+        @media (max-width: 991px) {
+            .sidebar { width: 100% !important; height: auto !important; min-height: 0 !important; position: static !important; padding: 15px !important; border-radius: 0 !important; display: block !important; }
+            .sidebar-logo { margin-bottom: 15px !important; justify-content: center !important; }
+            .nav-menu { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
+            .nav-item { margin-bottom: 0 !important; }
+            .nav-link { padding: 8px 16px !important; font-size: 0.85rem !important; border-radius: 20px !important; white-space: nowrap !important; width: auto !important; }
+            .main-content { margin-left: 0 !important; padding: 15px !important; }
+            body { display: block; }
+        }
 
         .main-content {
             margin-left: var(--sidebar-width);
@@ -172,12 +181,20 @@
             <span>Fight D Fear</span>
         </div>
         <ul class="nav-menu">
-            <li class="nav-item"><a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link"><i class="bi bi-grid"></i> Dashboard</a></li>
             <li class="nav-item"><a href="${pageContext.request.contextPath}/users/training-journey" class="nav-link"><i class="bi bi-compass"></i> My Journey</a></li>
             <li class="nav-item"><a href="${pageContext.request.contextPath}/attendance/my-attendance" class="nav-link"><i class="bi bi-calendar-check"></i> Attendance</a></li>
             <li class="nav-item"><a href="${pageContext.request.contextPath}/users/my-schedule" class="nav-link"><i class="bi bi-clock-history"></i> My Schedule</a></li>
             <li class="nav-item"><a href="${pageContext.request.contextPath}/payment/users/my-payments" class="nav-link active"><i class="bi bi-wallet2"></i> Payments</a></li>
-            <li class="nav-item"><a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="nav-link"><i class="bi bi-person"></i> Profile</a></li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="margin-top: 10px;">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </li>
         </ul>
     </aside>
 

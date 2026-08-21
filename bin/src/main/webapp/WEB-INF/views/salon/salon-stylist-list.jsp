@@ -1,237 +1,392 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>My Stylists</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Add Offer | Fight D Fear</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Stylists | Fight D Fear</title>
 
-    <!-- ================= BOOTSTRAP ================= -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
 
-    <!-- ================= GOOGLE FONTS ================= -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Prata&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --dashboard-bg: #f8f5ff;
+            --brand-purple: #6a0dad;
+            --brand-purple-darker: #4a0080;
+            --gradient-dark: linear-gradient(135deg, #2b1055 0%, #7597de 100%);
+            --fdf-border: #eee;
+        }
 
-    <!-- ================= ICONS ================= -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/open-iconic-bootstrap.min.css">
-
-    <!-- ================= THEME CSS ================= -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/animate.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.carousel.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.theme.default.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/magnific-popup.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/aos.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/ionicons.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/bootstrap-datepicker.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/jquery.timepicker.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/flaticon.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/icomoon.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/style.css">
-
-    <!-- ================= PROJECT CSS ================= -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
-    <style >
-    footer {
-    margin-top: 60px;
-}
         body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dashboard-bg);
+            color: var(--brand-purple-darker);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Modern Sidebar */
+        .sidebar {
+            background: var(--gradient-dark);
+            color: white;
+        }
+
+        .sidebar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-bottom: 40px;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
         }
 
-        #ftco-navbar {
-            position: sticky !important;
-            top: 0;
-            z-index: 1050;
-            background-color: #6a0dad !important;
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
-        #ftco-navbar .navbar-brand,
-        #ftco-navbar .nav-link {
-            color: #ffffff !important;
+        .nav-link-custom:hover, .nav-link-custom.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
         }
 
-        #ftco-navbar .nav-link:hover {
-            color: #ffd6ff !important;
+        .nav-link-custom i {
+            font-size: 1.2rem;
         }
 
-        main {
-            flex: 1;
-            padding-top: 40px;
+        /* Main Content */
+        .main-content {
+            padding: 40px;
+            min-height: 100vh;
         }
 
-        .offer-form {
-            background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        @media (min-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                padding: 30px 20px;
+                z-index: 1000;
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+        }
+
+        .glass-card {
+            background: white;
+            border-radius: 24px;
             padding: 30px;
-            max-width: 600px;
-            margin: 0 auto 60px;
+            border: 1px solid var(--fdf-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
         }
 
-        .strike { text-decoration: line-through; color: #888; }
-        .final-price { color: #28a745; font-weight: bold; }
-  </style>
+        .page-header {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-header h2 {
+            font-weight: 800;
+            color: var(--brand-purple-darker);
+            margin: 0;
+        }
+
+        .stylist-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid var(--fdf-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            height: 100%;
+        }
+
+        .stylist-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-color: rgba(106, 13, 173, 0.2);
+        }
+
+        .stylist-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #f8f5ff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+
+        .stylist-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--brand-purple-darker);
+            margin-bottom: 5px;
+        }
+
+        .stylist-role {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .stylist-stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            color: #495057;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 50px;
+        }
+        
+        .stat-item i {
+            color: #ffc107;
+        }
+
+        .btn-action-pill {
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-add-new {
+            background: var(--brand-purple);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add-new:hover {
+            background: var(--brand-purple-darker);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(106, 13, 173, 0.3);
+        }
+        
+        .btn-delete { background: #fff5f5; color: #dc3545; }
+        .btn-delete:hover { background: #dc3545; color: white; }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-available { background-color: #20c997; box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.2); }
+        .status-unavailable { background-color: #adb5bd; }
+
+        /* Responsive */
+        @media (max-width: 991.98px) {
+            .sidebar { padding: 20px; }
+            .sidebar-brand-desktop { display: none; }
+            .main-content { padding: 20px; margin-left: 0; }
+        }
+
+        .mobile-header {
+            background: var(--gradient-dark);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/index/templates">
-            <span class="flaticon-lotus"></span> Fight D Fear
+
+    <!-- Mobile Header -->
+    <div class="mobile-header d-lg-none shadow-sm">
+        <h4 class="m-0 fw-bold d-flex align-items-center gap-2"><i class="bi bi-stars"></i> Fight D Fear</h4>
+        <button class="btn btn-link text-white p-0 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+            <i class="bi bi-list" style="font-size: 2rem;"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
+        <div class="offcanvas-header d-lg-none border-bottom border-secondary mb-3 pb-3">
+            <h5 class="offcanvas-title text-white fw-bold"><i class="bi bi-stars"></i> Fight D Fear</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
+        </div>
+
+        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
+            <i class="bi bi-stars"></i>
+            <span>Fight D Fear</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#ftco-nav" aria-controls="ftco-nav"
-                aria-expanded="false" aria-label="Toggle navigation">
-            <span class="oi oi-menu"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/dashboard">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/profile">Profile</a></li>
-        
-                <li class="nav-item active"><a class="nav-link" href="${pageContext.request.contextPath}/booking/list">View Bookings</a>
-                </li>
-                 
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salon/viewServices">View Services</a>
-              </li>
-                
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/logout">Logout</a>
-               </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<div class="container mt-5">
-    <h2>My Stylists</h2>
-    <a href="${pageContext.request.contextPath}/addStylist" class="btn btn-success mb-3">Add New Stylist</a>
-
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger">${error}</div>
-    </c:if>
-
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Specialization</th>
-            <th>Experience</th>
-            <th>Rating</th>
-            <th>Availability</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <c:forEach var="stylist" items="${stylists}" varStatus="status">
-            <tr>
-                <td>${status.index + 1}</td>
-                <td>${stylist.firstName} ${stylist.lastName}</td>
-                <td>${stylist.email}</td>
-                <td>${stylist.specialization}</td>
-                <td>${stylist.experienceInYears}</td>
-                <td>${stylist.rating}</td>
-                <td>
-                    <c:choose>
-                        <c:when test="${stylist.available}">Available</c:when>
-                        <c:otherwise>Not Available</c:otherwise>
-                    </c:choose>
-                </td>
-                <td>
-                    <%-- <a href="${pageContext.request.contextPath}/salons/stylist/view?id=${stylist.id}" class="btn btn-info btn-sm">View</a>
-                  --%>   <a href="${pageContext.request.contextPath}/salons/stylist/delete?id=${stylist.id}" class="btn btn-danger btn-sm" 
-                       onclick="return confirm('Are you sure?')">Delete</a>
-                </td>
-            </tr>
-        </c:forEach>
-        </tbody>
-    </table>
-</div>
-<footer id="footer" class="footer position-relative">
-    <div class="container footer-top">
-        <div class="row gy-4">
-
-            <div class="col-lg-4 col-md-6 footer-about">
-                <a href="${pageContext.request.contextPath}/index/templates"
-                   class="d-flex align-items-center">
-                   Fight D Fear
+        <nav class="nav flex-column">
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
+                <i class="bi bi-person-circle"></i>
+                <span>Salon Profile</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
+                <i class="bi bi-calendar-check"></i>
+                <span>Manage Bookings</span>
+            </a>
+            <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salon/stylists">
+                <i class="bi bi-people"></i>
+                <span>Staff / Stylists</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
+                <i class="bi bi-magic"></i>
+                <span>Service Menu</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/treatments/view">
+                <i class="bi bi-droplet-half"></i>
+                <span>Specialized Treatments</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sessionScope.loggedSalon.id}">
+                <i class="bi bi-percent"></i>
+                <span>Offers & Promotions</span>
+            </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
+                <i class="bi bi-star-half"></i>
+                <span>Customer Reviews</span>
+            </a>
+            <div class="mt-5">
+                <a class="nav-link-custom text-danger" href="${pageContext.request.contextPath}/salons/logout">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Sign Out</span>
                 </a>
-                <div class="pt-3">
-                    <p class="fw-semibold">Our Values</p>
-                    <p>Awareness • Safety • Equality • Empowerment</p>
-                    <p class="mt-2">Building a safer tomorrow, together.</p>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container-fluid">
+            
+            <div class="page-header">
+                <h2>Our Stylists</h2>
+                <a href="${pageContext.request.contextPath}/addStylist" class="btn-add-new">
+                    <i class="bi bi-plus-lg"></i> Add Stylist
+                </a>
+            </div>
+
+            <c:if test="${not empty error}">
+                <div class="alert alert-danger rounded-3 mb-4"><i class="bi bi-exclamation-triangle-fill me-2"></i>${error}</div>
+            </c:if>
+            <c:if test="${not empty message}">
+                <div class="alert alert-success rounded-3 mb-4"><i class="bi bi-check-circle-fill me-2"></i>${message}</div>
+            </c:if>
+
+            <c:if test="${empty stylists}">
+                <div class="glass-card text-center py-5">
+                    <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3 fw-bold">No Stylists Found</h4>
+                    <p class="text-muted">You haven't added any stylists to your salon yet. Add your team members to manage their bookings.</p>
+                    <a href="${pageContext.request.contextPath}/addStylist" class="btn-add-new mt-3">Add Your First Stylist</a>
                 </div>
-            </div>
+            </c:if>
 
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Useful Links</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates">Home</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/services">Services</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
-                </ul>
-            </div>
-
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Our Services</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> Emergency Assistance</li>
-                    <li><i class="bi bi-chevron-right"></i> Safety Education</li>
-                    <li><i class="bi bi-chevron-right"></i> Self-defense Training</li>
-                    <li><i class="bi bi-chevron-right"></i> Community Support</li>
-                </ul>
-            </div>
-
-            <div class="col-lg-4 col-md-12">
-                <h4>Follow Us</h4>
-                <p>Stay connected with us for safety updates and empowerment.</p>
-                <div class="social-links d-flex">
-                    <a href="#"><i class="bi bi-twitter"></i></a>
-                    <a href="#"><i class="bi bi-facebook"></i></a>
-                    <a href="#"><i class="bi bi-instagram"></i></a>
-                    <a href="#"><i class="bi bi-linkedin"></i></a>
-                </div>
+            <div class="row g-4">
+                <c:forEach var="stylist" items="${stylists}">
+                    <div class="col-xl-3 col-lg-4 col-md-6">
+                        <div class="stylist-card">
+                            <div class="status-indicator ${stylist.available ? 'status-available' : 'status-unavailable'}" title="${stylist.available ? 'Available' : 'Not Available'}"></div>
+                            
+                            <img src="${not empty stylist.profileImage ? pageContext.request.contextPath.concat(stylist.profileImage) : 'https://ui-avatars.com/api/?name='.concat(stylist.firstName).concat('+').concat(stylist.lastName).concat('&background=6a0dad&color=fff&size=128')}" alt="${stylist.firstName}" class="stylist-avatar" onerror="this.src='https://ui-avatars.com/api/?name=${stylist.firstName}+${stylist.lastName}&background=6a0dad&color=fff&size=128';">
+                            
+                            <h4 class="stylist-name">${stylist.firstName} ${stylist.lastName}</h4>
+                            <div class="stylist-role">${not empty stylist.specialization ? stylist.specialization : 'Hair Stylist'}</div>
+                            
+                            <div class="stylist-stats">
+                                <div class="stat-item" title="Experience">
+                                    <i class="bi bi-briefcase-fill text-muted"></i> ${stylist.experienceInYears} Yrs
+                                </div>
+                                <div class="stat-item" title="Rating">
+                                    <i class="bi bi-star-fill"></i> ${not empty stylist.rating ? stylist.rating : '0.0'}
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex flex-column gap-2 mt-4">
+                                <a href="${pageContext.request.contextPath}/stylist/view?id=${stylist.id}" class="btn-action-pill btn-add-new" style="background-color: var(--brand-purple); color: white;">
+                                    <i class="bi bi-person-lines-fill"></i> View Profile
+                                </a>
+                                <a href="${pageContext.request.contextPath}/salons/stylist/delete?id=${stylist.id}" class="btn-action-pill btn-delete" onclick="return confirm('Are you sure you want to remove this stylist? This action cannot be undone.')">
+                                    <i class="bi bi-trash3"></i> Remove Stylist
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </c:forEach>
             </div>
 
         </div>
     </div>
 
-    <div class="container text-center mt-4">
-        <p>© <strong>Fight D Fear</strong> All Rights Reserved</p>
-    </div>
-</footer>
-
-<!-- ================= JS FILES ================= -->
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery-migrate-3.0.1.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/popper.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/bootstrap.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.easing.1.3.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.waypoints.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.stellar.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/owl.carousel.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.magnific-popup.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/aos.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.animateNumber.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/bootstrap-datepicker.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/jquery.timepicker.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/scrollax.min.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
-<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
-
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 

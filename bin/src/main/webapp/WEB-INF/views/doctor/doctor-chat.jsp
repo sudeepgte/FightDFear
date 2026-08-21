@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Chat with Dr. ${doctor.fullName} — SafeHer</title>
+  <title>Chat with Dr. ${doctor.fullName} — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
   <style>
@@ -71,7 +71,17 @@
 
   <div class="ch-messages" id="chatMessages">
     <c:if test="${empty chatHistory}">
-      <div class="ch-empty"><i class="bi bi-chat-heart"></i><p>Start your conversation with Dr. ${doctor.fullName}</p></div>
+      <div class="ch-empty">
+        <i class="bi bi-chat-heart"></i>
+        <c:choose>
+          <c:when test="${senderType == 'DOCTOR'}">
+            <p>Start your conversation with ${targetUserName != null ? targetUserName : 'the patient'}</p>
+          </c:when>
+          <c:otherwise>
+            <p>Start your conversation with Dr. ${doctor.fullName}</p>
+          </c:otherwise>
+        </c:choose>
+      </div>
     </c:if>
     <c:forEach var="m" items="${chatHistory}">
       <div class="ch-msg ${m.senderType == senderType ? 'sent' : 'received'}">

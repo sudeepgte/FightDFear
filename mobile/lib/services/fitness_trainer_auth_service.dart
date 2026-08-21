@@ -110,5 +110,47 @@ class FitnessTrainerAuthService {
     );
   }
 
+  Future<Map<String, dynamic>> getPackages() =>
+      _api.get('/api/fitness/trainer/packages');
+
+  Future<Map<String, dynamic>> savePackage(Map<String, dynamic> body) =>
+      _api.post('/api/fitness/trainer/packages', body: body);
+
+  Future<Map<String, dynamic>> deletePackage(int id) =>
+      _api.delete('/api/fitness/trainer/packages/$id');
+
+  Future<Map<String, dynamic>> markAttendance({
+    required int bookingId,
+    String? sessionDate,
+    String? sessionTime,
+    String status = 'PRESENT',
+    String? notes,
+  }) =>
+      _api.post('/api/fitness/trainer/attendance', body: {
+        'bookingId': bookingId,
+        if (sessionDate != null) 'sessionDate': sessionDate,
+        if (sessionTime != null) 'sessionTime': sessionTime,
+        'status': status,
+        if (notes != null) 'notes': notes,
+      });
+
+  Future<Map<String, dynamic>> logProgress({
+    required int userId,
+    double? weightKg,
+    double? bodyFatPct,
+    int workoutsCompleted = 1,
+    String? metricsJson,
+    String? workoutNotes,
+  }) =>
+      _api.post('/api/fitness/trainer/progress', body: {
+        'userId': userId,
+        if (weightKg != null) 'weightKg': weightKg,
+        if (bodyFatPct != null) 'bodyFatPct': bodyFatPct,
+        'workoutsCompleted': workoutsCompleted,
+        if (metricsJson != null) 'metricsJson': metricsJson,
+        if (workoutNotes != null) 'workoutNotes': workoutNotes,
+      });
+
   Future<void> logout() => _api.clearToken();
 }
+

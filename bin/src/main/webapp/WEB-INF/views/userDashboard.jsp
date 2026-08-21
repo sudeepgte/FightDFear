@@ -81,13 +81,18 @@
         display: flex;
         gap: 25px;
         align-items: flex-start;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     .main-col {
         flex: 1;
         min-width: 0;
+        max-width: 100%;
     }
     .right-col {
         width: 320px;
+        max-width: 100%;
         flex-shrink: 0;
         display: flex;
         flex-direction: column;
@@ -99,12 +104,13 @@
         overflow: hidden;
     }
     
-    /* 4 Stat Cards */
+    /* 4 Stat Cards — fit available cards without empty grid tracks */
     .stat-cards-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
         margin-bottom: 25px;
+        width: 100%;
     }
     .stat-card-new {
         background: #fff;
@@ -163,11 +169,39 @@
         box-shadow: var(--shadow-sm);
         margin-bottom: 25px;
     }
+    /* Charts grid */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+        margin-bottom: 25px;
+        width: 100%;
+    }
+    .charts-grid > .panel-new {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
     .panel-header-flex {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
         margin-bottom: 20px;
+    }
+
+    /* Bottom grid */
+    .bottom-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 20px;
+        width: 100%;
+    }
+    .bottom-grid > .panel-new {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
     }
     .panel-title {
         font-size: 1.1rem;
@@ -189,10 +223,16 @@
         gap: 20px;
         margin-bottom: 25px;
     }
+    .charts-grid > .panel-new {
+        min-width: 0;
+    }
+
     .chart-container {
         position: relative;
         height: 250px;
         width: 100%;
+
+        min-width: 0;
     }
     
     /* Bottom grid */
@@ -200,6 +240,10 @@
         display: grid;
         grid-template-columns: 2fr 1fr;
         gap: 20px;
+
+        max-width: 100%;
+        box-sizing: border-box;
+
     }
     
     /* Lists */
@@ -337,7 +381,10 @@
 
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+
+    <!-- Header -->
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -435,7 +482,7 @@
                     <!-- Donut Chart -->
                     <div class="panel-new d-flex flex-column">
                         <div class="panel-header-flex">
-                            <h3 class="panel-title">Safety Score</h3>
+                            <h3 class="panel-title">Gender Ratio</h3>
                             <a href="#" class="panel-link">Show More</a>
                         </div>
                         <div class="chart-container flex-grow-1 d-flex align-items-center" style="height: 180px;">
@@ -443,12 +490,12 @@
                         </div>
                         <div class="mt-3 w-100">
                              <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
-                                <span><i class="bi bi-circle-fill icon-blue me-2" style="font-size:10px;"></i> Secured Area</span>
-                                <span class="fw-bold text-dark">85%</span>
+                                <span><i class="bi bi-circle-fill icon-blue me-2" style="font-size:10px;"></i> Male</span>
+                                <span class="fw-bold text-dark">${malePct}%</span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
-                                <span><i class="bi bi-circle-fill me-2" style="font-size:10px; color:#e2e8f0;"></i> Risk Area</span>
-                                <span class="fw-bold text-dark">15%</span>
+                                <span><i class="bi bi-circle-fill me-2" style="font-size:10px; color:#f43f5e;"></i> Female</span>
+                                <span class="fw-bold text-dark">${femalePct}%</span>
                             </div>
                         </div>
                     </div>
@@ -587,8 +634,11 @@
                                         <c:if test="${sub.totalSessions > 0}">
                                             <c:set var="pct" value="${(sub.completedSessions * 100) / sub.totalSessions}" />
                                         </c:if>
-                                        <div class="mt-auto">
-                                            <div class="d-flex justify-content-between mb-1 small text-dark fw-medium">
+                                        <div class="mt-auto pt-3 border-top position-relative">
+                                            <button type="button" class="btn btn-sm btn-outline-primary position-absolute end-0 top-0 mt-3 me-0 border-0" onclick="openUserChat(${sub.trainer.id}, '${sub.trainer.fullName}')" title="Chat with Trainer" style="background:#e0e7ff; color:#312e81; border-radius: 50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;">
+                                                <i class="bi bi-chat-dots-fill"></i>
+                                            </button>
+                                            <div class="d-flex justify-content-between mb-1 small text-dark fw-medium" style="padding-right: 40px;">
                                                 <span>Progress Tracker</span>
                                                 <span>${sub.completedSessions} / ${sub.totalSessions} Sessions</span>
                                             </div>
@@ -740,27 +790,27 @@
                      <h3 class="panel-title mb-3"><i class="bi bi-shield-fill-check text-primary me-2"></i> Safety Toolbox</h3>
                      <div class="row g-2">
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/heatmap" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/heatmap" class="d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-map text-primary fs-3 mb-2"></i>
-                                 <span class="fw-bold small">Danger Map</span>
+                                 <span class="fw-bold small text-wrap">Danger Map</span>
                              </a>
                          </div>
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/reminders" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/reminders" class="d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-alarm text-primary fs-3 mb-2"></i>
-                                 <span class="fw-bold small">Reminders</span>
+                                 <span class="fw-bold small text-wrap">Reminders</span>
                              </a>
                          </div>
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/journey" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/journey" class="d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-pin-map text-primary fs-3 mb-2"></i>
-                                 <span class="fw-bold small">Safety Tracker</span>
+                                 <span class="fw-bold small text-wrap">Safety Tracker</span>
                              </a>
                          </div>
                          <div class="col-6">
-                             <a href="${pageContext.request.contextPath}/buddy" class="d-flex flex-column align-items-center justify-content-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
+                             <a href="${pageContext.request.contextPath}/buddy" class="d-flex flex-column align-items-center justify-content-center text-center p-3 border rounded-3 bg-light text-decoration-none text-dark hover-translate" style="transition:0.2s;">
                                  <i class="bi bi-people text-primary fs-3 mb-2"></i>
-                                 <span class="fw-bold small">Buddy Mode</span>
+                                 <span class="fw-bold small text-wrap">Buddy Mode</span>
                              </a>
                          </div>
                      </div>
@@ -865,9 +915,9 @@
         if (pieCanvas) {
             var ctxPie = pieCanvas.getContext('2d');
             var demoData = [
-                ${demoAge17to30Count == null ? 0 : demoAge17to30Count},
-                ${demoAge31to50Count == null ? 0 : demoAge31to50Count},
-                ${demoAge51PlusCount == null ? 0 : demoAge51PlusCount}
+                ${demoAge17to30Pct == null ? 0 : demoAge17to30Pct},
+                ${demoAge31to50Pct == null ? 0 : demoAge31to50Pct},
+                ${demoAge51PlusPct == null ? 0 : demoAge51PlusPct}
             ];
             if (demoData.reduce(function(a, b) { return a + b; }, 0) === 0) {
                 demoData = [1, 1, 1];
@@ -895,13 +945,16 @@
         var donutCanvas = document.getElementById('donutChart');
         if (donutCanvas) {
             var ctxDonut = donutCanvas.getContext('2d');
+            var mPct = ${malePct == null ? 0 : malePct};
+            var fPct = ${femalePct == null ? 0 : femalePct};
+            if(mPct === 0 && fPct === 0) { mPct = 1; fPct = 1; }
             new Chart(ctxDonut, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Secured Area', 'Risk Area'],
+                    labels: ['Male', 'Female'],
                     datasets: [{
-                        data: [85, 15],
-                        backgroundColor: ['#3b82f6', '#e2e8f0'],
+                        data: [mPct, fPct],
+                        backgroundColor: ['#3b82f6', '#f43f5e'],
                         borderWidth: 0,
                         cutout: '75%'
                     }]
@@ -988,10 +1041,10 @@
 </script>
 
 <!-- Floating Chat Window for User -->
-<div id="userFloatingChat" class="card shadow-lg d-none" style="position: fixed; bottom: 25px; right: 25px; width: 360px; z-index: 1050; border: none; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;">
-    <div class="card-header text-white d-flex justify-content-between align-items-center p-3" style="background: linear-gradient(135deg, #1e1b4b, #312e81); border-radius: 16px 16px 0 0;">
-        <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
-            <i class="bi bi-chat-dots-fill text-warning"></i> <span id="userChatTrainerName">Trainer Name</span>
+<div id="userFloatingChat" class="card shadow-lg d-none" style="position: fixed; bottom: 20px; right: 25px; width: 330px; max-width: calc(100vw - 40px); z-index: 1050; border: none; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;">
+    <div class="card-header d-flex justify-content-between align-items-center p-3" style="background: linear-gradient(135deg, #1e1b4b, #312e81);">
+        <h6 class="mb-0 fw-bold d-flex align-items-center gap-2 text-white">
+            <i class="bi bi-chat-dots-fill text-warning"></i> <span id="userChatTrainerName" class="text-white">Trainer Name</span>
         </h6>
         <button type="button" class="btn-close btn-close-white" onclick="closeUserChat()"></button>
     </div>

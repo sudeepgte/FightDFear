@@ -40,7 +40,7 @@
           <ul>
             <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/">Home</a></li>
             <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates#services">Services</a></li>
+            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/services">Services</a></li>
              <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
               </ul>
         

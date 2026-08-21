@@ -212,6 +212,9 @@
         <a href="${pageContext.request.contextPath}/users/dashboard" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/users/dashboard') ? 'active' : ''}">
             <i class="bi bi-house-door"></i> Dashboard
         </a>
+        <a href="${pageContext.request.contextPath}/chat/users" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/chat/users') ? 'active' : ''}">
+            <i class="bi bi-chat-dots"></i> Chat
+        </a>
         <a href="${pageContext.request.contextPath}/creator-hub" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/creator-hub') ? 'active' : ''}">
             <i class="bi bi-camera-reels"></i> Creator Hub
         </a>

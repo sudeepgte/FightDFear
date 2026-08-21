@@ -363,12 +363,14 @@
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${b.status eq 'CONFIRMED'}">
-                                                        <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
-                                                            <input type="hidden" name="bookingId" value="${b.id}">
-                                                            <input type="hidden" name="bookingType" value="NORMAL">
-                                                            <input type="hidden" name="status" value="COMPLETED">
-                                                            <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
-                                                        </form>
+                                                        <c:if test="${b.bookingDate le today}">
+                                                            <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                                <input type="hidden" name="bookingId" value="${b.id}">
+                                                                <input type="hidden" name="bookingType" value="NORMAL">
+                                                                <input type="hidden" name="status" value="COMPLETED">
+                                                                <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
+                                                            </form>
+                                                        </c:if>
                                                         <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
                                                             <input type="hidden" name="bookingId" value="${b.id}">
                                                             <input type="hidden" name="bookingType" value="NORMAL">
@@ -424,22 +426,38 @@
                                                 </c:choose>
                                             </td>
                                             <td class="text-end">
-                                                <c:if test="${b.status eq 'PENDING'}">
                                                     <div class="d-flex gap-2 justify-content-end">
-                                                        <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
-                                                            <input type="hidden" name="bookingId" value="${b.id}">
-                                                            <input type="hidden" name="bookingType" value="NORMAL">
-                                                            <input type="hidden" name="status" value="CONFIRMED">
-                                                            <button type="submit" class="btn-action-pill btn-confirm">Confirm</button>
-                                                        </form>
-                                                        <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
-                                                            <input type="hidden" name="bookingId" value="${b.id}">
-                                                            <input type="hidden" name="bookingType" value="NORMAL">
-                                                            <input type="hidden" name="status" value="REJECTED">
-                                                            <button type="submit" class="btn-action-pill btn-reject">Reject</button>
-                                                        </form>
+                                                        <c:if test="${b.status eq 'PENDING'}">
+                                                            <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                                <input type="hidden" name="bookingId" value="${b.id}">
+                                                                <input type="hidden" name="bookingType" value="NORMAL">
+                                                                <input type="hidden" name="status" value="CONFIRMED">
+                                                                <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
+                                                            </form>
+                                                            <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                                <input type="hidden" name="bookingId" value="${b.id}">
+                                                                <input type="hidden" name="bookingType" value="NORMAL">
+                                                                <input type="hidden" name="status" value="REJECTED">
+                                                                <button type="submit" class="btn-action-pill btn-reject"><i class="bi bi-x-circle"></i> Reject</button>
+                                                            </form>
+                                                        </c:if>
+                                                        <c:if test="${b.status eq 'CONFIRMED'}">
+                                                            <c:if test="${b.bookingDate le today}">
+                                                                <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                                    <input type="hidden" name="bookingId" value="${b.id}">
+                                                                    <input type="hidden" name="bookingType" value="NORMAL">
+                                                                    <input type="hidden" name="status" value="COMPLETED">
+                                                                    <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
+                                                                </form>
+                                                            </c:if>
+                                                            <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                                <input type="hidden" name="bookingId" value="${b.id}">
+                                                                <input type="hidden" name="bookingType" value="NORMAL">
+                                                                <input type="hidden" name="status" value="CANCELLED">
+                                                                <button type="submit" class="btn-action-pill btn-cancel"><i class="bi bi-slash-circle"></i> Cancel</button>
+                                                            </form>
+                                                        </c:if>
                                                     </div>
-                                                </c:if>
                                             </td>
                                         </tr>
                                     </c:if>
@@ -508,12 +526,14 @@
                                                     </form>
                                                 </c:if>
                                                 <c:if test="${b.status eq 'CONFIRMED'}">
-                                                    <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
-                                                        <input type="hidden" name="bookingId" value="${b.id}">
-                                                        <input type="hidden" name="bookingType" value="OFFER">
-                                                        <input type="hidden" name="status" value="COMPLETED">
-                                                        <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
-                                                    </form>
+                                                    <c:if test="${b.date le today}">
+                                                        <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+                                                            <input type="hidden" name="bookingId" value="${b.id}">
+                                                            <input type="hidden" name="bookingType" value="OFFER">
+                                                            <input type="hidden" name="status" value="COMPLETED">
+                                                            <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
+                                                        </form>
+                                                    </c:if>
                                                     <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="bookingType" value="OFFER">
@@ -538,5 +558,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
 
 

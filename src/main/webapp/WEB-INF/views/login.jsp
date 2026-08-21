@@ -379,8 +379,8 @@
     <!-- Left Panel -->
     <div class="left-panel">
         <div class="brand">
-            <div class="brand-logo">
-                <i class="bi bi-shield-check"></i> Fight D Fear
+            <div class="brand-logo" style="display: flex; align-items: center; justify-content: center; gap: 12px;">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 52px; width: 52px; border-radius: 12px; object-fit: cover;"> Fight D Fear
             </div>
             <p class="brand-tagline">
                 Empowering Women's Safety Through Technology. Your safety is our mission — anytime, anywhere.

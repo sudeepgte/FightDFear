@@ -56,25 +56,28 @@
 	
 
 	<!-- ======= Header ======= -->
-	<header id="header" class="header d-flex align-items-center sticky-top">
-	  <div class="container-fluid container-xl d-flex align-items-center">
-	    <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto"><h1>Fight D Fear</h1></a>
+	<header id="header" class="header d-flex align-items-center sticky-top shadow-sm" style="background: white;">
+	  <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+	    <a href="${pageContext.request.contextPath}/users/dashboard" class="logo d-flex align-items-center text-decoration-none">
+	      <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 36px; width: 36px; border-radius: 8px; object-fit: cover; margin-right: 10px;">
+	      <span style="color: #F43F5E; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px;">Fight D Fear</span>
+	    </a>
 	    <nav id="navmenu" class="navmenu">
-	      <ul>
-
-	        <li><a href="${pageContext.request.contextPath}/centres/allacceptedcentres">MartialArts Centres</a></li>
-
-	        <li><a href="${pageContext.request.contextPath}/video/reels">Reels</a></li>
-	        <li><a href="${pageContext.request.contextPath}/index/templates">Beauty</a></li>
-	        <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
+	      <ul class="d-flex align-items-center list-unstyled mb-0 gap-3">
+	        <li><a href="${pageContext.request.contextPath}/users/dashboard" class="text-decoration-none text-dark fw-semibold">Dashboard</a></li>
+	        <li><a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="text-decoration-none text-dark fw-semibold active">Martial Arts Centres</a></li>
+	        <li><a href="${pageContext.request.contextPath}/video/reels" class="text-decoration-none text-dark fw-semibold">Reels</a></li>
+	        <li><a href="${pageContext.request.contextPath}/user/bookings" class="text-decoration-none text-dark fw-semibold">My Bookings</a></li>
 	        <c:if test="${not empty user}">
-	        <li><a href="${pageContext.request.contextPath}/users/profile/${user.id}">Profile</a></li>
+	        <li><a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="text-decoration-none text-dark fw-semibold">Profile</a></li>
 	        </c:if>
 	      </ul>
 	      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
 	    </nav>
-	    <a class="btn-qna" href="${pageContext.request.contextPath}/qna">Q&amp;A</a>
-	    <a class="btn-getstarted" href="${pageContext.request.contextPath}/logout">Logout</a>
+	    <div class="d-flex align-items-center gap-2">
+	      <a class="btn btn-outline-danger btn-sm rounded-pill px-3" href="${pageContext.request.contextPath}/qna">Q&amp;A</a>
+	      <a class="btn btn-danger btn-sm rounded-pill px-4" href="${pageContext.request.contextPath}/logout">Logout</a>
+	    </div>
 	  </div>
 	</header>
 	<!-- END nav -->

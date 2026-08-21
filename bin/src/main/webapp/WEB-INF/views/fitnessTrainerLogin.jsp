@@ -5,353 +5,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coach Login — Fight D Fear</title>
+    <title>Coach Sign In — Fight D Fear</title>
     <!-- Google Fonts & Bootstrap Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
-            display: flex;
-            background: #f8fafc;
-        }
-
-        .left-panel {
-            flex: 1;
-            background: linear-gradient(135deg, #0f172a 0%, #be123c 50%, #f43f5e 100%);
+            background: var(--bg-page);
+            color: var(--navy);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 60px 40px;
-            position: relative;
-            overflow: hidden;
         }
 
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            top: -100px; right: -100px;
-            width: 400px; height: 400px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.06);
-        }
-
-        .left-panel .brand {
-            position: relative; z-index: 2;
-            text-align: center;
-            color: white;
-        }
-
-        .brand-logo {
-            font-size: 2.3rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
             gap: 10px;
-        }
-
-        .brand-tagline {
-            font-size: 1.1rem;
-            font-weight: 300;
-            opacity: 0.9;
-            max-width: 380px;
-            line-height: 1.7;
-            margin-bottom: 40px;
-        }
-
-        .feature-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            text-align: left;
-        }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            font-weight: 400;
-        }
-
-        .feature-list li .feat-icon {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .right-panel {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-        }
-
-        .login-card h2 {
-            font-size: 1.85rem;
+            font-size: 1.15rem;
             font-weight: 800;
-            color: #0f172a;
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .header-brand i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 440px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--navy);
             margin-bottom: 6px;
         }
 
-        .login-card .subtitle {
-            color: #64748b;
-            font-size: 0.95rem;
-            margin-bottom: 32px;
+        .card-header p {
+            font-size: 0.9rem;
+            color: var(--text-gray);
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         .form-group label {
             display: block;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
+            color: var(--navy);
+            margin-bottom: 6px;
         }
 
         .input-wrapper {
             position: relative;
         }
 
-        .input-wrapper i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 1rem;
-        }
-
         .form-input {
             width: 100%;
-            padding: 14px 16px 14px 46px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: #fff;
-            color: #0f172a;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
+            transition: all 0.2s ease;
         }
 
         .form-input:focus {
             outline: none;
-            border-color: #be123c;
-            box-shadow: 0 0 0 4px rgba(190, 18, 60, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
 
-        .btn-login {
+        .password-field .form-input {
+            padding-right: 42px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+        }
+
+        .btn-submit {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #1e1b4b, #f43f5e);
-            color: white;
+            background: var(--primary);
+            color: #FFFFFF;
             border: none;
             border-radius: 12px;
             font-size: 1rem;
             font-weight: 700;
+            font-family: inherit;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(244, 63, 94, 0.4);
-        }
-
-        .divider {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
             display: flex;
             align-items: center;
-            gap: 16px;
-            margin: 24px 0;
-            color: #94a3b8;
-            font-size: 0.8rem;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
         }
 
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
         }
 
-        .register-link {
+        .login-footer {
             text-align: center;
+            margin-top: 24px;
             font-size: 0.9rem;
-            color: #64748b;
+            color: var(--text-gray);
         }
 
-        .register-link a {
-            color: #f43f5e;
+        .login-footer a {
+            color: var(--primary);
             text-decoration: none;
             font-weight: 700;
         }
 
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-
-        .error-alert {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 12px 16px;
+        .alert-box {
+            padding: 12px 14px;
             border-radius: 10px;
             font-size: 0.85rem;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .success-alert {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            color: #16a34a;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            color: var(--error);
         }
 
-        .back-home {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 28px;
-        }
-        
-        .back-home:hover {
-            color: #be123c;
-        }
-
-        @media (max-width: 992px) {
-            body { flex-direction: column; min-height: 100vh; overflow-y: auto; }
-            .left-panel { flex: none; padding: 50px 30px; min-height: 35vh; }
-            .feature-list { display: none; }
-            .right-panel { flex: none; padding: 40px 20px; background: #fff; margin-top: -30px; border-radius: 30px 30px 0 0; display: flex; justify-content: center; align-items: center; }
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid #BBF7D0;
+            color: var(--success);
         }
     </style>
 </head>
 <body>
 
-    <!-- Left Panel -->
-    <div class="left-panel">
-        <div class="brand">
-            <div class="brand-logo">
-                <i class="bi bi-heart-pulse-fill text-white"></i> Coach Studio
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear Coach Studio
+        </a>
+    </header>
+
+    <main class="main-container">
+        <div class="form-card">
+            <div class="card-header">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 64px; width: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(244,63,94,0.15);">
+                <h2>Coach Sign In</h2>
+                <p>Access your training schedule, clients and earnings</p>
             </div>
-            <p class="brand-tagline">
-                Provide wellness coaching & self-defense events for women. Access dynamic scheduling calendar, track bookings, and retrieve safe payouts.
-            </p>
-            <ul class="feature-list">
-                <li>
-                    <span class="feat-icon"><i class="bi bi-calendar-event"></i></span>
-                    Manage customized timings & hourly session fee
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-wallet2"></i></span>
-                    Track completed coaching earnings instantly
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-patch-check"></i></span>
-                    Admin verified credentials safety badge
-                </li>
-            </ul>
-        </div>
-    </div>
 
-    <!-- Right Panel -->
-    <div class="right-panel">
-        <div class="login-card">
-            
-            <a href="${pageContext.request.contextPath}/" class="back-home">
-                <i class="bi bi-arrow-left"></i> Back to Homepage
-            </a>
-
-            <h2>Coach Studio Login</h2>
-            <p class="subtitle">Access your trainer dashboard panel</p>
-
-            <c:if test="${not empty success}">
-                <div class="success-alert">
-                    <i class="bi bi-check-circle-fill"></i> ${success}
-                </div>
-            </c:if>
             <c:if test="${not empty error}">
-                <div class="error-alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${error}
+                <div class="alert-box alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
+                </div>
+            </c:if>
+            <c:if test="${not empty message}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ${message}
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/fitness/trainer/login" method="POST">
+            <form action="${pageContext.request.contextPath}/fitness/trainer/login" method="post">
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-envelope"></i>
-                        <input type="email" name="email" class="form-input" placeholder="e.g. coach@fitness.com" required>
-                    </div>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="coach@example.com" 
+                           value="<c:out value='${not empty registeredEmail ? registeredEmail : (not empty param.email ? param.email : \"\")}'/>" required autofocus>
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" name="password" id="passwordInput" class="form-input" placeholder="••••••••" style="padding-right: 46px;" required>
-                        <i class="bi bi-eye-slash" id="togglePassword" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 1.1rem; z-index: 10;"></i>
+                    <label for="password">Password</label>
+                    <div class="input-wrapper password-field">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                 </div>
 
-                <button type="submit" class="btn-login">Log In to Studio</button>
+                <button type="submit" class="btn-submit">
+                    Sign In <i class="bi bi-arrow-right"></i>
+                </button>
             </form>
 
-            <div class="divider">or</div>
-
-            <div class="register-link">
-                Don't have an account? <a href="${pageContext.request.contextPath}/fitness/trainer/register">Register as Coach</a>
+            <div class="login-footer">
+                New Coach? <a href="${pageContext.request.contextPath}/fitness/trainer/register">Register here</a>
             </div>
-            
         </div>
-    </div>
+    </main>
 
     <script>
-        const togglePassword = document.querySelector('#togglePassword');
-        const passwordInput = document.querySelector('#passwordInput');
-        if (togglePassword && passwordInput) {
-            togglePassword.addEventListener('click', function () {
-                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                passwordInput.setAttribute('type', type);
-                this.classList.toggle('bi-eye');
-                this.classList.toggle('bi-eye-slash');
-            });
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
         }
     </script>
 </body>

@@ -214,6 +214,10 @@
                 <i class="bi bi-person-circle"></i>
                 <span>Stylist Profile</span>
             </a>
+            <a class="nav-link-custom" href="${pageContext.request.contextPath}/stylists/services">
+                <i class="bi bi-bag-heart-fill"></i>
+                <span>Services &amp; Packages</span>
+            </a>
             <a class="nav-link-custom" href="${pageContext.request.contextPath}/stylists/dashboard#bookings">
                 <i class="bi bi-calendar-check"></i>
                 <span>My Bookings</span>

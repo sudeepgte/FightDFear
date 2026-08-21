@@ -448,20 +448,21 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
               children: [
                 _CircleAction('Complete Profile', Icons.assignment_outlined, FitnessTrainerDashboardScreen.primary,
                     _openProfileCompletion),
+                _CircleAction('Packages', Icons.tag, const Color(0xFFE11D48),
+                    _openPackagesSheet),
+                _CircleAction('Attendance', Icons.fact_check_outlined, const Color(0xFF16A34A),
+                    _openAttendanceRosterSheet),
                 _CircleAction('Availability', Icons.calendar_month, const Color(0xFF2563EB),
                     () => setState(() => _navIndex = 2)),
-                _CircleAction('Add Class', Icons.add_circle_outline, const Color(0xFF9333EA),
-                    () => _snack('Create class coming soon — use web Trainer Studio for now')),
                 _CircleAction('Bookings', Icons.event_note, const Color(0xFF16A34A),
                     () => setState(() => _navIndex = 1)),
-                _CircleAction('Messages', Icons.chat_bubble_outline, const Color(0xFF0EA5E9),
-                    () => _snack('Client messages coming soon')),
                 _CircleAction('Earnings', Icons.payments_outlined, const Color(0xFFEA580C),
                     () => setState(() => _navIndex = 3)),
                 _CircleAction('Reviews', Icons.star_outline, const Color(0xFFD97706),
-                    () => _snack('Reviews will appear here once clients rate sessions')),
+                    () => _snack('Reviews from clients will appear here')),
                 _CircleAction('Announce', Icons.campaign_outlined, const Color(0xFF0F766E),
                     () => _snack('Announcements coming soon')),
+
               ],
             ),
           ),
@@ -1136,6 +1137,232 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
     );
   }
 
+  Future<void> _openPackagesSheet() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, scrollCtrl) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: _svc.getPackages(),
+              builder: (c, snap) {
+                final list = snap.hasData && snap.data!['packages'] is List
+                    ? (snap.data!['packages'] as List).cast<Map<String, dynamic>>()
+                    : <Map<String, dynamic>>[];
+                return ListView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Packages & Passes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                        FilledButton.icon(
+                          onPressed: () => _createPackageDialog(ctx),
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text('New Pass'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: FitnessTrainerDashboardScreen.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (snap.connectionState == ConnectionState.waiting)
+                      const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+                    else if (list.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: Text('No custom packages created yet. Tap "New Pass" to create one.')),
+                      )
+                    else
+                      ...list.map((pkg) {
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          child: ListTile(
+                            title: Text(pkg['packageName']?.toString() ?? 'Pass', style: const TextStyle(fontWeight: FontWeight.w700)),
+                            subtitle: Text('${pkg['sessionCount'] == 0 ? "Unlimited" : "${pkg['sessionCount']} Sessions"} · ${pkg['durationDays']} Days · ₹${pkg['price']}'),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () async {
+                                final id = int.tryParse('${pkg['id']}');
+                                if (id != null) {
+                                  await _svc.deletePackage(id);
+                                  Navigator.pop(ctx);
+                                  _openPackagesSheet();
+                                }
+                              },
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _createPackageDialog(BuildContext sheetCtx) {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController(text: '1999');
+    final sessionsCtrl = TextEditingController(text: '10');
+    final daysCtrl = TextEditingController(text: '30');
+    showDialog(
+      context: context,
+      builder: (dCtx) {
+        return AlertDialog(
+          title: const Text('Create Membership Pass'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Pass Name *', hintText: 'e.g. 10-Class Yoga Pass')),
+                TextField(controller: priceCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price (₹) *')),
+                TextField(controller: sessionsCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Sessions (0 = Unlimited)')),
+                TextField(controller: daysCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Validity (Days)')),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () async {
+                if (nameCtrl.text.trim().isEmpty) return;
+                await _svc.savePackage({
+                  'packageName': nameCtrl.text.trim(),
+                  'price': double.tryParse(priceCtrl.text) ?? 999.0,
+                  'sessionCount': int.tryParse(sessionsCtrl.text) ?? 10,
+                  'durationDays': int.tryParse(daysCtrl.text) ?? 30,
+                  'category': _trainer['specializations']?.toString().split(',').first.trim() ?? 'FITNESS',
+                  'sessionType': 'OFFLINE',
+                });
+                Navigator.pop(dCtx);
+                Navigator.pop(sheetCtx);
+                _openPackagesSheet();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openAttendanceRosterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, scrollCtrl) {
+            return ListView(
+              controller: scrollCtrl,
+              padding: const EdgeInsets.all(20),
+              children: [
+                const Text('Client Attendance Check-In', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 16),
+                if (_bookings.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: Text('No active client bookings found to mark attendance.')),
+                  )
+                else
+                  ..._bookings.map((b) {
+                    final id = int.tryParse('${b['id']}');
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: ListTile(
+                        title: Text(b['clientName']?.toString() ?? 'Client', style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text('${b['bookingDate']} @ ${b['bookingTime']} · ${b['status']}'),
+                        trailing: FilledButton.tonal(
+                          onPressed: () => _markAttendanceDialog(id, b['clientName']?.toString() ?? 'Client'),
+                          child: const Text('Check In'),
+                        ),
+                      ),
+                    );
+                  }),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _markAttendanceDialog(int? bookingId, String clientName) {
+    if (bookingId == null) return;
+    String status = 'PRESENT';
+    final notesCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dCtx) {
+        return StatefulBuilder(
+          builder: (context, setDState) {
+            return AlertDialog(
+              title: Text('Check In: $clientName'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    value: status,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: const [
+                      DropdownMenuItem(value: 'PRESENT', child: Text('Present (Deduct session)')),
+                      DropdownMenuItem(value: 'LATE', child: Text('Late (Deduct session)')),
+                      DropdownMenuItem(value: 'ABSENT', child: Text('Absent (No deduction)')),
+                    ],
+                    onChanged: (v) => setDState(() => status = v ?? 'PRESENT'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesCtrl,
+                    decoration: const InputDecoration(labelText: 'Coach Workout Notes (optional)'),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+                FilledButton(
+                  onPressed: () async {
+                    await _svc.markAttendance(
+                      bookingId: bookingId,
+                      status: status,
+                      notes: notesCtrl.text.trim().isNotEmpty ? notesCtrl.text.trim() : null,
+                    );
+                    Navigator.pop(dCtx);
+                    _snack('Attendance marked for $clientName');
+                    _reload();
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _sectionCard({required String title, required Widget child, Widget? trailing}) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -1160,6 +1387,7 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
     );
   }
 }
+
 
 class _CircleAction extends StatelessWidget {
   const _CircleAction(this.label, this.icon, this.color, this.onTap);

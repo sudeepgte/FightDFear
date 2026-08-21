@@ -33,4 +33,15 @@ public class HomeController {
 	public String heatMapPage(Model model) {
 		return "heatmap";
 	}
+
+	@RequestMapping({"/trainer/login", "/trainer/login.html"})
+	public String trainerLoginRedirect() {
+		return "redirect:/fitness/trainer/login";
+	}
+
+	@RequestMapping({"/trainer/register", "/trainer/register.html"})
+	public String trainerRegisterRedirect() {
+		return "redirect:/fitness/trainer/register";
+	}
 }
+

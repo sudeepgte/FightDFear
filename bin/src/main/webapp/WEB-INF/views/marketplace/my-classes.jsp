@@ -14,7 +14,7 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -104,6 +104,9 @@
 <body>
 
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
 
     <div class="header-bg">
         <div class="container d-flex justify-content-between align-items-center">
@@ -120,6 +123,12 @@
             <a href="${pageContext.request.contextPath}/marketplace/my-classes" class="active">Joined Classes</a>
         </div>
 
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
         <c:if test="${not empty message}">
             <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> ${message}
@@ -129,6 +138,7 @@
 
         <div class="row g-4">
             <c:forEach var="enrollment" items="${enrollments}">
+                <c:if test="${enrollment.paymentStatus != 'CANCELLED'}">
                 <div class="col-md-6 col-lg-4">
                     <div class="class-card-premium">
                         <div class="d-flex justify-content-between mb-3">
@@ -174,6 +184,7 @@
                         </c:choose>
                     </div>
                 </div>
+                </c:if>
             </c:forEach>
         </div>
 
@@ -188,6 +199,8 @@
     </div>
 
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    </div>
+</div>
 </body>
 </html>
 

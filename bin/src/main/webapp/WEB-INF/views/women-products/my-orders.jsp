@@ -354,6 +354,18 @@
     .track-step.completed .track-icon { background: #16a34a; color: #fff; }
     .track-step.completed .track-label { color: #16a34a; }
 
+    .error-alert {
+      background: #fef2f2;
+      color: #b91c1c;
+      padding: 14px 18px;
+      border-radius: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      border: 1px solid #fecaca;
+    }
     .success-alert {
       background: #ecfdf5;
       border: 1px solid #10b98133;
@@ -389,6 +401,11 @@
       .order-right { text-align: left; padding: 0; border: none; width: 100%; border-top: 1px solid #f3f4f6; padding-top: 16px; }
       .order-meta { grid-template-columns: 1fr; }
     }
+    @media (max-width: 576px) {
+      #refundModal .fdf-modal [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -408,6 +425,11 @@
         <i class="bi bi-check-circle-fill"></i> ${message}
       </div>
     </c:if>
+    <c:if test="${not empty error}">
+      <div class="error-alert">
+        <i class="bi bi-x-circle-fill"></i> ${error}
+      </div>
+    </c:if>
 
     <c:if test="${empty orders}">
       <div class="empty-state">
@@ -419,7 +441,7 @@
     </c:if>
 
     <c:forEach var="o" items="${orders}">
-      <div class="order-card">
+      <div class="order-card" data-order-id="${o.id}" data-current-status="${o.status}">
         <!-- Order Header -->
         <div class="order-card-header" onclick="toggleTrackingFromHeader(this)" style="cursor: pointer;">
           <div class="order-id-block">
@@ -459,8 +481,14 @@
             </c:if>
             <c:if test="${o.status != 'CANCELLED'}">
               <c:if test="${o.status != 'DELIVERED'}">
-                <div class="dynamic-delivery" data-order-date="${o.orderTime}" data-address="${o.shippingAddress}" style="margin-top: 15px; font-size: 13px; color: #16a34a; font-weight: 700; background: #ecfdf5; display: inline-block; padding: 6px 12px; border-radius: 8px;">
-                  <i class="bi bi-truck"></i> Calculating expected delivery...
+                <div class="expected-delivery" style="margin-top: 15px; font-size: 13px; color: #16a34a; font-weight: 700; background: #ecfdf5; display: inline-block; padding: 6px 12px; border-radius: 8px;">
+                  <i class="bi bi-truck"></i> Expected Delivery:
+                  <strong>
+                    <c:choose>
+                      <c:when test="${not empty expectedDeliveryLabels[o.id]}">${expectedDeliveryLabels[o.id]}</c:when>
+                      <c:otherwise>Calculating…</c:otherwise>
+                    </c:choose>
+                  </strong>
                 </div>
               </c:if>
               
@@ -569,10 +597,10 @@
         <div class="modal-title">Request Refund</div>
         <button type="button" class="close-modal" onclick="closeModal('refundModal')">&times;</button>
       </div>
-      <form id="refundForm" method="post" enctype="multipart/form-data">
+      <form id="refundForm" method="post" enctype="multipart/form-data" novalidate>
         <input type="hidden" name="type" value="REFUND">
         <div class="fdf-form-group">
-          <label>Refund Reason</label>
+          <label>Refund Reason *</label>
           <select name="reason" class="fdf-input" required>
             <option value="">Select a reason</option>
             <option value="quality">Quality not as expected</option>
@@ -583,27 +611,38 @@
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
           <div class="fdf-form-group" style="margin-bottom:0;">
-            <label>Bank Holder Name</label>
-            <input type="text" name="holderName" class="fdf-input" placeholder="Name as per bank" required>
+            <label>Bank Holder Name *</label>
+            <input type="text" name="holderName" class="fdf-input" placeholder="Name as per bank"
+                   required minlength="2" maxlength="80"
+                   pattern="[A-Za-z][A-Za-z .'-]{1,79}"
+                   title="2–80 letters; spaces, apostrophes, periods, hyphens allowed">
           </div>
           <div class="fdf-form-group" style="margin-bottom:0;">
-            <label>Account Number</label>
-            <input type="text" name="accountNumber" class="fdf-input" placeholder="Enter number" required maxlength="18" minlength="9" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+            <label>Account Number *</label>
+            <input type="text" name="accountNumber" class="fdf-input" placeholder="9–18 digits"
+                   required maxlength="18" minlength="9"
+                   oninput="this.value=this.value.replace(/[^0-9]/g,'')">
           </div>
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
           <div class="fdf-form-group" style="margin-bottom:0;">
-            <label>IFSC Code</label>
-            <input type="text" name="ifsc" class="fdf-input" placeholder="e.g. SBIN0001234" required maxlength="11" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+            <label>IFSC Code *</label>
+            <input type="text" name="ifsc" class="fdf-input" placeholder="e.g. SBIN0001234"
+                   required maxlength="11" minlength="11"
+                   pattern="[A-Z]{4}0[A-Z0-9]{6}"
+                   title="11-character IFSC e.g. SBIN0001234"
+                   oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
           </div>
           <div class="fdf-form-group" style="margin-bottom:0;">
-            <label>Branch Name</label>
-            <input type="text" name="branch" class="fdf-input" placeholder="City/Branch" required>
+            <label>Branch Name *</label>
+            <input type="text" name="branch" class="fdf-input" placeholder="City/Branch"
+                   required minlength="2" maxlength="100">
           </div>
         </div>
         <div class="fdf-form-group">
           <label>Additional Comments</label>
-          <textarea name="comments" class="fdf-input" rows="2" placeholder="Any additional info..."></textarea>
+          <textarea name="comments" class="fdf-input" rows="2" maxlength="1000"
+                    placeholder="Any additional info (optional, max 1000 characters)"></textarea>
         </div>
         <button type="submit" class="btn-submit">Submit Refund Request</button>
       </form>
@@ -725,21 +764,52 @@
       const refundForm = document.getElementById('refundForm');
       if (refundForm) {
         refundForm.addEventListener('submit', function(e) {
-          const accNum = this.querySelector('[name="accountNumber"]').value.trim();
-          const ifsc = this.querySelector('[name="ifsc"]').value.trim();
-          
+          const reason = (this.querySelector('[name="reason"]').value || '').trim();
+          const holder = (this.querySelector('[name="holderName"]').value || '').trim();
+          const accNum = (this.querySelector('[name="accountNumber"]').value || '').trim();
+          const ifsc = (this.querySelector('[name="ifsc"]').value || '').trim().toUpperCase();
+          const branch = (this.querySelector('[name="branch"]').value || '').trim();
+          const comments = (this.querySelector('[name="comments"]').value || '').trim();
+
+          if (!reason) {
+            alert('Please select a refund reason.');
+            e.preventDefault();
+            return false;
+          }
+          if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(holder)) {
+            alert('Bank holder name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed).');
+            e.preventDefault();
+            return false;
+          }
           if (!/^\d{9,18}$/.test(accNum)) {
-            alert("Account number must be between 9 and 18 numeric digits.");
+            alert('Account number must be between 9 and 18 numeric digits.');
             e.preventDefault();
             return false;
           }
           if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
-            alert("Please enter a valid 11-character Indian IFSC code (e.g. SBIN0001234).");
+            alert('Please enter a valid 11-character Indian IFSC code (e.g. SBIN0001234).');
             e.preventDefault();
             return false;
           }
+          if (branch.length < 2 || branch.length > 100) {
+            alert('Branch name must be between 2 and 100 characters.');
+            e.preventDefault();
+            return false;
+          }
+          if (comments.length > 1000) {
+            alert('Comments must be at most 1000 characters.');
+            e.preventDefault();
+            return false;
+          }
+          this.querySelector('[name="holderName"]').value = holder;
+          this.querySelector('[name="accountNumber"]').value = accNum;
+          this.querySelector('[name="ifsc"]').value = ifsc;
+          this.querySelector('[name="branch"]').value = branch;
         });
       }
+
+
+      // Expected delivery dates are rendered server-side from WomenProductDeliveryService.
 
       const deliveryElements = document.querySelectorAll('.dynamic-delivery');
       
@@ -786,6 +856,74 @@
           el.innerHTML = '<i class="bi bi-truck"></i> Expected Delivery: <strong>Within 3-5 working days</strong>';
         }
       });
+
+      // Real-time Order Status Updates Polling (Every 4 seconds)
+      function pollRealtimeOrderStatuses() {
+        const cards = document.querySelectorAll('.order-card[data-order-id]');
+        if (!cards || cards.length === 0) return;
+
+        fetch('${pageContext.request.contextPath}/women-products/api/my-orders-status')
+          .then(res => res.json())
+          .then(data => {
+            if (!Array.isArray(data)) return;
+
+            data.forEach(item => {
+              const card = document.querySelector('.order-card[data-order-id="' + item.id + '"]');
+              if (!card) return;
+
+              const prevStatus = card.getAttribute('data-current-status');
+              const newStatus = item.status;
+
+              if (prevStatus !== newStatus) {
+                card.setAttribute('data-current-status', newStatus);
+
+                // Update timeline tracking steps
+                const trackingWrapper = card.querySelector('.tracking-wrapper');
+                if (trackingWrapper) {
+                  const steps = trackingWrapper.querySelectorAll('.track-step');
+                  if (steps.length >= 4) {
+                    // Step 0: Placed
+                    steps[0].className = 'track-step ' + (newStatus === 'PLACED' ? 'active' : 'completed');
+
+                    // Step 1: Confirmed
+                    if (newStatus === 'CONFIRMED') {
+                      steps[1].className = 'track-step active';
+                    } else if (['SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(newStatus)) {
+                      steps[1].className = 'track-step completed';
+                    } else {
+                      steps[1].className = 'track-step';
+                    }
+
+                    // Step 2: Shipped / In Transit
+                    if (['SHIPPED', 'IN_TRANSIT'].includes(newStatus)) {
+                      steps[2].className = 'track-step active';
+                    } else if (newStatus === 'DELIVERED') {
+                      steps[2].className = 'track-step completed';
+                    } else {
+                      steps[2].className = 'track-step';
+                    }
+
+                    // Step 3: Delivered
+                    if (newStatus === 'DELIVERED') {
+                      steps[3].className = 'track-step completed';
+                    } else {
+                      steps[3].className = 'track-step';
+                    }
+                  }
+                }
+
+                // Reload if status changed to DELIVERED or CANCELLED to sync action buttons
+                if (newStatus === 'DELIVERED' || newStatus === 'CANCELLED') {
+                  window.location.reload();
+                }
+              }
+            });
+          })
+          .catch(err => { /* silent fail */ });
+      }
+
+      setInterval(pollRealtimeOrderStatuses, 4000);
+
     });
   </script>
   <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />

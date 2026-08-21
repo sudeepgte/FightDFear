@@ -199,7 +199,7 @@
 <body>
 
     <!-- ======= Header ======= -->
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
@@ -493,7 +493,7 @@
                 grid.innerHTML = '<div class="col-12 text-center py-5"><p class="text-muted">No enrollments recorded for this account.</p></div>';
             });
     </script>
-    <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+    
     </div>
 </div>
 </body>

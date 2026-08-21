@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,9 +383,27 @@
                                         <img src="${pageContext.request.contextPath}${service.photoUrl}" class="service-img" alt="${service.name}">
                                     </c:when>
                                     <c:otherwise>
-                                        <div class="h-100 bg-light d-flex align-items-center justify-content-center text-muted">
-                                            <i class="bi bi-image" style="font-size: 3rem;"></i>
-                                        </div>
+                                        <c:set var="catLower" value="${fn:toLowerCase(service.category)}" />
+                                        <c:choose>
+                                            <c:when test="${fn:contains(catLower, 'hair')}">
+                                                <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:when>
+                                            <c:when test="${fn:contains(catLower, 'makeup')}">
+                                                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:when>
+                                            <c:when test="${fn:contains(catLower, 'nail') or fn:contains(catLower, 'manicure') or fn:contains(catLower, 'pedicure')}">
+                                                <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:when>
+                                            <c:when test="${fn:contains(catLower, 'facial') or fn:contains(catLower, 'skin')}">
+                                                <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:when>
+                                            <c:when test="${fn:contains(catLower, 'massage') or fn:contains(catLower, 'spa')}">
+                                                <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <img src="https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=500&q=80" class="service-img" alt="${service.name}">
+                                            </c:otherwise>
+                                        </c:choose>
                                     </c:otherwise>
                                 </c:choose>
                                 <span class="category-badge">${service.category}</span>
@@ -431,4 +450,5 @@
 </html>
 
  
+
 

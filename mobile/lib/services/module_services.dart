@@ -476,7 +476,17 @@ class FitnessService {
 
   Future<Map<String, dynamic>> cancelBooking(int id) =>
       _api.post('/api/fitness/bookings/$id/cancel');
+
+  Future<Map<String, dynamic>> getTrainerPackages(int trainerId) =>
+      _api.get('/api/fitness/trainers/$trainerId/packages');
+
+  Future<Map<String, dynamic>> bookPackage(int packageId) =>
+      _api.post('/api/fitness/book-package', body: {'packageId': packageId});
+
+  Future<Map<String, dynamic>> myProgress() =>
+      _api.get('/api/fitness/my-progress');
 }
+
 
 class WomenEventsService {
   WomenEventsService(this._api);

@@ -134,8 +134,12 @@
 </head>
 
 <body class="my-videos-shell">
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" data-skip-global-back="true" style="margin-top: 0; padding-top: 40px;">
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+
 
 <main class="my-videos-main">
 
@@ -438,12 +442,14 @@
 
 </main>
 
-<jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
 
+    </div><!-- /#page-content-wrapper -->
+</div><!-- /#wrapper -->
 </body>
 
 </html>
