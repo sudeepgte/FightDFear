@@ -1751,7 +1751,7 @@
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex gap-1">
-                                                                    <a href="${pageContext.request.contextPath}/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1">View Profile Fully</a>
+                                                                    <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1">View Profile Fully</a>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/verify" method="POST">
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="approve" value="true">
@@ -1819,7 +1819,7 @@
                                                             </td>
                                                             <td>
                                                                 <div class="d-flex gap-1">
-                                                                    <a href="${pageContext.request.contextPath}/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1" style="font-size:0.8rem; border-radius:15px;">View Profile Fully</a>
+                                                                    <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1" style="font-size:0.8rem; border-radius:15px;">View Profile Fully</a>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/suspend" method="POST">
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="suspend" value="${!t.suspended}">

@@ -30,6 +30,13 @@ public class MobileFitnessController {
     private FitnessReviewRepository reviewRepo;
     @Autowired
     private FitnessCareService fitnessCareService;
+    @Autowired
+    private in.sp.main.Service.FitnessService fitnessService;
+    @Autowired
+    private in.sp.main.Repository.FitnessPackageRepository fitnessPackageRepo;
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepo;
+
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories() {
@@ -268,7 +275,95 @@ public class MobileFitnessController {
         return ResponseEntity.ok(res);
     }
 
+    @GetMapping("/trainers/{id}/packages")
+    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable Long id) {
+        List<FitnessPackage> packages = fitnessPackageRepo.findByTrainer_IdAndActiveTrue(id);
+        List<Map<String, Object>> dtos = packages.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", p.getId());
+            m.put("packageName", p.getPackageName());
+            m.put("category", p.getCategory());
+            m.put("description", p.getDescription());
+            m.put("sessionCount", p.getSessionCount());
+            m.put("durationDays", p.getDurationDays());
+            m.put("price", p.getPrice());
+            m.put("sessionType", p.getSessionType());
+            m.put("active", p.isActive());
+            return m;
+        }).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("packages", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/book-package")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> bookPackage(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        Long packageId;
+        try {
+            packageId = Long.parseLong(String.valueOf(body.get("packageId")).trim());
+        } catch (Exception e) {
+            return badRequest("Valid packageId is required");
+        }
+
+        FitnessPackage pkg = fitnessPackageRepo.findById(packageId).orElse(null);
+        if (pkg == null || !pkg.isActive()) {
+            return badRequest("Package is unavailable");
+        }
+
+        Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+        user.setWalletBalance(walletBalance - pkg.getPrice());
+        userRepo.save(user);
+        session.setAttribute("user", user);
+
+        FitnessBooking booking = new FitnessBooking();
+        booking.setUser(user);
+        booking.setTrainer(pkg.getTrainer());
+        booking.setFitnessPackage(pkg);
+        booking.setCategory(pkg.getCategory());
+        booking.setBookingDate(LocalDate.now());
+        booking.setBookingTime("Package Membership");
+        booking.setSessionType(pkg.getSessionType());
+        booking.setStatus("APPROVED");
+        booking.setPaymentAmount(pkg.getPrice());
+        booking.setPaymentStatus("PAID");
+        booking.setTotalSessions(pkg.getSessionCount());
+        booking.setRemainingSessions(pkg.getSessionCount());
+        booking.setCompletedSessions(0);
+        booking.setStartDate(LocalDate.now());
+        booking.setValidUntil(LocalDate.now().plusDays(pkg.getDurationDays()));
+        booking.setEndDate(LocalDate.now().plusDays(pkg.getDurationDays()));
+
+        bookingRepo.save(booking);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Subscribed to " + pkg.getPackageName());
+        res.put("bookingId", booking.getId());
+        res.put("totalSessions", booking.getTotalSessions());
+        res.put("validUntil", booking.getValidUntil().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/my-progress")
+    public ResponseEntity<Map<String, Object>> getMyProgress(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Map<String, Object> summary = fitnessService.getUserFitnessProgressSummary(user.getId());
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.putAll(summary);
+        return ResponseEntity.ok(res);
+    }
+
     private Map<String, Object> trainerDto(FitnessTrainer t) {
+
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", t.getId());
         m.put("fullName", t.getFullName());

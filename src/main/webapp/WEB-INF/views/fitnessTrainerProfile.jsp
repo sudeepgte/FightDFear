@@ -140,10 +140,44 @@
                             </c:if>
                         </div>
 
+                        <!-- Available Packages & Membership Plans -->
+                        <c:if test="${not empty packages}">
+                            <div class="card-custom">
+                                <h4 class="fw-bold mb-4"><i class="bi bi-tag-fill text-danger me-2"></i> Packages &amp; Membership Passes</h4>
+                                <div class="row g-3">
+                                    <c:forEach var="pkg" items="${packages}">
+                                        <div class="col-md-6">
+                                            <div class="border rounded-4 p-4 bg-white shadow-sm h-100 d-flex flex-column" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h6 class="fw-bold mb-0 text-dark">${pkg.packageName}</h6>
+                                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size:0.7rem;">${pkg.sessionType}</span>
+                                                </div>
+                                                <span class="badge bg-light text-muted border mb-2 align-self-start">${pkg.category}</span>
+                                                <p class="text-muted small mb-3 flex-grow-1">${pkg.description != null && !pkg.description.isEmpty() ? pkg.description : 'Full access coaching pass'}</p>
+                                                <div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">
+                                                    <div>
+                                                        <div class="fw-bold text-success fs-5">₹${pkg.price}</div>
+                                                        <div class="text-muted small" style="font-size:0.75rem;">${pkg.sessionCount == 0 ? 'Unlimited' : pkg.sessionCount} Sessions &bull; ${pkg.durationDays} Days</div>
+                                                    </div>
+                                                    <form action="${pageContext.request.contextPath}/fitness/booking/package/buy" method="POST" class="m-0" onsubmit="return confirm('Subscribe to ${pkg.packageName} for ₹${pkg.price}? (Deducted from wallet)');">
+                                                        <input type="hidden" name="packageId" value="${pkg.id}">
+                                                        <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold" style="background:linear-gradient(135deg, #f43f5e, #e11d48); border:none;">
+                                                            Subscribe
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </c:forEach>
+                                </div>
+                            </div>
+                        </c:if>
+
                         <!-- Available Group Classes -->
                         <c:if test="${not empty trainerClasses}">
                             <div class="card-custom">
                                 <h4 class="fw-bold mb-4"><i class="bi bi-calendar-event text-success me-2"></i> Upcoming Group Classes</h4>
+
                                 <div class="row g-3">
                                     <c:forEach var="fc" items="${trainerClasses}">
                                         <div class="col-md-6">

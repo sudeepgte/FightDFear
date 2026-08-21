@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO_DIR="${REPO_DIR:-/root/FightDFire}"
-DEPLOY_BRANCH="${DEPLOY_BRANCH:-cursor/production-readiness}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8084/actuator/health}"
 HEALTH_TIMEOUT_SEC="${HEALTH_TIMEOUT_SEC:-120}"
 COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml}"

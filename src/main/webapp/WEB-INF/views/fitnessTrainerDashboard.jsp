@@ -350,10 +350,10 @@
     <div id="sidebar-wrapper">
         <div class="sidebar-heading" style="flex-direction:column; align-items:flex-start; gap:2px; padding:14px 18px 12px;">
             <div style="display:flex; align-items:center; gap:8px;">
-                <i class="bi bi-activity" style="color:rgba(255,255,255,0.85); font-size:1rem;"></i>
-                <span style="font-size:0.92rem; font-weight:700;">Fitness Trainer</span>
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 24px; width: 24px; border-radius: 6px; object-fit: cover;">
+                <span style="font-size:0.92rem; font-weight:700;">Coach Studio</span>
             </div>
-            <div style="font-size:0.78rem; color:rgba(255,255,255,0.55); padding-left:24px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">${trainer.fullName}</div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.55); padding-left:32px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px;">${trainer.fullName}</div>
         </div>
         <div class="nav flex-column nav-pills" id="studioTab">
             <button class="list-group-item active" onclick="switchTab('requestsContent', this)" type="button">
@@ -362,11 +362,20 @@
             <button class="list-group-item" onclick="switchTab('activeContent', this)" type="button">
                 <i class="bi bi-calendar3" style="color:rgba(255,255,255,0.75);"></i> Upcoming Sessions <span class="badge ms-auto rounded-pill" style="background:rgba(255,255,255,0.2); font-size:0.7rem;">${activeBookings.size()}</span>
             </button>
-            <button class="list-group-item" onclick="switchTab('completedContent', this)" type="button">
-                <i class="bi bi-check2-square" style="color:rgba(255,255,255,0.75);"></i> Completed Classes
-            </button>
             <button class="list-group-item" onclick="switchTab('classesContent', this)" type="button">
                 <i class="bi bi-grid-1x2" style="color:rgba(255,255,255,0.75);"></i> Manage Classes
+            </button>
+            <button class="list-group-item" onclick="switchTab('packagesContent', this)" type="button">
+                <i class="bi bi-tag-fill" style="color:rgba(255,255,255,0.75);"></i> Packages &amp; Plans <span class="badge ms-auto rounded-pill" style="background:rgba(255,255,255,0.2); font-size:0.7rem;">${packages.size()}</span>
+            </button>
+            <button class="list-group-item" onclick="switchTab('attendanceContent', this)" type="button">
+                <i class="bi bi-clipboard-check-fill" style="color:rgba(255,255,255,0.75);"></i> Attendance &amp; Roster
+            </button>
+            <button class="list-group-item" onclick="switchTab('progressContent', this)" type="button">
+                <i class="bi bi-activity" style="color:rgba(255,255,255,0.75);"></i> Client Progress
+            </button>
+            <button class="list-group-item" onclick="switchTab('completedContent', this)" type="button">
+                <i class="bi bi-check2-square" style="color:rgba(255,255,255,0.75);"></i> Completed Classes
             </button>
             <button class="list-group-item" onclick="switchTab('messagesContent', this)" type="button">
                 <i class="bi bi-chat-square-text" style="color:rgba(255,255,255,0.75);"></i> Messages
@@ -383,6 +392,7 @@
             <a href="${pageContext.request.contextPath}/" class="list-group-item" type="button">
                 <i class="bi bi-chevron-left" style="color:rgba(255,255,255,0.75);"></i> Back to Home
             </a>
+
             <a href="${pageContext.request.contextPath}/fitness/trainer/logout" class="list-group-item" style="color:rgba(255,100,100,0.85);" type="button">
                 <i class="bi bi-power" style="color:rgba(255,100,100,0.85);"></i> Logout
             </a>
@@ -406,6 +416,16 @@
                 <p class="text-muted small mt-1 mb-0" style="text-align:center;">Manage your schedule, classes, and coaching requests.</p>
             </div>
         </div>
+
+        <c:if test="${trainer.verificationStatus != 'VERIFIED' && trainer.partnerProfileStatus != 'APPROVED'}">
+            <div class="alert alert-warning d-flex align-items-center justify-content-between p-3 mb-4 rounded-4 shadow-sm" style="background:#FFFBEB; border: 1px solid #FCD34D;">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Trainer Profile Verification Pending</h5>
+                    <p class="mb-0 text-muted" style="font-size:0.9rem;">Your trainer account is awaiting admin verification. Class & workout creation is locked until verified.</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/fitness/trainer/profile-completion" class="btn btn-warning fw-bold text-dark px-4 rounded-pill shadow-sm" style="white-space:nowrap;">Complete Profile <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </c:if>
 
         <c:if test="${not empty success}">
             <div class="alert alert-success alert-dismissible fade show mb-4" style="border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
@@ -693,9 +713,220 @@
                     </c:choose>
                 </div>
 
+                <!-- PACKAGES & MEMBERSHIP PLANS -->
+                <div class="tab-section" id="packagesContent" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Fitness Packages &amp; Membership Plans</h4>
+                            <p class="text-muted small mb-0">Create recurring class passes and multi-session membership tiers for your clients.</p>
+                        </div>
+                        <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createPackageModal">
+                            <i class="bi bi-plus-lg me-1"></i> New Package
+                        </button>
+                    </div>
+
+                    <c:choose>
+                        <c:when test="${empty packages}">
+                            <div class="text-center py-5">
+                                <i class="bi bi-tag text-muted" style="font-size:3rem; opacity:0.5;"></i>
+                                <p class="text-muted mt-3 fw-medium">No membership packages created yet. Click "New Package" to offer passes to clients.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="row g-3">
+                                <c:forEach var="pkg" items="${packages}">
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 position-relative" style="background:#fff;">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <span class="badge ${pkg.active ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${pkg.active ? 'success' : 'secondary'} border border-${pkg.active ? 'success' : 'secondary'} border-opacity-25 px-2 py-1 rounded-pill small">
+                                                    ${pkg.active ? 'Active' : 'Inactive'}
+                                                </span>
+                                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25">${pkg.sessionType}</span>
+                                            </div>
+                                            <h5 class="fw-bold text-dark mb-1">${pkg.packageName}</h5>
+                                            <span class="badge bg-light text-muted border mb-2 align-self-start">${pkg.category}</span>
+                                            <p class="text-muted small mb-3 flex-grow-1">${pkg.description != null && !pkg.description.isEmpty() ? pkg.description : 'Standard training package'}</p>
+                                            
+                                            <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-auto">
+                                                <div>
+                                                    <div class="fw-bold text-dark fs-5">₹${pkg.price}</div>
+                                                    <div class="text-muted small">${pkg.sessionCount == 0 ? 'Unlimited' : pkg.sessionCount} Sessions &bull; ${pkg.durationDays} Days</div>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <form action="${pageContext.request.contextPath}/fitness/trainer/package/toggle/${pkg.id}" method="POST" class="m-0">
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill" title="Toggle Active">
+                                                            <i class="bi bi-power"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form action="${pageContext.request.contextPath}/fitness/trainer/package/delete/${pkg.id}" method="POST" onsubmit="return confirm('Delete this package?');" class="m-0">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Package">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <!-- ATTENDANCE & ROSTER -->
+                <div class="tab-section" id="attendanceContent" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Session Attendance &amp; Client Roster</h4>
+                            <p class="text-muted small mb-0">Record date-by-date student check-ins and track remaining pass sessions.</p>
+                        </div>
+                    </div>
+
+                    <!-- Client Roster Table -->
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill text-primary me-2"></i> Active Trainees</h6>
+                    <c:choose>
+                        <c:when test="${empty activeBookings}">
+                            <div class="text-center py-4 bg-light rounded-4 mb-4">
+                                <p class="text-muted mb-0 fw-medium">No active student bookings to take attendance for.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="table-responsive bg-white border rounded-4 p-3 shadow-sm mb-5">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="text-muted" style="font-size: 0.85rem; border-bottom: 1px solid #eee;">
+                                        <tr>
+                                            <th>Client Name</th>
+                                            <th>Program / Category</th>
+                                            <th>Session Usage</th>
+                                            <th>Time Slot</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="b" items="${activeBookings}">
+                                            <tr>
+                                                <td class="fw-bold text-dark">
+                                                    <i class="bi bi-person-circle text-secondary me-2 fs-5"></i>${b.user.fullName}
+                                                </td>
+                                                <td><span class="badge bg-light border text-dark">${b.category}</span></td>
+                                                <td>
+                                                    <div class="small fw-bold text-dark mb-1">${b.completedSessions} / ${b.totalSessions} attended</div>
+                                                    <div class="progress" style="height: 5px; width: 140px;">
+                                                        <div class="progress-bar bg-success" style="width: ${(b.completedSessions * 100) / (b.totalSessions > 0 ? b.totalSessions : 1)}%"></div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-muted small">${b.bookingTime}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary rounded-pill px-3"
+                                                            onclick="openAttendanceModal(${b.id}, '${b.user.fullName}', '${b.bookingTime}')">
+                                                        <i class="bi bi-check2-circle me-1"></i> Check In
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <!-- Recent Check-In History -->
+                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-clock-history text-secondary me-2"></i> Recent Attendance Logs</h6>
+                    <c:choose>
+                        <c:when test="${empty attendanceList}">
+                            <div class="text-center py-4 bg-light rounded-4">
+                                <p class="text-muted mb-0 fw-medium">No check-in attendance logs recorded yet.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="table-responsive bg-white border rounded-4 p-3 shadow-sm">
+                                <table class="table table-sm table-borderless align-middle mb-0">
+                                    <thead class="text-muted" style="font-size: 0.85rem; border-bottom: 1px solid #eee;">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Client Name</th>
+                                            <th>Session Time</th>
+                                            <th>Status</th>
+                                            <th>Coach Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-size: 0.9rem;">
+                                        <c:forEach var="att" items="${attendanceList}">
+                                            <tr style="border-bottom: 1px solid #f8f9fa;">
+                                                <td class="fw-medium text-dark">${att.sessionDate}</td>
+                                                <td class="fw-bold text-dark">${att.user.fullName}</td>
+                                                <td class="text-muted">${att.sessionTime}</td>
+                                                <td>
+                                                    <span class="badge ${att.status == 'PRESENT' ? 'bg-success' : (att.status == 'LATE' ? 'bg-warning text-dark' : 'bg-danger')} bg-opacity-10 text-${att.status == 'PRESENT' ? 'success' : (att.status == 'LATE' ? 'warning' : 'danger')} border px-2 py-1">
+                                                        ${att.status}
+                                                    </span>
+                                                </td>
+                                                <td class="text-muted small">${att.notes != null ? att.notes : '—'}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <!-- CLIENT PROGRESS TRACKER -->
+                <div class="tab-section" id="progressContent" style="display:none;">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-dark mb-1">Client Fitness Progress &amp; Milestone Logs</h4>
+                            <p class="text-muted small mb-0">Record authentic body metric changes and fitness capability assessments for enrolled clients.</p>
+                        </div>
+                        <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#logProgressModal">
+                            <i class="bi bi-plus-lg me-1"></i> Log Client Metric
+                        </button>
+                    </div>
+
+                    <c:choose>
+                        <c:when test="${empty progressLogs}">
+                            <div class="text-center py-5 bg-white border rounded-4 shadow-sm">
+                                <i class="bi bi-activity text-muted" style="font-size:3rem; opacity:0.5;"></i>
+                                <p class="text-muted mt-3 fw-medium">No client fitness milestones logged yet. Click "Log Client Metric" to add evaluation data.</p>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="table-responsive bg-white border rounded-4 p-3 shadow-sm">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="text-muted" style="font-size: 0.85rem; border-bottom: 1px solid #eee;">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Client</th>
+                                            <th>Weight</th>
+                                            <th>Body Fat</th>
+                                            <th>Workouts Completed</th>
+                                            <th>Capabilities Radar</th>
+                                            <th>Workout Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach var="log" items="${progressLogs}">
+                                            <tr>
+                                                <td class="fw-medium text-dark">${log.logDate}</td>
+                                                <td class="fw-bold text-dark">${log.user.fullName}</td>
+                                                <td><span class="badge bg-light border text-dark">${log.weightKg != null ? log.weightKg : '—'} kg</span></td>
+                                                <td><span class="badge bg-light border text-dark">${log.bodyFatPct != null ? log.bodyFatPct : '—'}%</span></td>
+                                                <td><span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">${log.workoutsCompleted} Sessions</span></td>
+                                                <td class="small text-muted">${log.metricsJson != null ? log.metricsJson : 'General Assessment'}</td>
+                                                <td class="small text-muted">${log.workoutNotes != null ? log.workoutNotes : '—'}</td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
                 <!-- SCHEDULE & CONFIG -->
                 <div class="tab-section" id="scheduleContent" style="display:none;">
-                    <h4 class="fw-bold mb-4 text-dark">Schedule & Fees Configuration</h4>
+                    <h4 class="fw-bold mb-4 text-dark">Schedule &amp; Fees Configuration</h4>
+
                     
                     <form action="${pageContext.request.contextPath}/fitness/trainer/update-schedule" method="POST">
                         <div class="mb-4">
@@ -1218,7 +1449,166 @@
     }
 </script>
 
+<!-- Create Package Modal -->
+<div class="modal fade" id="createPackageModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header bg-light border-0 rounded-top-4">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-tag-fill text-primary me-2"></i> Create Fitness Membership Package</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="${pageContext.request.contextPath}/fitness/trainer/package/create" method="POST">
+          <div class="modal-body p-4">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Package Name *</label>
+                    <input type="text" name="packageName" class="form-control" placeholder="e.g. 10-Class Yoga Pass, Monthly Unlimited Gym" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Category *</label>
+                    <select name="category" class="form-select" required>
+                        <c:forEach var="cat" items="${categories}">
+                            <option value="${cat}">${cat}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Description / Inclusions</label>
+                    <textarea name="description" class="form-control" rows="2" placeholder="Include benefits, equipment access, personal locker, etc."></textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Total Sessions (0 = Unlimited)</label>
+                    <input type="number" name="sessionCount" class="form-control" value="10" min="0" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Validity (Days)</label>
+                    <input type="number" name="durationDays" class="form-control" value="30" min="1" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Price (₹) *</label>
+                    <input type="number" name="price" class="form-control" value="1999" min="0" step="1" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Training Mode</label>
+                    <select name="sessionType" class="form-select" required>
+                        <option value="OFFLINE">In-Person Studio</option>
+                        <option value="ONLINE">Online Live Sessions</option>
+                        <option value="HYBRID">Hybrid (Studio + Online)</option>
+                    </select>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-submit rounded-pill px-4">Save Package</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Mark Attendance Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header bg-light border-0 rounded-top-4">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-clipboard-check text-success me-2"></i> Mark Client Attendance</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="${pageContext.request.contextPath}/fitness/trainer/attendance/mark" method="POST">
+          <input type="hidden" name="bookingId" id="attBookingId">
+          <div class="modal-body p-4">
+            <div class="mb-3">
+                <label class="form-label">Client Name</label>
+                <input type="text" id="attClientName" class="form-control bg-light" readonly>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Session Date *</label>
+                <input type="date" name="sessionDate" id="attSessionDate" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Session Time</label>
+                <input type="text" name="sessionTime" id="attSessionTime" class="form-control" placeholder="e.g. 07:00 AM - 08:00 AM">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Attendance Status *</label>
+                <select name="status" class="form-select" required>
+                    <option value="PRESENT" selected>Present (Deduct 1 Session)</option>
+                    <option value="LATE">Late / Partial (Deduct 1 Session)</option>
+                    <option value="ABSENT">Absent (No deduction)</option>
+                    <option value="EXCUSED">Excused Absence</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Coach Notes / Workout Focus</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Completed heavy leg day + 15 min HIIT cooldown"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success rounded-pill px-4">Confirm Attendance</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Log Progress Modal -->
+<div class="modal fade" id="logProgressModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header bg-light border-0 rounded-top-4">
+        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-activity text-danger me-2"></i> Log Client Fitness Metric &amp; Progress</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="${pageContext.request.contextPath}/fitness/trainer/progress/log" method="POST">
+          <div class="modal-body p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Select Client *</label>
+                    <select name="userId" class="form-select" required>
+                        <c:forEach var="b" items="${activeBookings}">
+                            <option value="${b.user.id}">${b.user.fullName} (${b.category})</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Current Weight (kg)</label>
+                    <input type="number" name="weightKg" class="form-control" placeholder="e.g. 68.5" step="0.1" min="20" max="300">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Body Fat %</label>
+                    <input type="number" name="bodyFatPct" class="form-control" placeholder="e.g. 18.2" step="0.1" min="3" max="70">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Fitness Capabilities Radar (Scores out of 100)</label>
+                    <input type="text" name="metricsJson" class="form-control" value="Endurance: 80, Strength: 75, Flexibility: 70, Core: 85, Stamina: 80" placeholder="e.g. Endurance: 85, Strength: 80, Flexibility: 75">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Coach Milestone Notes</label>
+                    <textarea name="workoutNotes" class="form-control" rows="3" placeholder="Document achievements, personal records (PRs), posture corrections, diet adherence..."></textarea>
+                </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-submit rounded-pill px-4">Save Milestone</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+    function openAttendanceModal(bookingId, clientName, bookingTime) {
+        document.getElementById('attBookingId').value = bookingId;
+        document.getElementById('attClientName').value = clientName;
+        document.getElementById('attSessionTime').value = bookingTime;
+        document.getElementById('attSessionDate').value = new Date().toISOString().split('T')[0];
+        var attModal = new bootstrap.Modal(document.getElementById('markAttendanceModal'));
+        attModal.show();
+    }
+
     function switchTab(tabId, clickedBtn) {
         document.querySelectorAll('.tab-section').forEach(function(section) {
             section.style.display = 'none';
@@ -1239,7 +1629,6 @@
                 if (preview.tagName === 'IMG') {
                     preview.src = e.target.result;
                 } else {
-                    // Replace placeholder div with img
                     var img = document.createElement('img');
                     img.id = 'profilePreview';
                     img.src = e.target.result;
@@ -1255,3 +1644,4 @@
 
 </body>
 </html>
+

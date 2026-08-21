@@ -5,135 +5,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centre Login — Fight D Fear</title>
+    <title>Centre Sign In — Fight D Fear</title>
+    <!-- Google Fonts & Bootstrap Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; background: #fffcfd; }
-        .left-panel { flex: 1; background: linear-gradient(135deg, #1e1b4b 0%, #1e1b4b 40%, #f43f5e 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 40px; position: relative; overflow: hidden; }
-        .left-panel::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-        .left-panel::after { content: ''; position: absolute; bottom: -150px; left: -80px; width: 500px; height: 500px; border-radius: 50%; background: rgba(255,255,255,0.04); }
-        .left-panel .brand { position: relative; z-index: 2; text-align: center; color: white; }
-        .brand-logo { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
-        .brand-logo i { font-size: 2rem; margin-right: 8px; }
-        .brand-tagline { font-size: 1.1rem; font-weight: 300; opacity: 0.9; max-width: 360px; line-height: 1.7; margin-bottom: 40px; }
-        .right-panel { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; }
-        .login-card { width: 100%; max-width: 420px; }
-        .login-card h2 { font-size: 1.85rem; font-weight: 800; color: #3F1430; margin-bottom: 6px; }
-        .login-card .subtitle { color: #6b7280; font-size: 0.95rem; margin-bottom: 32px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #3F1430; margin-bottom: 8px; }
-        .input-wrapper { position: relative; }
-        .input-wrapper i.prefix-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 1rem; }
-        .password-toggle-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 1.1rem; z-index: 2; }
-        .input-wrapper.password-field .form-input { padding-right: 46px; }
-        .form-input { width: 100%; padding: 14px 16px 14px 46px; border: 2px solid #f3e8ef; border-radius: 12px; font-size: 0.95rem; transition: all 0.3s ease; }
-        .form-input:focus { outline: none; border-color: #1e1b4b; box-shadow: 0 0 0 4px rgba(30, 27, 75, 0.1); }
-        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e1b4b, #1e1b4b); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3); }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(124, 45, 94, 0.4); }
-        .register-link { text-align: center; margin-top: 24px; font-size: 0.9rem; color: #6b7280; }
-        .register-link a { color: #1e1b4b; text-decoration: none; font-weight: 700; }
-        .error-alert { background: #fff1f8; border: 1px solid #ffc2df; color: #1e1b4b; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .back-home { display: inline-flex; align-items: center; gap: 6px; color: #6b7280; text-decoration: none; font-size: 0.85rem; font-weight: 500; margin-bottom: 28px; }
-        .feature-list { list-style: none; display: flex; flex-direction: column; gap: 16px; text-align: left; margin-top: 20px; }
-        .feature-list li { display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.9); font-size: 0.95rem; font-weight: 400; }
-        .feature-list li .feat-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; font-size: 1.1rem; flex-shrink: 0; }
-        @media (max-width: 992px) {
-            body { flex-direction: column; }
-            .left-panel {
-                padding: 50px 30px;
-                min-height: 30vh;
-                text-align: center;
-            }
-            .brand-tagline { 
-                margin: 0 auto;
-                font-size: 1rem;
-            }
-            .feature-list { display: none; }
-            .right-panel { 
-                padding: 40px 20px;
-                background: #fff;
-                border-top-left-radius: 30px;
-                border-top-right-radius: 30px;
-                margin-top: -30px;
-                position: relative;
-                z-index: 5;
-            }
-            .login-card {
-                max-width: 100%;
-            }
+        :root {
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
         }
 
-        @media (max-width: 480px) {
-            .brand-logo { font-size: 2rem; }
-            .login-card h2 { font-size: 1.5rem; }
-            .form-input { padding: 12px 16px 12px 42px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .header-brand i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 440px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .card-header p {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+        }
+
+        .password-field .form-input {
+            padding-right: 42px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .alert-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            color: var(--error);
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid #BBF7D0;
+            color: var(--success);
         }
     </style>
 </head>
 <body>
-    <div class="left-panel">
-        <div class="brand">
-            <div class="brand-logo"><i class="fa-solid fa-dumbbell"></i> Fight D Fear</div>
-            <p class="brand-tagline">Empower your students with professional martial arts training and safety education.</p>
-            <ul class="feature-list">
-                <li><span class="feat-icon"><i class="bi bi-person-badge-fill"></i></span> Learn Self-Defense from Experts</li>
-                <li><span class="feat-icon"><i class="bi bi-graph-up-arrow"></i></span> Beginner to Advanced Training Programs</li>
-                <li><span class="feat-icon"><i class="bi bi-award-fill"></i></span> Build Confidence & Strength</li>
-                <li><span class="feat-icon"><i class="bi bi-shield-shaded"></i></span> Stay Prepared for Real-Life Situations</li>
-            </ul>
-        </div>
-    </div>
-    <div class="right-panel">
-        <div class="login-card">
-            <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Back to Home</a>
-            <h2>Welcome Back 👋</h2>
-            <p class="subtitle">Enter your centre credentials to manage your gym</p>
+
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+        </a>
+    </header>
+
+    <main class="main-container">
+        <div class="form-card">
+            <div class="card-header">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 64px; width: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(244,63,94,0.15);">
+                <h2>Centre Sign In</h2>
+                <p>Manage your batches, trainees and profile</p>
+            </div>
+
             <c:if test="${not empty error}">
-                <div class="error-alert"><i class="bi bi-exclamation-circle"></i> ${error}</div>
+                <div class="alert-box alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
+                </div>
             </c:if>
             <c:if test="${not empty message}">
-                <div class="error-alert" style="background:#ecfdf5;border-color:#a7f3d0;color:#065f46;">
-                    <i class="bi bi-check-circle"></i> ${message}
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ${message}
                 </div>
             </c:if>
+
             <form action="${pageContext.request.contextPath}/centres/loginCentre" method="post">
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <div class="input-wrapper"><i class="bi bi-envelope prefix-icon"></i><input type="email" name="email" class="form-input" placeholder="centre@example.com" required></div>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="centre@example.com" 
+                           value="<c:out value='${not empty registeredEmail ? registeredEmail : (not empty param.email ? param.email : \"\")}'/>" required autofocus>
                 </div>
+
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <label style="margin-bottom: 0;">Password</label>
-                        <a href="${pageContext.request.contextPath}/users/forgot-password" style="font-size: 0.8rem; color: #1e1b4b; text-decoration: none; font-weight: 600;">Forgot Password?</a>
-                    </div>
+                    <label for="password">Password</label>
                     <div class="input-wrapper password-field">
-                        <i class="bi bi-lock prefix-icon"></i><input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
-                        <button type="button" class="password-toggle-btn" onclick="togglePassword()"><i class="bi bi-eye"></i></button>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                 </div>
-                <button type="submit" class="btn-login">Sign In <i class="bi bi-arrow-right"></i></button>
+
+                <button type="submit" class="btn-submit">
+                    Sign In <i class="bi bi-arrow-right"></i>
+                </button>
             </form>
-            <p class="register-link">New Centre? <a href="${pageContext.request.contextPath}/centres/registerCentre">Register here</a></p>
+
+            <div class="login-footer">
+                New Centre? <a href="${pageContext.request.contextPath}/centres/registerCentre">Register here</a>
+            </div>
         </div>
-    </div>
+    </main>
+
     <script>
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.querySelector('.password-toggle-btn i');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('bi-eye');
-                toggleIcon.classList.add('bi-eye-slash');
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
             } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('bi-eye-slash');
-                toggleIcon.classList.add('bi-eye');
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
             }
         }
     </script>
 </body>
 </html>
-

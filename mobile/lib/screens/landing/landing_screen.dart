@@ -21,6 +21,7 @@ import '../glow/glow_space_screen.dart';
 import '../safety/home_screen.dart';
 import '../investor/investor_portal_login_screen.dart';
 import '../marketplace/job_bookings_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 import 'landing_notifications_screen.dart';
 import '../auth/login_screen.dart';
 import '../martial_arts/martial_arts_admin_screen.dart';
@@ -410,7 +411,7 @@ class _LandingScreenState extends State<LandingScreen> {
         return;
       case 'admin':
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MartialArtsAdminScreen()),
+          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
         );
         return;
       default:

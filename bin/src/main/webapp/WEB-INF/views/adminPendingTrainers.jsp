@@ -103,7 +103,10 @@
                 </td>
                 <td class="small">${empty t.phone ? '—' : t.phone}</td>
                 <td>
-                  <div class="d-flex flex-wrap gap-2">
+                  <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.85rem;">
+                      <i class="fas fa-user me-1"></i>Profile
+                    </a>
                     <form action="${pageContext.request.contextPath}/admin/trainers/${t.id}/approve" method="post" class="m-0">
                       <button type="submit" class="btn-approve"><i class="fas fa-check me-1"></i>Approve</button>
                     </form>

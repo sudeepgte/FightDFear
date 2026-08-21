@@ -284,19 +284,30 @@
 
                         {/* Skill Grid */}
                         <Col lg={16} md={24}>
-                            <Card title={<span><ThunderboltOutlined /> Skill Mastery</span>}>
-                                <Row gutter={[16, 16]}>
-                                    {Object.entries(data.skills).map(([skill, val]) => (
-                                        <Col span={8} key={skill}>
-                                            <div className="skill-card">
-                                                <span className="skill-name">{skill}</span>
-                                                <Progress type="circle" percent={val} size={80} strokeColor="#E11D48" />
-                                            </div>
-                                        </Col>
-                                    ))}
-                                </Row>
+                            <Card title={<span><ThunderboltOutlined /> Technical Skill Mastery</span>}>
+                                {Object.keys(data.skills || {}).length > 0 ? (
+                                    <Row gutter={[16, 16]}>
+                                        {Object.entries(data.skills).map(([skill, val]) => (
+                                            <Col span={8} key={skill}>
+                                                <div className="skill-card">
+                                                    <span className="skill-name">{skill}</span>
+                                                    <Progress type="circle" percent={val} size={80} strokeColor="#E11D48" />
+                                                </div>
+                                            </Col>
+                                        ))}
+                                    </Row>
+                                ) : (
+                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748B' }}>
+                                        <ThunderboltOutlined style={{ fontSize: 36, color: '#94A3B8', marginBottom: 12 }} /><br/>
+                                        <Typography.Title level={5} style={{ color: '#1E293B' }}>Not Yet Assessed</Typography.Title>
+                                        <p style={{ maxWidth: 440, margin: '0 auto', fontSize: '0.9rem' }}>
+                                            Your technique metrics will be unlocked once your master trainer conducts your first belt grading or skill examination.
+                                        </p>
+                                    </div>
+                                )}
                             </Card>
                         </Col>
+
 
                         {/* Achievements & Streak */}
                         <Col lg={8} md={24}>
