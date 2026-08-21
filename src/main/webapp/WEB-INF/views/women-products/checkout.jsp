@@ -311,6 +311,7 @@
     <div class="page-title">Shopping Checkout</div>
 
     <form method="post" action="${pageContext.request.contextPath}/women-products/checkout/place" id="checkoutForm">
+      <c:if test="${buyNowMode}"><input type="hidden" name="buyNow" value="1"></c:if>
       <div class="checkout-grid">
         <!-- Left Column: Details -->
         <div class="details-column">
@@ -334,25 +335,18 @@
                 <span>Cash on Delivery</span>
               </div>
               <div class="pay-option" onclick="selectPayment(this, 'ONLINE')">
-                <i class="bi bi-lightning-charge-fill"></i>
+                <i class="bi bi-credit-card"></i>
                 <span>Online Payment</span>
               </div>
-              
-              <div class="online-pay-menu" id="onlinePayMenu">
-                <label class="pay-radio">
-                  <input type="radio" name="onlineType" value="ONLINE_GPAY" checked onchange="updateOnlineMethod(this)">
-                  <span><img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" height="16" alt="GPay" style="margin-right:8px; vertical-align:middle;"> Google Pay</span>
-                </label>
-                <label class="pay-radio">
-                  <input type="radio" name="onlineType" value="ONLINE_PHONEPE" onchange="updateOnlineMethod(this)">
-                  <span><img src="https://upload.wikimedia.org/wikipedia/commons/7/71/PhonePe_Logo.svg" height="16" alt="PhonePe" style="margin-right:8px; vertical-align:middle;"> PhonePe</span>
-                </label>
-                <label class="pay-radio">
-                  <input type="radio" name="onlineType" value="ONLINE_PAYTM" onchange="updateOnlineMethod(this)">
-                  <span><img src="https://upload.wikimedia.org/wikipedia/commons/2/24/Paytm_Logo_%28standalone%29.svg" height="16" alt="Paytm" style="margin-right:8px; vertical-align:middle;"> Paytm</span>
-                </label>
-              </div>
             </div>
+            <p id="onlinePayNote" style="display:none;margin-top:12px;font-size:12px;color:#047857;background:#ecfdf5;padding:10px 12px;border-radius:10px;">
+              <i class="bi bi-shield-lock-fill"></i> Pay securely via Razorpay. Your order is placed first, then payment is confirmed instantly.
+            </p>
+            <c:if test="${not paymentsAvailable}">
+              <p style="margin-top:12px;font-size:12px;color:#b45309;background:#fffbeb;padding:10px 12px;border-radius:10px;">
+                Online payment is temporarily unavailable. Use Cash on Delivery or set Razorpay keys / <code>app.payments.mock-enabled=true</code> for local testing.
+              </p>
+            </c:if>
             <input type="hidden" name="paymentMethod" id="paymentMethod" value="COD">
           </div>
         </div>
@@ -365,22 +359,30 @@
               <c:forEach var="ci" items="${cartItems}">
                 <div class="summary-item">
                   <c:choose>
-                    <c:when test="${not empty ci.product.imagePath}">
-                      <img src="${pageContext.request.contextPath}${ci.product.imagePath}" alt="${ci.product.name}">
+                    <c:when test="${not empty ci.product.publicImagePath}">
+                      <img src="<c:choose><c:when test="${ci.product.remoteImage}">${ci.product.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${ci.product.publicImagePath}</c:otherwise></c:choose>" alt="<c:out value='${ci.product.name}'/>">
                     </c:when>
                     <c:otherwise>
                       <div class="placeholder"><i class="bi bi-gift"></i></div>
                     </c:otherwise>
                   </c:choose>
                   <div class="info">
-                    <div class="name">${ci.product.name}</div>
-                    <div class="qty">Selected: ${ci.quantity}</div>
+                    <div class="name"><c:out value="${ci.product.name}"/></div>
+                    <div class="qty">Qty: ${ci.quantity}<c:if test="${ci.product.discountPercent > 0}"> · ${ci.product.discountPercent}% off</c:if></div>
                   </div>
                   <div class="price">&#8377;${ci.product.price * ci.quantity}</div>
                 </div>
               </c:forEach>
             </div>
 
+            <div class="total-row" style="border-top:none;padding-top:8px;margin-top:0;">
+              <span class="total-label">Subtotal</span>
+              <span>&#8377;${cartTotal}</span>
+            </div>
+            <div class="summary-row" style="display:flex;justify-content:space-between;font-size:13px;color:var(--fdf-muted);margin:8px 0;">
+              <span>Delivery</span>
+              <span>Free</span>
+            </div>
             <div class="total-row">
               <span class="total-label">Total to Pay</span>
               <span class="total-val">&#8377;${cartTotal}</span>
@@ -567,31 +569,113 @@
     }
 
     // --- Payment Logic ---
+    const ctx = '${pageContext.request.contextPath}';
+    const cartTotal = ${cartTotal};
+    const paymentsAvailable = ${paymentsAvailable};
+
     function selectPayment(el, method) {
       document.querySelectorAll('.pay-option').forEach(function(o){ o.classList.remove('selected'); });
       el.classList.add('selected');
-      
-      const menu = document.getElementById('onlinePayMenu');
-      if (method === 'ONLINE') {
-        menu.classList.add('active');
-        const activeRadio = document.querySelector('input[name="onlineType"]:checked');
-        if (activeRadio) {
-          document.getElementById('paymentMethod').value = activeRadio.value;
-        }
-      } else {
-        menu.classList.remove('active');
-        document.getElementById('paymentMethod').value = method;
-      }
+      document.getElementById('paymentMethod').value = method;
+      const note = document.getElementById('onlinePayNote');
+      if (note) note.style.display = method === 'ONLINE' ? 'block' : 'none';
     }
-    
-    function updateOnlineMethod(radioEl) {
-      document.getElementById('paymentMethod').value = radioEl.value;
+
+    async function startOnlineCheckout() {
+      const btn = document.querySelector('.btn-place-order');
+      const address = document.getElementById('finalShippingAddress').value;
+      if (!address) {
+        alert('Please select or add a delivery address.');
+        return;
+      }
+      if (!paymentsAvailable) {
+        alert('Online payment is not configured on this server.');
+        return;
+      }
+      btn.disabled = true;
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
+
+      try {
+        const fd = new FormData();
+        fd.append('paymentMethod', 'ONLINE');
+        fd.append('shippingAddress', address);
+        const placeRes = await fetch(ctx + '/women-products/checkout/place/ajax', { method: 'POST', body: fd });
+        const placeData = await placeRes.json();
+        if (!placeRes.ok || placeData.status !== 'SUCCESS') {
+          throw new Error(placeData.message || 'Could not place order');
+        }
+        const orderIds = placeData.orderIds || [];
+        if (!orderIds.length) throw new Error('No order was created');
+
+        const createRes = await fetch(ctx + '/payment/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'WOMEN_PRODUCT',
+            orderIds: orderIds,
+            targetId: orderIds[0],
+            amount: cartTotal
+          })
+        });
+        const order = await createRes.json().catch(function() { return {}; });
+        if (!createRes.ok) throw new Error(order.error || 'Payment order creation failed');
+
+        const options = {
+          key: order.key,
+          amount: order.amount,
+          currency: 'INR',
+          name: 'Fight D Fear Shop',
+          description: 'Women Products order',
+          order_id: order.orderId,
+          handler: async function(response) {
+            const verifyRes = await fetch(ctx + '/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                type: 'WOMEN_PRODUCT',
+                targetId: orderIds[0],
+                orderIds: orderIds
+              })
+            });
+            if (verifyRes.ok) {
+              window.location.href = ctx + (placeData.redirect || '/women-products/order-confirmation');
+            } else {
+              const err = await verifyRes.json().catch(function() { return {}; });
+              alert(err.error || 'Payment verification failed. Check My Orders.');
+              window.location.href = ctx + '/women-products/my-orders';
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              btn.disabled = false;
+              btn.innerHTML = originalHtml;
+              alert('Payment cancelled. Your order is saved as payment pending in My Orders.');
+              window.location.href = ctx + '/women-products/my-orders';
+            }
+          },
+          theme: { color: '#7c2d5e' }
+        };
+        new Razorpay(options).open();
+      } catch (e) {
+        alert(e.message || 'Online checkout failed');
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
     }
 
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
       if (!document.getElementById('finalShippingAddress').value) {
         e.preventDefault();
-        alert("Please select or add a delivery address.");
+        alert('Please select or add a delivery address.');
+        return;
+      }
+      if (document.getElementById('paymentMethod').value === 'ONLINE') {
+        e.preventDefault();
+        startOnlineCheckout();
       }
     });
 
@@ -605,6 +689,7 @@
       renderAddresses();
     };
   </script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </body>
 </html>
 

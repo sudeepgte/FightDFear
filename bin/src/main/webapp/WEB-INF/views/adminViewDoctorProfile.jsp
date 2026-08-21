@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -42,24 +43,24 @@
   /* ── LAYOUT ── */
   .layout { display:flex; min-height:calc(100vh - 58px); }
 
-  /* ── SIDEBAR ── */
+  /* ── SIDEBAR (matches globalAdminMenu / pending-doctors) ── */
   .sidebar {
     width: var(--sidebar-w); background:#fff;
     border-right:1px solid var(--maroon-border);
     position:sticky; top:58px; height:calc(100vh - 58px);
     padding:14px 12px; overflow-y:auto; flex-shrink:0;
+    transition: all 0.3s ease;
   }
-  .sidebar .brand-label { font-weight:700; color:var(--maroon); font-size:0.95rem; margin-bottom:10px; padding:0 6px; }
-  .sidebar .sec-title { margin:14px 8px 6px; font-size:0.72rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.06em; }
-  .sidebar a.nl {
-    display:flex; align-items:center; gap:9px;
-    padding:9px 10px; border-radius:9px;
-    color:#374151; text-decoration:none; font-weight:500; font-size:0.88rem;
-    transition:all 0.18s;
+  .sidebar .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
+  .sidebar .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
+  .sidebar .navlink {
+    display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
+    color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
   }
-  .sidebar a.nl i { width:18px; text-align:center; color:var(--maroon); font-size:0.9rem; }
-  .sidebar a.nl:hover { background:rgba(125,42,90,0.08); padding-left:14px; color:#1a1a2e; }
-  .sidebar a.nl.active { background:rgba(125,42,90,0.12); color:var(--maroon); font-weight:700; }
+  .sidebar .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
+  .sidebar .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
+  .sidebar .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+  .sidebar .navlink.active i { color: #fff; }
 
   /* ── MAIN ── */
   .main { flex:1; min-width:0; padding:28px 20px 48px; }
@@ -279,26 +280,7 @@
 </div>
 
 <div class="layout">
-  <aside class="sidebar">
-    <div class="brand-label">Admin Menu</div>
-    <div class="sec-title">Dashboard</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/adminDashboard"><i class="fas fa-home"></i> Home</a>
-
-    <div class="sec-title">Moderation</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/sos"><i class="fas fa-broadcast-tower"></i> SOS Monitoring</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/reported-videos"><i class="fas fa-flag"></i> Reported Videos</a>
-    <a class="nl" href="${pageContext.request.contextPath}/qna/admin/questions"><i class="fas fa-question-circle"></i> Q&amp;A Panel</a>
-
-    <div class="sec-title">Approvals</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/martialManagement"><i class="fas fa-dumbbell"></i> Martial Arts Centres</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-suggestions"><i class="fas fa-users"></i> Volunteer Suggestions</a>
-    <a class="nl active" href="${pageContext.request.contextPath}/admin/pending-doctors"><i class="fas fa-user-md"></i> Doctor Verification</a>
-    <a class="nl" href="${pageContext.request.contextPath}/video/videoManagement"><i class="fas fa-video"></i> Video Library</a>
-
-    <div class="sec-title">Account</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/users"><i class="fas fa-user-cog"></i> User Management</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/profile/${admin.id}"><i class="fas fa-user"></i> Profile</a>
-  </aside>
+  <%@ include file="globalAdminMenu.jsp" %>
 
   <main class="main">
     <div class="mainInner">
@@ -329,18 +311,7 @@
               </c:choose>
               <div class="profile-name">${doctor.fullName}</div>
               <div class="profile-email">${doctor.email}</div>
-              
-              <c:choose>
-                  <c:when test="${doctor.verificationStatus == 'VERIFIED'}">
-                      <span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span>
-                  </c:when>
-                  <c:when test="${doctor.verificationStatus == 'REJECTED'}">
-                      <span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span>
-                  </c:when>
-                  <c:otherwise>
-                      <span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> PENDING</span>
-                  </c:otherwise>
-              </c:choose>
+              <span class="badge-status status-PENDING">${statusLabel}</span>
           </div>
 
           <!-- Doctor Information -->
@@ -389,44 +360,201 @@
                       </c:choose>
                   </div>
               </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-tasks"></i> Profile Status</div>
+                  <div class="info-value">${doctor.doctorProfileStatus != null ? doctor.doctorProfileStatus : '—'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-percent"></i> Profile Completion</div>
+                  <div class="info-value">${doctor.profileCompletionPct != null ? doctor.profileCompletionPct : 0}%</div>
+              </div>
           </div>
 
-          <!-- Identity Document -->
-          <div class="section-title"><i class="fas fa-file-medical-alt"></i> Medical Identity Document</div>
+          <!-- Verification Documents -->
+          <div class="section-title"><i class="fas fa-file-medical-alt"></i> Verification Documents</div>
           <div class="doc-box">
-              <div class="doc-box-icon"><i class="fas fa-file-image"></i></div>
+              <div class="doc-box-icon"><i class="fas fa-user-circle"></i></div>
               <div class="doc-box-content">
+                  <div class="label">Profile Photo</div>
                   <c:choose>
-                      <c:when test="${not empty doctor.identityDocumentPath}">
-                          <div class="label">Uploaded Certificate / ID</div>
-                          <a href="${pageContext.request.contextPath}${doctor.identityDocumentPath}" target="_blank" class="doc-link">
-                              <i class="fas fa-external-link-alt"></i> View / Download Document
+                      <c:when test="${not empty doctor.profilePhotoPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.profilePhotoPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View profile photo
                           </a>
                       </c:when>
-                      <c:otherwise>
-                          <div class="text-muted">No identity document uploaded.</div>
-                      </c:otherwise>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-id-card"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Government ID</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.idProofPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.idProofPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View government ID
+                          </a>
+                      </c:when>
+                      <c:when test="${not empty doctor.identityDocumentPath}">
+                          <a href="${pageContext.request.contextPath}${doctor.identityDocumentPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View identity document
+                          </a>
+                          <c:if test="${fn:startsWith(doctor.identityDocumentPath, 'mobile:') || doctor.identityDocumentPath == 'mobile-pending'}">
+                              <div class="text-warning small mt-1">Placeholder only — doctor must re-upload from mobile app.</div>
+                          </c:if>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-file-certificate"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Medical Registration Certificate</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.degreeCertificatePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.degreeCertificatePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View registration certificate
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-file-medical"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Medical License</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.medicalLicensePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.medicalLicensePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View medical license
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-certificate"></i></div>
+              <div class="doc-box-content">
+                  <div class="label">Additional Certificates</div>
+                  <c:choose>
+                      <c:when test="${not empty doctor.additionalCertificatePath}">
+                          <a href="${pageContext.request.contextPath}${doctor.additionalCertificatePath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View additional certificate
+                          </a>
+                      </c:when>
+                      <c:otherwise><div class="text-muted">Not uploaded</div></c:otherwise>
                   </c:choose>
               </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="action-bar">
-              <c:if test="${doctor.verificationStatus != 'VERIFIED'}">
-                  <form action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
-                      <button type="submit" class="btn-verify">
-                          <i class="fas fa-check-circle"></i> Verify Doctor
-                      </button>
-                  </form>
-              </c:if>
+          <c:if test="${not empty pendingDraft}">
+              <div class="section-title"><i class="fas fa-sync-alt"></i> Pending Re-verification Changes</div>
+              <div class="alert alert-warning" style="border-radius:12px;">
+                  <strong>Status:</strong> ${pendingDraft.status}<br/>
+                  <c:if test="${not empty pendingDraft.adminNotes}"><strong>Admin notes:</strong> ${pendingDraft.adminNotes}<br/></c:if>
+                  <c:if test="${not empty pendingDraft.submittedAt}"><strong>Submitted:</strong> ${pendingDraft.submittedAt}<br/></c:if>
+                  <div class="mt-2 small text-muted">Live approved profile is preserved until these changes are approved.</div>
+              </div>
+          </c:if>
 
-              <c:if test="${doctor.verificationStatus != 'REJECTED'}">
-                  <form action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this doctor?')">
-                      <button type="submit" class="btn-reject">
-                          <i class="fas fa-times-circle"></i> Reject Doctor
-                      </button>
-                  </form>
+          <div class="section-title"><i class="fas fa-history"></i> Verification History</div>
+          <c:choose>
+              <c:when test="${not empty history}">
+                  <div class="table-responsive mb-4">
+                      <table class="table table-sm align-middle">
+                          <thead>
+                              <tr>
+                                  <th>When</th>
+                                  <th>Action</th>
+                                  <th>From</th>
+                                  <th>To</th>
+                                  <th>Notes</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <c:forEach var="h" items="${history}">
+                                  <tr>
+                                      <td>${h.createdAt}</td>
+                                      <td>${h.action}</td>
+                                      <td>${h.fromStatusLabel}</td>
+                                      <td>${h.toStatusLabel}</td>
+                                      <td>
+                                          <c:if test="${not empty h.reasons}"><div><strong>Reasons:</strong> ${h.reasons}</div></c:if>
+                                          <c:if test="${not empty h.notes}">${h.notes}</c:if>
+                                          <c:if test="${empty h.notes && empty h.reasons}">—</c:if>
+                                      </td>
+                                  </tr>
+                              </c:forEach>
+                          </tbody>
+                      </table>
+                  </div>
+              </c:when>
+              <c:otherwise>
+                  <div class="text-muted mb-4">No verification history yet.</div>
+              </c:otherwise>
+          </c:choose>
+
+          <!-- Action Buttons -->
+          <div class="section-title"><i class="fas fa-gavel"></i> Admin Decision</div>
+          <div class="mb-3">
+              <span class="badge-status status-PENDING">${statusLabel}</span>
+              <c:if test="${not empty doctor.changesRequestedNote}">
+                  <div class="mt-2 text-warning small"><strong>Changes requested:</strong> ${doctor.changesRequestedNote}</div>
               </c:if>
+              <c:if test="${not empty doctor.rejectionReason}">
+                  <div class="mt-2 text-danger small"><strong>Rejection reason:</strong> ${doctor.rejectionReason}</div>
+              </c:if>
+          </div>
+
+          <div class="mb-3">
+              <label class="form-label fw-semibold">Decision notes / comments</label>
+              <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the doctor (required for reject / request changes)"></textarea>
+          </div>
+
+          <div class="mb-3">
+              <label class="form-label fw-semibold">Request-change reasons (optional checkboxes)</label>
+              <div class="d-flex flex-wrap gap-3">
+                  <label><input type="checkbox" class="reason-box" value="Professional information"> Professional information</label>
+                  <label><input type="checkbox" class="reason-box" value="Clinic details"> Clinic details</label>
+                  <label><input type="checkbox" class="reason-box" value="Documents"> Documents</label>
+                  <label><input type="checkbox" class="reason-box" value="Availability"> Availability</label>
+                  <label><input type="checkbox" class="reason-box" value="Fees"> Fees</label>
+              </div>
+          </div>
+
+          <div class="action-bar">
+              <form id="approveForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
+                  <input type="hidden" name="notes" id="approveNotes">
+                  <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
+                      <i class="fas fa-check-circle"></i> Approve
+                  </button>
+              </form>
+
+              <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
+                  <input type="hidden" name="notes" id="changesNotes">
+                  <input type="hidden" name="reasons" id="changesReasons">
+                  <button type="submit" class="btn btn-warning text-dark fw-semibold"
+                          style="border-radius:10px;padding:12px 28px;"
+                          onclick="
+                            document.getElementById('changesNotes').value=document.getElementById('decisionNotes').value;
+                            document.getElementById('changesReasons').value=Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value).join(', ');
+                          ">
+                      <i class="fas fa-edit"></i> Request Changes
+                  </button>
+              </form>
+
+              <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
+                    onsubmit="return confirm('Reject this doctor?')">
+                  <input type="hidden" name="notes" id="rejectNotes">
+                  <button type="submit" class="btn-reject"
+                          onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
+                      <i class="fas fa-times-circle"></i> Reject
+                  </button>
+              </form>
           </div>
 
       </div>

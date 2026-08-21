@@ -616,7 +616,7 @@
 
 <body class="reels-page-shell">
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
@@ -701,7 +701,7 @@
 
 
    <c:choose>
- <c:when test="${video.videoPath.endsWith('.mp4') || video.videoPath.endsWith('.webm')}">
+ <c:when test="${fn:endsWith(fn:toLowerCase(video.videoPath), '.mp4') || fn:endsWith(fn:toLowerCase(video.videoPath), '.webm') || fn:endsWith(fn:toLowerCase(video.videoPath), '.mov') || video.fileType eq 'VIDEO'}">
     <video muted playsinline data-video-id="${video.id}">
         <source src="${pageContext.request.contextPath}${video.videoPath}">
     </video>
@@ -957,7 +957,8 @@ document.querySelectorAll("video").forEach(v => {
       const id = v.dataset.id;
       document.getElementById("heart-" + id).classList.add("show");
       setTimeout(() => document.getElementById("heart-" + id).classList.remove("show"), 600);
-      v.closest(".reel").querySelector("button").click();
+      const btnLike = v.closest(".reel").querySelector(".side-actions button");
+      if (btnLike) btnLike.click();
     }
     last = now;
   };
@@ -1463,7 +1464,7 @@ function openReportModal(videoId) {
 
 </main>
 
-<jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+
 
 <!-- Reel Studio: camera + edit + upload -->
 <div class="modal fade" id="reelStudioModal" tabindex="-1" aria-labelledby="reelStudioModalLabel" aria-hidden="true">

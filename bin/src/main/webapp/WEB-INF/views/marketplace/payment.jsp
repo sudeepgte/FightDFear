@@ -14,7 +14,7 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
         :root {
@@ -158,7 +158,14 @@
                         </li>
                     </ul>
 
-                    <button id="payBtn" onclick="initiateRazorpayPayment()" class="btn-premium-pay py-3 mt-3">
+                    <c:if test="${not razorpayConfigured}">
+                        <div class="alert alert-warning rounded-4 mb-4 text-start small">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Payment gateway is not configured. Set <code>RAZORPAY_KEY_ID</code> and <code>RAZORPAY_KEY_SECRET</code> environment variables, then restart the server.
+                        </div>
+                    </c:if>
+
+                    <button id="payBtn" onclick="initiateRazorpayPayment()" class="btn-premium-pay py-3 mt-3" ${razorpayConfigured ? '' : 'disabled'}>
                         <i class="bi bi-credit-card-2-front-fill me-2"></i> Pay & Confirm Enrollment
                     </button>
                     
@@ -169,7 +176,7 @@
                     </div>
 
                     <div class="mt-3">
-                        <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-link text-muted text-decoration-none small">
+                        <a href="${pageContext.request.contextPath}/marketplace/payment/${enrollment.id}/cancel" class="btn btn-link text-muted text-decoration-none small">
                             <i class="bi bi-arrow-left"></i> Cancel Checkout
                         </a>
                     </div>
@@ -185,6 +192,10 @@
     <script>
         async function initiateRazorpayPayment() {
             const payBtn = document.getElementById('payBtn');
+            if (payBtn.disabled) {
+                alert('Payment gateway is not configured. Please contact support.');
+                return;
+            }
             payBtn.disabled = true;
             payBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
 
@@ -198,9 +209,10 @@
                     body: JSON.stringify({ amount: amount, type: 'MARKETPLACE' })
                 });
 
-                if (!res.ok) throw new Error('Order creation failed');
-
-                const order = await res.json();
+                const order = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    throw new Error(order.error || 'Order creation failed');
+                }
                 
                 const options = {
                     key: order.key,
@@ -243,7 +255,7 @@
 
                 new Razorpay(options).open();
             } catch (e) {
-                alert('Payment initiation failed. Please try again.');
+                alert(e.message || 'Payment initiation failed. Please try again.');
                 payBtn.disabled = false;
                 payBtn.innerHTML = '<i class="bi bi-credit-card-2-front-fill me-2"></i> Pay & Confirm Enrollment';
             }

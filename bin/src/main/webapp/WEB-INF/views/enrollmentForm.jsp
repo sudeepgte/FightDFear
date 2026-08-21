@@ -301,9 +301,13 @@
                             <span>2. Emergency Contact Details</span>
                         </div>
                         <div class="row g-3">
-                            <div class="col-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Emergency Contact Name *</label>
                                 <input type="text" id="eName" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Contact Number *</label>
+                                <input type="tel" id="ePhone" class="form-control" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
                             </div>
                         </div>
                     </div>
@@ -412,15 +416,15 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Medical Conditions / Injuries</label>
-                                <textarea id="medical" class="form-control" rows="2" placeholder="Specify if any"></textarea>
+                                <textarea id="medical" class="form-control" rows="2" placeholder="Specify if any" maxlength="300"></textarea>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Allergies</label>
-                                <textarea id="allergies" class="form-control" rows="2" placeholder="Specify if any"></textarea>
+                                <textarea id="allergies" class="form-control" rows="2" placeholder="Specify if any" maxlength="300"></textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Fitness Notes / Restrictions</label>
-                                <textarea id="fitnessNotes" class="form-control" rows="2" placeholder="Any notes for the trainer"></textarea>
+                                <textarea id="fitnessNotes" class="form-control" rows="2" placeholder="Any notes for the trainer" maxlength="500"></textarea>
                             </div>
                         </div>
                     </div>
@@ -447,7 +451,7 @@
                             <div class="col-md-6">
                                 <label class="form-label">Proposed Start Date *</label>
                                 <!-- Issue 137: Only allow future dates for proposed start date -->
-                                <input type="date" id="startDate" class="form-control" required onchange="updateSummary()">
+                                <input type="date" id="startDate" class="form-control" required onchange="validateStartDay(); updateSummary()">
                             </div>
                         </div>
                     </div>
@@ -710,6 +714,7 @@
                 email: document.getElementById('email').value,
                 address: document.getElementById('address').value,
                 emergencyName: document.getElementById('eName').value,
+                emergencyPhone: document.getElementById('ePhone') ? document.getElementById('ePhone').value : null,
                 skillLevel: document.getElementById('skillLevel').value,
                 preferredDays: Array.from(document.querySelectorAll('.day-check:checked')).map(c => c.value),
                 goal: document.getElementById('goal').value,
@@ -790,6 +795,24 @@
                 updateSummary();
             }
         });
+
+        function validateStartDay() {
+            const dateInput = document.getElementById('startDate');
+            if (!dateInput.value) return;
+            const date = new Date(dateInput.value);
+            const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            const daySelected = daysOfWeek[date.getDay()];
+            
+            const batchSelect = document.getElementById('batchId');
+            if (batchSelect && batchSelect.value) {
+                const option = batchSelect.options[batchSelect.selectedIndex];
+                const availableDaysStr = option.dataset.days ? option.dataset.days.toUpperCase() : '';
+                if (availableDaysStr && !availableDaysStr.includes(daySelected)) {
+                    alert("Please select a date that falls on the trainer's scheduled days: " + availableDaysStr);
+                    dateInput.value = "";
+                }
+            }
+        }
 
         async function initiateRazorpay(enrollmentId, amount) {
             try {

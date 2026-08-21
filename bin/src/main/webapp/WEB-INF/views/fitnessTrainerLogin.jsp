@@ -136,7 +136,7 @@
             position: relative;
         }
 
-        .input-wrapper i {
+        .input-wrapper i.prefix-icon {
             position: absolute;
             left: 16px;
             top: 50%;
@@ -316,15 +316,18 @@
                 <div class="form-group">
                     <label>Email Address</label>
                     <div class="input-wrapper">
-                        <i class="bi bi-envelope"></i>
+                        <i class="bi bi-envelope prefix-icon"></i>
                         <input type="email" name="email" class="form-input" placeholder="e.g. coach@fitness.com" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Password</label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="margin-bottom: 0;">Password</label>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password" style="font-size: 0.8rem; color: #f43f5e; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                    </div>
                     <div class="input-wrapper">
-                        <i class="bi bi-lock"></i>
+                        <i class="bi bi-lock prefix-icon"></i>
                         <input type="password" name="password" id="passwordInput" class="form-input" placeholder="••••••••" style="padding-right: 46px;" required>
                         <i class="bi bi-eye-slash" id="togglePassword" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 1.1rem; z-index: 10;"></i>
                     </div>

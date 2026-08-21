@@ -205,9 +205,12 @@
 
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-    <div class="container hub-container">
-        
-        <!-- Check Blocks -->
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper">
+            <div class="container hub-container" style="margin-top: 20px;">
+                
+                <!-- Check Blocks -->
         <c:choose>
             <c:when test="${blocked}">
                 <div class="row justify-content-center">
@@ -251,11 +254,11 @@
 
                             <!-- User Follower Count Metrics -->
                             <div class="d-flex justify-content-center justify-content-md-start gap-4 mb-4">
-                                <div class="stat-box" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followersModal" title="View followers">
+                                <div class="stat-box" style="cursor:pointer; transition: 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" data-bs-toggle="modal" data-bs-target="#followersModal" title="View followers">
                                     <span class="stat-value">${followersCount}</span>
                                     <span class="stat-label">Followers</span>
                                 </div>
-                                <div class="stat-box" style="cursor:pointer;" data-bs-toggle="modal" data-bs-target="#followingModal" title="View following">
+                                <div class="stat-box" style="cursor:pointer; transition: 0.3s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'" data-bs-toggle="modal" data-bs-target="#followingModal" title="View following">
                                     <span class="stat-value">${followingCount}</span>
                                     <span class="stat-label">Following</span>
                                 </div>
@@ -448,10 +451,10 @@
     <div class="modal fade" id="followersModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Followers</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header border-secondary"><h5 class="modal-title">Followers</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <c:forEach var="f" items="${followersList}">
-                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-dark">
+                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-white">
                             <img src="${pageContext.request.contextPath}${f.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png'" width="40" height="40" class="rounded-circle" style="object-fit:cover;">
                             <span>${f.fullName}</span>
                         </a>
@@ -466,10 +469,10 @@
     <div class="modal fade" id="followingModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Following</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header border-secondary"><h5 class="modal-title">Following</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <c:forEach var="f" items="${followingList}">
-                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-dark">
+                        <a href="${pageContext.request.contextPath}/creator-hub/creator/${f.id}" class="d-flex align-items-center gap-2 mb-3 text-decoration-none text-white">
                             <img src="${pageContext.request.contextPath}${f.profilePhoto}" onerror="this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png'" width="40" height="40" class="rounded-circle" style="object-fit:cover;">
                             <span>${f.fullName}</span>
                         </a>
@@ -625,5 +628,7 @@
             }
         }
     </script>
+        </div><!-- /#page-content-wrapper -->
+    </div><!-- /#wrapper -->
 </body>
 </html>

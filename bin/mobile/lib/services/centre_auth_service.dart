@@ -10,6 +10,29 @@ class CentreAuthService {
 
   final ApiClient _api;
 
+  Future<Map<String, dynamic>> sendEmailOtp(String email) => _api.post(
+        '/api/martial-arts/centre/otp/send-email',
+        auth: false,
+        body: {'email': email.trim().toLowerCase()},
+      );
+
+  Future<Map<String, dynamic>> verifyEmailOtp({
+    required String email,
+    required String otp,
+  }) =>
+      _api.post(
+        '/api/martial-arts/centre/otp/verify-email',
+        auth: false,
+        body: {'email': email.trim().toLowerCase(), 'otp': otp.trim()},
+      );
+
+  Future<Map<String, dynamic>> registerQuick(Map<String, dynamic> body) => _api.post(
+        '/api/martial-arts/centre/register-quick',
+        auth: false,
+        body: body,
+        timeout: const Duration(seconds: 45),
+      );
+
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
@@ -24,6 +47,23 @@ class CentreAuthService {
     }
     return res;
   }
+
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/martial-arts/centre/profile', auth: false, centreAuth: true);
+
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
+        '/api/martial-arts/centre/profile',
+        body: body,
+        auth: false,
+        centreAuth: true,
+        timeout: const Duration(seconds: 30),
+      );
+
+  Future<Map<String, dynamic>> submitVerification() => _api.post(
+        '/api/martial-arts/centre/submit-verification',
+        auth: false,
+        centreAuth: true,
+      );
 
   Future<void> logout() => _api.clearCentreToken();
 
@@ -52,6 +92,25 @@ class CentreAuthService {
       _api.post(
         '/api/martial-arts/centre/students/$enrollmentId/status',
         body: {'status': status},
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> studentFile(int enrollmentId) => _api.get(
+        '/api/martial-arts/centre/students/$enrollmentId',
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> saveStudentNotes(int enrollmentId, String notes) => _api.post(
+        '/api/martial-arts/centre/students/$enrollmentId/notes',
+        body: {'notes': notes},
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> requestPayout() => _api.post(
+        '/api/martial-arts/centre/payout/request',
         auth: false,
         centreAuth: true,
       );

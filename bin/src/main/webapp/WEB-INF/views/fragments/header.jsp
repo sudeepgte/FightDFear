@@ -249,12 +249,11 @@
 <!-- ======= Header ======= -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
-    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : '/users/dashboard'}" class="logo me-auto" style="text-decoration: none;"><h1>Fight D Fear</h1></a>
+    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto" style="text-decoration: none;"><h1>Fight D Fear</h1></a>
     <nav id="navmenu" class="navmenu">
       <ul>
         <c:choose>
             <c:when test="${not empty sessionScope.loggedTrainer}">
-                <li><a href="${pageContext.request.contextPath}/fitness/trainer/dashboard">Dashboard</a></li>
                 <!-- Notification Bell for Broadcasts -->
                 <li>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: white !important;">
@@ -270,6 +269,24 @@
                     </a>
                 </li>
                 <li><a href="${pageContext.request.contextPath}/fitness/trainer/dashboard">${sessionScope.loggedTrainer.fullName} (Coach)</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedHost}">
+                <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">Dashboard</a></li>
+                <!-- Notification Bell for Broadcasts -->
+                <li>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: white !important;">
+                        <div style="position: relative; display: inline-block;">
+                            <i class="fas fa-bell fs-5"></i>
+                            <c:if test="${unreadBroadcastCount > 0}">
+                                <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
+                                      style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
+                                    ${unreadBroadcastCount}
+                                </span>
+                            </c:if>
+                        </div>
+                    </a>
+                </li>
+                <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">${sessionScope.loggedHost.fullName} (Host)</a></li>
             </c:when>
             <c:otherwise>
                 <li><a href="${pageContext.request.contextPath}/">Home</a></li>
@@ -297,15 +314,18 @@
       </ul>
       <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
     </nav>
-    <c:choose>
-        <c:when test="${not empty sessionScope.loggedTrainer}">
-            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="ms-3">
+        <c:choose>
+            <c:when test="${not empty sessionScope.loggedTrainer}">
+                <!-- Profile Image Removed -->
+            </c:when>
+        <c:when test="${not empty sessionScope.loggedHost}">
+            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ms-3">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.loggedTrainer.profilePhotoPath}">
-                        <img src="${sessionScope.loggedTrainer.profilePhotoPath}" alt="Profile" class="header-profile-img">
+                    <c:when test="${not empty sessionScope.loggedHost.logoPath}">
+                        <img src="${pageContext.request.contextPath}${sessionScope.loggedHost.logoPath}" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:otherwise>
-                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2" alt="Profile" class="header-profile-img">
+                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
                     </c:otherwise>
                 </c:choose>
             </a>

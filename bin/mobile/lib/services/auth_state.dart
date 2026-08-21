@@ -19,6 +19,26 @@ class AuthState extends ChangeNotifier {
   int? userId;
 
   ApiClient get api => _client;
+  String get apiBaseUrl => _client.baseUrl;
+
+  String _networkErrorMessage(Object e) {
+    final msg = e.toString();
+    if (msg.contains('TimeoutException')) {
+      return 'Server timed out ($apiBaseUrl). '
+          'Turn OFF mobile data, connect phone to same Wi-Fi as laptop, '
+          'then open $apiBaseUrl/api/auth/health in phone browser.';
+    }
+    return 'Cannot reach server ($apiBaseUrl). Details: $e';
+  }
+
+  Future<bool> pingServer() async {
+    try {
+      final res = await _client.get('/api/auth/health', auth: false, timeout: const Duration(seconds: 8));
+      return res['success'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<void> bootstrap() async {
     loading = true;
@@ -43,8 +63,8 @@ class AuthState extends ChangeNotifier {
           loggedIn = false;
         }
       } catch (_) {
-        // Offline or backend unavailable — keep session for later API calls.
-        loggedIn = true;
+        // Offline or backend unavailable — do not fake a logged-in session.
+        loggedIn = false;
       }
     } finally {
       loading = false;
@@ -61,6 +81,7 @@ class AuthState extends ChangeNotifier {
         '/api/auth/login',
         body: {'email': emailInput.trim(), 'password': password},
         auth: false,
+        timeout: const Duration(seconds: 20),
       );
       if (res['success'] == true && res['token'] != null) {
         await _client.saveToken(res['token'].toString());
@@ -75,8 +96,11 @@ class AuthState extends ChangeNotifier {
         return true;
       }
       error = res['error']?.toString() ?? 'Login failed';
+      if (error != null && error!.isNotEmpty) {
+        error = '$error (server: $apiBaseUrl)';
+      }
     } catch (e) {
-      error = 'Cannot reach server (${_client.baseUrl}). Is the backend on :8084?';
+      error = _networkErrorMessage(e);
     }
     loading = false;
     notifyListeners();
@@ -91,6 +115,10 @@ class AuthState extends ChangeNotifier {
     required String password,
     String? homeAddress,
     String? gender,
+    String? dob,
+    String? emergencyContact,
+    String? preferredLanguage,
+    String? profilePhoto,
   }) async {
     error = null;
     try {
@@ -106,16 +134,45 @@ class AuthState extends ChangeNotifier {
       if (gender != null && gender.isNotEmpty) {
         body['gender'] = gender;
       }
-      final res = await _client.post('/api/auth/register', body: body, auth: false);
+      if (dob != null && dob.trim().isNotEmpty) {
+        body['dob'] = dob.trim();
+      }
+      if (emergencyContact != null && emergencyContact.trim().isNotEmpty) {
+        body['emergencyContact'] = emergencyContact.trim();
+      }
+      if (preferredLanguage != null && preferredLanguage.trim().isNotEmpty) {
+        body['preferredLanguage'] = preferredLanguage.trim();
+      }
+      if (profilePhoto != null && profilePhoto.trim().isNotEmpty) {
+        body['profilePhoto'] = profilePhoto.trim();
+      }
+      final res = await _client.post(
+        '/api/auth/register',
+        body: body,
+        auth: false,
+        timeout: const Duration(seconds: 20),
+      );
       if (res['success'] == true) {
         return res;
       }
       error = res['error']?.toString() ?? 'Registration failed';
       return null;
     } catch (e) {
-      error = 'Cannot reach server (${_client.baseUrl}). Is the backend on :8084?';
+      error = _networkErrorMessage(e);
       return null;
     }
+  }
+
+  /// Apply a user JWT session already saved on [api] (worker portal login).
+  void applyUserSession(Map<String, dynamic> res) {
+    loggedIn = true;
+    name = res['name']?.toString();
+    email = res['email']?.toString();
+    userId = res['userId'] is int
+        ? res['userId'] as int
+        : int.tryParse('${res['userId']}');
+    error = null;
+    notifyListeners();
   }
 
   Future<void> logout() async {

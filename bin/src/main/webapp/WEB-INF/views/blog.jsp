@@ -30,6 +30,10 @@
 	<link rel="stylesheet" href="/beauty/css/style.css">
   </head>
   <body>
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" data-skip-global-back="true" style="margin-top: 0; padding-top: 40px;">
+
   	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light ftco-navbar-light-2" id="ftco-navbar">
 	    <div class="container">
 	      <a class="navbar-brand" href="/index/templates"><span class="flaticon-lotus"></span>Energen</a>
@@ -289,5 +293,7 @@
   <script src="/beauty/js/google-map.js"></script>
   <script src="/beauty/js/main.js"></script>
     
-  </body>
+      </div><!-- /#page-content-wrapper -->
+</div><!-- /#wrapper -->
+</body>
 </html>

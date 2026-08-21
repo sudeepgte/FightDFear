@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -353,8 +354,8 @@
               <a href="${pageContext.request.contextPath}/women-products/view/${w.product.id}" class="wish-img-link">
                 <div class="wish-img-wrapper">
                   <c:choose>
-                    <c:when test="${not empty w.product.imagePath}">
-                      <img src="${pageContext.request.contextPath}${w.product.imagePath}" class="wish-img" alt="${w.product.name}">
+                    <c:when test="${not empty w.product.publicImagePath}">
+                      <img src="<c:choose><c:when test="${w.product.remoteImage}">${w.product.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${w.product.publicImagePath}</c:otherwise></c:choose>" class="wish-img" alt="<c:out value='${w.product.name}'/>">
                     </c:when>
                     <c:otherwise>
                       <div class="placeholder-icon"><i class="bi bi-gift"></i></div>
@@ -377,15 +378,16 @@
               <div class="wish-body">
                 <div class="wish-category">${w.product.categoryLabel}</div>
                 <h3 class="name">
-                  <a href="${pageContext.request.contextPath}/women-products/view/${w.product.id}">${w.product.name}</a>
+                  <a href="${pageContext.request.contextPath}/women-products/view/${w.product.id}"><c:out value="${w.product.name}"/></a>
                 </h3>
                 <c:if test="${not empty w.product.seller}">
                   <div class="wish-seller"><i class="bi bi-patch-check-fill"></i> ${w.product.seller.businessName}</div>
                 </c:if>
                 <div class="price">
                   &#8377;${w.product.price}
-                  <c:if test="${w.product.originalPrice != null && w.product.originalPrice > w.product.price}">
+                  <c:if test="${w.product.discountPercent > 0}">
                     <span class="original">&#8377;${w.product.originalPrice}</span>
+                    <span class="discount" style="font-size:11px;font-weight:800;color:#ef4444;margin-left:6px;">${w.product.discountPercent}% OFF</span>
                   </c:if>
                 </div>
 
@@ -401,6 +403,7 @@
                   </form>
                   <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
                     <input type="hidden" name="productId" value="${w.product.id}">
+                    <input type="hidden" name="returnTo" value="wishlist">
                     <button type="submit" class="btn-wish-del" title="Remove from wishlist">
                       <i class="bi bi-trash3"></i>
                     </button>

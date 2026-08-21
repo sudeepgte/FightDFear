@@ -244,29 +244,32 @@
                     <h5 class="modal-title fw-bold"><i class="fas fa-calendar-check me-2"></i>Register for Live Session</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="${pageContext.request.contextPath}/financial-literacy/live-session/register" method="POST">
+                <form action="${pageContext.request.contextPath}/financial-literacy/live-session/register" method="POST" id="registrationForm" class="needs-validation" novalidate>
                     <div class="modal-body">
                         <input type="hidden" name="sessionId" value="${session.id}">
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="fullName" class="form-label fw-bold" style="color: #1e1b4b;">Full Name</label>
-                            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" required>
+                            <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter your full name" required minlength="3">
+                            <div class="invalid-feedback">Please enter your full name (at least 3 characters).</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="mobile" class="form-label fw-bold" style="color: #1e1b4b;">Mobile Number</label>
-                            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Enter your mobile number" required>
+                            <input type="text" class="form-control" id="mobile" name="mobile" placeholder="Enter your mobile number" required pattern="^[0-9]{10}$">
+                            <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="email" class="form-label fw-bold" style="color: #1e1b4b;">Email Address</label>
                             <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                            <div class="invalid-feedback">Please enter a valid email address.</div>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 position-relative">
                             <label for="occupation" class="form-label fw-bold" style="color: #1e1b4b;">Occupation (Optional)</label>
                             <input type="text" class="form-control" id="occupation" name="occupation" placeholder="Enter your occupation">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="background: #f43f5e; border-color: #f43f5e;">
+                        <button type="submit" class="btn btn-primary" id="registerBtn" style="background: #f43f5e; border-color: #f43f5e;">
                             <i class="fas fa-check-circle me-2"></i>Register
                         </button>
                     </div>
@@ -279,5 +282,74 @@
 
     <!-- Bootstrap JS -->
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('registrationForm');
+            if (form) {
+                const submitBtn = document.getElementById('registerBtn');
+                const inputs = form.querySelectorAll('input[required]');
+
+                // Real-time validation on input/change
+                inputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        validateField(this);
+                        checkFormValidity();
+                    });
+                    
+                    input.addEventListener('blur', function() {
+                        validateField(this);
+                    });
+                });
+
+                function validateField(field) {
+                    if (field.checkValidity()) {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    } else {
+                        field.classList.remove('is-valid');
+                        field.classList.add('is-invalid');
+                    }
+                }
+
+                function checkFormValidity() {
+                    if (form.checkValidity()) {
+                        submitBtn.classList.remove('disabled');
+                        submitBtn.removeAttribute('disabled');
+                    } else {
+                        submitBtn.classList.add('disabled');
+                        submitBtn.setAttribute('disabled', 'true');
+                    }
+                }
+
+                // Form submission validation
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        // Mark all fields to show invalid state
+                        inputs.forEach(input => {
+                            validateField(input);
+                        });
+                        
+                        // Focus on the first invalid field
+                        const firstInvalid = form.querySelector(':invalid');
+                        if(firstInvalid) firstInvalid.focus();
+                    } else {
+                        // Show loading state
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                        submitBtn.style.pointerEvents = 'none';
+                        submitBtn.style.opacity = '0.8';
+                    }
+                    
+                    form.classList.add('was-validated');
+                }, false);
+                
+                // Initial check
+                checkFormValidity();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -3,6 +3,7 @@ package in.sp.main.Controller;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Util.ProductCategories;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -39,6 +40,16 @@ public class WomenProductController {
 
     @Autowired
     private in.sp.main.Service.WomenProductDeliveryService deliveryService;
+
+    @Autowired
+    private in.sp.main.Service.WomenProductsCareService productsCareService;
+
+    @Autowired
+    private in.sp.main.Service.DoctorPaymentService doctorPaymentService;
+
+    private static final String BUY_NOW_PRODUCT_ID = "wpBuyNowProductId";
+    private static final String BUY_NOW_QTY = "wpBuyNowQty";
+    private static final String JUST_PLACED_ORDER_IDS = "wpJustPlacedOrderIds";
 
     // ══════════════════════════════════════
     // SELLER: Register + Login
@@ -271,14 +282,8 @@ public class WomenProductController {
                 existing.setPhone(cleanedPhone);
                 existing.setAddress(cleanedAddress);
                 existing.setDescription(cleanedDescription.isEmpty() ? null : cleanedDescription);
-
-                existing.setFullName(fullName != null ? fullName.trim() : "");
-                existing.setBusinessName(businessName != null ? businessName.trim() : "");
-                existing.setPhone(phone != null ? phone.trim() : "");
-                existing.setAddress(address != null ? address.trim() : "");
                 existing.setCategory(category != null ? category.trim() : "");
                 existing.setServiceArea(serviceArea != null ? serviceArea.trim() : "");
-                existing.setDescription(description != null ? description.trim() : "");
                 existing.setQualification(qualification != null ? qualification.trim() : "");
                 existing.setExperience(experience != null ? experience.trim() : "");
                 existing.setAvailableDays(availableDays != null ? availableDays.trim() : "");
@@ -350,35 +355,10 @@ public class WomenProductController {
             applyProductFields(p, name, brand, description, fullDescription, price, originalPrice,
                     offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
                     ingredients, benefits, usageInstructions, tags, active, featured, trackInventory);
-
-            p.setName(name);
-            p.setBrand(brand);
-            p.setDescription(description);
-            p.setFullDescription(fullDescription);
-            p.setPrice(price);
-            Double finalMrp = originalPrice != null ? originalPrice : price;
-            p.setOriginalPrice(finalMrp);
-
-            String finalOfferBadge = offerBadge;
-            if ((finalOfferBadge == null || finalOfferBadge.trim().isEmpty() || finalOfferBadge.trim().endsWith("% OFF")) && finalMrp > price) {
-                long discount = Math.round(((finalMrp - price) / finalMrp) * 100);
-                if (discount > 0) finalOfferBadge = discount + "% OFF";
+            if (p.getDiscountPercent() > 0
+                    && (p.getOfferBadge() == null || p.getOfferBadge().isBlank() || p.getOfferBadge().trim().endsWith("% OFF"))) {
+                p.setOfferBadge(p.getDiscountPercent() + "% OFF");
             }
-            p.setOfferBadge(finalOfferBadge);
-            p.setStock(stock);
-            p.setLowStockAlertLevel(lowStockAlertLevel);
-            p.setSku(sku);
-            p.setCategory(category);
-            p.setWeightSize(weightSize);
-            p.setManufacturer(manufacturer);
-            p.setIngredients(ingredients);
-            p.setBenefits(benefits);
-            p.setUsageInstructions(usageInstructions);
-            p.setTags(tags);
-            p.setActive(active);
-            p.setFeatured(featured);
-            p.setTrackInventory(trackInventory);
-
             p.setSeller(s);
             applyProductImages(p, images, false);
             productRepo.save(p);
@@ -634,20 +614,8 @@ public class WomenProductController {
         p.setAdditionalImagePaths(additionalPaths.toString());
     }
 
-    /** Normalize stored upload path to a public /uploads/... URL (no hardcoded product files). */
     static String toPublicUploadPath(String stored) {
-        if (stored == null || stored.isBlank()) return null;
-        String path = stored.trim().replace('\\', '/');
-        if (path.startsWith("http://") || path.startsWith("https://")) return path;
-        int idx = path.toLowerCase().lastIndexOf("/uploads/");
-        if (idx >= 0) {
-            path = path.substring(idx);
-        } else if (path.toLowerCase().startsWith("uploads/")) {
-            path = "/" + path;
-        } else if (!path.startsWith("/")) {
-            path = "/uploads/" + path;
-        }
-        return path;
+        return WomenProduct.toPublicUploadPath(stored);
     }
 
     private static java.util.List<String> splitAdditionalImages(String additionalImagePaths) {
@@ -771,39 +739,159 @@ public class WomenProductController {
     // USER: Browse Products
     // ══════════════════════════════════════
     @GetMapping
-    public String shopHome(Model model, @RequestParam(required = false) String category) {
-        String normalized = WomenProduct.normalizeCategory(category);
-        if (normalized != null) {
-            model.addAttribute("products",
-                    productRepo.findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(normalized));
-            model.addAttribute("selectedCategory", normalized);
-        } else {
-            model.addAttribute("products", productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc());
-            model.addAttribute("selectedCategory", null);
+    public String shopHome(Model model, HttpSession session,
+                           @RequestParam(required = false) String category,
+                           @RequestParam(required = false) String q,
+                           @RequestParam(required = false) String price,
+                           @RequestParam(required = false) String rating,
+                           @RequestParam(required = false) String stock,
+                           @RequestParam(required = false) String brand,
+                           @RequestParam(required = false) String sort) {
+        List<WomenProduct> listed = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc()
+                .stream()
+                .filter(WomenProduct::isListedForShop)
+                .collect(java.util.stream.Collectors.toList());
+
+        Map<Long, Double> avgRatings = new HashMap<>();
+        Map<Long, Long> reviewCounts = new HashMap<>();
+        for (Object[] row : orderRepo.findAverageRatingsGroupedByProduct()) {
+            if (row[0] == null) continue;
+            Long pid = ((Number) row[0]).longValue();
+            avgRatings.put(pid, row[1] == null ? 0d : ((Number) row[1]).doubleValue());
+            reviewCounts.put(pid, row[2] == null ? 0L : ((Number) row[2]).longValue());
         }
+
+        java.util.Set<String> brands = listed.stream()
+                .map(WomenProduct::getBrand)
+                .filter(b -> b != null && !b.isBlank())
+                .map(String::trim)
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
+
+        String query = q == null ? "" : q.trim().toLowerCase();
+        String selectedCategory = ProductCategories.normalize(category);
+        if (selectedCategory == null && category != null && !category.isBlank()) {
+            selectedCategory = category.trim();
+        }
+
+        List<WomenProduct> filtered = new ArrayList<>();
+        for (WomenProduct p : listed) {
+            if (!ProductCategories.matchesFilter(p.getCategory(), category)) continue;
+            if (!query.isEmpty()) {
+                String hay = ((p.getName() == null ? "" : p.getName()) + " "
+                        + (p.getBrand() == null ? "" : p.getBrand()) + " "
+                        + (p.getTags() == null ? "" : p.getTags())).toLowerCase();
+                if (!hay.contains(query)) continue;
+            }
+            if (brand != null && !brand.isBlank()
+                    && (p.getBrand() == null || !p.getBrand().trim().equalsIgnoreCase(brand.trim()))) {
+                continue;
+            }
+            double pr = p.getPrice() == null ? 0 : p.getPrice();
+            if (!matchesPriceBand(price, pr)) continue;
+            int st = p.getStock() == null ? 0 : p.getStock();
+            if ("in".equalsIgnoreCase(stock) && st <= 0) continue;
+            if ("out".equalsIgnoreCase(stock) && st > 0) continue;
+            double avg = avgRatings.getOrDefault(p.getId(), 0d);
+            if (!matchesMinRating(rating, avg)) continue;
+            filtered.add(p);
+        }
+
+        String sortKey = sort == null || sort.isBlank() ? "newest" : sort.trim().toLowerCase();
+        filtered.sort((a, b) -> compareShopSort(a, b, sortKey, avgRatings));
+
+        List<WomenProduct> featured = listed.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getFeatured()))
+                .limit(8)
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.Set<Long> wishlistIds = java.util.Collections.emptySet();
+        User u = (User) session.getAttribute("user");
+        if (u != null) {
+            wishlistIds = wishlistRepo.findByUser(u).stream()
+                    .filter(w -> w.getProduct() != null)
+                    .map(w -> w.getProduct().getId())
+                    .collect(java.util.stream.Collectors.toSet());
+        }
+
+        model.addAttribute("products", filtered);
+        model.addAttribute("featuredProducts", featured);
         model.addAttribute("categoryCodes", WomenProduct.CATEGORY_CODES);
+        model.addAttribute("selectedCategory", selectedCategory);
+        model.addAttribute("searchQuery", q == null ? "" : q.trim());
+        model.addAttribute("selectedPrice", price == null ? "" : price);
+        model.addAttribute("selectedRating", rating == null ? "" : rating);
+        model.addAttribute("selectedStock", stock == null ? "" : stock);
+        model.addAttribute("selectedBrand", brand == null ? "" : brand);
+        model.addAttribute("selectedSort", sortKey);
+        model.addAttribute("availableBrands", brands);
+        model.addAttribute("avgRatings", avgRatings);
+        model.addAttribute("reviewCounts", reviewCounts);
+        model.addAttribute("wishlistIds", wishlistIds);
         return "women-products/shop";
+    }
+
+    private static boolean matchesPriceBand(String price, double pr) {
+        if (price == null || price.isBlank() || "any".equalsIgnoreCase(price)) return true;
+        return switch (price.trim().toLowerCase()) {
+            case "under500" -> pr < 500;
+            case "500-1000" -> pr >= 500 && pr <= 1000;
+            case "1000-2000" -> pr > 1000 && pr <= 2000;
+            case "2000plus" -> pr > 2000;
+            default -> true;
+        };
+    }
+
+    private static boolean matchesMinRating(String rating, double avg) {
+        if (rating == null || rating.isBlank() || "any".equalsIgnoreCase(rating)) return true;
+        try {
+            double min = Double.parseDouble(rating.trim());
+            return avg + 0.0001 >= min;
+        } catch (NumberFormatException e) {
+            return true;
+        }
+    }
+
+    private static int compareShopSort(WomenProduct a, WomenProduct b, String sortKey, Map<Long, Double> avgRatings) {
+        double pa = a.getPrice() == null ? 0 : a.getPrice();
+        double pb = b.getPrice() == null ? 0 : b.getPrice();
+        return switch (sortKey) {
+            case "price_asc", "price" -> Double.compare(pa, pb);
+            case "price_desc" -> Double.compare(pb, pa);
+            case "rating" -> Double.compare(
+                    avgRatings.getOrDefault(b.getId(), 0d),
+                    avgRatings.getOrDefault(a.getId(), 0d));
+            case "discount" -> Integer.compare(b.getDiscountPercent(), a.getDiscountPercent());
+            default -> 0; // newest — repository already returns createdAt desc
+        };
     }
 
     @GetMapping("/view/{id}")
     public String viewProduct(@PathVariable Long id, Model model, HttpSession session) {
         WomenProduct p = productRepo.findById(id).orElse(null);
-        if (p == null || !p.getActive() || p.getDeleted()) return "redirect:/women-products";
-        
+        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted() || !p.isListedForShop()) {
+            return "redirect:/women-products";
+        }
+
         List<WomenProductOrder> reviews = orderRepo.findByProduct_IdOrderByOrderTimeDesc(id);
         List<WomenProductOrder> ratedReviews = reviews.stream()
                 .filter(o -> o.getRating() != null)
                 .collect(java.util.stream.Collectors.toList());
-        
+
         double avgRating = ratedReviews.stream()
-                .mapToInt(o -> o.getRating())
+                .mapToInt(WomenProductOrder::getRating)
                 .average()
                 .orElse(0.0);
-        
+
+        List<WomenProduct> related = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc().stream()
+                .filter(WomenProduct::isListedForShop)
+                .filter(o -> !o.getId().equals(id))
+                .filter(o -> ProductCategories.matchesFilter(o.getCategory(), p.getCategory()))
+                .limit(4)
+                .collect(java.util.stream.Collectors.toList());
+
         model.addAttribute("product", p);
-        model.addAttribute("productImageUrl", toPublicUploadPath(p.getImagePath()));
-        model.addAttribute("additionalImageUrls", splitAdditionalImages(p.getAdditionalImagePaths()));
-        // Explicit product-detail fields for the user Product Details page
+        model.addAttribute("productImageUrl", p.getPublicImagePath());
+        model.addAttribute("additionalImageUrls", p.getPublicAdditionalImagePaths());
         model.addAttribute("ingredients", p.getIngredients());
         model.addAttribute("benefits", p.getBenefits());
         model.addAttribute("usageInstructions", p.getUsageInstructions());
@@ -811,6 +899,8 @@ public class WomenProductController {
         model.addAttribute("reviews", ratedReviews);
         model.addAttribute("avgRating", avgRating);
         model.addAttribute("reviewCount", ratedReviews.size());
+        model.addAttribute("relatedProducts", related);
+        model.addAttribute("sellerApproved", p.getSeller() != null && p.getSeller().isApprovedForCatalog());
 
         User u = (User) session.getAttribute("user");
         if (u != null) {
@@ -835,7 +925,9 @@ public class WomenProductController {
     // USER: Wishlist
     // ══════════════════════════════════════
     @PostMapping("/wishlist/toggle")
-    public String toggleWishlist(@RequestParam Long productId, HttpSession session, RedirectAttributes ra) {
+    public String toggleWishlist(@RequestParam Long productId,
+                                 @RequestParam(required = false) String returnTo,
+                                 HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         if (wishlistRepo.existsByUserAndProduct_Id(u, productId)) {
@@ -843,7 +935,7 @@ public class WomenProductController {
             ra.addFlashAttribute("message", "Removed from wishlist.");
         } else {
             WomenProduct p = productRepo.findById(productId).orElse(null);
-            if (p != null) {
+            if (p != null && !p.getDeleted()) {
                 WomenWishlistItem w = new WomenWishlistItem();
                 w.setUser(u);
                 w.setProduct(p);
@@ -851,6 +943,8 @@ public class WomenProductController {
                 ra.addFlashAttribute("message", "Added to wishlist!");
             }
         }
+        if ("wishlist".equals(returnTo)) return "redirect:/women-products/wishlist";
+        if ("shop".equals(returnTo)) return "redirect:/women-products";
         return "redirect:/women-products/view/" + productId;
     }
 
@@ -889,7 +983,7 @@ public class WomenProductController {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         WomenProduct p = productRepo.findById(productId).orElse(null);
-        if (p == null || !p.getActive() || p.getDeleted()) {
+        if (p == null || !p.isListedForShop()) {
             ra.addFlashAttribute("error", "Product is unavailable.");
             return "redirect:/women-products";
         }
@@ -934,7 +1028,7 @@ public class WomenProductController {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         WomenProduct p = productRepo.findById(productId).orElse(null);
-        if (p == null || !p.getActive() || p.getDeleted()) {
+        if (p == null || !p.isListedForShop()) {
             ra.addFlashAttribute("error", "Product is unavailable.");
             return "redirect:/women-products";
         }
@@ -946,13 +1040,9 @@ public class WomenProductController {
         int reqQty = (quantity != null && quantity > 0) ? quantity : 1;
         if (reqQty > availableStock) reqQty = availableStock;
 
-        cartRepo.deleteByUser(u);
-        WomenCartItem c = new WomenCartItem();
-        c.setUser(u);
-        c.setProduct(p);
-        c.setQuantity(reqQty);
-        cartRepo.save(c);
-        return "redirect:/women-products/checkout";
+        session.setAttribute(BUY_NOW_PRODUCT_ID, productId);
+        session.setAttribute(BUY_NOW_QTY, reqQty);
+        return "redirect:/women-products/checkout?buyNow=1";
     }
 
     @PostMapping("/cart/{id}/update")
@@ -985,15 +1075,50 @@ public class WomenProductController {
     }
 
     @GetMapping("/checkout")
-    public String checkoutPage(Model model, HttpSession session) {
+    public String checkoutPage(@RequestParam(required = false) String buyNow,
+                               Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
-        List<WomenCartItem> items = cartRepo.findByUser(u);
-        if (items.isEmpty()) return "redirect:/women-products/cart";
-        double total = items.stream().mapToDouble(i -> i.getProduct().getPrice() * i.getQuantity()).sum();
+
+        boolean buyNowMode = "1".equals(buyNow) && session.getAttribute(BUY_NOW_PRODUCT_ID) != null;
+        if (!buyNowMode) {
+            session.removeAttribute(BUY_NOW_PRODUCT_ID);
+            session.removeAttribute(BUY_NOW_QTY);
+        }
+
+        List<WomenCartItem> items;
+        if (buyNowMode) {
+            Long pid = (Long) session.getAttribute(BUY_NOW_PRODUCT_ID);
+            Integer qty = (Integer) session.getAttribute(BUY_NOW_QTY);
+            WomenProduct p = productRepo.findById(pid).orElse(null);
+            if (p == null || !p.isListedForShop()) {
+                session.removeAttribute(BUY_NOW_PRODUCT_ID);
+                session.removeAttribute(BUY_NOW_QTY);
+                return "redirect:/women-products";
+            }
+            WomenCartItem temp = new WomenCartItem();
+            temp.setProduct(p);
+            temp.setQuantity(qty == null || qty < 1 ? 1 : qty);
+            items = new ArrayList<>();
+            items.add(temp);
+        } else {
+            items = cartRepo.findByUser(u);
+            if (items.isEmpty()) return "redirect:/women-products/cart";
+        }
+        double total = items.stream()
+                .filter(i -> i.getProduct() != null && i.getProduct().getPrice() != null)
+                .mapToDouble(i -> i.getProduct().getPrice() * i.getQuantity()).sum();
+        double savings = items.stream()
+                .filter(i -> i.getProduct() != null && i.getProduct().getDiscountPercent() > 0)
+                .mapToDouble(i -> (i.getProduct().getOriginalPrice() - i.getProduct().getPrice()) * i.getQuantity())
+                .sum();
         model.addAttribute("cartItems", items);
         model.addAttribute("cartTotal", total);
+        model.addAttribute("cartSavings", savings);
+        model.addAttribute("deliveryFee", 0);
+        model.addAttribute("buyNowMode", buyNowMode);
         model.addAttribute("user", u);
+        model.addAttribute("paymentsAvailable", doctorPaymentService.paymentsAvailable());
         return "women-products/checkout";
     }
 
@@ -1005,56 +1130,37 @@ public class WomenProductController {
                                            HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
-        List<WomenCartItem> items = cartRepo.findByUser(u);
+
+        String payNorm = normalizeWebPaymentMethod(paymentMethod);
+        if (payNorm == null) {
+            ra.addFlashAttribute("error", "Choose Cash on Delivery or Online Payment.");
+            return checkoutRedirect(session);
+        }
+        String address = shippingAddress == null ? "" : shippingAddress.trim();
+        if (address.length() < 8) {
+            ra.addFlashAttribute("error", "Please enter a complete delivery address.");
+            return checkoutRedirect(session);
+        }
+
+        boolean buyNowMode = session.getAttribute(BUY_NOW_PRODUCT_ID) != null;
+        List<WomenCartItem> items = resolveCheckoutItems(session, u);
         if (items.isEmpty()) return "redirect:/women-products/cart";
 
-        // Strict Stock Pre-validation before order placement
-        for (WomenCartItem ci : items) {
-            WomenProduct liveP = productRepo.findById(ci.getProduct().getId()).orElse(null);
-            int currentStock = (liveP != null && liveP.getStock() != null) ? liveP.getStock() : 0;
-            if (liveP == null || !liveP.getActive() || liveP.getDeleted() || currentStock <= 0) {
-                ra.addFlashAttribute("error", "Product '" + (liveP != null ? liveP.getName() : "Item") + "' is Out of Stock.");
-                return "redirect:/women-products/cart";
-            }
-            if (ci.getQuantity() > currentStock) {
-                ra.addFlashAttribute("error", "Only " + currentStock + " unit(s) available for '" + liveP.getName() + "'. Please adjust your cart.");
-                return "redirect:/women-products/cart";
-            }
+        String stockError = validateCheckoutStock(items);
+        if (stockError != null) {
+            ra.addFlashAttribute("error", stockError);
+            return buyNowMode ? checkoutRedirect(session) : "redirect:/women-products/cart";
         }
 
-        for (WomenCartItem ci : items) {
-            WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
-            int finalQty = ci.getQuantity();
-
-            WomenProductOrder order = new WomenProductOrder();
-            order.setUser(u);
-            order.setProduct(p);
-            order.setSeller(p.getSeller());
-            order.setQuantity(finalQty);
-            order.setTotalPrice(p.getPrice() * finalQty);
-            order.setPaymentMethod(paymentMethod);
-            order.setShippingAddress(shippingAddress);
-            order.setStatus("PLACED");
-            if (razorpayPaymentId != null) order.setRazorpayPaymentId(razorpayPaymentId);
-            java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
-            order.setOrderTime(placedAt);
-            order.setExpectedDeliveryDate(deliveryService
-                    .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, ci.getQuantity())
-                    .atStartOfDay());
-            orderRepo.save(order);
-
-            // Deduct stock safely
-            int remainingStock = p.getStock() - finalQty;
-            if (remainingStock < 0) remainingStock = 0;
-            p.setStock(remainingStock);
-            productRepo.save(p);
+        List<Long> orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        if (!buyNowMode) {
+            cartRepo.deleteByUser(u);
         }
-
-        // Clear cart
-        cartRepo.deleteByUser(u);
-
+        session.removeAttribute(BUY_NOW_PRODUCT_ID);
+        session.removeAttribute(BUY_NOW_QTY);
+        session.setAttribute(JUST_PLACED_ORDER_IDS, orderIds);
         ra.addFlashAttribute("message", "Order placed successfully!");
-        return "redirect:/women-products/my-orders";
+        return "redirect:/women-products/order-confirmation";
     }
 
     @PostMapping("/checkout/place/ajax")
@@ -1067,29 +1173,98 @@ public class WomenProductController {
         Map<String, Object> response = new HashMap<>();
         User u = (User) session.getAttribute("user");
         if (u == null) { response.put("status", "ERROR"); response.put("message", "User not logged in"); return response; }
-        
-        List<WomenCartItem> items = cartRepo.findByUser(u);
-        if (items.isEmpty()) { response.put("status", "ERROR"); response.put("message", "Cart is empty"); return response; }
 
-        // Strict Stock Pre-validation before order placement
-        for (WomenCartItem ci : items) {
-            WomenProduct liveP = productRepo.findById(ci.getProduct().getId()).orElse(null);
-            int currentStock = (liveP != null && liveP.getStock() != null) ? liveP.getStock() : 0;
-            if (liveP == null || !liveP.getActive() || liveP.getDeleted() || currentStock <= 0) {
-                response.put("status", "ERROR");
-                response.put("message", "Product '" + (liveP != null ? liveP.getName() : "Item") + "' is Out of Stock.");
-                return response;
-            }
-            if (ci.getQuantity() > currentStock) {
-                response.put("status", "ERROR");
-                response.put("message", "Only " + currentStock + " unit(s) available for '" + liveP.getName() + "'. Please adjust your cart.");
-                return response;
-            }
+        String payNorm = normalizeWebPaymentMethod(paymentMethod);
+        if (payNorm == null) {
+            response.put("status", "ERROR");
+            response.put("message", "Choose Cash on Delivery or Online Payment.");
+            return response;
+        }
+        String address = shippingAddress == null ? "" : shippingAddress.trim();
+        if (address.length() < 8) {
+            response.put("status", "ERROR");
+            response.put("message", "Please enter a complete delivery address.");
+            return response;
         }
 
+        boolean buyNowMode = session.getAttribute(BUY_NOW_PRODUCT_ID) != null;
+        List<WomenCartItem> items = resolveCheckoutItems(session, u);
+        if (items.isEmpty()) { response.put("status", "ERROR"); response.put("message", "Cart is empty"); return response; }
+
+        String stockError = validateCheckoutStock(items);
+        if (stockError != null) {
+            response.put("status", "ERROR");
+            response.put("message", stockError);
+            return response;
+        }
+
+        List<Long> orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        if (!buyNowMode) {
+            cartRepo.deleteByUser(u);
+        }
+        session.removeAttribute(BUY_NOW_PRODUCT_ID);
+        session.removeAttribute(BUY_NOW_QTY);
+        session.setAttribute(JUST_PLACED_ORDER_IDS, orderIds);
+
+        response.put("status", "SUCCESS");
+        response.put("orderIds", orderIds);
+        response.put("redirect", "/women-products/order-confirmation");
+        return response;
+    }
+
+    private String checkoutRedirect(HttpSession session) {
+        if (session.getAttribute(BUY_NOW_PRODUCT_ID) != null) {
+            return "redirect:/women-products/checkout?buyNow=1";
+        }
+        return "redirect:/women-products/checkout";
+    }
+
+    private static String normalizeWebPaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isBlank()) return null;
+        String m = paymentMethod.trim().toUpperCase();
+        if ("COD".equals(m)) return "COD";
+        if (m.startsWith("ONLINE")) return "ONLINE";
+        return null;
+    }
+
+    private List<WomenCartItem> resolveCheckoutItems(HttpSession session, User u) {
+        Object pidObj = session.getAttribute(BUY_NOW_PRODUCT_ID);
+        if (pidObj instanceof Long pid) {
+            Integer qty = (Integer) session.getAttribute(BUY_NOW_QTY);
+            WomenProduct p = productRepo.findById(pid).orElse(null);
+            if (p == null) return new ArrayList<>();
+            WomenCartItem temp = new WomenCartItem();
+            temp.setProduct(p);
+            temp.setQuantity(qty == null || qty < 1 ? 1 : qty);
+            List<WomenCartItem> one = new ArrayList<>();
+            one.add(temp);
+            return one;
+        }
+        return cartRepo.findByUser(u);
+    }
+
+    private String validateCheckoutStock(List<WomenCartItem> items) {
+        for (WomenCartItem ci : items) {
+            if (ci.getProduct() == null) return "A product in your order is unavailable.";
+            WomenProduct liveP = productRepo.findById(ci.getProduct().getId()).orElse(null);
+            int currentStock = (liveP != null && liveP.getStock() != null) ? liveP.getStock() : 0;
+            if (liveP == null || !liveP.isListedForShop() || currentStock <= 0) {
+                return "Product '" + (liveP != null ? liveP.getName() : "Item") + "' is Out of Stock.";
+            }
+            if (ci.getQuantity() > currentStock) {
+                return "Only " + currentStock + " unit(s) available for '" + liveP.getName() + "'. Please adjust your cart.";
+            }
+        }
+        return null;
+    }
+
+    private List<Long> persistOrders(User u, List<WomenCartItem> items, String payNorm,
+                                     String address, String razorpayPaymentId) {
         List<Long> orderIds = new ArrayList<>();
+        String paymentStatus = "COD".equals(payNorm) ? "COD" : "PENDING";
         for (WomenCartItem ci : items) {
             WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
+            if (p == null) continue;
             int finalQty = ci.getQuantity();
 
             WomenProductOrder order = new WomenProductOrder();
@@ -1097,29 +1272,28 @@ public class WomenProductController {
             order.setProduct(p);
             order.setSeller(p.getSeller());
             order.setQuantity(finalQty);
-            order.setTotalPrice(p.getPrice() * finalQty);
-            order.setPaymentMethod(paymentMethod);
-            order.setShippingAddress(shippingAddress);
+            order.setTotalPrice((p.getPrice() == null ? 0 : p.getPrice()) * finalQty);
+            order.setPaymentMethod(payNorm);
+            order.setPaymentStatus(paymentStatus);
+            order.setShippingAddress(address);
             order.setStatus("PLACED");
-            if (razorpayPaymentId != null) order.setRazorpayPaymentId(razorpayPaymentId);
+            if (razorpayPaymentId != null && !razorpayPaymentId.isBlank()) {
+                order.setRazorpayPaymentId(razorpayPaymentId.trim());
+            }
             java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
             order.setOrderTime(placedAt);
             order.setExpectedDeliveryDate(deliveryService
-                    .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, ci.getQuantity())
+                    .calculateExpectedDeliveryDate(placedAt, address, p, ci.getQuantity())
                     .atStartOfDay());
             orderRepo.save(order);
             orderIds.add(order.getId());
 
-            int remainingStock = p.getStock() - finalQty;
+            int remainingStock = (p.getStock() == null ? 0 : p.getStock()) - finalQty;
             if (remainingStock < 0) remainingStock = 0;
             p.setStock(remainingStock);
             productRepo.save(p);
         }
-        cartRepo.deleteByUser(u);
-        
-        response.put("status", "SUCCESS");
-        response.put("orderIds", orderIds);
-        return response;
+        return orderIds;
     }
 
     @PostMapping("/order/rate")
@@ -1139,8 +1313,19 @@ public class WomenProductController {
                 response.put("message", "Only delivered orders can be rated.");
                 return response;
             }
+            if (rating == null || rating < 1 || rating > 5) {
+                response.put("status", "ERROR");
+                response.put("message", "Rating must be between 1 and 5.");
+                return response;
+            }
+            String cleanedReview = review == null ? "" : review.trim();
+            if (cleanedReview.length() > 2000) {
+                response.put("status", "ERROR");
+                response.put("message", "Review must be at most 2000 characters.");
+                return response;
+            }
             order.setRating(rating);
-            order.setReview(review);
+            order.setReview(cleanedReview.isEmpty() ? null : cleanedReview);
             orderRepo.save(order);
 
             // Update seller aggregate rating
@@ -1184,9 +1369,64 @@ public class WomenProductController {
             }
             expectedDeliveryLabels.put(String.valueOf(o.getId()), eta.format(fmt));
         }
+        Map<String, Boolean> canCancel = new HashMap<>();
+        for (WomenProductOrder o : orders) {
+            canCancel.put(String.valueOf(o.getId()), productsCareService.canCancel(o));
+        }
         model.addAttribute("orders", orders);
         model.addAttribute("expectedDeliveryLabels", expectedDeliveryLabels);
+        model.addAttribute("canCancel", canCancel);
+        model.addAttribute("cancelPolicy", in.sp.main.Service.WomenProductsCareService.CANCEL_POLICY);
         return "women-products/my-orders";
+    }
+
+    @GetMapping("/order-confirmation")
+    public String orderConfirmation(HttpSession session, Model model) {
+        User u = (User) session.getAttribute("user");
+        if (u == null) return "redirect:/login";
+        @SuppressWarnings("unchecked")
+        List<Long> ids = (List<Long>) session.getAttribute(JUST_PLACED_ORDER_IDS);
+        if (ids == null || ids.isEmpty()) return "redirect:/women-products/my-orders";
+        List<WomenProductOrder> placed = new ArrayList<>();
+        for (Long id : ids) {
+            WomenProductOrder o = orderRepo.findById(id).orElse(null);
+            if (o != null && o.getUser() != null && o.getUser().getId().equals(u.getId())) {
+                placed.add(o);
+            }
+        }
+        if (placed.isEmpty()) return "redirect:/women-products/my-orders";
+        double total = placed.stream().mapToDouble(o -> o.getTotalPrice() == null ? 0 : o.getTotalPrice()).sum();
+        Map<String, String> expectedDeliveryLabels = new HashMap<>();
+        java.time.format.DateTimeFormatter fmt =
+                java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", java.util.Locale.ENGLISH);
+        for (WomenProductOrder o : placed) {
+            if (o.getExpectedDeliveryDate() != null) {
+                expectedDeliveryLabels.put(String.valueOf(o.getId()), o.getExpectedDeliveryDate().toLocalDate().format(fmt));
+            }
+        }
+        model.addAttribute("orders", placed);
+        model.addAttribute("orderTotal", total);
+        model.addAttribute("expectedDeliveryLabels", expectedDeliveryLabels);
+        return "women-products/order-confirmation";
+    }
+
+    @PostMapping("/orders/{id}/cancel")
+    public String cancelOrder(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        User u = (User) session.getAttribute("user");
+        if (u == null) return "redirect:/login";
+        WomenProductOrder o = orderRepo.findById(id).orElse(null);
+        if (o == null || o.getUser() == null || !o.getUser().getId().equals(u.getId())) {
+            ra.addFlashAttribute("error", "Order not found.");
+            return "redirect:/women-products/my-orders";
+        }
+        try {
+            productsCareService.cancel(o, "customer");
+            ra.addFlashAttribute("message", "Order cancelled. Stock has been restored where applicable.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason()
+                    : in.sp.main.Service.WomenProductsCareService.CANCEL_POLICY);
+        }
+        return "redirect:/women-products/my-orders";
     }
 
     @GetMapping("/api/my-orders-status")

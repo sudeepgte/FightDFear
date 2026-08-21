@@ -99,6 +99,9 @@
             <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Back to Home</a>
             <h2>Welcome Back 👋</h2>
             <p class="subtitle">Enter your vendor credentials to access your portal</p>
+            <c:if test="${not empty message}">
+                <div class="error-alert" style="background:#ecfdf5;border-color:#a7f3d0;"><i class="bi bi-check-circle"></i> ${message}</div>
+            </c:if>
             <c:if test="${not empty error}">
                 <div class="error-alert"><i class="bi bi-exclamation-circle"></i> ${error}</div>
             </c:if>

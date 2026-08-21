@@ -147,8 +147,15 @@
                             <div class="info-card">
                                 <h5><i class="fas fa-address-book"></i> Contact Details</h5>
                                 <hr>
-                                <p><strong>Email:</strong> ${workerApp.user.email}</p>
-                                <p><strong>Phone:</strong> ${workerApp.user.phoneNumber}</p>
+                                <c:choose>
+                                    <c:when test="${revealContact}">
+                                        <p><strong>Email:</strong> ${workerApp.user.email}</p>
+                                        <p><strong>Phone:</strong> ${workerApp.user.phoneNumber}</p>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="text-muted small mb-2">Contact details are shared after your booking is accepted.</p>
+                                    </c:otherwise>
+                                </c:choose>
                                 <p><strong>Location:</strong> ${workerApp.user.homeAddress}</p>
                                 <hr>
                                 <p class="mb-0 fs-5 text-success">
@@ -233,10 +240,13 @@
             return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
         };
 
+        if (!dateInputElem) return;
         dateInputElem.min = formatDateTime(now);
         dateInputElem.max = formatDateTime(maxDate);
 
-        document.querySelector('form').addEventListener('submit', function(e) {
+        const bookingForm = dateInputElem.closest('form');
+        if (!bookingForm) return;
+        bookingForm.addEventListener('submit', function(e) {
             const dateInput = dateInputElem.value;
             if (!dateInput) return;
             

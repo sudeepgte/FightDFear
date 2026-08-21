@@ -26,7 +26,9 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #3F1430; margin-bottom: 8px; }
         .input-wrapper { position: relative; }
-        .input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 1rem; }
+        .input-wrapper i.prefix-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 1rem; }
+        .password-toggle-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 1.1rem; z-index: 2; }
+        .input-wrapper.password-field .form-input { padding-right: 46px; }
         .form-input { width: 100%; padding: 14px 16px 14px 46px; border: 2px solid #f3e8ef; border-radius: 12px; font-size: 0.95rem; transition: all 0.3s ease; }
         .form-input:focus { outline: none; border-color: #1e1b4b; box-shadow: 0 0 0 4px rgba(30, 27, 75, 0.1); }
         .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e1b4b, #1e1b4b); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3); }
@@ -100,17 +102,38 @@
             <form action="${pageContext.request.contextPath}/centres/loginCentre" method="post">
                 <div class="form-group">
                     <label>Email Address</label>
-                    <div class="input-wrapper"><i class="bi bi-envelope"></i><input type="email" name="email" class="form-input" placeholder="centre@example.com" required></div>
+                    <div class="input-wrapper"><i class="bi bi-envelope prefix-icon"></i><input type="email" name="email" class="form-input" placeholder="centre@example.com" required></div>
                 </div>
                 <div class="form-group">
-                    <label>Password</label>
-                    <div class="input-wrapper"><i class="bi bi-lock"></i><input type="password" name="password" class="form-input" placeholder="••••••••" required></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="margin-bottom: 0;">Password</label>
+                        <a href="${pageContext.request.contextPath}/users/forgot-password" style="font-size: 0.8rem; color: #1e1b4b; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                    </div>
+                    <div class="input-wrapper password-field">
+                        <i class="bi bi-lock prefix-icon"></i><input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassword()"><i class="bi bi-eye"></i></button>
+                    </div>
                 </div>
                 <button type="submit" class="btn-login">Sign In <i class="bi bi-arrow-right"></i></button>
             </form>
             <p class="register-link">New Centre? <a href="${pageContext.request.contextPath}/centres/registerCentre">Register here</a></p>
         </div>
     </div>
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.password-toggle-btn i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            }
+        }
+    </script>
 </body>
 </html>
 

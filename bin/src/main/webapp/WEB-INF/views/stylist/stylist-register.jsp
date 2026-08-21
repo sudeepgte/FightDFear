@@ -151,31 +151,57 @@
                     </div>
                 </c:if>
 
-                <form action="${pageContext.request.contextPath}/stylists/register" method="post" id="stylistRegForm">
+                <form action="${pageContext.request.contextPath}/stylists/register" method="post" id="stylistRegForm" enctype="multipart/form-data">
                     <!-- Step 1: Personal Profile -->
                     <div class="dr-step-panel active" id="step1">
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Step 1: Personal Profile</h3>
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>First Name</label>
-                                <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya" required>
+
+                                <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya"
+                                       value="${stylist.firstName}" maxlength="50" required>
                                 <div class="error-msg" id="err-firstName">Required (Min 2 chars, alphabets only).</div>
                             </div>
                             <div class="fdf-group">
                                 <label>Last Name</label>
-                                <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma" required>
+                                <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma"
+                                       value="${stylist.lastName}" maxlength="50" required>
                                 <div class="error-msg" id="err-lastName">Required (Min 2 chars, alphabets only).</div>
+
+                                <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya" required>
+                                <div class="error-msg" id="err-firstName">Required (alphabets only).</div>
+                            </div>
+                            <div class="fdf-group">
+                                <label>Last Name</label>
+                                <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma" required>
+                                <div class="error-msg" id="err-lastName">Required (alphabets only).</div>
+
                             </div>
                         </div>
                         <div class="fdf-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" id="email" class="fdf-input" placeholder="priya@example.com" required>
+                            <input type="email" name="email" id="email" class="fdf-input" placeholder="priya@example.com"
+                                   value="${stylist.email}" maxlength="100" required>
                             <div class="error-msg" id="err-email">Valid email is required (e.g., name@domain.com).</div>
+                        </div>
+                        <div class="fdf-group">
+                            <label>Phone Number</label>
+                            <input type="tel" name="contactNumber" id="contactNumber" class="fdf-input"
+                                   placeholder="10-digit mobile number" value="${stylist.contactNumber}"
+                                   maxlength="10" inputmode="numeric" pattern="\d{10}" required>
+                            <div class="error-msg" id="err-contactNumber">Phone number must be exactly 10 digits.</div>
+                        </div>
+                        <div class="fdf-group">
+                            <label>Profile Photo <span style="font-weight:600; text-transform:none; letter-spacing:0; color:var(--fdf-muted);">(JPG/JPEG/PNG, max ${profileImageMaxSizeMb != null ? profileImageMaxSizeMb : 2} MB)</span></label>
+                            <input type="file" name="profileImageFile" id="profileImageFile" class="fdf-input"
+                                   accept=".jpg,.jpeg,.png,image/jpeg,image/png">
+                            <div class="error-msg" id="err-profileImageFile">Upload a JPG/JPEG or PNG image within the size limit.</div>
                         </div>
                         <div class="fdf-group">
                             <label>Password</label>
                             <input type="password" name="password" id="password" class="fdf-input" placeholder="Create a strong password" required>
-                            <div class="error-msg" id="err-password">6-8 chars (1 Uppercase & 1 Number required).</div>
+                            <div class="error-msg" id="err-password">At least 6 characters (1 Uppercase & 1 Number required).</div>
                             <div class="password-strength-container" id="strengthContainer" style="display:none;">
                                 <div class="strength-bar"><div id="strengthFill" class="strength-fill"></div></div>
                                 <span id="strengthText" class="strength-text"></span>
@@ -191,7 +217,7 @@
                         
                         <div class="fdf-group">
                             <label>Specialization</label>
-                            <input type="text" name="specialization" id="specialization" class="fdf-input" placeholder="e.g. Hair Styling, Bridal Makeup" required>
+                            <input type="text" name="specialization" id="specialization" class="fdf-input" placeholder="e.g. Hair Styling, Bridal Makeup" maxlength="100" required>
                             <div class="error-msg" id="err-specialization">Required (Min 3-5 characters).</div>
                         </div>
 
@@ -255,21 +281,39 @@
             text.style.color = colors[strength - 1] || '#ef4444';
         }
 
+        const maxPhotoBytes = ${profileImageMaxBytes != null ? profileImageMaxBytes : 2097152};
+
         const validateField = (el) => {
             let isValid = true;
-            const val = el.value.trim();
+            const val = el.type === 'file' ? (el.files && el.files[0] ? el.files[0].name : '') : el.value.trim();
             const fieldId = el.id;
             const errorEl = document.getElementById('err-' + fieldId);
 
-            if (el.hasAttribute('required') && !val) {
+            if (el.hasAttribute('required') && el.type !== 'file' && !val) {
                 isValid = false;
             } else {
                 if (fieldId === 'firstName' || fieldId === 'lastName') {
-                    isValid = val.length >= 2 && /^[a-zA-Z\s]+$/.test(val);
+
+                    isValid = val.length >= 2 && /^[a-zA-Z][a-zA-Z .'-]*$/.test(val);
+
+                    isValid = val.length >= 1 && /^[a-zA-Z\s]+$/.test(val);
+
                 } else if (fieldId === 'email') {
                     isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+                } else if (fieldId === 'contactNumber') {
+                    isValid = /^\d{10}$/.test(val);
+                } else if (fieldId === 'profileImageFile') {
+                    const file = el.files && el.files[0];
+                    if (!file) {
+                        isValid = true; // optional on register
+                    } else {
+                        const name = (file.name || '').toLowerCase();
+                        const typeOk = ['image/jpeg', 'image/jpg', 'image/png'].includes((file.type || '').toLowerCase())
+                            || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+                        isValid = typeOk && file.size <= maxPhotoBytes;
+                    }
                 } else if (fieldId === 'password') {
-                    isValid = val.length >= 6 && val.length <= 8 && /[A-Z]/.test(val) && /\d/.test(val);
+                    isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
                     updatePasswordStrength(val);
                 } else if (fieldId === 'specialization') {
                     isValid = val.length >= 3;
@@ -294,13 +338,15 @@
         };
 
         function checkFormValidity() {
-            const step1Fields = ['firstName', 'lastName', 'email', 'password'];
+            const step1Fields = ['firstName', 'lastName', 'email', 'contactNumber', 'password'];
             const step2Fields = ['specialization', 'experience'];
             
             const isStep1Valid = step1Fields.every(id => {
                 const el = document.getElementById(id);
                 return el && el.classList.contains('is-valid');
             });
+            const photoEl = document.getElementById('profileImageFile');
+            const photoOk = !photoEl || !photoEl.classList.contains('is-invalid');
 
             const isStep2Valid = step2Fields.every(id => {
                 const el = document.getElementById(id);
@@ -308,7 +354,7 @@
             });
 
             const nextBtn = document.getElementById('btn-next-1');
-            if (nextBtn) nextBtn.disabled = !isStep1Valid;
+            if (nextBtn) nextBtn.disabled = !(isStep1Valid && photoOk);
             const submitBtn = document.getElementById('btn-submit');
             if (submitBtn) submitBtn.disabled = !isStep2Valid;
         }
@@ -336,6 +382,11 @@
                     e.preventDefault();
                     if (!document.getElementById('step2').classList.contains('active')) showStep(1);
                 }
+            });
+
+            document.getElementById('contactNumber').addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                validateField(this);
             });
 
             checkFormValidity();

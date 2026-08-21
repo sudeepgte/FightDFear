@@ -382,7 +382,7 @@
                                                             <c:set var="postVideoUrl" value="${fn:startsWith(postVideoPath, 'http') ? postVideoPath : pageContext.request.contextPath.concat(postVideoPath)}" />
                                                             <c:set var="postThumbUrl" value="${fn:startsWith(postThumbPath, 'http') ? postThumbPath : pageContext.request.contextPath.concat(postThumbPath)}" />
                                                             <c:choose>
-                                                                <c:when test="${post.fileType eq 'VIDEO'}">
+                                                                <c:when test="${post.fileType eq 'VIDEO' || fn:endsWith(fn:toLowerCase(post.videoPath), '.mp4') || fn:endsWith(fn:toLowerCase(post.videoPath), '.webm') || fn:endsWith(fn:toLowerCase(post.videoPath), '.mov')}">
                                                                     <video src="${postVideoUrl}" poster="${postThumbUrl}" class="draft-thumb" muted></video>
                                                                 </c:when>
                                                                 <c:otherwise>
@@ -453,7 +453,7 @@
                                                             <c:set var="draftVideoUrl" value="${fn:startsWith(draftVideoPath, 'http') ? draftVideoPath : pageContext.request.contextPath.concat(draftVideoPath)}" />
                                                             <c:set var="draftThumbUrl" value="${fn:startsWith(draftThumbPath, 'http') ? draftThumbPath : pageContext.request.contextPath.concat(draftThumbPath)}" />
                                                             <c:choose>
-                                                                <c:when test="${draft.fileType eq 'VIDEO'}">
+                                                                <c:when test="${draft.fileType eq 'VIDEO' || fn:endsWith(fn:toLowerCase(draft.videoPath), '.mp4') || fn:endsWith(fn:toLowerCase(draft.videoPath), '.webm') || fn:endsWith(fn:toLowerCase(draft.videoPath), '.mov')}">
                                                                     <video src="${draftVideoUrl}" poster="${draftThumbUrl}" class="draft-thumb" muted></video>
                                                                 </c:when>
                                                                 <c:otherwise>
