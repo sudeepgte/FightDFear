@@ -397,11 +397,23 @@
                         <div class="two-col">
                             <div class="fg">
                                 <label>Category <span class="req">*</span></label>
-                                <select name="category" required>
+                                <select name="category" id="categorySelect" required>
                                     <option value="">Select Category</option>
-                                    <c:forEach var="cat" items="${categories}">
-                                        <option value="${cat}">${cat.displayName}</option>
-                                    </c:forEach>
+                                    <c:choose>
+                                        <c:when test="${not empty categories}">
+                                            <c:forEach var="cat" items="${categories}">
+                                                <option value="${cat}">${cat.displayName}</option>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <option value="HEALTH_WELLNESS">Health &amp; Wellness</option>
+                                            <option value="ENTREPRENEURSHIP_CAREER">Entrepreneurship &amp; Career</option>
+                                            <option value="FITNESS_SPORTS">Fitness &amp; Sports</option>
+                                            <option value="EDUCATION_SKILLS">Education &amp; Skills</option>
+                                            <option value="SOCIAL_COMMUNITY">Social &amp; Community</option>
+                                            <option value="SAFETY_AWARENESS">Safety &amp; Awareness</option>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </select>
                             </div>
                             <div class="fg">
@@ -636,6 +648,15 @@
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
+// Enforce min date as today
+document.addEventListener('DOMContentLoaded', () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateInput = document.querySelector('[name="eventDate"]');
+    if (dateInput) {
+        dateInput.min = todayStr;
+    }
+});
+
 /* ── Live checklist ── */
 function updateChecklist() {
     function setCheck(id, filled) {
@@ -663,6 +684,22 @@ function updateChecklist() {
 }
 document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener('input', updateChecklist));
 updateChecklist();
+
+/* ── Form Submit Validation ── */
+document.getElementById('createEventForm')?.addEventListener('submit', function(e) {
+    const dateInp = document.querySelector('[name="eventDate"]');
+    if (dateInp && dateInp.value) {
+        const selected = new Date(dateInp.value);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        if (selected < today) {
+            e.preventDefault();
+            alert('Event date cannot be in the past. Please select today or a future date.');
+            dateInp.focus();
+            return false;
+        }
+    }
+});
 
 /* ── Fee toggle ── */
 function toggleFee(isFree) {

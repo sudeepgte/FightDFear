@@ -407,7 +407,8 @@ public class WomenEventController {
         host.setOrganizerType(organizerType);
         host.setHostContact(hostContact);
         host.setHostBio(hostBio);
-        host.setVerificationStatus(VerificationStatus.PENDING);
+        host.setPartnerProfileStatus(PartnerProfileStatus.PROFILE_INCOMPLETE);
+        host.setProfileCompletionPct(10); // Initial quick reg percentage
 
         eventHostRepository.save(host);
         return "redirect:/women-events/host/login?registered=true";
@@ -438,30 +439,38 @@ public class WomenEventController {
             model.addAttribute("error", "Invalid password.");
             return "women-events/host-login";
         }
-        if (host.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending verification by Admin. Please check back later.");
-            return "women-events/host-login";
-        }
-        if (host.getVerificationStatus() == VerificationStatus.REJECTED) {
-            model.addAttribute("error", "Your account has been rejected by admin.");
-            return "women-events/host-login";
-        }
-
+        // Allow login for incomplete & pending profile hosts so they can complete profile or view pending status
         session.setAttribute("loggedHost", host);
 
-        // Generate JWT token if possible
+        // Handle profile lifecycle status routing matching mobile app flow
+        PartnerProfileStatus partnerStatus = host.getPartnerProfileStatus();
+        VerificationStatus verStatus = host.getVerificationStatus();
+
+        if (partnerStatus == PartnerProfileStatus.SUSPENDED || verStatus == VerificationStatus.REJECTED || partnerStatus == PartnerProfileStatus.REJECTED) {
+            model.addAttribute("error", "Your account has been rejected or suspended by admin." + (host.getRejectionReason() != null ? " Reason: " + host.getRejectionReason() : ""));
+            return "women-events/host-login";
+        }
+
+        // Generate JWT token
         try {
             String token = jwtUtil.generateToken(host.getEmail(), "HOST");
             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
             cookie.setPath("/");
             cookie.setHttpOnly(true);
-            cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+            cookie.setMaxAge(365 * 24 * 60 * 60);
             response.addCookie(cookie);
         } catch (Exception ex) {
-            // jwtUtil exception fallback
+            // token generation fallback
         }
 
-        return "redirect:/women-events/organizer/dashboard";
+        if (partnerStatus == PartnerProfileStatus.APPROVED || verStatus == VerificationStatus.VERIFIED) {
+            return "redirect:/women-events/organizer/dashboard";
+        } else if (partnerStatus == PartnerProfileStatus.PENDING_ADMIN_APPROVAL) {
+            return "redirect:/women-events/organizer/edit-profile?submitted=true";
+        } else {
+            // PROFILE_INCOMPLETE or null or CHANGES_REQUESTED
+            return "redirect:/women-events/organizer/edit-profile";
+        }
     }
 
     @GetMapping("/host/logout")
@@ -487,6 +496,11 @@ public class WomenEventController {
         EventHost host = checkAndGetHost(session);
         if (host == null) {
             return "redirect:/women-events/host/login";
+        }
+
+        // Strict Mobile Parity: Only APPROVED hosts can access the Dashboard
+        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            return "redirect:/women-events/organizer/edit-profile";
         }
 
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);

@@ -354,7 +354,13 @@
     <!-- TOP BAR -->
     <div class="topbar">
         <div class="topbar-left">
-            <h2>Welcome back, ${host.fullName}! 👋</h2>
+            <div class="d-flex align-items-center gap-2">
+                <h2>Welcome back, ${host.fullName}! 👋</h2>
+                <c:set var="hostStatus" value="${host.partnerProfileStatus != null ? host.partnerProfileStatus.name() : 'PROFILE_INCOMPLETE'}"/>
+                <span class="status-pill status-${fn:contains(hostStatus, 'APPROVED') ? 'APPROVED' : fn:contains(hostStatus, 'PENDING') ? 'PENDING' : 'REJECTED'}" style="font-size:0.75rem;">
+                    <i class="bi bi-shield-check"></i> ${hostStatus}
+                </span>
+            </div>
             <p>Here's what's happening with your events today.</p>
         </div>
         <div class="topbar-right">
@@ -363,14 +369,45 @@
                 <span class="notif-dot"></span>
             </div>
             <div class="topbar-avatar">${fn:substring(host.fullName, 0, 1)}</div>
-            <a href="${pageContext.request.contextPath}/women-events/organizer/create" class="create-event-btn">
-                <i class="bi bi-plus-lg"></i>Create Event
-            </a>
+            <c:choose>
+                <c:when test="${hostStatus eq 'APPROVED' || host.verificationStatus eq 'VERIFIED'}">
+                    <a href="${pageContext.request.contextPath}/women-events/organizer/create" class="create-event-btn">
+                        <i class="bi bi-plus-lg"></i>Create Event
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <button class="create-event-btn" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Your host profile must be verified and APPROVED by admin before creating events. Current status: ${hostStatus}')" title="Requires Admin Approval">
+                        <i class="bi bi-lock-fill"></i>Create Event
+                    </button>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 
     <!-- PAGE CONTENT -->
     <div class="page-content">
+        <!-- Verification Banner if not approved -->
+        <c:if test="${hostStatus ne 'APPROVED' && host.verificationStatus ne 'VERIFIED'}">
+            <div class="alert alert-warning alert-dismissible fade show alert-banner rounded-3" role="alert">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <i class="bi bi-exclamation-triangle-fill me-2" style="font-size: 1.1rem;"></i>
+                        <strong>Host Verification Status: ${hostStatus}</strong> —
+                        <c:choose>
+                            <c:when test="${hostStatus eq 'PENDING_ADMIN_APPROVAL'}">
+                                Your profile is currently under review by Admin. Event creation will be enabled once approved.
+                            </c:when>
+                            <c:when test="${hostStatus eq 'CHANGES_REQUESTED'}">
+                                Admin has requested profile updates. <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="alert-link">Update your profile here</a>.
+                            </c:when>
+                            <c:otherwise>
+                                Please complete all 11 profile sections and submit for verification to unlock event creation. <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="alert-link">Complete Profile (${host.profileCompletionPct != null ? host.profileCompletionPct : 0}%)</a>.
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+        </c:if>
 
         <!-- Alert banner -->
         <c:if test="${not empty success}">
