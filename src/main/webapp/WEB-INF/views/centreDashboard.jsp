@@ -14,10 +14,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
+            --martial-rose: #f43f5e;
+            --martial-rose-dark: #e11d48;
+            --martial-rose-light: #ffe4e6;
+            --martial-rose-soft: #fff1f2;
+            --martial-text: #0f172a;
+            --martial-muted: #64748b;
+            --martial-border: #e2e8f0;
+            --martial-border-light: #f1f5f9;
+            --martial-bg: #f8fafc;
+            --martial-white: #ffffff;
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 8px 24px rgba(244, 63, 94, 0.08);
+
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
-            --navy-light: #2D2960;
+            --navy: #0F172A;
+            --navy-light: #1E293B;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -35,62 +48,65 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-page);
-            color: var(--navy);
+            background: var(--martial-bg);
+            color: var(--martial-text);
             min-height: 100vh;
             display: flex;
         }
 
-        /* Sidebar Navigation */
+        /* Clean Light Sidebar matching Fitness */
         .sidebar {
-            width: 260px;
-            background: var(--navy);
-            color: #FFFFFF;
+            width: 240px;
+            background: var(--martial-white);
+            color: var(--martial-text);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            position: sticky;
+            position: fixed;
+            left: 0;
             top: 0;
             height: 100vh;
-            z-index: 40;
-            transition: all 0.3s ease;
+            z-index: 1000;
+            border-right: 1px solid var(--martial-border);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+            transition: all 0.3s ease-in-out;
+            overflow-y: auto;
         }
 
         .sidebar-brand {
-            padding: 22px 20px;
+            padding: 20px 18px;
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 800;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid var(--martial-border);
             text-decoration: none;
-            color: #FFFFFF;
+            color: var(--martial-text);
         }
 
         .sidebar-brand i {
-            color: var(--primary);
-            font-size: 1.4rem;
+            color: var(--martial-rose);
+            font-size: 1.3rem;
         }
 
         .sidebar-nav {
             flex: 1;
-            padding: 16px 12px;
+            padding: 14px 10px;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            overflow-y: auto;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 14px;
-            color: #94A3B8;
+            padding: 10px 14px;
+            color: var(--martial-muted);
             text-decoration: none;
-            border-radius: 12px;
-            font-size: 0.9rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
             font-weight: 600;
             transition: all 0.2s ease;
             cursor: pointer;
@@ -101,25 +117,36 @@
         }
 
         .nav-item i {
-            font-size: 1.15rem;
-            width: 20px;
+            font-size: 1.1rem;
+            width: 22px;
             text-align: center;
+            color: #94a3b8;
+            transition: color 0.2s ease;
         }
 
         .nav-item:hover {
-            color: #FFFFFF;
-            background: rgba(255,255,255,0.06);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
+        }
+
+        .nav-item:hover i {
+            color: var(--martial-rose);
         }
 
         .nav-item.active {
-            color: #FFFFFF;
-            background: var(--primary);
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-light);
+            font-weight: 700;
+            box-shadow: none;
+        }
+
+        .nav-item.active i {
+            color: var(--martial-rose);
         }
 
         .sidebar-footer {
-            padding: 16px 14px;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 14px;
+            border-top: 1px solid var(--martial-border);
         }
 
         .btn-logout {
@@ -129,30 +156,32 @@
             padding: 10px 14px;
             color: #EF4444;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
             border-radius: 10px;
             transition: background 0.2s;
         }
 
         .btn-logout:hover {
-            background: rgba(239, 68, 68, 0.1);
+            background: #FEF2F2;
         }
 
-        /* Main Content */
+        /* Main Content Wrapper */
         .main-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-width: 0;
+            margin-left: 240px;
+            min-height: 100vh;
             overflow-y: auto;
         }
 
         /* Top Header */
         .topbar {
-            background: #FFFFFF;
-            border-bottom: 1px solid var(--border-color);
-            padding: 14px 28px;
+            background: var(--martial-white);
+            border-bottom: 1px solid var(--martial-border);
+            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -162,26 +191,30 @@
         }
 
         .topbar-greeting h1 {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 800;
-            color: var(--navy);
+            color: var(--martial-text);
+            margin: 0;
+            letter-spacing: -0.3px;
         }
 
         .topbar-greeting p {
-            font-size: 0.85rem;
-            color: var(--text-gray);
+            font-size: 0.86rem;
+            color: var(--martial-muted);
             font-weight: 500;
+            margin-top: 2px;
+            margin-bottom: 0;
         }
 
         .topbar-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
-        .btn-quick-add {
+        .btn-header-cta {
             padding: 9px 18px;
-            background: var(--primary);
+            background: var(--martial-rose);
             color: #FFFFFF;
             border: none;
             border-radius: 10px;
@@ -189,32 +222,48 @@
             font-weight: 700;
             font-family: inherit;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 10px rgba(244, 63, 94, 0.25);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
             text-decoration: none;
         }
 
-        .btn-quick-add:hover {
-            background: var(--primary-hover);
+        .btn-header-cta:hover {
+            background: var(--martial-rose-dark);
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
 
         .content-container {
-            padding: 24px 28px 60px;
-            max-width: 1200px;
+            padding: 26px 32px 60px;
+            max-width: 1240px;
             width: 100%;
         }
 
-        /* Centre Profile Summary Card Matching Mobile */
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+            animation: fadeInTab 0.2s ease-in-out;
+        }
+
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Centre Profile Summary Card Matching Fitness */
         .centre-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 22px 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
+            border-radius: 18px;
+            padding: 22px 26px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow-card);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -229,18 +278,19 @@
         }
 
         .centre-avatar {
-            width: 80px;
-            height: 80px;
+            width: 76px;
+            height: 76px;
             border-radius: 16px;
-            background: var(--rose-soft);
-            color: var(--primary);
+            background: var(--martial-rose-light);
+            color: var(--martial-rose);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.9rem;
             font-weight: 800;
             overflow: hidden;
             flex-shrink: 0;
+            border: 2px solid #FECDD3;
         }
 
         .centre-avatar img {
@@ -250,18 +300,19 @@
         }
 
         .centre-info h2 {
-            font-size: 1.3rem;
+            font-size: 1.28rem;
             font-weight: 800;
-            color: var(--navy);
+            color: var(--martial-text);
             margin-bottom: 4px;
+            letter-spacing: -0.2px;
         }
 
         .centre-meta {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 0.85rem;
-            color: var(--text-gray);
+            font-size: 0.84rem;
+            color: var(--martial-muted);
             flex-wrap: wrap;
         }
 
@@ -271,19 +322,19 @@
             gap: 5px;
             padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             font-weight: 700;
         }
 
-        .pill-verified { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
+        .pill-verified { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
         .pill-pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .pill-changes { background: var(--warning-bg); color: var(--warning); border: 1px solid #FED7AA; }
+        .pill-changes { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
 
         .btn-edit-profile {
             padding: 8px 16px;
-            border: 1px solid var(--border-color);
-            background: #FFFFFF;
-            color: var(--navy);
+            border: 1px solid var(--martial-border);
+            background: var(--martial-white);
+            color: var(--martial-text);
             border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -291,27 +342,28 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
         .btn-edit-profile:hover {
-            border-color: var(--primary);
-            color: var(--primary);
+            border-color: var(--martial-rose);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
         }
 
         /* Profile Completion Warning Card */
         .completion-banner {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
+            background: var(--martial-white);
+            border: 1px solid #FECDD3;
             border-radius: 16px;
-            padding: 18px 22px;
-            margin-bottom: 24px;
+            padding: 20px 24px;
+            margin-bottom: 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
             flex-wrap: wrap;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.04);
         }
 
         .completion-banner-left {
@@ -342,77 +394,127 @@
             border-radius: 4px;
         }
 
-        /* 8 Metric Tiles Grid Matching Mobile */
-        .metrics-grid {
+        /* Unified Stat Cards Grid Matching Fitness (No Rainbow Colors) */
+        .stat-cards-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
         }
 
-        @media (max-width: 1024px) {
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 600px) {
-            .metrics-grid { grid-template-columns: 1fr; }
-        }
-
-        .metric-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
+        .stat-card-unified {
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
             border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            padding: 20px 22px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-
-        .metric-top {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
+            gap: 10px;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            min-height: 125px;
+            color: var(--martial-text);
         }
 
-        .metric-icon-wrap {
+        .stat-card-unified:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: #FECDD3;
+        }
+
+        .stat-card-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--martial-muted);
+        }
+
+        .stat-card-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            color: var(--martial-text);
+        }
+
+        .stat-card-icon-badge {
             width: 42px;
             height: 42px;
-            border-radius: 12px;
+            border-radius: 50%;
+            background: var(--martial-rose-light);
+            color: var(--martial-rose);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.25rem;
+            flex-shrink: 0;
         }
 
-        .metric-val {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--navy);
+        .stat-card-footer {
+            font-size: 0.76rem;
+            color: #94A3B8;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
         }
 
-        .metric-label {
-            font-size: 0.85rem;
+        /* Clean Quick Actions Toolbar matching Fitness */
+        .quick-actions-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .btn-quick-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-size: 0.84rem;
             font-weight: 600;
-            color: var(--text-gray);
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
+            color: var(--martial-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
 
-        /* Tab Content Section */
-        .tab-section {
-            display: none;
+        .btn-quick-pill:hover {
+            border-color: var(--martial-rose);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
+            transform: translateY(-1px);
         }
 
-        .tab-section.active {
-            display: block;
+        .btn-quick-pill i {
+            color: var(--martial-rose);
+            font-size: 0.95rem;
         }
 
-        /* Tables & Content Panels */
-        .content-panel {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 22px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        .btn-quick-pill.primary {
+            background: var(--martial-rose);
+            color: #FFFFFF;
+            border-color: var(--martial-rose);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+        }
+
+        .btn-quick-pill.primary i {
+            color: #FFFFFF;
+        }
+
+        .btn-quick-pill.primary:hover {
+            background: var(--martial-rose-dark);
+            border-color: var(--martial-rose-dark);
+            color: #FFFFFF;
         }
 
         .panel-header {
@@ -903,7 +1005,17 @@
         <!-- Top Header -->
         <header class="topbar">
             <div class="topbar-greeting">
-                <h1>Welcome back, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
+                <%
+                    int currentHour = java.time.LocalTime.now().getHour();
+                    String martialGreeting = "Good morning";
+                    if (currentHour >= 12 && currentHour < 17) {
+                        martialGreeting = "Good afternoon";
+                    } else if (currentHour >= 17 || currentHour < 5) {
+                        martialGreeting = "Good evening";
+                    }
+                    request.setAttribute("martialGreeting", martialGreeting);
+                %>
+                <h1>${martialGreeting}, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
                 <p>Manage your martial arts programs, batch schedules, and student progress</p>
             </div>
             <div class="topbar-actions">
@@ -916,148 +1028,155 @@
         <!-- Content Area -->
         <div class="content-container">
 
-            <!-- Centre Profile Summary Card Matching Mobile -->
-            <div class="centre-card">
-                <div class="centre-card-left">
-                    <div class="centre-avatar">
-                        <c:choose>
-                            <c:when test="${not empty loggedCentre.profilePhoto}">
-                                <img src="${pageContext.request.contextPath}${loggedCentre.profilePhoto}" alt="Logo">
-                            </c:when>
-                            <c:otherwise>
-                                ${loggedCentre.name.substring(0,1).toUpperCase()}
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                    <div class="centre-info">
-                        <h2><c:out value="${loggedCentre.name}"/></h2>
-                        <div class="centre-meta">
-                            <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty loggedCentre.location ? loggedCentre.location : 'Location not set'}"/></span>
-                            <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${loggedCentre.phoneNumber}"/></span>
-                            <span><i class="bi bi-star-fill text-warning"></i> 4.8 Rating</span>
-                            <c:choose>
-                                <c:when test="${loggedCentre.approved}">
-                                    <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified Centre</span>
-                                </c:when>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
-                                    <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Admin Review</span>
-                                </c:when>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
-                                    <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="pill-badge pill-pending">Verification Required</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-edit-profile">
-                        <i class="bi bi-pencil-square"></i> Edit Profile
-                    </a>
-                </div>
-            </div>
-
-            <!-- Profile Completion Banner (When unapproved / incomplete) -->
-            <c:if test="${not loggedCentre.approved}">
-                <div class="completion-banner">
-                    <div class="completion-banner-left">
-                        <div class="completion-header">
-                            <span>Profile Completion Status</span>
-                            <span style="color: var(--primary);">${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%;"></div>
-                        </div>
-                        <p style="font-size: 0.8rem; color: var(--text-gray);">
-                            <c:choose>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
-                                    <strong style="color: var(--warning);">Admin Note:</strong> <c:out value="${loggedCentre.rejectionReason}"/>
-                                </c:when>
-                                <c:otherwise>
-                                    Complete required profile information to submit your centre for Admin approval and unlock batch creation.
-                                </c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-quick-add">
-                        <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile Now
-                    </a>
-                </div>
-            </c:if>
-
-            <!-- 8 Key Metrics Grid -->
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Enrolled Students</span>
-                        <div class="metric-icon-wrap" style="background:#FFE4E6;color:#F43F5E;"><i class="bi bi-people-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${enrolledUsersCount != null ? enrolledUsersCount : 0}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Active Batches</span>
-                        <div class="metric-icon-wrap" style="background:#F3E8FF;color:#9333EA;"><i class="bi bi-layers-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${batches != null ? batches.size() : 0}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Today's Classes</span>
-                        <div class="metric-icon-wrap" style="background:#FFEDD5;color:#EA580C;"><i class="bi bi-calendar-check-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${todayClassesCount != null ? todayClassesCount : 1}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Monthly Revenue</span>
-                        <div class="metric-icon-wrap" style="background:#DCFCE7;color:#16A34A;"><i class="bi bi-wallet2"></i></div>
-                    </div>
-                    <div class="metric-val">₹${totalRevenue != null ? totalRevenue : '0'}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Avg Attendance</span>
-                        <div class="metric-icon-wrap" style="background:#E0E7FF;color:#4F46E5;"><i class="bi bi-person-check-fill"></i></div>
-                    </div>
-                    <div class="metric-val">94%</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Live Sessions</span>
-                        <div class="metric-icon-wrap" style="background:#DBEAFE;color:#2563EB;"><i class="bi bi-camera-video-fill"></i></div>
-                    </div>
-                    <div class="metric-val">Online</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Centre Rating</span>
-                        <div class="metric-icon-wrap" style="background:#FEF3C7;color:#D97706;"><i class="bi bi-star-fill"></i></div>
-                    </div>
-                    <div class="metric-val">4.8 ★</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Status</span>
-                        <div class="metric-icon-wrap" style="background:#FFE4E6;color:#F43F5E;"><i class="bi bi-shield-check"></i></div>
-                    </div>
-                    <div class="metric-val" style="font-size: 1.1rem; text-transform: uppercase;">
-                        ${loggedCentre.centreProfileStatus != null ? loggedCentre.centreProfileStatus : 'Active'}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 1: Overview -->
+            <!-- Tab 1: Overview Workspace -->
             <div id="tab-overview" class="tab-section active">
+
+                <!-- Centre Profile Summary Card Matching Mobile -->
+                <div class="centre-card">
+                    <div class="centre-card-left">
+                        <div class="centre-avatar">
+                            <c:choose>
+                                <c:when test="${not empty loggedCentre.profilePhoto}">
+                                    <img src="${pageContext.request.contextPath}${loggedCentre.profilePhoto}" alt="Logo">
+                                </c:when>
+                                <c:otherwise>
+                                    ${loggedCentre.name.substring(0,1).toUpperCase()}
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div class="centre-info">
+                            <h2><c:out value="${loggedCentre.name}"/></h2>
+                            <div class="centre-meta">
+                                <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty loggedCentre.location ? loggedCentre.location : 'Location not set'}"/></span>
+                                <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${loggedCentre.phoneNumber}"/></span>
+                                <span><i class="bi bi-star-fill text-warning"></i> 4.8 Rating</span>
+                                <c:choose>
+                                    <c:when test="${loggedCentre.approved}">
+                                        <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified Centre</span>
+                                    </c:when>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                        <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Admin Review</span>
+                                    </c:when>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
+                                        <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="pill-badge pill-pending">Verification Required</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-edit-profile">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Profile Completion Banner (When unapproved / incomplete) -->
+                <c:if test="${not loggedCentre.approved || (loggedCentre.profileCompletionPct != null && loggedCentre.profileCompletionPct < 100)}">
+                    <div class="completion-banner">
+                        <div class="completion-banner-left">
+                            <div class="completion-header">
+                                <span>Centre Profile Completion</span>
+                                <span style="color: var(--primary); font-weight: 800;">${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%;"></div>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-gray); margin-bottom: 8px;">
+                                <c:choose>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
+                                        <strong style="color: var(--warning);">Admin Feedback:</strong> <c:out value="${not empty loggedCentre.changesRequestedNote ? loggedCentre.changesRequestedNote : loggedCentre.rejectionReason}"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        Complete these sections to improve discovery, student trust, and get verified:
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <c:if test="${empty loggedCentre.about}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Description</span></c:if>
+                                <c:if test="${empty loggedCentre.openTime or empty loggedCentre.closeTime}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Set Hours</span></c:if>
+                                <c:if test="${empty loggedCentre.profilePhoto}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Logo</span></c:if>
+                                <c:if test="${empty loggedCentre.galleryPhotos or loggedCentre.galleryPhotos.size() == 0}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Gallery</span></c:if>
+                                <c:if test="${empty loggedCentre.stylesTaught}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Select Styles</span></c:if>
+                                <c:if test="${empty loggedCentre.facilities}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Amenities</span></c:if>
+                            </div>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-quick-add" style="white-space: nowrap;">
+                            <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile &rarr;
+                        </a>
+                    </div>
+                </c:if>
+
+                <!-- Clean Quick Actions Toolbar matching Fitness -->
+                <div class="quick-actions-bar">
+                    <button type="button" class="btn-quick-pill primary" onclick="switchTab('batches'); openCreateBatchModal();">
+                        <i class="bi bi-plus-circle-fill"></i> Create Batch
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('attendance');">
+                        <i class="bi bi-qr-code-scan"></i> QR Attendance
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('students');">
+                        <i class="bi bi-people-fill"></i> Manage Students
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('grading');">
+                        <i class="bi bi-award-fill"></i> Belt Grading
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('instructors');">
+                        <i class="bi bi-person-plus-fill"></i> Add Instructor
+                    </button>
+                </div>
+
+                <!-- 4 Unified Stat Cards Grid Matching Fitness (No Rainbow Colors) -->
+                <div class="stat-cards-grid">
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Enrolled Students</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-people-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${enrolledUsersCount != null ? enrolledUsersCount : 0}</div>
+                            <div class="stat-card-footer"><i class="bi bi-check-circle-fill text-success me-1"></i> Active trainees</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Active Batches</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-layers-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${batches != null ? batches.size() : 0}</div>
+                            <div class="stat-card-footer"><i class="bi bi-activity text-danger me-1"></i> Ongoing programs</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Today's Classes</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-calendar-check-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${todayClassesCount != null ? todayClassesCount : (batches != null && batches.size() > 0 ? 1 : 0)}</div>
+                            <div class="stat-card-footer"><i class="bi bi-clock-history me-1"></i> Scheduled today</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Monthly Revenue</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-wallet2"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">₹${totalRevenue != null ? totalRevenue : '0'}</div>
+                            <div class="stat-card-footer"><i class="bi bi-arrow-up-right text-success me-1"></i> Current month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule Content Panel -->
                 <div class="content-panel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="bi bi-calendar-event text-danger"></i> Today's Schedule & Programs</div>
@@ -1825,7 +1944,16 @@
 
             const target = document.getElementById('tab-' + tabId);
             if (target) target.classList.add('active');
-            if (btn) btn.classList.add('active');
+
+            if (btn && btn.classList.contains('nav-item')) {
+                btn.classList.add('active');
+            } else {
+                const matchingNav = Array.from(document.querySelectorAll('.sidebar-nav .nav-item')).find(el => {
+                    const oc = el.getAttribute('onclick');
+                    return oc && oc.includes("'" + tabId + "'");
+                });
+                if (matchingNav) matchingNav.classList.add('active');
+            }
 
             if (tabId === 'grading') {
                 loadGradingAssessments();

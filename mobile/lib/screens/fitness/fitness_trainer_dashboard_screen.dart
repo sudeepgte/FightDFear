@@ -450,6 +450,8 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
                     _openProfileCompletion),
                 _CircleAction('Packages', Icons.tag, const Color(0xFFE11D48),
                     _openPackagesSheet),
+                _CircleAction('QR Check-in', Icons.qr_code_2, const Color(0xFFF43F5E),
+                    _openQrAttendanceSheet),
                 _CircleAction('Attendance', Icons.fact_check_outlined, const Color(0xFF16A34A),
                     _openAttendanceRosterSheet),
                 _CircleAction('Availability', Icons.calendar_month, const Color(0xFF2563EB),
@@ -1256,6 +1258,141 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
               child: const Text('Save'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _openQrAttendanceSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return FutureBuilder<Map<String, dynamic>>(
+              future: _svc.createQrSession(duration: 15),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 380,
+                    child: Center(child: CircularProgressIndicator(color: FitnessTrainerDashboardScreen.primary)),
+                  );
+                }
+                final data = snapshot.data;
+                final success = data != null && data['success'] == true;
+                final token = data?['token']?.toString() ?? '';
+                final sessionId = int.tryParse('${data?['sessionId']}');
+                final expiresAt = data?['expiresAt']?.toString() ?? '';
+
+                if (!success || token.isEmpty) {
+                  return SizedBox(
+                    height: 260,
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                          const SizedBox(height: 12),
+                          Text(data?['error']?.toString() ?? 'Unable to start QR attendance session', textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          FilledButton(onPressed: () => setModalState(() {}), child: const Text('Retry')),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Dynamic Workout QR', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                          IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Have your client scan this QR code to check in and deduct pass session.',
+                          textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.black54)),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          boxShadow: const [BoxShadow(color: Color(0x0F000000), blurRadius: 10)],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${Uri.encodeComponent(token)}',
+                            width: 200,
+                            height: 200,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 200,
+                              height: 200,
+                              color: const Color(0xFFF1F5F9),
+                              child: Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: SelectableText(token, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFFECDD3)),
+                        ),
+                        child: Text('Session Token: $token', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFFE11D48))),
+                      ),
+                      if (expiresAt.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text('Expires at: ${expiresAt.length > 16 ? expiresAt.substring(11, 16) : expiresAt}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: () => setModalState(() {}),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Refresh Token'),
+                          ),
+                          const SizedBox(width: 12),
+                          if (sessionId != null)
+                            FilledButton.tonal(
+                              onPressed: () async {
+                                await _svc.closeQrSession(sessionId);
+                                Navigator.pop(ctx);
+                                _snack('QR session closed');
+                              },
+                              style: FilledButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('End Session'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );

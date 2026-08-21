@@ -13,8 +13,10 @@
     <style>
         :root {
             --primary: #f43f5e;
-            --dark-navy: #1e1b4b;
-            --gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
+            --primary-hover: #e11d48;
+            --primary-light: #ffe4e6;
+            --dark-navy: #0f172a;
+            --gradient: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
             --shadow: 0 10px 30px rgba(244, 63, 94, 0.05);
         }
         body {
@@ -22,6 +24,7 @@
             background-color: #f8fafc;
             color: var(--dark-navy);
         }
+
         .card-custom {
             background: white;
             border-radius: 24px;

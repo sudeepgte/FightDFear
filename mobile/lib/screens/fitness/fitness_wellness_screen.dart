@@ -8,6 +8,7 @@ import '../../services/payment_service.dart';
 import '../../widgets/module_payment_checkout.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/ux_feedback.dart';
+import 'fitness_qr_scanner_screen.dart';
 import 'fitness_trainer_detail_screen.dart';
 
 /// Member Fitness & Wellness browse — mockup layout, same booking flow.
@@ -662,9 +663,57 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
       onRefresh: _loadBookings,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _bookings.length,
+        itemCount: _bookings.length + 1,
         itemBuilder: (_, i) {
-          final b = _bookings[i];
+          if (i == 0) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFECDD3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF43F5E),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text('Workout Session Check-In', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0F172A))),
+                        SizedBox(height: 2),
+                        Text('Scan coach QR token to start session', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFF43F5E),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: _openClientQrCheckInDialog,
+                    child: const Text('Check In', style: TextStyle(fontWeight: FontWeight.w700)),
+                  ),
+                ],
+              ),
+            );
+          }
+          final b = _bookings[i - 1];
           final nested = b['trainer'];
           final trainer = nested is Map ? Map<String, dynamic>.from(nested) : <String, dynamic>{};
           final needsPay = b['paymentRequired'] == true;
@@ -790,6 +839,155 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
           );
         },
       ),
+    );
+  }
+
+  void _openClientQrCheckInDialog() async {
+    final scanned = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const FitnessQrScannerScreen()),
+    );
+    if (scanned == true) {
+      _loadBookings();
+    }
+  }
+
+  void _openManualTokenEntryDialog() {
+    final tokenCtrl = TextEditingController();
+    bool submitting = false;
+    String? dialogError;
+    Map<String, dynamic>? successData;
+
+    showDialog(
+      context: context,
+      builder: (dCtx) {
+        return StatefulBuilder(
+          builder: (context, setDState) {
+            if (successData != null) {
+              final trainerName = successData?['trainerName']?.toString() ?? 'Coach';
+              final already = successData?['alreadyCheckedIn'] == true;
+              final completed = successData?['completedSessions'];
+              final remaining = successData?['remainingSessions'];
+
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Icon(already ? Icons.info_outline : Icons.check_circle, size: 56, color: already ? Colors.blue : const Color(0xFF10B981)),
+                    const SizedBox(height: 14),
+                    Text(already ? 'Already Checked In!' : 'Attendance Confirmed!',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 8),
+                    Text(successData?['message']?.toString() ?? 'Welcome to your workout with $trainerName.',
+                        textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.black84)),
+                    if (completed != null && remaining != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('Sessions: $completed attended · $remaining remaining',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF0F172A))),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF10B981), shape: const StadiumBorder()),
+                      onPressed: () {
+                        Navigator.pop(dCtx);
+                        _loadBookings();
+                      },
+                      child: const Text('Done'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: const [
+                  Icon(Icons.qr_code_scanner, color: Color(0xFFF43F5E)),
+                  SizedBox(width: 8),
+                  Text('Workout Check-In', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Enter the session token displayed on your trainer\'s screen:',
+                      style: TextStyle(fontSize: 13, color: Colors.black84)),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: tokenCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. FIT-XXXX-XXXX',
+                      prefixIcon: const Icon(Icons.vpn_key_outlined),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  if (dialogError != null) ...[
+                    const SizedBox(height: 10),
+                    Text(dialogError!, style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(dCtx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E), shape: const StadiumBorder()),
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          final token = tokenCtrl.text.trim();
+                          if (token.isEmpty) {
+                            setDState(() => dialogError = 'Please enter a valid QR token');
+                            return;
+                          }
+                          setDState(() {
+                            submitting = true;
+                            dialogError = null;
+                          });
+
+                          try {
+                            final res = await _fitness.checkInWithQr(token: token);
+                            if (res['success'] == true) {
+                              setDState(() {
+                                submitting = false;
+                                successData = res;
+                              });
+                            } else {
+                              setDState(() {
+                                submitting = false;
+                                dialogError = res['error']?.toString() ?? 'Check-in failed. Please verify with trainer.';
+                              });
+                            }
+                          } catch (e) {
+                            setDState(() {
+                              submitting = false;
+                              dialogError = '$e';
+                            });
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Check In'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
