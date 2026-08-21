@@ -160,9 +160,11 @@ public class SecurityConfig {
             "/women-events/*",
             "/women-events/host/**",
             "/fitness",
+            "/fitness/**",
             "/fitness/trainer/login",
             "/fitness/trainer/register",
             "/fitness/trainer/register/**",
+
             "/trainer/**",
             "/trainer/login",
             "/trainer/register",

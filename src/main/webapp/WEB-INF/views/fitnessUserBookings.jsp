@@ -80,6 +80,52 @@
                     <div class="alert alert-danger" style="border-radius: 15px;">${error}</div>
                 </c:if>
 
+                <!-- Progress & Stats Banner -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Workouts Attended</span>
+                                    <h3 class="fw-bold text-dark mb-0 mt-1">${progressSummary.totalWorkoutsAttended != null ? progressSummary.totalWorkoutsAttended : 0}</h3>
+                                </div>
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle p-3 fs-4">
+                                    <i class="bi bi-fire"></i>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i> Current Streak: <strong>${progressSummary.currentStreakDays != null ? progressSummary.currentStreakDays : 0} Days</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Latest Weight</span>
+                                    <h3 class="fw-bold text-dark mb-0 mt-1">${progressSummary.latestWeight != null ? progressSummary.latestWeight : '—'} <small class="fs-6 text-muted">kg</small></h3>
+                                </div>
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 fs-4">
+                                    <i class="bi bi-speedometer2"></i>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-2"><i class="bi bi-calendar-event me-1"></i> Evaluated: ${progressSummary.lastLogDate != null ? progressSummary.lastLogDate : 'Not recorded yet'}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small fw-bold text-uppercase">Active Fitness Passes</span>
+                                    <h3 class="fw-bold text-dark mb-0 mt-1">${bookings.stream().filter(b -> b.status eq 'APPROVED' and b.fitnessPackage != null).count()}</h3>
+                                </div>
+                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle p-3 fs-4">
+                                    <i class="bi bi-tag-fill"></i>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-2"><i class="bi bi-shield-check text-success me-1"></i> Verified Coach Access</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-custom">
                     <ul class="nav nav-tabs mb-4" id="bookingTabs" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -88,8 +134,13 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendanceContent" type="button" role="tab" style="color:var(--primary); font-weight:600;">
+                                Attendance History (${attendanceList.size()})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#pastContent" type="button" role="tab" style="color:var(--primary); font-weight:600;">
-                                Historical Classes
+                                Completed Classes
                             </button>
                         </li>
                     </ul>
@@ -107,9 +158,17 @@
                                             <img src="${not empty b.trainer.profilePhotoPath ? b.trainer.profilePhotoPath : 'https://images.unsplash.com/photo-1544005313-94ddf0286df2'}" class="avatar-small">
                                             <div>
                                                 <h6 class="fw-bold mb-1">${b.trainer.fullName}</h6>
-                                                <span class="badge bg-light text-dark me-2">${b.category}</span>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <span class="badge bg-light text-dark">${b.category}</span>
+                                                    <c:if test="${not empty b.fitnessPackage}">
+                                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">${b.fitnessPackage.packageName}</span>
+                                                    </c:if>
+                                                </div>
                                                 <span class="text-muted text-xs"><i class="bi bi-clock me-1"></i> ${b.bookingDate} @ ${b.bookingTime}</span>
                                                 <span class="text-muted text-xs ms-2"><i class="bi bi-laptop me-1"></i> Format: <strong>${b.sessionType}</strong></span>
+                                                <c:if test="${b.totalSessions > 1}">
+                                                    <div class="text-muted text-xs mt-1">Sessions Used: <strong>${b.completedSessions} / ${b.totalSessions}</strong> &bull; Valid Until: ${b.validUntil}</div>
+                                                </c:if>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center gap-3">
@@ -118,7 +177,7 @@
                                                     <span class="badge bg-warning text-dark px-3 py-2" style="border-radius:20px;">Requested</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span class="badge bg-success px-3 py-2" style="border-radius:20px;">Confirmed</span>
+                                                    <span class="badge bg-success px-3 py-2" style="border-radius:20px;">Active Pass</span>
                                                 </c:otherwise>
                                             </c:choose>
                                             <form action="${pageContext.request.contextPath}/fitness/booking/cancel" method="POST" onsubmit="return confirm('Cancel this session? Fully refunded if paid.');">
@@ -130,9 +189,49 @@
                                 </c:if>
                             </c:forEach>
                             <c:if test="${not hasUpcoming}">
-                                <p class="text-muted text-center py-4 small">No upcoming slots booked. Choose from categories above.</p>
+                                <p class="text-muted text-center py-4 small">No upcoming slots booked. Choose from coaches or packages in the catalog.</p>
                             </c:if>
                         </div>
+
+                        <!-- ATTENDANCE HISTORY -->
+                        <div class="tab-pane fade" id="attendanceContent" role="tabpanel">
+                            <c:choose>
+                                <c:when test="${empty attendanceList}">
+                                    <p class="text-muted text-center py-4 small">No session check-ins recorded yet. When your coach checks you in, attendance will appear here.</p>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="text-muted" style="font-size: 0.85rem; border-bottom: 1px solid #eee;">
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Coach</th>
+                                                    <th>Session Time</th>
+                                                    <th>Status</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach var="att" items="${attendanceList}">
+                                                    <tr>
+                                                        <td class="fw-medium text-dark">${att.sessionDate}</td>
+                                                        <td class="fw-bold text-dark">${att.trainer.fullName}</td>
+                                                        <td class="text-muted">${att.sessionTime}</td>
+                                                        <td>
+                                                            <span class="badge ${att.status == 'PRESENT' ? 'bg-success' : 'bg-warning text-dark'} bg-opacity-10 text-${att.status == 'PRESENT' ? 'success' : 'warning'} border px-2 py-1">
+                                                                ${att.status}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-muted small">${att.notes != null ? att.notes : '—'}</td>
+                                                    </tr>
+                                                </c:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+
 
                         <!-- HISTORICAL CLASSES -->
                         <div class="tab-pane fade" id="pastContent" role="tabpanel">

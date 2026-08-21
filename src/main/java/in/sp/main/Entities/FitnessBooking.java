@@ -23,6 +23,10 @@ public class FitnessBooking {
     @JoinColumn(name = "fitness_class_id", nullable = true)
     private FitnessClass fitnessClass;
 
+    @ManyToOne
+    @JoinColumn(name = "fitness_package_id", nullable = true)
+    private FitnessPackage fitnessPackage;
+
     private String category; // e.g. Yoga, Zumba
     private LocalDate bookingDate;
     private String bookingTime; // Time slot e.g., "10:00 - 11:00"
@@ -33,11 +37,14 @@ public class FitnessBooking {
     private String duration = "SINGLE"; // SINGLE, MONTHLY, QUARTERLY, HALF_YEAR, YEAR
     private Integer totalSessions = 1;
     private Integer completedSessions = 0;
+    private Integer remainingSessions = 1;
     private LocalDate startDate;
     private LocalDate endDate;
+    private LocalDate validUntil;
     private Boolean payoutCredited = false;
     @Column(columnDefinition = "TEXT")
     private String coachNotes;
+
 
     // Getters and Setters
     public String getPaymentStatus() { return paymentStatus; }
@@ -92,4 +99,14 @@ public class FitnessBooking {
 
     public FitnessClass getFitnessClass() { return fitnessClass; }
     public void setFitnessClass(FitnessClass fitnessClass) { this.fitnessClass = fitnessClass; }
+
+    public FitnessPackage getFitnessPackage() { return fitnessPackage; }
+    public void setFitnessPackage(FitnessPackage fitnessPackage) { this.fitnessPackage = fitnessPackage; }
+
+    public Integer getRemainingSessions() { return remainingSessions; }
+    public void setRemainingSessions(Integer remainingSessions) { this.remainingSessions = remainingSessions; }
+
+    public LocalDate getValidUntil() { return validUntil; }
+    public void setValidUntil(LocalDate validUntil) { this.validUntil = validUntil; }
 }
+

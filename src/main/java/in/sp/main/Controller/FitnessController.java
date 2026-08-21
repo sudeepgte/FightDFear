@@ -46,6 +46,26 @@ public class FitnessController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+    @Autowired
+    private in.sp.main.Service.FitnessTrainerProfileService trainerProfileService;
+
+    @Autowired
+    private in.sp.main.Service.FitnessTrainerRegistrationService trainerRegistrationService;
+
+    @Autowired
+    private in.sp.main.Service.FitnessService fitnessService;
+
+    @Autowired
+    private in.sp.main.Repository.FitnessPackageRepository fitnessPackageRepository;
+
+    @Autowired
+    private in.sp.main.Repository.FitnessAttendanceRepository fitnessAttendanceRepository;
+
+    @Autowired
+    private in.sp.main.Repository.FitnessProgressLogRepository fitnessProgressLogRepository;
+
+
+
     private final String[] FITNESS_CATEGORIES = {
         "Gym Training", "Zumba", "Dance Fitness", "Yoga", "Aerobics", "Pilates", 
         "Strength Training", "Cardio Training", "CrossFit", "Functional Training", 
@@ -69,43 +89,50 @@ public class FitnessController {
     }
 
     // BROWSE TRAINERS & CATEGORIES
-    @GetMapping("")
+    @GetMapping({"", "/browse"})
     public String browseFitness(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String city,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(required = false) Double minRating,
             HttpSession session, Model model) {
-        
+
         User currentUser = getSessionUser(session);
         model.addAttribute("user", currentUser);
 
         // Fetch verified, active trainers
         List<FitnessTrainer> trainers = fitnessTrainerRepository.findByVerificationStatusAndSuspended(VerificationStatus.VERIFIED, false);
 
+        String searchTerm = (search != null && !search.isBlank()) ? search.trim() : (query != null && !query.isBlank() ? query.trim() : null);
+
         // Apply filters in memory
-        if (category != null && !category.trim().isEmpty()) {
+        if (category != null && !category.trim().isEmpty() && !"all".equalsIgnoreCase(category.trim())) {
             trainers = trainers.stream()
                     .filter(t -> t.getSpecializations() != null && t.getSpecializations().toLowerCase().contains(category.trim().toLowerCase()))
                     .collect(Collectors.toList());
         }
 
-        if (search != null && !search.trim().isEmpty()) {
+        if (searchTerm != null && !searchTerm.isEmpty()) {
+            String q = searchTerm.toLowerCase();
             trainers = trainers.stream()
-                    .filter(t -> t.getFullName().toLowerCase().contains(search.trim().toLowerCase()))
+                    .filter(t -> (t.getFullName() != null && t.getFullName().toLowerCase().contains(q))
+                            || (t.getSpecializations() != null && t.getSpecializations().toLowerCase().contains(q))
+                            || (t.getCity() != null && t.getCity().toLowerCase().contains(q)))
                     .collect(Collectors.toList());
         }
 
-        if (location != null && !location.trim().isEmpty()) {
-            // ServiceProvider has locationText, but we can match text if trainer has it or phone or anything.
-            // Let's filter by phone or name, or if we define default locations for trainers.
-            // For now, search matches name and specializations as fallback.
+        if (city != null && !city.trim().isEmpty()) {
+            trainers = trainers.stream()
+                    .filter(t -> t.getCity() != null && t.getCity().equalsIgnoreCase(city.trim()))
+                    .collect(Collectors.toList());
         }
 
         if (maxPrice != null) {
             trainers = trainers.stream()
-                    .filter(t -> t.getSessionFees() <= maxPrice)
+                    .filter(t -> t.getSessionFees() != null && t.getSessionFees() <= maxPrice)
                     .collect(Collectors.toList());
         }
 
@@ -115,10 +142,20 @@ public class FitnessController {
                     .collect(Collectors.toList());
         }
 
+        List<FitnessClass> activeClasses = fitnessClassRepository.findAll().stream()
+                .filter(c -> "ACTIVE".equals(c.getStatus()) && c.getClassDate() != null && !c.getClassDate().isBefore(LocalDate.now()))
+                .collect(Collectors.toList());
+
+        List<FitnessPackage> activePackages = fitnessPackageRepository.findByActiveTrue();
+
         model.addAttribute("trainers", trainers);
-        model.addAttribute("categories", FITNESS_CATEGORIES);
+        model.addAttribute("classes", activeClasses);
+        model.addAttribute("packages", activePackages);
+        model.addAttribute("categories", in.sp.main.Util.FitnessCategories.ALL != null ? in.sp.main.Util.FitnessCategories.ALL : FITNESS_CATEGORIES);
         model.addAttribute("selectedCategory", category);
-        model.addAttribute("search", search);
+        model.addAttribute("selectedCity", city);
+        model.addAttribute("search", searchTerm);
+        model.addAttribute("query", searchTerm);
         model.addAttribute("maxPrice", maxPrice);
         model.addAttribute("minRating", minRating);
 
@@ -127,32 +164,46 @@ public class FitnessController {
 
     // VIEW TRAINER DETAILS
     @GetMapping("/trainer/{id}")
-    public String viewTrainerProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
-        User currentUser = getSessionUser(session);
-        if (currentUser == null) return "redirect:/login";
+    public String viewTrainerProfile(
+            @PathVariable Long id,
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
         if (trainer == null || trainer.isSuspended()) {
-            redirectAttributes.addFlashAttribute("error", "Trainer not found or suspended.");
+            if (redirectAttributes != null) {
+                redirectAttributes.addFlashAttribute("error", "Trainer not found or suspended.");
+            }
             return "redirect:/fitness";
         }
+
+        User currentUser = getSessionUser(session);
+        if (currentUser != null) {
+            model.addAttribute("user", currentUser);
+        }
+
+        // Fetch active membership packages for this trainer
+        List<FitnessPackage> packages = fitnessPackageRepository.findByTrainer_IdAndActiveTrue(id);
+
+        // Fetch upcoming active group classes for this trainer
+        List<FitnessClass> trainerClasses = fitnessClassRepository.findByTrainer_IdOrderByClassDateAsc(id).stream()
+                .filter(fc -> "ACTIVE".equals(fc.getStatus()) && fc.getClassDate() != null && !fc.getClassDate().isBefore(LocalDate.now()) && fc.getCurrentEnrollment() < fc.getMaxCapacity())
+                .collect(Collectors.toList());
 
         // Fetch reviews
         List<FitnessReview> reviews = fitnessReviewRepository.findByBooking_Trainer_Id(id);
 
-        model.addAttribute("user", currentUser);
         model.addAttribute("trainer", trainer);
+        model.addAttribute("packages", packages);
+        model.addAttribute("classes", trainerClasses);
+        model.addAttribute("trainerClasses", trainerClasses);
         model.addAttribute("reviews", reviews);
         model.addAttribute("categories", trainer.getSpecializations() != null ? trainer.getSpecializations().split(",") : new String[0]);
 
-        // Fetch upcoming active fitness classes for this trainer
-        List<FitnessClass> trainerClasses = fitnessClassRepository.findByTrainer_IdOrderByClassDateAsc(id).stream()
-                .filter(fc -> "ACTIVE".equals(fc.getStatus()) && !fc.getClassDate().isBefore(LocalDate.now()) && fc.getCurrentEnrollment() < fc.getMaxCapacity())
-                .collect(Collectors.toList());
-        model.addAttribute("trainerClasses", trainerClasses);
-
         return "fitnessTrainerProfile";
     }
+
 
     // BOOK SESSION REQUEST
     @PostMapping("/book")
@@ -425,6 +476,7 @@ public class FitnessController {
                     return "redirect:/fitness/trainer/login";
                 }
 
+                trainerProfileService.refreshCompletion(trainer);
                 session.setAttribute("loggedTrainer", trainer);
 
                 // Generate JWT and add to response
@@ -434,6 +486,14 @@ public class FitnessController {
                 cookie.setHttpOnly(true);
                 cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
                 response.addCookie(cookie);
+
+                boolean needsCompletion = in.sp.main.Service.PartnerLifecycleSupport.needsProfileCompletion(trainer.getPartnerProfileStatus())
+                        || !trainerProfileService.isReadyForVerification(trainer);
+
+                if (needsCompletion) {
+                    redirectAttributes.addFlashAttribute("info", "Please complete your coach profile to submit for verification.");
+                    return "redirect:/fitness/trainer/profile-completion";
+                }
 
                 return "redirect:/fitness/trainer/dashboard";
             }
@@ -450,8 +510,134 @@ public class FitnessController {
         if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
+        trainerProfileService.refreshCompletion(trainer);
         model.addAttribute("trainer", trainer);
+        model.addAttribute("missingItems", trainerProfileService.missingItems(trainer));
         return "fitnessTrainerProfileCompletion";
+    }
+
+    // TRAINER PROFILE UPDATE POST (Profile Completion Form)
+    @PostMapping("/trainer/updateProfile")
+    @Transactional
+
+    public String updateTrainerProfile(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String fullName,
+            @RequestParam(required = false) String designation,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String whatsappNumber,
+            @RequestParam(required = false) Integer experience,
+            @RequestParam(required = false) String credentialNumber,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String mapLink,
+            @RequestParam(required = false) List<String> specializations,
+            @RequestParam(required = false) List<String> audience,
+            @RequestParam(required = false, defaultValue = "false") Boolean doorstepService,
+            @RequestParam(required = false) List<String> facilities,
+            @RequestParam(required = false) List<String> availableDays,
+            @RequestParam(required = false) String openTime,
+            @RequestParam(required = false) String closeTime,
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) String sessionMode,
+            @RequestParam(required = false) Integer sessionDuration,
+            @RequestParam(required = false) Double sessionFees,
+            @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) String bankDetails,
+            @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
+            @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
+            @RequestParam(value = "galleryFiles", required = false) List<MultipartFile> galleryFiles,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer sessionTrainer = getSessionTrainer(session);
+        if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
+
+        Map<String, Object> fields = new HashMap<>();
+        if (fullName != null) fields.put("fullName", fullName);
+        if (designation != null) fields.put("designation", designation);
+        if (phone != null) fields.put("phone", phone);
+        if (whatsappNumber != null) fields.put("whatsappNumber", whatsappNumber);
+        if (experience != null) fields.put("experience", experience);
+        if (credentialNumber != null) fields.put("credentialNumber", credentialNumber);
+        if (address != null) fields.put("address", address);
+        if (city != null) fields.put("city", city);
+        if (state != null) fields.put("state", state);
+        if (pincode != null) fields.put("pincode", pincode);
+        if (mapLink != null) fields.put("mapLink", mapLink);
+        if (specializations != null) fields.put("specializations", specializations);
+        if (audience != null) fields.put("audience", audience);
+        fields.put("doorService", doorstepService);
+        if (facilities != null) fields.put("facilities", facilities);
+        if (availableDays != null) fields.put("openDays", availableDays);
+        if (openTime != null) fields.put("openTime", openTime);
+        if (closeTime != null) fields.put("closeTime", closeTime);
+        if (bio != null) fields.put("bio", bio);
+        if (sessionMode != null) fields.put("sessionMode", sessionMode);
+        if (sessionDuration != null) fields.put("durationMinutes", sessionDuration);
+        if (sessionFees != null) fields.put("typicalPrice", sessionFees);
+        if (upiId != null) fields.put("upiId", upiId);
+        if (bankDetails != null) fields.put("bankDetails", bankDetails);
+
+        trainerProfileService.applyExtraFields(trainer, fields);
+
+        try {
+            if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
+                trainer.setProfilePhotoPath(fileUploadService.saveFile(profilePhotoFile));
+            }
+            if (certificateFile != null && !certificateFile.isEmpty()) {
+                trainer.setCertificationsPath(fileUploadService.saveFile(certificateFile));
+            }
+            if (galleryFiles != null && !galleryFiles.isEmpty()) {
+                List<String> paths = new ArrayList<>();
+                for (MultipartFile gf : galleryFiles) {
+                    if (gf != null && !gf.isEmpty()) {
+                        paths.add(fileUploadService.saveFile(gf));
+                    }
+                }
+                if (!paths.isEmpty()) {
+                    trainer.setGalleryPhotos(String.join(",", paths));
+                }
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "File upload failed: " + e.getMessage());
+        }
+
+        trainerProfileService.refreshCompletion(trainer);
+        trainer = fitnessTrainerRepository.save(trainer);
+        session.setAttribute("loggedTrainer", trainer);
+
+        boolean ready = trainerProfileService.isReadyForVerification(trainer);
+        if (ready) {
+            redirectAttributes.addFlashAttribute("success", "Profile saved successfully! You can now submit your profile for admin verification.");
+            return "redirect:/fitness/trainer/dashboard";
+        } else {
+            List<String> missing = trainerProfileService.missingItems(trainer);
+            redirectAttributes.addFlashAttribute("info", "Profile saved. Remaining fields to complete: " + String.join(", ", missing));
+            return "redirect:/fitness/trainer/profile-completion";
+        }
+    }
+
+    // TRAINER SUBMIT VERIFICATION POST
+    @PostMapping(value = {"/trainer/submitVerification", "/trainer/submit-verification"})
+    @Transactional
+    public String submitTrainerVerification(HttpSession session, RedirectAttributes redirectAttributes) {
+        FitnessTrainer sessionTrainer = getSessionTrainer(session);
+        if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
+        try {
+            trainer = trainerRegistrationService.submitForVerification(trainer);
+            session.setAttribute("loggedTrainer", trainer);
+            redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! Admin review is in progress.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/fitness/trainer/profile-completion";
+        }
+        return "redirect:/fitness/trainer/dashboard";
     }
 
     // TRAINER LOGOUT
@@ -474,6 +660,14 @@ public class FitnessController {
     public String showTrainerDashboard(HttpSession session, Model model) {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        trainerProfileService.refreshCompletion(trainer);
+        boolean needsCompletion = in.sp.main.Service.PartnerLifecycleSupport.needsProfileCompletion(trainer.getPartnerProfileStatus())
+                && !trainerProfileService.isReadyForVerification(trainer);
+        if (needsCompletion) {
+            return "redirect:/fitness/trainer/profile-completion";
+        }
+
 
         // Bookings
         List<FitnessBooking> bookings = fitnessBookingRepository.findByTrainer_Id(trainer.getId());
@@ -506,15 +700,20 @@ public class FitnessController {
         List<FitnessClass> trainerClasses = fitnessClassRepository.findByTrainer_IdOrderByClassDateAsc(trainer.getId());
         model.addAttribute("trainerClasses", trainerClasses);
 
-        // Fetch attendees for these classes
-        java.util.Map<Long, List<FitnessBooking>> classAttendeesMap = new java.util.HashMap<>();
-        for (FitnessClass fc : trainerClasses) {
-            List<FitnessBooking> classBookings = fitnessBookingRepository.findByFitnessClass_Id(fc.getId());
-            classAttendeesMap.put(fc.getId(), classBookings);
-        }
-        model.addAttribute("classAttendees", classAttendeesMap);
+        // Packages
+        List<FitnessPackage> packages = fitnessPackageRepository.findByTrainer_Id(trainer.getId());
+        model.addAttribute("packages", packages);
+
+        // Attendance records for this trainer
+        List<FitnessAttendance> attendanceList = fitnessAttendanceRepository.findByTrainer_IdOrderBySessionDateDesc(trainer.getId());
+        model.addAttribute("attendanceList", attendanceList);
+
+        // Client Progress Logs
+        List<FitnessProgressLog> progressLogs = fitnessProgressLogRepository.findByTrainer_IdOrderByLogDateDesc(trainer.getId());
+        model.addAttribute("progressLogs", progressLogs);
 
         return "fitnessTrainerDashboard";
+
     }
 
     // TRAINER ACCEPT/REJECT/COMPLETE BOOKINGS
@@ -891,4 +1090,235 @@ public class FitnessController {
         redirectAttributes.addFlashAttribute("success", "Review submitted successfully! Thank you for your feedback.");
         return "redirect:/users/dashboard";
     }
+
+    // ==========================================
+    // TRAINER PACKAGE MANAGEMENT
+    // ==========================================
+
+    @PostMapping("/trainer/package/create")
+    @Transactional
+    public String createTrainerPackage(
+            @RequestParam(required = false) Long packageId,
+            @RequestParam String packageName,
+            @RequestParam String category,
+            @RequestParam(required = false) String description,
+            @RequestParam(defaultValue = "1") Integer sessionCount,
+            @RequestParam(defaultValue = "30") Integer durationDays,
+            @RequestParam(defaultValue = "0.0") Double price,
+            @RequestParam(defaultValue = "OFFLINE") String sessionType,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        try {
+            fitnessService.createOrUpdatePackage(trainer, packageId, packageName, category, description,
+                    sessionCount, durationDays, price, sessionType);
+            redirectAttributes.addFlashAttribute("success", "Fitness package saved successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    @PostMapping("/trainer/package/toggle/{id}")
+    @Transactional
+    public String toggleTrainerPackage(
+            @PathVariable Long id,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        try {
+            boolean active = fitnessService.togglePackageActive(trainer, id);
+            redirectAttributes.addFlashAttribute("success", "Package is now " + (active ? "Active" : "Inactive"));
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    @PostMapping("/trainer/package/delete/{id}")
+    @Transactional
+    public String deleteTrainerPackage(
+            @PathVariable Long id,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        try {
+            fitnessService.deletePackage(trainer, id);
+            redirectAttributes.addFlashAttribute("success", "Package deleted successfully.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    // ==========================================
+    // ATTENDANCE & ROSTER MANAGEMENT
+    // ==========================================
+
+    @PostMapping("/trainer/attendance/mark")
+    @Transactional
+    public String markSessionAttendance(
+            @RequestParam Long bookingId,
+            @RequestParam(required = false) String sessionDate,
+            @RequestParam(required = false) String sessionTime,
+            @RequestParam(defaultValue = "PRESENT") String status,
+            @RequestParam(required = false) String notes,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        try {
+            LocalDate date = (sessionDate != null && !sessionDate.isBlank())
+                    ? LocalDate.parse(sessionDate) : LocalDate.now();
+            fitnessService.markAttendance(trainer, bookingId, date, sessionTime, status, notes);
+            redirectAttributes.addFlashAttribute("success", "Attendance marked (" + status + ") successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    // ==========================================
+    // CLIENT PROGRESS TRACKING
+    // ==========================================
+
+    @PostMapping("/trainer/progress/log")
+    @Transactional
+    public String logClientProgress(
+            @RequestParam Long userId,
+            @RequestParam(required = false) Double weightKg,
+            @RequestParam(required = false) Double bodyFatPct,
+            @RequestParam(defaultValue = "1") Integer workoutsCompleted,
+            @RequestParam(required = false) String metricsJson,
+            @RequestParam(required = false) String workoutNotes,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        try {
+            fitnessService.logClientProgress(userId, trainer, LocalDate.now(), weightKg, bodyFatPct,
+                    workoutsCompleted, metricsJson, workoutNotes);
+            redirectAttributes.addFlashAttribute("success", "Client fitness progress logged successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    @GetMapping("/api/my-progress")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<Map<String, Object>> getMyProgressApi(HttpSession session) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) {
+            return org.springframework.http.ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+        Map<String, Object> summary = fitnessService.getUserFitnessProgressSummary(currentUser.getId());
+        return org.springframework.http.ResponseEntity.ok(summary);
+    }
+
+    // ==========================================
+    // RESCHEDULE BOOKING
+    // ==========================================
+
+    @PostMapping("/trainer/booking/reschedule")
+    @Transactional
+    public String rescheduleBooking(
+            @RequestParam Long bookingId,
+            @RequestParam String newDate,
+            @RequestParam String newTime,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        FitnessBooking booking = fitnessBookingRepository.findById(bookingId).orElse(null);
+        if (booking == null || !booking.getTrainer().getId().equals(trainer.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Booking record not found.");
+            return "redirect:/fitness/trainer/dashboard";
+        }
+
+        try {
+            booking.setBookingDate(LocalDate.parse(newDate));
+            booking.setBookingTime(newTime);
+            fitnessBookingRepository.save(booking);
+            redirectAttributes.addFlashAttribute("success", "Session rescheduled to " + newDate + " at " + newTime);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Invalid date or time: " + e.getMessage());
+        }
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    // ==========================================
+    // USER MEMBERSHIP & BOOKINGS
+    // ==========================================
+
+
+    @PostMapping("/booking/package/buy")
+    @Transactional
+    public String buyFitnessPackage(
+            @RequestParam Long packageId,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "redirect:/login";
+
+        FitnessPackage pkg = fitnessPackageRepository.findById(packageId).orElse(null);
+        if (pkg == null || !pkg.isActive()) {
+            redirectAttributes.addFlashAttribute("error", "Selected package is unavailable.");
+            return "redirect:/fitness";
+        }
+
+        Double walletBalance = currentUser.getWalletBalance() != null ? currentUser.getWalletBalance() : 0.0;
+        currentUser.setWalletBalance(walletBalance - pkg.getPrice());
+        userRepository.save(currentUser);
+        session.setAttribute("user", currentUser);
+
+        FitnessBooking booking = new FitnessBooking();
+        booking.setUser(currentUser);
+        booking.setTrainer(pkg.getTrainer());
+        booking.setFitnessPackage(pkg);
+        booking.setCategory(pkg.getCategory());
+        booking.setBookingDate(LocalDate.now());
+        booking.setBookingTime("Package Membership");
+        booking.setSessionType(pkg.getSessionType());
+        booking.setStatus("APPROVED");
+        booking.setPaymentAmount(pkg.getPrice());
+        booking.setPaymentStatus("PAID");
+        booking.setTotalSessions(pkg.getSessionCount());
+        booking.setRemainingSessions(pkg.getSessionCount());
+        booking.setCompletedSessions(0);
+        booking.setStartDate(LocalDate.now());
+        booking.setValidUntil(LocalDate.now().plusDays(pkg.getDurationDays()));
+        booking.setEndDate(LocalDate.now().plusDays(pkg.getDurationDays()));
+
+        fitnessBookingRepository.save(booking);
+
+        redirectAttributes.addFlashAttribute("success", "Successfully subscribed to " + pkg.getPackageName() + "!");
+        return "redirect:/fitness/my-bookings";
+    }
+
+    @GetMapping("/my-bookings")
+    public String showUserFitnessBookings(HttpSession session, Model model) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "redirect:/login";
+
+        List<FitnessBooking> bookings = fitnessBookingRepository.findByUser_Id(currentUser.getId());
+        List<FitnessAttendance> attendanceList = fitnessAttendanceRepository.findByUser_IdOrderBySessionDateDesc(currentUser.getId());
+        Map<String, Object> progressSummary = fitnessService.getUserFitnessProgressSummary(currentUser.getId());
+
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("attendanceList", attendanceList);
+        model.addAttribute("progressSummary", progressSummary);
+
+        return "fitnessUserBookings";
+    }
 }
+

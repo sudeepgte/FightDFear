@@ -432,12 +432,12 @@
                     <div class="form-group">
                         <label>1.2 Designation *</label>
                         <select name="designation" class="form-select">
-                            <option value="Certified Fitness Coach">Certified Fitness Coach</option>
-                            <option value="Personal Trainer">Personal Trainer</option>
-                            <option value="Yoga Instructor">Yoga Instructor</option>
-                            <option value="Zumba Coach">Zumba Coach</option>
-                            <option value="Strength & Conditioning Coach">Strength & Conditioning Coach</option>
-                            <option value="Nutrition & Wellness Consultant">Nutrition & Wellness Consultant</option>
+                            <option value="Certified Fitness Coach" ${trainer.designation == 'Certified Fitness Coach' ? 'selected' : ''}>Certified Fitness Coach</option>
+                            <option value="Personal Trainer" ${trainer.designation == 'Personal Trainer' ? 'selected' : ''}>Personal Trainer</option>
+                            <option value="Yoga Instructor" ${trainer.designation == 'Yoga Instructor' ? 'selected' : ''}>Yoga Instructor</option>
+                            <option value="Zumba Coach" ${trainer.designation == 'Zumba Coach' ? 'selected' : ''}>Zumba Coach</option>
+                            <option value="Strength & Conditioning Coach" ${trainer.designation == 'Strength & Conditioning Coach' ? 'selected' : ''}>Strength & Conditioning Coach</option>
+                            <option value="Nutrition & Wellness Consultant" ${trainer.designation == 'Nutrition & Wellness Consultant' ? 'selected' : ''}>Nutrition & Wellness Consultant</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -448,16 +448,16 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>1.6 WhatsApp</label>
-                        <input type="tel" name="whatsappNumber" class="form-input" placeholder="10-digit WhatsApp number" maxlength="10">
+                        <input type="tel" name="whatsappNumber" class="form-input" value="<c:out value='${trainer.whatsappNumber}'/>" placeholder="10-digit WhatsApp number" maxlength="10">
                     </div>
                     <div class="form-group">
                         <label>1.7 Years of experience *</label>
-                        <input type="number" name="experience" class="form-input" value="${trainer.experience}" min="0" max="50" required>
+                        <input type="number" name="experience" class="form-input" value="${trainer.experience != null ? trainer.experience : 1}" min="0" max="50" required>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>1.8 ACE / NASM / Yoga Alliance / Cert Number *</label>
-                    <input type="text" name="credentialNumber" class="form-input" placeholder="Credential Registration ID">
+                    <input type="text" name="credentialNumber" class="form-input" value="<c:out value='${trainer.credentialNumber}'/>" placeholder="Credential Registration ID" required>
                 </div>
             </div>
 
@@ -466,29 +466,29 @@
                 <div class="section-header">2. Location</div>
                 <div class="form-group">
                     <label>2.1 Studio / Home Address *</label>
-                    <input type="text" name="address" class="form-input" placeholder="Studio address or home base" required>
+                    <input type="text" name="address" class="form-input" value="<c:out value='${trainer.address}'/>" placeholder="Studio address or home base" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>2.3 City *</label>
-                        <input type="text" name="city" class="form-input" placeholder="City" required>
+                        <input type="text" name="city" class="form-input" value="<c:out value='${trainer.city}'/>" placeholder="City" required>
                     </div>
                     <div class="form-group">
                         <label>2.4 State *</label>
                         <select name="state" class="form-select" required>
-                            <option value="Karnataka" selected>Karnataka</option>
-                            <option value="Maharashtra">Maharashtra</option>
-                            <option value="Delhi">Delhi</option>
-                            <option value="Tamil Nadu">Tamil Nadu</option>
-                            <option value="Telangana">Telangana</option>
-                            <option value="Other">Other</option>
+                            <option value="Karnataka" ${trainer.state == 'Karnataka' ? 'selected' : ''}>Karnataka</option>
+                            <option value="Maharashtra" ${trainer.state == 'Maharashtra' ? 'selected' : ''}>Maharashtra</option>
+                            <option value="Delhi" ${trainer.state == 'Delhi' ? 'selected' : ''}>Delhi</option>
+                            <option value="Tamil Nadu" ${trainer.state == 'Tamil Nadu' ? 'selected' : ''}>Tamil Nadu</option>
+                            <option value="Telangana" ${trainer.state == 'Telangana' ? 'selected' : ''}>Telangana</option>
+                            <option value="Other" ${trainer.state == 'Other' ? 'selected' : ''}>Other</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>2.5 Pincode *</label>
-                        <input type="text" name="pincode" class="form-input" placeholder="6-digit Pincode" maxlength="6" required>
+                        <input type="text" name="pincode" class="form-input" value="<c:out value='${trainer.pincode}'/>" placeholder="6-digit Pincode" maxlength="6" required>
                     </div>
                     <div class="form-group">
                         <label>2.6 Google Maps link</label>
@@ -503,7 +503,7 @@
                 <div class="chips-container">
                     <c:forEach var="cat" items="${['Weight Loss', 'HIIT', 'Yoga', 'Strength Training', 'Zumba', 'Aerobics', 'Pilates', 'Self-Defense Fitness', 'Pre/Post Natal', 'Senior Fitness']}">
                         <label class="chip-checkbox">
-                            <input type="checkbox" name="specializations" value="${cat}">
+                            <input type="checkbox" name="specializations" value="${cat}" ${trainer.specializations != null && trainer.specializations.contains(cat) ? 'checked' : ''}>
                             <span class="chip-label">${cat}</span>
                         </label>
                     </c:forEach>
@@ -517,7 +517,7 @@
                 <div class="chips-container" style="margin-bottom: 14px;">
                     <c:forEach var="aud" items="${['Women Only', 'Beginners', 'All Fitness Levels', 'Post-Rehab']}">
                         <label class="chip-checkbox">
-                            <input type="checkbox" name="audience" value="${aud}">
+                            <input type="checkbox" name="audience" value="${aud}" ${trainer.audience != null && trainer.audience.contains(aud) ? 'checked' : ''}>
                             <span class="chip-label">${aud}</span>
                         </label>
                     </c:forEach>
@@ -525,7 +525,7 @@
                 <div class="toggle-row">
                     <span class="toggle-label">4.2 Home / Doorstep sessions</span>
                     <label class="toggle-switch">
-                        <input type="checkbox" name="doorstepService" value="true">
+                        <input type="checkbox" name="doorstepService" value="true" ${trainer.doorService == true ? 'checked' : ''}>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -537,7 +537,7 @@
                 <div class="chips-container">
                     <c:forEach var="fac" items="${['Private Studio', 'Changing Room', 'Shower', 'Locker', 'AC', 'Free Weights', 'Cardio Equipment', 'Mirrors', 'Parking']}">
                         <label class="chip-checkbox">
-                            <input type="checkbox" name="facilities" value="${fac}">
+                            <input type="checkbox" name="facilities" value="${fac}" ${trainer.facilities != null && trainer.facilities.contains(fac) ? 'checked' : ''}>
                             <span class="chip-label">${fac}</span>
                         </label>
                     </c:forEach>
@@ -551,7 +551,7 @@
                 <div class="chips-container" style="margin-bottom: 14px;">
                     <c:forEach var="day" items="${['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']}">
                         <label class="chip-checkbox">
-                            <input type="checkbox" name="availableDays" value="${day}">
+                            <input type="checkbox" name="availableDays" value="${day}" ${trainer.openDays != null && trainer.openDays.contains(day) ? 'checked' : ''}>
                             <span class="chip-label">${day.substring(0, 3)}</span>
                         </label>
                     </c:forEach>
@@ -559,11 +559,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>6.2 Open time *</label>
-                        <input type="time" name="openTime" class="form-input" value="06:00" required>
+                        <input type="time" name="openTime" class="form-input" value="${trainer.openTime != null ? trainer.openTime : '06:00'}" required>
                     </div>
                     <div class="form-group">
                         <label>6.3 Close time *</label>
-                        <input type="time" name="closeTime" class="form-input" value="20:00" required>
+                        <input type="time" name="closeTime" class="form-input" value="${trainer.closeTime != null ? trainer.closeTime : '20:00'}" required>
                     </div>
                 </div>
             </div>
@@ -573,7 +573,7 @@
                 <div class="section-header">7. About you</div>
                 <div class="form-group">
                     <label>7.1 Bio & coaching approach *</label>
-                    <textarea name="bio" class="form-textarea" rows="4" placeholder="Tell your clients about your training approach, philosophy, and success stories..."><c:out value="${trainer.bio}"/></textarea>
+                    <textarea name="bio" class="form-textarea" rows="4" placeholder="Tell your clients about your training approach, philosophy, and success stories..." required><c:out value="${trainer.bio}"/></textarea>
                 </div>
             </div>
 
@@ -584,25 +584,25 @@
                     <div class="form-group">
                         <label>8.1 Session mode *</label>
                         <select name="sessionMode" class="form-select">
-                            <option value="In-Person Studio">In-Person Studio</option>
-                            <option value="Home / Client Location">Home / Client Location</option>
-                            <option value="Online 1-on-1">Online 1-on-1</option>
-                            <option value="Hybrid">Hybrid</option>
+                            <option value="In-Person Studio" ${trainer.sessionMode == 'In-Person Studio' ? 'selected' : ''}>In-Person Studio</option>
+                            <option value="Home / Client Location" ${trainer.sessionMode == 'Home / Client Location' ? 'selected' : ''}>Home / Client Location</option>
+                            <option value="Online 1-on-1" ${trainer.sessionMode == 'Online 1-on-1' ? 'selected' : ''}>Online 1-on-1</option>
+                            <option value="Hybrid" ${trainer.sessionMode == 'Hybrid' ? 'selected' : ''}>Hybrid</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>8.2 Duration *</label>
                         <select name="sessionDuration" class="form-select">
-                            <option value="30">30 minutes</option>
-                            <option value="45">45 minutes</option>
-                            <option value="60" selected>60 minutes</option>
-                            <option value="90">90 minutes</option>
+                            <option value="30" ${trainer.durationMinutes == 30 ? 'selected' : ''}>30 minutes</option>
+                            <option value="45" ${trainer.durationMinutes == 45 ? 'selected' : ''}>45 minutes</option>
+                            <option value="60" ${trainer.durationMinutes == 60 || trainer.durationMinutes == null ? 'selected' : ''}>60 minutes</option>
+                            <option value="90" ${trainer.durationMinutes == 90 ? 'selected' : ''}>90 minutes</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>8.4 Typical session fee (₹, 0 = free) *</label>
-                    <input type="number" name="sessionFees" class="form-input" value="${trainer.sessionFees != null ? trainer.sessionFees : 300}" min="0" required>
+                    <input type="number" name="sessionFees" class="form-input" value="${trainer.typicalPrice != null ? trainer.typicalPrice : (trainer.sessionFees != null ? trainer.sessionFees : 300)}" min="0" required>
                 </div>
             </div>
 
@@ -611,13 +611,14 @@
                 <div class="section-header">9. Payout details</div>
                 <div class="form-group">
                     <label>9.1 UPI ID (for receiving session payouts)</label>
-                    <input type="text" name="upiId" class="form-input" placeholder="coach@upi">
+                    <input type="text" name="upiId" class="form-input" value="<c:out value='${trainer.upiId}'/>" placeholder="coach@upi">
                 </div>
                 <div class="form-group">
                     <label>9.2 Bank details</label>
-                    <textarea name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, IFSC"></textarea>
+                    <textarea name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, IFSC"><c:out value="${trainer.bankDetails}"/></textarea>
                 </div>
             </div>
+
 
             <!-- Section 10: Documents -->
             <div class="section-card">
