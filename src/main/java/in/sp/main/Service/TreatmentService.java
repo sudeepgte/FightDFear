@@ -15,6 +15,26 @@ public class TreatmentService {
     private TreatmentRepository treatmentRepository;
  
     public void saveTreatment(Treatment treatment) {
+        if (treatment == null) {
+            throw new IllegalArgumentException("Treatment is required.");
+        }
+        if (treatment.getCategory() == null || treatment.getCategory().isBlank()) {
+            throw new IllegalArgumentException("Category is required.");
+        }
+        if (treatment.getServiceName() == null || treatment.getServiceName().isBlank()) {
+            throw new IllegalArgumentException("Service Name is required.");
+        }
+        if (treatment.getPrice() < 0) {
+            throw new IllegalArgumentException("Base Price cannot be negative. Please enter zero or a positive amount.");
+        }
+        if (treatment.getDuration() <= 0) {
+            throw new IllegalArgumentException("Duration must be a positive value (at least 1 minute).");
+        }
+        String description = treatment.getDescription();
+        if (description == null || description.isBlank()) {
+            throw new IllegalArgumentException("Detailed Description is required.");
+        }
+        treatment.setDescription(description.trim());
         treatmentRepository.save(treatment);
     }
  

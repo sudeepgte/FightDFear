@@ -31,13 +31,19 @@ class AuthState extends ChangeNotifier {
     return 'Cannot reach server ($apiBaseUrl). Details: $e';
   }
 
-  Future<bool> pingServer() async {
+  Future<bool> pingServer([String? customUrl]) async {
     try {
-      final res = await _client.get('/api/auth/health', auth: false, timeout: const Duration(seconds: 8));
+      final client = customUrl == null ? _client : ApiClient(customUrl);
+      final res = await client.get('/api/auth/health', auth: false, timeout: const Duration(seconds: 8));
       return res['success'] == true;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<void> setServerUrl(String? url) async {
+    await _client.setCustomBaseUrl(url);
+    notifyListeners();
   }
 
   Future<void> bootstrap() async {
@@ -161,6 +167,18 @@ class AuthState extends ChangeNotifier {
       error = _networkErrorMessage(e);
       return null;
     }
+  }
+
+  /// Apply a user JWT session already saved on [api] (worker portal login).
+  void applyUserSession(Map<String, dynamic> res) {
+    loggedIn = true;
+    name = res['name']?.toString();
+    email = res['email']?.toString();
+    userId = res['userId'] is int
+        ? res['userId'] as int
+        : int.tryParse('${res['userId']}');
+    error = null;
+    notifyListeners();
   }
 
   Future<void> logout() async {

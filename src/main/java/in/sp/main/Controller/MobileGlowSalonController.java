@@ -1,6 +1,10 @@
 package in.sp.main.Controller;
 
 import in.sp.main.Entities.*;
+import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.GlowCareService;
+import in.sp.main.Service.PartnerLifecycleSupport;
+import in.sp.main.Service.SalonProfileService;
 import in.sp.main.Repository.Booking1Repository;
 import in.sp.main.Repository.SalonRepository;
 import in.sp.main.Repository.ServiceRepository;
@@ -11,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -29,6 +35,12 @@ public class MobileGlowSalonController {
     private ServiceRepository serviceRepo;
     @Autowired
     private StylistRepository stylistRepo;
+    @Autowired
+    private GlowCareService glowCareService;
+    @Autowired
+    private SalonProfileService salonProfileService;
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @GetMapping("/me")
     @Transactional(readOnly = true)
@@ -57,6 +69,19 @@ public class MobileGlowSalonController {
         meta.put("serviceCount", services.size());
         meta.put("stylistCount", stylists.size());
         meta.put("earnings", earnings);
+        meta.put("payoutBalance", fresh.getPayoutBalance());
+        meta.put("upiId", fresh.getUpiId());
+        meta.put("bankDetails", fresh.getBankDetails());
+        meta.put("payoutRequestedAt", fresh.getPayoutRequestedAt() == null
+                ? null : fresh.getPayoutRequestedAt().toString());
+        meta.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
+        meta.put("todaySlots", glowCareService.slotsFor(fresh, LocalDate.now(), 30));
+        meta.put("nextSlot", glowCareService.nextSlot(fresh));
+        meta.put("partnerProfileStatus", fresh.getPartnerProfileStatus() == null
+                ? null : fresh.getPartnerProfileStatus().name());
+        meta.put("partnerProfileStatusLabel", PartnerLifecycleSupport.statusLabel(fresh.getPartnerProfileStatus()));
+        meta.put("profileCompletionPct", fresh.getProfileCompletionPct() == null ? 0 : fresh.getProfileCompletionPct());
+        meta.put("canManageServices", true);
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("success", true);
@@ -87,6 +112,15 @@ public class MobileGlowSalonController {
         }
         String status = body == null ? "" : str(body.get("status")).toUpperCase(Locale.ROOT);
         if (status.isBlank()) return badRequest("status is required");
+        String current = booking.getStatus() == null ? "PENDING" : booking.getStatus().toUpperCase(Locale.ROOT);
+        boolean allowed = switch (current) {
+            case "PENDING" -> status.equals("CONFIRMED") || status.equals("CANCELLED") || status.equals("REJECTED");
+            case "CONFIRMED", "PAID" -> status.equals("COMPLETED") || status.equals("CANCELLED");
+            default -> false;
+        };
+        if (!allowed) {
+            return badRequest("Cannot change booking from " + current + " to " + status);
+        }
         booking.setStatus(status);
         bookingRepo.save(booking);
 
@@ -128,7 +162,14 @@ public class MobileGlowSalonController {
                 ServiceCategory cat = ServiceCategory.fromFlexible(body.get("category").toString());
                 if (cat != null) service.setCategory(cat.normalized());
             }
+            if (body.get("bufferMinutes") != null && !body.get("bufferMinutes").toString().isBlank()) {
+                service.setBufferMinutes(Integer.parseInt(body.get("bufferMinutes").toString()));
+            }
+            if (body.get("serviceMode") != null && !body.get("serviceMode").toString().isBlank()) {
+                service.setServiceMode(body.get("serviceMode").toString().trim().toUpperCase(Locale.ROOT));
+            }
             Service1 saved = serviceRepo.save(service);
+            salonProfileService.refreshCompletion(salonRepository.findById(salon.getId()).orElse(salon));
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Service saved");
@@ -171,6 +212,8 @@ public class MobileGlowSalonController {
         if (body.get("address") != null) fresh.setAddress(str(body.get("address")));
         if (body.get("bio") != null) fresh.setBio(str(body.get("bio")));
         if (body.get("availabilityHours") != null) fresh.setAvailabilityHours(str(body.get("availabilityHours")));
+        if (body.get("upiId") != null) fresh.setUpiId(str(body.get("upiId")));
+        if (body.get("bankDetails") != null) fresh.setBankDetails(str(body.get("bankDetails")));
         salonRepository.save(fresh);
         session.setAttribute("loggedSalon", fresh);
         Map<String, Object> res = new LinkedHashMap<>();
@@ -180,18 +223,102 @@ public class MobileGlowSalonController {
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping("/bookings/{id}/notes")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateBookingNotes(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        Salon salon = requireSalon(session);
+        if (salon == null) return unauthorized();
+        Booking1 booking = bookingRepo.findById(id).orElse(null);
+        if (booking == null || booking.getSalon() == null
+                || !booking.getSalon().getId().equals(salon.getId())) {
+            return badRequest("Booking not found");
+        }
+        booking.setCoachNotes(str(body == null ? null : body.get("coachNotes")));
+        bookingRepo.save(booking);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Notes saved", "booking", bookingDto(booking)));
+    }
+
+    @PostMapping("/payout/request")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> requestPayout(HttpSession session) {
+        Salon salon = requireSalon(session);
+        if (salon == null) return unauthorized();
+        try {
+            Salon fresh = salonRepository.findById(salon.getId()).orElse(salon);
+            return ResponseEntity.ok(glowCareService.requestPayout(fresh));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason()));
+        }
+    }
+
+    @PostMapping("/photos")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadPhotos(
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
+            HttpSession session) {
+        Salon salon = requireSalon(session);
+        if (salon == null) return unauthorized();
+        Salon fresh = salonRepository.findById(salon.getId()).orElse(salon);
+        try {
+            if (profileImage != null && !profileImage.isEmpty()) {
+                fresh.setProfileImageUrl(fileUploadService.saveFile(profileImage));
+            }
+            if (galleryPhotos != null) {
+                List<String> existing = new ArrayList<>();
+                if (fresh.getGalleryPhotos() != null && !fresh.getGalleryPhotos().isBlank()) {
+                    existing.addAll(Arrays.asList(fresh.getGalleryPhotos().split(",")));
+                }
+                for (MultipartFile photo : galleryPhotos) {
+                    if (photo != null && !photo.isEmpty()) {
+                        existing.add(fileUploadService.saveFile(photo));
+                    }
+                }
+                fresh.setGalleryPhotos(String.join(",", existing.stream().map(String::trim).filter(s -> !s.isEmpty()).toList()));
+            }
+            salonRepository.save(fresh);
+            session.setAttribute("loggedSalon", fresh);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Photos saved");
+            res.put("profileImageUrl", fresh.getProfileImageUrl());
+            res.put("galleryPhotos", fresh.getGalleryPhotos());
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest("Upload failed: " + ex.getMessage());
+        }
+    }
+
     private Map<String, Object> salonDto(Salon s) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", s.getId());
         m.put("name", s.getName());
         m.put("username", s.getUsername());
         m.put("phone", s.getPhone());
+        m.put("whatsappNumber", s.getWhatsappNumber());
         m.put("city", s.getCity());
+        m.put("state", s.getState());
+        m.put("pincode", s.getPincode());
         m.put("address", s.getAddress());
         m.put("bio", s.getBio());
         m.put("availabilityHours", s.getAvailabilityHours());
+        m.put("openDays", s.getOpenDays());
+        m.put("openTime", s.getOpenTime() == null ? null : s.getOpenTime().toString());
+        m.put("closeTime", s.getCloseTime() == null ? null : s.getCloseTime().toString());
+        m.put("upiId", s.getUpiId());
+        m.put("payoutBalance", s.getPayoutBalance());
         m.put("profileImageUrl", s.getProfileImageUrl());
         m.put("approved", s.isApproved());
+        m.put("partnerProfileStatus", s.getPartnerProfileStatus() == null
+                ? null : s.getPartnerProfileStatus().name());
+        m.put("partnerProfileStatusLabel", PartnerLifecycleSupport.statusLabel(s.getPartnerProfileStatus()));
+        m.put("profileCompletionPct", s.getProfileCompletionPct() == null ? 0 : s.getProfileCompletionPct());
+        m.put("canManageServices", s.isApproved()
+                || s.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED);
         return m;
     }
 
@@ -205,6 +332,12 @@ public class MobileGlowSalonController {
         m.put("address", b.getAddress());
         m.put("price", b.getPrice());
         m.put("notes", b.getNotes());
+        m.put("coachNotes", b.getCoachNotes());
+        m.put("cancelReason", b.getCancelReason());
+        m.put("createdAt", b.getCreatedAt() == null ? null : b.getCreatedAt().toString());
+        m.put("canCancelFree", glowCareService.canCancelFree(b));
+        m.put("joinWindowOpen", glowCareService.joinWindowOpen(b));
+        m.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
         m.put("customerName", b.getUser() == null ? null : b.getUser().getFullName());
         m.put("customerEmail", b.getUser() == null ? null : b.getUser().getEmail());
         if (b.getService() != null) {
@@ -231,6 +364,8 @@ public class MobileGlowSalonController {
         m.put("categoryLabel", cat == null ? null : cat.displayLabel());
         m.put("ingredients", s.getIngredients());
         m.put("allergenInfo", s.getAllergenInfo());
+        m.put("bufferMinutes", s.getBufferMinutes());
+        m.put("serviceMode", s.getServiceMode());
         return m;
     }
 
@@ -244,6 +379,12 @@ public class MobileGlowSalonController {
         m.put("approved", s.isApproved());
         m.put("available", s.getAvailable());
         return m;
+    }
+
+    private boolean isApproved(Salon salon) {
+        if (salon == null) return false;
+        if (salon.isApproved()) return true;
+        return salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
     }
 
     private Salon requireSalon(HttpSession session) {

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
  
 public interface SalonReviewRepository extends JpaRepository<SalonReview, Long> {
+    List<SalonReview> findBySalonIdOrderByCreatedAtDesc(Long salonId);
     List<SalonReview> findBySalonId(Long salonId);
     
 // ✅ Optional: Get reviews that already have replies
@@ -18,6 +19,8 @@ public interface SalonReviewRepository extends JpaRepository<SalonReview, Long> 
     
     List<SalonReview> findBySalon(Salon salon);
 
+    boolean existsByUserIdAndSalon_Id(Long userId, Long salonId);
+    
     List<SalonReview> findTop20ByOrderByCreatedAtDesc();
 }
  

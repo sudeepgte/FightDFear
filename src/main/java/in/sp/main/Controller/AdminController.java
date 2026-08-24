@@ -64,6 +64,42 @@ public class AdminController {
     private FitnessTrainerRepository fitnessTrainerRepository;
 
     @Autowired
+    private FitnessTrainerProfileService fitnessTrainerProfileService;
+
+    @Autowired
+    private DeliveryPartnerRepository deliveryPartnerRepository;
+
+    @Autowired
+    private DeliveryPartnerProfileService deliveryPartnerProfileService;
+
+    @Autowired
+    private CreatorProfileService creatorProfileService;
+
+    @Autowired
+    private CreatorNotificationRepository creatorNotificationRepository;
+
+    @Autowired
+    private FinancialEducatorRepository financialEducatorRepository;
+
+    @Autowired
+    private FinancialEducatorProfileService financialEducatorProfileService;
+
+    @Autowired
+    private EntrepreneurProfileService entrepreneurProfileService;
+
+    @Autowired
+    private CentreProfileService centreProfileService;
+
+    @Autowired
+    private MartialArtsCenterRepository centreRepository;
+
+    @Autowired
+    private InvestorProfileService investorProfileService;
+
+    @Autowired
+    private in.sp.main.Service.FundingCareService fundingCareService;
+
+    @Autowired
     private FitnessBookingRepository fitnessBookingRepository;
 
     @Autowired
@@ -71,6 +107,15 @@ public class AdminController {
 
     @Autowired
     private ServiceProviderRepository serviceProviderRepository;
+
+    @Autowired
+    private ServiceProviderProfileService serviceProviderProfileService;
+
+    @Autowired
+    private WomenProductSellerProfileService womenProductSellerProfileService;
+
+    @Autowired
+    private EventHostProfileService eventHostProfileService;
 
     @Autowired
     private SOSRequestRepository sosRequestRepository;
@@ -97,6 +142,9 @@ public class AdminController {
 
     @Autowired
     private SalonRepository salonRepository;
+
+    @Autowired
+    private SalonProfileService salonProfileService;
 
     @Autowired
     private StylistRepository stylistRepository;
@@ -372,9 +420,16 @@ public class AdminController {
         // Reported Content list
         List<VideoReport> reports = videoReportRepository.findAll();
 
-        // Creator Verification Requests
-        List<User> creatorsVerificationList = userRepository.findAll().stream()
-                .filter(u -> !u.isVerifiedCreator() && u.getRewardPoints() != null && u.getRewardPoints() > 100)
+        // Creator Verification Requests (Join Us applications pending admin review)
+        List<User> creatorsVerificationList = userRepository
+                .findByCreatorProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
+        creatorsVerificationList.sort(Comparator
+                .comparingInt((User u) -> PartnerLifecycleSupport.pendingPriority(u.getCreatorProfileStatus()))
+                .thenComparing(User::getId, Comparator.nullsLast(Long::compareTo)));
+        List<User> eligibleCreatorsByPoints = userRepository.findAll().stream()
+                .filter(u -> !u.isVerifiedCreator()
+                        && u.getCreatorProfileStatus() == null
+                        && u.getRewardPoints() != null && u.getRewardPoints() > 100)
                 .collect(java.util.stream.Collectors.toList());
 
         // Approved creators (to allow un-badge)
@@ -391,6 +446,7 @@ public class AdminController {
         model.addAttribute("moderationQueue", moderationQueue);
         model.addAttribute("reports", reports);
         model.addAttribute("creatorsVerificationList", creatorsVerificationList);
+        model.addAttribute("eligibleCreatorsByPoints", eligibleCreatorsByPoints);
         model.addAttribute("verifiedCreators", verifiedCreators);
         model.addAttribute("cashoutRequests", cashoutRequests);
         model.addAttribute("campaigns", campaigns);
@@ -457,6 +513,27 @@ public class AdminController {
         long bannedUsers = userRepository.findByBanned(true).size();
         long pendingUsers = userRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
         long pendingTrainers = fitnessTrainerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+        long pendingJobApplications = jobApplicationRepository.countByStatus(VerificationStatus.PENDING);
+        long verifiedJobWorkers = jobApplicationRepository.countByStatus(VerificationStatus.VERIFIED);
+        long pendingDeliveryPartners = 0;
+        try {
+            pendingDeliveryPartners = deliveryPartnerRepository
+                    .findByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses()).size();
+        } catch (Exception ignored) {
+            pendingDeliveryPartners = deliveryPartnerRepository.findByVerificationStatus(VerificationStatus.PENDING).size();
+        }
+        long pendingCreators = 0;
+        try {
+            pendingCreators = userRepository.countByCreatorProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
+        } catch (Exception ignored) {
+            pendingCreators = 0;
+        }
+        long pendingEducators = 0;
+        try {
+            pendingEducators = financialEducatorRepository.countByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
+        } catch (Exception ignored) {
+            pendingEducators = 0;
+        }
 
         // Simple signature: reload/update when any count changes
         String signature = pendingCentres + "|" + totalLiveSos + "|" + totalUsers + "|" + verifiedSalons + "|" + pendingTrainers;
@@ -520,6 +597,13 @@ public class AdminController {
         res.put("bannedUsers", bannedUsers);
         res.put("pendingUsers", pendingUsers);
         res.put("pendingTrainers", pendingTrainers);
+        res.put("pendingJobApplications", pendingJobApplications);
+        res.put("verifiedJobWorkers", verifiedJobWorkers);
+        res.put("pendingDeliveryPartners", pendingDeliveryPartners);
+        res.put("pendingCreators", pendingCreators);
+        res.put("pendingEducators", pendingEducators);
+        res.put("pendingDoctors", pendingDoctors);
+        res.put("pendingWomenProducts", pendingWomenProducts);
         
         res.put("totalVideos", totalVideos);
         
@@ -1323,21 +1407,34 @@ public class AdminController {
             return "redirect:/admin/loginAdmin";
         }
 
-        // Fix legacy rows with null status so they appear under Pending.
-        for (ServiceProvider p : serviceProviderRepository.findAll()) {
+        Map<Long, ServiceProvider> pendingById = new LinkedHashMap<>();
+        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIn(
+                PartnerLifecycleSupport.pendingQueueStatuses())) {
+            if (category == null || p.getCategory() == category) {
+                pendingById.put(p.getId(), p);
+            }
+        }
+        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIsNull()) {
             if (p.getVerificationStatus() == null) {
                 p.setVerificationStatus(VerificationStatus.PENDING);
                 serviceProviderRepository.save(p);
             }
+            if (category == null || p.getCategory() == category) {
+                pendingById.putIfAbsent(p.getId(), p);
+            }
         }
+        List<ServiceProvider> pending = new ArrayList<>(pendingById.values());
+        pending.sort(Comparator
+                .comparingInt((ServiceProvider p) -> PartnerLifecycleSupport.pendingPriority(p.getPartnerProfileStatus()))
+                .thenComparing(ServiceProvider::getId, Comparator.nullsLast(Long::compareTo)));
 
         if (category != null) {
-            model.addAttribute("pending", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.PENDING));
+            model.addAttribute("pending", pending);
             model.addAttribute("verified", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.VERIFIED));
             model.addAttribute("rejected", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.REJECTED));
             model.addAttribute("selectedCategory", category);
         } else {
-            model.addAttribute("pending", serviceProviderRepository.findByVerificationStatus(VerificationStatus.PENDING));
+            model.addAttribute("pending", pending);
             model.addAttribute("verified", serviceProviderRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
             model.addAttribute("rejected", serviceProviderRepository.findByVerificationStatus(VerificationStatus.REJECTED));
         }
@@ -1345,6 +1442,7 @@ public class AdminController {
     }
 
     @PostMapping("/providers/{id}/verify")
+    @Transactional
     public String verifyProvider(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
@@ -1354,14 +1452,19 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Provider not found.");
             return "redirect:/admin/pending-providers";
         }
-        p.setVerificationStatus(VerificationStatus.VERIFIED);
+        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.APPROVED);
+        p.setRejectionReason(null);
+        p.setChangesRequestedNote(null);
         serviceProviderRepository.save(p);
         redirectAttributes.addFlashAttribute("message", "Provider verified.");
-        return "redirect:/admin/pending-providers";
+        return pendingProvidersRedirect(p);
     }
 
     @PostMapping("/providers/{id}/reject")
-    public String rejectProvider(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    @Transactional
+    public String rejectProvider(@PathVariable Long id,
+                                 @RequestParam(value = "reason", required = false) String reason,
+                                 HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1370,9 +1473,38 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("message", "Provider not found.");
             return "redirect:/admin/pending-providers";
         }
-        p.setVerificationStatus(VerificationStatus.REJECTED);
+        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.REJECTED);
+        p.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
         serviceProviderRepository.save(p);
         redirectAttributes.addFlashAttribute("message", "Provider rejected.");
+        return pendingProvidersRedirect(p);
+    }
+
+    @PostMapping("/providers/{id}/request-changes")
+    @Transactional
+    public String requestProviderChanges(@PathVariable Long id,
+                                         @RequestParam(value = "note", required = false) String note,
+                                         HttpSession session, RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        ServiceProvider p = serviceProviderRepository.findById(id).orElse(null);
+        if (p == null) {
+            redirectAttributes.addFlashAttribute("message", "Provider not found.");
+            return "redirect:/admin/pending-providers";
+        }
+        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.CHANGES_REQUESTED);
+        p.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        p.setRejectionReason(null);
+        serviceProviderRepository.save(p);
+        redirectAttributes.addFlashAttribute("message", "Changes requested from provider.");
+        return pendingProvidersRedirect(p);
+    }
+
+    private String pendingProvidersRedirect(ServiceProvider p) {
+        if (p != null && p.getCategory() != null) {
+            return "redirect:/admin/pending-providers?category=" + p.getCategory().name();
+        }
         return "redirect:/admin/pending-providers";
     }
 
@@ -1600,27 +1732,50 @@ public class AdminController {
     public String viewPendingSellers(Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-        // Purpose: fix legacy rows with null status so they appear in Pending.
-        for (WomenProductSeller s : womenSellerRepo.findAllByOrderByCreatedAtDesc()) {
+        Map<Long, WomenProductSeller> pendingById = new LinkedHashMap<>();
+        for (WomenProductSeller s : womenSellerRepo.findByPartnerProfileStatusIn(
+                PartnerLifecycleSupport.pendingQueueStatuses())) {
+            pendingById.put(s.getId(), s);
+        }
+        for (WomenProductSeller s : womenSellerRepo.findByPartnerProfileStatusIsNull()) {
             if (s.getVerificationStatus() == null) {
                 s.setVerificationStatus(VerificationStatus.PENDING);
                 womenSellerRepo.save(s);
             }
+            pendingById.putIfAbsent(s.getId(), s);
         }
-        for (ServiceProvider p : serviceProviderRepository.findAll()) {
-            if (p.getVerificationStatus() == null) {
-                p.setVerificationStatus(VerificationStatus.PENDING);
-                serviceProviderRepository.save(p);
-            }
-        }
+        List<WomenProductSeller> pending = new ArrayList<>(pendingById.values());
+        pending.sort(Comparator
+                .comparingInt((WomenProductSeller s) -> PartnerLifecycleSupport.pendingPriority(s.getPartnerProfileStatus()))
+                .thenComparing(WomenProductSeller::getId, Comparator.nullsLast(Long::compareTo)));
 
-        model.addAttribute("pending", womenSellerRepo.findByVerificationStatus(VerificationStatus.PENDING));
+        model.addAttribute("pending", pending);
         model.addAttribute("verified", womenSellerRepo.findByVerificationStatus(VerificationStatus.VERIFIED));
         model.addAttribute("rejected", womenSellerRepo.findByVerificationStatus(VerificationStatus.REJECTED));
 
         // Purpose: sellers who registered via marketplace with WOMEN_PRODUCTS category.
-        model.addAttribute("pendingMarketplace", serviceProviderRepository
-                .findByCategoryAndVerificationStatus(ProviderCategory.WOMEN_PRODUCTS, VerificationStatus.PENDING));
+        Map<Long, ServiceProvider> pendingMarketplaceById = new LinkedHashMap<>();
+        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIn(
+                PartnerLifecycleSupport.pendingQueueStatuses())) {
+            if (p.getCategory() == ProviderCategory.WOMEN_PRODUCTS) {
+                pendingMarketplaceById.put(p.getId(), p);
+            }
+        }
+        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIsNull()) {
+            if (p.getCategory() == ProviderCategory.WOMEN_PRODUCTS) {
+                if (p.getVerificationStatus() == null) {
+                    p.setVerificationStatus(VerificationStatus.PENDING);
+                    serviceProviderRepository.save(p);
+                }
+                pendingMarketplaceById.putIfAbsent(p.getId(), p);
+            }
+        }
+        List<ServiceProvider> pendingMarketplace = new ArrayList<>(pendingMarketplaceById.values());
+        pendingMarketplace.sort(Comparator
+                .comparingInt((ServiceProvider p) -> PartnerLifecycleSupport.pendingPriority(p.getPartnerProfileStatus()))
+                .thenComparing(ServiceProvider::getId, Comparator.nullsLast(Long::compareTo)));
+
+        model.addAttribute("pendingMarketplace", pendingMarketplace);
         model.addAttribute("verifiedMarketplace", serviceProviderRepository
                 .findByCategoryAndVerificationStatus(ProviderCategory.WOMEN_PRODUCTS, VerificationStatus.VERIFIED));
         model.addAttribute("rejectedMarketplace", serviceProviderRepository
@@ -1630,24 +1785,50 @@ public class AdminController {
     }
 
     @PostMapping("/sellers/{id}/verify")
+    @Transactional
     public String verifySeller(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        womenSellerRepo.findById(id).ifPresent(s -> {
-            s.setVerificationStatus(VerificationStatus.VERIFIED);
+        WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
+        if (s != null) {
+            womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.APPROVED);
+            s.setRejectionReason(null);
+            s.setChangesRequestedNote(null);
             womenSellerRepo.save(s);
-        });
+        }
         ra.addFlashAttribute("message", "Seller verified.");
         return "redirect:/admin/pending-sellers";
     }
 
     @PostMapping("/sellers/{id}/reject")
-    public String rejectSeller(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    @Transactional
+    public String rejectSeller(@PathVariable Long id,
+                               @RequestParam(value = "reason", required = false) String reason,
+                               HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        womenSellerRepo.findById(id).ifPresent(s -> {
-            s.setVerificationStatus(VerificationStatus.REJECTED);
+        WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
+        if (s != null) {
+            womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.REJECTED);
+            s.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
             womenSellerRepo.save(s);
-        });
+        }
         ra.addFlashAttribute("message", "Seller rejected.");
+        return "redirect:/admin/pending-sellers";
+    }
+
+    @PostMapping("/sellers/{id}/request-changes")
+    @Transactional
+    public String requestSellerChanges(@PathVariable Long id,
+                                       @RequestParam(value = "note", required = false) String note,
+                                       HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
+        if (s != null) {
+            womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.CHANGES_REQUESTED);
+            s.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+            s.setRejectionReason(null);
+            womenSellerRepo.save(s);
+        }
+        ra.addFlashAttribute("message", "Changes requested from seller.");
         return "redirect:/admin/pending-sellers";
     }
 
@@ -1657,46 +1838,80 @@ public class AdminController {
         try {
             if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-            for (EventHost h : eventHostRepository.findAll()) {
+            Map<Long, EventHost> pendingById = new LinkedHashMap<>();
+            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIn(
+                    PartnerLifecycleSupport.pendingQueueStatuses())) {
+                pendingById.put(h.getId(), h);
+            }
+            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIsNull()) {
                 if (h.getVerificationStatus() == null) {
                     h.setVerificationStatus(VerificationStatus.PENDING);
                     eventHostRepository.save(h);
                 }
+                pendingById.putIfAbsent(h.getId(), h);
             }
+            List<EventHost> pending = new ArrayList<>(pendingById.values());
+            pending.sort(Comparator
+                    .comparingInt((EventHost h) -> PartnerLifecycleSupport.pendingPriority(h.getPartnerProfileStatus()))
+                    .thenComparing(EventHost::getId, Comparator.nullsLast(Long::compareTo)));
 
-            model.addAttribute("pending", eventHostRepository.findByVerificationStatusOrderByCreatedAtDesc(VerificationStatus.PENDING));
+            model.addAttribute("pending", pending);
             model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
             model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
             model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
             model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
             return "adminPendingEventHosts";
         } catch (Exception e) {
-            e.printStackTrace();
-            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage() + " - " + e.toString());
-            return "adminPendingEventHosts"; // reuse view to show error or we can return a simple string if ResponseBody was there, but it's a view.
-            // Let's pass the error to the model. We can view it in the UI or logs.
+            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage());
+            return "adminPendingEventHosts";
         }
     }
 
     @PostMapping("/event-hosts/{id}/approve")
+    @Transactional
     public String approveEventHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        eventHostRepository.findById(id).ifPresent(h -> {
-            h.setVerificationStatus(VerificationStatus.VERIFIED);
+        EventHost h = eventHostRepository.findById(id).orElse(null);
+        if (h != null) {
+            eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.APPROVED);
+            h.setRejectionReason(null);
+            h.setChangesRequestedNote(null);
             eventHostRepository.save(h);
-        });
+        }
         ra.addFlashAttribute("message", "Event organizer approved. They can now log in and create events.");
         return "redirect:/admin/pending-event-hosts";
     }
 
     @PostMapping("/event-hosts/{id}/reject")
-    public String rejectEventHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    @Transactional
+    public String rejectEventHost(@PathVariable Long id,
+                                  @RequestParam(value = "reason", required = false) String reason,
+                                  HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        eventHostRepository.findById(id).ifPresent(h -> {
-            h.setVerificationStatus(VerificationStatus.REJECTED);
+        EventHost h = eventHostRepository.findById(id).orElse(null);
+        if (h != null) {
+            eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.REJECTED);
+            h.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
             eventHostRepository.save(h);
-        });
+        }
         ra.addFlashAttribute("message", "Event organizer application rejected.");
+        return "redirect:/admin/pending-event-hosts";
+    }
+
+    @PostMapping("/event-hosts/{id}/request-changes")
+    @Transactional
+    public String requestEventHostChanges(@PathVariable Long id,
+                                          @RequestParam(value = "note", required = false) String note,
+                                          HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        EventHost h = eventHostRepository.findById(id).orElse(null);
+        if (h != null) {
+            eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.CHANGES_REQUESTED);
+            h.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+            h.setRejectionReason(null);
+            eventHostRepository.save(h);
+        }
+        ra.addFlashAttribute("message", "Changes requested from event host.");
         return "redirect:/admin/pending-event-hosts";
     }
 
@@ -1815,7 +2030,10 @@ public class AdminController {
     @PostMapping("/salons/{id}/approve")
     public String approveSalon(@PathVariable Long id, RedirectAttributes ra) {
         salonRepository.findById(id).ifPresent(s -> {
+            salonProfileService.setLifecycleStatus(s, PartnerProfileStatus.APPROVED);
             s.setApproved(true);
+            s.setRejectionReason(null);
+            s.setChangesRequestedNote(null);
             salonRepository.save(s);
         });
         ra.addFlashAttribute("message", "Salon approved successfully.");
@@ -1823,9 +2041,19 @@ public class AdminController {
     }
 
     @PostMapping("/salons/{id}/reject")
-    public String rejectSalon(@PathVariable Long id, RedirectAttributes ra) {
-        salonRepository.deleteById(id);
-        ra.addFlashAttribute("message", "Salon rejected and removed.");
+    public String rejectSalon(@PathVariable Long id,
+                              @RequestParam(value = "reason", required = false) String reason,
+                              RedirectAttributes ra) {
+        Salon s = salonRepository.findById(id).orElse(null);
+        if (s == null) {
+            ra.addFlashAttribute("error", "Salon not found.");
+            return "redirect:/admin/salons";
+        }
+        salonProfileService.setLifecycleStatus(s, PartnerProfileStatus.REJECTED);
+        s.setApproved(false);
+        s.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        salonRepository.save(s);
+        ra.addFlashAttribute("message", "Salon rejected. They can update their profile and resubmit.");
         return "redirect:/admin/salons";
     }
 
@@ -1842,7 +2070,28 @@ public class AdminController {
         Salon salon = salonRepository.findById(id).orElse(null);
         if (salon == null) return "redirect:/admin/salons";
         model.addAttribute("salon", salon);
+        model.addAttribute("salonImageUrl", toPublicUploadPath(salon.getProfileImageUrl()));
         return "adminViewSalonProfile";
+    }
+
+    /** Normalize stored upload paths so admin/user pages can resolve them under the app context. */
+    private static String toPublicUploadPath(String stored) {
+        if (stored == null || stored.isBlank()) {
+            return null;
+        }
+        String path = stored.trim().replace('\\', '/');
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+        int idx = path.toLowerCase().lastIndexOf("/uploads/");
+        if (idx >= 0) {
+            path = path.substring(idx);
+        } else if (path.toLowerCase().startsWith("uploads/")) {
+            path = "/" + path;
+        } else if (!path.startsWith("/")) {
+            path = "/uploads/" + path;
+        }
+        return path;
     }
 
     @GetMapping("/stylists")
@@ -1975,10 +2224,13 @@ public class AdminController {
     }
 
     @PostMapping("/entrepreneurs/{id}/approve")
+    @Transactional
     public String approveEntrepreneur(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
-            e.setVerificationStatus(VerificationStatus.VERIFIED);
+            entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.APPROVED);
+            e.setRejectionReason(null);
+            e.setChangesRequestedNote(null);
             entrepreneurRepository.save(e);
         });
         ra.addFlashAttribute("message", "Entrepreneur verified successfully.");
@@ -1986,10 +2238,11 @@ public class AdminController {
     }
 
     @PostMapping("/entrepreneurs/{id}/reject")
+    @Transactional
     public String rejectEntrepreneur(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
-            e.setVerificationStatus(VerificationStatus.REJECTED);
+            entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.REJECTED);
             entrepreneurRepository.save(e);
         });
         ra.addFlashAttribute("message", "Entrepreneur verification rejected.");
@@ -1997,10 +2250,13 @@ public class AdminController {
     }
 
     @PostMapping("/investors/{id}/approve")
+    @Transactional
     public String approveInvestor(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         investorRepository.findById(id).ifPresent(i -> {
-            i.setVerificationStatus(VerificationStatus.VERIFIED);
+            investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.APPROVED);
+            i.setRejectionReason(null);
+            i.setChangesRequestedNote(null);
             investorRepository.save(i);
         });
         ra.addFlashAttribute("message", "Investor verified successfully.");
@@ -2008,10 +2264,11 @@ public class AdminController {
     }
 
     @PostMapping("/investors/{id}/reject")
+    @Transactional
     public String rejectInvestor(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         investorRepository.findById(id).ifPresent(i -> {
-            i.setVerificationStatus(VerificationStatus.REJECTED);
+            investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.REJECTED);
             investorRepository.save(i);
         });
         ra.addFlashAttribute("message", "Investor verification rejected.");
@@ -2080,6 +2337,9 @@ public class AdminController {
                 double adminAmount = inv.getAmount() - releasedAmount;
                 inv.setAdminAmount(adminAmount);
                 investmentRepository.save(inv);
+                try {
+                    fundingCareService.creditPayout(inv);
+                } catch (Exception ignored) {}
                 
                 BusinessProposal proposal = inv.getProposal();
                 proposal.setAmountRaised(proposal.getAmountRaised() + releasedAmount);
@@ -2101,7 +2361,7 @@ public class AdminController {
         return "redirect:/admin/pending-proposals";
     }
 
-    // VERIFY TRAINER CERTIFICATIONS
+    // VERIFY TRAINER CERTIFICATIONS (legacy dashboard form)
     @PostMapping("/fitness/verify")
     @Transactional
     public String verifyFitnessTrainer(
@@ -2112,7 +2372,14 @@ public class AdminController {
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
         if (trainer != null) {
-            trainer.setVerificationStatus(approve ? VerificationStatus.VERIFIED : VerificationStatus.REJECTED);
+            if (approve) {
+                fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.APPROVED);
+                trainer.setRejectionReason(null);
+                trainer.setChangesRequestedNote(null);
+                trainer.setSuspended(false);
+            } else {
+                fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.REJECTED);
+            }
             fitnessTrainerRepository.save(trainer);
             ra.addFlashAttribute("message", "Trainer verification status updated to " + trainer.getVerificationStatus());
         } else {
@@ -2132,13 +2399,391 @@ public class AdminController {
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
         if (trainer != null) {
-            trainer.setSuspended(suspend);
+            if (suspend) {
+                fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.SUSPENDED);
+            } else {
+                trainer.setSuspended(false);
+                if (trainer.getPartnerProfileStatus() == PartnerProfileStatus.SUSPENDED) {
+                    fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.APPROVED);
+                }
+            }
             fitnessTrainerRepository.save(trainer);
             ra.addFlashAttribute("message", suspend ? "Trainer account suspended." : "Trainer account activated.");
         } else {
             ra.addFlashAttribute("error", "Trainer not found.");
         }
         return "redirect:/admin/adminDashboard#fitnessOversightTabs";
+    }
+
+    @GetMapping("/pending-trainers")
+    public String viewPendingTrainers(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+
+        Map<Long, FitnessTrainer> byId = new LinkedHashMap<>();
+        for (FitnessTrainer t : fitnessTrainerRepository.findByPartnerProfileStatusIn(
+                PartnerLifecycleSupport.pendingQueueStatuses())) {
+            byId.put(t.getId(), t);
+        }
+        for (FitnessTrainer t : fitnessTrainerRepository.findByPartnerProfileStatusIsNull()) {
+            byId.putIfAbsent(t.getId(), t);
+        }
+        List<FitnessTrainer> pending = new ArrayList<>(byId.values());
+        pending.sort(Comparator
+                .comparingInt((FitnessTrainer t) -> PartnerLifecycleSupport.pendingPriority(t.getPartnerProfileStatus()))
+                .thenComparing(FitnessTrainer::getId, Comparator.nullsLast(Long::compareTo)));
+
+        model.addAttribute("pendingTrainers", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingTrainers";
+    }
+
+    @PostMapping("/trainers/{id}/approve")
+    @Transactional
+    public String approveTrainer(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+        if (trainer == null) {
+            ra.addFlashAttribute("error", "Trainer not found.");
+            return "redirect:/admin/pending-trainers";
+        }
+        fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.APPROVED);
+        trainer.setRejectionReason(null);
+        trainer.setChangesRequestedNote(null);
+        trainer.setSuspended(false);
+        fitnessTrainerRepository.save(trainer);
+        ra.addFlashAttribute("message", "Trainer approved.");
+        return "redirect:/admin/pending-trainers";
+    }
+
+    @GetMapping("/pending-delivery-partners")
+    public String viewPendingDeliveryPartners(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        Map<Long, DeliveryPartner> byId = new LinkedHashMap<>();
+        for (DeliveryPartner d : deliveryPartnerRepository.findByPartnerProfileStatusIn(
+                PartnerLifecycleSupport.pendingQueueStatuses())) {
+            byId.put(d.getId(), d);
+        }
+        for (DeliveryPartner d : deliveryPartnerRepository.findByPartnerProfileStatusIsNull()) {
+            byId.putIfAbsent(d.getId(), d);
+        }
+        List<DeliveryPartner> pending = new ArrayList<>(byId.values());
+        pending.sort(Comparator
+                .comparingInt((DeliveryPartner d) -> PartnerLifecycleSupport.pendingPriority(d.getPartnerProfileStatus()))
+                .thenComparing(DeliveryPartner::getId, Comparator.nullsLast(Long::compareTo)));
+        model.addAttribute("pendingPartners", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingDeliveryPartners";
+    }
+
+    @PostMapping("/delivery-partners/{id}/approve")
+    @Transactional
+    public String approveDeliveryPartner(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        DeliveryPartner d = deliveryPartnerRepository.findById(id).orElse(null);
+        if (d == null) {
+            ra.addFlashAttribute("error", "Delivery partner not found.");
+            return "redirect:/admin/pending-delivery-partners";
+        }
+        deliveryPartnerProfileService.setLifecycleStatus(d, PartnerProfileStatus.APPROVED);
+        d.setRejectionReason(null);
+        d.setChangesRequestedNote(null);
+        d.setSuspended(false);
+        deliveryPartnerRepository.save(d);
+        ra.addFlashAttribute("message", "Delivery partner approved.");
+        return "redirect:/admin/pending-delivery-partners";
+    }
+
+    @PostMapping("/delivery-partners/{id}/reject")
+    @Transactional
+    public String rejectDeliveryPartner(@PathVariable Long id,
+                                        @RequestParam(value = "reason", required = false) String reason,
+                                        HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        DeliveryPartner d = deliveryPartnerRepository.findById(id).orElse(null);
+        if (d == null) {
+            ra.addFlashAttribute("error", "Delivery partner not found.");
+            return "redirect:/admin/pending-delivery-partners";
+        }
+        deliveryPartnerProfileService.setLifecycleStatus(d, PartnerProfileStatus.REJECTED);
+        d.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        deliveryPartnerRepository.save(d);
+        ra.addFlashAttribute("message", "Delivery partner rejected.");
+        return "redirect:/admin/pending-delivery-partners";
+    }
+
+    @PostMapping("/delivery-partners/{id}/request-changes")
+    @Transactional
+    public String requestDeliveryPartnerChanges(@PathVariable Long id,
+                                                @RequestParam(value = "note", required = false) String note,
+                                                HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        DeliveryPartner d = deliveryPartnerRepository.findById(id).orElse(null);
+        if (d == null) {
+            ra.addFlashAttribute("error", "Delivery partner not found.");
+            return "redirect:/admin/pending-delivery-partners";
+        }
+        deliveryPartnerProfileService.setLifecycleStatus(d, PartnerProfileStatus.CHANGES_REQUESTED);
+        d.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        d.setRejectionReason(null);
+        deliveryPartnerRepository.save(d);
+        ra.addFlashAttribute("message", "Changes requested from delivery partner.");
+        return "redirect:/admin/pending-delivery-partners";
+    }
+
+    @GetMapping("/pending-creators")
+    public String viewPendingCreators(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        List<User> pending = userRepository.findByCreatorProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
+        pending.sort(Comparator
+                .comparingInt((User u) -> PartnerLifecycleSupport.pendingPriority(u.getCreatorProfileStatus()))
+                .thenComparing(User::getId, Comparator.nullsLast(Long::compareTo)));
+        model.addAttribute("pendingCreators", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingCreators";
+    }
+
+    @PostMapping("/creators/{id}/approve")
+    @Transactional
+    public String approveCreator(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        User creator = userRepository.findById(id).orElse(null);
+        if (creator == null) {
+            ra.addFlashAttribute("error", "Creator not found.");
+            return "redirect:/admin/pending-creators";
+        }
+        creatorProfileService.setLifecycleStatus(creator, PartnerProfileStatus.APPROVED);
+        creator.setCreatorRejectionReason(null);
+        creator.setCreatorChangesRequestedNote(null);
+        creator.setBannedCreator(false);
+        userRepository.save(creator);
+        notifyCreator(creator, "Congratulations! You have been awarded the Verified Women Creator Badge.");
+        ra.addFlashAttribute("message", "Creator approved.");
+        return "redirect:/admin/pending-creators";
+    }
+
+    @PostMapping("/creators/{id}/reject")
+    @Transactional
+    public String rejectCreator(@PathVariable Long id,
+                                @RequestParam(value = "reason", required = false) String reason,
+                                HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        User creator = userRepository.findById(id).orElse(null);
+        if (creator == null) {
+            ra.addFlashAttribute("error", "Creator not found.");
+            return "redirect:/admin/pending-creators";
+        }
+        creatorProfileService.setLifecycleStatus(creator, PartnerProfileStatus.REJECTED);
+        creator.setCreatorRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        userRepository.save(creator);
+        notifyCreator(creator, "Your Creator Hub application was not approved."
+                + (reason == null || reason.isBlank() ? "" : " Reason: " + reason.trim()));
+        ra.addFlashAttribute("message", "Creator rejected.");
+        return "redirect:/admin/pending-creators";
+    }
+
+    @PostMapping("/creators/{id}/request-changes")
+    @Transactional
+    public String requestCreatorChanges(@PathVariable Long id,
+                                        @RequestParam(value = "note", required = false) String note,
+                                        HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        User creator = userRepository.findById(id).orElse(null);
+        if (creator == null) {
+            ra.addFlashAttribute("error", "Creator not found.");
+            return "redirect:/admin/pending-creators";
+        }
+        creatorProfileService.setLifecycleStatus(creator, PartnerProfileStatus.CHANGES_REQUESTED);
+        creator.setCreatorChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        creator.setCreatorRejectionReason(null);
+        userRepository.save(creator);
+        notifyCreator(creator, "Admin requested changes to your creator profile."
+                + (note == null || note.isBlank() ? "" : " Note: " + note.trim()));
+        ra.addFlashAttribute("message", "Changes requested from creator.");
+        return "redirect:/admin/pending-creators";
+    }
+
+    private void notifyCreator(User creator, String message) {
+        if (creator == null) return;
+        CreatorNotification n = new CreatorNotification();
+        n.setUser(creator);
+        n.setType("SYSTEM");
+        n.setMessage(message);
+        creatorNotificationRepository.save(n);
+    }
+
+    @GetMapping("/pending-educators")
+    public String viewPendingEducators(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        List<FinancialEducator> pending = financialEducatorRepository
+                .findByPartnerProfileStatusIn(PartnerLifecycleSupport.pendingQueueStatuses());
+        pending.sort(Comparator
+                .comparingInt((FinancialEducator e) -> PartnerLifecycleSupport.pendingPriority(e.getPartnerProfileStatus()))
+                .thenComparing(FinancialEducator::getId, Comparator.nullsLast(Long::compareTo)));
+        model.addAttribute("pendingEducators", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingEducators";
+    }
+
+    @PostMapping("/educators/{id}/approve")
+    @Transactional
+    public String approveEducator(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FinancialEducator e = financialEducatorRepository.findById(id).orElse(null);
+        if (e == null) {
+            ra.addFlashAttribute("error", "Educator not found.");
+            return "redirect:/admin/pending-educators";
+        }
+        financialEducatorProfileService.setLifecycleStatus(e, PartnerProfileStatus.APPROVED);
+        e.setRejectionReason(null);
+        e.setChangesRequestedNote(null);
+        e.setSuspended(false);
+        financialEducatorRepository.save(e);
+        ra.addFlashAttribute("message", "Financial educator approved.");
+        return "redirect:/admin/pending-educators";
+    }
+
+    @PostMapping("/educators/{id}/reject")
+    @Transactional
+    public String rejectEducator(@PathVariable Long id,
+                                 @RequestParam(value = "reason", required = false) String reason,
+                                 HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FinancialEducator e = financialEducatorRepository.findById(id).orElse(null);
+        if (e == null) {
+            ra.addFlashAttribute("error", "Educator not found.");
+            return "redirect:/admin/pending-educators";
+        }
+        financialEducatorProfileService.setLifecycleStatus(e, PartnerProfileStatus.REJECTED);
+        e.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        financialEducatorRepository.save(e);
+        ra.addFlashAttribute("message", "Financial educator rejected.");
+        return "redirect:/admin/pending-educators";
+    }
+
+    @PostMapping("/educators/{id}/request-changes")
+    @Transactional
+    public String requestEducatorChanges(@PathVariable Long id,
+                                         @RequestParam(value = "note", required = false) String note,
+                                         HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FinancialEducator e = financialEducatorRepository.findById(id).orElse(null);
+        if (e == null) {
+            ra.addFlashAttribute("error", "Educator not found.");
+            return "redirect:/admin/pending-educators";
+        }
+        financialEducatorProfileService.setLifecycleStatus(e, PartnerProfileStatus.CHANGES_REQUESTED);
+        e.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        e.setRejectionReason(null);
+        financialEducatorRepository.save(e);
+        ra.addFlashAttribute("message", "Changes requested from educator.");
+        return "redirect:/admin/pending-educators";
+    }
+
+    @PostMapping("/trainers/{id}/reject")
+    @Transactional
+    public String rejectTrainer(@PathVariable Long id,
+                                @RequestParam(value = "reason", required = false) String reason,
+                                HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+        if (trainer == null) {
+            ra.addFlashAttribute("error", "Trainer not found.");
+            return "redirect:/admin/pending-trainers";
+        }
+        fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.REJECTED);
+        trainer.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        fitnessTrainerRepository.save(trainer);
+        ra.addFlashAttribute("message", "Trainer rejected.");
+        return "redirect:/admin/pending-trainers";
+    }
+
+    @PostMapping("/trainers/{id}/request-changes")
+    @Transactional
+    public String requestTrainerChanges(@PathVariable Long id,
+                                        @RequestParam(value = "note", required = false) String note,
+                                        HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+        if (trainer == null) {
+            ra.addFlashAttribute("error", "Trainer not found.");
+            return "redirect:/admin/pending-trainers";
+        }
+        fitnessTrainerProfileService.setLifecycleStatus(trainer, PartnerProfileStatus.CHANGES_REQUESTED);
+        trainer.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        trainer.setRejectionReason(null);
+        fitnessTrainerRepository.save(trainer);
+        ra.addFlashAttribute("message", "Changes requested from trainer.");
+        return "redirect:/admin/pending-trainers";
+    }
+
+    // ==========================================
+    // COMPLETE PROVIDER PROFILE REVIEW ENDPOINTS
+    // ==========================================
+
+    @GetMapping({"/fitness/trainer/{id}", "/trainers/{id}"})
+    public String viewFitnessTrainerReviewProfile(@PathVariable Long id, Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+        if (trainer == null) {
+            return "redirect:/admin/pending-trainers";
+        }
+        String statusKey = trainer.getPartnerProfileStatus() != null ? trainer.getPartnerProfileStatus().name() :
+                (trainer.getVerificationStatus() == VerificationStatus.VERIFIED ? "APPROVED" : "PENDING");
+        model.addAttribute("trainer", trainer);
+        model.addAttribute("statusKey", statusKey);
+        return "adminFitnessTrainerProfile";
+    }
+
+
+    @PostMapping("/centres/{id}/approve")
+    @Transactional
+    public String approveCentreDirect(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        return approveCentre(id, session, redirectAttributes);
+    }
+
+    @PostMapping("/centres/{id}/reject")
+    @Transactional
+    public String rejectCentreWithReason(@PathVariable Long id,
+                                         @RequestParam(value = "reason", required = false) String reason,
+                                         HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
+        if (centre == null) {
+            ra.addFlashAttribute("error", "Centre not found.");
+            return "redirect:/admin/martialManagement";
+        }
+        centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.REJECTED);
+        centre.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        centreRepository.save(centre);
+        ra.addFlashAttribute("message", "Centre application rejected.");
+        return "redirect:/admin/martialManagement";
+    }
+
+    @PostMapping("/centres/{id}/request-changes")
+    @Transactional
+    public String requestCentreChanges(@PathVariable Long id,
+                                       @RequestParam(value = "note", required = false) String note,
+                                       HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
+        if (centre == null) {
+            ra.addFlashAttribute("error", "Centre not found.");
+            return "redirect:/admin/martialManagement";
+        }
+        centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.CHANGES_REQUESTED);
+        centre.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        centre.setRejectionReason(null);
+        centreRepository.save(centre);
+        ra.addFlashAttribute("message", "Changes requested from centre.");
+        return "redirect:/admin/martialManagement";
     }
 }
 

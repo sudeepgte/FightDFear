@@ -41,6 +41,11 @@ public class DoctorDocumentService {
         validateFile(file);
         try {
             String path = fileUploadService.saveFile(file);
+            if (type == DoctorDocumentType.CLINIC_PHOTO) {
+                applyClinicPhoto(doctor, path);
+                doctorProfileService.refreshCompletion(doctor);
+                return path;
+            }
             if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED) {
                 Map<String, Object> changes = new java.util.LinkedHashMap<>();
                 switch (type) {
@@ -68,6 +73,11 @@ public class DoctorDocumentService {
 
     @Transactional
     public void deleteDocument(Doctor doctor, DoctorDocumentType type) {
+        if (type == DoctorDocumentType.CLINIC_PHOTO) {
+            doctor.setClinicPhotos(null);
+            doctorProfileService.refreshCompletion(doctor);
+            return;
+        }
         if (doctor.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED) {
             Map<String, Object> changes = new java.util.LinkedHashMap<>();
             switch (type) {
@@ -124,7 +134,17 @@ public class DoctorDocumentService {
             case MEDICAL_REGISTRATION -> doctor.setDegreeCertificatePath(path);
             case MEDICAL_LICENSE -> doctor.setMedicalLicensePath(path);
             case ADDITIONAL_CERTIFICATE -> doctor.setAdditionalCertificatePath(path);
+            case CLINIC_PHOTO -> applyClinicPhoto(doctor, path);
             default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported document type");
         }
+    }
+
+    private void applyClinicPhoto(Doctor doctor, String path) {
+        if (path == null || path.isBlank()) {
+            doctor.setClinicPhotos(null);
+            return;
+        }
+        String existing = doctor.getClinicPhotos();
+        doctor.setClinicPhotos(existing == null || existing.isBlank() ? path : existing + "," + path);
     }
 }

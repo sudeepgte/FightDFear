@@ -2,10 +2,16 @@ package in.sp.main.Controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +33,8 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/centres")
 public class MartialArtsCenterController {
+
+    private static final Logger log = LoggerFactory.getLogger(MartialArtsCenterController.class);
 
     @Autowired
     private in.sp.main.Repository.VideoUploadRepository videoRepository;
@@ -67,6 +75,19 @@ public class MartialArtsCenterController {
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
 
+
+    @Autowired
+    private in.sp.main.Service.QrAttendanceService qrAttendanceService;
+
+    @Autowired
+    private in.sp.main.Service.BeltGradingService beltGradingService;
+
+    @Autowired
+    private in.sp.main.Repository.CentreInstructorRepository instructorRepository;
+
+    @Autowired
+    private in.sp.main.Service.OtpVerificationService otpVerificationService;
+
     public MartialArtsCenterController(MartialArtsCenterService centreService, ObjectMapper objectMapper) {
         this.centreService = centreService;
         this.objectMapper = objectMapper;
@@ -98,7 +119,7 @@ public class MartialArtsCenterController {
             @RequestParam(value = "profileimage", required = false) MultipartFile profilePhoto,
             @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
             @RequestParam(value = "availableDays", required = false) List<DayAvailable> availableDays,
-            @RequestParam("martialArtsJson") String martialArtsJson,
+            @RequestParam(value = "martialArtsJson", required = false) String martialArtsJson,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -110,14 +131,30 @@ public class MartialArtsCenterController {
             center.setEmail(email);
 
             if (centreRepository.findByEmail(email).isPresent()) {
-                redirectAttributes.addFlashAttribute("error", "Email already exists. Please login.");
+                redirectAttributes.addFlashAttribute("error", "Email already exists. Please sign in.");
                 return "redirect:/centres/login";
             }
+
+            // Enforce verified Email OTP (parity with mobile)
+            if (!otpVerificationService.consumeVerifiedOtp(email, OtpPurpose.CENTRE_REGISTER, 15)) {
+                redirectAttributes.addFlashAttribute("error", "Email verification required. Please verify your OTP before registering.");
+                return "redirect:/centres/registerCentre";
+            }
+
 
             if (center.getPhoneNumber() == null || !center.getPhoneNumber().trim().matches("^\\d{10}$")) {
                 redirectAttributes.addFlashAttribute("error", "Phone number must be exactly 10 digits.");
                 return "redirect:/centres/registerCentre";
             }
+
+            if (center.getPassword() == null || center.getPassword().isBlank()) {
+                redirectAttributes.addFlashAttribute("error", "Password is required.");
+                return "redirect:/centres/registerCentre";
+            }
+            center.setPassword(passwordService.encode(center.getPassword()));
+            center.setApproved(false);
+            center.setCentreProfileStatus(CentreProfileStatus.REGISTERED);
+            center.setProfileCompletionPct(0);
 
             if (galleryPhotos != null) {
                 for (MultipartFile photo : galleryPhotos) {
@@ -134,21 +171,15 @@ public class MartialArtsCenterController {
                     new TypeReference<List<MartialArtsType>>() {}
             );
 
-            if (types == null || types.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error",
-                        "Please add at least one martial arts program with time slots.");
-                return "redirect:/centres/registerCentre";
-            }
-
-            for (MartialArtsType type : types) {
-                if (type.getName() == null || type.getName().isBlank()) {
-                    redirectAttributes.addFlashAttribute("error", "Each program must have a name.");
-                    return "redirect:/centres/registerCentre";
-                }
-                type.setCentre(center);
-                if (type.getSlots() != null) {
-                    for (Slot slot : type.getSlots()) {
-                        slot.setMartialArtsType(type);
+            if (types != null && !types.isEmpty()) {
+                for (MartialArtsType type : types) {
+                    if (type.getName() != null && !type.getName().isBlank()) {
+                        type.setCentre(center);
+                        if (type.getSlots() != null) {
+                            for (Slot slot : type.getSlots()) {
+                                slot.setMartialArtsType(type);
+                            }
+                        }
                     }
                 }
             }
@@ -159,11 +190,12 @@ public class MartialArtsCenterController {
                 center.setAvailableDays(new TreeSet<>());
             }
 
-            centreService.register(center, certificate, types, profilePhoto);
+            centreRepository.save(center);
 
+            redirectAttributes.addFlashAttribute("registeredEmail", email);
             redirectAttributes.addFlashAttribute("message",
-                    "Centre registered successfully! Wait for admin approval, then sign in with your email and password.");
-            return "redirect:/centres/success";
+                    "Account created successfully! Please sign in to complete your profile and submit for verification.");
+            return "redirect:/centres/login";
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -213,6 +245,14 @@ public class MartialArtsCenterController {
         List<in.sp.main.Entities.Videoupload> videos = videoRepository.findByIsReel(true);
 
         int totalBatches = centers.stream().mapToInt(c -> c.getBatches() != null ? c.getBatches().size() : 0).sum();
+
+        // Complete mobile source-of-truth style catalog
+        List<String> catalogStyles = List.of(
+            "Karate", "Taekwondo", "Judo", "Kung Fu", "Self-Defence", 
+            "MMA", "Boxing", "Kickboxing", "Muay Thai", "Krav Maga", 
+            "Aikido", "Kalaripayattu", "Wrestling", "Jiu-Jitsu", "Other"
+        );
+        model.addAttribute("catalogStyles", catalogStyles);
         
         if (user != null) {
             List<Enrollment> enrollments = enrollmentRepository.findByUser(user);
@@ -221,6 +261,93 @@ public class MartialArtsCenterController {
                 .map(e -> e.getBatch().getId())
                 .collect(Collectors.toSet());
             model.addAttribute("enrolledBatchIds", enrolledBatchIds);
+            model.addAttribute("userEnrollments", enrollments);
+
+            Enrollment activeEnrollment = enrollments.stream()
+                .filter(e -> e.getStatus() == null || e.getStatus() != TrainingStatus.COMPLETED)
+                .findFirst()
+                .orElse(enrollments.isEmpty() ? null : enrollments.get(0));
+            model.addAttribute("activeEnrollment", activeEnrollment);
+
+            List<Attendance> attendances = attendanceRepository.findByUser(user);
+            long totalClasses = attendances.size();
+            long attendedCount = attendances.stream()
+                .filter(a -> a.getStatus() == in.sp.main.Entities.AttendanceStatus.PRESENT || a.getStatus() == in.sp.main.Entities.AttendanceStatus.LATE)
+                .count();
+            long presentCount = attendances.stream().filter(a -> a.getStatus() == in.sp.main.Entities.AttendanceStatus.PRESENT).count();
+            long absentCount = attendances.stream().filter(a -> a.getStatus() == in.sp.main.Entities.AttendanceStatus.ABSENT).count();
+            long lateCount = attendances.stream().filter(a -> a.getStatus() == in.sp.main.Entities.AttendanceStatus.LATE).count();
+            double attendancePercentage = totalClasses == 0 ? 0.0 : ((double) attendedCount / (double) totalClasses) * 100.0;
+
+            model.addAttribute("totalClasses", totalClasses);
+            model.addAttribute("attendedCount", attendedCount);
+            model.addAttribute("presentCount", presentCount);
+            model.addAttribute("absentCount", absentCount);
+            model.addAttribute("lateCount", lateCount);
+            model.addAttribute("attendancePercentage", String.format(Locale.ROOT, "%.1f", attendancePercentage));
+
+            // Belt calculation matching Mobile / UserController
+            String belt = "Not Started";
+            int beltProgress = 0;
+            if (attendedCount >= 200) { belt = "Black"; beltProgress = 100; }
+            else if (attendedCount >= 100) { belt = "Blue"; beltProgress = 75; }
+            else if (attendedCount >= 50) { belt = "Green"; beltProgress = 50; }
+            else if (attendedCount >= 25) { belt = "Orange"; beltProgress = 35; }
+            else if (attendedCount >= 10) { belt = "Yellow"; beltProgress = 20; }
+            else if (attendedCount > 0) { belt = "White"; beltProgress = 10; }
+
+            model.addAttribute("currentBelt", belt);
+            model.addAttribute("beltProgress", beltProgress);
+
+            // Streak calculation
+            int streak = 0;
+            if (!attendances.isEmpty()) {
+                List<java.time.LocalDate> dates = attendances.stream()
+                    .filter(a -> a.getStatus() == in.sp.main.Entities.AttendanceStatus.PRESENT || a.getStatus() == in.sp.main.Entities.AttendanceStatus.LATE)
+                    .map(a -> {
+                        if (a.getSession() != null) return a.getSession().getDate();
+                        if (a.getOnlineClass() != null) return a.getOnlineClass().getDate();
+                        return a.getAttendanceDate();
+                    })
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .sorted(java.util.Comparator.reverseOrder())
+                    .collect(Collectors.toList());
+
+                if (!dates.isEmpty()) {
+                    java.time.LocalDate today = java.time.LocalDate.now();
+                    if (dates.get(0).equals(today) || dates.get(0).equals(today.minusDays(1))) {
+                        streak = 1;
+                        for (int i = 0; i < dates.size() - 1; i++) {
+                            if (dates.get(i).minusDays(1).equals(dates.get(i + 1))) {
+                                streak++;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            model.addAttribute("streak", streak);
+
+            // Upcoming Online Classes for user's batches
+            List<MartialArtsBatch> userBatches = enrollments.stream()
+                .map(Enrollment::getBatch)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+
+            List<OnlineClass> upcomingOnline = userBatches.isEmpty() ? Collections.emptyList() : 
+                onlineClassRepository.findByBatchIn(userBatches).stream()
+                .filter(oc -> oc.getDate() != null && !oc.getDate().isBefore(java.time.LocalDate.now()))
+                .sorted(java.util.Comparator.comparing(OnlineClass::getDate))
+                .collect(Collectors.toList());
+            model.addAttribute("upcomingOnlineClasses", upcomingOnline);
+        } else {
+            model.addAttribute("currentBelt", "Guest");
+            model.addAttribute("beltProgress", 0);
+            model.addAttribute("streak", 0);
+            model.addAttribute("attendedCount", 0);
+            model.addAttribute("attendancePercentage", "0.0");
         }
         
         model.addAttribute("centers", centers);
@@ -229,15 +356,6 @@ public class MartialArtsCenterController {
         model.addAttribute("videos", videos);
         model.addAttribute("user", user);
         model.addAttribute("activeTab", "explore");
-
-        // Sorting days for all centers chronologically
-        for (MartialArtsCenter c : centers) {
-            if (c.getAvailableDays() != null) {
-                List<DayAvailable> sortedList = new ArrayList<>(c.getAvailableDays());
-                sortedList.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
-                c.setAvailableDays(new LinkedHashSet<>(sortedList));
-            }
-        }
 
         return "userMartialDashboard";
     }
@@ -256,14 +374,23 @@ public class MartialArtsCenterController {
                                      RedirectAttributes redirectAttributes) {
         try {
             MartialArtsCenter center = centreService.getApprovedCenterById(id);
-            List<DayAvailable> sortedDays = new ArrayList<>(center.getAvailableDays());
-            sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+            if (center == null) {
+                redirectAttributes.addFlashAttribute("message", "Center not found or not approved.");
+                return "redirect:/centres/allacceptedcentres";
+            }
+            List<DayAvailable> sortedDays = new ArrayList<>();
+            if (center.getAvailableDays() != null) {
+                sortedDays.addAll(center.getAvailableDays());
+                sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+            }
 
             // Build enrolled count map for capacity display on each batch
             java.util.Map<Long, Long> enrolledCountByBatch = new java.util.HashMap<>();
-            for (MartialArtsBatch batch : center.getBatches()) {
-                long count = enrollmentRepository.countPaidByBatchId(batch.getId());
-                enrolledCountByBatch.put(batch.getId(), count);
+            if (center.getBatches() != null) {
+                for (MartialArtsBatch batch : center.getBatches()) {
+                    long count = enrollmentRepository.countPaidByBatchId(batch.getId());
+                    enrolledCountByBatch.put(batch.getId(), count);
+                }
             }
 
             model.addAttribute("center", center);
@@ -302,6 +429,9 @@ public class MartialArtsCenterController {
         return "centreLogin";
     }
 
+    @Autowired
+    private in.sp.main.Service.CentreProfileService centreProfileService;
+
     // ---------- LOGIN SUBMIT ----------
     @RequestMapping(value = "/loginCentre", method = RequestMethod.POST)
     public String loginCentre(@RequestParam String email,
@@ -317,8 +447,8 @@ public class MartialArtsCenterController {
         java.util.Optional<MartialArtsCenter> centerOpt = centreRepository.findByEmail(normalizedEmail);
         if (centerOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("error",
-                    "No centre found for this email. Please complete registration first.");
-            return "redirect:/centres/registerCentre";
+                    "No centre found for this email. Please check your credentials or register.");
+            return "redirect:/centres/login";
         }
         MartialArtsCenter center = centerOpt.get();
         boolean ok = passwordService.matchesAndUpgrade(password, center.getPassword(), hashed -> {
@@ -329,12 +459,6 @@ public class MartialArtsCenterController {
             redirectAttributes.addFlashAttribute("error", "Invalid email or password.");
             return "redirect:/centres/login";
         }
-        if (!center.isApproved()) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Your centre is registered but not yet approved by admin. You will be able to sign in after approval.");
-            return "redirect:/centres/login";
-        }
-
         session.setAttribute("loggedCentre", center);
         
         // Generate JWT and add to response
@@ -344,8 +468,142 @@ public class MartialArtsCenterController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
-        
+
+        // Smart routing: Check if profile needs completion (Mobile parity)
+        boolean needsCompletion = center.getCentreProfileStatus() == CentreProfileStatus.REGISTERED
+                || center.getCentreProfileStatus() == CentreProfileStatus.PROFILE_INCOMPLETE
+                || center.getCentreProfileStatus() == CentreProfileStatus.CHANGES_REQUESTED
+                || (center.getProfileCompletionPct() != null && center.getProfileCompletionPct() < 100 && !center.isApproved());
+
+        if (needsCompletion) {
+            return "redirect:/centres/profile-completion";
+        }
         return "redirect:/centres/dashboard";
+    }
+
+    // ---------- PROFILE COMPLETION PAGE ----------
+    @RequestMapping(value = "/profile-completion", method = RequestMethod.GET)
+    public String showProfileCompletion(HttpSession session, Model model) {
+        MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (sessionCenter == null) {
+            return "redirect:/centres/login";
+        }
+        MartialArtsCenter center = centreRepository.findById(sessionCenter.getId()).orElse(sessionCenter);
+        model.addAttribute("center", center);
+        return "centreProfileCompletion";
+    }
+
+    // ---------- UPDATE PROFILE HANDLER ----------
+    @PostMapping("/updateProfile")
+    public String updateProfile(
+            @RequestParam Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String centreType,
+            @RequestParam(required = false) String contactPerson,
+            @RequestParam(required = false) String designation,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String whatsappNumber,
+            @RequestParam(required = false) Integer yearStarted,
+            @RequestParam(required = false) String affiliation,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String mapLink,
+            @RequestParam(required = false) List<String> styles,
+            @RequestParam(required = false) List<String> audience,
+            @RequestParam(required = false) Boolean womenOnly,
+            @RequestParam(required = false) Boolean femaleInstructor,
+            @RequestParam(required = false) List<String> ageGroups,
+            @RequestParam(required = false) List<String> facilities,
+            @RequestParam(required = false) List<String> availableDays,
+            @RequestParam(required = false) String openTime,
+            @RequestParam(required = false) String closeTime,
+            @RequestParam(required = false) String about,
+            @RequestParam(required = false) String howWeTeach,
+            @RequestParam(required = false) List<String> offers,
+            @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) String bankDetails,
+            @RequestParam(required = false) MultipartFile profilePhotoFile,
+            @RequestParam(required = false) MultipartFile certificateFile,
+            @RequestParam(required = false) MultipartFile[] galleryFiles,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (sessionCenter == null) return "redirect:/centres/login";
+
+        MartialArtsCenter center = centreRepository.findById(id).orElse(sessionCenter);
+        Map<String, Object> body = new HashMap<>();
+        if (name != null) body.put("name", name);
+        if (centreType != null) body.put("centreType", centreType);
+        if (contactPerson != null) body.put("contactPerson", contactPerson);
+        if (designation != null) body.put("designation", designation);
+        if (phone != null) body.put("phoneNumber", phone);
+        if (whatsappNumber != null) body.put("whatsappNumber", whatsappNumber);
+        if (yearStarted != null) body.put("yearStarted", yearStarted);
+        if (affiliation != null) body.put("affiliation", affiliation);
+        if (location != null) body.put("location", location);
+        if (city != null) body.put("city", city);
+        if (state != null) body.put("state", state);
+        if (pincode != null) body.put("pincode", pincode);
+        if (mapLink != null) body.put("googleMapLocation", mapLink);
+        if (styles != null) body.put("stylesTaught", styles);
+        if (audience != null) body.put("audience", audience);
+        if (womenOnly != null) body.put("womenOnlyBatches", womenOnly);
+        if (femaleInstructor != null) body.put("femaleInstructor", femaleInstructor);
+        if (ageGroups != null) body.put("ageGroups", ageGroups);
+        if (facilities != null) body.put("facilities", facilities);
+        if (availableDays != null) body.put("availableDays", availableDays);
+        if (openTime != null) body.put("openTime", openTime);
+        if (closeTime != null) body.put("closeTime", closeTime);
+        if (about != null) body.put("about", about);
+        if (howWeTeach != null) body.put("howWeTeach", howWeTeach);
+        if (offers != null) body.put("whatWeOffer", offers);
+        if (upiId != null) body.put("upiId", upiId);
+        if (bankDetails != null) body.put("bankDetails", bankDetails);
+
+        try {
+            if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
+                center.setProfilePhoto(fileuploadService.saveFile(profilePhotoFile));
+            }
+            if (certificateFile != null && !certificateFile.isEmpty()) {
+                center.setTrainerCertificatePath(fileuploadService.saveFile(certificateFile));
+            }
+            if (galleryFiles != null) {
+                for (MultipartFile f : galleryFiles) {
+                    if (f != null && !f.isEmpty()) {
+                        center.getGalleryPhotos().add(fileuploadService.saveFile(f));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Upload error during profile update", e);
+        }
+
+        centreProfileService.applyFields(center, body);
+        center = centreProfileService.refreshCompletion(center);
+        session.setAttribute("loggedCentre", center);
+
+        redirectAttributes.addFlashAttribute("message", "Profile details saved successfully! Current completion: " + (center.getProfileCompletionPct() != null ? center.getProfileCompletionPct() : 0) + "%");
+        return "redirect:/centres/profile-completion";
+    }
+
+    // ---------- SUBMIT VERIFICATION HANDLER ----------
+    @PostMapping("/submitVerification")
+    public String submitVerification(HttpSession session, RedirectAttributes redirectAttributes) {
+        MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (sessionCenter == null) return "redirect:/centres/login";
+
+        MartialArtsCenter center = centreRepository.findById(sessionCenter.getId()).orElse(sessionCenter);
+        center = centreProfileService.refreshCompletion(center);
+
+        center.setCentreProfileStatus(CentreProfileStatus.PENDING_ADMIN_APPROVAL);
+        center.setSubmittedForVerificationAt(LocalDateTime.now());
+        centreRepository.save(center);
+        session.setAttribute("loggedCentre", center);
+
+        redirectAttributes.addFlashAttribute("message", "Your centre profile has been submitted for Admin Verification! Our team will review your application shortly.");
+        return "redirect:/centres/profile-completion";
     }
 
     // ---------- LOGOUT ----------
@@ -387,7 +645,7 @@ public class MartialArtsCenterController {
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
         List<Map<String, Object>> enrollList = buildEnrollmentMaps(center, enrollments);
         res.put("meta", buildDashboardMeta(center, batches, enrollments, enrollList));
-        res.put("batches", buildBatchMaps(batches, onlineClassRepository.findByCenter_Id(center.getId())));
+        res.put("batches", buildBatchMaps(batches, onlineClassRepository.findByCenterId(center.getId())));
         res.put("enrollments", enrollList);
         return res;
     }
@@ -501,15 +759,23 @@ public class MartialArtsCenterController {
 
         List<Enrollment> enrollments = centreService.getEnrolledUsersByCenter(center.getId());
         List<MartialArtsBatch> batches = batchRepository.findByCenterId(center.getId());
-        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenter_Id(center.getId());
+        List<OnlineClass> onlineClasses = onlineClassRepository.findByCenterId(center.getId());
 
         double totalEarnings = enrollments.stream()
                 .filter(e -> e.getAmountPaid() != null)
                 .mapToDouble(Enrollment::getAmountPaid)
                 .sum();
 
+        Map<Long, Long> enrolledCountByBatch = new HashMap<>();
+        for (MartialArtsBatch b : batches) {
+            enrolledCountByBatch.put(b.getId(), enrollmentRepository.countByBatchId(b.getId()));
+        }
+
         model.addAttribute("center", center);
+        model.addAttribute("loggedCentre", center);
         model.addAttribute("enrollments", enrollments);
+        model.addAttribute("enrolledUsersCount", enrollments.size());
+        model.addAttribute("enrolledCountByBatch", enrolledCountByBatch);
         model.addAttribute("batches", batches);
         model.addAttribute("totalEarnings", totalEarnings);
         model.addAttribute("trainingStatuses", TrainingStatus.values());
@@ -564,10 +830,19 @@ public class MartialArtsCenterController {
             bMap.put("timeSlot", b.getTimeSlot());
             bMap.put("availableDays", formatBatchDays(b.getAvailableDays()));
             bMap.put("fee", b.getFee() != null ? b.getFee() : 0.0);
-            bMap.put("status", b.getStatus());
-            bMap.put("batchType", b.getBatchType());
+            bMap.put("admissionFee", b.getAdmissionFee() != null ? b.getAdmissionFee() : 0.0);
+            bMap.put("status", b.getStatus() != null ? b.getStatus() : "Active");
+            bMap.put("batchType", b.getBatchType() != null ? b.getBatchType() : "Offline");
             bMap.put("meetingLink", b.getMeetingLink());
-            bMap.put("capacity", b.getCapacity());
+            bMap.put("capacity", b.getCapacity() != null ? b.getCapacity() : 20);
+            bMap.put("ageGroup", b.getAgeGroup() != null ? b.getAgeGroup() : "All Ages");
+            bMap.put("skillLevel", b.getSkillLevel() != null ? b.getSkillLevel() : "All Levels");
+            bMap.put("trialType", b.getTrialType() != null ? b.getTrialType() : "None");
+            bMap.put("durationMinutes", b.getDurationMinutes() != null ? b.getDurationMinutes() : 60);
+            bMap.put("bufferMinutes", b.getBufferMinutes() != null ? b.getBufferMinutes() : 10);
+            bMap.put("startDate", b.getStartDate() != null ? b.getStartDate().toString() : "");
+            bMap.put("endDate", b.getEndDate() != null ? b.getEndDate().toString() : "");
+            bMap.put("location", b.getLocation() != null ? b.getLocation() : "");
             bMap.put("isBatch", true);
             batchList.add(bMap);
         }
@@ -792,11 +1067,14 @@ public class MartialArtsCenterController {
     @RequestMapping(value = "/about/{id}", method = RequestMethod.GET)
     public String showCenterProfile(@PathVariable Long id, Model model) {
         MartialArtsCenter center = centreService.getCenterById(id);
-        List<MartialArtsType> types = centreService.getMartialArtsTypes(id);
         if (center == null) return "errorPage";
+        List<MartialArtsType> types = centreService.getMartialArtsTypes(id);
         
-        List<DayAvailable> sortedDays = new ArrayList<>(center.getAvailableDays());
-        sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+        List<DayAvailable> sortedDays = new ArrayList<>();
+        if (center.getAvailableDays() != null) {
+            sortedDays.addAll(center.getAvailableDays());
+            sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
+        }
         
         model.addAttribute("center", center);
         model.addAttribute("sortedAvailableDays", sortedDays);
@@ -823,20 +1101,120 @@ public class MartialArtsCenterController {
     public Map<String, Object> createBatch(@RequestBody MartialArtsBatch batch, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
-            MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
-            if (center == null) {
+            MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+            if (sessionCenter == null) {
                 response.put("success", false);
-                response.put("message", "User not logged in");
+                response.put("message", "User not logged in. Please sign in again.");
                 return response;
             }
+            MartialArtsCenter center = centreRepository.findById(sessionCenter.getId()).orElse(sessionCenter);
+
+            // Approval gate enforcement
+            if (!center.isApproved() && center.getCentreProfileStatus() != CentreProfileStatus.APPROVED) {
+                response.put("success", false);
+                response.put("message", "Your centre must be approved by an Admin before you can publish batches.");
+                return response;
+            }
+
+            // Discipline validation: reject fitness-only styles
+            if (batch.getStyle() != null) {
+                String style = batch.getStyle().trim();
+                if (in.sp.main.Util.MartialArtsDiscoveryFilter.isFitnessOnlyProgram(style)) {
+                    response.put("success", false);
+                    response.put("message", "Gym, Zumba, Yoga and fitness programs belong under Fitness & Wellness. Please select a martial arts style.");
+                    return response;
+                }
+            }
+
+            // If updating existing batch, verify ownership
+            if (batch.getId() != null) {
+                MartialArtsBatch existing = batchRepository.findById(batch.getId()).orElse(null);
+                if (existing == null) {
+                    response.put("success", false);
+                    response.put("message", "Batch not found.");
+                    return response;
+                }
+                if (existing.getCenter() != null && !existing.getCenter().getId().equals(center.getId())) {
+                    response.put("success", false);
+                    response.put("message", "Unauthorized. You do not own this batch.");
+                    return response;
+                }
+            }
+
             batch.setCenter(center);
+            if (batch.getStatus() == null || batch.getStatus().isBlank()) {
+                batch.setStatus("Active");
+            }
+            if (batch.getBatchType() == null || batch.getBatchType().isBlank()) {
+                batch.setBatchType("Offline");
+            }
+
             MartialArtsBatch savedBatch = batchRepository.save(batch);
             response.put("success", true);
+            response.put("message", "Batch saved successfully");
             response.put("batch", savedBatch);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", e.getMessage());
+            response.put("message", "Failed to save batch: " + e.getMessage());
         }
+        return response;
+    }
+
+    @GetMapping("/batches/details/{id}")
+    @ResponseBody
+    public Map<String, Object> getBatchDetails(@PathVariable Long id, HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (sessionCenter == null) {
+            response.put("success", false);
+            response.put("message", "User not logged in");
+            return response;
+        }
+        MartialArtsBatch batch = batchRepository.findById(id).orElse(null);
+        if (batch == null) {
+            response.put("success", false);
+            response.put("message", "Batch not found");
+            return response;
+        }
+        if (batch.getCenter() == null || !batch.getCenter().getId().equals(sessionCenter.getId())) {
+            response.put("success", false);
+            response.put("message", "Access denied.");
+            return response;
+        }
+        response.put("success", true);
+        response.put("batch", batch);
+        response.put("enrolledCount", enrollmentRepository.countByBatchId(id));
+        return response;
+    }
+
+    @PostMapping("/batches/status/{id}")
+    @ResponseBody
+    public Map<String, Object> updateBatchStatus(@PathVariable Long id,
+                                                 @RequestParam String status,
+                                                 HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (sessionCenter == null) {
+            response.put("success", false);
+            response.put("message", "User not logged in");
+            return response;
+        }
+        MartialArtsBatch batch = batchRepository.findById(id).orElse(null);
+        if (batch == null) {
+            response.put("success", false);
+            response.put("message", "Batch not found");
+            return response;
+        }
+        if (batch.getCenter() == null || !batch.getCenter().getId().equals(sessionCenter.getId())) {
+            response.put("success", false);
+            response.put("message", "Access denied.");
+            return response;
+        }
+        batch.setStatus(status);
+        batchRepository.save(batch);
+        response.put("success", true);
+        response.put("message", "Batch status updated to " + status);
+        response.put("status", status);
         return response;
     }
 
@@ -848,15 +1226,294 @@ public class MartialArtsCenterController {
 
     @PostMapping("/batches/delete/{id}")
     @ResponseBody
-    public Map<String, Object> deleteBatch(@PathVariable Long id) {
+    public Map<String, Object> deleteBatch(@PathVariable Long id, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
-            batchRepository.deleteById(id);
+            MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
+            if (sessionCenter == null) {
+                response.put("success", false);
+                response.put("message", "User not logged in");
+                return response;
+            }
+            MartialArtsBatch batch = batchRepository.findById(id).orElse(null);
+            if (batch == null) {
+                response.put("success", false);
+                response.put("message", "Batch not found");
+                return response;
+            }
+            if (batch.getCenter() == null || !batch.getCenter().getId().equals(sessionCenter.getId())) {
+                response.put("success", false);
+                response.put("message", "Unauthorized. You do not own this batch.");
+                return response;
+            }
+
+            long enrolledCount = enrollmentRepository.countByBatchId(id);
+            if (enrolledCount > 0) {
+                batch.setStatus("Closed");
+                batchRepository.save(batch);
+                response.put("success", true);
+                response.put("archived", true);
+                response.put("message", "Batch has " + enrolledCount + " active enrollment(s). It has been closed/archived instead of hard deleted.");
+                return response;
+            }
+
+            batchRepository.delete(batch);
             response.put("success", true);
+            response.put("message", "Batch deleted successfully");
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", e.getMessage());
+            response.put("message", "Error deleting batch: " + e.getMessage());
         }
         return response;
     }
+
+    // ==========================================
+    // QR ATTENDANCE SESSIONS (CENTRE / TRAINER)
+    // ==========================================
+
+    @PostMapping("/api/qr-session")
+    @ResponseBody
+    public ResponseEntity<?> createQrSession(@RequestBody Map<String, Object> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Long batchId = Long.parseLong(body.get("batchId").toString());
+            String dateStr = (String) body.get("date");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            int duration = body.get("duration") != null ? Integer.parseInt(body.get("duration").toString()) : 15;
+
+            QrAttendanceSession qrSession = qrAttendanceService.createOrRefreshSession(centre, batchId, date, duration);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("batchId", batchId);
+            res.put("batchName", qrSession.getBatch().getName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("active", qrSession.isActive());
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/api/qr-session")
+    @ResponseBody
+    public ResponseEntity<?> getActiveQrSession(@RequestParam Long batchId, @RequestParam(required = false) String date, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        LocalDate sessionDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now();
+        Optional<QrAttendanceSession> opt = qrAttendanceService.getActiveSession(batchId, sessionDate);
+
+        if (opt.isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", false, "active", false, "message", "No active QR session for this batch today"));
+        }
+
+        QrAttendanceSession s = opt.get();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("active", true);
+        res.put("sessionId", s.getId());
+        res.put("token", s.getToken());
+        res.put("batchName", s.getBatch().getName());
+        res.put("sessionDate", s.getSessionDate().toString());
+        res.put("expiresAt", s.getExpiresAt().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/api/qr-session/{id}/close")
+    @ResponseBody
+    public ResponseEntity<?> closeQrSession(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            qrAttendanceService.closeSession(id, centre);
+            return ResponseEntity.ok(Map.of("success", true, "message", "QR attendance session closed successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    // ==========================================
+    // BELT GRADING & SKILL ASSESSMENTS (CENTRE)
+    // ==========================================
+
+    @GetMapping("/api/grading/criteria")
+    @ResponseBody
+    public ResponseEntity<?> getGradingCriteria(@RequestParam(required = false) String discipline) {
+        List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
+        List<String> belts = beltGradingService.getBeltHierarchy(discipline);
+        return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
+    }
+
+    @GetMapping("/api/gradings")
+    @ResponseBody
+    public ResponseEntity<?> getCentreGradings(HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        List<Map<String, Object>> list = beltGradingService.getCentreGradingHistory(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "gradings", list));
+    }
+
+    @PostMapping("/api/gradings/schedule")
+    @ResponseBody
+    public ResponseEntity<?> scheduleGrading(@RequestBody Map<String, Object> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Long studentId = Long.parseLong(body.get("studentId").toString());
+            Long batchId = body.get("batchId") != null ? Long.parseLong(body.get("batchId").toString()) : null;
+            String discipline = (String) body.get("discipline");
+            String targetBelt = (String) body.get("targetBelt");
+            String dateStr = (String) body.get("scheduledDate");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            String trainer = (String) body.get("trainerName");
+
+            BeltGradingAssessment assessment = beltGradingService.scheduleGrading(
+                    centre, studentId, batchId, discipline, targetBelt, date, trainer
+            );
+            return ResponseEntity.ok(Map.of("success", true, "message", "Grading scheduled successfully", "assessment", beltGradingService.assessmentSummary(assessment)));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/gradings/{id}/score")
+    @ResponseBody
+    public ResponseEntity<?> conductAssessment(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            Map<String, Integer> criteriaScores = (Map<String, Integer>) body.get("scores");
+            String remarks = (String) body.get("remarks");
+            String examinerNotes = (String) body.get("examinerNotes");
+            String trainerName = (String) body.get("trainerName");
+            boolean autoPromote = body.get("autoPromote") != null && Boolean.parseBoolean(body.get("autoPromote").toString());
+
+            BeltGradingAssessment assessment = beltGradingService.conductAndScoreAssessment(
+                    centre, id, criteriaScores, remarks, examinerNotes, trainerName, autoPromote
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", assessment.getPassed() ? "Assessment passed! " + (autoPromote ? "Student promoted & Certificate generated." : "Awaiting approval.") : "Assessment submitted as Failed.",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/gradings/{id}/promote")
+    @ResponseBody
+    public ResponseEntity<?> approveAndPromote(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        try {
+            BeltGradingAssessment assessment = beltGradingService.approveAndPromote(centre, id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Belt promotion approved! Digital Certificate generated.",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
+    }
+
+    // ==========================================
+    // INSTRUCTOR STAFF MANAGEMENT (CENTRE)
+    // ==========================================
+
+    @GetMapping("/api/instructors")
+    @ResponseBody
+    public ResponseEntity<?> getInstructors(HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        List<CentreInstructor> list = instructorRepository.findByCenter_IdAndActiveTrue(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "instructors", list));
+    }
+
+    @PostMapping("/api/instructors")
+    @ResponseBody
+    public ResponseEntity<?> createInstructor(@RequestBody Map<String, String> body, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        String name = body.get("name");
+        if (name == null || name.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Instructor name is required"));
+        }
+
+        CentreInstructor inst = new CentreInstructor();
+        inst.setCenter(centre);
+        inst.setName(name.trim());
+        inst.setEmail(body.get("email"));
+        inst.setPhone(body.get("phone"));
+        inst.setDesignation(body.getOrDefault("designation", "Instructor"));
+        inst.setSpecialization(body.getOrDefault("specialization", "General Martial Arts"));
+        inst.setExperienceYears(body.getOrDefault("experienceYears", "1+ years"));
+        inst.setActive(true);
+        instructorRepository.save(inst);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor added successfully", "instructor", inst));
+    }
+
+    @DeleteMapping("/api/instructors/{id}")
+    @ResponseBody
+    public ResponseEntity<?> removeInstructor(@PathVariable Long id, HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        CentreInstructor inst = instructorRepository.findById(id).orElse(null);
+        if (inst == null || !inst.getCenter().getId().equals(centre.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Instructor not found"));
+        }
+        inst.setActive(false);
+        instructorRepository.save(inst);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor removed successfully"));
+    }
+
+    // ==========================================
+    // STUDENT RENEWAL & GRACE PERIOD
+    // ==========================================
+
+    @PostMapping("/api/enrollments/{id}/renewal")
+    @ResponseBody
+    public ResponseEntity<?> updateRenewal(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
+
+        Enrollment e = enrollmentRepository.findById(id).orElse(null);
+        if (e == null || e.getCenter() == null || !e.getCenter().getId().equals(centre.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Enrollment not found"));
+        }
+
+        String renewalStatus = body.get("renewalStatus");
+        String nextDueDateStr = body.get("nextRenewalDate");
+
+        if (renewalStatus != null) e.setRenewalStatus(renewalStatus);
+        if (nextDueDateStr != null && !nextDueDateStr.isBlank()) {
+            e.setNextRenewalDate(LocalDate.parse(nextDueDateStr));
+        }
+        enrollmentRepository.save(e);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Renewal status updated"));
+    }
 }
+

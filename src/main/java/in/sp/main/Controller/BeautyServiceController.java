@@ -23,6 +23,12 @@ public class BeautyServiceController {
     private SalonRepository salonRepository;
 
     @Autowired
+    private SalonPackageRepository salonPackageRepository;
+
+    @Autowired
+    private SalonMembershipRepository salonMembershipRepository;
+
+    @Autowired
     private StylistRepository stylistRepository;
 
     @Autowired
@@ -332,8 +338,11 @@ public class BeautyServiceController {
      return "user/user-salon-list"; // JSP page
  }
  // 9️⃣ View Salon Details
- @GetMapping("/salon/view")
- public String viewSalon(@RequestParam("id") Long salonId, Model model) {
+ @GetMapping({"/salon/view", "/user/salon/view"})
+ public String viewSalon(@RequestParam(value = "id", required = false) Long salonId, Model model) {
+     if (salonId == null || salonId <= 0) {
+         return "redirect:/user/salons";
+     }
      Optional<Salon> salonOpt = salonRepository.findById(salonId);
      if (salonOpt.isEmpty()) {
          return "redirect:/user/salons";
@@ -373,12 +382,18 @@ public class BeautyServiceController {
      // ✅ Fetch salon offers
      List<Offer> offerList = offerRepository.findBySalonId(salonId);
 
+     // ✅ Fetch packages and memberships
+     List<SalonPackage> packages = salonPackageRepository.findBySalonId(salonId);
+     List<SalonMembership> memberships = salonMembershipRepository.findBySalonId(salonId);
+
      // ✅ Add all data to model
      model.addAttribute("salon", salon);
      model.addAttribute("stylists", stylists);
      model.addAttribute("serviceList", serviceList);
      model.addAttribute("treatmentList", treatmentList);
      model.addAttribute("offerList", offerList);
+     model.addAttribute("packages", packages);
+     model.addAttribute("memberships", memberships);
      model.addAttribute("averageRating", average);
 
      return "user/user-salon-view";

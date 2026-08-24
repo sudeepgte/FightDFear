@@ -4,13 +4,10 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
-import '../../services/glow_provider_auth_service.dart';
 import '../../services/glow_space_service.dart';
+import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
-import 'glow_admin_screen.dart';
-import 'glow_provider_login_screen.dart';
-import 'glow_provider_signup_screen.dart';
-import 'glow_salon_dashboard_screen.dart';
+import 'glow_booking_confirmation_screen.dart';
 import 'glow_space_salon_detail_screen.dart';
 
 class GlowSpaceScreen extends StatefulWidget {
@@ -27,7 +24,6 @@ class GlowSpaceScreen extends StatefulWidget {
 class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     with SingleTickerProviderStateMixin {
   late final GlowSpaceService _api;
-  late final GlowProviderAuthService _providerAuth;
   late final TabController _tabs;
   late final Razorpay _razorpay;
   bool _loading = true;
@@ -40,20 +36,26 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   String _section = 'CATEGORIES';
   String? _selectedCategory;
   int? _pendingPayBookingId;
+  final _cityFilter = TextEditingController();
+  final _searchFilter = TextEditingController();
+  bool _availableToday = false;
+  bool _doorOnly = false;
+  String _sort = 'rating';
+  List<Map<String, dynamic>> _favorites = [];
 
   @override
   void initState() {
     super.initState();
     final api = context.read<AuthState>().api;
     _api = GlowSpaceService(api);
-    _providerAuth = GlowProviderAuthService(api);
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
-      if (_tabs.index == 1) _loadBookings();
+      if (_tabs.index == 1) _loadFavorites();
+      if (_tabs.index == 2) _loadBookings();
     });
     _loadExplore();
   }
@@ -61,6 +63,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
   @override
   void dispose() {
     _razorpay.clear();
+    _cityFilter.dispose();
+    _searchFilter.dispose();
     _tabs.dispose();
     super.dispose();
   }
@@ -78,7 +82,14 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
       _error = null;
     });
     try {
-      final salonsRes = await _api.salons();
+      final salonsRes = await _api.salons(
+        city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        search: _searchFilter.text.trim().isEmpty ? null : _searchFilter.text.trim(),
+        category: _selectedCategory,
+        availableToday: _availableToday ? true : null,
+        doorService: _doorOnly ? true : null,
+        sort: _sort,
+      );
       final servicesRes = await _api.services();
       final offersRes = await _api.offers();
       if (!mounted) return;
@@ -107,6 +118,16 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     if (mounted) setState(() => _loadingBookings = false);
   }
 
+  Future<void> _loadFavorites() async {
+    try {
+      final res = await _api.favorites();
+      if (!mounted) return;
+      if (res['success'] == true) {
+        setState(() => _favorites = _toList(res['salons']));
+      }
+    } catch (_) {}
+  }
+
   List<Map<String, dynamic>> _toList(dynamic raw) =>
       raw is List ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : <Map<String, dynamic>>[];
 
@@ -124,8 +145,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     required int itemId,
     required String title,
   }) async {
-    final dateCtrl = TextEditingController(text: DateTime.now().add(const Duration(days: 1)).toString().split(' ').first);
-    final timeCtrl = TextEditingController(text: '11:00');
+    DateTime date = DateTime.now().add(const Duration(days: 1));
+    String time = '11:00';
     final addressCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     String bookingType = 'ONLINE';
@@ -139,10 +160,33 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)')),
-                const SizedBox(height: 8),
-                TextField(controller: timeCtrl, decoration: const InputDecoration(labelText: 'Time (HH:mm)')),
-                const SizedBox(height: 8),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Date'),
+                  subtitle: Text('${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'),
+                  trailing: const Icon(Icons.calendar_today),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: date,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 60)),
+                    );
+                    if (picked != null) setLocal(() => date = picked);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Time'),
+                  subtitle: Text(time),
+                  trailing: const Icon(Icons.schedule),
+                  onTap: () async {
+                    final picked = await showTimePicker(context: ctx, initialTime: const TimeOfDay(hour: 11, minute: 0));
+                    if (picked != null) {
+                      setLocal(() => time = GlowCatalog.formatTime(picked));
+                    }
+                  },
+                ),
                 DropdownButtonFormField<String>(
                   initialValue: bookingType,
                   items: const [
@@ -158,6 +202,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                 ],
                 const SizedBox(height: 8),
                 TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)')),
+                const SizedBox(height: 8),
+                Text(GlowCatalog.cancelPolicy, style: const TextStyle(fontSize: 11, color: GlowSpaceScreen.textGray)),
               ],
             ),
           ),
@@ -173,8 +219,8 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     final res = await _api.createBooking(
       itemType: itemType,
       itemId: itemId,
-      bookingDate: dateCtrl.text.trim(),
-      preferredTime: timeCtrl.text.trim(),
+      bookingDate: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      preferredTime: time,
       bookingType: bookingType,
       address: addressCtrl.text.trim(),
       notes: notesCtrl.text.trim(),
@@ -184,14 +230,16 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
       final paymentRequired = res['paymentRequired'] == true;
       final bookingId = res['bookingId'] is int ? res['bookingId'] as int : int.tryParse('${res['bookingId']}');
       final amount = (res['amount'] is num) ? (res['amount'] as num).toDouble() : 0.0;
-      if (paymentRequired && bookingId != null && amount > 0) {
-        await _startPayment(bookingId: bookingId, amount: amount);
+      if (paymentRequired && bookingId != null) {
+        await _startPayment(bookingId: bookingId);
+      } else if (bookingId != null) {
+        await _openConfirmation(bookingId);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(res['message']?.toString() ?? 'Booking created')),
         );
       }
-      _tabs.animateTo(1);
+      _tabs.animateTo(2);
       await _loadBookings();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,9 +248,17 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     }
   }
 
-  Future<void> _startPayment({required int bookingId, required double amount}) async {
+  Future<void> _openConfirmation(int bookingId) async {
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => GlowBookingConfirmationScreen(bookingId: bookingId)),
+    );
+    await _loadBookings();
+  }
+
+  Future<void> _startPayment({required int bookingId}) async {
     _pendingPayBookingId = bookingId;
-    final orderRes = await _api.createPaymentOrder(amount);
+    final orderRes = await _api.createPaymentOrder(bookingId);
     if (!mounted) return;
     if (orderRes['orderId'] == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +291,11 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Payment successful — booking confirmed')),
         );
-        await _loadBookings();
+        if (_pendingPayBookingId != null) {
+          await _openConfirmation(_pendingPayBookingId!);
+        } else {
+          await _loadBookings();
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -249,6 +309,114 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
     );
   }
 
+  Future<void> _rescheduleBooking(Map<String, dynamic> b) async {
+    final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+    final salonId = b['salon'] is Map ? (b['salon'] as Map)['id'] : null;
+    if (id == null || salonId == null) return;
+    final sid = salonId is int ? salonId : int.tryParse('$salonId');
+    if (sid == null) return;
+
+    DateTime date = DateTime.tryParse(b['bookingDate']?.toString() ?? '') ?? DateTime.now().add(const Duration(days: 1));
+    String time = b['preferredTime']?.toString() ?? '11:00';
+    List<String> slots = [];
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Reschedule booking'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('New date'),
+                subtitle: Text('${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}'),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: date,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 60)),
+                  );
+                  if (picked == null) return;
+                  final key = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                  final slotRes = await _api.salonSlots(sid, date: key);
+                  setLocal(() {
+                    date = picked;
+                    slots = (slotRes['slots'] is List)
+                        ? (slotRes['slots'] as List).map((e) => e.toString()).toList()
+                        : <String>[];
+                    if (slots.isNotEmpty) time = slots.first;
+                  });
+                },
+              ),
+              if (slots.isEmpty)
+                const Text('Pick a date to load slots', style: TextStyle(color: GlowSpaceScreen.textGray))
+              else
+                DropdownButtonFormField<String>(
+                  initialValue: slots.contains(time) ? time : slots.first,
+                  items: slots.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (v) => setLocal(() => time = v ?? time),
+                  decoration: const InputDecoration(labelText: 'Time'),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final res = await _api.rescheduleBooking(
+      id,
+      bookingDate: '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+      preferredTime: time,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(res['success'] == true ? 'Booking rescheduled' : (res['error']?.toString() ?? 'Failed'))),
+    );
+    if (res['success'] == true) _loadBookings();
+  }
+
+  Future<void> _reviewSalon(int salonId) async {
+    int rating = 5;
+    final comment = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Rate & Review'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<int>(
+                initialValue: rating,
+                items: const [1, 2, 3, 4, 5].map((e) => DropdownMenuItem(value: e, child: Text('$e ★'))).toList(),
+                onChanged: (v) => setLocal(() => rating = v ?? 5),
+                decoration: const InputDecoration(labelText: 'Rating'),
+              ),
+              TextField(controller: comment, maxLines: 3, decoration: const InputDecoration(labelText: 'Comment')),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Post')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true) return;
+    final res = await _api.addReview(salonId, rating: rating, comment: comment.text.trim());
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(res['success'] == true ? 'Review saved' : (res['error']?.toString() ?? 'Failed'))),
+    );
+    if (res['success'] == true) _loadBookings();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -257,39 +425,6 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         backgroundColor: Colors.white,
         foregroundColor: GlowSpaceScreen.navy,
         title: const Text('Glow Space', style: TextStyle(fontWeight: FontWeight.w700)),
-        actions: [
-          IconButton(
-            tooltip: 'Admin Glow',
-            icon: const Icon(Icons.admin_panel_settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GlowAdminScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Salon portal',
-            icon: const Icon(Icons.storefront_outlined),
-            onPressed: () async {
-              if (await _providerAuth.isSalonLoggedIn()) {
-                if (!mounted) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GlowSalonDashboardScreen()),
-                );
-              } else {
-                if (!mounted) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const GlowProviderLoginScreen()),
-                );
-              }
-            },
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const GlowProviderSignupScreen()),
-            ),
-            style: TextButton.styleFrom(foregroundColor: GlowSpaceScreen.primary),
-            child: const Text('Join'),
-          ),
-        ],
         bottom: TabBar(
           controller: _tabs,
           labelColor: GlowSpaceScreen.primary,
@@ -297,6 +432,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           indicatorColor: GlowSpaceScreen.primary,
           tabs: const [
             Tab(text: 'Explore'),
+            Tab(text: 'Favourites'),
             Tab(text: 'My Bookings'),
           ],
         ),
@@ -305,6 +441,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
         controller: _tabs,
         children: [
           _buildExplore(),
+          _buildFavorites(),
           _buildBookings(),
         ],
       ),
@@ -341,6 +478,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             if (v == 'CATEGORIES') _selectedCategory = null;
           }),
         ),
+        if (_section == 'SALONS') _salonFilters(),
         if (_section == 'SERVICES' || _selectedCategory != null) _categoryFilterChips(),
         Expanded(
           child: RefreshIndicator(
@@ -358,6 +496,106 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _salonFilters() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchFilter,
+            decoration: InputDecoration(
+              hintText: 'Search salons or services',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: IconButton(icon: const Icon(Icons.search), onPressed: _loadExplore),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onSubmitted: (_) => _loadExplore(),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _cityFilter,
+            decoration: InputDecoration(
+              hintText: 'City',
+              prefixIcon: const Icon(Icons.search, size: 18),
+              suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _loadExplore),
+              isDense: true,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onSubmitted: (_) => _loadExplore(),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            children: [
+              FilterChip(
+                label: const Text('Available today'),
+                selected: _availableToday,
+                onSelected: (v) {
+                  setState(() => _availableToday = v);
+                  _loadExplore();
+                },
+              ),
+              FilterChip(
+                label: const Text('Door service'),
+                selected: _doorOnly,
+                onSelected: (v) {
+                  setState(() => _doorOnly = v);
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Top rated'),
+                selected: _sort == 'rating',
+                onSelected: (_) {
+                  setState(() => _sort = 'rating');
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Fee'),
+                selected: _sort == 'fee',
+                onSelected: (_) {
+                  setState(() => _sort = 'fee');
+                  _loadExplore();
+                },
+              ),
+              ChoiceChip(
+                label: const Text('Nearest'),
+                selected: _sort == 'nearest',
+                onSelected: (_) {
+                  setState(() => _sort = 'nearest');
+                  _loadExplore();
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavorites() {
+    if (_favorites.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadFavorites,
+        child: ListView(
+          children: const [
+            SizedBox(height: 140),
+            Center(child: Text('No favourites yet — tap the heart on a salon')),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadFavorites,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: _favorites.map(_salonTile).toList(),
+      ),
     );
   }
 
@@ -583,6 +821,7 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
           final salon = b['salon'] is Map ? Map<String, dynamic>.from(b['salon'] as Map) : <String, dynamic>{};
           final item = b['item'] is Map ? Map<String, dynamic>.from(b['item'] as Map) : <String, dynamic>{};
           final type = b['itemType']?.toString() ?? '';
+          final status = (b['status']?.toString() ?? 'PENDING').toUpperCase();
           final itemTitle = item['name']?.toString() ?? item['serviceName']?.toString() ?? item['title']?.toString() ?? type;
           return Container(
             padding: const EdgeInsets.all(12),
@@ -609,6 +848,15 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                     if (b['price'] != null) _statusChip('₹${b['price']}', color: Colors.teal),
                   ],
                 ),
+                const SizedBox(height: 8),
+                _trackRow('Placed', true),
+                _trackRow('Confirmed', const ['CONFIRMED', 'PAID', 'COMPLETED'].contains(status)),
+                _trackRow('Completed', status == 'COMPLETED'),
+                if (status == 'CANCELLED' || status == 'REJECTED')
+                  Text(
+                    status == 'REJECTED' ? 'This booking was rejected.' : 'This booking was cancelled.',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFFBE123C)),
+                  ),
                 if (b['paymentRequired'] == true) ...[
                   const SizedBox(height: 8),
                   Align(
@@ -617,13 +865,51 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                       onPressed: () {
                         final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
                         final amount = (b['price'] is num) ? (b['price'] as num).toDouble() : 0.0;
-                        if (id != null && amount > 0) _startPayment(bookingId: id, amount: amount);
+                        if (id != null) _startPayment(bookingId: id);
                       },
                       style: FilledButton.styleFrom(backgroundColor: GlowSpaceScreen.primary),
                       child: const Text('Pay now'),
                     ),
                   ),
                 ],
+                if ((b['canCancel'] == true || status == 'PENDING') &&
+                    (b['id'] is int || int.tryParse('${b['id']}') != null))
+                  TextButton(
+                    onPressed: () async {
+                      final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+                      if (id == null) return;
+                      final messenger = ScaffoldMessenger.of(context);
+                      final res = await _api.cancelBooking(id);
+                      if (!mounted) return;
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(res['success'] == true
+                            ? 'Booking cancelled'
+                            : (res['error']?.toString() ?? 'Cancel failed')),
+                      ));
+                      if (res['success'] == true) _loadBookings();
+                    },
+                    child: Text(b['canCancelFree'] == true ? 'Cancel (free)' : 'Cancel booking'),
+                  ),
+                if (b['canReschedule'] == true && (b['id'] is int || int.tryParse('${b['id']}') != null))
+                  TextButton(
+                    onPressed: () => _rescheduleBooking(b),
+                    child: const Text('Reschedule'),
+                  ),
+                if (b['canReview'] == true && salon['id'] != null)
+                  TextButton(
+                    onPressed: () => _reviewSalon(
+                      salon['id'] is int ? salon['id'] as int : int.parse('${salon['id']}'),
+                    ),
+                    child: const Text('Rate & Review'),
+                  ),
+                if (b['id'] is int || int.tryParse('${b['id']}') != null)
+                  TextButton(
+                    onPressed: () {
+                      final id = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
+                      if (id != null) _openConfirmation(id);
+                    },
+                    child: const Text('View confirmation'),
+                  ),
               ],
             ),
           );
@@ -653,6 +939,12 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
             background: const Color(0xFFFEF3C7),
             foreground: const Color(0xFFB45309),
           ),
+        if (s['startingFee'] != null && s['startingFee'] != 0)
+          DetailTag(label: 'From ₹${s['startingFee']}', icon: Icons.currency_rupee),
+        if (s['availableToday'] == true)
+          DetailTag(label: 'Today', icon: Icons.event_available, background: const Color(0xFFDCFCE7), foreground: const Color(0xFF166534)),
+        if (s['nextSlot'] is Map)
+          DetailTag(label: '${(s['nextSlot'] as Map)['label'] ?? 'Next slot'}', icon: Icons.schedule),
         if (s['availabilityHours'] != null)
           DetailTag(label: '${s['availabilityHours']}', icon: Icons.access_time),
       ],
@@ -699,6 +991,20 @@ class _GlowSpaceScreenState extends State<GlowSpaceScreen>
                 itemId: id,
                 title: o['title']?.toString() ?? 'Offer',
               ),
+    );
+  }
+
+  Widget _trackRow(String label, bool done) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(done ? Icons.check_circle : Icons.radio_button_unchecked,
+              size: 14, color: done ? const Color(0xFF16A34A) : const Color(0xFFCBD5E1)),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(fontSize: 12, color: done ? const Color(0xFF166534) : GlowSpaceScreen.textGray)),
+        ],
+      ),
     );
   }
 

@@ -6,6 +6,7 @@ import in.sp.main.Service.MartialArtsCenterService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -32,8 +33,10 @@ public class MobileLandingController {
     @Autowired private VideoUploadRepository videoUploadRepo;
     @Autowired private CreatorNotificationRepository creatorNotificationRepo;
     @Autowired private UserRepository userRepo;
+    @Autowired private MartialArtsCenterRepository centreRepo;
 
     @GetMapping("/feed")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> feed() {
         List<Map<String, Object>> events = eventRepo.findByStatusOrderByCreatedAtDesc("APPROVED").stream()
                 .limit(LIMIT)
@@ -71,23 +74,19 @@ public class MobileLandingController {
                 .map(this::doctorDto)
                 .collect(Collectors.toList());
 
-        List<Map<String, Object>> community = videoUploadRepo.findAll().stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
-                .sorted((a, b) -> {
-                    if (a.getUploadTime() == null || b.getUploadTime() == null) return 0;
-                    return b.getUploadTime().compareTo(a.getUploadTime());
-                })
-                .limit(LIMIT)
+        List<Map<String, Object>> community = videoUploadRepo
+                .findTop8ByIsBlockedFalseAndIsDraftFalseAndStatusOrderByUploadTimeDesc("APPROVED")
+                .stream()
                 .map(this::communityDto)
                 .collect(Collectors.toList());
 
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("events", eventRepo.countByStatus("APPROVED"));
-        stats.put("salons", salonRepo.findByApproved(true).size());
-        stats.put("centres", martialArtsCenterService.getApprovedCentersForDiscovery().size());
-        stats.put("providers", providerRepo.findByVerificationStatus(VerificationStatus.VERIFIED).size());
-        stats.put("doctors", doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED).size());
-        stats.put("products", productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc().size());
+        stats.put("salons", salonRepo.countByApproved(true));
+        stats.put("centres", centreRepo.countByApproved(true));
+        stats.put("providers", providerRepo.countByVerificationStatus(VerificationStatus.VERIFIED));
+        stats.put("doctors", doctorRepo.countByVerificationStatus(VerificationStatus.VERIFIED));
+        stats.put("products", productRepo.countByActiveTrueAndDeletedFalse());
 
         // What's New = mix of latest events, offers, centres
         List<Map<String, Object>> whatsNew = new ArrayList<>();
@@ -164,6 +163,7 @@ public class MobileLandingController {
     }
 
     @GetMapping("/notifications")
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> notifications(HttpSession session) {
         List<Map<String, Object>> items = new ArrayList<>();
         List<BroadcastMessage> broadcasts = broadcastRepo.findAllByOrderBySentAtDesc();
@@ -406,6 +406,14 @@ public class MobileLandingController {
         return m;
     }
 
+    private int safeCommentCount(Videoupload v) {
+        try {
+            return v.getComments() == null ? 0 : v.getComments().size();
+        } catch (Exception ignored) {
+            return 0;
+        }
+    }
+
     private Map<String, Object> communityDto(Videoupload v) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", v.getId());
@@ -413,7 +421,7 @@ public class MobileLandingController {
         m.put("description", v.getDescription());
         m.put("category", v.getCategory());
         m.put("likes", v.getLikeCount());
-        m.put("comments", v.getComments() == null ? 0 : v.getComments().size());
+        m.put("comments", safeCommentCount(v));
         m.put("createdAt", v.getUploadTime() == null ? null : v.getUploadTime().toString());
         if (v.getUser() != null) {
             m.put("author", v.getUser().getFullName());

@@ -12,6 +12,16 @@ typedef PortalAuthSubmit = Future<Map<String, dynamic>> Function({
   required Map<String, String> extra,
 });
 
+typedef PortalEmailOtpSender = Future<Map<String, dynamic>> Function(String email);
+typedef PortalEmailOtpVerifier = Future<Map<String, dynamic>> Function({
+  required String email,
+  required String otp,
+});
+typedef PortalLoginSuccess = Future<void> Function(
+  BuildContext context,
+  Map<String, dynamic> response,
+);
+
 /// Shared login/register UI for provider portals with rich registration fields.
 class PortalAuthScreen extends StatefulWidget {
   const PortalAuthScreen({
@@ -29,6 +39,9 @@ class PortalAuthScreen extends StatefulWidget {
     this.loginSubtitle,
     this.loginIcon = Icons.business_center_rounded,
     this.onCreateAccount,
+    this.onSendEmailOtp,
+    this.onVerifyEmailOtp,
+    this.onLoginSuccess,
   });
 
   final String title;
@@ -44,6 +57,12 @@ class PortalAuthScreen extends StatefulWidget {
   final IconData loginIcon;
   /// When set, "Create account" opens this flow instead of the inline register form.
   final VoidCallback? onCreateAccount;
+  /// Real email OTP send (when set, replaces demo OTP).
+  final PortalEmailOtpSender? onSendEmailOtp;
+  /// Real email OTP verify (when set, replaces demo OTP).
+  final PortalEmailOtpVerifier? onVerifyEmailOtp;
+  /// Override post-login navigation (e.g. profile completion then dashboard).
+  final PortalLoginSuccess? onLoginSuccess;
 
   @override
   State<PortalAuthScreen> createState() => _PortalAuthScreenState();
@@ -144,6 +163,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
           : e.value.map((n) => 'mobile:$n').join('|');
     }
     extra['confirmPassword'] = _confirmPassword.text;
+    extra['acceptedTerms'] = _terms ? 'true' : 'false';
     return extra;
   }
 
@@ -341,9 +361,13 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
             }),
           );
         } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: widget.dashboardBuilder),
-          );
+          if (widget.onLoginSuccess != null) {
+            await widget.onLoginSuccess!(context, res);
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: widget.dashboardBuilder),
+            );
+          }
         }
       } else {
         final err = res['error']?.toString() ?? res['message']?.toString() ?? 'Action failed';
@@ -668,19 +692,28 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
       children: [
         const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(18),
+          width: 76,
+          height: 76,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(20),
             color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFF43F5E).withValues(alpha: 0.18),
-                blurRadius: 24,
+                blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Icon(widget.loginIcon, size: 42, color: const Color(0xFFF43F5E)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/fightdfear-logo.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Icon(widget.loginIcon, size: 40, color: const Color(0xFFF43F5E)),
+            ),
+          ),
         ),
         const SizedBox(height: 18),
         Text(
@@ -859,6 +892,40 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
               setState(() => _emailOtpOk = true);
               _refreshValidation();
             },
+            onSend: widget.onSendEmailOtp == null
+                ? null
+                : () async {
+                    final email = _email.text.trim();
+                    final err = RegValidators.emailError(email);
+                    if (err != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      return false;
+                    }
+                    final res = await widget.onSendEmailOtp!(email);
+                    if (res['success'] == true) return true;
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(res['error']?.toString() ?? 'Failed to send OTP'),
+                        ),
+                      );
+                    }
+                    return false;
+                  },
+            onVerify: widget.onVerifyEmailOtp == null
+                ? null
+                : (otp) async {
+                    try {
+                      final res = await widget.onVerifyEmailOtp!(
+                        email: _email.text.trim(),
+                        otp: otp,
+                      );
+                      if (res['success'] == true) return null;
+                      return res['error']?.toString() ?? 'Invalid or expired OTP';
+                    } catch (e) {
+                      return 'Verification failed: $e';
+                    }
+                  },
           ),
           _errorText('emailOtp'),
         ],

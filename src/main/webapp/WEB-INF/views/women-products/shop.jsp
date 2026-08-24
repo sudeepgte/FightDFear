@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -280,6 +282,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     .stock-badge.in { background: #fff; color: #10b981; }
+    .stock-badge.low {
+      background: #fff7ed;
+      color: #c2410c;
+      border: 1px solid #fdba74;
+    }
     .stock-badge.out { background: rgba(0,0,0,0.6); color: #fff; backdrop-filter: blur(4px); }
 
     .offer-badge {
@@ -311,6 +318,66 @@
       margin-bottom: 24px;
       display: block;
     }
+    .shop-toolbar {
+      max-width: 1200px;
+      margin: 24px auto 0;
+      padding: 0 20px;
+    }
+    .shop-search-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .shop-search-row input[type="search"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--fdf-border);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .shop-filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .shop-filters select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--fdf-border);
+      font-family: inherit;
+      font-size: 13px;
+      background: #fff;
+    }
+    .featured-wrap {
+      max-width: 1200px;
+      margin: 28px auto 0;
+      padding: 0 20px;
+    }
+    .featured-wrap h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--brand-purple-darker);
+      margin: 0 0 14px;
+    }
+    .wish-float {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+    }
+    .wish-float button {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: none; background: #fff; color: var(--brand-pink);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12); cursor: pointer;
+    }
+    .product-brand { font-size: 12px; font-weight: 700; color: var(--fdf-muted); margin-bottom: 4px; }
+    .product-rating { font-size: 12px; color: #d97706; font-weight: 700; margin-bottom: 8px; }
+    .product-price { flex-wrap: wrap; }
 
     @media (max-width: 768px) {
       .shop-header { padding-top: 20px; padding-bottom: 20px; }
@@ -325,14 +392,13 @@
       .top-btn {
           padding: 8px 12px;
           font-size: 12px;
-          margin-right: 0 !important; /* override the inline margin */
+          margin-right: 0 !important;
       }
       .shop-header h1 { font-size: 28px; }
       .shop-nav { gap: 8px; margin-top: 20px; }
       .shop-nav a { padding: 8px 16px; font-size: 12px; }
-      
       .products-grid {
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* 2 columns on mobile */
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
           gap: 15px;
           padding: 20px 10px;
       }
@@ -346,6 +412,9 @@
       .stock-badge, .offer-badge { padding: 4px 8px; font-size: 9px; top: 10px; }
       .stock-badge { left: 10px; }
       .offer-badge { right: 10px; }
+      .wish-float { top: 8px; right: 8px; }
+      .product-actions { flex-direction: column; }
+      .shop-toolbar { padding: 0 10px; }
     }
   </style>
 </head>
@@ -372,14 +441,73 @@
     
     <div class="shop-nav">
       <a href="${pageContext.request.contextPath}/women-products" class="${empty selectedCategory ? 'active' : ''}">All Collections</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=SKINCARE" class="${selectedCategory == 'SKINCARE' ? 'active' : ''}">Skincare</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=HAIRCARE" class="${selectedCategory == 'HAIRCARE' ? 'active' : ''}">Haircare</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=HYGIENE" class="${selectedCategory == 'HYGIENE' ? 'active' : ''}">Hygiene</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=CLOTHING" class="${selectedCategory == 'CLOTHING' ? 'active' : ''}">Clothing</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=ACCESSORIES" class="${selectedCategory == 'ACCESSORIES' ? 'active' : ''}">Accessories</a>
-      <a href="${pageContext.request.contextPath}/women-products?category=WELLNESS" class="${selectedCategory == 'WELLNESS' ? 'active' : ''}">Wellness</a>
+      <c:forEach var="code" items="${categoryCodes}">
+        <a href="${pageContext.request.contextPath}/women-products?category=${code}" class="${selectedCategory == code ? 'active' : ''}">
+          <c:choose>
+            <c:when test="${code == 'SKINCARE'}">Skincare</c:when>
+            <c:when test="${code == 'HAIRCARE'}">Haircare</c:when>
+            <c:when test="${code == 'HYGIENE'}">Hygiene</c:when>
+            <c:when test="${code == 'CLOTHING'}">Clothing</c:when>
+            <c:when test="${code == 'ACCESSORIES'}">Accessories</c:when>
+            <c:when test="${code == 'WELLNESS'}">Wellness</c:when>
+            <c:otherwise>Other</c:otherwise>
+          </c:choose>
+        </a>
+      </c:forEach>
     </div>
   </div>
+
+  <form class="shop-toolbar" method="get" action="${pageContext.request.contextPath}/women-products">
+    <c:if test="${not empty selectedCategory}"><input type="hidden" name="category" value="${fn:escapeXml(selectedCategory)}"></c:if>
+    <div class="shop-search-row">
+      <input type="search" name="q" value="${fn:escapeXml(searchQuery)}" placeholder="Search women products..." maxlength="80" aria-label="Search products">
+      <button type="submit" class="top-btn" style="position:static;"><i class="bi bi-search"></i> Search</button>
+    </div>
+    <div class="shop-filters">
+      <select name="price" onchange="this.form.submit()" aria-label="Price">
+        <option value="">Any price</option>
+        <option value="under500" ${selectedPrice == 'under500' ? 'selected' : ''}>Under ₹500</option>
+        <option value="500-1000" ${selectedPrice == '500-1000' ? 'selected' : ''}>₹500–₹1,000</option>
+        <option value="1000-2000" ${selectedPrice == '1000-2000' ? 'selected' : ''}>₹1,000–₹2,000</option>
+        <option value="2000plus" ${selectedPrice == '2000plus' ? 'selected' : ''}>₹2,000+</option>
+      </select>
+      <select name="rating" onchange="this.form.submit()" aria-label="Rating">
+        <option value="">Any rating</option>
+        <option value="4" ${selectedRating == '4' ? 'selected' : ''}>4★ and up</option>
+        <option value="3" ${selectedRating == '3' ? 'selected' : ''}>3★ and up</option>
+      </select>
+      <select name="stock" onchange="this.form.submit()" aria-label="Stock">
+        <option value="">All stock</option>
+        <option value="in" ${selectedStock == 'in' ? 'selected' : ''}>In stock</option>
+        <option value="out" ${selectedStock == 'out' ? 'selected' : ''}>Out of stock</option>
+      </select>
+      <select name="brand" onchange="this.form.submit()" aria-label="Brand">
+        <option value="">All brands</option>
+        <c:forEach var="b" items="${availableBrands}">
+          <option value="${fn:escapeXml(b)}" ${selectedBrand == b ? 'selected' : ''}><c:out value="${b}"/></option>
+        </c:forEach>
+      </select>
+      <select name="sort" onchange="this.form.submit()" aria-label="Sort">
+        <option value="newest" ${selectedSort == 'newest' ? 'selected' : ''}>Newest</option>
+        <option value="price_asc" ${selectedSort == 'price_asc' ? 'selected' : ''}>Price: Low to High</option>
+        <option value="price_desc" ${selectedSort == 'price_desc' ? 'selected' : ''}>Price: High to Low</option>
+        <option value="rating" ${selectedSort == 'rating' ? 'selected' : ''}>Highest Rated</option>
+        <option value="discount" ${selectedSort == 'discount' ? 'selected' : ''}>Biggest Discount</option>
+      </select>
+    </div>
+  </form>
+
+  <c:if test="${not empty featuredProducts}">
+    <div class="featured-wrap">
+      <h2>Featured Products</h2>
+      <div class="products-grid" style="padding:0;">
+        <c:forEach var="p" items="${featuredProducts}">
+          <c:set var="p" value="${p}" scope="request"/>
+          <jsp:include page="/WEB-INF/views/women-products/product-card.jsp"/>
+        </c:forEach>
+      </div>
+    </div>
+  </c:if>
 
   <c:if test="${empty products}">
     <div class="empty-shop">
@@ -391,68 +519,8 @@
 
   <div class="products-grid">
     <c:forEach var="p" items="${products}">
-      <div class="product-card">
-        <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="product-img-wrapper" style="display:block; text-decoration:none; color:inherit;">
-          <c:choose>
-            <c:when test="${not empty p.imagePath}">
-              <img src="${pageContext.request.contextPath}${p.imagePath}" class="product-img" alt="${p.name}">
-            </c:when>
-            <c:otherwise>
-              <div class="product-img-placeholder"><i class="bi bi-gift"></i></div>
-            </c:otherwise>
-          </c:choose>
-          <c:choose>
-            <c:when test="${p.stock > 5}">
-              <span class="stock-badge in" style="background:#ecfdf5; color:#059669;"><i class="bi bi-check-circle-fill"></i> In Stock</span>
-            </c:when>
-            <c:when test="${p.stock >= 2 && p.stock <= 5}">
-              <span class="stock-badge in" style="background:#fffbe0; color:#d97706;"><i class="bi bi-exclamation-triangle-fill"></i> Only ${p.stock} left in stock</span>
-            </c:when>
-            <c:when test="${p.stock == 1}">
-              <span class="stock-badge in" style="background:#fef2f2; color:#dc2626; border:1px solid #fca5a5;"><i class="bi bi-fire" style="color:#ef4444;"></i> Only 1 left in stock!</span>
-            </c:when>
-            <c:otherwise>
-              <span class="stock-badge out" style="background:#fee2e2; color:#991b1b;"><i class="bi bi-x-circle-fill"></i> Out of Stock</span>
-            </c:otherwise>
-          </c:choose>
-          <c:choose>
-            <c:when test="${p.originalPrice != null && p.originalPrice > p.price}">
-              <span class="offer-badge">${Math.round((1 - p.price / p.originalPrice) * 100)}% OFF</span>
-            </c:when>
-            <c:when test="${not empty p.offerBadge && p.offerBadge != '15'}">
-              <span class="offer-badge">${p.offerBadge}</span>
-            </c:when>
-          </c:choose>
-        </a>
-        
-        <div class="product-body">
-          <div class="product-category">${p.category}</div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-seller"><i class="bi bi-patch-check-fill text-primary"></i> ${p.seller.businessName}</div>
-          
-          <div class="product-price">
-            <span class="current">&#8377;${p.price}</span>
-            <c:if test="${p.originalPrice != null && p.originalPrice > p.price}">
-              <span class="original">&#8377;${p.originalPrice}</span>
-              <span class="discount">${Math.round((1 - p.price / p.originalPrice) * 100)}% OFF</span>
-            </c:if>
-          </div>
-          
-          <div class="product-actions">
-            <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="btn-shop btn-shop-outline">
-              <i class="bi bi-eye"></i> Details
-            </a>
-            <c:if test="${p.stock > 0}">
-              <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" style="flex: 1;">
-                <input type="hidden" name="productId" value="${p.id}">
-                <button type="submit" class="btn-shop btn-shop-primary w-100">
-                  <i class="bi bi-cart-plus"></i> Buy Now
-                </button>
-              </form>
-            </c:if>
-          </div>
-        </div>
-      </div>
+      <c:set var="p" value="${p}" scope="request"/>
+      <jsp:include page="/WEB-INF/views/women-products/product-card.jsp"/>
     </c:forEach>
   </div>
 

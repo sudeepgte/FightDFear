@@ -136,7 +136,7 @@ public class UserController {
 
         List<Enrollment> enrollments = enrollmentRepository.findByUser(user);
         Enrollment activeEnrollment = enrollments.stream()
-            .filter(e -> e.getStatus() != TrainingStatus.COMPLETED)
+            .filter(e -> e.getStatus() == null || e.getStatus() != TrainingStatus.COMPLETED)
             .findFirst()
             .orElse(enrollments.isEmpty() ? null : enrollments.get(0));
 
@@ -614,7 +614,13 @@ public class UserController {
         int age17to30 = 0;
         int age31to50 = 0;
         int age51plus = 0;
+        int maleCount = 0;
+        int femaleCount = 0;
         for (User u : allUsers) {
+            if (u.getGender() != null) {
+                if (u.getGender() == Gender.MALE) maleCount++;
+                else if (u.getGender() == Gender.FEMALE) femaleCount++;
+            }
             if (u.getAge() == null) {
                 continue;
             }
@@ -627,6 +633,11 @@ public class UserController {
             }
         }
         int demoTotal = age17to30 + age31to50 + age51plus;
+        int genderTotal = maleCount + femaleCount;
+        
+        model.addAttribute("malePct", genderTotal == 0 ? 0 : Math.round(100f * maleCount / genderTotal));
+        model.addAttribute("femalePct", genderTotal == 0 ? 0 : Math.round(100f * femaleCount / genderTotal));
+
         model.addAttribute("demoAge17to30Count", age17to30);
         model.addAttribute("demoAge31to50Count", age31to50);
         model.addAttribute("demoAge51PlusCount", age51plus);

@@ -53,7 +53,7 @@ public class OnlineClassController {
         List<MartialArtsBatch> batches;
 
         if (center != null) {
-            classes = onlineClassRepository.findByCenter_Id(center.getId());
+            classes = onlineClassRepository.findByCenterId(center.getId());
             batches = batchRepository.findByCenterId(center.getId());
         } else {
             classes = onlineClassRepository.findByTrainer(user);
@@ -63,6 +63,31 @@ public class OnlineClassController {
         
         model.addAttribute("classes", classes);
         model.addAttribute("batches", batches);
+        return "onlineClassManagement";
+    }
+
+    @GetMapping("/history")
+    public String showHistoryPage(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        
+        if (user == null && center == null) return "redirect:/login";
+
+        List<OnlineClass> classes;
+
+        if (center != null) {
+            classes = onlineClassRepository.findByCenterId(center.getId());
+        } else {
+            classes = onlineClassRepository.findByTrainer(user);
+        }
+        
+        // Filter only completed classes
+        classes = classes.stream()
+            .filter(oc -> oc.getStatus() == OnlineClassStatus.COMPLETED)
+            .collect(Collectors.toList());
+            
+        model.addAttribute("classes", classes);
+        model.addAttribute("batches", new ArrayList<>()); 
         return "onlineClassManagement";
     }
 

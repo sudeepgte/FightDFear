@@ -12,6 +12,8 @@ class ModulePaymentCheckout {
   Map<String, dynamic> Function(PaymentSuccessResponse response)? _verifyPayload;
   void Function()? _onSuccess;
   void Function(String message)? _onError;
+  bool _paying = false;
+  bool _verifying = false;
 
   void bind({
     required void Function(PaymentSuccessResponse) onSuccess,
@@ -29,53 +31,65 @@ class ModulePaymentCheckout {
 
   Future<void> pay({
     required BuildContext context,
-    required double amount,
     required Map<String, dynamic> Function(PaymentSuccessResponse response) verifyPayload,
     VoidCallback? onSuccess,
     void Function(String message)? onError,
     String description = 'Payment',
+    double? amount,
+    Future<Map<String, dynamic>> Function()? createOrderFn,
   }) async {
-    if (amount <= 0) {
-      onError?.call('No payment required');
-      return;
-    }
+    if (_paying) return;
+    _paying = true;
     _verifyPayload = verifyPayload;
     _onSuccess = onSuccess;
     _onError = onError;
 
-    final orderRes = await _payments.createOrder(amount);
-    if (!context.mounted) return;
+    try {
+      final Map<String, dynamic> orderRes;
+      if (createOrderFn != null) {
+        orderRes = await createOrderFn();
+      } else {
+        if (amount == null || amount <= 0) {
+          onError?.call('No payment required');
+          return;
+        }
+        orderRes = await _payments.createOrder(amount);
+      }
+      if (!context.mounted) return;
 
-    if (orderRes['orderId'] == null || orderRes['key'] == null) {
-      final msg = orderRes['error']?.toString() ?? 'Payment gateway unavailable';
-      onError?.call(msg);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-      return;
+      if (orderRes['orderId'] == null || orderRes['key'] == null) {
+        final msg = orderRes['error']?.toString() ?? 'Payment gateway unavailable';
+        onError?.call(msg);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        return;
+      }
+
+      if (orderRes['mock'] == true) {
+        await _verify(
+          context,
+          PaymentSuccessResponse(
+            'mock_pay_${DateTime.now().millisecondsSinceEpoch}',
+            orderRes['orderId']?.toString(),
+            'mock_sig',
+            <dynamic, dynamic>{'mock': true},
+          ),
+        );
+        return;
+      }
+
+      _razorpay ??= Razorpay();
+      _razorpay!.open({
+        'key': orderRes['key'],
+        'amount': orderRes['amount'],
+        'currency': orderRes['currency'] ?? 'INR',
+        'order_id': orderRes['orderId'],
+        'name': 'Fight D Fear',
+        'description': description,
+        'theme': {'color': '#F43F5E'},
+      });
+    } finally {
+      _paying = false;
     }
-
-    if (orderRes['mock'] == true) {
-      await _verify(
-        context,
-        PaymentSuccessResponse(
-          'mock_pay_${DateTime.now().millisecondsSinceEpoch}',
-          orderRes['orderId']?.toString(),
-          'mock_sig',
-          <dynamic, dynamic>{'mock': true},
-        ),
-      );
-      return;
-    }
-
-    _razorpay ??= Razorpay();
-    _razorpay!.open({
-      'key': orderRes['key'],
-      'amount': orderRes['amount'],
-      'currency': orderRes['currency'] ?? 'INR',
-      'order_id': orderRes['orderId'],
-      'name': 'Fight D Fear',
-      'description': description,
-      'theme': {'color': '#F43F5E'},
-    });
   }
 
   Future<void> handleSuccess(BuildContext context, PaymentSuccessResponse response) async {
@@ -88,10 +102,11 @@ class ModulePaymentCheckout {
   }
 
   Future<void> _verify(BuildContext context, PaymentSuccessResponse response) async {
-    if (_verifyPayload == null) return;
+    if (_verifyPayload == null || _verifying) return;
+    _verifying = true;
     try {
       final payload = _verifyPayload!(response);
-      final verify = await _payments.verify(payload);
+      final verify = await _payments.verifyWithRetry(payload);
       if (!context.mounted) return;
       if (verify['error'] != null) {
         final msg = verify['error'].toString();
@@ -108,6 +123,8 @@ class ModulePaymentCheckout {
       final msg = '$e';
       _onError?.call(msg);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } finally {
+      _verifying = false;
     }
   }
 }

@@ -162,6 +162,15 @@ public class VideoUploadController {
             video.setPrivate(isPrivate);
             video.setUser(user);
             video.setReel(isReel);
+            
+            // Set fileType
+            String contentType = file.getContentType();
+            if (contentType != null && contentType.startsWith("image/")) {
+                video.setFileType("IMAGE");
+            } else {
+                video.setFileType("VIDEO");
+            }
+            
             video.setUploadTime(java.time.LocalDateTime.now());
             
             videoRepository.save(video);
@@ -224,6 +233,14 @@ public class VideoUploadController {
             video.setPrivate(isPrivate);
             video.setUser(user);
             video.setReel(isReel); // Set the isReel flag
+            
+            String contentType = file.getContentType();
+            if (contentType != null && contentType.startsWith("image/")) {
+                video.setFileType("IMAGE");
+            } else {
+                video.setFileType("VIDEO");
+            }
+            
             video.setUploadTime(LocalDateTime.now());
             videoRepository.save(video);
 

@@ -1,5 +1,6 @@
 package in.sp.main.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,10 @@ public class ChatService {
 
     public List<ChatMessage> getChatHistory(User user1, User user2) {
         return chatRepo.findChatHistory(user1.getId(), user2.getId());
+    }
+
+    public List<ChatMessage> getMessagesSince(User user1, User user2, LocalDateTime since) {
+        return chatRepo.findMessagesSince(user1.getId(), user2.getId(), since);
     }
 
     public ChatMessage save(ChatMessage message) {

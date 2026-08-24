@@ -24,4 +24,6 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     java.util.Optional<JobApplication> findFirstByUser_IdAndStatusOrderByAppliedAtDesc(Long userId, VerificationStatus status);
 
     boolean existsByUser_IdAndStatusIn(Long userId, java.util.Collection<VerificationStatus> statuses);
+
+    long countByStatus(VerificationStatus status);
 }

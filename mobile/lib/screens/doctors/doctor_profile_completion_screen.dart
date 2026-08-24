@@ -2,17 +2,24 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+
+import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
 class DoctorProfileCompletionScreen extends StatefulWidget {
-  const DoctorProfileCompletionScreen({super.key});
+  const DoctorProfileCompletionScreen({super.key, this.onFinished});
+
+  final void Function(BuildContext context)? onFinished;
 
   @override
   State<DoctorProfileCompletionScreen> createState() => _DoctorProfileCompletionScreenState();
@@ -42,22 +49,27 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   static const _allowedExt = {'.jpg', '.jpeg', '.png', '.pdf'};
 
   final _fullName = TextEditingController();
-  final _specialization = TextEditingController();
-  final _qualification = TextEditingController();
+  final _specializationOther = TextEditingController();
+  final _qualificationCustom = TextEditingController();
   final _medicalReg = TextEditingController();
   final _experience = TextEditingController();
   final _hospital = TextEditingController();
   final _clinicAddress = TextEditingController();
   final _city = TextEditingController();
-  final _state = TextEditingController();
+  final _stateOther = TextEditingController();
   final _pincode = TextEditingController();
-  final _languages = TextEditingController();
-  final _services = TextEditingController();
+  final _mapLocation = TextEditingController();
   final _bio = TextEditingController();
   final _consultationFee = TextEditingController();
   final _chatFee = TextEditingController();
   final _callFee = TextEditingController();
   final _videoFee = TextEditingController();
+
+  String? _specialization;
+  String? _state;
+  final Set<String> _qualifications = {};
+  final Set<String> _languages = {};
+  final Set<String> _servicesOffered = {};
 
   bool _loading = true;
   bool _saving = false;
@@ -67,6 +79,16 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   final Set<String> _selectedModes = {};
   final List<_AvailabilitySlot> _slots = [];
   bool _emergency = false;
+  bool _autoConfirm = false;
+  int _slotDuration = 30;
+  int _bufferMinutes = 0;
+  TimeOfDay? _breakStart;
+  TimeOfDay? _breakEnd;
+  final Set<String> _blockedDates = {};
+  double? _clinicLat;
+  double? _clinicLng;
+  final _upi = TextEditingController();
+  final _bank = TextEditingController();
   String? _uploadingType;
   double _uploadProgress = 0;
 
@@ -82,22 +104,23 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   @override
   void dispose() {
     _fullName.dispose();
-    _specialization.dispose();
-    _qualification.dispose();
+    _specializationOther.dispose();
+    _qualificationCustom.dispose();
     _medicalReg.dispose();
     _experience.dispose();
     _hospital.dispose();
     _clinicAddress.dispose();
     _city.dispose();
-    _state.dispose();
+    _stateOther.dispose();
     _pincode.dispose();
-    _languages.dispose();
-    _services.dispose();
+    _mapLocation.dispose();
     _bio.dispose();
     _consultationFee.dispose();
     _chatFee.dispose();
     _callFee.dispose();
     _videoFee.dispose();
+    _upi.dispose();
+    _bank.dispose();
     super.dispose();
   }
 
@@ -119,26 +142,65 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     }
   }
 
+  String _pickOrOther(String raw, List<String> options, TextEditingController other) {
+    final v = raw.trim();
+    if (v.isEmpty) {
+      other.clear();
+      return '';
+    }
+    if (options.contains(v)) {
+      other.clear();
+      return v;
+    }
+    other.text = v;
+    return 'Other';
+  }
+
   void _applyProfile(Map<String, dynamic> p) {
     _profile = p;
     _fullName.text = p['fullName']?.toString() ?? '';
-    _specialization.text = p['specialization']?.toString() ?? '';
-    _qualification.text = p['qualification']?.toString() ?? '';
+    _specialization = _pickOrOther(p['specialization']?.toString() ?? '', DoctorCatalog.specializations, _specializationOther);
+    if ((_specialization ?? '').isEmpty) _specialization = null;
+    _qualifications
+      ..clear()
+      ..addAll(DoctorCatalog.splitCsv(p['qualification']).where((e) => e.isNotEmpty && e.toLowerCase() != 'other'));
     _medicalReg.text = p['medicalRegNumber']?.toString() ?? '';
     _experience.text = p['experienceYears']?.toString() ?? '';
     _hospital.text = p['hospitalName']?.toString() ?? '';
     _clinicAddress.text = p['clinicAddress']?.toString() ?? '';
     _city.text = p['city']?.toString() ?? '';
-    _state.text = p['state']?.toString() ?? '';
+    _state = _pickOrOther(p['state']?.toString() ?? '', DoctorCatalog.indianStates, _stateOther);
+    if ((_state ?? '').isEmpty) _state = null;
     _pincode.text = p['pincode']?.toString() ?? '';
-    _languages.text = _listOrCsv(p['languages']);
-    _services.text = _listOrCsv(p['services']);
+    _mapLocation.text = p['googleMapLocation']?.toString() ?? '';
+    _clinicLat = p['clinicLat'] is num ? (p['clinicLat'] as num).toDouble() : double.tryParse('${p['clinicLat'] ?? ''}');
+    _clinicLng = p['clinicLng'] is num ? (p['clinicLng'] as num).toDouble() : double.tryParse('${p['clinicLng'] ?? ''}');
+    _languages
+      ..clear()
+      ..addAll(DoctorCatalog.splitCsv(p['languages']));
+    _servicesOffered
+      ..clear()
+      ..addAll(DoctorCatalog.splitCsv(p['services']));
     _bio.text = p['bio']?.toString() ?? '';
     _consultationFee.text = _numText(p['consultationFee']);
     _chatFee.text = _numText(p['chatFee']);
     _callFee.text = _numText(p['callFee']);
     _videoFee.text = _numText(p['videoFee']);
     _emergency = p['emergencyAvailable'] == true;
+    _autoConfirm = p['autoConfirm'] == true;
+    _slotDuration = p['slotDurationMinutes'] is num
+        ? (p['slotDurationMinutes'] as num).toInt()
+        : int.tryParse('${p['slotDurationMinutes']}') ?? 30;
+    _bufferMinutes = p['bufferMinutes'] is num
+        ? (p['bufferMinutes'] as num).toInt()
+        : int.tryParse('${p['bufferMinutes']}') ?? 0;
+    _breakStart = _parseTime(p['breakStart']?.toString());
+    _breakEnd = _parseTime(p['breakEnd']?.toString());
+    _blockedDates
+      ..clear()
+      ..addAll(DoctorCatalog.splitCsv(p['blockedDates']));
+    _upi.text = p['upiId']?.toString() ?? '';
+    _bank.text = p['bankDetails']?.toString() ?? '';
 
     _selectedModes
       ..clear()
@@ -170,13 +232,13 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         _slots.add(_AvailabilitySlot(day: day, start: start, end: end));
       }
     }
-  }
-
-  String _listOrCsv(dynamic value) {
-    if (value is List) {
-      return value.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).join(', ');
+    if (_slots.isEmpty) {
+      _slots.add(_AvailabilitySlot(
+        day: 'MONDAY',
+        start: const TimeOfDay(hour: 9, minute: 0),
+        end: const TimeOfDay(hour: 17, minute: 0),
+      ));
     }
-    return value?.toString() ?? '';
   }
 
   List<String> _asStringList(dynamic value) {
@@ -224,43 +286,157 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     return lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png');
   }
 
+  String get _resolvedSpecialization =>
+      _specialization == 'Other' ? _specializationOther.text.trim() : (_specialization ?? '').trim();
+  String get _resolvedQualification => _qualifications.join(', ');
+  String get _resolvedState =>
+      _state == 'Other' ? _stateOther.text.trim() : (_state ?? '').trim();
+
+  Map<String, dynamic> _profileBody() => {
+        'fullName': _fullName.text.trim(),
+        'specialization': _resolvedSpecialization,
+        'qualification': _resolvedQualification,
+        'medicalRegNumber': _medicalReg.text.trim(),
+        'experienceYears': int.tryParse(_experience.text.trim()),
+        'hospitalName': _hospital.text.trim(),
+        'clinicAddress': _clinicAddress.text.trim(),
+        'city': _city.text.trim(),
+        'state': _resolvedState,
+        'pincode': _pincode.text.trim(),
+        'googleMapLocation': _mapLocation.text.trim(),
+        if (_clinicLat != null) 'clinicLat': _clinicLat,
+        if (_clinicLng != null) 'clinicLng': _clinicLng,
+        'languages': _languages.join(', '),
+        'services': _servicesOffered.join(', '),
+        'bio': _bio.text.trim(),
+        'consultationFee': double.tryParse(_consultationFee.text.trim()),
+        'chatFee': double.tryParse(_chatFee.text.trim()),
+        'callFee': double.tryParse(_callFee.text.trim()),
+        'videoFee': double.tryParse(_videoFee.text.trim()),
+        'consultationModes': _selectedModes.toList(),
+        'emergencyAvailable': _emergency,
+        'autoConfirm': _autoConfirm,
+        'slotDurationMinutes': _slotDuration,
+        'bufferMinutes': _bufferMinutes,
+        'breakStart': _breakStart == null ? '' : _formatTime(_breakStart!),
+        'breakEnd': _breakEnd == null ? '' : _formatTime(_breakEnd!),
+        'blockedDates': _blockedDates.join(','),
+        'upiId': _upi.text.trim(),
+        'bankDetails': _bank.text.trim(),
+        'availabilitySlots': _slots
+            .map((s) => {
+                  'day': s.day,
+                  'start': _formatTime(s.start),
+                  'end': _formatTime(s.end),
+                })
+            .toList(),
+      };
+
+  String? _validate({bool forSubmit = false}) {
+    if (_fullName.text.trim().isEmpty) return '1.1 Doctor name is required';
+
+    final expStr = _experience.text.trim();
+    if (expStr.isNotEmpty) {
+      final exp = int.tryParse(expStr);
+      if (exp == null || exp < 0 || exp > 50) return '1.5 Years of experience must be between 0 and 50';
+    }
+
+    final pin = _pincode.text.trim();
+    if (pin.isNotEmpty && !RegExp(r'^\d{6}$').hasMatch(pin)) {
+      return '2.5 Pincode must be exactly 6 digits';
+    }
+
+    for (final slot in _slots) {
+      final start = slot.start.hour * 60 + slot.start.minute;
+      final end = slot.end.hour * 60 + slot.end.minute;
+      if (end <= start) return '4. Each slot end time must be after start time';
+    }
+
+    final feeStr = _consultationFee.text.trim();
+    if (feeStr.isNotEmpty) {
+      final fee = double.tryParse(feeStr);
+      if (fee == null || fee < 0) return '7.1 Consultation fee cannot be negative';
+    }
+    final chatFeeStr = _chatFee.text.trim();
+    if (chatFeeStr.isNotEmpty) {
+      final cf = double.tryParse(chatFeeStr);
+      if (cf == null || cf < 0) return '7.2 Chat fee cannot be negative';
+    }
+    final callFeeStr = _callFee.text.trim();
+    if (callFeeStr.isNotEmpty) {
+      final clf = double.tryParse(callFeeStr);
+      if (clf == null || clf < 0) return '7.3 Call fee cannot be negative';
+    }
+    final videoFeeStr = _videoFee.text.trim();
+    if (videoFeeStr.isNotEmpty) {
+      final vf = double.tryParse(videoFeeStr);
+      if (vf == null || vf < 0) return '7.4 Video fee cannot be negative';
+    }
+
+    if (!forSubmit) return null;
+
+    // Strict completeness checks for submission
+    if (_resolvedSpecialization.isEmpty) return '1.2 Specialization is required';
+    if (_resolvedQualification.isEmpty) return '1.3 Qualification is required';
+    if (_medicalReg.text.trim().isEmpty) return '1.4 Medical registration number is required';
+    if (expStr.isEmpty) return '1.5 Years of experience is required';
+    if (_hospital.text.trim().isEmpty) return '2.1 Hospital / clinic name is required';
+    if (_clinicAddress.text.trim().isEmpty) return '2.2 Clinic address is required';
+    if (_city.text.trim().isEmpty) return '2.3 City is required';
+    if (_resolvedState.isEmpty) return '2.4 State is required';
+    if (pin.isEmpty || !RegExp(r'^\d{6}$').hasMatch(pin)) return '2.5 Pincode must be exactly 6 digits';
+    if (_selectedModes.isEmpty) return '3. Select at least one consultation mode';
+    if (_slots.isEmpty) return '4. Add at least one availability slot';
+    if (_languages.isEmpty) return '5. Select at least one language';
+
+    final fee = double.tryParse(feeStr);
+    if (fee == null || fee < 0) return '7.1 Consultation fee is required';
+
+    if (_selectedModes.contains('VIDEO') &&
+        double.tryParse(videoFeeStr) == null &&
+        fee <= 0) {
+      return '7.4 Video fee is required when Video mode is selected';
+    }
+    if (_selectedModes.contains('ONLINE') &&
+        double.tryParse(chatFeeStr) == null &&
+        fee <= 0) {
+      return '7.2 Chat fee is required when Online/Chat mode is selected';
+    }
+
+    return null;
+  }
+
+  void _leave() {
+    final onFinished = widget.onFinished;
+    if (onFinished != null) {
+      onFinished(context);
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _saveProfile() async {
-    setState(() => _error = null);
+    final err = _validate(forSubmit: false);
+    if (err != null) {
+      setState(() => _error = err);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       await ActionFeedback.run(
         context,
         loadingLabel: 'Saving…',
         doneLabel: 'Saved',
         action: () async {
-          setState(() => _saving = true);
-          final body = <String, dynamic>{
-            'fullName': _fullName.text.trim(),
-            'specialization': _specialization.text.trim(),
-            'qualification': _qualification.text.trim(),
-            'medicalRegNumber': _medicalReg.text.trim(),
-            'experienceYears': int.tryParse(_experience.text.trim()),
-            'hospitalName': _hospital.text.trim(),
-            'clinicAddress': _clinicAddress.text.trim(),
-            'city': _city.text.trim(),
-            'state': _state.text.trim(),
-            'pincode': _pincode.text.trim(),
-            'languages': _languages.text.trim(),
-            'services': _services.text.trim(),
-            'bio': _bio.text.trim(),
-            'consultationFee': double.tryParse(_consultationFee.text.trim()),
-            'chatFee': double.tryParse(_chatFee.text.trim()),
-            'callFee': double.tryParse(_callFee.text.trim()),
-            'videoFee': double.tryParse(_videoFee.text.trim()),
-            'consultationModes': _selectedModes.toList(),
-            'emergencyAvailable': _emergency,
-            'availabilitySlots': _slots
-                .map((s) => {
-                      'day': s.day,
-                      'start': _formatTime(s.start),
-                      'end': _formatTime(s.end),
-                    })
-                .toList(),
-          };
+          final body = _profileBody();
           final res = await _svc.updateProfile(body);
           if (res['success'] != true) {
             throw Exception(res['error']?.toString() ?? 'Failed to save profile');
@@ -270,14 +446,39 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
           }
         },
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile saved successfully'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        setState(() => _error = msg);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _submit() async {
+    final err = _validate(forSubmit: true);
+    if (err != null) {
+      setState(() => _error = err);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
     setState(() {
       _submitting = true;
       _error = null;
@@ -288,39 +489,17 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         loadingLabel: 'Submitting…',
         doneLabel: 'Submitted',
         action: () async {
-          final saveRes = await _svc.updateProfile({
-            'fullName': _fullName.text.trim(),
-            'specialization': _specialization.text.trim(),
-            'qualification': _qualification.text.trim(),
-            'medicalRegNumber': _medicalReg.text.trim(),
-            'experienceYears': int.tryParse(_experience.text.trim()),
-            'hospitalName': _hospital.text.trim(),
-            'clinicAddress': _clinicAddress.text.trim(),
-            'city': _city.text.trim(),
-            'state': _state.text.trim(),
-            'pincode': _pincode.text.trim(),
-            'languages': _languages.text.trim(),
-            'services': _services.text.trim(),
-            'bio': _bio.text.trim(),
-            'consultationFee': double.tryParse(_consultationFee.text.trim()),
-            'chatFee': double.tryParse(_chatFee.text.trim()),
-            'callFee': double.tryParse(_callFee.text.trim()),
-            'videoFee': double.tryParse(_videoFee.text.trim()),
-            'consultationModes': _selectedModes.toList(),
-            'emergencyAvailable': _emergency,
-            'availabilitySlots': _slots
-                .map((s) => {
-                      'day': s.day,
-                      'start': _formatTime(s.start),
-                      'end': _formatTime(s.end),
-                    })
-                .toList(),
-          });
-          if (saveRes['success'] == true && saveRes['profile'] is Map) {
+          final saveRes = await _svc.updateProfile(_profileBody());
+          if (saveRes['success'] != true) {
+            throw Exception(saveRes['error']?.toString() ?? 'Failed to save profile before submission');
+          }
+          if (saveRes['profile'] is Map) {
             _applyProfile(Map<String, dynamic>.from(saveRes['profile'] as Map));
           }
           if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields and required documents before submitting');
+            final missingList = ModuleTheme.toList(_profile['missingItems']);
+            final missingText = missingList.isNotEmpty ? ': ${missingList.join(", ")}' : '';
+            throw Exception('Complete all mandatory fields before submitting$missingText');
           }
           final res = await _svc.submitVerification();
           if (res['success'] != true) {
@@ -331,10 +510,14 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       );
       if (!mounted) return;
       await showVerificationSubmittedSheet(context);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) _leave();
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        setState(() => _error = msg);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -447,7 +630,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Widget _section(String title, List<Widget> children) {
+  Widget _section(String number, String title, List<Widget> children) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -455,7 +638,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            Text('$number. $title', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 12),
             ...children,
           ],
@@ -466,10 +649,14 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
 
   Widget _field(
     TextEditingController controller,
+    String number,
     String label, {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? hint,
+    bool required = false,
+    int? maxLength,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -477,14 +664,133 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
+        maxLength: maxLength,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,
         ),
       ),
+    );
+  }
+
+  Widget _dropdown({
+    required String number,
+    required String label,
+    required String? value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+    bool required = false,
+  }) {
+    final items = [...options];
+    if (value != null && value.isNotEmpty && !items.contains(value)) {
+      items.insert(items.length - (items.contains('Other') ? 1 : 0), value);
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: DropdownButtonFormField<String>(
+        initialValue: value != null && items.contains(value) ? value : null,
+        decoration: InputDecoration(
+          labelText: '$number $label${required ? ' *' : ''}',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          filled: true,
+          fillColor: Colors.white,
+        ),
+        items: items.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  void _addCustomQualification() {
+    final value = _qualificationCustom.text.trim();
+    if (value.isEmpty) return;
+    setState(() {
+      _qualifications.add(value);
+      _qualificationCustom.clear();
+    });
+  }
+
+  Widget _qualificationPicker() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '1.3 Qualifications *',
+            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E1B4B)),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Select every degree you hold. You can also type a custom qualification.',
+            style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          _chipGroup(
+            options: DoctorCatalog.qualifications,
+            selected: _qualifications,
+            onChanged: (v, on) => setState(() {
+              if (on) {
+                _qualifications.add(v);
+              } else {
+                _qualifications.remove(v);
+              }
+            }),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _qualificationCustom,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _addCustomQualification(),
+                  decoration: InputDecoration(
+                    labelText: 'Add another degree',
+                    hintText: 'e.g. MRCOG, Fellowship',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: _addCustomQualification,
+                child: const Text('Add'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipGroup({
+    required List<String> options,
+    required Set<String> selected,
+    required void Function(String value, bool on) onChanged,
+  }) {
+    final extras = selected.where((s) => !options.contains(s)).toList();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ...options,
+        ...extras,
+      ].map((item) {
+        final on = selected.contains(item);
+        return FilterChip(
+          label: Text(item),
+          selected: on,
+          onSelected: (v) => onChanged(item, v),
+        );
+      }).toList(),
     );
   }
 
@@ -680,7 +986,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   }
 
   Widget _availabilitySection() {
-    return _section('Availability', [
+    return _section('4', 'Availability', [
       ..._slots.asMap().entries.map((entry) {
         final i = entry.key;
         final slot = entry.value;
@@ -697,7 +1003,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 children: [
                   Expanded(
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'Day', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: '4.1 Day', border: OutlineInputBorder()),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: slot.day,
@@ -725,7 +1031,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                         final picked = await showTimePicker(context: context, initialTime: slot.start);
                         if (picked != null) setState(() => slot.start = picked);
                       },
-                      child: Text('Start ${_formatTime(slot.start)}'),
+                      child: Text('4.2 Start ${_formatTime(slot.start)}'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -735,7 +1041,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                         final picked = await showTimePicker(context: context, initialTime: slot.end);
                         if (picked != null) setState(() => slot.end = picked);
                       },
-                      child: Text('End ${_formatTime(slot.end)}'),
+                      child: Text('4.3 End ${_formatTime(slot.end)}'),
                     ),
                   ),
                 ],
@@ -757,9 +1063,104 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Emergency available'),
+        title: const Text('4.4 Emergency / instant available'),
         value: _emergency,
         onChanged: (v) => setState(() => _emergency = v),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('4.5 Auto-confirm bookings'),
+        subtitle: const Text('Off = you accept each request. On = confirmed instantly after pay.'),
+        value: _autoConfirm,
+        onChanged: (v) => setState(() => _autoConfirm = v),
+      ),
+      const SizedBox(height: 8),
+      const Text('4.6 Consult length', style: TextStyle(fontWeight: FontWeight.w700)),
+      Wrap(
+        spacing: 8,
+        children: [15, 20, 30, 45, 60].map((m) {
+          return ChoiceChip(
+            label: Text('$m min'),
+            selected: _slotDuration == m,
+            onSelected: (_) => setState(() => _slotDuration = m),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 8),
+      const Text('4.7 Buffer between patients', style: TextStyle(fontWeight: FontWeight.w700)),
+      Wrap(
+        spacing: 8,
+        children: [0, 5, 10, 15].map((m) {
+          return ChoiceChip(
+            label: Text('$m min'),
+            selected: _bufferMinutes == m,
+            onSelected: (_) => setState(() => _bufferMinutes = m),
+          );
+        }).toList(),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _breakStart ?? const TimeOfDay(hour: 13, minute: 0),
+                );
+                if (picked != null) setState(() => _breakStart = picked);
+              },
+              child: Text('4.8 Break start ${_breakStart == null ? '—' : _formatTime(_breakStart!)}'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: _breakEnd ?? const TimeOfDay(hour: 14, minute: 0),
+                );
+                if (picked != null) setState(() => _breakEnd = picked);
+              },
+              child: Text('End ${_breakEnd == null ? '—' : _formatTime(_breakEnd!)}'),
+            ),
+          ),
+        ],
+      ),
+      TextButton(
+        onPressed: () => setState(() {
+          _breakStart = null;
+          _breakEnd = null;
+        }),
+        child: const Text('Clear break'),
+      ),
+      const Text('4.9 Leave / blocked dates', style: TextStyle(fontWeight: FontWeight.w700)),
+      Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          ..._blockedDates.map((d) => InputChip(
+                label: Text(d),
+                onDeleted: () => setState(() => _blockedDates.remove(d)),
+              )),
+          ActionChip(
+            label: const Text('Add date'),
+            onPressed: () async {
+              final now = DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: now,
+                firstDate: now,
+                lastDate: now.add(const Duration(days: 180)),
+              );
+              if (picked == null) return;
+              final key =
+                  '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+              setState(() => _blockedDates.add(key));
+            },
+          ),
+        ],
       ),
     ]);
   }
@@ -769,19 +1170,12 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Complete Doctor Profile'),
-        actions: [
-          TextButton(
-            onPressed: (_loading || _saving) ? null : _saveProfile,
-            child: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
-          ),
-        ],
+        title: const Text('Complete Doctor Profile', maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: ProfileCompletionActions.appBar(
+          onSkip: _loading ? null : _leave,
+          onSave: (_loading || _saving) ? null : _saveProfile,
+          saving: _saving,
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -793,21 +1187,75 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                   const SizedBox(height: 8),
                 ],
                 _statusHeader(),
-                _section('Professional Information', [
-                  _field(_fullName, 'Full name'),
-                  _field(_specialization, 'Specialization'),
-                  _field(_qualification, 'Qualification'),
-                  _field(_medicalReg, 'Medical registration number'),
-                  _field(_experience, 'Years of experience', keyboardType: TextInputType.number),
+                _section('1', 'Professional Information', [
+                  _field(_fullName, '1.1', 'Doctor name', required: true),
+                  _dropdown(
+                    number: '1.2',
+                    label: 'Specialization',
+                    value: _specialization,
+                    options: DoctorCatalog.specializations,
+                    required: true,
+                    onChanged: (v) => setState(() => _specialization = v),
+                  ),
+                  if (_specialization == 'Other')
+                    _field(_specializationOther, '1.2', 'Enter specialization', required: true),
+                  _qualificationPicker(),
+                  _field(_medicalReg, '1.4', 'Medical registration number', required: true),
+                  _field(
+                    _experience,
+                    '1.5',
+                    'Years of experience',
+                    required: true,
+                    keyboardType: TextInputType.number,
+                    maxLength: 2,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
                 ]),
-                _section('Clinic / Hospital Information', [
-                  _field(_hospital, 'Hospital / clinic name'),
-                  _field(_clinicAddress, 'Clinic address', maxLines: 2),
-                  _field(_city, 'City'),
-                  _field(_state, 'State'),
-                  _field(_pincode, 'Pincode', keyboardType: TextInputType.number),
+                _section('2', 'Clinic / Hospital Information', [
+                  _field(_hospital, '2.1', 'Hospital / clinic name', required: true),
+                  _field(_clinicAddress, '2.2', 'Clinic address', required: true, maxLines: 2),
+                  _field(_city, '2.3', 'City', required: true),
+                  _dropdown(
+                    number: '2.4',
+                    label: 'State',
+                    value: _state,
+                    options: DoctorCatalog.indianStates,
+                    required: true,
+                    onChanged: (v) => setState(() => _state = v),
+                  ),
+                  if (_state == 'Other') _field(_stateOther, '2.4', 'Enter state', required: true),
+                  _field(
+                    _pincode,
+                    '2.5',
+                    'Pincode',
+                    required: true,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    _mapLocation,
+                    '2.6',
+                    'Google Maps location',
+                    hint: 'Paste Google Maps link (optional)',
+                  ),
+                  const SizedBox(height: 8),
+                  ProfileLocationPicker(
+                    lat: _clinicLat,
+                    lng: _clinicLng,
+                    mapLinkController: _mapLocation,
+                    pinLabel: '2.7 Pin clinic on map',
+                    onPinned: (lat, lng) => setState(() {
+                      _clinicLat = lat;
+                      _clinicLng = lng;
+                    }),
+                    onError: (msg) => setState(() => _error = msg),
+                  ),
                 ]),
-                _section('Consultation Modes', [
+                _section('3', 'Consultation Modes', [
+                  Text('3.1 Select the ways patients can consult you *',
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -828,58 +1276,151 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                   ),
                 ]),
                 _availabilitySection(),
-                _section('Languages', [
-                  _field(_languages, 'Languages', hint: 'e.g. English, Hindi, Kannada'),
+                _section('5', 'Languages', [
+                  Text('5.1 Languages you consult in *',
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  _chipGroup(
+                    options: DoctorCatalog.languages,
+                    selected: _languages,
+                    onChanged: (v, on) => setState(() {
+                      if (on) {
+                        _languages.add(v);
+                      } else {
+                        _languages.remove(v);
+                      }
+                    }),
+                  ),
                 ]),
-                _section('Services', [
-                  _field(_services, 'Services offered', hint: 'e.g. General consultation, Follow-up', maxLines: 2),
+                _section('6', 'Services offered', [
+                  Text('6.1 Select services patients can book',
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  _chipGroup(
+                    options: DoctorCatalog.services,
+                    selected: _servicesOffered,
+                    onChanged: (v, on) => setState(() {
+                      if (on) {
+                        _servicesOffered.add(v);
+                      } else {
+                        _servicesOffered.remove(v);
+                      }
+                    }),
+                  ),
                 ]),
-                _section('Fees', [
-                  _field(_consultationFee, 'Consultation fee (₹)', keyboardType: TextInputType.number),
-                  _field(_chatFee, 'Chat fee (₹)', keyboardType: TextInputType.number),
-                  _field(_callFee, 'Call fee (₹)', keyboardType: TextInputType.number),
-                  _field(_videoFee, 'Video fee (₹)', keyboardType: TextInputType.number),
+                _section('7', 'Fees', [
+                  _field(
+                    _consultationFee,
+                    '7.1',
+                    'Consultation fee (₹)',
+                    required: true,
+                    keyboardType: TextInputType.number,
+                  ),
+                  _field(
+                    _chatFee,
+                    '7.2',
+                    'Chat fee (₹)${_selectedModes.contains('ONLINE') ? ' *' : ''}',
+                    keyboardType: TextInputType.number,
+                  ),
+                  _field(_callFee, '7.3', 'Call fee (₹)', keyboardType: TextInputType.number),
+                  _field(
+                    _videoFee,
+                    '7.4',
+                    'Video fee (₹)${_selectedModes.contains('VIDEO') ? ' *' : ''}',
+                    keyboardType: TextInputType.number,
+                  ),
                 ]),
-                _section('Bio', [
-                  _field(_bio, 'About you', maxLines: 4, hint: 'Short professional bio for patients'),
+                _section('8', 'About you', [
+                  _field(_bio, '8.1', 'Bio', maxLines: 4, hint: 'Short professional bio for patients'),
                 ]),
-                _section('Documents', [
+                _section('9', 'Payout', [
+                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
+                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
+                  Text(
+                    'Earnings stay in your wallet until you request a withdraw from the dashboard.',
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                  ),
+                ]),
+                _section('10', 'Documents (optional)', [
+                  const Text(
+                    'Uploads are optional for now. You can add them later from this screen.',
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
                   _documentTile(
-                    title: 'Profile Photo',
+                    title: '10.1 Profile Photo',
                     type: 'PROFILE_PHOTO',
                     path: _profile['profilePhotoPath']?.toString(),
-                    requiredDoc: true,
+                    requiredDoc: false,
                     imagesOnly: true,
                   ),
                   _documentTile(
-                    title: 'Government ID',
+                    title: '10.2 Government ID',
                     type: 'GOVERNMENT_ID',
                     path: (_profile['idProofPath'] ?? _profile['identityDocumentPath'])?.toString(),
-                    requiredDoc: true,
+                    requiredDoc: false,
                   ),
                   _documentTile(
-                    title: 'Medical Registration Certificate',
+                    title: '10.3 Medical Registration Certificate',
                     type: 'MEDICAL_REGISTRATION',
                     path: _profile['degreeCertificatePath']?.toString(),
-                    requiredDoc: true,
+                    requiredDoc: false,
                   ),
                   _documentTile(
-                    title: 'Medical License',
+                    title: '10.4 Medical License',
                     type: 'MEDICAL_LICENSE',
                     path: _profile['medicalLicensePath']?.toString(),
-                    requiredDoc: true,
+                    requiredDoc: false,
                   ),
                   _documentTile(
-                    title: 'Additional Certificates',
+                    title: '10.5 Extra certificates',
                     type: 'ADDITIONAL_CERTIFICATE',
                     path: _profile['additionalCertificatePath']?.toString(),
                     requiredDoc: false,
                   ),
+                  _documentTile(
+                    title: '10.6 Clinic photos (waiting room / signage)',
+                    type: 'CLINIC_PHOTO',
+                    path: (_profile['clinicPhotos'] is List && (_profile['clinicPhotos'] as List).isNotEmpty)
+                        ? (_profile['clinicPhotos'] as List).last.toString()
+                        : _profile['clinicPhotos']?.toString(),
+                    requiredDoc: false,
+                    imagesOnly: true,
+                  ),
                 ]),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _saving ? null : _saveProfile,
-                  child: const Text('Save Profile'),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: (_saving || _submitting) ? null : _saveProfile,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Save Profile'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: (_saving || _submitting || !(_profile['canSubmitForVerification'] == true)) ? null : _submit,
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(
+                                (_profile['doctorProfileStatus']?.toString() == 'APPROVED')
+                                    ? 'Submit Changes'
+                                    : ((_profile['canSubmitForVerification'] == true) ? 'Submit for Verification' : 'Submit (Incomplete)'),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

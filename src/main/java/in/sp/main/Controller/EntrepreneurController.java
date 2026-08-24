@@ -232,11 +232,26 @@ public class EntrepreneurController {
         return "redirect:/entrepreneur/forgot-password";
     }
 
+    private Entrepreneur getLoggedEntrepreneur(HttpSession session) {
+        Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
+        if (e == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+                Optional<Entrepreneur> opt = entrepreneurRepository.findByEmail(auth.getName());
+                if (opt.isPresent()) {
+                    e = opt.get();
+                    session.setAttribute("loggedEntrepreneur", e);
+                }
+            }
+        }
+        return e;
+    }
+
     // --- Dashboard ---
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
+        Entrepreneur e = getLoggedEntrepreneur(session);
         if (e == null) return "redirect:/entrepreneur/login";
 
         // Refresh state
@@ -525,5 +540,25 @@ public class EntrepreneurController {
             }
         }
         return "redirect:/entrepreneur/dashboard";
+    }
+
+    // --- Wallet & Bookings placeholders ---
+    @GetMapping("/wallet")
+    public String viewWallet(HttpSession session, Model model) {
+        Entrepreneur e = getLoggedEntrepreneur(session);
+        if (e == null) return "redirect:/entrepreneur/login";
+        // Refresh Entrepreneur data
+        Optional<Entrepreneur> opt = entrepreneurRepository.findById(e.getId());
+        if (opt.isPresent()) {
+            session.setAttribute("loggedEntrepreneur", opt.get());
+        }
+        return "entrepreneur/wallet";
+    }
+
+    @GetMapping("/bookings")
+    public String viewBookings(HttpSession session, Model model) {
+        Entrepreneur e = getLoggedEntrepreneur(session);
+        if (e == null) return "redirect:/entrepreneur/login";
+        return "entrepreneur/bookings";
     }
 }

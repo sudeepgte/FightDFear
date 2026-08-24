@@ -80,6 +80,18 @@ public class Enrollment {
     private boolean consentAccuracy;
     private boolean consentRules;
     private String paymentStatus;
+    @Column(columnDefinition = "TEXT")
+    private String coachNotes;
+    @Column(name = "reminder_1h_sent")
+    private Boolean reminder1hSent;
+    private String cancelReason;
+    private Boolean transferUsed;
+    private java.time.LocalDateTime enrolledAt;
+
+    @PrePersist
+    void onEnroll() {
+        if (enrolledAt == null) enrolledAt = java.time.LocalDateTime.now();
+    }
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -157,4 +169,29 @@ public class Enrollment {
 
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
-}
+    public String getCoachNotes() { return coachNotes; }
+    public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
+    public Boolean getReminder1hSent() { return reminder1hSent; }
+    public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
+    public String getCancelReason() { return cancelReason; }
+    public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+    public Boolean getTransferUsed() { return transferUsed; }
+    public void setTransferUsed(Boolean transferUsed) { this.transferUsed = transferUsed; }
+    public java.time.LocalDateTime getEnrolledAt() { return enrolledAt; }
+    public void setEnrolledAt(java.time.LocalDateTime enrolledAt) { this.enrolledAt = enrolledAt; }
+
+    // Renewal and Belt Progression Fields
+    private LocalDate nextRenewalDate;
+    private String renewalStatus = "ACTIVE"; // ACTIVE, DUE_SOON, DUE, GRACE_PERIOD, EXPIRED
+    private String billingCycle = "MONTHLY"; // MONTHLY, QUARTERLY, ANNUAL
+    private String currentBelt = "White";
+
+    public LocalDate getNextRenewalDate() { return nextRenewalDate; }
+    public void setNextRenewalDate(LocalDate nextRenewalDate) { this.nextRenewalDate = nextRenewalDate; }
+    public String getRenewalStatus() { return renewalStatus; }
+    public void setRenewalStatus(String renewalStatus) { this.renewalStatus = renewalStatus; }
+    public String getBillingCycle() { return billingCycle; }
+    public void setBillingCycle(String billingCycle) { this.billingCycle = billingCycle; }
+    public String getCurrentBelt() { return currentBelt; }
+    public void setCurrentBelt(String currentBelt) { this.currentBelt = currentBelt; }
+}

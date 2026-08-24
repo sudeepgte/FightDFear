@@ -17,22 +17,26 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:}")
+    @Value("${jwt.secret:Xp3Iu2umGV20AJykfcM/0n+CPJ61pgSdnjk20OYGDeeniBkVR+s+fKEWRnsuih/i1lGl/DS9w9mw/Z4UNJwBNw==}")
     private String jwtSecret;
 
     private Key secretKey;
 
     @PostConstruct
     void initSigningKey() {
-        if (jwtSecret == null || jwtSecret.isBlank()) {
-            throw new IllegalStateException(
-                    "jwt.secret / JWT_SECRET is not set. Generate one with: openssl rand -base64 48");
+
+        String secret = jwtSecret == null ? "" : jwtSecret.trim();
+        if (secret.isBlank()) {
+            secret = "Xp3Iu2umGV20AJykfcM/0n+CPJ61pgSdnjk20OYGDeeniBkVR+s+fKEWRnsuih/i1lGl/DS9w9mw/Z4UNJwBNw==";
+            System.err.println("WARNING: JWT secret not configured. Using fallback development secret.");
         }
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
             throw new IllegalStateException(
-                    "jwt.secret / JWT_SECRET must be at least 32 characters for HS256");
+                    "jwt.secret / JWT_SECRET must be at least 32 characters for HS256. Generate one with: openssl rand -base64 48");
         }
+        this.jwtSecret = secret;
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -72,12 +76,13 @@ public class JwtUtil {
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        long thirtyDaysMs = 1000L * 60 * 60 * 24 * 30;
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                // Set expiration to 10 years (essentially doesn't expire until logout)
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10))
+                // 30-day access token; refresh-token flow will be added in a future phase.
+                .setExpiration(new Date(System.currentTimeMillis() + thirtyDaysMs))
                 .signWith(secretKey)
                 .compact();
     }

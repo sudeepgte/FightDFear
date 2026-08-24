@@ -9,5 +9,6 @@ import in.sp.main.Entities.Admin;
 
 public interface AdminRepository extends JpaRepository<Admin, Integer> {
     Optional<Admin> findByEmail(String email);
+    Optional<Admin> findByEmailIgnoreCase(String email);
 }
 

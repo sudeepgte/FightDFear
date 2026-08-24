@@ -5,10 +5,13 @@ import in.sp.main.Entities.WomenCartItem;
 import in.sp.main.Entities.WomenProduct;
 import in.sp.main.Entities.WomenProductOrder;
 import in.sp.main.Entities.WomenWishlistItem;
+import in.sp.main.Util.ProductCategories;
 import in.sp.main.Repository.WomenCartItemRepository;
 import in.sp.main.Repository.WomenProductOrderRepository;
 import in.sp.main.Repository.WomenProductRepository;
 import in.sp.main.Repository.WomenWishlistItemRepository;
+import in.sp.main.Service.ProductDeliveryTrackingService;
+import in.sp.main.Service.WomenProductsCareService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,19 +44,42 @@ public class MobileWomenProductController {
     @Autowired
     private WomenProductOrderRepository orderRepo;
 
+    @Autowired
+    private ProductDeliveryTrackingService trackingService;
+    @Autowired
+    private WomenProductsCareService productsCareService;
+
+    @GetMapping("/categories")
+    public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
+        if (requireUser(session) == null) return unauthorized();
+        return ResponseEntity.ok(ok(Map.of("categories", ProductCategories.asCatalog())));
+    }
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> listProducts(
             @RequestParam(value = "category", required = false) String category,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Boolean inStock,
+            @RequestParam(required = false) String sort,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
-        List<WomenProduct> products = (category != null && !category.isBlank())
-                ? productRepo.findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(category)
-                : productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
-
+        String cityQ = city == null ? "" : city.trim().toLowerCase();
+        List<WomenProduct> products = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
         List<Map<String, Object>> items = new ArrayList<>();
         for (WomenProduct p : products) {
+            if (!ProductCategories.matchesFilter(p.getCategory(), category)) continue;
+            if (p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) {
+                continue;
+            }
+            String sellerCity = p.getSeller().getCity() == null ? "" : p.getSeller().getCity().toLowerCase();
+            if (!cityQ.isBlank() && !sellerCity.contains(cityQ)) continue;
+            double price = p.getPrice() == null ? 0 : p.getPrice();
+            if (maxPrice != null && (price == 0 || price > maxPrice)) continue;
+            int stock = p.getStock() == null ? 0 : p.getStock();
+            if (Boolean.TRUE.equals(inStock) && stock <= 0) continue;
             Map<String, Object> dto = productDto(p);
             dto.put("inWishlist", wishlistRepo.existsByUserAndProduct_Id(user, p.getId()));
             Optional<WomenCartItem> c = cartRepo.findByUserAndProduct_Id(user, p.getId());
@@ -61,10 +87,25 @@ public class MobileWomenProductController {
             dto.put("cartQty", c.map(WomenCartItem::getQuantity).orElse(0));
             items.add(dto);
         }
+        String sortKey = sort == null ? "newest" : sort.trim().toLowerCase();
+        items.sort((a, b) -> {
+            if ("price".equals(sortKey) || "fee".equals(sortKey)) {
+                double pa = a.get("price") instanceof Number n ? n.doubleValue() : 0;
+                double pb = b.get("price") instanceof Number n ? n.doubleValue() : 0;
+                return Double.compare(pa, pb);
+            }
+            if ("rating".equals(sortKey)) {
+                double ra = a.get("avgRating") instanceof Number n ? n.doubleValue() : 0;
+                double rb = b.get("avgRating") instanceof Number n ? n.doubleValue() : 0;
+                return Double.compare(rb, ra);
+            }
+            return 0;
+        });
 
         return ResponseEntity.ok(ok(Map.of(
                 "products", items,
-                "count", items.size()
+                "count", items.size(),
+                "cancelPolicy", WomenProductsCareService.CANCEL_POLICY
         )));
     }
 
@@ -74,7 +115,7 @@ public class MobileWomenProductController {
         if (user == null) return unauthorized();
 
         WomenProduct p = productRepo.findById(id).orElse(null);
-        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted()) {
+        if (p == null || !p.isListedForShop()) {
             return badRequest("Product not found.");
         }
 
@@ -232,18 +273,22 @@ public class MobileWomenProductController {
 
         String shippingAddress = str(body.get("shippingAddress"));
         String paymentMethod = str(body.get("paymentMethod")).toUpperCase();
-        if (shippingAddress.isBlank()) return badRequest("shippingAddress is required.");
-        if (!"COD".equals(paymentMethod)) {
-            return badRequest("Only COD is enabled in mobile for now.");
+        if (shippingAddress.isBlank() || shippingAddress.length() < 8) {
+            return badRequest("Enter a complete delivery address.");
+        }
+        if (!"COD".equals(paymentMethod) && !"ONLINE".equals(paymentMethod)) {
+            return badRequest("Use COD or ONLINE.");
         }
 
         List<WomenCartItem> items = cartRepo.findByUser(user);
         if (items.isEmpty()) return badRequest("Cart is empty.");
 
         List<Long> orderIds = new ArrayList<>();
+        double total = 0;
         for (WomenCartItem ci : items) {
             WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
             if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())) continue;
+            if (p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) continue;
             int stock = p.getStock() == null ? 0 : p.getStock();
             if (stock <= 0) continue;
             int qty = Math.min(ci.getQuantity(), stock);
@@ -254,12 +299,16 @@ public class MobileWomenProductController {
             o.setProduct(p);
             o.setSeller(p.getSeller());
             o.setQuantity(qty);
-            o.setTotalPrice((p.getPrice() == null ? 0 : p.getPrice()) * qty);
-            o.setPaymentMethod("COD");
+            double line = (p.getPrice() == null ? 0 : p.getPrice()) * qty;
+            o.setTotalPrice(line);
+            o.setPaymentMethod(paymentMethod);
+            o.setPaymentStatus("COD".equals(paymentMethod) ? "COD" : "PENDING");
             o.setShippingAddress(shippingAddress);
             o.setStatus("PLACED");
             orderRepo.save(o);
+            trackingService.ensureGeocoded(o);
             orderIds.add(o.getId());
+            total += line;
 
             p.setStock(Math.max(0, stock - qty));
             productRepo.save(p);
@@ -268,8 +317,14 @@ public class MobileWomenProductController {
 
         if (orderIds.isEmpty()) return badRequest("Could not place order. Items are unavailable.");
         return ResponseEntity.ok(ok(Map.of(
-                "message", "Order placed successfully.",
-                "orderIds", orderIds
+                "message", "ONLINE".equals(paymentMethod)
+                        ? "Order placed. Pay from My Orders."
+                        : "Order placed successfully.",
+                "orderIds", orderIds,
+                "amount", total,
+                "paymentMethod", paymentMethod,
+                "paymentRequired", "ONLINE".equals(paymentMethod),
+                "cancelPolicy", WomenProductsCareService.CANCEL_POLICY
         )));
     }
 
@@ -285,15 +340,65 @@ public class MobileWomenProductController {
             row.put("quantity", o.getQuantity());
             row.put("totalPrice", o.getTotalPrice());
             row.put("paymentMethod", o.getPaymentMethod());
-            row.put("status", o.getStatus());
+            row.put("status", normStatus(o.getStatus()));
             row.put("shippingAddress", o.getShippingAddress());
             row.put("orderTime", o.getOrderTime() == null ? null : o.getOrderTime().toString());
             row.put("rating", o.getRating());
             row.put("review", o.getReview());
+            row.put("trackingNote", o.getTrackingNote());
+            row.put("assignedAt", o.getAssignedAt() == null ? null : o.getAssignedAt().toString());
+            row.put("pickedUpAt", o.getPickedUpAt() == null ? null : o.getPickedUpAt().toString());
+            row.put("deliveredAt", o.getDeliveredAt() == null ? null : o.getDeliveredAt().toString());
+            row.put("paymentStatus", o.getPaymentStatus());
+            row.put("canCancel", productsCareService.canCancel(o));
+            row.put("needsPayment", "ONLINE".equalsIgnoreCase(o.getPaymentMethod())
+                    && !"PAID".equalsIgnoreCase(o.getPaymentStatus())
+                    && !"CANCELLED".equalsIgnoreCase(normStatus(o.getStatus())));
+            row.put("canReview", "DELIVERED".equalsIgnoreCase(normStatus(o.getStatus())) && o.getRating() == null);
+            row.put("cancelPolicy", WomenProductsCareService.CANCEL_POLICY);
+            row.put("canLiveTrack", ProductDeliveryTrackingService.isLive(o.getStatus()));
+            row.put("etaMinutes", o.getEtaMinutes());
+            row.put("remainingKm", o.getRemainingKm());
             row.put("product", o.getProduct() == null ? null : productDto(o.getProduct()));
+            if (o.getDeliveryPartner() != null) {
+                row.put("deliveryName", o.getDeliveryPartner().getFullName());
+                row.put("deliveryPhone", o.getDeliveryPartner().getPhone());
+                row.put("deliveryVehicle", o.getDeliveryPartner().getVehicleType());
+            }
             out.add(row);
         }
         return ResponseEntity.ok(ok(Map.of("orders", out, "count", out.size())));
+    }
+
+    @GetMapping("/orders/{id}/track")
+    public ResponseEntity<Map<String, Object>> trackOrder(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenProductOrder o = orderRepo.findById(id).orElse(null);
+        if (o == null || o.getUser() == null || !o.getUser().getId().equals(user.getId())) {
+            return badRequest("Order not found.");
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.putAll(trackingService.trackPayload(o));
+        return ResponseEntity.ok(ok(data));
+    }
+
+    @PostMapping("/orders/{id}/cancel")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> cancelOrder(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenProductOrder o = orderRepo.findById(id).orElse(null);
+        if (o == null || o.getUser() == null || !o.getUser().getId().equals(user.getId())) {
+            return badRequest("Order not found.");
+        }
+        try {
+            productsCareService.cancel(o, "customer");
+            return ResponseEntity.ok(ok(Map.of("message", "Order cancelled", "status", "CANCELLED",
+                    "cancelPolicy", WomenProductsCareService.CANCEL_POLICY)));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        }
     }
 
     @PostMapping("/orders/{id}/rate")
@@ -337,10 +442,12 @@ public class MobileWomenProductController {
         dto.put("benefits", p.getBenefits());
         dto.put("usageInstructions", p.getUsageInstructions());
         dto.put("tags", p.getTags());
-        dto.put("imagePath", p.getImagePath());
+        dto.put("imagePath", p.getPublicImagePath());
         dto.put("additionalImagePaths", p.getAdditionalImagePaths());
         dto.put("featured", p.getFeatured());
         dto.put("sellerName", p.getSeller() != null ? p.getSeller().getBusinessName() : null);
+        dto.put("sellerCity", p.getSeller() != null ? p.getSeller().getCity() : null);
+        dto.put("inStock", p.getStock() != null && p.getStock() > 0);
         return dto;
     }
 
@@ -385,5 +492,12 @@ public class MobileWomenProductController {
 
     private static String str(Object v) {
         return v == null ? "" : v.toString().trim();
+    }
+
+    private static String normStatus(String status) {
+        if (status == null) return "PLACED";
+        String s = status.trim().toUpperCase();
+        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
+        return s;
     }
 }

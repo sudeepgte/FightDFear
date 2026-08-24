@@ -1,12 +1,16 @@
 package in.sp.main.Controller;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,6 +69,15 @@ public class DoctorController {
 
     @Autowired
     private DoctorBookingService doctorBookingService;
+
+    @Autowired
+    private in.sp.main.Repository.DoctorChatRepository doctorChatRepo;
+
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepo;
 
     // ==============================
     // Doctor Registration + Login
@@ -230,6 +243,8 @@ public class DoctorController {
             return "doctor/doctor-login";
         }
 
+        // Clear conflicting user session so doctor chat/calls use doctor role, not leftover user session
+        session.removeAttribute("user");
         session.setAttribute("loggedDoctor", d);
         
         // Generate JWT and add to response
@@ -266,6 +281,79 @@ public class DoctorController {
         model.addAttribute("pendingCount", pending);
         model.addAttribute("confirmedCount", confirmed);
         model.addAttribute("completedCount", completed);
+
+        // Notification badge: unseen pending appointments (clears after viewing appointments)
+        @SuppressWarnings("unchecked")
+        java.util.Set<Long> seenFromSession =
+                (java.util.Set<Long>) session.getAttribute("doctorSeenPendingAppointmentIds");
+        final java.util.Set<Long> seenPendingIds =
+                seenFromSession != null ? seenFromSession : new java.util.HashSet<>();
+        java.util.List<Long> currentPendingIds = appts.stream()
+                .filter(a -> a.getStatus() == DoctorAppointmentStatus.PENDING)
+                .map(DoctorAppointment::getId)
+                .toList();
+        long appointmentNotifCount = currentPendingIds.stream()
+                .filter(id -> !seenPendingIds.contains(id))
+                .count();
+        if ("appointments".equals(section)) {
+            seenPendingIds.addAll(currentPendingIds);
+            session.setAttribute("doctorSeenPendingAppointmentIds", seenPendingIds);
+            appointmentNotifCount = 0;
+        }
+        model.addAttribute("appointmentNotifCount", appointmentNotifCount);
+
+        // Unread chat messages from patients (build list before marking read)
+        java.util.List<in.sp.main.Entities.DoctorChatMessage> unreadMsgs =
+                doctorChatRepo.findByDoctorAndSenderTypeAndReadByDoctorFalse(d, "USER");
+        long unreadChatCount = unreadMsgs.size();
+
+        // Notification messages for bell dropdown
+        java.util.List<java.util.Map<String, String>> notifications = new java.util.ArrayList<>();
+        for (DoctorAppointment a : appts) {
+            if (a.getStatus() == DoctorAppointmentStatus.PENDING
+                    && a.getId() != null
+                    && !seenPendingIds.contains(a.getId())) {
+                java.util.Map<String, String> n = new java.util.LinkedHashMap<>();
+                n.put("type", "appointment");
+                n.put("icon", "bi-calendar-plus");
+                n.put("title", "New appointment request");
+                String patient = a.getUser() != null && a.getUser().getFullName() != null
+                        ? a.getUser().getFullName() : "Patient";
+                n.put("body", patient + (a.getAppointmentTime() != null ? " · " + a.getAppointmentTime() : ""));
+                n.put("href", "/doctors/dashboard?section=appointments");
+                notifications.add(n);
+            }
+        }
+        java.util.LinkedHashMap<Long, in.sp.main.Entities.DoctorChatMessage> latestUnreadByUser =
+                new java.util.LinkedHashMap<>();
+        for (in.sp.main.Entities.DoctorChatMessage msg : unreadMsgs) {
+            if (msg.getUser() != null && msg.getUser().getId() != null) {
+                latestUnreadByUser.putIfAbsent(msg.getUser().getId(), msg);
+            }
+        }
+        for (in.sp.main.Entities.DoctorChatMessage msg : latestUnreadByUser.values()) {
+            java.util.Map<String, String> n = new java.util.LinkedHashMap<>();
+            n.put("type", "chat");
+            n.put("icon", "bi-chat-dots-fill");
+            n.put("title", "New patient message");
+            String patient = msg.getUser().getFullName() != null ? msg.getUser().getFullName() : "Patient";
+            String preview = msg.getMessage() != null ? msg.getMessage() : "";
+            if (preview.length() > 60) preview = preview.substring(0, 57) + "...";
+            n.put("body", patient + (preview.isBlank() ? "" : " · " + preview));
+            n.put("href", "/doctors/chat/" + d.getId() + "?userId=" + msg.getUser().getId());
+            notifications.add(n);
+        }
+        model.addAttribute("notifications", notifications);
+
+        if ("chats".equals(section) && unreadChatCount > 0) {
+            for (in.sp.main.Entities.DoctorChatMessage msg : unreadMsgs) {
+                msg.setReadByDoctor(true);
+            }
+            doctorChatRepo.saveAll(unreadMsgs);
+            unreadChatCount = 0;
+        }
+        model.addAttribute("unreadChatCount", unreadChatCount);
+        model.addAttribute("notificationCount", appointmentNotifCount + unreadChatCount);
 
         // Calculate total earnings from paid appointments
         double totalEarnings = appts.stream()
@@ -336,6 +424,41 @@ public class DoctorController {
         session.setAttribute("loggedDoctor", d);
         redirectAttributes.addFlashAttribute("message", "Profile updated successfully!");
         return "redirect:/doctors/dashboard?section=profile";
+    }
+
+    @PostMapping("/update-fees")
+    public String updateFees(@RequestParam(required = false) Double consultationFee,
+                             @RequestParam(required = false) Double chatFee,
+                             @RequestParam(required = false) Double callFee,
+                             @RequestParam(required = false) Double videoFee,
+                             @RequestParam(required = false) String upiId,
+                             @RequestParam(required = false) String bankDetails,
+                             HttpSession session,
+                             RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        if (consultationFee != null && consultationFee < 0) {
+            redirectAttributes.addFlashAttribute("error", "Consultation fee cannot be negative.");
+            return "redirect:/doctors/dashboard?section=earnings";
+        }
+        if ((chatFee != null && chatFee < 0) || (callFee != null && callFee < 0) || (videoFee != null && videoFee < 0)) {
+            redirectAttributes.addFlashAttribute("error", "Fees cannot be negative.");
+            return "redirect:/doctors/dashboard?section=earnings";
+        }
+
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        if (consultationFee != null) d.setConsultationFee(consultationFee);
+        d.setChatFee(chatFee);
+        d.setCallFee(callFee);
+        d.setVideoFee(videoFee);
+        d.setUpiId(upiId != null ? upiId.trim() : null);
+        d.setBankDetails(bankDetails != null ? bankDetails.trim() : null);
+
+        doctorRepo.save(d);
+        session.setAttribute("loggedDoctor", d);
+        redirectAttributes.addFlashAttribute("message", "Fee breakdown and payment methods updated successfully!");
+        return "redirect:/doctors/dashboard?section=earnings";
     }
 
     @PostMapping("/update-schedule")
@@ -432,9 +555,12 @@ public class DoctorController {
     @GetMapping("/list")
     public String listForUsers(Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
-        if (u == null) return "redirect:/login";
+        Doctor loggedDoctor = (Doctor) session.getAttribute("loggedDoctor");
+        // Doctors browsing the directory must not be bounced to user login/dashboard
+        if (u == null && loggedDoctor == null) return "redirect:/login";
 
         model.addAttribute("doctors", doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED));
+        model.addAttribute("viewerIsDoctor", loggedDoctor != null && u == null);
         return "doctor/doctor-list";
     }
 
@@ -471,6 +597,9 @@ public class DoctorController {
             return "redirect:/doctors/list";
         }
 
+
+
+
         try {
             ConsultationType cType;
             try {
@@ -496,20 +625,83 @@ public class DoctorController {
             redirectAttributes.addFlashAttribute("message", "Invalid appointment time.");
             return "redirect:/doctors/view/" + doctorId;
         }
+
     }
 
     @GetMapping("/myAppointments")
-    public String myAppointments(HttpSession session, Model model) {
+    public String myAppointments(@RequestParam(required = false) String section,
+                                 HttpSession session, Model model) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
         model.addAttribute("appointments", appointmentRepo.findByUserOrderByAppointmentTimeDesc(u));
+        model.addAttribute("section", section);
         return "doctor/my-appointments";
+    }
+
+    /** Authorized patient view of a prescription linked to their appointment. */
+    @GetMapping("/appointments/{id}/prescription/view")
+    public String viewOwnPrescription(@PathVariable Long id, HttpSession session, Model model,
+                                      RedirectAttributes redirectAttributes) {
+        User u = (User) session.getAttribute("user");
+        if (u == null) return "redirect:/login";
+
+        DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
+        if (appt == null || appt.getUser() == null || !appt.getUser().getId().equals(u.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Prescription not found or access denied.");
+            return "redirect:/doctors/myAppointments";
+        }
+        if (appt.getPrescriptionText() == null || appt.getPrescriptionText().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "No prescription available for this appointment yet.");
+            return "redirect:/doctors/myAppointments";
+        }
+
+        model.addAttribute("appointment", appt);
+        return "doctor/prescription-view";
+    }
+
+    /** Authorized patient download of prescription as a plain-text file. */
+    @GetMapping("/appointments/{id}/prescription/download")
+    public ResponseEntity<byte[]> downloadOwnPrescription(@PathVariable Long id, HttpSession session) {
+        User u = (User) session.getAttribute("user");
+        if (u == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
+        if (appt == null || appt.getUser() == null || !appt.getUser().getId().equals(u.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        if (appt.getPrescriptionText() == null || appt.getPrescriptionText().isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Doctor doc = appt.getDoctor();
+        StringBuilder sb = new StringBuilder();
+        sb.append("PRESCRIPTION\n");
+        sb.append("============\n\n");
+        sb.append("Doctor: ").append(doc != null ? doc.getFullName() : "—").append("\n");
+        if (doc != null && doc.getSpecialization() != null) {
+            sb.append("Specialization: ").append(doc.getSpecialization()).append("\n");
+        }
+        if (doc != null && doc.getHospitalName() != null) {
+            sb.append("Hospital/Clinic: ").append(doc.getHospitalName()).append("\n");
+        }
+        sb.append("Patient: ").append(u.getFullName() != null ? u.getFullName() : "—").append("\n");
+        sb.append("Appointment: ").append(appt.getAppointmentTime()).append("\n\n");
+        sb.append("Rx:\n").append(appt.getPrescriptionText()).append("\n");
+
+        byte[] body = sb.toString().getBytes(StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"prescription-" + id + ".txt\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(body);
     }
 
     @PostMapping("/review")
     public String addReview(@RequestParam Long doctorId,
-                            @RequestParam Integer rating,
+                            @RequestParam(required = false) Integer rating,
                             @RequestParam(required = false) String comment,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
@@ -519,8 +711,9 @@ public class DoctorController {
         Doctor d = doctorRepo.findById(doctorId).orElse(null);
         if (d == null) return "redirect:/doctors/list";
 
+        // No default rating — require an explicit user selection (1-5)
         if (rating == null || rating < 1 || rating > 5) {
-            redirectAttributes.addFlashAttribute("message", "Rating must be 1-5.");
+            redirectAttributes.addFlashAttribute("error", "Please select a star rating before submitting your review.");
             return "redirect:/doctors/view/" + doctorId;
         }
 
@@ -538,7 +731,12 @@ public class DoctorController {
 
         // Purpose: update average rating for display (simple recalculation).
         List<DoctorReview> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(doctorId);
-        double avg = reviews.stream().mapToInt(x -> x.getRating() == null ? 0 : x.getRating()).average().orElse(0.0);
+        double avg = reviews.stream()
+                .map(DoctorReview::getRating)
+                .filter(x -> x != null && x >= 1 && x <= 5)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0.0);
         d.setRating(avg);
         doctorRepo.save(d);
 
@@ -549,15 +747,6 @@ public class DoctorController {
     // ==============================
     // Real-time: Chat, Video, Call
     // ==============================
-    @Autowired
-    private in.sp.main.Repository.DoctorChatRepository doctorChatRepo;
-
-    @Autowired
-    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
-    private in.sp.main.Repository.UserRepository userRepo;
-
     @GetMapping("/chat/{doctorId}")
     public String chatWithDoctor(@PathVariable Long doctorId, @RequestParam(required = false) Long userId, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
@@ -565,16 +754,10 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        if (u != null) {
-            model.addAttribute("currentUser", u.getFullName());
-            model.addAttribute("currentId", u.getId());
-            model.addAttribute("senderType", "USER");
-            model.addAttribute("targetUserId", u.getId());
-            model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(u, target));
-        } else if (d != null) {
-            if (!d.getId().equals(doctorId)) {
-                return "redirect:/doctors/dashboard";
-            }
+        // Doctor owning this chat must win over a leftover user session (same browser / prior login)
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
+
+        if (doctorOwner) {
             model.addAttribute("currentUser", "Dr. " + d.getFullName());
             model.addAttribute("currentId", d.getId());
             model.addAttribute("senderType", "DOCTOR");
@@ -584,6 +767,15 @@ public class DoctorController {
                 if (chatUser != null) {
                     model.addAttribute("targetUserName", chatUser.getFullName());
                     model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target));
+                    // Mark this patient's messages as read when doctor opens the chat
+                    java.util.List<in.sp.main.Entities.DoctorChatMessage> unread =
+                            doctorChatRepo.findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(target, chatUser, "USER");
+                    if (!unread.isEmpty()) {
+                        for (in.sp.main.Entities.DoctorChatMessage msg : unread) {
+                            msg.setReadByDoctor(true);
+                        }
+                        doctorChatRepo.saveAll(unread);
+                    }
                 } else {
                     model.addAttribute("targetUserName", "Unknown Patient");
                     model.addAttribute("chatHistory", java.util.Collections.emptyList());
@@ -591,6 +783,14 @@ public class DoctorController {
             } else {
                 model.addAttribute("chatHistory", java.util.Collections.emptyList());
             }
+        } else if (u != null) {
+            model.addAttribute("currentUser", u.getFullName());
+            model.addAttribute("currentId", u.getId());
+            model.addAttribute("senderType", "USER");
+            model.addAttribute("targetUserId", u.getId());
+            model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(u, target));
+        } else if (d != null) {
+            return "redirect:/doctors/dashboard";
         } else {
             return "redirect:/login";
         }
@@ -618,11 +818,13 @@ public class DoctorController {
             if (u == null) return "NOT_LOGGED_IN";
             msg.setUser(u);
             msg.setSenderType("USER");
+            msg.setReadByDoctor(false);
         } else {
             Doctor d = (Doctor) session.getAttribute("loggedDoctor");
             if (d == null) return "NOT_LOGGED_IN";
             if (!d.getId().equals(doctorId)) return "ACCESS_DENIED";
             msg.setSenderType("DOCTOR");
+            msg.setReadByDoctor(true);
             if (userId != null) {
                 User targetUser = userRepo.findById(userId).orElse(null);
                 msg.setUser(targetUser);
@@ -649,13 +851,16 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-doc-" + doctorId + "-" + System.currentTimeMillis();
-        if (u != null) {
+        if (doctorOwner) {
+            model.addAttribute("displayName", "Dr. " + d.getFullName());
+            roomName = "safeher-doc-" + doctorId + "-user-" + (userId != null ? userId : 0);
+        } else if (u != null) {
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-doc-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
-            model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-doc-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            return "redirect:/doctors/dashboard";
         } else {
             return "redirect:/login";
         }
@@ -672,13 +877,16 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-call-" + doctorId + "-" + System.currentTimeMillis();
-        if (u != null) {
+        if (doctorOwner) {
+            model.addAttribute("displayName", "Dr. " + d.getFullName());
+            roomName = "safeher-call-" + doctorId + "-user-" + (userId != null ? userId : 0);
+        } else if (u != null) {
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-call-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
-            model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-call-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            return "redirect:/doctors/dashboard";
         } else {
             return "redirect:/login";
         }
@@ -688,18 +896,34 @@ public class DoctorController {
         return "doctor/doctor-call";
     }
 
+    private static final int PRESCRIPTION_MAX_LENGTH = 2000;
+
     @PostMapping("/appointments/{id}/prescription")
-    public String savePrescription(@PathVariable Long id, @RequestParam String prescriptionText, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String savePrescription(@PathVariable Long id,
+                                   @RequestParam String prescriptionText,
+                                   HttpSession session,
+                                   RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
-        
+
+        String text = prescriptionText == null ? "" : prescriptionText.trim();
+        if (text.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Prescription text is required.");
+            return "redirect:/doctors/dashboard?section=prescriptions";
+        }
+        if (text.length() > PRESCRIPTION_MAX_LENGTH) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Prescription cannot exceed " + PRESCRIPTION_MAX_LENGTH + " characters.");
+            return "redirect:/doctors/dashboard?section=prescriptions";
+        }
+
         DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
         if (prescriptionText != null && prescriptionText.length() > 500) {
             redirectAttributes.addFlashAttribute("error", "Prescription cannot exceed 500 characters.");
             return "redirect:/doctors/dashboard?section=prescriptions";
         }
         if (appt != null && appt.getDoctor().getId().equals(d.getId())) {
-            appt.setPrescriptionText(prescriptionText);
+            appt.setPrescriptionText(text);
             appointmentRepo.save(appt);
             redirectAttributes.addFlashAttribute("message", "Prescription saved successfully!");
         } else {

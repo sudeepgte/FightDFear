@@ -26,5 +26,34 @@ public interface ServiceRepository extends JpaRepository<Service1, Long> {
 	List<Service1> findByCategory(ServiceCategory category);
 	void deleteByIdAndSalonId(Long id, Long id2);
 
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "DELETE FROM package_services WHERE service_id = :serviceId", nativeQuery = true)
+    void removeFromAllPackages(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "DELETE FROM offer_applicable_services WHERE service_id = :serviceId", nativeQuery = true)
+    void removeFromAllOffers(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "UPDATE booking1 SET service_id = NULL WHERE service_id = :serviceId", nativeQuery = true)
+    void deleteBookingsForService(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "UPDATE bookings SET salon_service_id = NULL WHERE salon_service_id = :serviceId", nativeQuery = true)
+    void deleteOldBookingsForService(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "UPDATE bookings SET service_id = NULL WHERE service_id = :serviceId", nativeQuery = true)
+    void deleteOldBookingsForStylistService(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query(value = "DELETE FROM services WHERE id = :serviceId", nativeQuery = true)
+    void forceDeleteService(@org.springframework.data.repository.query.Param("serviceId") Long serviceId);
  
 }

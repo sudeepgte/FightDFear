@@ -6,9 +6,14 @@ import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.UserRepository;
+import in.sp.main.Entities.OtpChannel;
+import in.sp.main.Entities.OtpPurpose;
+import in.sp.main.Service.OtpVerificationService;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.RateLimitService;
 import in.sp.main.Service.UserService;
 import in.sp.main.Util.MobileValidation;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,12 +44,62 @@ public class MobileAuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
+    @Autowired
+    private OtpVerificationService otpVerificationService;
+
+    @org.springframework.beans.factory.annotation.Value("${otp.expiration-minutes:10}")
+    private int otpExpirationMinutes;
+
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("success", true);
         response.put("status", "ok");
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/otp/send-email")
+    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
+        String email = MobileValidation.normalizeEmail(body == null ? null : body.get("email"));
+        String emailErr = MobileValidation.requireEmail(email);
+        if (emailErr != null) {
+            return ResponseEntity.badRequest().body(error(emailErr));
+        }
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error("Email already registered. Please sign in."));
+        }
+        try {
+            otpVerificationService.sendOtp(email, OtpPurpose.USER_REGISTER, OtpChannel.EMAIL);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Verification code sent to your email");
+            res.put("channel", "EMAIL");
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error(ex.getMessage()));
+        }
+    }
+
+    @PostMapping("/otp/verify-email")
+    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody Map<String, String> body) {
+        String email = MobileValidation.normalizeEmail(body == null ? null : body.get("email"));
+        String otp = body == null || body.get("otp") == null ? "" : body.get("otp").trim();
+        String emailErr = MobileValidation.requireEmail(email);
+        if (emailErr != null) {
+            return ResponseEntity.badRequest().body(error(emailErr));
+        }
+        if (!otpVerificationService.verifyOtp(email, otp, OtpPurpose.USER_REGISTER)) {
+            return ResponseEntity.badRequest().body(error("Invalid or expired email OTP"));
+        }
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Email verified successfully");
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/register")
@@ -96,6 +152,11 @@ public class MobileAuthController {
             response.put("error", "Email already registered. Please sign in.");
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
+        if (!otpVerificationService.consumeVerifiedOtp(normEmail, OtpPurpose.USER_REGISTER, otpExpirationMinutes)) {
+            response.put("success", false);
+            response.put("error", "Email not verified. Please verify the OTP sent to your email first.");
+            return ResponseEntity.badRequest().body(response);
+        }
 
         User user = new User();
         user.setEmail(normEmail);
@@ -103,10 +164,11 @@ public class MobileAuthController {
         user.setPhoneNumber(phone);
         user.setHomeAddress(homeAddress.isEmpty() ? null : homeAddress);
         user.setPassword(passwordService.encode(password));
-        user.setVerificationStatus(VerificationStatus.PENDING);
+        // Members are app users after email OTP — not job workers.
+        user.setVerificationStatus(VerificationStatus.VERIFIED);
         user.setIdentityDocument(preferredLanguage.isEmpty()
-                ? "mobile-pending"
-                : "mobile-pending|lang:" + preferredLanguage);
+                ? "mobile-member"
+                : "mobile-member|lang:" + preferredLanguage);
         if (!profilePhoto.isEmpty()) {
             user.setProfilePhoto(profilePhoto);
         }
@@ -150,10 +212,10 @@ public class MobileAuthController {
 
         userService.createUser(user);
         response.put("success", true);
-        response.put("message", "Registration successful. Your account is under admin verification. You will be able to log in once your account is approved.");
+        response.put("message", "Registration successful. You can now sign in.");
         response.put("userId", user.getId());
         response.put("email", user.getEmail());
-        response.put("status", VerificationStatus.PENDING.name());
+        response.put("status", VerificationStatus.VERIFIED.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -162,7 +224,9 @@ public class MobileAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> login(
+            @RequestBody Map<String, String> body,
+            HttpServletRequest request) {
         Map<String, Object> response = new LinkedHashMap<>();
         String email = body == null ? null : body.get("email");
         String password = body == null ? null : body.get("password");
@@ -175,6 +239,9 @@ public class MobileAuthController {
             response.put("error", "Email and password are required");
             return ResponseEntity.badRequest().body(response);
         }
+
+        String clientIp = request == null ? "unknown" : request.getRemoteAddr();
+        rateLimitService.checkOrThrow("login:" + clientIp + ":" + normEmail, 10, Duration.ofMinutes(15));
 
         User user = userService.findByUsername(normEmail);
         boolean ok = false;
@@ -192,11 +259,6 @@ public class MobileAuthController {
         }
 
         VerificationStatus status = user.getVerificationStatus();
-        if (status == null || status == VerificationStatus.PENDING) {
-            response.put("success", false);
-            response.put("error", "Account pending admin verification");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        }
         if (status == VerificationStatus.REJECTED) {
             response.put("success", false);
             response.put("error", "Account rejected by admin");
@@ -207,6 +269,7 @@ public class MobileAuthController {
             response.put("error", "Account banned");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
+        // Members sign in after email OTP. Job workers are gated separately via Women Jobs admin approval.
 
         String token = jwtUtil.generateToken(user.getEmail(), "USER");
         response.put("success", true);
@@ -216,7 +279,14 @@ public class MobileAuthController {
         response.put("email", user.getEmail());
         response.put("name", user.getFullName());
         response.put("phone", user.getPhoneNumber());
-        response.put("status", status.name());
+        response.put("status", status == null ? VerificationStatus.VERIFIED.name() : status.name());
         return ResponseEntity.ok(response);
+    }
+
+    private static Map<String, Object> error(String msg) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("success", false);
+        out.put("error", msg == null ? "Request failed" : msg);
+        return out;
     }
 }

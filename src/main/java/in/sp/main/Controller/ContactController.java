@@ -73,15 +73,36 @@ public class ContactController {
             return contactResponse(request, redirectAttributes, false, "Please fill in all fields.");
         }
 
+        String cleanedName = name.trim();
+        String cleanedSubject = subject.trim();
+        String cleanedMessage = message.trim();
+
+        if (cleanedName.length() < 2 || cleanedName.length() > 80) {
+            return contactResponse(request, redirectAttributes, false, "Your Name must be between 2 and 80 characters.");
+        }
+        if (!cleanedName.matches("^[A-Za-z]([A-Za-z .'-]*[A-Za-z])?$")) {
+            return contactResponse(request, redirectAttributes, false,
+                    "Your Name may only contain letters, spaces, apostrophes, hyphens, or periods — no numbers.");
+        }
+        if (cleanedSubject.length() > 150) {
+            return contactResponse(request, redirectAttributes, false, "Subject cannot exceed 150 characters.");
+        }
+        if (cleanedMessage.length() < 10) {
+            return contactResponse(request, redirectAttributes, false, "Message must be at least 10 characters.");
+        }
+        if (cleanedMessage.length() > 2000) {
+            return contactResponse(request, redirectAttributes, false, "Message cannot exceed 2000 characters.");
+        }
+
         try {
-            contactMessageService.save(name.trim(), trimmedEmail, subject.trim(), message.trim());
+            contactMessageService.save(cleanedName, trimmedEmail, cleanedSubject, cleanedMessage);
             try {
                 if (adminEmail != null && !adminEmail.isBlank()) {
                     SimpleMailMessage mail = new SimpleMailMessage();
                     mail.setTo(adminEmail);
-                    mail.setSubject("Fight D Fear Contact: " + subject.trim());
-                    mail.setText("From: " + name.trim() + "\nEmail: " + trimmedEmail
-                            + "\n\nMessage:\n" + message.trim());
+                    mail.setSubject("Fight D Fear Contact: " + cleanedSubject);
+                    mail.setText("From: " + cleanedName + "\nEmail: " + trimmedEmail
+                            + "\n\nMessage:\n" + cleanedMessage);
                     mailSender.send(mail);
                 }
             } catch (Exception mailEx) {

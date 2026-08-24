@@ -351,4 +351,30 @@ public class AttendanceController {
             return ResponseEntity.badRequest().body("Check-in failed: " + e.getMessage());
         }
     }
+
+    @Autowired
+    private in.sp.main.Service.QrAttendanceService qrAttendanceService;
+
+    // ---------- USER QR SCAN / CODE CHECK-IN (Offline Dojo Classes) ----------
+    @PostMapping({"/api/attendance/qr-checkin", "/attendance/api/qr-checkin"})
+    @ResponseBody
+    public ResponseEntity<?> studentQrCheckIn(@RequestBody Map<String, String> data, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Please login first"));
+
+        String token = data.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "QR token is required"));
+        }
+
+        try {
+            Map<String, Object> result = qrAttendanceService.checkInStudent(user, token.trim());
+            return ResponseEntity.ok(result);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", ex.getMessage()));
+        }
+    }
 }
+

@@ -8,6 +8,16 @@ import jakarta.persistence.*;
 @Table(name = "stylists")
 public class Stylist {
 
+    public static final int NAME_MAX_LENGTH = 50;
+    public static final int EMAIL_MAX_LENGTH = 100;
+    public static final int PHONE_MAX_LENGTH = 10;
+    public static final int SPECIALIZATION_MAX_LENGTH = 100;
+    public static final int BIO_MAX_LENGTH = 1000;
+    public static final int AVAILABILITY_HOURS_MAX_LENGTH = 120;
+    public static final String NAME_PATTERN = "^[A-Za-z][A-Za-z .'-]{1,49}$";
+    public static final String EMAIL_PATTERN = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+    public static final String PHONE_PATTERN = "^\\d{10}$";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -102,4 +112,49 @@ public class Stylist {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "partner_profile_status", length = 40)
+    private PartnerProfileStatus partnerProfileStatus;
+
+    @Column(name = "profile_completion_pct")
+    private Integer profileCompletionPct = 0;
+
+    @Column(name = "accepted_terms_at")
+    private LocalDateTime acceptedTermsAt;
+
+    @Column(name = "submitted_for_verification_at")
+    private LocalDateTime submittedForVerificationAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "changes_requested_note", columnDefinition = "TEXT")
+    private String changesRequestedNote;
+
+    public PartnerProfileStatus getPartnerProfileStatus() { return partnerProfileStatus; }
+    public void setPartnerProfileStatus(PartnerProfileStatus partnerProfileStatus) {
+        this.partnerProfileStatus = partnerProfileStatus;
+    }
+
+    public Integer getProfileCompletionPct() { return profileCompletionPct; }
+    public void setProfileCompletionPct(Integer profileCompletionPct) {
+        this.profileCompletionPct = profileCompletionPct;
+    }
+
+    public LocalDateTime getAcceptedTermsAt() { return acceptedTermsAt; }
+    public void setAcceptedTermsAt(LocalDateTime acceptedTermsAt) { this.acceptedTermsAt = acceptedTermsAt; }
+
+    public LocalDateTime getSubmittedForVerificationAt() { return submittedForVerificationAt; }
+    public void setSubmittedForVerificationAt(LocalDateTime submittedForVerificationAt) {
+        this.submittedForVerificationAt = submittedForVerificationAt;
+    }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getChangesRequestedNote() { return changesRequestedNote; }
+    public void setChangesRequestedNote(String changesRequestedNote) {
+        this.changesRequestedNote = changesRequestedNote;
+    }
 }

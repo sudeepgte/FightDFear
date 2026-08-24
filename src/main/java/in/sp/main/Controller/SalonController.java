@@ -3,6 +3,7 @@ package in.sp.main.Controller;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,8 +24,10 @@ import in.sp.main.Service.SalonService;
 import in.sp.main.Repository.SalonRepository;
 import in.sp.main.Repository.ServiceRepository;
 import in.sp.main.Repository.StylistRepository;
+import in.sp.main.Repository.Booking1Repository;
 import jakarta.servlet.http.HttpSession;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +55,21 @@ public class SalonController {
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
 
+
+    @Value("${app.upload.profile-image.max-size-mb:2}")
+    private int profileImageMaxSizeMb;
+
+    @Value("${app.upload.profile-image.accepted:JPG, JPEG, PNG}")
+    private String profileImageAccepted;
+    @Autowired
+    private in.sp.main.Repository.BookingRepository bookingRepository;
+
+    @Autowired
+    private in.sp.main.Repository.Booking1Repository booking1Repository;
+
+    @Autowired
+    private in.sp.main.Repository.OfferRepository offerRepository;
+
     // Show registration form
     @GetMapping("/salons/register")
     public String showSalonRegister() {
@@ -63,12 +81,47 @@ public class SalonController {
     public String registerSalon(
             @RequestParam("name") String name,
             @RequestParam("username") String username,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword,
             @RequestParam("hygieneCertificate") MultipartFile hygieneCertificate,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
             Model model) {
+
+        String cleanedName = name == null ? "" : name.trim();
+        String cleanedUsername = username == null ? "" : username.trim();
+        String cleanedEmail = email == null ? "" : email.trim().toLowerCase();
+        String cleanedPhone = phone == null ? "" : phone.trim();
+
+        if (cleanedName.length() < 3) {
+            model.addAttribute("error", "Salon name must be at least 3 characters.");
+            return "salon/salon-register";
+        }
+        if (cleanedName.length() > Salon.NAME_MAX_LENGTH) {
+            model.addAttribute("error",
+                    "Salon name cannot exceed " + Salon.NAME_MAX_LENGTH + " characters.");
+            return "salon/salon-register";
+        }
+        if (!cleanedUsername.matches(Salon.USERNAME_PATTERN)) {
+            model.addAttribute("error",
+                    "Username must be 3–20 characters and may only contain letters, numbers, and underscores (no spaces or special characters).");
+            return "salon/salon-register";
+        }
+        if (salonRepository.findByUsername(cleanedUsername).isPresent()) {
+            model.addAttribute("error", "Username is already taken. Please choose another.");
+            return "salon/salon-register";
+        }
+        if (cleanedEmail.isEmpty() || cleanedEmail.length() > Salon.EMAIL_MAX_LENGTH
+                || !cleanedEmail.matches(Salon.EMAIL_PATTERN)) {
+            model.addAttribute("error", "Please enter a valid email address.");
+            return "salon/salon-register";
+        }
+        if (!cleanedPhone.matches(Salon.PHONE_PATTERN)) {
+            model.addAttribute("error", "Phone number must be exactly 10 digits.");
+            return "salon/salon-register";
+        }
 
         if (!password.equals(confirmPassword)) {
             model.addAttribute("error", "Passwords do not match!");
@@ -79,8 +132,10 @@ public class SalonController {
             String hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
 
             Salon salon = new Salon();
-            salon.setName(name);
-            salon.setUsername(username); // store username
+            salon.setName(cleanedName);
+            salon.setUsername(cleanedUsername);
+            salon.setEmail(cleanedEmail);
+            salon.setPhone(cleanedPhone);
             salon.setPassword(passwordService.encode(password));
             salon.setHygieneCertificateUrl(hygieneCertificateUrl);
             salon.setBio(bio);
@@ -93,6 +148,9 @@ public class SalonController {
         } catch (IOException e) {
             e.printStackTrace();
             model.addAttribute("error", "Failed to upload hygiene certificate.");
+            return "salon/salon-register";
+        } catch (DataIntegrityViolationException e) {
+            model.addAttribute("error", "Username is already taken. Please choose another.");
             return "salon/salon-register";
         }
     }
@@ -123,6 +181,14 @@ public class SalonController {
                     model.addAttribute("error", "Your account is pending admin approval. Please wait for the physical business audit.");
                     return "salon/salon-login";
                 }
+                // Clear user/other portals so contact/header "My Dashboard" routes to salon correctly
+                session.removeAttribute("user");
+                session.removeAttribute("loggedDoctor");
+                session.removeAttribute("loggedStylist");
+                session.removeAttribute("loggedProvider");
+                session.removeAttribute("loggedCentre");
+                session.removeAttribute("loggedSeller");
+                session.removeAttribute("admin");
                 session.setAttribute("loggedSalon", salon);
                 
                 // Generate JWT and add to response
@@ -168,47 +234,546 @@ public class SalonController {
         if (loggedSalon == null) {
             return "redirect:/salons/login";
         }
+        
+        Long salonId = loggedSalon.getId();
+        
+        // Today's date
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDateTime startOfDay = today.atStartOfDay();
+        java.time.LocalDateTime endOfDay = today.atTime(java.time.LocalTime.MAX);
+        
+        // --- Old Booking entity counts (instant bookings) ---
+        long oldTodayAppts = bookingRepository.countBySalonIdAndBookingTimeBetween(salonId, startOfDay, endOfDay);
+        long oldCompletedAppts = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.COMPLETED, startOfDay, endOfDay);
+        Double oldTodayRevenue = bookingRepository.sumRevenueBySalonIdAndDate(salonId, startOfDay, endOfDay);
+        long oldTotalBookings = bookingRepository.countBySalonId(salonId);
+        
+        // --- Booking1 entity counts (customer bookings via online form) ---
+        long newTodayAppts = booking1Repository.countBySalonAndBookingDate(loggedSalon, today);
+        long newCompletedAppts = booking1Repository.countBySalonAndStatusAndBookingDate(loggedSalon, "COMPLETED", today);
+        Double newTodayRevenue = booking1Repository.sumRevenueBySalonAndDate(loggedSalon, today);
+        long newTotalBookings = booking1Repository.countBySalon(loggedSalon);
+        
+        // Merge counts from both booking systems
+        long todayAppts = oldTodayAppts + newTodayAppts;
+        long completedAppts = oldCompletedAppts + newCompletedAppts;
+        double todayRevenue = (oldTodayRevenue != null ? oldTodayRevenue : 0.0) + (newTodayRevenue != null ? newTodayRevenue : 0.0);
+        long totalBookings = oldTotalBookings + newTotalBookings;
+        
+        // Average rating from old booking system
+        List<Object[]> avgResultList = bookingRepository.getAverageRatingAndCount(salonId);
+        Double avgRating = 0.0;
+        long totalReviews = 0;
+        if (avgResultList != null && !avgResultList.isEmpty()) {
+            Object[] avgResult = avgResultList.get(0);
+            if (avgResult[0] != null) avgRating = ((Number) avgResult[0]).doubleValue();
+            if (avgResult[1] != null) totalReviews = ((Number) avgResult[1]).longValue();
+        }
+        avgRating = Math.round(avgRating * 10.0) / 10.0;
+        
+        model.addAttribute("todayApptsCount", todayAppts);
+        model.addAttribute("completedApptsCount", completedAppts);
+        model.addAttribute("todayRevenue", todayRevenue);
+        model.addAttribute("totalBookingsCount", totalBookings);
+        model.addAttribute("averageRating", avgRating);
+        model.addAttribute("totalReviews", totalReviews);
+        
+        // --- Calculate Today's Real Hours ---
+        String todayHours = "09:00 AM - 09:00 PM"; // Default fallback
+        try {
+            if (loggedSalon.getOperatingHoursJson() != null && !loggedSalon.getOperatingHoursJson().isEmpty()) {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, String> hoursMap = mapper.readValue(loggedSalon.getOperatingHoursJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+                String dayName = today.getDayOfWeek().name().toLowerCase();
+                if (hoursMap.containsKey(dayName)) {
+                    String val = hoursMap.get(dayName);
+                    if (val != null && val.contains(" - ")) {
+                        String[] parts = val.split(" - ");
+                        java.time.format.DateTimeFormatter format12 = java.time.format.DateTimeFormatter.ofPattern("hh:mm a");
+                        todayHours = java.time.LocalTime.parse(parts[0]).format(format12) + " - " + java.time.LocalTime.parse(parts[1]).format(format12);
+                    } else if (val != null) {
+                        todayHours = val; // e.g. "Closed"
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore parse errors, fallback to default
+        }
+        model.addAttribute("todayHours", todayHours);
+        
+        // Top services from old booking system
+        List<Object[]> topServices = bookingRepository.findTopServicesBySalonId(salonId);
+        model.addAttribute("topServices", topServices);
+        
+        // Fetch salon offers to display in the dashboard
+        List<in.sp.main.Entities.Offer> salonOffers = offerRepository.findBySalonId(salonId);
+        model.addAttribute("salonOffers", salonOffers);
+        
+        // --- Business Overview (This Week) ---
+        java.time.LocalDate monday = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        java.time.LocalDate sunday = monday.plusDays(6);
+        java.time.LocalDateTime startOfWeek = monday.atStartOfDay();
+        java.time.LocalDateTime endOfWeek = sunday.atTime(java.time.LocalTime.MAX);
+        
+        // Old booking system week stats
+        long oldWeekTotal = bookingRepository.countBySalonIdAndBookingTimeBetween(salonId, startOfWeek, endOfWeek);
+        long oldWeekCompleted = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.COMPLETED, startOfWeek, endOfWeek);
+        long oldWeekPending = bookingRepository.countBySalonIdAndStatusAndBookingTimeBetween(salonId, in.sp.main.Entities.BookingStatus.PENDING, startOfWeek, endOfWeek);
+        Double oldWeekRevenue = bookingRepository.sumRevenueBySalonIdAndDate(salonId, startOfWeek, endOfWeek);
+        if (oldWeekRevenue == null) oldWeekRevenue = 0.0;
+        
+        // New booking system week stats
+        long newWeekTotal = booking1Repository.countBySalonAndBookingDateBetween(loggedSalon, monday, sunday);
+        long newWeekCompleted = booking1Repository.countBySalonAndStatusAndBookingDateBetween(loggedSalon, "COMPLETED", monday, sunday);
+        long newWeekPending = booking1Repository.countBySalonAndStatusAndBookingDateBetween(loggedSalon, "PENDING", monday, sunday);
+        Double newWeekRevenue = booking1Repository.sumRevenueBySalonAndDateBetween(loggedSalon, monday, sunday);
+        if (newWeekRevenue == null) newWeekRevenue = 0.0;
+        
+        long weekTotalAppts = oldWeekTotal + newWeekTotal;
+        long weekCompletedAppts = oldWeekCompleted + newWeekCompleted;
+        long weekPendingAppts = oldWeekPending + newWeekPending;
+        long weekOtherAppts = weekTotalAppts - weekCompletedAppts - weekPendingAppts;
+        if (weekOtherAppts < 0) weekOtherAppts = 0;
+        double weekRevenue = oldWeekRevenue + newWeekRevenue;
+        
+        // Daily revenue bars (merged)
+        List<Double> dailyRevenue = new java.util.ArrayList<>();
+        double maxDaily = 1.0;
+        for (int i = 0; i < 7; i++) {
+            java.time.LocalDate dayDate = monday.plusDays(i);
+            java.time.LocalDateTime sdl = dayDate.atStartOfDay();
+            java.time.LocalDateTime edl = dayDate.atTime(java.time.LocalTime.MAX);
+            Double oldDayRev = bookingRepository.sumRevenueBySalonIdAndDate(salonId, sdl, edl);
+            Double newDayRev = booking1Repository.sumRevenueBySalonAndDate(loggedSalon, dayDate);
+            double merged = (oldDayRev != null ? oldDayRev : 0.0) + (newDayRev != null ? newDayRev : 0.0);
+            dailyRevenue.add(merged);
+            if (merged > maxDaily) maxDaily = merged;
+        }
+        List<Integer> dailyRevenueHeights = new java.util.ArrayList<>();
+        for (Double rev : dailyRevenue) {
+            int height = (int) Math.max(10, (rev / maxDaily) * 100);
+            dailyRevenueHeights.add(height);
+        }
+        
+        // Donut chart percentages
+        double cPct = weekTotalAppts == 0 ? 0 : ((double) weekCompletedAppts / weekTotalAppts) * 100;
+        double pPct = weekTotalAppts == 0 ? 0 : ((double) weekPendingAppts / weekTotalAppts) * 100;
+        double oPct = weekTotalAppts == 0 ? 0 : ((double) weekOtherAppts / weekTotalAppts) * 100;
+        int offsetCompleted = 25;
+        int offsetPending = (100 - (int) cPct + 25) % 100;
+        int offsetOther = (100 - (int) cPct - (int) pPct + 25) % 100;
+        
+        model.addAttribute("weekTotalAppts", weekTotalAppts);
+        model.addAttribute("weekCompletedAppts", weekCompletedAppts);
+        model.addAttribute("weekPendingAppts", weekPendingAppts);
+        model.addAttribute("weekOtherAppts", weekOtherAppts);
+        model.addAttribute("weekRevenue", weekRevenue);
+        model.addAttribute("dailyRevenue", dailyRevenue);
+        model.addAttribute("dailyRevenueHeights", dailyRevenueHeights);
+        model.addAttribute("cPct", String.format("%.0f", cPct));
+        model.addAttribute("pPct", String.format("%.0f", pPct));
+        model.addAttribute("oPct", String.format("%.0f", oPct));
+        model.addAttribute("offsetCompleted", offsetCompleted);
+        model.addAttribute("offsetPending", offsetPending);
+        model.addAttribute("offsetOther", offsetOther);
+        // --- End Business Overview ---
+        
+        // Calendar events - merge both booking systems
+        List<in.sp.main.Entities.Booking> allBookingsList = bookingRepository.findBySalonId(salonId);
+        java.util.List<java.util.Map<String, Object>> calendarEvents = new java.util.ArrayList<>();
+        for (in.sp.main.Entities.Booking b : allBookingsList) {
+            java.util.Map<String, Object> event = new java.util.HashMap<>();
+            String serviceName = "Service";
+            if (b.getSalonService() != null) serviceName = b.getSalonService().getName();
+            else if (b.getService() != null) serviceName = b.getService().getName();
+            String userName = b.getUser() != null && b.getUser().getFullName() != null ? b.getUser().getFullName() : "Client";
+            event.put("title", userName + " - " + serviceName);
+            if (b.getBookingTime() != null) {
+                event.put("start", b.getBookingTime().toString());
+                event.put("end", b.getBookingTime().plusMinutes(60).toString());
+            }
+            if (in.sp.main.Entities.BookingStatus.COMPLETED.equals(b.getStatus())) event.put("color", "#10b981");
+            else if (in.sp.main.Entities.BookingStatus.PENDING.equals(b.getStatus())) event.put("color", "#f59e0b");
+            else if (in.sp.main.Entities.BookingStatus.CANCELLED.equals(b.getStatus())) event.put("color", "#ef4444");
+            else event.put("color", "#3b82f6");
+            calendarEvents.add(event);
+        }
+        // Add Booking1 to calendar
+        List<in.sp.main.Entities.Booking1> allBooking1List = booking1Repository.findBySalon(loggedSalon);
+        for (in.sp.main.Entities.Booking1 b1 : allBooking1List) {
+            if (b1.getBookingDate() != null && b1.getPreferredTime() != null) {
+                java.util.Map<String, Object> event = new java.util.HashMap<>();
+                String sn = "Service";
+                if (b1.getService() != null) sn = b1.getService().getName();
+                else if (b1.getTreatment() != null) sn = b1.getTreatment().getServiceName();
+                String un = b1.getUser() != null && b1.getUser().getFullName() != null ? b1.getUser().getFullName() : "Client";
+                event.put("title", un + " - " + sn);
+                java.time.LocalDateTime startDT = java.time.LocalDateTime.of(b1.getBookingDate(), b1.getPreferredTime());
+                event.put("start", startDT.toString());
+                event.put("end", startDT.plusMinutes(60).toString());
+                String st = b1.getStatus() != null ? b1.getStatus() : "PENDING";
+                if ("COMPLETED".equals(st)) event.put("color", "#10b981");
+                else if ("PENDING".equals(st)) event.put("color", "#f59e0b");
+                else if ("CANCELLED".equals(st) || "REJECTED".equals(st)) event.put("color", "#ef4444");
+                else event.put("color", "#3b82f6");
+                calendarEvents.add(event);
+            }
+        }
+        try {
+            model.addAttribute("calendarEventsJson", new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(calendarEvents));
+        } catch (Exception e) {}
+        
+        // Today's schedule from Booking1 (real customer appointments for today)
+        List<in.sp.main.Entities.Booking1> todayBookingsList = booking1Repository.findBySalonAndBookingDate(loggedSalon, today);
+        model.addAttribute("todayBookings", todayBookingsList);
+        
+        // Recent appointments (last 5 from Booking1, ordered by date desc)
+        List<in.sp.main.Entities.Booking1> recentAll = booking1Repository.findBySalonOrderByBookingDateDesc(loggedSalon);
+        model.addAttribute("recentBookings1", recentAll.size() > 5 ? recentAll.subList(0, 5) : recentAll);
+        
+        // Today's date display
+        String todayDisplay = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, EEEE"));
+        model.addAttribute("todayDate", todayDisplay);
+        
         model.addAttribute("salon", loggedSalon);
         return "salon/salon-dashboard";
     }
- // View profile page
     @GetMapping("/salons/profile")
     public String viewProfile(HttpSession session, Model model) {
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
-
-        if (loggedSalon == null) {
-            return "redirect:/salons/login";
-        }
-
-        // Fetch fresh data from DB
+        if (loggedSalon == null) return "redirect:/salons/login";
         Optional<Salon> salonOpt = salonRepository.findById(loggedSalon.getId());
+        if (salonOpt.isEmpty()) { session.invalidate(); return "redirect:/salons/login"; }
+        Salon salon = salonOpt.get();
+        model.addAttribute("salon", salon);
         
+
         if (salonOpt.isEmpty()) {
             session.invalidate();
             return "redirect:/salons/login";
         }
         if (salonOpt.isPresent()) {
-            model.addAttribute("salon", salonOpt.get());
+            populateProfileModel(model, salonOpt.get());
+            addProfileImageUploadHints(model);
             return "salon/salon-profile"; // loads profile.jsp
         }
 
         return "redirect:/salons/login";
     }
 
+    private void addProfileImageUploadHints(Model model) {
+        model.addAttribute("profileImageMaxSizeMb", profileImageMaxSizeMb);
+        model.addAttribute("profileImageAccepted", profileImageAccepted);
+        model.addAttribute("profileImageMaxBytes", profileImageMaxSizeMb * 1024L * 1024L);
+    }
+
+    private long profileImageMaxBytes() {
+        return profileImageMaxSizeMb * 1024L * 1024L;
+    }
+
     // Update profile
-    @PostMapping("/salons/updateProfile")
-    public String updateProfile(
-            @ModelAttribute Salon updatedSalon,
-            @RequestParam("profileImage") MultipartFile profileImage,
+    @PostMapping("/salons/updateProfileLegacy")
+    public String updateProfileLegacy(
+            @RequestParam("id") Long id,
+            @RequestParam("name") String name,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "establishedYear", required = false) String establishedYearRaw,
+            @RequestParam(value = "website", required = false) String website,
+            @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             HttpSession session,
             Model model) {
 
-        Optional<Salon> salonOpt = salonRepository.findById(updatedSalon.getId());
+        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
+        if (loggedSalon == null) {
+            return "redirect:/salons/login";
+        }
+        if (id == null || !id.equals(loggedSalon.getId())) {
+            model.addAttribute("error", "Unauthorized profile update.");
+            return "redirect:/salons/profile";
+        }
 
+        Optional<Salon> salonOpt = salonRepository.findById(id);
+        if (salonOpt.isEmpty()) {
+            model.addAttribute("error", "Salon not found!");
+            return "redirect:/salons/login";
+        }
+
+        Salon salon = salonOpt.get();
+        String cleanedName = name == null ? "" : name.trim();
+        String cleanedEmail = email == null ? "" : email.trim().toLowerCase();
+        String cleanedPhone = phone == null ? "" : phone.trim();
+        String cleanedAddress = address == null ? "" : address.trim();
+        String cleanedCity = city == null ? "" : city.trim();
+        String cleanedState = state == null ? "" : state.trim();
+        String cleanedPincode = pincode == null ? "" : pincode.trim();
+        String cleanedBio = bio == null ? "" : bio.trim();
+        String cleanedWebsite = website == null ? "" : website.trim();
+        String cleanedHours = availabilityHours == null ? "" : availabilityHours.trim();
+        String cleanedYearRaw = establishedYearRaw == null ? "" : establishedYearRaw.trim();
+
+        if (cleanedName.length() < 3 || cleanedName.length() > Salon.NAME_MAX_LENGTH) {
+            return profileFormError(model, salon, "Salon name must be 3–" + Salon.NAME_MAX_LENGTH + " characters.");
+        }
+        if (cleanedEmail.isEmpty() || cleanedEmail.length() > Salon.EMAIL_MAX_LENGTH
+                || !cleanedEmail.matches(Salon.EMAIL_PATTERN)) {
+            return profileFormError(model, salon, "Please enter a valid email address.");
+        }
+        if (!cleanedPhone.matches(Salon.PHONE_PATTERN)) {
+            return profileFormError(model, salon, "Phone number must be exactly 10 digits.");
+        }
+        if (cleanedAddress.isEmpty()) {
+            return profileFormError(model, salon, "Full Address is required.");
+        }
+        if (cleanedAddress.length() > Salon.ADDRESS_MAX_LENGTH) {
+            return profileFormError(model, salon, "Address cannot exceed " + Salon.ADDRESS_MAX_LENGTH + " characters.");
+        }
+        if (cleanedCity.isEmpty() || cleanedCity.length() < Salon.CITY_STATE_MIN_LENGTH) {
+            return profileFormError(model, salon, "City is required (at least " + Salon.CITY_STATE_MIN_LENGTH + " characters).");
+        }
+        if (cleanedCity.length() > Salon.CITY_STATE_MAX_LENGTH) {
+            return profileFormError(model, salon, "City cannot exceed " + Salon.CITY_STATE_MAX_LENGTH + " characters.");
+        }
+        if (cleanedState.isEmpty() || cleanedState.length() < Salon.CITY_STATE_MIN_LENGTH) {
+            return profileFormError(model, salon, "State is required (at least " + Salon.CITY_STATE_MIN_LENGTH + " characters).");
+        }
+        if (cleanedState.length() > Salon.CITY_STATE_MAX_LENGTH) {
+            return profileFormError(model, salon, "State cannot exceed " + Salon.CITY_STATE_MAX_LENGTH + " characters.");
+        }
+        if (!cleanedPincode.isEmpty() && !cleanedPincode.matches(Salon.PINCODE_PATTERN)) {
+            return profileFormError(model, salon, "Pincode must be exactly " + Salon.PINCODE_LENGTH + " digits.");
+        }
+        if (cleanedBio.length() > Salon.BIO_MAX_LENGTH) {
+            return profileFormError(model, salon, "Bio cannot exceed " + Salon.BIO_MAX_LENGTH + " characters.");
+        }
+        if (cleanedWebsite.length() > Salon.WEBSITE_MAX_LENGTH) {
+            return profileFormError(model, salon, "Website URL cannot exceed " + Salon.WEBSITE_MAX_LENGTH + " characters.");
+        }
+        if (!cleanedWebsite.isEmpty()
+                && !cleanedWebsite.matches("^(https?://)?([\\w-]+\\.)+[\\w-]+(/\\S*)?$")) {
+            return profileFormError(model, salon, "Please enter a valid website URL.");
+        }
+        if (cleanedHours.length() > Salon.HOURS_MAX_LENGTH) {
+            return profileFormError(model, salon, "Working hours cannot exceed " + Salon.HOURS_MAX_LENGTH + " characters.");
+        }
+
+        Integer establishedYear = null;
+        int currentYear = java.time.Year.now().getValue();
+        if (!cleanedYearRaw.isEmpty()) {
+            if (!cleanedYearRaw.matches(Salon.ESTABLISHED_YEAR_PATTERN)) {
+                return profileFormError(model, salon, "Established Year must be exactly 4 digits.");
+            }
+            establishedYear = Integer.parseInt(cleanedYearRaw);
+            if (establishedYear < Salon.ESTABLISHED_YEAR_MIN || establishedYear > currentYear) {
+                return profileFormError(model, salon,
+                        "Established Year must be between " + Salon.ESTABLISHED_YEAR_MIN + " and " + currentYear + ".");
+            }
+        }
+
+        salon.setName(cleanedName);
+        salon.setEmail(cleanedEmail);
+        salon.setPhone(cleanedPhone);
+        salon.setAddress(cleanedAddress);
+        salon.setCity(cleanedCity);
+        salon.setState(cleanedState);
+        salon.setPincode(cleanedPincode.isEmpty() ? null : cleanedPincode);
+        salon.setBio(cleanedBio.isEmpty() ? null : cleanedBio);
+        salon.setEstablishedYear(establishedYear);
+        salon.setWebsite(cleanedWebsite.isEmpty() ? null : cleanedWebsite);
+        salon.setAvailabilityHours(cleanedHours.isEmpty() ? null : cleanedHours);
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String imageError = fileUploadService.validatePngOrJpegImage(profileImage, profileImageMaxBytes());
+            if (imageError != null) {
+                return profileFormError(model, salon, imageError);
+            }
+            try {
+                String profileImageUrl = fileUploadService.saveFile(profileImage);
+                salon.setProfileImageUrl(profileImageUrl);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return profileFormError(model, salon, "Failed to upload profile image.");
+            }
+        }
+
+        salonRepository.save(salon);
+        session.setAttribute("loggedSalon", salon);
+        model.addAttribute("salon", salon);
+        addProfileImageUploadHints(model);
+        model.addAttribute("message", "Profile updated successfully!");
+        return "salon/salon-profile";
+    }
+
+    private String profileFormError(Model model, Salon salon, String error) {
+        model.addAttribute("error", error);
+        populateProfileModel(model, salon);
+        addProfileImageUploadHints(model);
+        return "salon/salon-profile";
+    }
+
+    private void populateProfileModel(Model model, Salon salon) {
+        model.addAttribute("salon", salon);
+
+        int completionPercentage = 10; // Base 10% just for registering
+        
+        boolean basicDone = salon.getName() != null && !salon.getName().isEmpty() && salon.getPhone() != null && !salon.getPhone().isEmpty();
+        if(basicDone) completionPercentage += 5;
+        model.addAttribute("stepBasicInfo", basicDone);
+        
+        boolean detailsDone = salon.getSalonCategory() != null && !salon.getSalonCategory().isEmpty();
+        if(detailsDone) completionPercentage += 15;
+        model.addAttribute("stepSalonDetails", detailsDone);
+        
+        boolean servicesDone = true; // mock for now, assuming they have default service or wait until services module
+        if(servicesDone) completionPercentage += 10;
+        model.addAttribute("stepServices", servicesDone);
+        
+        boolean photosDone = salon.getProfileImageUrl() != null && !salon.getProfileImageUrl().isEmpty();
+        if(photosDone) completionPercentage += 15;
+        model.addAttribute("stepPhotos", photosDone);
+        
+        boolean facilitiesDone = salon.getHasAc() != null && (salon.getHasAc() || salon.getHasWifi() || salon.getHasParking());
+        if(facilitiesDone) completionPercentage += 15;
+        model.addAttribute("stepFacilities", facilitiesDone);
+        
+        boolean docsDone = salon.getBusinessRegistrationUrl() != null && !salon.getBusinessRegistrationUrl().isEmpty();
+        if(docsDone) completionPercentage += 10;
+        model.addAttribute("stepDocs", docsDone);
+        model.addAttribute("docsCount", docsDone ? 5 : 0);
+        model.addAttribute("docsTotal", 5);
+        
+        boolean socialDone = salon.getSocialMediaJson() != null && !salon.getSocialMediaJson().isEmpty() && !salon.getSocialMediaJson().contains("\"instagram\":\"\"");
+        if(socialDone) completionPercentage += 10;
+        model.addAttribute("stepSocial", socialDone);
+        model.addAttribute("socialCount", socialDone ? 4 : 0);
+        model.addAttribute("socialTotal", 4);
+        
+        boolean prefDone = salon.getPreferencesJson() != null && !salon.getPreferencesJson().isEmpty();
+        if(prefDone) completionPercentage += 10;
+        model.addAttribute("stepPref", prefDone);
+        
+        if (completionPercentage > 100) completionPercentage = 100;
+        model.addAttribute("completionPercentage", completionPercentage);
+        
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            if (salon.getPreferencesJson() != null && !salon.getPreferencesJson().isEmpty()) {
+                model.addAttribute("salonPrefs", mapper.readValue(salon.getPreferencesJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){}));
+            }
+            java.util.Map<String, String> hoursMap = null;
+            if (salon.getOperatingHoursJson() != null && !salon.getOperatingHoursJson().isEmpty()) {
+                hoursMap = mapper.readValue(salon.getOperatingHoursJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+            }
+            if (hoursMap == null || hoursMap.isEmpty()) {
+                hoursMap = new java.util.HashMap<>();
+                hoursMap.put("monday", "10:00 - 19:00");
+                hoursMap.put("tuesday", "10:00 - 19:00");
+                hoursMap.put("wednesday", "10:00 - 19:00");
+                hoursMap.put("thursday", "10:00 - 19:00");
+                hoursMap.put("friday", "10:00 - 19:00");
+                hoursMap.put("saturday", "10:00 - 22:00");
+                hoursMap.put("sunday", "10:00 - 22:00");
+            }
+            model.addAttribute("salonHours", hoursMap);
+            
+            java.util.Map<String, String> hoursDisplay = new java.util.HashMap<>();
+            java.time.format.DateTimeFormatter format12 = java.time.format.DateTimeFormatter.ofPattern("hh:mm a");
+            for (java.util.Map.Entry<String, String> entry : hoursMap.entrySet()) {
+                String val = entry.getValue();
+                if (val != null && val.contains(" - ")) {
+                    try {
+                        String[] parts = val.split(" - ");
+                        hoursDisplay.put(entry.getKey(), java.time.LocalTime.parse(parts[0]).format(format12) + " - " + java.time.LocalTime.parse(parts[1]).format(format12));
+                    } catch(Exception e) { hoursDisplay.put(entry.getKey(), val); }
+                } else { hoursDisplay.put(entry.getKey(), val); }
+            }
+            model.addAttribute("salonHoursDisplay", hoursDisplay);
+            
+        } catch(Exception e) {}
+    }
+
+    @GetMapping("/salons/preview")
+    public String previewProfile(HttpSession session, Model model) {
+        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
+        if (loggedSalon == null) return "redirect:/salons/login";
+        model.addAttribute("salon", loggedSalon);
+        
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            
+            // Interior Images
+            if (loggedSalon.getInteriorImagesJson() != null && !loggedSalon.getInteriorImagesJson().isEmpty()) {
+                java.util.List<String> images = mapper.readValue(loggedSalon.getInteriorImagesJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>(){});
+                model.addAttribute("interiorImagesList", images);
+            }
+            
+            // Preferences
+            if (loggedSalon.getPreferencesJson() != null && !loggedSalon.getPreferencesJson().isEmpty()) {
+                java.util.Map<String, String> prefsMap = mapper.readValue(loggedSalon.getPreferencesJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+                model.addAttribute("salonPrefs", prefsMap);
+            }
+            
+            // Social Media
+            if (loggedSalon.getSocialMediaJson() != null && !loggedSalon.getSocialMediaJson().isEmpty()) {
+                java.util.Map<String, String> socialMap = mapper.readValue(loggedSalon.getSocialMediaJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+                model.addAttribute("salonSocial", socialMap);
+            }
+            
+            // Hours Display
+            java.util.Map<String, String> hoursMap = null;
+            if (loggedSalon.getOperatingHoursJson() != null && !loggedSalon.getOperatingHoursJson().isEmpty()) {
+                hoursMap = mapper.readValue(loggedSalon.getOperatingHoursJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
+            }
+            if (hoursMap != null) {
+                java.util.Map<String, String> hoursDisplay = new java.util.HashMap<>();
+                java.time.format.DateTimeFormatter format12 = java.time.format.DateTimeFormatter.ofPattern("hh:mm a");
+                for (java.util.Map.Entry<String, String> entry : hoursMap.entrySet()) {
+                    String val = entry.getValue();
+                    if (val != null && val.contains(" - ")) {
+                        try {
+                            String[] parts = val.split(" - ");
+                            hoursDisplay.put(entry.getKey(), java.time.LocalTime.parse(parts[0]).format(format12) + " - " + java.time.LocalTime.parse(parts[1]).format(format12));
+                        } catch(Exception e) { hoursDisplay.put(entry.getKey(), val); }
+                    } else { hoursDisplay.put(entry.getKey(), val); }
+                }
+                model.addAttribute("salonHoursDisplay", hoursDisplay);
+            }
+        } catch(Exception e) {}
+        
+        return "salon/salon-preview";
+    }
+
+    @PostMapping("/salons/updateProfile")
+    public String updateProfile(
+            @ModelAttribute Salon updatedSalon,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+            @RequestParam(value = "coverImage", required = false) MultipartFile coverImage,
+            @RequestParam(value = "interiorImages", required = false) MultipartFile[] interiorImages,
+            @RequestParam(value = "businessRegistration", required = false) MultipartFile businessRegistration,
+            @RequestParam(value = "salonLicense", required = false) MultipartFile salonLicense,
+            @RequestParam(value = "fireSafety", required = false) MultipartFile fireSafety,
+            @RequestParam(value = "gstCertificate", required = false) MultipartFile gstCertificate,
+            @RequestParam(value = "hygieneCertificate", required = false) MultipartFile hygieneCertificate,
+            @RequestParam(value = "socialInstagram", required = false) String socialInstagram,
+            @RequestParam(value = "socialFacebook", required = false) String socialFacebook,
+            @RequestParam(value = "socialWebsite", required = false) String socialWebsite,
+            jakarta.servlet.http.HttpServletRequest request,
+            HttpSession session,
+            org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+        Salon sessionSalon = (Salon) session.getAttribute("loggedSalon");
+        if (sessionSalon == null) return "redirect:/salons/login";
+        
+        Optional<Salon> salonOpt = salonRepository.findById(updatedSalon.getId() != null ? updatedSalon.getId() : sessionSalon.getId());
         if (salonOpt.isPresent()) {
             Salon salon = salonOpt.get();
-
-            // Update basic info
+            
             salon.setName(updatedSalon.getName());
             salon.setEmail(updatedSalon.getEmail());
             salon.setPhone(updatedSalon.getPhone());
@@ -217,43 +782,78 @@ public class SalonController {
             salon.setState(updatedSalon.getState());
             salon.setPincode(updatedSalon.getPincode());
             salon.setWebsite(updatedSalon.getWebsite());
-
-            // Update optional fields
-            salon.setLatitude(updatedSalon.getLatitude());
-            salon.setLongitude(updatedSalon.getLongitude());
-            salon.setAverageRating(updatedSalon.getAverageRating());
-            salon.setLongitude(updatedSalon.getLongitude());
-            salon.setEstablishedYear(updatedSalon.getEstablishedYear());
             salon.setBio(updatedSalon.getBio());
+            salon.setSalonTagline(updatedSalon.getSalonTagline());
+            salon.setSalonCategory(updatedSalon.getSalonCategory());
+            salon.setEstablishedYear(updatedSalon.getEstablishedYear());
             salon.setAvailabilityHours(updatedSalon.getAvailabilityHours());
-
-            salon.setHygieneCertificateUrl(updatedSalon.getHygieneCertificateUrl());
-
-            // Update checkboxes
-            salon.setIsEcoFriendly(updatedSalon.getIsEcoFriendly() != null ? updatedSalon.getIsEcoFriendly() : false);
-            salon.setIsCertified(updatedSalon.getIsCertified() != null ? updatedSalon.getIsCertified() : false);
-
-            // Handle profile image using FileUploadService
-            if (profileImage != null && !profileImage.isEmpty()) {
-                try {
-                    String profileImageUrl = fileUploadService.saveFile(profileImage);
-                    salon.setProfileImageUrl(profileImageUrl);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    model.addAttribute("error", "Failed to upload profile image.");
+            salon.setIsWomenOnly(updatedSalon.getIsWomenOnly() != null ? updatedSalon.getIsWomenOnly() : false);
+            salon.setCurrentStatus(updatedSalon.getCurrentStatus());
+            
+            salon.setBusinessRegistrationNo(updatedSalon.getBusinessRegistrationNo());
+            salon.setGstNumber(updatedSalon.getGstNumber());
+            salon.setSalonLicenseNo(updatedSalon.getSalonLicenseNo());
+            salon.setAlternateNumber(updatedSalon.getAlternateNumber());
+            salon.setHygieneStandard(updatedSalon.getHygieneStandard());
+            salon.setLanguagesSpoken(updatedSalon.getLanguagesSpoken());
+            salon.setLandmark(updatedSalon.getLandmark());
+            salon.setHasReceptionArea(updatedSalon.getHasReceptionArea() != null ? updatedSalon.getHasReceptionArea() : false);
+            salon.setHasWaitingArea(updatedSalon.getHasWaitingArea() != null ? updatedSalon.getHasWaitingArea() : false);
+            
+            salon.setSalonSizeSqFt(updatedSalon.getSalonSizeSqFt());
+            salon.setTotalFloors(updatedSalon.getTotalFloors());
+            salon.setTotalChairs(updatedSalon.getTotalChairs());
+            salon.setTreatmentRooms(updatedSalon.getTreatmentRooms());
+            salon.setWashrooms(updatedSalon.getWashrooms());
+            
+            salon.setHasParking(updatedSalon.getHasParking() != null ? updatedSalon.getHasParking() : false);
+            salon.setHasAc(updatedSalon.getHasAc() != null ? updatedSalon.getHasAc() : false);
+            salon.setHasWifi(updatedSalon.getHasWifi() != null ? updatedSalon.getHasWifi() : false);
+            salon.setHasPowerBackup(updatedSalon.getHasPowerBackup() != null ? updatedSalon.getHasPowerBackup() : false);
+            salon.setIsWheelchairAccessible(updatedSalon.getIsWheelchairAccessible() != null ? updatedSalon.getIsWheelchairAccessible() : false);
+            
+            String jsonSocial = String.format("{\"instagram\":\"%s\", \"facebook\":\"%s\", \"website\":\"%s\"}", 
+                socialInstagram != null ? socialInstagram : "", 
+                socialFacebook != null ? socialFacebook : "",
+                socialWebsite != null ? socialWebsite : "");
+            salon.setSocialMediaJson(jsonSocial);
+            
+            try {
+                java.util.Map<String, String> prefsMap = new java.util.HashMap<>();
+                for (java.util.Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+                    if (entry.getKey().startsWith("pref_")) prefsMap.put(entry.getKey(), entry.getValue()[0]);
                 }
-            }
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                salon.setPreferencesJson(mapper.writeValueAsString(prefsMap));
+                
+                java.util.Map<String, String> hoursMap = new java.util.HashMap<>();
+                String[] days = {"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"};
+                for(String day : days) {
+                    String open = request.getParameter("hours_" + day + "_open");
+                    String close = request.getParameter("hours_" + day + "_close");
+                    String isClosed = request.getParameter("hours_" + day + "_closed");
+                    if (isClosed != null && isClosed.equals("true")) hoursMap.put(day, "Closed");
+                    else if (open != null && !open.isEmpty() && close != null && !close.isEmpty()) hoursMap.put(day, open + " - " + close);
+                    else hoursMap.put(day, "Not set");
+                }
+                if (request.getParameter("hours_monday_open") != null) salon.setOperatingHoursJson(mapper.writeValueAsString(hoursMap));
+            } catch(Exception e) {}
+            
+            try {
+                if (profileImage != null && !profileImage.isEmpty()) salon.setProfileImageUrl(fileUploadService.saveFile(profileImage));
+                if (coverImage != null && !coverImage.isEmpty()) salon.setCoverImageUrl(fileUploadService.saveFile(coverImage));
+                if (businessRegistration != null && !businessRegistration.isEmpty()) salon.setBusinessRegistrationUrl(fileUploadService.saveFile(businessRegistration));
+                if (salonLicense != null && !salonLicense.isEmpty()) salon.setSalonLicenseUrl(fileUploadService.saveFile(salonLicense));
+                if (fireSafety != null && !fireSafety.isEmpty()) salon.setFireSafetyUrl(fileUploadService.saveFile(fireSafety));
+                if (gstCertificate != null && !gstCertificate.isEmpty()) salon.setGstCertificateUrl(fileUploadService.saveFile(gstCertificate));
+                if (hygieneCertificate != null && !hygieneCertificate.isEmpty()) salon.setHygieneCertificateUrl(fileUploadService.saveFile(hygieneCertificate));
+            } catch (Exception e) {}
 
             salonRepository.save(salon);
-
             session.setAttribute("loggedSalon", salon);
-            model.addAttribute("salon", salon);
-            model.addAttribute("message", "Profile updated successfully!");
-            return "salon/salon-profile";
         }
+        return "redirect:/salons/profile";
 
-        model.addAttribute("error", "Salon not found!");
-        return "salon/salon-profile";
     }
 
     // Delete profile
@@ -349,7 +949,7 @@ public class SalonController {
     // ===========================
     // 3️⃣ List all stylists of this salon
     // ===========================
-    @GetMapping("/myStylists")
+    @GetMapping({"/myStylists", "/salon/stylists"})
     public String listSalonStylists(HttpSession session, Model model) {
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
         if (loggedSalon == null) return "redirect:/salons/login";
@@ -379,11 +979,11 @@ public class SalonController {
                 return "salon/salon-stylist-view"; // JSP page
             } else {
                 model.addAttribute("error", "You cannot view this stylist.");
-                return "redirect:/salons/myStylists";
+                return "redirect:/salon/stylists";
             }
         }
         model.addAttribute("error", "Stylist not found.");
-        return "redirect:/salons/myStylists";
+        return "redirect:/salon/stylists";
     }
 
     // ===========================
@@ -404,7 +1004,7 @@ public class SalonController {
             }
         }
 
-        return "redirect:/salons/myStylists";
+        return "redirect:/salon/stylists";
     }
 	/*--------------------------------------------------------------------------------------------------*/
     
@@ -500,11 +1100,27 @@ public class SalonController {
         }
 
         try {
-        	 salonservice.deleteService(id, loggedSalon.getId());
-            redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
-        } catch (DataIntegrityViolationException e) {
+            Optional<Service1> serviceOpt = serviceRepository.findById(id);
+            if (serviceOpt.isPresent() && serviceOpt.get().getSalon().getId().equals(loggedSalon.getId())) {
+                serviceRepository.removeFromAllPackages(id);
+                serviceRepository.removeFromAllOffers(id);
+                serviceRepository.deleteBookingsForService(id);
+                serviceRepository.deleteOldBookingsForService(id);
+                serviceRepository.deleteOldBookingsForStylistService(id);
+                
+                serviceRepository.forceDeleteService(id);
+                redirectAttributes.addFlashAttribute("successMessage", "Service deleted successfully!");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage", "Service not found or unauthorized.");
+            }
+        } catch (Exception e) {
+            String errorMsg = e.getMessage() != null ? e.getMessage() : e.getClass().getName();
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                errorMsg += " -> " + (cause.getMessage() != null ? cause.getMessage() : cause.getClass().getName());
+            }
             redirectAttributes.addFlashAttribute("errorMessage",
-                "Cannot delete this service because it has existing bookings!");
+                "Cannot delete this service. Error: " + errorMsg.replace("\"", "'").replace("\n", " "));
         }
 
         return "redirect:/salon/viewServices";

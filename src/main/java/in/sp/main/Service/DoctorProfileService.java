@@ -116,7 +116,11 @@ public class DoctorProfileService {
             doctor.setMedicalRegNumber(blankToNull(asString(body.get("medicalRegNumber"))));
         }
         if (body.containsKey("experienceYears")) {
-            doctor.setExperienceYears(asInteger(body.get("experienceYears"), "Years of experience"));
+            Integer years = asInteger(body.get("experienceYears"), "Years of experience");
+            if (years != null && (years < 0 || years > 50)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Years of experience must be between 0 and 50");
+            }
+            doctor.setExperienceYears(years);
         }
         if (body.containsKey("hospitalName")) {
             doctor.setHospitalName(blankToNull(asString(body.get("hospitalName"))));
@@ -131,7 +135,7 @@ public class DoctorProfileService {
             doctor.setState(blankToNull(asString(body.get("state"))));
         }
         if (body.containsKey("pincode")) {
-            doctor.setPincode(blankToNull(asString(body.get("pincode"))));
+            doctor.setPincode(normalizePincode(asString(body.get("pincode"))));
         }
         if (body.containsKey("googleMapLocation")) {
             doctor.setGoogleMapLocation(blankToNull(asString(body.get("googleMapLocation"))));
@@ -159,6 +163,44 @@ public class DoctorProfileService {
         }
         if (body.containsKey("emergencyAvailable")) {
             doctor.setEmergencyAvailable(asBoolean(body.get("emergencyAvailable")));
+        }
+        if (body.containsKey("slotDurationMinutes")) {
+            Integer mins = asInteger(body.get("slotDurationMinutes"), "Slot duration");
+            if (mins != null && (mins < 10 || mins > 120)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Slot duration must be between 10 and 120 minutes");
+            }
+            doctor.setSlotDurationMinutes(mins == null ? 30 : mins);
+        }
+        if (body.containsKey("bufferMinutes")) {
+            Integer mins = asInteger(body.get("bufferMinutes"), "Buffer minutes");
+            if (mins != null && (mins < 0 || mins > 60)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Buffer must be between 0 and 60 minutes");
+            }
+            doctor.setBufferMinutes(mins == null ? 0 : mins);
+        }
+        if (body.containsKey("breakStart")) {
+            doctor.setBreakStart(blankToNull(asString(body.get("breakStart"))));
+        }
+        if (body.containsKey("breakEnd")) {
+            doctor.setBreakEnd(blankToNull(asString(body.get("breakEnd"))));
+        }
+        if (body.containsKey("blockedDates")) {
+            doctor.setBlockedDates(normalizeCsv(asString(body.get("blockedDates"))));
+        }
+        if (body.containsKey("autoConfirm")) {
+            doctor.setAutoConfirm(asBoolean(body.get("autoConfirm")));
+        }
+        if (body.containsKey("upiId")) {
+            doctor.setUpiId(blankToNull(asString(body.get("upiId"))));
+        }
+        if (body.containsKey("bankDetails")) {
+            doctor.setBankDetails(blankToNull(asString(body.get("bankDetails"))));
+        }
+        if (body.containsKey("clinicLat")) {
+            doctor.setClinicLat(asDouble(body.get("clinicLat"), "Clinic latitude"));
+        }
+        if (body.containsKey("clinicLng")) {
+            doctor.setClinicLng(asDouble(body.get("clinicLng"), "Clinic longitude"));
         }
 
         if (body.containsKey("consultationModes") || body.containsKey("consultationType")) {
@@ -259,7 +301,7 @@ public class DoctorProfileService {
             return 0;
         }
         int filled = 0;
-        int total = 10;
+        int total = 13;
 
         if (notBlank(doctor.getFullName())) filled++;
         if (notBlank(doctor.getSpecialization())) filled++;
@@ -269,8 +311,11 @@ public class DoctorProfileService {
         if (doctor.getConsultationFee() != null && doctor.getConsultationFee() >= 0) filled++;
         if (notBlank(doctor.getHospitalName())) filled++;
         if (notBlank(doctor.getClinicAddress()) && notBlank(doctor.getCity())) filled++;
+        if (notBlank(doctor.getState())) filled++;
+        if (isValidPincode(doctor.getPincode())) filled++;
         if (notBlank(doctor.getAvailableDays()) && notBlank(doctor.getStartTime())) filled++;
-        if (hasRequiredDocuments(doctor)) filled++;
+        if (notBlank(doctor.getConsultationModes()) || doctor.getConsultationType() != null) filled++;
+        if (notBlank(doctor.getLanguages())) filled++;
 
         return (int) Math.round(100.0 * filled / total);
     }
@@ -281,21 +326,27 @@ public class DoctorProfileService {
             missing.add("Doctor profile not found");
             return missing;
         }
-        if (isBlank(doctor.getSpecialization())) missing.add("Specialization");
-        if (isBlank(doctor.getQualification())) missing.add("Qualification");
-        if (isBlank(doctor.getMedicalRegNumber())) missing.add("Medical registration number");
-        if (doctor.getExperienceYears() == null) missing.add("Years of experience");
-        if (doctor.getConsultationFee() == null) missing.add("Consultation fee");
-        if (isBlank(doctor.getHospitalName())) missing.add("Hospital / clinic name");
-        if (isBlank(doctor.getClinicAddress()) || isBlank(doctor.getCity())) missing.add("Clinic address and city");
-        if (isBlank(doctor.getAvailableDays()) || isBlank(doctor.getStartTime())) missing.add("Working availability");
-        if (!isRealDocument(doctor.getProfilePhotoPath())) missing.add("Profile photo");
-        if (!isRealDocument(doctor.getIdProofPath()) && !isRealDocument(doctor.getIdentityDocumentPath())) {
-            missing.add("Government ID");
+        if (isBlank(doctor.getFullName())) missing.add("1.1 Doctor name");
+        if (isBlank(doctor.getSpecialization())) missing.add("1.2 Specialization");
+        if (isBlank(doctor.getQualification())) missing.add("1.3 Qualification");
+        if (isBlank(doctor.getMedicalRegNumber())) missing.add("1.4 Medical registration number");
+        if (doctor.getExperienceYears() == null) missing.add("1.5 Years of experience");
+        if (isBlank(doctor.getHospitalName())) missing.add("2.1 Hospital / clinic name");
+        if (isBlank(doctor.getClinicAddress()) || isBlank(doctor.getCity())) missing.add("2.2 Clinic address and city");
+        if (isBlank(doctor.getState())) missing.add("2.4 State");
+        if (!isValidPincode(doctor.getPincode())) missing.add("2.5 Pincode");
+        if (isBlank(doctor.getConsultationModes()) && doctor.getConsultationType() == null) {
+            missing.add("3. Consultation mode");
         }
-        if (!isRealDocument(doctor.getMedicalLicensePath())) missing.add("Medical license");
-        if (!isRealDocument(primaryDocumentPath(doctor.getDegreeCertificatePath()))) {
-            missing.add("Medical registration certificate");
+        if (isBlank(doctor.getAvailableDays()) || isBlank(doctor.getStartTime())) missing.add("4. Working availability");
+        if (isBlank(doctor.getLanguages())) missing.add("5. Languages");
+        if (doctor.getConsultationFee() == null) missing.add("7.1 Consultation fee");
+        String modes = doctor.getConsultationModes() == null ? "" : doctor.getConsultationModes().toUpperCase(Locale.ROOT);
+        if (modes.contains("VIDEO") && doctor.getVideoFee() == null && doctor.getConsultationFee() == null) {
+            missing.add("7.4 Video fee");
+        }
+        if (modes.contains("ONLINE") && doctor.getChatFee() == null && doctor.getConsultationFee() == null) {
+            missing.add("7.2 Chat fee");
         }
         return missing;
     }
@@ -331,6 +382,18 @@ public class DoctorProfileService {
         payload.put("endTime", doctor.getEndTime());
         payload.put("availabilitySlots", parseAvailabilitySlots(doctor.getAvailabilitySlots()));
         payload.put("emergencyAvailable", doctor.getEmergencyAvailable());
+        payload.put("slotDurationMinutes", doctor.getSlotDurationMinutes() == null ? 30 : doctor.getSlotDurationMinutes());
+        payload.put("bufferMinutes", doctor.getBufferMinutes() == null ? 0 : doctor.getBufferMinutes());
+        payload.put("breakStart", doctor.getBreakStart());
+        payload.put("breakEnd", doctor.getBreakEnd());
+        payload.put("blockedDates", splitCsv(doctor.getBlockedDates()));
+        payload.put("autoConfirm", Boolean.TRUE.equals(doctor.getAutoConfirm()));
+        payload.put("upiId", doctor.getUpiId());
+        payload.put("bankDetails", doctor.getBankDetails());
+        payload.put("payoutBalance", doctor.getPayoutBalance());
+        payload.put("clinicPhotos", splitCsv(doctor.getClinicPhotos()));
+        payload.put("clinicLat", doctor.getClinicLat());
+        payload.put("clinicLng", doctor.getClinicLng());
         payload.put("languages", splitCsv(doctor.getLanguages()));
         payload.put("services", splitCsv(doctor.getServices()));
         payload.put("bio", doctor.getBio());
@@ -593,7 +656,11 @@ public class DoctorProfileService {
         doctor.setEndTime(latest);
     }
 
-    private List<Map<String, String>> parseAvailabilitySlots(String raw) {
+    public List<Map<String, String>> readAvailabilitySlots(Doctor doctor) {
+        return parseAvailabilitySlots(doctor == null ? null : doctor.getAvailabilitySlots());
+    }
+
+    public List<Map<String, String>> parseAvailabilitySlots(String raw) {
         if (isBlank(raw)) {
             return List.of();
         }
@@ -625,6 +692,21 @@ public class DoctorProfileService {
     private static String normalizeCsv(String raw) {
         List<String> parts = splitCsv(raw);
         return parts.isEmpty() ? null : String.join(", ", parts);
+    }
+
+    private static String normalizePincode(String raw) {
+        String pin = blankToNull(raw);
+        if (pin == null) {
+            return null;
+        }
+        if (!isValidPincode(pin)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Pincode must be exactly 6 digits");
+        }
+        return pin;
+    }
+
+    private static boolean isValidPincode(String raw) {
+        return raw != null && raw.trim().matches("\\d{6}");
     }
 
     private static List<String> splitCsv(String raw) {
