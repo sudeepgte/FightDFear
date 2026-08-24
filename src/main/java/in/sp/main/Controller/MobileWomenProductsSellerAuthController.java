@@ -9,6 +9,7 @@ import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.ProductDeliveryTrackingService;
+import in.sp.main.Service.WomenProductOrderLifecycleService;
 import in.sp.main.Service.WomenProductSellerProfileService;
 import in.sp.main.Service.WomenProductSellerRegistrationService;
 import in.sp.main.Service.WomenProductsCareService;
@@ -61,6 +62,8 @@ public class MobileWomenProductsSellerAuthController {
     private ProductDeliveryTrackingService trackingService;
     @Autowired
     private WomenProductsCareService productsCareService;
+    @Autowired
+    private WomenProductOrderLifecycleService orderLifecycle;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -357,6 +360,14 @@ public class MobileWomenProductsSellerAuthController {
         data.put("totalProducts", products.size());
         data.put("totalOrders", orders.size());
         data.put("totalEarnings", totalEarnings);
+        data.put("pendingOrders", orders.stream().filter(o -> "PLACED".equals(WomenProductOrderLifecycleService.canonical(o.getStatus()))).count());
+        data.put("deliveryPartners", orderLifecycle.listAssignablePartners().stream().map(p -> {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", p.getId());
+            row.put("fullName", p.getFullName());
+            row.put("phone", p.getPhone());
+            return row;
+        }).toList());
         data.put("payoutBalance", s.getPayoutBalance());
         data.put("upiId", s.getUpiId() == null ? "" : s.getUpiId());
         data.put("cancelPolicy", WomenProductsCareService.CANCEL_POLICY);
@@ -589,38 +600,41 @@ public class MobileWomenProductsSellerAuthController {
             return badRequest("Order not found");
         }
 
-        String status = trim(body == null ? null : body.get("status")).toUpperCase(Locale.ROOT);
-        if ("SHIPPED".equals(status)) status = "READY_FOR_PICKUP";
-        if (!ORDER_STATUSES.contains(status)) {
-            return badRequest("Invalid status. Use CONFIRMED, READY_FOR_PICKUP, or CANCELLED.");
+        try {
+            WomenProductOrder updated = orderLifecycle.applySellerStatus(order, s, trim(body == null ? null : body.get("status")));
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("message", "Order status updated");
+            data.put("order", orderDto(updated));
+            data.put("nextStatuses", WomenProductOrderLifecycleService.sellerNextStatuses(updated.getStatus()));
+            return ResponseEntity.ok(ok(data));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
-        String current = normStatus(order.getStatus());
-        boolean allowed = switch (current) {
-            case "PLACED" -> "CONFIRMED".equals(status) || "CANCELLED".equals(status);
-            case "CONFIRMED" -> "READY_FOR_PICKUP".equals(status) || "CANCELLED".equals(status);
-            default -> false;
-        };
-        if (!allowed) {
-            return badRequest("Sellers can confirm, mark packed for pickup, or cancel before a delivery partner is assigned.");
-        }
-        if ("CANCELLED".equals(status)) {
-            restoreStock(order);
-            order.setTrackingNote("Cancelled by seller");
-        } else if ("CONFIRMED".equals(status)) {
-            order.setTrackingNote("Seller confirmed the order");
-        } else if ("READY_FOR_PICKUP".equals(status)) {
-            order.setTrackingNote("Packed and ready for delivery pickup");
-        }
-        order.setStatus(status);
-        orderRepo.save(order);
-        if ("READY_FOR_PICKUP".equals(status)) {
-            trackingService.ensureGeocoded(order);
-        }
+    }
 
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("message", "Order status updated");
-        data.put("order", orderDto(order));
-        return ResponseEntity.ok(ok(data));
+    @PostMapping("/orders/{id}/assign")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> assignOrder(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        WomenProductSeller s = requireApprovedSeller(session);
+        if (s == null) return unauthorized();
+        if (s.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(error("Your shop must be approved before you can manage orders."));
+        }
+        WomenProductOrder order = orderRepo.findById(id).orElse(null);
+        Long partnerId = null;
+        if (body != null && body.get("partnerId") != null) {
+            try { partnerId = Long.parseLong(String.valueOf(body.get("partnerId"))); } catch (Exception ignored) {}
+        }
+        try {
+            WomenProductOrder updated = orderLifecycle.assignDeliveryPartner(order, s, partnerId);
+            return ResponseEntity.ok(ok(Map.of("message", "Delivery partner assigned", "order", orderDto(updated))));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
     }
 
     @GetMapping("/orders/{id}/track")
@@ -681,10 +695,7 @@ public class MobileWomenProductsSellerAuthController {
     }
 
     private static String normStatus(String status) {
-        if (status == null) return "PLACED";
-        String s = status.trim().toUpperCase(Locale.ROOT);
-        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
-        return s;
+        return WomenProductOrderLifecycleService.canonical(status);
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {
@@ -787,7 +798,10 @@ public class MobileWomenProductsSellerAuthController {
         m.put("quantity", o.getQuantity());
         m.put("totalPrice", o.getTotalPrice());
         m.put("paymentMethod", o.getPaymentMethod());
-        m.put("status", normStatus(o.getStatus()));
+        m.put("status", WomenProductOrderLifecycleService.canonical(o.getStatus()));
+        m.put("statusLabel", WomenProductOrderLifecycleService.displayLabel(o.getStatus()));
+        m.put("nextStatuses", WomenProductOrderLifecycleService.sellerNextStatuses(o.getStatus()));
+        m.put("canAssign", WomenProductOrderLifecycleService.canAssign(o));
         m.put("shippingAddress", o.getShippingAddress());
         m.put("orderTime", o.getOrderTime() == null ? null : o.getOrderTime().toString());
         m.put("trackingNote", o.getTrackingNote());

@@ -9,6 +9,7 @@ import java.util.List;
 public interface SalonReviewRepository extends JpaRepository<SalonReview, Long> {
     List<SalonReview> findBySalonIdOrderByCreatedAtDesc(Long salonId);
     List<SalonReview> findBySalonId(Long salonId);
+    List<SalonReview> findTop20ByOrderByCreatedAtDesc();
     
 // ✅ Optional: Get reviews that already have replies
     List<SalonReview> findBySalonIdAndReplyIsNotNull(Long salonId);

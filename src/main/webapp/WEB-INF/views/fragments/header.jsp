@@ -6,10 +6,10 @@
        UNIVERSAL HEADER CSS
        ============================================ */
     :root {
-        --uh-purple: #1e1b4b; /* Deep Navy */
-        --uh-purple-light: #312e81; /* Light Navy */
-        --uh-coral: #f43f5e; /* Rose Pink */
-        --uh-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
+        --uh-purple: #0F172A;
+        --uh-purple-light: #1E293B;
+        --uh-coral: #f43f5e;
+        --uh-gradient: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
         --primary-coral: #f43f5e;
     }
 
@@ -18,27 +18,32 @@
         top: 0;
         left: 0;
         right: 0;
-        background: var(--uh-purple) !important;
-        border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        background: #ffffff !important;
+        border-bottom: 1px solid #E2E8F0;
         backdrop-filter: blur(8px);
-        padding: 15px 0;
+        padding: 12px 0;
         transition: all 0.5s;
         z-index: 1050 !important;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
     }
 
     .header .logo h1 {
-        font-size: 30px !important;
+        font-size: 22px !important;
         margin: 0;
-        font-weight: 700;
-        letter-spacing: 2px;
-        background: var(--uh-gradient) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
-        background-clip: text !important;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        color: #0F172A !important;
+        background: none !important;
+        -webkit-background-clip: initial !important;
+        -webkit-text-fill-color: initial !important;
+        background-clip: initial !important;
+    }
+    .header .logo h1 .brand-fear {
+        color: #F43F5E;
     }
 
     .header .btn-getstarted {
-        background: var(--uh-gradient) !important;
+        background: var(--uh-coral) !important;
         border: none !important;
         color: #fff !important;
         font-size: 14px !important;
@@ -52,7 +57,7 @@
     
     .header .btn-getstarted:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 20px rgba(244, 63, 94, 0.25);
     }
 
     @media (min-width: 1200px) {
@@ -70,10 +75,10 @@
             position: relative;
         }
         .navmenu a, .navmenu a:focus {
-            color: rgba(255, 255, 255, 0.92) !important;
+            color: #334155 !important;
             font-weight: 600 !important;
-            padding: 18px 15px !important;
-            font-size: 16px !important;
+            padding: 14px 14px !important;
+            font-size: 15px !important;
             font-family: 'Poppins', sans-serif;
             display: flex;
             align-items: center;
@@ -86,15 +91,15 @@
         .navmenu a::after {
             content: '';
             position: absolute;
-            bottom: 12px;
-            left: 15px;
+            bottom: 8px;
+            left: 14px;
             width: 0%;
             height: 2px;
-            background: var(--uh-gradient);
+            background: #F43F5E;
             transition: width 0.3s ease;
         }
         .navmenu a:hover::after, .navmenu .active::after {
-            width: calc(100% - 30px);
+            width: calc(100% - 28px);
         }
         .navmenu a:hover, .navmenu .active {
             color: var(--uh-coral) !important;
@@ -107,21 +112,21 @@
         height: 42px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid var(--uh-purple-light);
+        border: 2px solid #FFE4E6;
         transition: all 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
         cursor: pointer;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
     .header-profile-img:hover {
-        transform: scale(1.15) rotate(5deg);
+        transform: scale(1.08);
         border-color: var(--uh-coral);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 8px 20px rgba(244, 63, 94, 0.18);
     }
 
 
 
     .mobile-nav-toggle {
-        color: white !important;
+        color: #0F172A !important;
         font-size: 28px;
         cursor: pointer;
         line-height: 0;
@@ -185,14 +190,14 @@
             padding: 12px;
             margin: 0;
             border-radius: 14px;
-            background: rgba(30, 27, 75, 0.98);
+            background: #ffffff;
             backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid #E2E8F0;
             list-style: none;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             z-index: 10001;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
             flex-direction: column !important;
             align-items: stretch !important;
             gap: 4px;
@@ -206,14 +211,14 @@
             align-items: center;
             padding: 12px 16px !important;
             font-size: 15px !important;
-            color: rgba(255, 255, 255, 0.92) !important;
+            color: #334155 !important;
             border-radius: 10px;
             transition: all 0.3s;
             white-space: normal !important;
         }
         .navmenu ul li a:hover,
         .navmenu ul li a.active {
-            background: rgba(244, 63, 94, 0.18) !important;
+            background: #FFF1F2 !important;
             color: #f43f5e !important;
         }
         .mobile-nav-active {
@@ -223,7 +228,7 @@
             position: fixed;
             inset: 0;
             z-index: 10000;
-            background: rgba(10, 8, 30, 0.55);
+            background: rgba(15, 23, 42, 0.35);
         }
         .mobile-nav-active .navmenu ul {
             display: flex !important;
@@ -251,7 +256,7 @@
   <div class="container-fluid container-xl d-flex align-items-center">
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
         <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 36px; width: 36px; border-radius: 8px; object-fit: cover;">
-        <h1 style="margin:0;">Fight D Fear</h1>
+        <h1 style="margin:0;">Fight D <span class="brand-fear">Fear</span></h1>
     </a>
     <nav id="navmenu" class="navmenu">
       <ul>
@@ -259,7 +264,7 @@
             <c:when test="${not empty sessionScope.loggedTrainer}">
                 <!-- Notification Bell for Broadcasts -->
                 <li>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: white !important;">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
                             <i class="fas fa-bell fs-5"></i>
                             <c:if test="${unreadBroadcastCount > 0}">
@@ -277,7 +282,7 @@
                 <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">Dashboard</a></li>
                 <!-- Notification Bell for Broadcasts -->
                 <li>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: white !important;">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
                             <i class="fas fa-bell fs-5"></i>
                             <c:if test="${unreadBroadcastCount > 0}">
@@ -298,7 +303,7 @@
                 
                 <!-- Notification Bell for Broadcasts -->
                 <li>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: white !important;">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
                             <i class="fas fa-bell fs-5"></i>
                             <c:if test="${unreadBroadcastCount > 0}">

@@ -40,9 +40,21 @@ public class LoginController {
     // Show login page
     @GetMapping
     public String showLoginPage(@RequestParam(value = "redirect", required = false) String redirect,
-                                HttpSession session) {
+                                HttpSession session,
+                                Model model) {
         if (redirect != null && !redirect.isEmpty()) {
             session.setAttribute("redirectAfterLogin", redirect);
+        }
+        // One-time post-registration prefill (email always; password only if still in session).
+        Object prefillEmail = session.getAttribute("regPrefillEmail");
+        if (prefillEmail != null) {
+            model.addAttribute("prefillEmail", prefillEmail.toString());
+            session.removeAttribute("regPrefillEmail");
+        }
+        Object prefillPassword = session.getAttribute("regPrefillPassword");
+        if (prefillPassword != null) {
+            model.addAttribute("prefillPassword", prefillPassword.toString());
+            session.removeAttribute("regPrefillPassword");
         }
         return "login"; // login.jsp
     }
@@ -76,10 +88,8 @@ public class LoginController {
             });
             if (ok) {
                 VerificationStatus status = user.getVerificationStatus();
-                if (status == null || status == VerificationStatus.PENDING) {
-                    model.addAttribute("error", "Your account is pending verification by Admin. Please check back later.");
-                    return "login";
-                }
+                // Parity with MobileAuthController: members may sign in after email OTP.
+                // PENDING is allowed; only REJECTED / banned are blocked.
                 if (status == VerificationStatus.REJECTED) {
                     model.addAttribute("error", "Your account has been rejected by admin.");
                     return "login";

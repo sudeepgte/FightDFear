@@ -29,6 +29,7 @@ import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Service.ProductDeliveryTrackingService;
+import in.sp.main.Service.WomenProductOrderLifecycleService;
 import in.sp.main.Service.WomenProductsCareService;
 import in.sp.main.Util.MobileValidation;
 import jakarta.servlet.http.HttpSession;
@@ -55,6 +56,8 @@ public class MobileDeliveryPartnerAuthController {
     private ProductDeliveryTrackingService trackingService;
     @Autowired
     private WomenProductsCareService productsCareService;
+    @Autowired
+    private WomenProductOrderLifecycleService orderLifecycle;
     @Autowired
     private FileUploadService fileUploadService;
 
@@ -322,18 +325,12 @@ public class MobileDeliveryPartnerAuthController {
                     .body(error("Your profile must be approved before you can accept deliveries."));
         }
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
-        if (o == null) return badRequest("Order not found");
-        if (o.getDeliveryPartner() != null) return badRequest("This order is already assigned.");
-        if (!"READY_FOR_PICKUP".equalsIgnoreCase(normStatus(o.getStatus()))) {
-            return badRequest("Only packed orders ready for pickup can be accepted.");
+        try {
+            WomenProductOrder updated = orderLifecycle.acceptByPartner(o, deliveryRepo.findById(p.getId()).orElse(p));
+            return ResponseEntity.ok(ok(Map.of("message", "Order accepted", "order", orderDto(updated))));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
-        o.setDeliveryPartner(p);
-        o.setStatus("ASSIGNED");
-        o.setAssignedAt(LocalDateTime.now());
-        o.setTrackingNote("Delivery partner assigned");
-        orderRepo.save(o);
-        trackingService.ensureGeocoded(o);
-        return ResponseEntity.ok(ok(Map.of("message", "Order accepted", "order", orderDto(o))));
     }
 
     @PostMapping("/orders/{id}/status")
@@ -349,38 +346,13 @@ public class MobileDeliveryPartnerAuthController {
                     .body(error("Your profile must be approved before you can update deliveries."));
         }
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
-        if (o == null || o.getDeliveryPartner() == null || !o.getDeliveryPartner().getId().equals(p.getId())) {
-            return badRequest("Order not found");
+        try {
+            WomenProductOrder updated = orderLifecycle.applyDeliveryStatus(
+                    o, deliveryRepo.findById(p.getId()).orElse(p), trim(body == null ? null : body.get("status")));
+            return ResponseEntity.ok(ok(Map.of("message", "Status updated", "order", orderDto(updated))));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
-        String next = trim(body == null ? null : body.get("status")).toUpperCase(Locale.ROOT);
-        if ("SHIPPED".equals(next) || "PICKED_UP".equals(next)) next = "OUT_FOR_DELIVERY";
-        String current = normStatus(o.getStatus());
-        boolean allowed = switch (current) {
-            case "ASSIGNED" -> "OUT_FOR_DELIVERY".equals(next);
-            case "OUT_FOR_DELIVERY" -> "DELIVERED".equals(next);
-            default -> false;
-        };
-        if (!allowed) {
-            return badRequest("Invalid status change from " + current + " to " + next);
-        }
-        o.setStatus(next);
-        if ("OUT_FOR_DELIVERY".equals(next)) {
-            o.setPickedUpAt(LocalDateTime.now());
-            o.setTrackingNote("Out for delivery");
-        }
-        if ("DELIVERED".equals(next)) {
-            o.setDeliveredAt(LocalDateTime.now());
-            o.setTrackingNote("Delivered");
-            orderRepo.save(o);
-            if ("COD".equalsIgnoreCase(o.getPaymentMethod()) || "COD".equalsIgnoreCase(o.getPaymentStatus())) {
-                productsCareService.creditSeller(o);
-            }
-            productsCareService.creditDelivery(o);
-        }
-        orderRepo.save(o);
-        trackingService.ensureGeocoded(o);
-        trackingService.refreshRouteIfNeeded(o, true);
-        return ResponseEntity.ok(ok(Map.of("message", "Status updated", "order", orderDto(o))));
     }
 
     @GetMapping("/orders/{id}/track")
@@ -459,7 +431,9 @@ public class MobileDeliveryPartnerAuthController {
         m.put("id", o.getId());
         m.put("quantity", o.getQuantity());
         m.put("totalPrice", o.getTotalPrice());
-        m.put("status", normStatus(o.getStatus()));
+        m.put("status", WomenProductOrderLifecycleService.canonical(o.getStatus()));
+        m.put("statusLabel", WomenProductOrderLifecycleService.displayLabel(o.getStatus()));
+        m.put("nextStatuses", WomenProductOrderLifecycleService.deliveryNextStatuses(o.getStatus()));
         m.put("shippingAddress", o.getShippingAddress());
         m.put("orderTime", o.getOrderTime() == null ? null : o.getOrderTime().toString());
         m.put("assignedAt", o.getAssignedAt() == null ? null : o.getAssignedAt().toString());
@@ -487,10 +461,7 @@ public class MobileDeliveryPartnerAuthController {
     }
 
     private static String normStatus(String status) {
-        if (status == null) return "PLACED";
-        String s = status.trim().toUpperCase(Locale.ROOT);
-        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
-        return s;
+        return WomenProductOrderLifecycleService.canonical(status);
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {
