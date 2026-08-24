@@ -9,7 +9,18 @@ class PaymentService {
   Future<Map<String, dynamic>> config() =>
       _api.get('/payment/config', timeout: const Duration(seconds: 20));
 
-  /// Generic amount-based order (marketplace / martial arts / glow).
+  /// Glow Space booking — server validates amount from booking record.
+  Future<Map<String, dynamic>> createGlowBookingOrder(int bookingId) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'GLOW_BOOKING',
+          'bookingId': bookingId,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
+  /// Generic amount-based order (marketplace / martial arts / etc.).
   Future<Map<String, dynamic>> createOrder(double amount, {String? type, Map<String, dynamic>? extra}) =>
       _api.post(
         '/payment/create-order',

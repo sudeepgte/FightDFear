@@ -1798,6 +1798,7 @@
                 <div class="dropdown-menu" style="right: 0; left: auto; top: 100%; margin-top: 15px; width: 230px;">
                     <a href="/login" class="dropdown-item">Join as Member</a>
                     <a href="/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
                     <a href="/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="/salons/login" class="dropdown-item">Beauty & Wellness</a>
                     <a href="/seller/login" class="dropdown-item">Service Partner</a>

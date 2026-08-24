@@ -674,8 +674,8 @@
                           </td>
                           <td>
                             <div style="display:flex; align-items:center; gap:10px;">
-                              <c:if test="${not empty o.product.imagePath}">
-                                <img src="${pageContext.request.contextPath}${o.product.imagePath}" style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                              <c:if test="${not empty o.product.publicImagePath}">
+                                <img src="${pageContext.request.contextPath}${o.product.publicImagePath}" style="width:36px; height:36px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
                               </c:if>
                               <div>
                                 <div style="font-weight:700; font-size:0.9rem; color:var(--brand-purple-dark);">${o.product.name}</div>
@@ -764,8 +764,8 @@
                               #PRD-${p.id}</td>
                             <td>
                               <c:choose>
-                                <c:when test="${not empty p.imagePath}"><img
-                                    src="${pageContext.request.contextPath}${p.imagePath}" class="img-avatar" alt="">
+                                <c:when test="${not empty p.publicImagePath}"><img
+                                    src="${pageContext.request.contextPath}${p.publicImagePath}" class="img-avatar" alt="">
                                 </c:when>
                                 <c:otherwise>
                                   <div class="img-avatar"
@@ -1050,8 +1050,8 @@
                               </td>
                               <td>
                                 <div style="display:flex; align-items:center; gap:10px;">
-                                  <c:if test="${not empty o.product.imagePath}">
-                                    <img src="${pageContext.request.contextPath}${o.product.imagePath}" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
+                                  <c:if test="${not empty o.product.publicImagePath}">
+                                    <img src="${pageContext.request.contextPath}${o.product.publicImagePath}" style="width:38px; height:38px; border-radius:8px; object-fit:cover; border:1px solid #eee;">
                                   </c:if>
                                   <div>
                                     <div style="font-weight:700; font-size:0.9rem; color:var(--brand-purple-dark);">${o.product.name}</div>

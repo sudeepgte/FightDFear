@@ -692,19 +692,28 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
       children: [
         const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(18),
+          width: 76,
+          height: 76,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(20),
             color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFFF43F5E).withValues(alpha: 0.18),
-                blurRadius: 24,
+                blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Icon(widget.loginIcon, size: 42, color: const Color(0xFFF43F5E)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/fightdfear-logo.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Icon(widget.loginIcon, size: 40, color: const Color(0xFFF43F5E)),
+            ),
+          ),
         ),
         const SizedBox(height: 18),
         Text(

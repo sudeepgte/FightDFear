@@ -615,7 +615,7 @@
         <c:if test="${not empty product.brand}">
           <div class="brand-top">${product.brand}</div>
         </c:if>
-        <h2 class="product-title">${product.name}</h2>
+        <h2 class="product-title"><c:out value="${product.name}"/></h2>
 
         <div class="ratings-block" onclick="document.getElementById('reviewsSection').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
           <div>
@@ -652,51 +652,22 @@
         </c:choose>
 
         <c:if test="${not empty product.description}">
-          <div class="product-desc">${product.description}</div>
+          <div class="product-desc"><c:out value="${product.description}"/></div>
         </c:if>
 
+        <div id="stockContainer" style="margin-bottom: 20px;"></div>
 
-        <!-- Stock Availability Indicator Container -->
-        <div id="stockContainer" style="margin-bottom: 20px;">
-          <c:choose>
-            <c:when test="${product.stock > 5}">
-              <div class="stock-badge-pill stock-in" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#ecfdf5; color:#059669; border:1px solid #10b98133; border-radius:12px; font-weight:800; font-size:14px;">
-                <i class="bi bi-check-circle-fill"></i> ✓ In Stock
-              </div>
-            </c:when>
-            <c:when test="${product.stock >= 2 && product.stock <= 5}">
-              <div class="stock-badge-pill stock-warning" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fffbe0; color:#d97706; border:1px solid #fde68a; border-radius:12px; font-weight:800; font-size:14px;">
-                <i class="bi bi-exclamation-triangle-fill"></i> ⚠ Only <span id="currentStockVal">${product.stock}</span> left in stock
-              </div>
-            </c:when>
-            <c:when test="${product.stock == 1}">
-              <div class="stock-badge-pill stock-urgent" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:#fef2f2; color:#dc2626; border:2px solid #fca5a5; border-radius:14px; font-weight:900; font-size:15px; box-shadow:0 4px 12px rgba(220,38,38,0.15);">
-                <i class="bi bi-fire" style="color:#ef4444;"></i> 🔥 Only 1 left in stock!
-              </div>
-            </c:when>
-            <c:otherwise>
-              <div class="stock-badge-pill stock-out" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:12px; font-weight:800; font-size:14px;">
-                <i class="bi bi-x-circle-fill"></i> Out of Stock
-              </div>
-            </c:otherwise>
-          </c:choose>
-        </div>
-
-        <!-- Dynamic Quantity Selector -->
         <div class="quantity-selector-block" style="margin-bottom: 20px; display: flex; align-items: center; gap: 14px;">
           <label style="font-weight: 800; font-size: 14px; color: var(--brand-purple-dark);">Quantity:</label>
           <c:choose>
             <c:when test="${product.stock > 0}">
-              <input type="number" id="productQuantity" min="1" max="${product.stock}" value="1" class="form-control" style="width: 100px; text-align: center; font-weight: 800; border-radius: 12px; border: 2px solid var(--fdf-border); font-size: 15px;" oninput="updateQtyInputs(this, ${product.stock})">
+              <input type="number" id="productQuantity" min="1" max="${product.stock}" value="1" class="form-control" style="width: 100px; text-align: center; font-weight: 800; border-radius: 12px; border: 2px solid var(--fdf-border); font-size: 15px;">
             </c:when>
             <c:otherwise>
               <input type="number" id="productQuantity" min="0" max="0" value="0" disabled class="form-control" style="width: 100px; text-align: center; font-weight: 800; border-radius: 12px; background: #f3f4f6; color: #9ca3af; font-size: 15px;">
             </c:otherwise>
           </c:choose>
         </div>
-        
-        <div class="product-desc" style="border:none; padding:0; margin-bottom:15px; font-size:14px;">${product.description}</div>
-        
 
         <div class="highlights-box">
           <h4>Highlights</h4>
@@ -729,31 +700,19 @@
 
         <div class="seller-badge" style="margin-top: 16px;">
           <i class="bi bi-shop"></i>
-          Sold by <strong>${product.seller.businessName}</strong>
+          Sold by <strong><c:out value="${product.seller.businessName}"/></strong>
+          <c:if test="${sellerApproved}"><span style="margin-left:8px;font-size:11px;font-weight:800;color:#059669;">Verified seller</span></c:if>
         </div>
 
         <c:if test="${not empty product.tags}">
           <div class="tags-container">
             <c:forEach var="tag" items="${fn:split(product.tags, ',')}">
-              <span class="tag-badge">#${fn:trim(tag)}</span>
+              <span class="tag-badge">#<c:out value="${fn:trim(tag)}"/></span>
             </c:forEach>
           </div>
         </c:if>
 
-
-        <div class="btn-group" style="margin-top:20px;">
-          <c:if test="${product.stock > 0}">
-            <form class="cart-form" action="${pageContext.request.contextPath}/women-products/cart/add" method="post">
-              <input type="hidden" name="productId" value="${product.id}">
-              <button type="submit" class="btn-fdf-main">
-                <i class="bi bi-cart-plus-fill"></i> Add to Cart
-              </button>
-            </form>
-          </c:if>
-          <form class="wish-form" action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
-
         <div class="btn-group" style="margin-top:20px; gap:12px;">
-          <!-- Buy Now Form -->
           <form action="${pageContext.request.contextPath}/women-products/buy-now" method="post" id="buyNowForm" style="flex: 2;">
             <input type="hidden" name="productId" value="${product.id}">
             <input type="hidden" name="quantity" id="buyNowQty" value="1">
@@ -761,8 +720,6 @@
               <i class="bi bi-lightning-charge-fill"></i> Buy Now
             </button>
           </form>
-
-          <!-- Add to Cart Form -->
           <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" id="addToCartForm" style="flex: 2;">
             <input type="hidden" name="productId" value="${product.id}">
             <input type="hidden" name="quantity" id="addToCartQty" value="1">
@@ -770,9 +727,7 @@
               <i class="bi bi-cart-plus-fill"></i> Add to Cart
             </button>
           </form>
-          
           <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post" style="flex: 1;">
-
             <input type="hidden" name="productId" value="${product.id}">
             <button type="submit" class="btn-fdf-secondary ${inWishlist ? 'active' : ''}" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
               <i class="bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}"></i>
@@ -858,7 +813,7 @@
                           ${not empty r.user.fullName ? r.user.fullName.substring(0,1) : 'U'}
                         </div>
                         <div>
-                          <div style="font-weight: 800; font-size: 14px; color: var(--brand-purple-darker);">${r.user.fullName}</div>
+                          <div style="font-weight: 800; font-size: 14px; color: var(--brand-purple-darker);"><c:out value="${r.user.fullName}"/></div>
                           <div style="font-size: 11px; color: #9ca3af; font-weight: 600;"><i class="bi bi-patch-check-fill" style="color:#16a34a"></i> Verified Purchase</div>
                         </div>
                       </div>
@@ -867,7 +822,7 @@
                         <c:forEach begin="${r.rating + 1}" end="5"><i class="bi bi-star" style="color: #ddd;"></i></c:forEach>
                       </div>
                     </div>
-                    <p style="font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 8px;">${r.review}</p>
+                    <p style="font-size: 14px; color: #4b5563; line-height: 1.6; margin-bottom: 8px;"><c:out value="${r.review}"/></p>
                     <div style="font-size: 11px; color: #9ca3af;">Posted on ${r.orderTime}</div>
                   </div>
                 </c:forEach>
@@ -885,6 +840,27 @@
     </div>
   </div>
 
+  <c:if test="${not empty relatedProducts}">
+    <div class="pv-container" style="padding-top:0;">
+      <h3 style="font-family:Montserrat,sans-serif;font-weight:800;color:var(--brand-purple-darker);margin:0 0 16px;">You May Also Like</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;">
+        <c:forEach var="rp" items="${relatedProducts}">
+          <a href="${pageContext.request.contextPath}/women-products/view/${rp.id}" style="text-decoration:none;color:inherit;background:#fff;border:1px solid var(--fdf-border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);">
+            <div style="height:140px;background:#fdf2f8;">
+              <c:if test="${not empty rp.publicImagePath}">
+                <img src="<c:choose><c:when test="${rp.remoteImage}">${rp.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${rp.publicImagePath}</c:otherwise></c:choose>" alt="<c:out value='${rp.name}'/>" style="width:100%;height:100%;object-fit:cover;">
+              </c:if>
+            </div>
+            <div style="padding:12px;">
+              <div style="font-weight:800;font-size:14px;color:var(--brand-purple);"><c:out value="${rp.name}"/></div>
+              <div style="font-weight:900;margin-top:6px;">&#8377;<fmt:formatNumber value="${rp.price}" maxFractionDigits="2"/></div>
+            </div>
+          </a>
+        </c:forEach>
+      </div>
+    </div>
+  </c:if>
+
   <script>
     function changeImage(element, src) {
       const main = document.getElementById('mainImage');
@@ -897,6 +873,7 @@
       const inputEl = document.getElementById('pincodeInput');
       const input = (inputEl.value || '').trim();
       const msgBox = document.getElementById('deliveryMsg');
+      if (!inputEl || !msgBox) return;
 
       if (!/^\d{6}$/.test(input)) {
         msgBox.className = 'delivery-msg error';
@@ -917,124 +894,88 @@
       }
       let daysToAdd = (sum % 6) + 2;
       const prefix = input.substring(0, 2);
-      if (['56', '11', '40', '60', '70', '50'].includes(prefix)) {
+      if (['56', '11', '40', '60', '70', '50', '12', '13', '14', '20', '30'].includes(prefix)) {
         daysToAdd = (sum % 2) + 1;
       }
 
       const deliveryDate = new Date();
       deliveryDate.setDate(deliveryDate.getDate() + daysToAdd);
       const dateString = deliveryDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-
       msgBox.className = 'delivery-msg success';
       msgBox.innerHTML = '<i class="bi bi-check-circle-fill"></i> Delivery available — arriving by <strong>' + dateString + '</strong>.';
     }
 
-
-    document.addEventListener('DOMContentLoaded', function () {
-      const pincodeInput = document.getElementById('pincodeInput');
-      if (pincodeInput) {
-        pincodeInput.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            checkDelivery();
-          }
-        });
-      }
-
-    // Dynamic Quantity Input Synchronization
     function updateQtyInputs(inputEl, maxStock) {
-      let val = parseInt(inputEl.value) || 1;
+      let val = parseInt(inputEl.value, 10) || 1;
       if (val < 1) val = 1;
       if (val > maxStock) val = maxStock;
       inputEl.value = val;
-
       const buyNowQty = document.getElementById('buyNowQty');
       const addToCartQty = document.getElementById('addToCartQty');
       if (buyNowQty) buyNowQty.value = val;
       if (addToCartQty) addToCartQty.value = val;
     }
 
-    // Real-Time Stock Availability Polling (Every 3 seconds)
     function pollProductStock() {
       const productId = '${product.id}';
       if (!productId) return;
-
       fetch('${pageContext.request.contextPath}/women-products/api/product/' + productId + '/stock')
         .then(res => res.json())
         .then(data => {
           if (!data.exists) return;
-
           const stock = data.stock;
           const container = document.getElementById('stockContainer');
           const qtyInput = document.getElementById('productQuantity');
           const buyNowBtn = document.getElementById('buyNowBtn');
           const addToCartBtn = document.getElementById('addToCartBtn');
-
           if (container) {
             if (stock > 5) {
-              container.innerHTML = '<div class="stock-badge-pill stock-in" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#ecfdf5; color:#059669; border:1px solid #10b98133; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-check-circle-fill"></i> ✓ In Stock</div>';
-            } else if (stock >= 2 && stock <= 5) {
-              container.innerHTML = '<div class="stock-badge-pill stock-warning" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fffbe0; color:#d97706; border:1px solid #fde68a; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-exclamation-triangle-fill"></i> ⚠ Only ' + stock + ' left in stock</div>';
+              container.innerHTML = '<div class="stock-badge-pill" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:#ecfdf5;color:#059669;border-radius:12px;font-weight:800;font-size:14px;"><i class="bi bi-check-circle-fill"></i> In Stock</div>';
+            } else if (stock >= 2) {
+              container.innerHTML = '<div class="stock-badge-pill" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:#fffbe0;color:#d97706;border-radius:12px;font-weight:800;font-size:14px;"><i class="bi bi-exclamation-triangle-fill"></i> Only ' + stock + ' left in stock</div>';
             } else if (stock === 1) {
-              container.innerHTML = '<div class="stock-badge-pill stock-urgent" style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:#fef2f2; color:#dc2626; border:2px solid #fca5a5; border-radius:14px; font-weight:900; font-size:15px; box-shadow:0 4px 12px rgba(220,38,38,0.15);"><i class="bi bi-fire" style="color:#ef4444;"></i> 🔥 Only 1 left in stock!</div>';
+              container.innerHTML = '<div class="stock-badge-pill" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:#fef2f2;color:#dc2626;border-radius:12px;font-weight:800;font-size:14px;"><i class="bi bi-fire"></i> Only 1 left in stock</div>';
             } else {
-              container.innerHTML = '<div class="stock-badge-pill stock-out" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:12px; font-weight:800; font-size:14px;"><i class="bi bi-x-circle-fill"></i> Out of Stock</div>';
+              container.innerHTML = '<div class="stock-badge-pill" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:#fee2e2;color:#991b1b;border-radius:12px;font-weight:800;font-size:14px;"><i class="bi bi-x-circle-fill"></i> Out of Stock</div>';
             }
           }
-
           if (qtyInput) {
             if (stock <= 0) {
               qtyInput.value = 0;
               qtyInput.max = 0;
-              qtyInput.min = 0;
               qtyInput.disabled = true;
             } else {
               qtyInput.disabled = false;
               qtyInput.min = 1;
               qtyInput.max = stock;
-              if (parseInt(qtyInput.value) > stock) {
-                qtyInput.value = stock;
-                updateQtyInputs(qtyInput, stock);
-              }
+              if (parseInt(qtyInput.value, 10) > stock) updateQtyInputs(qtyInput, stock);
             }
           }
-
-          if (buyNowBtn) {
-            if (stock <= 0) {
-              buyNowBtn.disabled = true;
-              buyNowBtn.style.opacity = '0.5';
-              buyNowBtn.style.cursor = 'not-allowed';
-              buyNowBtn.style.background = '#9ca3af';
-              buyNowBtn.style.boxShadow = 'none';
-            } else {
-              buyNowBtn.disabled = false;
-              buyNowBtn.style.opacity = '1';
-              buyNowBtn.style.cursor = 'pointer';
-              buyNowBtn.style.background = 'var(--gradient-primary)';
-            }
-          }
-
-          if (addToCartBtn) {
-            if (stock <= 0) {
-              addToCartBtn.disabled = true;
-              addToCartBtn.style.opacity = '0.5';
-              addToCartBtn.style.cursor = 'not-allowed';
-              addToCartBtn.style.background = '#9ca3af';
-              addToCartBtn.style.boxShadow = 'none';
-            } else {
-              addToCartBtn.disabled = false;
-              addToCartBtn.style.opacity = '1';
-              addToCartBtn.style.cursor = 'pointer';
-              addToCartBtn.style.background = '#166534';
-            }
-          }
+          [buyNowBtn, addToCartBtn].forEach(function(btn) {
+            if (!btn) return;
+            btn.disabled = stock <= 0;
+            btn.style.opacity = stock <= 0 ? '0.5' : '1';
+            btn.style.cursor = stock <= 0 ? 'not-allowed' : 'pointer';
+          });
         })
-        .catch(err => { /* silent fail */ });
+        .catch(function() { /* ignore */ });
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('DOMContentLoaded', function () {
+      const qtyInput = document.getElementById('productQuantity');
+      const maxStock = ${product.stock == null ? 0 : product.stock};
+      if (qtyInput) {
+        qtyInput.addEventListener('input', function () { updateQtyInputs(qtyInput, parseInt(qtyInput.max, 10) || maxStock); });
+        updateQtyInputs(qtyInput, maxStock > 0 ? maxStock : 1);
+      }
+      const pincodeInput = document.getElementById('pincodeInput');
+      if (pincodeInput) {
+        pincodeInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); checkDelivery(); }
+        });
+      }
+      pollProductStock();
       setInterval(pollProductStock, 3000);
-
     });
   </script>
 
