@@ -463,17 +463,18 @@
 
         <!-- Showing count status -->
         <div class="container mt-4 px-4 text-muted small">
-            <i class="bi bi-info-circle me-1"></i> Showing <span id="visibleCount" class="fw-bold text-dark">${doctors.size()}</span> verified medical experts
+            <i class="bi bi-info-circle me-1"></i> Showing <span id="visibleCount" class="fw-bold text-dark">...</span> verified medical experts
         </div>
 
         <!-- Doctors Grid -->
         <div class="doctors-grid" id="doctorGrid">
             <c:forEach var="d" items="${doctors}">
-                <div class="doctor-card" data-aos="fade-up"
-                     data-name="${d.fullName}" 
-                     data-spec="${d.specialization}" 
-                     data-city="${d.city}" 
-                     data-loc="${d.locationText}">
+                <c:if test="${empty sessionScope.loggedDoctor || d.id != sessionScope.loggedDoctor.id}">
+                    <div class="doctor-card" data-aos="fade-up"
+                         data-name="${d.fullName}" 
+                         data-spec="${d.specialization}" 
+                         data-city="${d.city}" 
+                         data-loc="${d.locationText}">
                     
                     <div class="doctor-card-top">
                         <div class="doctor-avatar">
@@ -527,6 +528,7 @@
                         </a>
                     </div>
                 </div>
+                </c:if>
             </c:forEach>
             
             <c:if test="${empty doctors}">
@@ -590,6 +592,10 @@
         });
         document.getElementById('visibleCount').textContent = count;
     }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        filterDoctors();
+    });
 </script>
 
 </body>
