@@ -3,7 +3,9 @@ package in.sp.main;
 import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Entities.WomenProduct;
+import in.sp.main.Entities.WomenProductOrder;
 import in.sp.main.Entities.WomenProductSeller;
+import in.sp.main.Service.WomenProductOrderLifecycleService;
 import in.sp.main.Service.WomenProductsCareService;
 import in.sp.main.Util.ProductCategories;
 import org.junit.jupiter.api.Test;
@@ -79,16 +81,43 @@ class WomenProductsModuleTest {
     void cancelPolicyMatchesMobileRules() {
         assertTrue(isCancellableStatus("PLACED"));
         assertTrue(isCancellableStatus("CONFIRMED"));
+        assertTrue(isCancellableStatus("PROCESSING"));
+        assertTrue(isCancellableStatus("PACKED"));
         assertTrue(isCancellableStatus("READY_FOR_PICKUP"));
+        assertFalse(isCancellableStatus("ASSIGNED"));
         assertFalse(isCancellableStatus("SHIPPED"));
         assertFalse(isCancellableStatus("DELIVERED"));
         assertFalse(isCancellableStatus("CANCELLED"));
-        assertEquals("OUT_FOR_DELIVERY", WomenProductsCareService.normStatus("SHIPPED"));
+        assertEquals("PLACED", WomenProductsCareService.normStatus("PENDING"));
+        assertEquals("SHIPPED", WomenProductsCareService.normStatus("SHIPPED"));
+        assertEquals("PICKED_UP", WomenProductsCareService.normStatus("PICKED_UP"));
+    }
+
+    @Test
+    void orderLifecycleTransitionsAreControlled() {
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("PLACED", "CONFIRMED"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("CONFIRMED", "PROCESSING"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("CONFIRMED", "READY_FOR_PICKUP"));
+        assertFalse(WomenProductOrderLifecycleService.sellerMaySet("DELIVERED", "PROCESSING"));
+        assertFalse(WomenProductOrderLifecycleService.sellerMaySet("CANCELLED", "SHIPPED"));
+        assertTrue(WomenProductOrderLifecycleService.deliveryMaySet("ASSIGNED", "PICKED_UP"));
+        assertTrue(WomenProductOrderLifecycleService.deliveryMaySet("ASSIGNED", "OUT_FOR_DELIVERY"));
+        assertTrue(WomenProductOrderLifecycleService.deliveryMaySet("PICKED_UP", "IN_TRANSIT"));
+        assertFalse(WomenProductOrderLifecycleService.deliveryMaySet("DELIVERED", "OUT_FOR_DELIVERY"));
+
+        WomenProductOrder placed = new WomenProductOrder();
+        placed.setStatus("READY_FOR_PICKUP");
+        assertTrue(WomenProductOrderLifecycleService.canAssign(placed));
+        placed.setStatus("CANCELLED");
+        assertFalse(WomenProductOrderLifecycleService.canAssign(placed));
+        placed.setStatus("DELIVERED");
+        assertFalse(WomenProductOrderLifecycleService.canAssign(placed));
     }
 
     /** Mirrors {@link WomenProductsCareService#canCancel} without loading Spring beans. */
     private static boolean isCancellableStatus(String status) {
-        String st = WomenProductsCareService.normStatus(status);
-        return "PLACED".equals(st) || "CONFIRMED".equals(st) || "READY_FOR_PICKUP".equals(st);
+        WomenProductOrder o = new WomenProductOrder();
+        o.setStatus(status);
+        return WomenProductOrderLifecycleService.canCancel(o);
     }
 }
