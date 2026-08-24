@@ -71,6 +71,9 @@ public class MarketplaceController {
     @Autowired
     private in.sp.main.Service.PasswordService passwordService;
 
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:}")
     private String razorpayKeyId;
 
@@ -437,6 +440,15 @@ public class MarketplaceController {
             booking.setStatus("PENDING");
             
             workerBookingRepo.save(booking);
+            
+            // Broadcast live refresh to worker dashboard
+            try {
+                if (booking.getJobApplication() != null && booking.getJobApplication().getUser() != null) {
+                    Long workerUserId = booking.getJobApplication().getUser().getId();
+                    messagingTemplate.convertAndSend("/topic/worker-bookings/" + workerUserId, "REFRESH");
+                }
+            } catch (Exception ignored) {}
+
             redirectAttributes.addFlashAttribute("success", "Booking request sent successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Invalid date format or booking failed.");
@@ -709,25 +721,6 @@ public class MarketplaceController {
         return "redirect:/marketplace/myBookings";
     }
 
-    @GetMapping("/worker-bookings")
-    public String workerBookings(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
-        User u = (User) session.getAttribute("user");
-        if (u == null) return "redirect:/login";
-
-        in.sp.main.Entities.JobApplication app = jobAppRepo
-                .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(u.getId(), VerificationStatus.VERIFIED)
-                .orElse(null);
-
-        if (app == null) {
-            redirectAttributes.addFlashAttribute("error", "Job Bookings are available only for verified workers.");
-            return "redirect:/marketplace";
-        }
-
-        List<in.sp.main.Entities.WorkerBooking> incomingBookings = workerBookingRepo.findByJobApplication_Id(app.getId());
-        model.addAttribute("incomingBookings", incomingBookings);
-        return "marketplace/worker-dashboard-bookings";
-    }
-
     @GetMapping("/myBookings")
     public String myBookings(HttpSession session, Model model) {
         User u = (User) session.getAttribute("user");
@@ -736,35 +729,6 @@ public class MarketplaceController {
         model.addAttribute("bookings", bookingRepo.findByUserOrderByRequestedTimeDesc(u));
         model.addAttribute("workerBookings", workerBookingRepo.findByClient_Id(u.getId()));
         return "marketplace/my-bookings";
-    }
-
-    @PostMapping("/worker-booking/{id}/status")
-    public String updateWorkerBookingStatus(@PathVariable Long id, @RequestParam String status, HttpSession session, RedirectAttributes redirectAttributes) {
-        User u = (User) session.getAttribute("user");
-        if (u == null) return "redirect:/login";
-        
-        in.sp.main.Entities.WorkerBooking booking = workerBookingRepo.findById(id).orElse(null);
-        if (booking == null || booking.getJobApplication() == null || booking.getJobApplication().getUser() == null
-                || !booking.getJobApplication().getUser().getId().equals(u.getId())) {
-            redirectAttributes.addFlashAttribute("error", "Booking not found.");
-            return "redirect:/marketplace/worker-bookings";
-        }
-
-        String current = booking.getStatus() != null ? booking.getStatus() : "";
-        String next = status != null ? status.trim().toUpperCase() : "";
-        boolean allowed =
-                ("PENDING".equals(current) && ("ACCEPTED".equals(next) || "REJECTED".equals(next)))
-                || (("ACCEPTED".equals(current) || "PAID".equals(current)) && "COMPLETED".equals(next));
-
-        if (!allowed) {
-            redirectAttributes.addFlashAttribute("error", "Invalid booking status transition.");
-            return "redirect:/marketplace/worker-bookings";
-        }
-
-        booking.setStatus(next);
-        workerBookingRepo.save(booking);
-        redirectAttributes.addFlashAttribute("success", "Booking updated successfully!");
-        return "redirect:/marketplace/worker-bookings";
     }
 
     /**

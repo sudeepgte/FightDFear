@@ -6,6 +6,7 @@ import '../../services/auth_state.dart';
 import '../../services/glow_space_service.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/module_payment_checkout.dart';
+import 'glow_booking_confirmation_screen.dart';
 
 class GlowSpaceSalonDetailScreen extends StatefulWidget {
   const GlowSpaceSalonDetailScreen({super.key, required this.salonId});
@@ -33,6 +34,7 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
   List<String> _slotsToday = [];
   List<String> _photos = [];
   bool _favorite = false;
+  bool _canReview = false;
   String? _nextSlotLabel;
   String? _cancelPolicy;
 
@@ -86,6 +88,7 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
             ? ((res['salon'] as Map)['galleryPhotos'] as List).map((e) => e.toString()).toList()
             : <String>[];
         _favorite = res['favorite'] == true || _salon?['favorite'] == true;
+        _canReview = res['canReview'] == true;
         _nextSlotLabel = res['nextSlot'] is Map ? (res['nextSlot'] as Map)['label']?.toString() : null;
         if (res['noSlotsToday'] == true) _nextSlotLabel ??= 'No slots today';
         _cancelPolicy = res['cancelPolicy']?.toString() ?? GlowCatalog.cancelPolicy;
@@ -98,18 +101,24 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _startPayment({required int bookingId, required double amount, required String title}) async {
+  Future<void> _startPayment({required int bookingId, required String title}) async {
     await _checkout.pay(
       context: context,
-      amount: amount,
       description: 'Glow Space · $title',
+      createOrderFn: () => PaymentService(context.read<AuthState>().api)
+          .createGlowBookingOrder(bookingId),
       verifyPayload: (response) => {
         'razorpay_order_id': response.orderId,
         'razorpay_payment_id': response.paymentId,
         'razorpay_signature': response.signature,
         'type': 'GLOW_BOOKING',
         'bookingId': bookingId,
-        'amount': amount,
+      },
+      onSuccess: () async {
+        if (!mounted) return;
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => GlowBookingConfirmationScreen(bookingId: bookingId)),
+        );
       },
     );
   }
@@ -257,9 +266,12 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
     if (res['success'] == true) {
       final paymentRequired = res['paymentRequired'] == true;
       final bookingId = res['bookingId'] is int ? res['bookingId'] as int : int.tryParse('${res['bookingId']}');
-      final amount = (res['amount'] is num) ? (res['amount'] as num).toDouble() : 0.0;
-      if (paymentRequired && bookingId != null && amount > 0) {
-        await _startPayment(bookingId: bookingId, amount: amount, title: title);
+      if (paymentRequired && bookingId != null) {
+        await _startPayment(bookingId: bookingId, title: title);
+      } else if (bookingId != null) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => GlowBookingConfirmationScreen(bookingId: bookingId)),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(res['message']?.toString() ?? 'Booking created')),
@@ -393,7 +405,8 @@ class _GlowSpaceSalonDetailScreenState extends State<GlowSpaceSalonDetailScreen>
                       Row(
                         children: [
                           const Expanded(child: Text('Reviews', style: TextStyle(fontWeight: FontWeight.w700))),
-                          TextButton(onPressed: _writeReview, child: const Text('Write review')),
+                          if (_canReview)
+                            TextButton(onPressed: _writeReview, child: const Text('Write review')),
                         ],
                       ),
                       if (_reviews.isEmpty)

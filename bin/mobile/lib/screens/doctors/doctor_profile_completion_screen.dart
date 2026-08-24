@@ -232,6 +232,13 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         _slots.add(_AvailabilitySlot(day: day, start: start, end: end));
       }
     }
+    if (_slots.isEmpty) {
+      _slots.add(_AvailabilitySlot(
+        day: 'MONDAY',
+        start: const TimeOfDay(hour: 9, minute: 0),
+        end: const TimeOfDay(hour: 17, minute: 0),
+      ));
+    }
   }
 
   List<String> _asStringList(dynamic value) {
@@ -327,39 +334,75 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
 
   String? _validate({bool forSubmit = false}) {
     if (_fullName.text.trim().isEmpty) return '1.1 Doctor name is required';
-    if (_resolvedSpecialization.isEmpty) return '1.2 Specialization is required';
-    if (_resolvedQualification.isEmpty) return '1.3 Qualification is required';
-    if (_medicalReg.text.trim().isEmpty) return '1.4 Medical registration number is required';
-    final exp = int.tryParse(_experience.text.trim());
-    if (exp == null) return '1.5 Years of experience is required';
-    if (exp < 0 || exp > 50) return '1.5 Years of experience must be between 0 and 50';
-    if (_hospital.text.trim().isEmpty) return '2.1 Hospital / clinic name is required';
-    if (_clinicAddress.text.trim().isEmpty) return '2.2 Clinic address is required';
-    if (_city.text.trim().isEmpty) return '2.3 City is required';
-    if (_resolvedState.isEmpty) return '2.4 State is required';
-    if (!RegExp(r'^\d{6}$').hasMatch(_pincode.text.trim())) return '2.5 Pincode must be exactly 6 digits';
-    if (_selectedModes.isEmpty) return '3. Select at least one consultation mode';
-    if (_slots.isEmpty) return '4. Add at least one availability slot';
+
+    final expStr = _experience.text.trim();
+    if (expStr.isNotEmpty) {
+      final exp = int.tryParse(expStr);
+      if (exp == null || exp < 0 || exp > 50) return '1.5 Years of experience must be between 0 and 50';
+    }
+
+    final pin = _pincode.text.trim();
+    if (pin.isNotEmpty && !RegExp(r'^\d{6}$').hasMatch(pin)) {
+      return '2.5 Pincode must be exactly 6 digits';
+    }
+
     for (final slot in _slots) {
       final start = slot.start.hour * 60 + slot.start.minute;
       final end = slot.end.hour * 60 + slot.end.minute;
       if (end <= start) return '4. Each slot end time must be after start time';
     }
+
+    final feeStr = _consultationFee.text.trim();
+    if (feeStr.isNotEmpty) {
+      final fee = double.tryParse(feeStr);
+      if (fee == null || fee < 0) return '7.1 Consultation fee cannot be negative';
+    }
+    final chatFeeStr = _chatFee.text.trim();
+    if (chatFeeStr.isNotEmpty) {
+      final cf = double.tryParse(chatFeeStr);
+      if (cf == null || cf < 0) return '7.2 Chat fee cannot be negative';
+    }
+    final callFeeStr = _callFee.text.trim();
+    if (callFeeStr.isNotEmpty) {
+      final clf = double.tryParse(callFeeStr);
+      if (clf == null || clf < 0) return '7.3 Call fee cannot be negative';
+    }
+    final videoFeeStr = _videoFee.text.trim();
+    if (videoFeeStr.isNotEmpty) {
+      final vf = double.tryParse(videoFeeStr);
+      if (vf == null || vf < 0) return '7.4 Video fee cannot be negative';
+    }
+
+    if (!forSubmit) return null;
+
+    // Strict completeness checks for submission
+    if (_resolvedSpecialization.isEmpty) return '1.2 Specialization is required';
+    if (_resolvedQualification.isEmpty) return '1.3 Qualification is required';
+    if (_medicalReg.text.trim().isEmpty) return '1.4 Medical registration number is required';
+    if (expStr.isEmpty) return '1.5 Years of experience is required';
+    if (_hospital.text.trim().isEmpty) return '2.1 Hospital / clinic name is required';
+    if (_clinicAddress.text.trim().isEmpty) return '2.2 Clinic address is required';
+    if (_city.text.trim().isEmpty) return '2.3 City is required';
+    if (_resolvedState.isEmpty) return '2.4 State is required';
+    if (pin.isEmpty || !RegExp(r'^\d{6}$').hasMatch(pin)) return '2.5 Pincode must be exactly 6 digits';
+    if (_selectedModes.isEmpty) return '3. Select at least one consultation mode';
+    if (_slots.isEmpty) return '4. Add at least one availability slot';
     if (_languages.isEmpty) return '5. Select at least one language';
-    final fee = double.tryParse(_consultationFee.text.trim());
-    if (fee == null) return '7.1 Consultation fee is required';
-    if (fee < 0) return '7.1 Consultation fee cannot be negative';
+
+    final fee = double.tryParse(feeStr);
+    if (fee == null || fee < 0) return '7.1 Consultation fee is required';
+
     if (_selectedModes.contains('VIDEO') &&
-        double.tryParse(_videoFee.text.trim()) == null &&
+        double.tryParse(videoFeeStr) == null &&
         fee <= 0) {
       return '7.4 Video fee is required when Video mode is selected';
     }
     if (_selectedModes.contains('ONLINE') &&
-        double.tryParse(_chatFee.text.trim()) == null &&
+        double.tryParse(chatFeeStr) == null &&
         fee <= 0) {
       return '7.2 Chat fee is required when Online/Chat mode is selected';
     }
-    if (forSubmit) return null;
+
     return null;
   }
 
@@ -373,19 +416,26 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   }
 
   Future<void> _saveProfile() async {
-    final err = _validate();
+    final err = _validate(forSubmit: false);
     if (err != null) {
       setState(() => _error = err);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.red),
+        );
+      }
       return;
     }
-    setState(() => _error = null);
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       await ActionFeedback.run(
         context,
         loadingLabel: 'Saving…',
         doneLabel: 'Saved',
         action: () async {
-          setState(() => _saving = true);
           final body = _profileBody();
           final res = await _svc.updateProfile(body);
           if (res['success'] != true) {
@@ -396,9 +446,23 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
           }
         },
       );
-      if (mounted) _leave();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile saved successfully'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        setState(() => _error = msg);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -408,6 +472,11 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     final err = _validate(forSubmit: true);
     if (err != null) {
       setState(() => _error = err);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.red),
+        );
+      }
       return;
     }
     setState(() {
@@ -421,11 +490,16 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         doneLabel: 'Submitted',
         action: () async {
           final saveRes = await _svc.updateProfile(_profileBody());
-          if (saveRes['success'] == true && saveRes['profile'] is Map) {
+          if (saveRes['success'] != true) {
+            throw Exception(saveRes['error']?.toString() ?? 'Failed to save profile before submission');
+          }
+          if (saveRes['profile'] is Map) {
             _applyProfile(Map<String, dynamic>.from(saveRes['profile'] as Map));
           }
           if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields and required documents before submitting');
+            final missingList = ModuleTheme.toList(_profile['missingItems']);
+            final missingText = missingList.isNotEmpty ? ': ${missingList.join(", ")}' : '';
+            throw Exception('Complete all mandatory fields before submitting$missingText');
           }
           final res = await _svc.submitVerification();
           if (res['success'] != true) {
@@ -439,7 +513,11 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       if (mounted) _leave();
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        setState(() => _error = msg);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -1310,10 +1388,39 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     imagesOnly: true,
                   ),
                 ]),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _saving ? null : _saveProfile,
-                  child: const Text('Save Profile'),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: (_saving || _submitting) ? null : _saveProfile,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Save Profile'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: (_saving || _submitting || !(_profile['canSubmitForVerification'] == true)) ? null : _submit,
+                        child: _submitting
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(
+                                (_profile['doctorProfileStatus']?.toString() == 'APPROVED')
+                                    ? 'Submit Changes'
+                                    : ((_profile['canSubmitForVerification'] == true) ? 'Submit for Verification' : 'Submit (Incomplete)'),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

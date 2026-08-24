@@ -267,11 +267,11 @@
                    style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(123,44,191,0.1)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(123,44,191,0.2)' : 'transparent'};">
                   <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--dd-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
                   <div style="flex: 1; overflow: hidden;">
-                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? 'var(--dd-purple-l)' : '#fff'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
+                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? 'var(--dd-purple)' : '#333'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
                     <div style="font-size: 12px; color: var(--dd-muted);">Patient</div>
                   </div>
                   <c:if test="${targetUserId == u.id}">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--dd-purple-l);"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--dd-purple);"></div>
                   </c:if>
                 </a>
               </c:forEach>
@@ -307,7 +307,7 @@
                     </div>
                   </c:if>
                   <c:forEach var="m" items="${chatHistory}">
-                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: rgba(255,255,255,0.06); color: #e0e0e0; border-bottom-left-radius: 4px;'}">
+                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #f1f3f5; color: #333; border-bottom-left-radius: 4px;'}">
                       ${m.message}
                       <span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">${m.timestamp}</span>
                     </div>
@@ -316,7 +316,7 @@
                 
                 <!-- Chat Input -->
                 <div style="padding: 16px 24px; border-top: 1px solid var(--dd-border); display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.02);">
-                  <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: rgba(255,255,255,0.03); color: #fff; font-family: 'Poppins', sans-serif; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
+                  <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: #fff; color: #333; font-family: 'Poppins', sans-serif; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
                   <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--dd-gradient); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(123,44,191,0.3); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
                 </div>
                 
@@ -337,7 +337,9 @@
                     stompClient.subscribe('/topic/doctor-chat/' + doctorId, function(payload) {
                       const msg = JSON.parse(payload.body);
                       if (msg.userId && msg.userId != targetUserId) return;
-                      appendMsg(msg.message, msg.senderType === senderType ? 'DOCTOR' : 'USER');
+                      // Ignore echoes
+                      if (msg.senderType === senderType) return;
+                      appendMsg(msg.message, 'USER');
                     });
                   });
 
@@ -349,6 +351,9 @@
 
                     const empty = chatBox.querySelector('.bi-chat-dots');
                     if (empty) empty.parentNode.remove();
+
+                    // Immediately show in UI
+                    appendMsg(text, 'DOCTOR');
 
                     fetch(ctx + '/doctors/chat/send', {
                       method: 'POST',
@@ -363,7 +368,7 @@
                     if(type === 'DOCTOR') {
                         styles += "align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;";
                     } else {
-                        styles += "align-self: flex-start; background: rgba(255,255,255,0.06); color: #e0e0e0; border-bottom-left-radius: 4px;";
+                        styles += "align-self: flex-start; background: #f1f3f5; color: #333; border-bottom-left-radius: 4px;";
                     }
                     div.style.cssText = styles;
                     div.innerHTML = text + '<span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">Just now</span>';
@@ -397,10 +402,57 @@
       <!-- VIEW -->
       <div class="dd-section" id="profileView">
         <div class="dd-section-header">
-          <h2><i class="bi bi-person"></i> My Profile</h2>
-          <button onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit</button>
+          <h2><i class="bi bi-person"></i> Comprehensive Profile</h2>
+          <button onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit Complete Profile</button>
         </div>
         <div class="dd-section-body padded">
+          
+          <!-- Profile Completion & Verification Status Card -->
+          <div class="dd-profile-completion-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--dd-border); border-radius: 10px; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px;">
+            <div class="completion-circle" style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--dd-purple-l) ${profileCompletion}%, rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="width: 65px; height: 65px; border-radius: 50%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff;">
+                ${profileCompletion}%
+              </div>
+            </div>
+            <div class="completion-info" style="flex-grow: 1;">
+              <c:choose>
+                <c:when test="${doctor.doctorProfileStatus == 'APPROVED' || doctor.verificationStatus == 'VERIFIED'}">
+                  <h3 style="margin: 0 0 5px; color: #4CAF50;"><i class="bi bi-check-circle-fill"></i> Profile Approved</h3>
+                  <p style="margin: 0; color: var(--dd-muted); font-size: 14px;">Your profile has been verified and approved by the admin. You can now move forward.</p>
+                </c:when>
+                <c:when test="${doctor.doctorProfileStatus == 'REJECTED' || doctor.doctorProfileStatus == 'CHANGES_REQUESTED' || doctor.verificationStatus == 'REJECTED'}">
+                  <h3 style="margin: 0 0 5px; color: #F44336;"><i class="bi bi-exclamation-circle-fill"></i> Changes Required</h3>
+                  <p style="margin: 0 0 5px; color: var(--dd-muted); font-size: 14px;">Your profile requires some changes before it can be approved. Please review and update the required information.</p>
+                  <c:if test="${not empty doctor.rejectionReason}">
+                    <div style="background: rgba(244, 67, 54, 0.1); border-left: 3px solid #F44336; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 13px; color: #ffcccc;">
+                      <strong>Reason:</strong> ${doctor.rejectionReason}
+                    </div>
+                  </c:if>
+                  <button onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-save" style="padding: 8px 20px; font-size: 14px; margin-top: 10px;">Update Profile</button>
+                </c:when>
+                <c:when test="${doctor.doctorProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                  <h3 style="margin: 0 0 5px; color: #FFC107;"><i class="bi bi-hourglass-split"></i> Profile Status: Under Verification</h3>
+                  <p style="margin: 0; color: var(--dd-muted); font-size: 14px;">Your profile is currently being verified by the admin. Please wait for approval.</p>
+                </c:when>
+                <c:otherwise>
+                  <c:choose>
+                    <c:when test="${profileCompletion < 100}">
+                      <h3 style="margin: 0 0 5px; color: #fff;">${profileCompletion}% Profile Completed</h3>
+                      <p style="margin: 0 0 15px; color: var(--dd-muted); font-size: 14px;">Your profile is ${profileCompletion}% complete. Please update your profile to complete the remaining details to 100% before submitting it for verification.</p>
+                      <button onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-save" style="padding: 8px 20px; font-size: 14px;">Update Profile</button>
+                    </c:when>
+                    <c:otherwise>
+                      <h3 style="margin: 0 0 5px; color: #4CAF50;">100% Profile Completed</h3>
+                      <p style="margin: 0 0 15px; color: var(--dd-muted); font-size: 14px;">Your profile is 100% complete. Please submit your application to be verified by the admin.</p>
+                      <form action="${pageContext.request.contextPath}/doctors/submit-for-verification" method="post" style="margin: 0;">
+                        <button type="submit" class="dd-btn-save" style="padding: 8px 20px; font-size: 14px;">Submit Profile for Verification</button>
+                      </form>
+                    </c:otherwise>
+                  </c:choose>
+                </c:otherwise>
+              </c:choose>
+            </div>
+          </div>
           <div class="dd-profile-grid">
             <div class="dd-profile-item"><span class="label">Full Name</span><span class="value">${doctor.fullName}</span></div>
             <div class="dd-profile-item"><span class="label">Email</span><span class="value">${doctor.email}</span></div>
@@ -420,15 +472,18 @@
       <!-- EDIT -->
       <div class="dd-section" id="profileEdit" style="display:none">
         <div class="dd-section-header">
-          <h2><i class="bi bi-pencil-square"></i> Edit Profile</h2>
+          <h2><i class="bi bi-pencil-square"></i> Complete Profile Setup</h2>
           <button onclick="document.getElementById('profileEdit').style.display='none';document.getElementById('profileView').style.display='block';" class="dd-btn-edit"><i class="bi bi-x-lg"></i> Cancel</button>
         </div>
         <div class="dd-section-body padded">
-          <form action="${pageContext.request.contextPath}/doctors/update-profile" method="post">
+          <form action="${pageContext.request.contextPath}/doctors/update-full-profile" method="post" enctype="multipart/form-data">
+            
+            <!-- STEP 1: Basic Details -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 10px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">1. Basic Details</h3>
             <div class="dd-edit-grid">
-              <div class="dd-edit-field"><label>Full Name</label><input type="text" name="fullName" value="${doctor.fullName}" required></div>
+              <div class="dd-edit-field"><label>Full Name</label><input type="text" name="fullName" value="${doctor.fullName}" required minlength="3"></div>
               <div class="dd-edit-field"><label>Email (read-only)</label><input type="email" value="${doctor.email}" disabled style="opacity:0.6"></div>
-              <div class="dd-edit-field"><label>Phone</label><input type="tel" name="phone" value="${doctor.phone}" required></div>
+              <div class="dd-edit-field"><label>Phone</label><input type="tel" name="phone" value="${doctor.phone}" required pattern="[0-9]{10}"></div>
               <div class="dd-edit-field">
                 <label>Gender</label>
                 <select name="gender">
@@ -437,50 +492,85 @@
                   <option value="OTHER" ${doctor.gender == 'OTHER' ? 'selected' : ''}>Other</option>
                 </select>
               </div>
-              <div class="dd-edit-field">
-                <label>Specialization</label>
-                <select name="specialization" required>
-                  <option value="Gynecologist" ${doctor.specialization == 'Gynecologist' ? 'selected' : ''}>Gynecologist</option>
-                  <option value="Psychologist" ${doctor.specialization == 'Psychologist' ? 'selected' : ''}>Psychologist</option>
-                  <option value="General Physician" ${doctor.specialization == 'General Physician' ? 'selected' : ''}>General Physician</option>
-                  <option value="Dermatologist" ${doctor.specialization == 'Dermatologist' ? 'selected' : ''}>Dermatologist</option>
-                  <option value="Pediatrician" ${doctor.specialization == 'Pediatrician' ? 'selected' : ''}>Pediatrician</option>
-                  <option value="Cardiologist" ${doctor.specialization == 'Cardiologist' ? 'selected' : ''}>Cardiologist</option>
-                  <option value="Neurologist" ${doctor.specialization == 'Neurologist' ? 'selected' : ''}>Neurologist</option>
-                  <option value="Psychiatrist" ${doctor.specialization == 'Psychiatrist' ? 'selected' : ''}>Psychiatrist</option>
-                  <option value="Nutritionist" ${doctor.specialization == 'Nutritionist' ? 'selected' : ''}>Nutritionist</option>
-                  <option value="Other" ${doctor.specialization == 'Other' ? 'selected' : ''}>Other</option>
-                </select>
+              <div class="dd-edit-field full">
+                <label>Profile Photo</label>
+                <input type="file" name="profilePhoto" accept="image/png, image/jpeg" style="padding: 10px; border-radius: 8px; width: 100%; border: 1px solid var(--dd-border);">
               </div>
-              <div class="dd-edit-field">
-                <label>Qualification</label>
-                <select name="qualification">
-                  <option value="MBBS" ${doctor.qualification == 'MBBS' ? 'selected' : ''}>MBBS</option>
-                  <option value="MD" ${doctor.qualification == 'MD' ? 'selected' : ''}>MD</option>
-                  <option value="MS" ${doctor.qualification == 'MS' ? 'selected' : ''}>MS</option>
-                  <option value="MBBS, MD" ${doctor.qualification == 'MBBS, MD' ? 'selected' : ''}>MBBS, MD</option>
-                  <option value="MBBS, MS" ${doctor.qualification == 'MBBS, MS' ? 'selected' : ''}>MBBS, MS</option>
-                  <option value="BDS" ${doctor.qualification == 'BDS' ? 'selected' : ''}>BDS</option>
-                  <option value="BAMS" ${doctor.qualification == 'BAMS' ? 'selected' : ''}>BAMS</option>
-                  <option value="PhD" ${doctor.qualification == 'PhD' ? 'selected' : ''}>PhD</option>
-                  <option value="Other" ${doctor.qualification == 'Other' ? 'selected' : ''}>Other</option>
-                </select>
-              </div>
-              <div class="dd-edit-field"><label>Experience (years)</label><input type="number" name="experienceYears" value="${doctor.experienceYears != null ? doctor.experienceYears : ''}" min="0" max="60"></div>
-              <div class="dd-edit-field"><label>Medical Reg No.</label><input type="text" name="medicalRegNumber" value="${doctor.medicalRegNumber != null ? doctor.medicalRegNumber : ''}"></div>
-              <div class="dd-edit-field"><label>Hospital / Clinic</label><input type="text" name="hospitalName" value="${doctor.hospitalName != null ? doctor.hospitalName : ''}"></div>
+            </div>
+
+            <!-- STEP 2: Professional Details -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">2. Professional Details</h3>
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field"><label>Medical Reg No.</label><input type="text" name="medicalRegNumber" value="${doctor.medicalRegNumber != null ? doctor.medicalRegNumber : ''}" required></div>
+              <div class="dd-edit-field"><label>Specialization</label><input type="text" name="specialization" value="${doctor.specialization != null ? doctor.specialization : ''}" required></div>
+              <div class="dd-edit-field"><label>Experience (years)</label><input type="number" name="experienceYears" value="${doctor.experienceYears != null ? doctor.experienceYears : ''}" min="0"></div>
+              <div class="dd-edit-field"><label>Qualification</label><input type="text" name="qualification" value="${doctor.qualification != null ? doctor.qualification : ''}"></div>
+              <div class="dd-edit-field"><label>Hospital / Clinic Name</label><input type="text" name="hospitalName" value="${doctor.hospitalName != null ? doctor.hospitalName : ''}"></div>
               <div class="dd-edit-field">
                 <label>Consultation Type</label>
                 <select name="consultationType">
-                  <option value="ONLINE" ${doctor.consultationType == 'ONLINE' ? 'selected' : ''}>Online</option>
-                  <option value="OFFLINE" ${doctor.consultationType == 'OFFLINE' ? 'selected' : ''}>Offline</option>
-                  <option value="BOTH" ${doctor.consultationType == 'BOTH' ? 'selected' : ''}>Both</option>
+                  <option value="ONLINE" ${doctor.consultationType == 'ONLINE' ? 'selected' : ''}>Online Only</option>
+                  <option value="OFFLINE" ${doctor.consultationType == 'OFFLINE' ? 'selected' : ''}>Clinic Only</option>
+                  <option value="BOTH" ${doctor.consultationType == 'BOTH' ? 'selected' : ''}>Both Online & Clinic</option>
                 </select>
               </div>
             </div>
-            <div style="margin-top:20px;display:flex;gap:10px">
-              <button type="submit" class="dd-btn-save"><i class="bi bi-check-circle"></i> Save Changes</button>
-              <button type="button" onclick="document.getElementById('profileEdit').style.display='none';document.getElementById('profileView').style.display='block';" class="dd-btn-cancel">Cancel</button>
+
+            <!-- STEP 3: Location -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">3. Location</h3>
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field full"><label>Clinic Address</label><textarea name="clinicAddress" rows="2" style="width: 100%; border-radius: 8px; border: 1px solid var(--dd-border); padding: 12px; font-family: inherit; color: #333; background: #fff;">${doctor.clinicAddress != null ? doctor.clinicAddress : ''}</textarea></div>
+              <div class="dd-edit-field"><label>City</label><input type="text" name="city" value="${doctor.city != null ? doctor.city : ''}"></div>
+              <div class="dd-edit-field"><label>State</label><input type="text" name="state" value="${doctor.state != null ? doctor.state : ''}"></div>
+              <div class="dd-edit-field"><label>Pincode</label><input type="text" name="pincode" value="${doctor.pincode != null ? doctor.pincode : ''}" maxlength="6"></div>
+              <div class="dd-edit-field full"><label>Google Map Link</label><input type="url" name="googleMapLocation" value="${doctor.googleMapLocation != null ? doctor.googleMapLocation : ''}" placeholder="https://maps.google.com/..."></div>
+            </div>
+
+            <!-- STEP 4: Availability -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">4. Availability</h3>
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field full">
+                <label>Available Days</label>
+                <div class="dd-day-toggles">
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="MONDAY" ${doctor.availableDays != null && doctor.availableDays.contains('MONDAY') ? 'checked' : ''}><span>Mon</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="TUESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('TUESDAY') ? 'checked' : ''}><span>Tue</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="WEDNESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('WEDNESDAY') ? 'checked' : ''}><span>Wed</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="THURSDAY" ${doctor.availableDays != null && doctor.availableDays.contains('THURSDAY') ? 'checked' : ''}><span>Thu</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="FRIDAY" ${doctor.availableDays != null && doctor.availableDays.contains('FRIDAY') ? 'checked' : ''}><span>Fri</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="SATURDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SATURDAY') ? 'checked' : ''}><span>Sat</span></label>
+                  <label class="dd-day"><input type="checkbox" name="availableDays" value="SUNDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SUNDAY') ? 'checked' : ''}><span>Sun</span></label>
+                </div>
+              </div>
+              <div class="dd-edit-field"><label>Start Time</label><input type="time" name="startTime" value="${doctor.startTime != null ? doctor.startTime : '09:00'}"></div>
+              <div class="dd-edit-field"><label>End Time</label><input type="time" name="endTime" value="${doctor.endTime != null ? doctor.endTime : '18:00'}"></div>
+              <div class="dd-edit-field full">
+                <label>Emergency Availability</label>
+                <label class="dd-switch-label"><input type="checkbox" name="emergencyAvailable" value="yes" ${doctor.emergencyAvailable != null && doctor.emergencyAvailable ? 'checked' : ''}><span class="dd-switch-track"><span class="dd-switch-thumb"></span></span> Available for emergencies</label>
+              </div>
+            </div>
+
+            <!-- STEP 5: Verification Documents -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 10px; color: var(--dd-purple-l); font-size: 16px;">5. Verification Documents</h3>
+            <p style="font-size: 13px; color: var(--dd-muted); margin-bottom: 20px;">Upload documents if needed. Existing files are kept if you don't upload new ones.</p>
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field"><label>Medical License</label><input type="file" name="medicalLicense" accept=".pdf, image/*" style="padding: 10px; border-radius: 8px; width: 100%; border: 1px solid var(--dd-border);"></div>
+              <div class="dd-edit-field"><label>ID Proof (Aadhar/PAN)</label><input type="file" name="idProof" accept=".pdf, image/*" style="padding: 10px; border-radius: 8px; width: 100%; border: 1px solid var(--dd-border);"></div>
+              <div class="dd-edit-field"><label>Degree Certificate</label><input type="file" name="degreeCertificate" accept=".pdf, image/*" style="padding: 10px; border-radius: 8px; width: 100%; border: 1px solid var(--dd-border);"></div>
+            </div>
+
+            <!-- STEP 6: Payment Details -->
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">6. Payment Details</h3>
+            <div class="dd-edit-grid">
+              <div class="dd-edit-field"><label>Consultation Fee (₹)</label><input type="number" name="consultationFee" value="${doctor.consultationFee != null ? doctor.consultationFee : '0'}" min="0"></div>
+              <div class="dd-edit-field"><label>Video Fee (₹)</label><input type="number" name="videoFee" value="${doctor.videoFee != null ? doctor.videoFee : '0'}" min="0"></div>
+              <div class="dd-edit-field"><label>Call Fee (₹)</label><input type="number" name="callFee" value="${doctor.callFee != null ? doctor.callFee : '0'}" min="0"></div>
+              <div class="dd-edit-field"><label>Chat Fee (₹)</label><input type="number" name="chatFee" value="${doctor.chatFee != null ? doctor.chatFee : '0'}" min="0"></div>
+              <div class="dd-edit-field full"><label>UPI ID</label><input type="text" name="upiId" value="${doctor.upiId != null ? doctor.upiId : ''}" placeholder="username@bank"></div>
+            </div>
+
+            <div style="margin-top:40px;display:flex;gap:15px; border-top: 1px solid var(--dd-border); padding-top: 20px;">
+              <button type="submit" class="dd-btn-save" style="padding: 12px 30px; font-size: 15px; font-weight: 600;"><i class="bi bi-check-circle"></i> Save Complete Profile</button>
+              <button type="button" onclick="document.getElementById('profileEdit').style.display='none';document.getElementById('profileView').style.display='block';" class="dd-btn-cancel" style="padding: 12px 30px; font-size: 15px; font-weight: 600;">Cancel</button>
             </div>
           </form>
         </div>

@@ -253,12 +253,82 @@
                 </a>
             </div>
             
-            <h1>Chat with Friends</h1>
-            <p>Connect with your mutual connections. Safe, secure, and direct communication channels.</p>
+            <h1>My Active Chats</h1>
+            <p>Access your ongoing conversations with friends and medical professionals.</p>
         </div>
 
-        <!-- Friends Grid -->
+        <!-- Active Chats Grid -->
         <div class="friends-grid">
+            <% 
+                // Fallback to fetch data directly via JDBC if backend wasn't restarted or if JPA mapping fails
+                org.springframework.context.ApplicationContext ctx = 
+                    org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(application);
+                in.sp.main.Entities.User currentUser = (in.sp.main.Entities.User) session.getAttribute("user");
+                
+                if (currentUser != null && request.getAttribute("doctors") == null) {
+                    try {
+                        javax.sql.DataSource ds = ctx.getBean(javax.sql.DataSource.class);
+                        java.util.List doctors = new java.util.ArrayList();
+                        java.util.List usersList = new java.util.ArrayList();
+                        
+                        try (java.sql.Connection conn = ds.getConnection()) {
+                            // Fetch Doctors
+                            try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                                "SELECT DISTINCT d.* FROM doctors d INNER JOIN doctor_chat_messages m ON d.id = m.doctor_id WHERE m.user_id = ?")) {
+                                ps.setLong(1, currentUser.getId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    while (rs.next()) {
+                                        in.sp.main.Entities.Doctor d = new in.sp.main.Entities.Doctor();
+                                        d.setId(rs.getLong("id"));
+                                        d.setFullName(rs.getString("full_name"));
+                                        d.setProfilePhotoPath(rs.getString("profile_photo_path"));
+                                        doctors.add(d);
+                                    }
+                                }
+                            }
+                            
+                            // Fetch Users
+                            try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                                "SELECT DISTINCT u.* FROM user u INNER JOIN chat_messages m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
+                                ps.setLong(1, currentUser.getId());
+                                ps.setLong(2, currentUser.getId());
+                                ps.setLong(3, currentUser.getId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    while (rs.next()) {
+                                        in.sp.main.Entities.User u = new in.sp.main.Entities.User();
+                                        u.setId(rs.getLong("id"));
+                                        u.setFullName(rs.getString("full_name"));
+                                        u.setEmail(rs.getString("email"));
+                                        u.setProfilePhoto(rs.getString("profile_photo"));
+                                        usersList.add(u);
+                                    }
+                                }
+                            }
+                        }
+                        request.setAttribute("doctors", doctors);
+                        request.setAttribute("users", usersList);
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            %>
+
+            <!-- Doctor Contacts -->
+            <c:forEach var="doc" items="${doctors}">
+                <a href="${pageContext.request.contextPath}/doctors/chat/${doc.id}" class="friend-card" data-aos="fade-up">
+                    <div class="friend-avatar">
+                        <img src="${pageContext.request.contextPath}/uploads/${doc.profilePhotoPath}"
+                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
+                             alt="Dr. ${doc.fullName}">
+                    </div>
+                    <div class="friend-name" style="color: var(--brand-purple);">Dr. ${doc.fullName}</div>
+                    <span class="btn-chat-open">
+                        <i class="bi bi-chat-fill"></i> Open Chat
+                    </span>
+                </a>
+            </c:forEach>
+
+            <!-- User Contacts -->
             <c:forEach var="chatUser" items="${users}">
                 <a href="${pageContext.request.contextPath}/chat/window/${chatUser.id}" class="friend-card" data-aos="fade-up">
                     <div class="friend-avatar">
@@ -273,11 +343,10 @@
                 </a>
             </c:forEach>
             
-            <c:if test="${empty users}">
+            <c:if test="${empty users and empty doctors}">
                 <div class="col-12 text-center py-5 text-muted">
-                    <i class="bi bi-people-fill display-3 mb-3"></i>
-                    <p class="fs-5">No mutual connections found yet. Start connecting in the Creator Hub!</p>
-                    <a href="${pageContext.request.contextPath}/creator-hub" class="btn btn-primary rounded-pill px-4 mt-2" style="background: var(--brand-purple); border: none;">Go to Creator Hub</a>
+                    <i class="bi bi-chat-dots display-3 mb-3"></i>
+                    <p class="fs-5">You don't have any active chats right now.</p>
                 </div>
             </c:if>
         </div>

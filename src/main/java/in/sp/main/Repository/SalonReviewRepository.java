@@ -19,4 +19,11 @@ public interface SalonReviewRepository extends JpaRepository<SalonReview, Long> 
     List<SalonReview> findBySalon(Salon salon);
 
     boolean existsByUserIdAndSalon_Id(Long userId, Long salonId);
+
 }
+
+    
+
+ 
+ 
+

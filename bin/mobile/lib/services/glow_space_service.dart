@@ -7,6 +7,7 @@ class GlowSpaceService {
 
   Future<Map<String, dynamic>> salons({
     String? city,
+    String? search,
     String? category,
     double? minFee,
     double? maxFee,
@@ -16,17 +17,18 @@ class GlowSpaceService {
     double? lat,
     double? lng,
   }) {
-    final q = <String, String>{};
-    if (city != null && city.isNotEmpty) q['city'] = city;
-    if (category != null && category.isNotEmpty) q['category'] = category;
-    if (minFee != null) q['minFee'] = '$minFee';
-    if (maxFee != null) q['maxFee'] = '$maxFee';
-    if (availableToday == true) q['availableToday'] = 'true';
-    if (doorService == true) q['doorService'] = 'true';
-    if (sort != null && sort.isNotEmpty) q['sort'] = sort;
-    if (lat != null) q['lat'] = '$lat';
-    if (lng != null) q['lng'] = '$lng';
-    final qs = q.entries
+    final params = <String, String>{};
+    if (city != null && city.isNotEmpty) params['city'] = city;
+    if (search != null && search.isNotEmpty) params['q'] = search;
+    if (category != null && category.isNotEmpty) params['category'] = category;
+    if (minFee != null) params['minFee'] = '$minFee';
+    if (maxFee != null) params['maxFee'] = '$maxFee';
+    if (availableToday == true) params['availableToday'] = 'true';
+    if (doorService == true) params['doorService'] = 'true';
+    if (sort != null && sort.isNotEmpty) params['sort'] = sort;
+    if (lat != null) params['lat'] = '$lat';
+    if (lng != null) params['lng'] = '$lng';
+    final qs = params.entries
         .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
         .join('&');
     return _api.get('/api/glow/salons${qs.isEmpty ? '' : '?$qs'}');
@@ -63,6 +65,19 @@ class GlowSpaceService {
   Future<Map<String, dynamic>> cancelBooking(int id) =>
       _api.post('/api/glow/bookings/$id/cancel');
 
+  Future<Map<String, dynamic>> rescheduleBooking(
+    int id, {
+    required String bookingDate,
+    required String preferredTime,
+  }) =>
+      _api.post('/api/glow/bookings/$id/reschedule', body: {
+        'bookingDate': bookingDate,
+        'preferredTime': preferredTime,
+      });
+
+  Future<Map<String, dynamic>> bookingConfirmation(int id) =>
+      _api.get('/api/glow/bookings/$id/confirmation');
+
   Future<Map<String, dynamic>> createBooking({
     required String itemType,
     required int itemId,
@@ -87,9 +102,13 @@ class GlowSpaceService {
     });
   }
 
-  Future<Map<String, dynamic>> createPaymentOrder(double amount) =>
-      _api.post('/payment/create-order', body: {'amount': amount}, timeout: const Duration(seconds: 45));
+  Future<Map<String, dynamic>> createPaymentOrder(int bookingId) =>
+      _api.post('/payment/create-order', body: {
+        'type': 'GLOW_BOOKING',
+        'bookingId': bookingId,
+      }, timeout: const Duration(seconds: 45));
 
   Future<Map<String, dynamic>> verifyPayment(Map<String, dynamic> body) =>
       _api.post('/payment/verify', body: body, timeout: const Duration(seconds: 45));
 }
+
