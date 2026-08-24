@@ -143,7 +143,9 @@ public class EnrollmentController {
             }
 
             boolean alreadyEnrolled = enrollmentRepository.findByUser(user).stream()
-                    .anyMatch(e -> e.getBatch() != null && e.getBatch().getId().equals(batch.getId()));
+                    .anyMatch(e -> e.getBatch() != null && e.getBatch().getId().equals(batch.getId())
+                            && e.getStatus() != TrainingStatus.CANCELLED
+                            && e.getStatus() != TrainingStatus.REJECTED);
             if (alreadyEnrolled) {
                 return ResponseEntity.badRequest().body("You are already enrolled in this batch.");
             }
@@ -201,7 +203,8 @@ public class EnrollmentController {
             // Details
             enrollment.setProposedStartDate(request.getStartDate());
             enrollment.setTrainerPreference(request.getTrainerPreference());
-            enrollment.setAmountPaid(request.getMonthlyFee());
+            // Do not trust client fee / mark paid until centre approval + verified payment
+            enrollment.setAmountPaid(null);
 
             // Consent
             enrollment.setConsentAccuracy(request.isConsentAccuracy());
@@ -209,27 +212,17 @@ public class EnrollmentController {
 
             Enrollment saved = enrollmentRepository.save(enrollment);
 
-            // --- FREE BATCH: auto-approve immediately ---
             boolean isFree = (batch.getFee() == null || batch.getFee() <= 0);
-            if (isFree) {
-                saved.setPaymentStatus("PAID");
-                saved.setStatus(TrainingStatus.APPROVED);
-                saved.setAmountPaid(0.0);
-                enrollmentRepository.save(saved);
-                // Mark batch as Full if capacity reached
-                if (batch.getCapacity() != null && batch.getCapacity() > 0) {
-                    long newCount = enrollmentRepository.countPaidByBatchId(batch.getId());
-                    if (newCount >= batch.getCapacity()) {
-                        batch.setStatus("Full");
-                        batchRepository.save(batch);
-                    }
-                }
-            }
+            double fee = isFree ? 0.0 : batch.getFee();
 
             java.util.Map<String, Object> response = new java.util.HashMap<>();
-            response.put("message", isFree ? "Enrolled successfully!" : "Enrollment saved successfully");
+            response.put("message", "Application submitted. Waiting for centre review.");
             response.put("enrollmentId", saved.getId());
             response.put("free", isFree);
+            response.put("paymentRequired", false);
+            response.put("awaitingCentreReview", true);
+            response.put("status", TrainingStatus.PENDING.name());
+            response.put("amount", fee);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -301,6 +294,18 @@ public class EnrollmentController {
         }
         enrollment.setStatus(status);
 
+        if (status == TrainingStatus.APPROVED) {
+            MartialArtsBatch batch = enrollment.getBatch();
+            boolean isFree = batch == null || batch.getFee() == null || batch.getFee() <= 0;
+            if (isFree) {
+                enrollment.setPaymentStatus("PAID");
+                enrollment.setAmountPaid(0.0);
+                enrollment.setStatus(TrainingStatus.IN_PROGRESS);
+            } else if (!"PAID".equalsIgnoreCase(enrollment.getPaymentStatus())) {
+                enrollment.setPaymentStatus("PENDING");
+            }
+        }
+
         if (status == TrainingStatus.COMPLETED) {
             String artName = "Martial Arts";
             if (enrollment.getMartialArtsType() != null) {
@@ -319,6 +324,99 @@ public class EnrollmentController {
         enrollmentRepository.save(enrollment);
         model.addAttribute("message", "Status updated successfully!");
         return "redirect:/centres/dashboard1";
+    }
+
+    @PostMapping("/api/{enrollmentId}/status")
+    @ResponseBody
+    public ResponseEntity<?> updateEnrollmentStatusApi(@PathVariable Long enrollmentId,
+                                                       @RequestBody java.util.Map<String, String> body,
+                                                       HttpSession session) {
+        MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
+        if (centre == null && session.getAttribute("admin") == null) {
+            return ResponseEntity.status(401).body(java.util.Map.of("success", false, "error", "Centre login required"));
+        }
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId).orElse(null);
+        if (enrollment == null) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "error", "Enrollment not found"));
+        }
+        if (centre != null && (enrollment.getCenter() == null
+                || !enrollment.getCenter().getId().equals(centre.getId()))) {
+            return ResponseEntity.status(403).body(java.util.Map.of("success", false, "error", "Enrollment does not belong to this centre"));
+        }
+        String statusStr = body != null ? body.get("status") : null;
+        if (statusStr == null || statusStr.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "error", "status is required"));
+        }
+        TrainingStatus status;
+        try {
+            status = TrainingStatus.valueOf(statusStr.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("success", false, "error", "Invalid status"));
+        }
+        enrollment.setStatus(status);
+        if (body.get("coachNotes") != null) {
+            enrollment.setCoachNotes(body.get("coachNotes"));
+        }
+        if (status == TrainingStatus.APPROVED) {
+            MartialArtsBatch batch = enrollment.getBatch();
+            boolean isFree = batch == null || batch.getFee() == null || batch.getFee() <= 0;
+            if (isFree) {
+                enrollment.setPaymentStatus("PAID");
+                enrollment.setAmountPaid(0.0);
+                enrollment.setStatus(TrainingStatus.IN_PROGRESS);
+            } else if (!"PAID".equalsIgnoreCase(enrollment.getPaymentStatus())) {
+                enrollment.setPaymentStatus("PENDING");
+            }
+        }
+        if (status == TrainingStatus.COMPLETED) {
+            String artName = enrollment.getMartialArtsType() != null
+                    ? enrollment.getMartialArtsType().getName()
+                    : (enrollment.getBatch() != null ? enrollment.getBatch().getStyle() : "Martial Arts");
+            String certificatePath = certificateService.generateCertificate(
+                    enrollment.getUser() != null ? enrollment.getUser().getFullName() : enrollment.getFullName(),
+                    artName);
+            enrollment.setCertificateDetails(certificatePath);
+        }
+        enrollmentRepository.save(enrollment);
+        return ResponseEntity.ok(java.util.Map.of(
+                "success", true,
+                "message", "Status updated",
+                "status", enrollment.getStatus().name(),
+                "paymentStatus", enrollment.getPaymentStatus() != null ? enrollment.getPaymentStatus() : "PENDING"
+        ));
+    }
+
+    @GetMapping("/payment/{enrollmentId}")
+    public String enrollmentPaymentPage(@PathVariable Long enrollmentId, Model model,
+                                        HttpSession session, RedirectAttributes redirectAttributes) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login?redirect=/enrollment/payment/" + enrollmentId;
+        }
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId).orElse(null);
+        if (enrollment == null || enrollment.getUser() == null
+                || !enrollment.getUser().getId().equals(user.getId())) {
+            redirectAttributes.addFlashAttribute("message", "Enrollment not found.");
+            return "redirect:/centres/allacceptedcentres";
+        }
+        if (enrollment.getStatus() != TrainingStatus.APPROVED
+                && enrollment.getStatus() != TrainingStatus.IN_PROGRESS) {
+            redirectAttributes.addFlashAttribute("message", "Wait for centre approval before payment.");
+            return "redirect:/centres/allacceptedcentres";
+        }
+        if ("PAID".equalsIgnoreCase(enrollment.getPaymentStatus())) {
+            redirectAttributes.addFlashAttribute("message", "This enrollment is already paid.");
+            return "redirect:/centres/allacceptedcentres";
+        }
+        Double fee = enrollment.getBatch() != null ? enrollment.getBatch().getFee() : null;
+        if (fee == null || fee <= 0) {
+            redirectAttributes.addFlashAttribute("message", "No payment required for this enrollment.");
+            return "redirect:/centres/allacceptedcentres";
+        }
+        model.addAttribute("enrollment", enrollment);
+        model.addAttribute("user", user);
+        model.addAttribute("fee", fee);
+        return "enrollmentPayment";
     }
 
     @RequestMapping(value = "/downloadCertificate/{enrollmentId}", method = GET)

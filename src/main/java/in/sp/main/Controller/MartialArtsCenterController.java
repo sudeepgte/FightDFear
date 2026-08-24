@@ -286,18 +286,20 @@ public class MartialArtsCenterController {
             model.addAttribute("lateCount", lateCount);
             model.addAttribute("attendancePercentage", String.format(Locale.ROOT, "%.1f", attendancePercentage));
 
-            // Belt calculation matching Mobile / UserController
-            String belt = "Not Started";
+            // Belt from real grading assessments only (no attendance heuristics)
+            Map<String, Object> beltRadar = beltGradingService.getStudentLatestSkillRadar(user.getId());
+            boolean assessed = Boolean.TRUE.equals(beltRadar.get("assessed"));
+            String belt = assessed && beltRadar.get("currentBelt") != null
+                    ? String.valueOf(beltRadar.get("currentBelt"))
+                    : "Not assessed";
             int beltProgress = 0;
-            if (attendedCount >= 200) { belt = "Black"; beltProgress = 100; }
-            else if (attendedCount >= 100) { belt = "Blue"; beltProgress = 75; }
-            else if (attendedCount >= 50) { belt = "Green"; beltProgress = 50; }
-            else if (attendedCount >= 25) { belt = "Orange"; beltProgress = 35; }
-            else if (attendedCount >= 10) { belt = "Yellow"; beltProgress = 20; }
-            else if (attendedCount > 0) { belt = "White"; beltProgress = 10; }
-
+            if (assessed && beltRadar.get("overallScore") instanceof Number) {
+                beltProgress = Math.min(100, Math.max(0, ((Number) beltRadar.get("overallScore")).intValue()));
+            }
             model.addAttribute("currentBelt", belt);
             model.addAttribute("beltProgress", beltProgress);
+            model.addAttribute("beltAssessed", assessed);
+            model.addAttribute("beltSkills", beltRadar.get("skills"));
 
             // Streak calculation
             int streak = 0;

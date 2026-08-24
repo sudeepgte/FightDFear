@@ -143,11 +143,12 @@
 
         /* ======= Modern Centre Hero ======= */
         .centre-hero-card {
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 60%, #312E81 100%);
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
             border-radius: var(--radius-xl);
-            color: #FFFFFF;
-            padding: 36px 32px;
-            box-shadow: 0 16px 36px rgba(15, 23, 42, 0.15);
+            color: #0F172A;
+            padding: 28px 24px;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
             position: relative;
             overflow: hidden;
             margin-bottom: 32px;
@@ -156,11 +157,11 @@
         .centre-hero-card::after {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(244, 63, 94, 0.18) 0%, rgba(244, 63, 94, 0) 70%);
+            top: -40%;
+            right: -10%;
+            width: 360px;
+            height: 360px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, rgba(244, 63, 94, 0) 70%);
             pointer-events: none;
         }
 
@@ -209,10 +210,9 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #F1F5F9;
+            background: #FFF1F2;
+            border: 1px solid #FECDD3;
+            color: #9F1239;
             font-size: 0.82rem;
             font-weight: 500;
             padding: 5px 14px;
@@ -220,7 +220,7 @@
         }
 
         .hero-pill i {
-            color: #FDA4AF;
+            color: #F43F5E;
         }
 
         .btn-hero-book {
@@ -731,45 +731,10 @@
 </head>
 <body>
 
-    <!-- ======= Header ======= -->
-    <header class="site-header py-2">
-        <div class="container-xl d-flex align-items-center justify-content-between">
-            <a href="${pageContext.request.contextPath}/users/dashboard" class="site-logo">
-                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-                <span>Fight D Fear</span>
-            </a>
-
-            <!-- Desktop Nav -->
-            <nav class="d-none d-lg-flex align-items-center gap-1">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="nav-link-custom">Dashboard</a>
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link-custom active">Martial Arts Centres</a>
-                <a href="${pageContext.request.contextPath}/video/reels" class="nav-link-custom">Reels</a>
-                <a href="${pageContext.request.contextPath}/user/bookings" class="nav-link-custom">My Bookings</a>
-                <c:if test="${not empty user}">
-                    <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="nav-link-custom">Profile</a>
-                </c:if>
-            </nav>
-
-            <!-- User / Auth Actions -->
-            <div class="d-flex align-items-center gap-2">
-                <a class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold" href="${pageContext.request.contextPath}/qna">
-                    <i class="bi bi-question-circle me-1"></i> Q&amp;A
-                </a>
-                <c:choose>
-                    <c:when test="${not empty user}">
-                        <a class="btn btn-sm btn-danger rounded-pill px-3 fw-bold" href="${pageContext.request.contextPath}/logout">
-                            <i class="bi bi-box-arrow-right me-1"></i> Logout
-                        </a>
-                    </c:when>
-                    <c:otherwise>
-                        <a class="btn btn-sm btn-danger rounded-pill px-4 fw-bold" href="${pageContext.request.contextPath}/login">
-                            Login
-                        </a>
-                    </c:otherwise>
-                </c:choose>
-            </div>
-        </div>
-    </header>
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper" style="min-height:100vh; background:#F8FAFC; padding-top: 88px;">
 
     <!-- ======= Breadcrumb & Return Bar ======= -->
     <div class="breadcrumb-bar">
@@ -825,10 +790,10 @@
                             </div>
 
                             <!-- Centre Name & Tagline -->
-                            <h1 class="text-white mb-1" style="font-size: 2.1rem; letter-spacing: -0.5px;">
+                            <h1 class="mb-1" style="font-size: 2.1rem; letter-spacing: -0.5px; color:#0F172A;">
                                 <c:out value="${center.name}"/>
                             </h1>
-                            <p class="text-white-50 mb-3" style="font-size: 0.95rem;">
+                            <p class="mb-3" style="font-size: 0.95rem; color:#64748B;">
                                 <c:choose>
                                     <c:when test="${not empty center.designation}">
                                         ${center.designation} • Discipline • Strength • Confidence
@@ -1581,59 +1546,14 @@
         </c:choose>
     </div>
 
-    <!-- ======= Footer ======= -->
-    <footer class="site-footer">
-        <div class="container-xl">
-            <div class="row gy-4">
-                <div class="col-lg-4 col-md-6">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px;">
-                        <span class="text-white fw-bold fs-5">Fight D Fear</span>
-                    </div>
-                    <p class="small text-white-50 mb-2">
-                        Empowering individuals and women across India through discipline, martial arts mastery, and proactive safety awareness.
-                    </p>
-                    <p class="small text-white-50">Awareness • Safety • Equality • Empowerment</p>
-                </div>
-                <div class="col-lg-2 col-md-3 col-6">
-                    <h6 class="text-white fw-bold mb-3 small text-uppercase">Navigation</h6>
-                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
-                        <li><a href="${pageContext.request.contextPath}/users/dashboard">Dashboard</a></li>
-                        <li><a href="${pageContext.request.contextPath}/centres/allacceptedcentres">Martial Arts Centres</a></li>
-                        <li><a href="${pageContext.request.contextPath}/video/reels">Reels</a></li>
-                        <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-3 col-6">
-                    <h6 class="text-white fw-bold mb-3 small text-uppercase">Support</h6>
-                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
-                        <li><a href="${pageContext.request.contextPath}/qna">Safety Q&amp;A</a></li>
-                        <li><a href="${pageContext.request.contextPath}/terms">Terms &amp; Conditions</a></li>
-                        <li><a href="${pageContext.request.contextPath}/privacy">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-4 col-md-12">
-                    <h6 class="text-white fw-bold mb-3 small text-uppercase">Platform Support</h6>
-                    <p class="small text-white-50 mb-3">
-                        Have questions about enrolling in training batches or verifying your centre? Reach out to our community support desk.
-                    </p>
-                    <div class="d-flex gap-2">
-                        <a href="${pageContext.request.contextPath}/qna" class="btn btn-sm btn-outline-light rounded-pill px-3">
-                            <i class="bi bi-chat-dots me-1"></i> Ask in Q&amp;A
-                        </a>
-                        <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                            <i class="bi bi-search me-1"></i> Browse Centres
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="border-top border-secondary border-opacity-25 mt-4 pt-3 text-center small text-white-50">
-                &copy; <strong>Fight D Fear</strong>. All Rights Reserved. Verified Martial Arts Network.
-            </div>
-        </div>
-    </footer>
+    </div>
 
-    <!-- Bootstrap Bundle JS -->
+    <!-- Footer removed for Phase 1 shell parity — use shared layout only -->
+
+        </div><!-- page-content-wrapper -->
+    </div><!-- wrapper -->
+
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Client-Side Batch Selection & Filtering Scripts -->
