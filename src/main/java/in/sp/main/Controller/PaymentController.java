@@ -554,6 +554,40 @@ public class PaymentController {
                     return ResponseEntity.badRequest().body(errorBody);
                 }
                 targetId = bookingId;
+            } else if ("MARTIAL_ARTS".equals(type)) {
+                Object enrollmentIdObj = data.get("enrollmentId") != null ? data.get("enrollmentId") : data.get("targetId");
+                if (enrollmentIdObj == null) {
+                    errorBody.put("error", "enrollmentId is required for martial arts payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                Long enrollmentId = Long.parseLong(enrollmentIdObj.toString());
+                Enrollment maEnrollment = enrollmentRepository.findById(enrollmentId).orElse(null);
+                if (maEnrollment == null || maEnrollment.getUser() == null
+                        || !maEnrollment.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Enrollment not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if (maEnrollment.getStatus() == TrainingStatus.REJECTED
+                        || maEnrollment.getStatus() == TrainingStatus.CANCELLED) {
+                    errorBody.put("error", "Enrollment is not eligible for payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if (maEnrollment.getStatus() != TrainingStatus.APPROVED
+                        && maEnrollment.getStatus() != TrainingStatus.IN_PROGRESS) {
+                    errorBody.put("error", "Wait for the centre to approve your application before paying");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if ("PAID".equalsIgnoreCase(maEnrollment.getPaymentStatus())) {
+                    errorBody.put("error", "Enrollment already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                Double batchFee = maEnrollment.getBatch() != null ? maEnrollment.getBatch().getFee() : null;
+                amount = batchFee == null ? 0 : Math.max(0, batchFee);
+                if (amount <= 0) {
+                    errorBody.put("error", "This enrollment does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = enrollmentId;
             } else if ("WOMEN_PRODUCT".equals(type)) {
                 List<Long> orderIds = parseWomenProductOrderIds(data);
                 if (orderIds.isEmpty()) {
@@ -777,47 +811,58 @@ public class PaymentController {
                 booking.setRazorpaySignature(signature);
                 bookingRepository.save(booking);
             } else if ("MARTIAL_ARTS".equals(type)) {
-                Object enrollmentIdObj = data.get("enrollmentId");
-                Enrollment enrollment = null;
-                if (enrollmentIdObj != null && !enrollmentIdObj.toString().equals("null") && !enrollmentIdObj.toString().isEmpty()) {
-                    try {
-                        enrollment = enrollmentRepository.findById(Long.parseLong(enrollmentIdObj.toString())).orElse(null);
-                    } catch (NumberFormatException nfe) {
-                        // fall through to create new enrollment
-                    }
+                Object enrollmentIdObj = data.get("enrollmentId") != null ? data.get("enrollmentId") : data.get("targetId");
+                if (enrollmentIdObj == null && pending.targetId() != null) {
+                    enrollmentIdObj = pending.targetId();
                 }
-
-                if (enrollment != null && (enrollment.getUser() == null || !enrollment.getUser().getId().equals(user.getId()))) {
+                if (enrollmentIdObj == null || enrollmentIdObj.toString().isBlank()
+                        || "null".equalsIgnoreCase(enrollmentIdObj.toString())) {
+                    responseMap.put("error", "enrollmentId is required");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                Enrollment enrollment;
+                try {
+                    enrollment = enrollmentRepository.findById(Long.parseLong(enrollmentIdObj.toString())).orElse(null);
+                } catch (NumberFormatException nfe) {
+                    responseMap.put("error", "Invalid enrollmentId");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                if (enrollment == null) {
+                    responseMap.put("error", "Enrollment not found");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                if (enrollment.getUser() == null || !enrollment.getUser().getId().equals(user.getId())) {
                     responseMap.put("error", "Enrollment does not belong to this user.");
                     return ResponseEntity.status(403).body(responseMap);
                 }
-
-                if (enrollment == null) {
-                    enrollment = new Enrollment();
-
-                    Object cId = data.get("centerId");
-                    if (cId != null && !cId.toString().isEmpty()) {
-                        try {
-                            enrollment.setCenter(centerRepository.findById(Long.parseLong(cId.toString())).orElse(null));
-                        } catch (NumberFormatException ignored) {}
-                    }
-
-                    Object bId = data.get("batchId");
-                    if (bId != null && !bId.toString().isEmpty()) {
-                        try {
-                            enrollment.setBatch(batchRepository.findById(Long.parseLong(bId.toString())).orElse(null));
-                        } catch (NumberFormatException ignored) {}
-                    }
-
-                    enrollment.setUser(user);
+                if (enrollment.getStatus() != TrainingStatus.APPROVED
+                        && enrollment.getStatus() != TrainingStatus.IN_PROGRESS) {
+                    responseMap.put("error", "Centre must approve the application before payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                if ("PAID".equalsIgnoreCase(enrollment.getPaymentStatus())) {
+                    responseMap.put("error", "Enrollment already paid");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                Double expectedFee = enrollment.getBatch() != null ? enrollment.getBatch().getFee() : null;
+                double expectedAmount = expectedFee == null ? 0 : Math.max(0, expectedFee);
+                if (expectedAmount <= 0) {
+                    responseMap.put("error", "This enrollment does not require payment");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                if (Math.abs(expectedAmount - amountPaid) > 0.05) {
+                    responseMap.put("error", "Payment amount does not match batch fee.");
+                    return ResponseEntity.badRequest().body(responseMap);
                 }
 
-                enrollment.setStatus(TrainingStatus.APPROVED);
                 enrollment.setPaymentStatus("PAID");
                 enrollment.setRazorpayOrderId(orderId);
                 enrollment.setRazorpayPaymentId(paymentId);
                 enrollment.setRazorpaySignature(signature);
                 enrollment.setAmountPaid(amountPaid);
+                if (enrollment.getStatus() == TrainingStatus.APPROVED) {
+                    enrollment.setStatus(TrainingStatus.IN_PROGRESS);
+                }
                 enrollmentRepository.save(enrollment);
 
                 if (enrollment.getCenter() != null) {
@@ -826,6 +871,14 @@ public class PaymentController {
                     try {
                         martialArtsCareService.creditPayout(enrollment.getCenter(), amountPaid);
                     } catch (Exception ignored) {}
+                }
+                if (enrollment.getBatch() != null && enrollment.getBatch().getCapacity() != null
+                        && enrollment.getBatch().getCapacity() > 0) {
+                    long newCount = enrollmentRepository.countPaidByBatchId(enrollment.getBatch().getId());
+                    if (newCount >= enrollment.getBatch().getCapacity()) {
+                        enrollment.getBatch().setStatus("Full");
+                        batchRepository.save(enrollment.getBatch());
+                    }
                 }
             } else if ("MARKETPLACE".equals(type)) {
                 Object enrollmentIdObj = data.get("enrollmentId");

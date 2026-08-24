@@ -11,12 +11,12 @@
         margin-top: 80px;
     }
     
-    /* Curved sidebar */
+    /* Premium light sidebar (Fitness / Martial Arts dashboard parity) */
     #sidebar-wrapper {
         min-width: 260px;
         max-width: 260px;
-        background: #1e1b4b; /* var(--primary-purple) */
-        color: white;
+        background: #ffffff;
+        color: #0F172A;
         transition: all 0.3s ease-in-out;
         z-index: 1000;
         position: fixed;
@@ -26,9 +26,10 @@
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 40px;
-        border-top-right-radius: 40px;
+        border-top-right-radius: 24px;
+        border-right: 1px solid #E2E8F0;
         padding-top: 20px;
-        box-shadow: 10px 0 20px rgba(0,0,0,0.05);
+        box-shadow: 2px 0 12px rgba(0,0,0,0.03);
     }
 
     #sidebar-wrapper .list-group {
@@ -36,25 +37,26 @@
     }
     
     #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
-    #sidebar-wrapper::-webkit-scrollbar-thumb { background-color: #312e81; border-radius: 10px; }
+    #sidebar-wrapper::-webkit-scrollbar-thumb { background-color: #E2E8F0; border-radius: 10px; }
     
     .sidebar-heading {
         padding: 10px 25px 25px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: white;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0F172A;
         display: flex;
         align-items: center;
         gap: 10px;
     }
+    .sidebar-heading i { color: #F43F5E; }
     
     .sidebar-list-group-item {
         background: transparent;
-        color: rgba(255, 255, 255, 0.7);
+        color: #64748B;
         border: none;
         padding: 12px 25px;
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 600;
         transition: all 0.3s;
         display: flex;
         align-items: center;
@@ -64,11 +66,12 @@
         cursor: pointer;
         pointer-events: auto;
     }
-    .sidebar-list-group-item i { font-size: 1.1rem; width: 20px; text-align: center; }
+    .sidebar-list-group-item i { font-size: 1.1rem; width: 20px; text-align: center; color: #94A3B8; }
     .sidebar-list-group-item:hover, .sidebar-list-group-item.active {
-        color: white;
-        background: transparent;
+        color: #F43F5E;
+        background: #FFF1F2;
     }
+    .sidebar-list-group-item:hover i, .sidebar-list-group-item.active i { color: #F43F5E; }
     .sidebar-list-group-item:hover::before, .sidebar-list-group-item.active::before {
         content: '';
         position: absolute;
@@ -84,18 +87,18 @@
     .sidebar-logout-item {
         color: #f43f5e;
         margin-top: 15px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: 1px solid #E2E8F0;
     }
 
     .sidebar-mobile-toggle {
         display: none;
         width: calc(100% - 30px);
-        margin: 0 15px 12px;
+        margin: 12px 15px 12px;
         padding: 10px 16px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid #E2E8F0;
         border-radius: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #fff;
+        background: #FFF1F2;
+        color: #0F172A;
         font-size: 14px;
         font-weight: 600;
         align-items: center;
@@ -110,7 +113,7 @@
         display: flex;
         flex-direction: column;
         padding: 25px 30px;
-        background: #f4f6fa !important;
+        background: #F8FAFC !important;
     }
     
     @media (max-width: 768px) {
@@ -201,9 +204,6 @@
 
 <!-- Sidebar -->
 <div id="sidebar-wrapper">
-    <div class="sidebar-heading">
-        <i class="bi bi-layers-half"></i> Rubick <span style="font-weight: 400; font-size: 0.9rem;">FightDFire</span>
-    </div>
     <button type="button" class="sidebar-mobile-toggle" id="sidebarMobileToggle" aria-expanded="false" aria-controls="sidebarNavList">
         <span><i class="bi bi-list me-2"></i> Menu</span>
         <i class="bi bi-chevron-down" id="sidebarToggleIcon"></i>

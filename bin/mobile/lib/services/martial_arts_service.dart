@@ -96,10 +96,20 @@ class MartialArtsService {
   Future<Map<String, dynamic>> createPaymentOrder(double amount) =>
       _api.post('/payment/create-order', body: {'amount': amount}, timeout: const Duration(seconds: 45));
 
-  Future<Map<String, dynamic>> verifyPayment(Map<String, dynamic> body) =>
-      _api.post('/payment/verify', body: body, timeout: const Duration(seconds: 45));
+  Future<Map<String, dynamic>> qrCheckIn(String token) =>
+      _api.post('/api/attendance/qr-checkin', body: {'token': token});
+
+  Future<Map<String, dynamic>> myProgress() =>
+      _api.get('/api/progress/my-progress');
+
+  Future<Map<String, dynamic>> beltHierarchy() =>
+      _api.get('/api/progress/belt-hierarchy');
+
+  Future<Map<String, dynamic>> gradingHistory() =>
+      _api.get('/api/progress/grading-history');
 
   Future<({List<int> bytes, int statusCode, String? filename})> downloadCertificate(
           int enrollmentId) =>
       _api.getBytes('/api/martial-arts/enrollments/$enrollmentId/certificate');
 }
+

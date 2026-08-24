@@ -38,6 +38,12 @@ public class ChatController {
     @Autowired
     private in.sp.main.Service.UserFollowService followService;
 
+    @Autowired
+    private in.sp.main.Repository.DoctorChatRepository doctorChatRepo;
+
+    @Autowired
+    private in.sp.main.Repository.ChatMessageRepository chatMessageRepo;
+
     // WebRTC Signaling — sender from authenticated principal only
     @MessageMapping("/webrtc.signal")
     public void handleWebRTCSignal(@Payload Map<String, Object> signal,
@@ -67,9 +73,12 @@ public class ChatController {
             return "redirect:/login";
         }
 
-        // Only mutual followers (friends) are allowed to chat
-        List<User> users = followService.getFriends(currentUser.getId());
-        model.addAttribute("users", users);
+        // Fetch contacts the user has actively chatted with
+        List<User> userContacts = chatMessageRepo.findChatContacts(currentUser.getId());
+        List<in.sp.main.Entities.Doctor> doctorContacts = doctorChatRepo.findChattedDoctorsByUser(currentUser.getId());
+        
+        model.addAttribute("users", userContacts);
+        model.addAttribute("doctors", doctorContacts);
         return "chat_users";
     }
 

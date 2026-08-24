@@ -94,37 +94,37 @@ public class DoctorController {
             @RequestParam String email,
             @RequestParam String phone,
             @RequestParam String password,
-            @RequestParam String gender,
-            @RequestParam("profilePhoto") MultipartFile profilePhoto,
+            @RequestParam(required = false, defaultValue = "FEMALE") String gender,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
 
             // ── Step 2: Professional Details ──
-            @RequestParam String medicalRegNumber,
-            @RequestParam String specialization,
-            @RequestParam Integer experienceYears,
-            @RequestParam String qualification,
+            @RequestParam(required = false) String medicalRegNumber,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) Integer experienceYears,
+            @RequestParam(required = false) String qualification,
             @RequestParam(required = false) String hospitalName,
-            @RequestParam String consultationType,
+            @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
 
             // ── Step 3: Location Details ──
-            @RequestParam String clinicAddress,
-            @RequestParam String city,
-            @RequestParam String state,
-            @RequestParam String pincode,
+            @RequestParam(required = false) String clinicAddress,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String pincode,
             @RequestParam(required = false) String googleMapLocation,
 
             // ── Step 4: Availability ──
             @RequestParam(required = false) List<String> availableDays,
-            @RequestParam String startTime,
-            @RequestParam String endTime,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(required = false) String emergencyAvailable,
 
             // ── Step 5: Verification Documents ──
-            @RequestParam("medicalLicense") MultipartFile medicalLicense,
-            @RequestParam("idProof") MultipartFile idProof,
-            @RequestParam("degreeCertificate") MultipartFile degreeCertificate,
+            @RequestParam(value = "medicalLicense", required = false) MultipartFile medicalLicense,
+            @RequestParam(value = "idProof", required = false) MultipartFile idProof,
+            @RequestParam(value = "degreeCertificate", required = false) MultipartFile degreeCertificate,
 
             // ── Step 6: Earnings Setup ──
-            @RequestParam Double consultationFee,
+            @RequestParam(required = false, defaultValue = "0.0") Double consultationFee,
             @RequestParam(required = false) Double chatFee,
             @RequestParam(required = false) Double callFee,
             @RequestParam(required = false) Double videoFee,
@@ -145,10 +145,10 @@ public class DoctorController {
 
         try {
             // Save uploaded files
-            String profilePhotoPath = fileUploadService.saveFile(profilePhoto);
-            String medicalLicensePath = fileUploadService.saveFile(medicalLicense);
-            String idProofPath = fileUploadService.saveFile(idProof);
-            String degreeCertificatePath = fileUploadService.saveFile(degreeCertificate);
+            String profilePhotoPath = (profilePhoto != null && !profilePhoto.isEmpty()) ? fileUploadService.saveFile(profilePhoto) : null;
+            String medicalLicensePath = (medicalLicense != null && !medicalLicense.isEmpty()) ? fileUploadService.saveFile(medicalLicense) : null;
+            String idProofPath = (idProof != null && !idProof.isEmpty()) ? fileUploadService.saveFile(idProof) : null;
+            String degreeCertificatePath = (degreeCertificate != null && !degreeCertificate.isEmpty()) ? fileUploadService.saveFile(degreeCertificate) : null;
 
             Doctor d = new Doctor();
 
@@ -259,13 +259,23 @@ public class DoctorController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(@RequestParam(required = false, defaultValue = "overview") String section,
-                            @RequestParam(required = false) Long userId,
-                            HttpSession session, Model model) {
+    public String dashboard(@RequestParam(value = "section", defaultValue = "overview") String section,
+                            @RequestParam(value = "userId", required = false) Long userId,
+                            Model model, HttpSession session, RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
 
         d = doctorRepo.findById(d.getId()).orElse(d);
+        session.setAttribute("loggedDoctor", d);
+        
+        // Enforce profile approval
+        boolean isApproved = (d.getDoctorProfileStatus() == in.sp.main.Entities.DoctorProfileStatus.APPROVED || 
+                              d.getVerificationStatus() == in.sp.main.Entities.VerificationStatus.VERIFIED);
+        if (!isApproved && !section.equals("profile")) {
+            redirectAttributes.addFlashAttribute("error", "You must complete your profile and wait for admin approval before accessing other features.");
+            return "redirect:/doctors/dashboard?section=profile";
+        }
+
         doctorProfileService.refreshCompletion(d);
         doctorRepo.save(d);
         List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
@@ -386,30 +396,86 @@ public class DoctorController {
             }
         }
 
+        // Profile Completion Calculation
+        int totalFields = 15;
+        int completedFields = 0;
+        if (d.getFullName() != null && !d.getFullName().trim().isEmpty()) completedFields++;
+        if (d.getPhone() != null && !d.getPhone().trim().isEmpty()) completedFields++;
+        if (d.getGender() != null) completedFields++;
+        if (d.getProfilePhotoPath() != null && !d.getProfilePhotoPath().trim().isEmpty()) completedFields++;
+        if (d.getMedicalRegNumber() != null && !d.getMedicalRegNumber().trim().isEmpty()) completedFields++;
+        if (d.getSpecialization() != null && !d.getSpecialization().trim().isEmpty()) completedFields++;
+        if (d.getExperienceYears() != null) completedFields++;
+        if (d.getQualification() != null && !d.getQualification().trim().isEmpty()) completedFields++;
+        if (d.getConsultationType() != null) completedFields++;
+        if (d.getClinicAddress() != null && !d.getClinicAddress().trim().isEmpty()) completedFields++;
+        if (d.getCity() != null && !d.getCity().trim().isEmpty()) completedFields++;
+        if (d.getState() != null && !d.getState().trim().isEmpty()) completedFields++;
+        if (d.getAvailableDays() != null && !d.getAvailableDays().trim().isEmpty()) completedFields++;
+        if (d.getMedicalLicensePath() != null && !d.getMedicalLicensePath().trim().isEmpty()) completedFields++;
+        if (d.getIdProofPath() != null && !d.getIdProofPath().trim().isEmpty()) completedFields++;
+
+        int completionPercentage = (completedFields * 100) / totalFields;
+        model.addAttribute("profileCompletion", completionPercentage);
+
         return "doctor/doctor-dashboard";
     }
 
-    @PostMapping("/update-profile")
-    public String updateProfile(@RequestParam String fullName,
-                                @RequestParam String phone,
-                                @RequestParam(required = false) String gender,
-                                @RequestParam(required = false) String specialization,
-                                @RequestParam(required = false) String qualification,
-                                @RequestParam(required = false) Integer experienceYears,
-                                @RequestParam(required = false) String medicalRegNumber,
-                                @RequestParam(required = false) String hospitalName,
-                                @RequestParam(required = false) String consultationType,
-                                HttpSession session,
-                                RedirectAttributes redirectAttributes) {
+    @PostMapping("/update-full-profile")
+    public String updateFullProfile(
+            @RequestParam String fullName,
+            @RequestParam String phone,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) String qualification,
+            @RequestParam(required = false) Integer experienceYears,
+            @RequestParam(required = false) String medicalRegNumber,
+            @RequestParam(required = false) String hospitalName,
+            @RequestParam(required = false) String consultationType,
+            @RequestParam(required = false) List<String> availableDays,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String emergencyAvailable,
+            @RequestParam(required = false) String clinicAddress,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String googleMapLocation,
+            @RequestParam(required = false) Double consultationFee,
+            @RequestParam(required = false) Double chatFee,
+            @RequestParam(required = false) Double callFee,
+            @RequestParam(required = false) Double videoFee,
+            @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) MultipartFile profilePhoto,
+            @RequestParam(required = false) MultipartFile medicalLicense,
+            @RequestParam(required = false) MultipartFile idProof,
+            @RequestParam(required = false) MultipartFile degreeCertificate,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
 
-        if (phone == null || !phone.trim().matches("^\\d{10}$")) {
-            redirectAttributes.addFlashAttribute("error", "Phone number must be exactly 10 digits.");
+        d = doctorRepo.findById(d.getId()).orElse(d);
+
+        try {
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                d.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
+            }
+            if (medicalLicense != null && !medicalLicense.isEmpty()) {
+                d.setMedicalLicensePath(fileUploadService.saveFile(medicalLicense));
+            }
+            if (idProof != null && !idProof.isEmpty()) {
+                d.setIdProofPath(fileUploadService.saveFile(idProof));
+                d.setIdentityDocumentPath(d.getIdProofPath());
+            }
+            if (degreeCertificate != null && !degreeCertificate.isEmpty()) {
+                d.setDegreeCertificatePath(fileUploadService.saveFile(degreeCertificate));
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error uploading files.");
             return "redirect:/doctors/dashboard?section=profile";
         }
 
-        d = doctorRepo.findById(d.getId()).orElse(d);
         d.setFullName(fullName);
         d.setPhone(phone);
         if (gender != null) d.setGender(Gender.valueOf(gender));
@@ -420,9 +486,48 @@ public class DoctorController {
         d.setHospitalName(hospitalName);
         if (consultationType != null) d.setConsultationType(ConsultationType.valueOf(consultationType));
 
+        if (availableDays != null && !availableDays.isEmpty()) {
+            d.setAvailableDays(String.join(",", availableDays));
+        } else {
+            d.setAvailableDays(null);
+        }
+        d.setStartTime(startTime);
+        d.setEndTime(endTime);
+        d.setEmergencyAvailable("yes".equalsIgnoreCase(emergencyAvailable));
+
+        d.setClinicAddress(clinicAddress);
+        d.setCity(city);
+        d.setState(state);
+        d.setPincode(pincode);
+        if (city != null && state != null) {
+            d.setLocationText(city + ", " + state);
+        }
+        d.setGoogleMapLocation(googleMapLocation);
+
+        if (consultationFee != null) d.setConsultationFee(consultationFee);
+        d.setChatFee(chatFee);
+        d.setCallFee(callFee);
+        d.setVideoFee(videoFee);
+        d.setUpiId(upiId != null ? upiId.trim() : null);
+
         doctorRepo.save(d);
         session.setAttribute("loggedDoctor", d);
         redirectAttributes.addFlashAttribute("message", "Profile updated successfully!");
+        return "redirect:/doctors/dashboard?section=profile";
+    }
+
+    @PostMapping("/submit-for-verification")
+    public String submitForVerification(HttpSession session, RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        d.setDoctorProfileStatus(in.sp.main.Entities.DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
+        d.setVerificationStatus(in.sp.main.Entities.VerificationStatus.PENDING);
+        doctorRepo.save(d);
+        
+        session.setAttribute("loggedDoctor", d);
+        redirectAttributes.addFlashAttribute("message", "Your profile has been submitted successfully. Your profile is currently being verified by the admin.");
         return "redirect:/doctors/dashboard?section=profile";
     }
 
@@ -559,7 +664,14 @@ public class DoctorController {
         // Doctors browsing the directory must not be bounced to user login/dashboard
         if (u == null && loggedDoctor == null) return "redirect:/login";
 
-        model.addAttribute("doctors", doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED));
+        List<Doctor> allVerified = doctorRepo.findByVerificationStatus(VerificationStatus.VERIFIED);
+        if (loggedDoctor != null) {
+            allVerified = allVerified.stream()
+                    .filter(d -> !d.getId().equals(loggedDoctor.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+        
+        model.addAttribute("doctors", allVerified);
         model.addAttribute("viewerIsDoctor", loggedDoctor != null && u == null);
         return "doctor/doctor-list";
     }

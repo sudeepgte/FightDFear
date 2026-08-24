@@ -400,11 +400,14 @@
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
                         <h1 class="h3 fw-bold mb-0 text-white">${trainer.fullName}</h1>
-                        <c:set var="statusKey" value="${trainer.partnerProfileStatus != null ? trainer.partnerProfileStatus : (trainer.verificationStatus == 'VERIFIED' ? 'APPROVED' : 'PENDING')}"/>
+                        <c:if test="${empty statusKey}">
+                            <c:set var="statusKey" value="${not empty trainer.partnerProfileStatus ? trainer.partnerProfileStatus.name() : (not empty trainer.verificationStatus ? (trainer.verificationStatus.name() == 'VERIFIED' ? 'APPROVED' : trainer.verificationStatus.name()) : 'PENDING')}"/>
+                        </c:if>
                         <span class="badge-status-lg status-${statusKey}">
                             <i class="bi ${statusKey == 'APPROVED' || statusKey == 'VERIFIED' ? 'bi-check-circle-fill' : 'bi-clock-history'}"></i>
                             ${statusKey}
                         </span>
+
                         <c:if test="${trainer.suspended}">
                             <span class="badge bg-danger text-white px-3 py-1">SUSPENDED</span>
                         </c:if>

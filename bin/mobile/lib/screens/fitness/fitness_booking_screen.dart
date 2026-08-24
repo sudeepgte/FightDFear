@@ -39,6 +39,8 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
   String? _timeSlot;
   DateTime? _date;
   final _noteCtrl = TextEditingController();
+  List<Map<String, dynamic>> _dynamicSlots = [];
+  bool _loadingSlots = false;
 
   @override
   void initState() {
@@ -91,6 +93,35 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
+  Future<void> _fetchSlotsForDate(DateTime date) async {
+    setState(() {
+      _loadingSlots = true;
+      _timeSlot = null;
+    });
+    final dateStr =
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    try {
+      final res = await _svc.availableSlots(widget.trainerId, date: dateStr);
+      if (!mounted) return;
+      if (res['success'] == true && res['slots'] is List) {
+        final list = (res['slots'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        setState(() {
+          _dynamicSlots = list;
+          final firstAvail = list.firstWhere((s) => s['available'] == true, orElse: () => {});
+          if (firstAvail.isNotEmpty) {
+            _timeSlot = firstAvail['time']?.toString();
+          }
+        });
+      } else {
+        setState(() => _dynamicSlots = []);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _dynamicSlots = []);
+    } finally {
+      if (mounted) setState(() => _loadingSlots = false);
+    }
+  }
+
   void _initDefaults() {
     final specs = (_trainer['specializations']?.toString() ?? '')
         .split(',')
@@ -106,13 +137,8 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
       _sessionType = 'ONLINE';
     }
 
-    final slots = ModuleTheme.toList(_trainer['timeSlots']);
-    if (slots.isNotEmpty) {
-      _timeSlot = slots.first.toString();
-    } else {
-      _timeSlot = '10:00 - 12:00';
-    }
     _date = DateTime.now().add(const Duration(days: 1));
+    _fetchSlotsForDate(_date!);
   }
 
   List<Map<String, dynamic>> get _packages {
@@ -129,19 +155,18 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
     ];
   }
 
-  List<String> get _timeSlots {
-    final raw = _trainer['timeSlots'];
-    if (raw is List && raw.isNotEmpty) {
-      return raw.map((e) => e.toString()).toList();
-    }
+  List<Map<String, dynamic>> get _timeSlotsList {
+    if (_dynamicSlots.isNotEmpty) return _dynamicSlots;
     return const [
-      '06:00 - 08:00',
-      '08:00 - 10:00',
-      '10:00 - 12:00',
-      '12:00 - 14:00',
-      '14:00 - 16:00',
-      '16:00 - 18:00',
-      '18:00 - 20:00',
+      {'time': '06:00 AM - 07:00 AM', 'available': true, 'reason': 'Available'},
+      {'time': '07:00 AM - 08:00 AM', 'available': true, 'reason': 'Available'},
+      {'time': '08:00 AM - 09:00 AM', 'available': true, 'reason': 'Available'},
+      {'time': '09:00 AM - 10:00 AM', 'available': true, 'reason': 'Available'},
+      {'time': '10:00 AM - 11:00 AM', 'available': true, 'reason': 'Available'},
+      {'time': '04:00 PM - 05:00 PM', 'available': true, 'reason': 'Available'},
+      {'time': '05:00 PM - 06:00 PM', 'available': true, 'reason': 'Available'},
+      {'time': '06:00 PM - 07:00 PM', 'available': true, 'reason': 'Available'},
+      {'time': '07:00 PM - 08:00 PM', 'available': true, 'reason': 'Available'},
     ];
   }
 
@@ -245,7 +270,10 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
       firstDate: now,
       lastDate: now.add(const Duration(days: 90)),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) {
+      setState(() => _date = picked);
+      _fetchSlotsForDate(picked);
+    }
   }
 
   @override
@@ -314,18 +342,50 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
                     ),
                     const SizedBox(height: 12),
                     _section('Choose time slot'),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _timeSlots.map((slot) {
-                        return ChoiceChip(
-                          label: Text(slot, style: const TextStyle(fontSize: 12)),
-                          selected: _timeSlot == slot,
-                          onSelected: (_) => setState(() => _timeSlot = slot),
-                          selectedColor: const Color(0xFFFFE4E6),
-                        );
-                      }).toList(),
-                    ),
+                    if (_loadingSlots)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: FitnessBookingScreen.primary),
+                          ),
+                        ),
+                      )
+                    else if (_timeSlotsList.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: const Text('No slots available for this date.', style: TextStyle(fontSize: 12, color: Color(0xFFB45309))),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _timeSlotsList.map((slotObj) {
+                          final slot = slotObj['time']?.toString() ?? '';
+                          final available = slotObj['available'] == true;
+                          final reason = slotObj['reason']?.toString() ?? '';
+                          return ChoiceChip(
+                            label: Text(
+                              available ? slot : '$slot ($reason)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: available ? null : Colors.grey.shade400,
+                              ),
+                            ),
+                            selected: _timeSlot == slot && available,
+                            onSelected: available ? (_) => setState(() => _timeSlot = slot) : null,
+                            selectedColor: const Color(0xFFFFE4E6),
+                            disabledColor: const Color(0xFFF1F5F9),
+                          );
+                        }).toList(),
+                      ),
                     const SizedBox(height: 16),
                     _section('Session format'),
                     SegmentedButton<String>(

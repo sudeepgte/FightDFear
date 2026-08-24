@@ -1,598 +1,286 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Training Journey | Fight D Fear</title>
-    
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <style>
         :root {
-            --sidebar-width: 260px;
-            --primary-purple: #1e1b4b;
-            --primary-dark: #1e1b4b;
-            --bg-light: #F8FAFC;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --rose: #F43F5E;
+            --rose-soft: #FFF1F2;
+            --navy: #0F172A;
+            --muted: #64748B;
+            --bg: #F8FAFC;
+            --border: #E2E8F0;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: #1E293B;
-            margin: 0;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: var(--primary-dark);
-            color: white;
-            position: fixed;
-            left: 0;
-            top: 0;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .sidebar-logo img { width: 32px; }
-        .sidebar-logo span { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; }
-
-        .nav-menu { list-style: none; padding: 0; margin: 0; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: #94A3B8;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 500;
-            transition: var(--transition);
-        }
-
-        .nav-link:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .nav-link.active { background: var(--primary-red); color: white; box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3); }
-        .nav-link i { font-size: 1.1rem; }
-
-        @media (max-width: 991px) {
-            .sidebar { width: 100% !important; height: auto !important; min-height: 0 !important; position: static !important; padding: 15px !important; border-radius: 0 !important; display: block !important; }
-            .sidebar-logo { margin-bottom: 15px !important; justify-content: center !important; }
-            .nav-menu { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; gap: 8px !important; }
-            .nav-item { margin-bottom: 0 !important; }
-            .nav-link { padding: 8px 16px !important; font-size: 0.85rem !important; border-radius: 20px !important; white-space: nowrap !important; width: auto !important; }
-            .main-content { margin-left: 0 !important; padding: 15px !important; }
-            body { display: block; }
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            padding: 32px;
-            min-height: 100vh;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
-        }
-
-        .header-title h2 { font-weight: 800; margin-bottom: 4px; }
-        .header-title p { color: #64748B; margin: 0; }
-
-        .user-actions { display: flex; align-items: center; gap: 20px; }
-        .icon-btn { 
-            width: 40px; height: 40px; border-radius: 10px; 
-            background: white; border: 1px solid #E2E8F0;
-            display: flex; align-items: center; justify-content: center;
-            color: #64748B; cursor: pointer; transition: var(--transition);
-        }
-        .icon-btn:hover { border-color: var(--primary-red); color: var(--primary-red); }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: white;
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--navy); margin: 0; }
+        .journey-wrap { padding: 96px 20px 40px; }
+        .journey-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 4px 18px rgba(15,23,42,0.04);
             padding: 20px;
-            border-radius: 20px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid #F1F5F9;
-            transition: var(--transition);
-        }
-        .stat-card:hover { transform: translateY(-5px); }
-        .stat-label { font-size: 0.8rem; color: #64748B; font-weight: 600; margin-bottom: 12px; display: block; }
-        .stat-value { font-weight: 700; font-size: 1.2rem; display: block; margin-bottom: 8px; }
-        .stat-link { font-size: 0.75rem; color: var(--primary-red); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 4px; }
-
-        /* Main Layout Grid */
-        .layout-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
-        .card-custom {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: var(--card-shadow);
-            border: 1px solid #F1F5F9;
             height: 100%;
         }
-
-        .card-header-custom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        .stat-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+        .stat-value { font-size: 1.15rem; font-weight: 800; color: var(--navy); display: block; margin-top: 4px; }
+        .progress-compact { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+        .progress-bar-rose { height: 100%; background: var(--rose); border-radius: 999px; }
+        .status-banner {
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--rose);
+            border-radius: 14px;
+            padding: 16px 18px;
+            background: #fff;
+            margin-bottom: 16px;
         }
-        .card-title-custom { font-weight: 700; font-size: 1.1rem; margin: 0; }
-        .card-link-custom { font-size: 0.8rem; color: var(--primary-red); text-decoration: none; font-weight: 600; }
-
-        /* Timeline */
-        .timeline-compact { padding-left: 15px; position: relative; }
-        .timeline-compact::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-            width: 2px; background: #E2E8F0;
+        .status-banner.pending { border-left-color: #F59E0B; background: #FFFBEB; }
+        .status-banner.pay { border-left-color: var(--rose); background: var(--rose-soft); }
+        .icon-circle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--rose-soft); color: var(--rose);
+            display: inline-flex; align-items: center; justify-content: center;
         }
-        .timeline-item-compact {
-            position: relative; padding-bottom: 20px; padding-left: 20px;
+        .btn-rose {
+            background: var(--rose); color: #fff; border: none;
+            border-radius: 999px; font-weight: 700; padding: 10px 18px;
+            text-decoration: none; display: inline-block;
         }
-        .timeline-item-compact::before {
-            content: ''; position: absolute; left: -5px; top: 0;
-            width: 12px; height: 12px; border-radius: 50%;
-            background: white; border: 2px solid var(--primary-red);
-        }
-
-        /* Skills */
-        .skill-item { margin-bottom: 16px; }
-        .skill-info { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; }
-        .progress-compact { height: 6px; border-radius: 10px; background: #F1F5F9; overflow: hidden; }
-        .progress-bar-red { background: var(--primary-red); height: 100%; }
-
-        /* Donut Chart Simulation */
-        .donut-container {
-            width: 180px; height: 180px; margin: 0 auto 20px;
-            position: relative;
-        }
-        .donut-val { 
-            position: absolute; text-align: center; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100%;
-        }
-        .donut-val h3 { margin: 0; font-weight: 800; font-size: 1.4rem; }
-        .donut-val span { font-size: 0.70rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* Streak */
-        .streak-dots { display: flex; justify-content: space-between; margin-top: 20px; }
-        .streak-dot { 
-            width: 32px; height: 32px; border-radius: 50%; border: 2px solid #E2E8F0;
-            display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #64748B;
-        }
-        .streak-dot.active { border-color: var(--primary-red); background: #FFF1F2; color: var(--primary-red); font-weight: 700; }
-
-        /* Belt Progress */
-        .belt-path {
-            display: flex; justify-content: space-between; align-items: center; padding: 20px 0;
-        }
-        .belt-node { text-align: center; position: relative; }
-        .belt-icon { 
-            width: 48px; height: 48px; border-radius: 50%; background: #F8FAFC;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-            margin-bottom: 8px; border: 2px solid #E2E8F0;
-        }
-        .belt-node.active .belt-icon { background: #FFF1F2; border-color: var(--primary-red); color: var(--primary-red); }
-        
-        /* Secondary Grid */
-        .secondary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 1200px) {
-            .layout-grid { grid-template-columns: 1fr; }
-            .secondary-grid { grid-template-columns: 1fr 1fr; }
-        }
-
-        @media (max-width: 767px) {
-            .header-top { flex-direction: column; text-align: center; gap: 15px; }
-            .user-actions { justify-content: center; width: 100%; }
-            .secondary-grid { grid-template-columns: 1fr; }
-            .belt-path { overflow-x: auto; overflow-y: hidden; max-width: 100%; width: 100%; justify-content: flex-start; gap: 30px; padding-bottom: 15px; }
-            .belt-node { flex-shrink: 0; }
-            .card-header-custom { flex-direction: column; text-align: center; gap: 10px; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .main-content { padding: 15px !important; min-width: 0; max-width: 100vw; overflow-x: hidden; }
+        .btn-rose:hover { color: #fff; background: #E11D48; }
+        .timeline-item { border-bottom: 1px solid #F1F5F9; padding: 10px 0; }
+        .timeline-item:last-child { border-bottom: none; }
+        @media (max-width: 991px) {
+            .journey-wrap { padding-top: 24px; }
         }
     </style>
 </head>
 <body>
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <i class="fas fa-hand-fist fa-2x text-danger"></i>
-            <span>Fight D Fear</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/users/training-journey" class="nav-link active">
-                    <i class="bi bi-compass"></i> My Journey
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/attendance/my-attendance" class="nav-link">
-                    <i class="bi bi-calendar-check"></i> Attendance
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/users/my-schedule" class="nav-link">
-                    <i class="bi bi-clock-history"></i> My Schedule
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/payment/users/my-payments" class="nav-link">
-                    <i class="bi bi-wallet2"></i> Payments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/logout" class="nav-link text-danger" style="margin-top: 10px;">
-                    <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="nav-link">
-                    <i class="bi bi-arrow-left"></i> Back
-                </a>
-            </li>
-        </ul>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="header-top">
-            <div class="header-title">
-                <h2>My Training Journey</h2>
-                <p>Track your progress, stay consistent and achieve excellence.</p>
-            </div>
-            <div class="user-actions">
-                <div class="icon-btn"><i class="bi bi-bell"></i></div>
-                <div class="icon-btn" onclick="location.href='${pageContext.request.contextPath}/attendance/my-attendance'"><i class="bi bi-calendar"></i></div>
-                <div class="dropdown">
-                    <div class="icon-btn" onclick="location.href='${pageContext.request.contextPath}/users/profile/${user.id}'">
-                        <i class="bi bi-person-circle"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-label">Current Batch</span>
-                <span class="stat-value">${not empty activeEnrollment ? activeEnrollment.batch.name : 'Not Enrolled'}</span>
-                <a href="${not empty activeEnrollment ? pageContext.request.contextPath.concat('/centres/details/').concat(activeEnrollment.batch.center.id) : '#'}" class="stat-link">View Details <i class="bi bi-arrow-right"></i></a>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Trainer</span>
-                <span class="stat-value">${not empty activeEnrollment ? activeEnrollment.batch.instructor : 'Not Assigned'}</span>
-                <!-- Issue 140: Link trainer card to the centre details page which shows trainer info -->
-                <a href="${not empty activeEnrollment ? pageContext.request.contextPath.concat('/centres/details/').concat(activeEnrollment.batch.center.id) : '#'}" class="stat-link">View Profile <i class="bi bi-arrow-right"></i></a>
-            </div>
-            <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="donut-container" style="width: 60px; height: 60px;">
-                        <canvas id="attendanceMini"></canvas>
-                        <div class="donut-val">
-                            <span class="fw-bold" style="font-size: 0.7rem;">${attendancePercentage}%</span>
-                        </div>
-                    </div>
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper" style="min-height:100vh; background:var(--bg);">
+            <div class="container journey-wrap" style="max-width:1100px;">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
                     <div>
-                        <span class="stat-label mb-1">Attendance</span>
-                        <small class="d-block text-muted">Present: ${presentCount}</small>
+                        <h1 class="h3 fw-bold mb-1">My Training Journey</h1>
+                        <p class="text-muted mb-0">Track your progress, stay consistent and achieve excellence.</p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-secondary btn-sm rounded-pill" href="${pageContext.request.contextPath}/attendance/my-attendance">Attendance</a>
+                        <a class="btn btn-outline-secondary btn-sm rounded-pill" href="${pageContext.request.contextPath}/centres/allacceptedcentres">Martial Arts</a>
                     </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Total Classes</span>
-                <span class="stat-value">${totalClasses}</span>
-                <small class="text-muted">Attended: ${attendedCount}</small>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Training Hours</span>
-                <span class="stat-value">${totalHours}</span>
-                <small class="text-muted">Total Journey</small>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Current Belt</span>
-                <span class="stat-value">${currentBelt}</span>
-                <div class="progress-compact mt-2">
-                    <div class="progress-bar-red" style="width: ${beltProgress}%"></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Main Grid -->
-        <div class="layout-grid">
-            <!-- Training Timeline -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom">Training Timeline</h5>
-                    <a href="${pageContext.request.contextPath}/attendance/my-attendance" class="card-link-custom">View All</a>
-                </div>
-                <div class="timeline-compact">
-                    <c:forEach var="item" items="${attendances}" varStatus="status">
-                        <c:if test="${status.index < 4}">
-                            <div class="timeline-item-compact">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <span class="fw-bold small">${not empty item.session ? item.session.batch.name : item.onlineClass.title}</span>
-                                    <span class="text-muted" style="font-size: 0.7rem;">${not empty item.session ? item.session.date : item.onlineClass.date}</span>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark small p-1 px-2 border" style="font-size: 0.65rem;">
-                                        ${not empty item.session ? item.session.startTime : item.onlineClass.startTime}
-                                    </span>
-                                    <span class="text-success small fw-bold" style="font-size: 0.65rem;">${item.status}</span>
-                                </div>
+                <c:choose>
+                    <c:when test="${empty enrollments}">
+                        <div class="journey-card text-center py-5">
+                            <div class="icon-circle mx-auto mb-3"><i class="bi bi-shield"></i></div>
+                            <h5 class="fw-bold">No Martial Arts enrollment yet.</h5>
+                            <p class="text-muted">Discover verified centres and enroll in a training batch.</p>
+                            <a class="btn-rose" href="${pageContext.request.contextPath}/centres/allacceptedcentres">Explore Martial Arts</a>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <c:if test="${activeEnrollment.status == 'PENDING'}">
+                            <div class="status-banner pending">
+                                <strong>Application pending centre approval.</strong>
+                                <div class="small mt-1"><c:out value="${activeEnrollment.batch != null ? activeEnrollment.batch.name : 'Batch'}"/> at <c:out value="${activeEnrollment.center != null ? activeEnrollment.center.name : 'Centre'}"/></div>
                             </div>
                         </c:if>
-                    </c:forEach>
-                    <c:if test="${empty attendances}">
-                        <div class="text-center py-4">
-                            <i class="bi bi-calendar-x fs-1 text-muted opacity-25 mb-3"></i>
-                            <h6 class="fw-bold">No training sessions yet</h6>
-                            <p class="text-muted small">Your training journey will appear here once classes begin.</p>
+                        <c:if test="${activeEnrollment.status == 'APPROVED' && (empty activeEnrollment.paymentStatus || activeEnrollment.paymentStatus == 'PENDING')}">
+                            <div class="status-banner pay">
+                                <strong>Payment required.</strong>
+                                <div class="small mt-1">Complete payment to activate your enrollment.</div>
+                                <a class="btn-rose mt-2" href="${pageContext.request.contextPath}/enrollment/payment/${activeEnrollment.id}">Complete Payment →</a>
+                            </div>
+                        </c:if>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Current Batch</span>
+                                    <span class="stat-value"><c:out value="${not empty activeEnrollment.batch ? activeEnrollment.batch.name : 'Not Enrolled'}"/></span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Trainer</span>
+                                    <span class="stat-value"><c:out value="${not empty activeEnrollment.batch && not empty activeEnrollment.batch.instructor ? activeEnrollment.batch.instructor : 'Not Assigned'}"/></span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Attendance</span>
+                                    <span class="stat-value">${attendancePercentage}%</span>
+                                    <small class="text-muted">Present: ${presentCount}</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Total Classes</span>
+                                    <span class="stat-value">${totalClasses}</span>
+                                    <small class="text-muted">Attended: ${attendedCount}</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Training Hours</span>
+                                    <span class="stat-value">${totalHours}</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg-4">
+                                <div class="journey-card">
+                                    <span class="stat-label">Current Belt</span>
+                                    <span class="stat-value"><c:out value="${currentBelt}"/></span>
+                                    <c:if test="${beltAssessed}">
+                                        <div class="progress-compact mt-2"><div class="progress-bar-rose" style="width:${beltProgress}%"></div></div>
+                                    </c:if>
+                                </div>
+                            </div>
                         </div>
-                    </c:if>
-                </div>
-            </div>
 
-            <!-- Skill Progress -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom">Skill Progress</h5>
-                    <a href="#" class="card-link-custom">View All</a>
-                </div>
-                <div class="skill-item">
-                    <div class="skill-info">
-                        <span><i class="fas fa-shoe-prints me-2"></i> Footwork</span>
-                        <span class="fw-bold">${attendedCount * 2 > 100 ? 100 : attendedCount * 2}%</span>
-                    </div>
-                    <div class="progress-compact"><div class="progress-bar-red" style="width: ${attendedCount * 2 > 100 ? 100 : attendedCount * 2}%"></div></div>
-                </div>
-                <div class="skill-item">
-                    <div class="skill-info">
-                        <span><i class="fas fa-shield-alt me-2"></i> Blocking</span>
-                        <span class="fw-bold">${attendedCount * 1.5 > 100 ? 100 : attendedCount * 1.5}%</span>
-                    </div>
-                    <div class="progress-compact"><div class="progress-bar-red" style="width: ${attendedCount * 1.5 > 100 ? 100 : attendedCount * 1.5}%"></div></div>
-                </div>
-                <div class="skill-item">
-                    <div class="skill-info">
-                        <span><i class="fas fa-hand-fist me-2"></i> Striking</span>
-                        <span class="fw-bold">${attendedCount * 3 > 100 ? 100 : attendedCount * 3}%</span>
-                    </div>
-                    <div class="progress-compact"><div class="progress-bar-red" style="width: ${attendedCount * 3 > 100 ? 100 : attendedCount * 3}%"></div></div>
-                </div>
-                <div class="skill-item">
-                    <div class="skill-info">
-                        <span><i class="fas fa-dumbbell me-2"></i> Stamina</span>
-                        <span class="fw-bold">${attendedCount * 1 > 100 ? 100 : attendedCount * 1}%</span>
-                    </div>
-                    <div class="progress-compact"><div class="progress-bar-red" style="width: ${attendedCount * 1 > 100 ? 100 : attendedCount * 1}%"></div></div>
-                </div>
-            </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-6">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Training Timeline</h5>
+                                    <c:forEach var="item" items="${attendances}" varStatus="status">
+                                        <c:if test="${status.index < 8}">
+                                            <div class="timeline-item">
+                                                <div class="d-flex justify-content-between">
+                                                    <strong class="small">
+                                                        <c:choose>
+                                                            <c:when test="${not empty item.session && not empty item.session.batch}"><c:out value="${item.session.batch.name}"/></c:when>
+                                                            <c:when test="${not empty item.onlineClass}"><c:out value="${item.onlineClass.title}"/></c:when>
+                                                            <c:otherwise>Training session</c:otherwise>
+                                                        </c:choose>
+                                                    </strong>
+                                                    <span class="small text-muted">
+                                                        <c:choose>
+                                                            <c:when test="${not empty item.session}"><c:out value="${item.session.date}"/></c:when>
+                                                            <c:when test="${not empty item.onlineClass}"><c:out value="${item.onlineClass.date}"/></c:when>
+                                                            <c:otherwise><c:out value="${item.attendanceDate}"/></c:otherwise>
+                                                        </c:choose>
+                                                    </span>
+                                                </div>
+                                                <span class="badge rounded-pill" style="background:var(--rose-soft);color:var(--rose);">${item.status}</span>
+                                            </div>
+                                        </c:if>
+                                    </c:forEach>
+                                    <c:if test="${empty attendances}">
+                                        <p class="text-muted small mb-0">No attendance records yet.</p>
+                                    </c:if>
+                                    <a class="small fw-semibold d-inline-block mt-2" style="color:var(--rose);" href="${pageContext.request.contextPath}/attendance/my-attendance">View all attendance</a>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Skill Progress</h5>
+                                    <c:choose>
+                                        <c:when test="${beltAssessed && not empty beltSkills}">
+                                            <c:forEach var="entry" items="${beltSkills}">
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between small mb-1">
+                                                        <span><c:out value="${entry.key}"/></span>
+                                                        <strong><c:out value="${entry.value}"/>%</strong>
+                                                    </div>
+                                                    <div class="progress-compact"><div class="progress-bar-rose" style="width:${entry.value}%"></div></div>
+                                                </div>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p class="text-muted small mb-0">Not assessed. Skills appear after your centre completes a belt grading.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Attendance Overview -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom">Attendance Overview</h5>
-                </div>
-                <div class="donut-container">
-                    <canvas id="attendanceMain"></canvas>
-                    <div class="donut-val">
-                        <h3>${attendancePercentage}%</h3>
-                        <span>Attendance</span>
-                    </div>
-                </div>
-                <div class="d-flex flex-column gap-2 mt-3">
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span><i class="bi bi-circle-fill text-success me-2"></i> Present</span>
-                        <span class="fw-bold">${presentCount}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span><i class="bi bi-circle-fill text-danger me-2"></i> Absent</span>
-                        <span class="fw-bold">${absentCount}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span><i class="bi bi-circle-fill text-warning me-2"></i> Late</span>
-                        <span class="fw-bold">${lateCount}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Attendance Overview</h5>
+                                    <p class="mb-1"><span class="text-success">●</span> Present: <strong>${presentCount}</strong></p>
+                                    <p class="mb-1"><span class="text-danger">●</span> Absent: <strong>${absentCount}</strong></p>
+                                    <p class="mb-0"><span class="text-warning">●</span> Late: <strong>${lateCount}</strong></p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Upcoming Class</h5>
+                                    <c:choose>
+                                        <c:when test="${not empty upcomingClass}">
+                                            <h6 class="fw-bold"><c:out value="${upcomingClass.title}"/></h6>
+                                            <p class="text-muted small"><c:out value="${upcomingClass.date}"/> @ <c:out value="${upcomingClass.startTime}"/></p>
+                                            <c:if test="${not empty upcomingClass.meetingLink}">
+                                                <a class="btn-rose btn-sm" href="${upcomingClass.meetingLink}">Join Session</a>
+                                            </c:if>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p class="text-muted small mb-0">No upcoming classes scheduled.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="journey-card text-center">
+                                    <div class="icon-circle mx-auto mb-2"><i class="bi bi-fire"></i></div>
+                                    <h5 class="fw-bold mb-1">Training Streak</h5>
+                                    <div class="display-6 fw-bold" style="color:var(--rose);">${streak}</div>
+                                    <p class="text-muted small mb-0">Days</p>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Secondary Grid -->
-        <div class="secondary-grid">
-            <!-- Trainer Feedback -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom"><i class="bi bi-chat-quote text-danger me-2"></i> Feedback</h5>
-                </div>
-                <div class="bg-light p-4 rounded-4 text-center">
-                    <p class="small text-muted mb-0 italic">No feedback available yet</p>
-                </div>
-            </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Feedback</h5>
+                                    <c:choose>
+                                        <c:when test="${not empty beltRemarks}">
+                                            <p class="mb-0"><c:out value="${beltRemarks}"/></p>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p class="text-muted small mb-0">No feedback available yet.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="journey-card">
+                                    <h5 class="fw-bold mb-3">Belt Progression</h5>
+                                    <c:choose>
+                                        <c:when test="${beltAssessed}">
+                                            <p class="mb-1"><strong>Current:</strong> <c:out value="${currentBelt}"/></p>
+                                            <p class="mb-1"><strong>Target:</strong> <c:out value="${not empty beltTarget ? beltTarget : '—'}"/></p>
+                                            <div class="progress-compact mt-2"><div class="progress-bar-rose" style="width:${beltProgress}%"></div></div>
+                                            <small class="text-muted">Score from latest centre grading: ${beltProgress}%</small>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p class="text-muted small mb-0">Not assessed. Belt progress appears after centre grading.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Upcoming Class -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom">Upcoming Class</h5>
-                    <a href="${pageContext.request.contextPath}/users/my-schedule" class="card-link-custom">View Schedule</a>
-                </div>
-                <div class="text-center py-3">
-                    <c:choose>
-                        <c:when test="${not empty upcomingClass}">
-                            <h6 class="fw-bold mb-1">${upcomingClass.title}</h6>
-                            <p class="text-muted small mb-3">${upcomingClass.date} @ ${upcomingClass.startTime}</p>
-                            <a href="${upcomingClass.meetingLink}" class="btn btn-primary w-100 btn-sm rounded-pill"><i class="bi bi-camera-video me-2"></i>Join Session</a>
-                        </c:when>
-                        <c:otherwise>
-                            <p class="text-muted small mb-3">No upcoming classes scheduled</p>
-                            <button class="btn btn-outline-secondary w-100 btn-sm rounded-pill" disabled><i class="bi bi-calendar-plus me-2"></i>Add to Calendar</button>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-
-            <!-- Training Streak -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom"><i class="bi bi-fire text-danger me-2"></i> Training Streak</h5>
-                </div>
-                <div class="text-center">
-                    <h2 class="fw-extrabold mb-0">${streak} Days</h2>
-                    <p class="text-muted small">Current Streak</p>
-                    <div class="streak-dots">
-                        <div class="streak-dot">M</div>
-                        <div class="streak-dot">T</div>
-                        <div class="streak-dot">W</div>
-                        <div class="streak-dot">T</div>
-                        <div class="streak-dot">F</div>
-                        <div class="streak-dot">S</div>
-                        <div class="streak-dot">S</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Achievements -->
-            <div class="card-custom">
-                <div class="card-header-custom">
-                    <h5 class="card-title-custom">Achievements</h5>
-                    <a href="#" class="card-link-custom">View All</a>
-                </div>
-                <div class="text-center py-3">
-                    <p class="text-muted small">No achievements unlocked yet</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Belt Progress Full Width -->
-        <div class="card-custom mt-4">
-            <h5 class="card-title-custom mb-4">Belt Progression Path</h5>
-            <div class="belt-path">
-                <div class="belt-node ${attendedCount >= 0 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal"></i></div>
-                    <span class="small fw-bold d-block">White</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 0 ? 'Current' : 'Locked'}</span>
-                </div>
-                <i class="bi bi-arrow-right text-muted"></i>
-                <div class="belt-node ${attendedCount >= 10 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal" style="color: #FFD700;"></i></div>
-                    <span class="small fw-bold d-block">Yellow</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 10 ? 'Achieved' : '10 Classes'}</span>
-                </div>
-                <i class="bi bi-arrow-right text-muted"></i>
-                <div class="belt-node ${attendedCount >= 25 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal" style="color: #FF8C00;"></i></div>
-                    <span class="small fw-bold d-block">Orange</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 25 ? 'Achieved' : '25 Classes'}</span>
-                </div>
-                <i class="bi bi-arrow-right text-muted"></i>
-                <div class="belt-node ${attendedCount >= 50 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal" style="color: #2E8B57;"></i></div>
-                    <span class="small fw-bold d-block">Green</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 50 ? 'Achieved' : '50 Classes'}</span>
-                </div>
-                <i class="bi bi-arrow-right text-muted"></i>
-                <div class="belt-node ${attendedCount >= 100 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal" style="color: #0000FF;"></i></div>
-                    <span class="small fw-bold d-block">Blue</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 100 ? 'Achieved' : '100 Classes'}</span>
-                </div>
-                <i class="bi bi-arrow-right text-muted"></i>
-                <div class="belt-node ${attendedCount >= 200 ? 'active' : ''}">
-                    <div class="belt-icon"><i class="fas fa-medal" style="color: #000000;"></i></div>
-                    <span class="small fw-bold d-block">Black</span>
-                    <span class="text-muted" style="font-size: 0.65rem;">${attendedCount >= 200 ? 'Achieved' : '200 Classes'}</span>
-                </div>
+                        <div class="journey-card mt-3">
+                            <h5 class="fw-bold mb-2">Achievements</h5>
+                            <p class="text-muted small mb-0">No achievements unlocked yet.</p>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </div>
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Attendance Donut Chart
-        const ctx = document.getElementById('attendanceMain').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Present', 'Absent', 'Late'],
-                datasets: [{
-                    data: [${presentCount}, ${absentCount}, ${lateCount}],
-                    backgroundColor: ['#198754', '#dc3545', '#ffc107'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                cutout: '80%',
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: { enabled: true }
-                }
-            }
-        });
-
-        // Mini Attendance Donut
-        const ctxMini = document.getElementById('attendanceMini').getContext('2d');
-        new Chart(ctxMini, {
-            type: 'doughnut',
-            data: {
-                datasets: [{
-                    data: [${attendancePercentage}, ${100 - attendancePercentage}],
-                    backgroundColor: ['#E11D48', '#F1F5F9'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                cutout: '85%',
-                plugins: { legend: { display: false }, tooltip: { enabled: false } }
-            }
-        });
-    </script>
 </body>
 </html>
-

@@ -1796,6 +1796,7 @@
                     login ▾
                 </span>
                 <div class="dropdown-menu" style="right: 0; left: auto; top: 100%; margin-top: 15px; width: 230px;">
+<<<<<<< HEAD
                     <a href="${pageContext.request.contextPath}/login" class="dropdown-item">Join as Member</a>
                     <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
@@ -1806,8 +1807,20 @@
                     <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
                     <a href="${pageContext.request.contextPath}/host/login" class="dropdown-item">Event Host</a>
+=======
+                    <a href="/login" class="dropdown-item">Join as Member</a>
+                    <a href="/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="/centres/login" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="/salons/login" class="dropdown-item">Beauty & Wellness</a>
+                    <a href="/seller/login" class="dropdown-item">Service Partner</a>
+                    <a href="/provider/login" class="dropdown-item">Marketplace Seller</a>
+                    <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
+                    <a href="/investor/login" class="dropdown-item">Investor</a>
+                    <a href="/host/login" class="dropdown-item">Event Host</a>
+>>>>>>> f6c6e495f5e8fc1465fc91e5a7b51de3128507a1
                     <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
+
             </div>
             <a href="/users/register" class="btn-sos-nav">🆘 Emergency SOS</a>
             <button class="mobile-menu-btn">☰</button>
