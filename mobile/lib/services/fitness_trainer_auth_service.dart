@@ -151,6 +151,28 @@ class FitnessTrainerAuthService {
         if (workoutNotes != null) 'workoutNotes': workoutNotes,
       });
 
+  Future<Map<String, dynamic>> createQrSession({
+    int duration = 15,
+    int? classId,
+    double? latitude,
+    double? longitude,
+  }) =>
+      _api.post('/api/fitness/trainer/qr-session', body: {
+        'duration': duration,
+        if (classId != null) 'classId': classId,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      });
+
+  Future<Map<String, dynamic>> closeQrSession(int sessionId) =>
+      _api.post('/api/fitness/trainer/qr-session/$sessionId/close');
+
+  Future<Map<String, dynamic>> getQrAttendees(int sessionId) =>
+      _api.get('/api/fitness/trainer/qr-session/$sessionId/attendees');
+
+  Future<Map<String, dynamic>> getActiveQrSession() =>
+      _api.get('/api/fitness/trainer/qr-session/active');
+
   Future<void> logout() => _api.clearToken();
 }
 

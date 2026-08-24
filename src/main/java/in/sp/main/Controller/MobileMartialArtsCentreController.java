@@ -656,6 +656,17 @@ public class MobileMartialArtsCentreController {
         if (body != null && body.get("coachNotes") != null) {
             enrollment.setCoachNotes(body.get("coachNotes"));
         }
+        if (status == TrainingStatus.APPROVED) {
+            MartialArtsBatch batch = enrollment.getBatch();
+            boolean isFree = batch == null || batch.getFee() == null || batch.getFee() <= 0;
+            if (isFree) {
+                enrollment.setPaymentStatus("PAID");
+                enrollment.setAmountPaid(0.0);
+                enrollment.setStatus(TrainingStatus.IN_PROGRESS);
+            } else if (!"PAID".equalsIgnoreCase(enrollment.getPaymentStatus())) {
+                enrollment.setPaymentStatus("PENDING");
+            }
+        }
         if (status == TrainingStatus.COMPLETED) {
             String artName = enrollment.getMartialArtsType() != null
                     ? enrollment.getMartialArtsType().getName()
@@ -670,7 +681,8 @@ public class MobileMartialArtsCentreController {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("message", "Status updated");
-        res.put("status", status.name());
+        res.put("status", enrollment.getStatus().name());
+        res.put("paymentStatus", enrollment.getPaymentStatus());
         return ResponseEntity.ok(res);
     }
 

@@ -282,12 +282,16 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-        title: const Text('Enrollment Successful!'),
+        icon: Icon(
+          paid ? Icons.check_circle : Icons.hourglass_top,
+          color: paid ? Colors.green : MartialArtsEnrollScreen.primary,
+          size: 48,
+        ),
+        title: Text(paid ? 'Enrollment Confirmed' : 'Application Submitted'),
         content: Text(
           paid
-              ? 'Your enrollment request has been received. Payment has been completed successfully, and your training will begin on ${_startDateCtrl.text.trim()}. You will receive batch details via email and SMS.'
-              : 'Your enrollment request has been received. Your training will begin on ${_startDateCtrl.text.trim()}. You will receive batch details via email and SMS.',
+              ? 'Payment verified. Your Martial Arts enrollment is active.'
+              : 'Your application was sent to the centre for review. After approval, complete payment from Enrollments if a fee applies.',
         ),
         actions: [
           FilledButton(
@@ -332,53 +336,10 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
         return;
       }
 
-      final free = res['free'] == true || _isFree;
-      if (free) {
-        setState(() => _busy = false);
-        await _showSuccessAndPop(paid: false);
-        return;
-      }
-
-      final amount = (res['amount'] is num) ? (res['amount'] as num).toDouble() : _totalPayable;
-      final enrollmentId = res['enrollmentId'] is int
-          ? res['enrollmentId'] as int
-          : int.tryParse('${res['enrollmentId']}');
-      if (enrollmentId == null || amount <= 0) {
-        setState(() {
-          _busy = false;
-          _error = 'Could not start payment';
-        });
-        return;
-      }
-
-      _pendingEnrollmentId = enrollmentId;
-      _pendingCentreId = centreId;
-      _pendingBatchId = batchId;
-
-      final orderRes = await _api.createPaymentOrder(amount);
-      if (!mounted) return;
-      if (orderRes['orderId'] == null) {
-        setState(() {
-          _busy = false;
-          _error = orderRes['error']?.toString() ?? 'Payment gateway unavailable';
-        });
-        return;
-      }
-
-      final options = {
-        'key': orderRes['key'],
-        'amount': orderRes['amount'],
-        'order_id': orderRes['orderId'],
-        'name': 'Fight D Fear',
-        'description': 'Martial Arts Enrollment',
-        'prefill': {
-          'email': _emailCtrl.text.trim(),
-          'contact': _phoneCtrl.text.trim(),
-          'name': _nameCtrl.text.trim(),
-        },
-      };
-      _razorpay.open(options);
       setState(() => _busy = false);
+      // Centre must review before payment — do not open Razorpay here.
+      await _showSuccessAndPop(paid: false);
+      return;
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -411,12 +372,11 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
       setState(() => _busy = false);
       await _showSuccessAndPop(paid: true);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _error = 'Verification failed: $e';
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = '$e';
+      });
     }
   }
 

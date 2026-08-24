@@ -44,44 +44,58 @@
             color: var(--text-dark);
         }
 
-        /* Clean Top Hero */
+        /* Clean Top Hero — Phase 1 light surface */
         .hub-hero {
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
-            color: #FFFFFF;
-            padding: 44px 0 36px;
-            border-radius: 0 0 28px 28px;
-            margin-bottom: 32px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+            background: #FFFFFF;
+            color: #0F172A;
+            padding: 28px 0 20px;
+            border-radius: 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #E2E8F0;
+            box-shadow: none;
         }
 
         .hub-hero h1 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
-            font-size: 2.2rem;
+            font-size: 1.85rem;
             letter-spacing: -0.5px;
             margin-bottom: 8px;
+            color: #0F172A;
         }
 
         .hub-hero p {
-            color: #94A3B8;
+            color: #64748B;
             font-size: 0.95rem;
             max-width: 620px;
             line-height: 1.5;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .hero-belt-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: #FFF1F2;
+            border: 1px solid #FECDD3;
+            color: #9F1239;
             padding: 6px 16px;
             border-radius: var(--radius-pill);
             font-size: 0.85rem;
             font-weight: 700;
         }
+
+        .status-banner {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-left: 4px solid #F43F5E;
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+        }
+        .status-banner.pending { border-left-color: #F59E0B; background: #FFFBEB; }
+        .status-banner.approved { border-left-color: #F43F5E; background: #FFF1F2; }
+        .status-banner.rejected { border-left-color: #DC2626; background: #FEF2F2; }
 
         /* Quick Metric Cards */
         .metric-card {
@@ -264,9 +278,10 @@
         }
 
         .hub-tabs .nav-link.active {
-            background: var(--navy);
-            color: #FFFFFF;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+            background: #FFF1F2;
+            color: #F43F5E;
+            box-shadow: none;
+            border: 1px solid #FECDD3;
         }
     </style>
 </head>
@@ -286,25 +301,25 @@
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="badge bg-danger rounded-pill px-3 py-1 text-uppercase" style="font-size:0.75rem; letter-spacing:0.5px;">
-                                    <i class="fas fa-shield-halved me-1"></i> Martial Arts Hub
+                                <span class="badge rounded-pill px-3 py-1 text-uppercase" style="font-size:0.75rem; letter-spacing:0.5px; background:#FFF1F2; color:#F43F5E;">
+                                    <i class="fas fa-shield-halved me-1"></i> Martial Arts
                                 </span>
-                                <c:if test="${not empty currentBelt and currentBelt != 'Guest'}">
+                                <c:if test="${not empty currentBelt and currentBelt != 'Guest' and currentBelt != 'Not assessed'}">
                                     <div class="hero-belt-badge">
-                                        <i class="fas fa-medal text-warning"></i> ${currentBelt} Belt (${beltProgress}%)
+                                        <i class="fas fa-medal"></i> Current Belt: ${currentBelt}
                                     </div>
                                 </c:if>
                             </div>
-                            <h1>Welcome back, <c:out value="${not empty user.fullName ? user.fullName : 'Martial Artist'}"/>! 🥋</h1>
-                            <p>Discover verified dojos, master self-defense disciplines, explore scheduled batches, and track your belt journey.</p>
+                            <h1>Welcome back, <c:out value="${not empty user.fullName ? user.fullName : 'Martial Artist'}"/> </h1>
+                            <p>Discover verified martial arts centres and training batches near you. Continue your journey with real attendance, streaks, and belt progress.</p>
                         </div>
                         <div class="d-flex flex-wrap gap-2">
-                            <a href="#explorePane" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="tab">
+                            <a href="#explorePane" class="btn rounded-pill px-4 fw-bold text-white" style="background:#F43F5E;" data-bs-toggle="tab">
                                 <i class="fas fa-compass me-2"></i> Explore Dojos
                             </a>
                             <c:if test="${not empty user}">
-                                <a href="${pageContext.request.contextPath}/users/training-journey" class="btn btn-outline-light rounded-pill px-4 fw-bold">
-                                    <i class="fas fa-chart-line me-2"></i> My Journey
+                                <a href="${pageContext.request.contextPath}/attendance/my-attendance" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                                    <i class="fas fa-qrcode me-2"></i> Check In
                                 </a>
                             </c:if>
                         </div>
@@ -313,6 +328,31 @@
             </div>
 
             <div class="container pb-5">
+
+                <c:if test="${not empty userEnrollments}">
+                    <c:forEach var="en" items="${userEnrollments}">
+                        <c:if test="${en.status == 'PENDING'}">
+                            <div class="status-banner pending">
+                                <strong>Application Status</strong>
+                                <div class="mt-1">Waiting for centre review — <c:out value="${en.batch != null ? en.batch.name : 'Batch'}"/> at <c:out value="${en.center != null ? en.center.name : 'Centre'}"/>.</div>
+                            </div>
+                        </c:if>
+                        <c:if test="${en.status == 'APPROVED' && (empty en.paymentStatus || en.paymentStatus == 'PENDING')}">
+                            <div class="status-banner approved">
+                                <strong>Approved</strong>
+                                <div class="mt-1">Payment required to activate enrollment for <c:out value="${en.batch != null ? en.batch.name : 'your batch'}"/>.</div>
+                                <a class="btn btn-sm rounded-pill text-white mt-2 fw-bold" style="background:#F43F5E;"
+                                   href="${pageContext.request.contextPath}/enrollment/payment/${en.id}">Complete Payment →</a>
+                            </div>
+                        </c:if>
+                        <c:if test="${en.status == 'REJECTED'}">
+                            <div class="status-banner rejected">
+                                <strong>Application rejected</strong>
+                                <div class="mt-1"><c:out value="${en.batch != null ? en.batch.name : 'Batch'}"/> was not approved by the centre.</div>
+                            </div>
+                        </c:if>
+                    </c:forEach>
+                </c:if>
 
                 <!-- 1. Stats Overview Grid -->
                 <div class="row g-3 mb-4">
@@ -753,8 +793,6 @@
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="${pageContext.request.contextPath}/assets/vendor/aos/aos.js"></script>
 
-    <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-
     <script>
         AOS.init({ duration: 800, once: true });
 
@@ -786,28 +824,34 @@
         document.getElementById('dojoSearch').addEventListener('input', applyFilters);
         document.getElementById('feeFilter').addEventListener('change', applyFilters);
 
+        function normalizeStyle(value) {
+            return (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
         function applyFilters() {
             const query = (document.getElementById('dojoSearch').value || '').toLowerCase().trim();
             const maxFee = parseFloat(document.getElementById('feeFilter').value) || 0;
             const items = document.querySelectorAll('.center-card-item');
             let visibleCount = 0;
+            const selectedNorm = normalizeStyle(selectedStyle);
 
             items.forEach(item => {
                 const name = (item.getAttribute('data-name') || '').toLowerCase();
                 const loc = (item.getAttribute('data-location') || '').toLowerCase();
                 const style = (item.getAttribute('data-style') || '').toLowerCase();
+                const styleNorm = normalizeStyle(style);
                 const fee = parseFloat(item.getAttribute('data-fee')) || 0;
                 const mode = (item.getAttribute('data-mode') || '').toLowerCase();
                 const trial = (item.getAttribute('data-trial') || '').toLowerCase();
                 const age = (item.getAttribute('data-age') || '').toLowerCase();
 
-                let matchQuery = !query || name.includes(query) || loc.includes(query);
-                let matchStyle = !selectedStyle || style.includes(selectedStyle);
+                let matchQuery = !query || name.includes(query) || loc.includes(query) || style.includes(query);
+                let matchStyle = !selectedNorm || styleNorm.includes(selectedNorm) || selectedNorm.includes(styleNorm);
                 let matchFee = maxFee <= 0 || (fee > 0 && fee <= maxFee);
 
                 let matchQuick = true;
                 if (quickFilter === 'women') {
-                    matchQuick = name.includes('women') || style.includes('self-defence') || style.includes('self-defense');
+                    matchQuick = name.includes('women') || style.includes('self-defence') || style.includes('self-defense') || styleNorm.includes('selfdefence');
                 } else if (quickFilter === 'kids') {
                     matchQuick = age.includes('kid') || age.includes('teen') || name.includes('kid') || name.includes('teen');
                 } else if (quickFilter === 'online') {

@@ -448,6 +448,11 @@ class FitnessService {
 
   Future<Map<String, dynamic>> trainerDetail(int id) => _api.get('/api/fitness/trainers/$id');
 
+  Future<Map<String, dynamic>> availableSlots(int id, {String? date}) {
+    final qs = date != null && date.isNotEmpty ? '?date=${Uri.encodeQueryComponent(date)}' : '';
+    return _api.get('/api/fitness/trainers/$id/available-slots$qs');
+  }
+
   Future<Map<String, dynamic>> book(
     int id, {
     required String category,
@@ -485,6 +490,17 @@ class FitnessService {
 
   Future<Map<String, dynamic>> myProgress() =>
       _api.get('/api/fitness/my-progress');
+
+  Future<Map<String, dynamic>> checkInWithQr({
+    required String token,
+    double? latitude,
+    double? longitude,
+  }) =>
+      _api.post('/api/fitness/qr/check-in', body: {
+        'token': token,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      });
 }
 
 

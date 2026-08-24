@@ -7,6 +7,8 @@ import java.util.List;
 public interface FitnessBookingRepository extends JpaRepository<FitnessBooking, Long> {
     List<FitnessBooking> findByUser_Id(Long userId);
     List<FitnessBooking> findByTrainer_Id(Long trainerId);
+    List<FitnessBooking> findByTrainer_IdAndBookingDate(Long trainerId, java.time.LocalDate bookingDate);
+    List<FitnessBooking> findByUser_IdAndTrainer_Id(Long userId, Long trainerId);
     List<FitnessBooking> findByStatus(String status);
     List<FitnessBooking> findByFitnessClass_Id(Long classId);
 }
