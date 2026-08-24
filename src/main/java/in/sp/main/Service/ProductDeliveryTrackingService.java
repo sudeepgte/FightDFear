@@ -112,7 +112,7 @@ public class ProductDeliveryTrackingService {
     @Transactional
     public Map<String, Object> trackPayload(WomenProductOrder order) {
         ensureGeocoded(order);
-        String status = normStatus(order.getStatus());
+        String status = WomenProductOrderLifecycleService.canonical(order.getStatus());
         boolean live = isLive(status) && order.getCourierLat() != null && order.getCourierLng() != null;
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("orderId", order.getId());
@@ -153,13 +153,13 @@ public class ProductDeliveryTrackingService {
     }
 
     public static boolean isLive(String status) {
-        String s = normStatus(status);
-        return "ASSIGNED".equals(s) || "OUT_FOR_DELIVERY".equals(s);
+        return WomenProductOrderLifecycleService.isLiveDelivery(status);
     }
 
     private GoogleMapsService.LatLng destinationFor(WomenProductOrder order) {
-        String status = normStatus(order.getStatus());
-        if ("ASSIGNED".equals(status) && order.getPickupLat() != null && order.getPickupLng() != null) {
+        String status = WomenProductOrderLifecycleService.canonical(order.getStatus());
+        if (("ASSIGNED".equals(status) || "PICKED_UP".equals(status))
+                && order.getPickupLat() != null && order.getPickupLng() != null) {
             return new GoogleMapsService.LatLng(order.getPickupLat(), order.getPickupLng());
         }
         if (order.getDropLat() != null && order.getDropLng() != null) {
@@ -180,10 +180,4 @@ public class ProductDeliveryTrackingService {
         return m;
     }
 
-    private static String normStatus(String status) {
-        if (status == null) return "PLACED";
-        String s = status.trim().toUpperCase();
-        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
-        return s;
-    }
 }

@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
-    <!-- Theme CSS -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
-
     <style>
         :root {
             --brand-purple: #1e1b4b;
@@ -116,49 +113,29 @@
         }
 
         .form-panel { flex: 1.2; display: flex; justify-content: center; align-items: center; padding: 40px; background: #fff; overflow-y: auto; }
-        .reg-card { width: 100%; max-width: 650px; }
+        .reg-card { width: 100%; max-width: 500px; }
         
-        .dr-progress { display:flex; justify-content:space-between; margin-bottom:40px; position: relative; }
-        .dr-progress::after {
-            content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 2px; 
-            background: #f1f5f9; z-index: 1;
-        }
-        
-        .dr-step-item { z-index: 2; text-align: center; width: 40px; cursor: pointer; }
-        .dr-step-dot { 
-            width:40px; height:40px; border-radius:50%; background:#f1f5f9; 
-            display:flex; align-items:center; justify-content:center; 
-            font-weight:800; font-size:0.9rem; border:2px solid #fff; 
-            transition:0.3s; color:#94a3b8; box-shadow: 0 0 0 2px #f1f5f9;
-        }
-        .dr-step-item.active .dr-step-dot { background:var(--brand-pink); color:#fff; box-shadow: 0 0 0 2px var(--brand-pink); }
-        .dr-step-item.completed .dr-step-dot { background:var(--brand-purple); color:#fff; box-shadow: 0 0 0 2px var(--brand-purple); }
-        
-        .dr-step-label { font-size: 0.65rem; font-weight: 800; margin-top: 8px; text-transform: uppercase; color: #94a3b8; }
-        .dr-step-item.active .dr-step-label { color: var(--brand-pink); }
-
-        .dr-step-panel { display:none; animation:fadeIn 0.4s ease; }
-        .dr-step-panel.active { display:block; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-
-        .fdf-row { display:grid; grid-template-columns: 1fr 1fr; gap:25px; margin-bottom:20px; }
-        .fdf-group { margin-bottom:20px; position: relative; }
-        .fdf-group label { display:block; font-size:0.75rem; font-weight:800; color:var(--brand-purple-dark); margin-bottom:8px; text-transform:uppercase; }
+        .fdf-group { margin-bottom: 20px; position: relative; }
+        .fdf-group label { display:block; font-size:0.75rem; font-weight:800; color:var(--brand-purple); margin-bottom:8px; text-transform:uppercase; }
         .fdf-input { 
             width:100%; padding:14px 18px; border:2px solid var(--fdf-border); 
             border-radius:16px; background:#f8fafc; outline:none; 
             transition:0.3s; font-family:inherit; font-weight: 500;
         }
         .fdf-input:focus { border-color:var(--brand-pink); background:#fff; box-shadow:0 0 0 4px rgba(219,39,119,0.05); }
+        .fdf-input.is-invalid { border-color: var(--error-red); background: #fef2f2; }
 
         .btn-dr { 
             padding:16px 32px; border-radius:14px; font-weight:800; cursor:pointer; 
             transition:0.3s; border:none; font-size: 1rem; width: 100%;
+            background: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%); color:#fff;
+            box-shadow: 0 8px 20px rgba(219,39,119,0.2);
         }
-        .btn-dr-next { background:var(--gradient-primary); color:#fff; box-shadow: 0 8px 20px rgba(219,39,119,0.2); }
-        .btn-dr-next.is-disabled { opacity: 0.65; cursor: pointer; transform: none !important; pointer-events: auto; }
-        .btn-dr-prev { background:#f1f5f9; color:#64748b; }
+        .btn-dr:disabled { opacity: 0.65; cursor: not-allowed; transform: none !important; }
+        .btn-dr:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        
         .error-msg { display: none; color: var(--error-red); font-size: 0.75rem; margin-top: 6px; font-weight: 600; }
+        
         .password-input-wrap { position: relative; }
         .password-input-wrap .fdf-input { padding-right: 48px; }
         .password-toggle-btn {
@@ -166,11 +143,22 @@
             border: none; background: transparent; color: #64748b; cursor: pointer; padding: 4px; font-size: 1.1rem;
         }
         .password-toggle-btn:hover { color: var(--brand-pink); }
-        .back-home { display: inline-flex; align-items: center; gap: 6px; color: #64748b; text-decoration: none; font-size: 0.85rem; font-weight: 600; margin-bottom: 20px; }
-        .step-hint { display: none; color: var(--error-red); font-size: 0.85rem; margin-bottom: 12px; font-weight: 600; }
-        .step-hint.visible { display: block; }
         
-        .btn-dr:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .back-home { display: inline-flex; align-items: center; gap: 6px; color: #64748b; text-decoration: none; font-size: 0.85rem; font-weight: 600; margin-bottom: 30px; }
+        .back-home:hover { color: var(--brand-purple); }
+
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 25px; margin-top: 10px; }
+        .checkbox-group input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--brand-pink); cursor: pointer; }
+        .checkbox-group label { font-size: 0.85rem; color: #64748b; font-weight: 500; cursor: pointer; line-height: 1.5; text-transform: none; }
+        .checkbox-group a { color: var(--brand-pink); text-decoration: none; font-weight: 600; }
+        .checkbox-group a:hover { text-decoration: underline; }
+
+        .login-link { text-align: center; margin-top: 25px; font-size: 0.9rem; color: #64748b; font-weight: 500; }
+        .login-link a { color: var(--brand-purple); text-decoration: none; font-weight: 700; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .alert { padding: 14px 20px; border-radius: 12px; font-size: 0.9rem; font-weight: 600; margin-bottom: 20px; }
+        .alert-danger { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
 
         @media (max-width: 992px) {
             body, .auth-container { flex-direction: column; }
@@ -189,38 +177,25 @@
                 position: relative;
                 z-index: 5;
             }
-            .dr-progress { margin-bottom: 30px; overflow-x: auto; padding-bottom: 10px; justify-content: flex-start; gap: 10px; }
-            .dr-step-item { flex-shrink: 0; }
-        }
-
-        @media (max-width: 600px) {
-            .fdf-row { grid-template-columns: 1fr; gap: 0; }
-            .dr-progress::-webkit-scrollbar { display: none; }
-            .dr-progress { -ms-overflow-style: none; scrollbar-width: none; }
         }
 
         @media (max-width: 480px) {
             .brand-logo { font-size: 2rem; }
-            .fw-900 { font-size: 1.5rem !important; }
             .fdf-input { padding: 12px 15px; border-radius: 12px; }
             .btn-dr { padding: 14px 20px; }
-            .dr-step-dot { width: 35px; height: 35px; font-size: 0.8rem; }
         }
-
     </style>
 </head>
 <body>
     <div class="auth-container">
-
         <div class="left-panel">
             <div class="brand">
                 <div class="brand-logo"><i class="bi bi-heart-pulse"></i> Fight D Fear</div>
-                <p class="brand-tagline">Providing quality healthcare and support to the community. Dedicated to safety and wellness.</p>
+                <p class="brand-tagline">Join our network of trusted women doctors. Provide quality healthcare and support to the community.</p>
                 <ul class="feature-list">
                     <li><span class="feat-icon"><i class="bi bi-person-heart"></i></span> Consult Trusted Women Doctors</li>
                     <li><span class="feat-icon"><i class="bi bi-hospital-fill"></i></span> 24/7 Health & Emergency Support</li>
                     <li><span class="feat-icon"><i class="bi bi-clipboard-check-fill"></i></span> Safe & Confidential Guidance</li>
-                    <li><span class="feat-icon"><i class="bi bi-calendar-event-fill"></i></span> Book Appointments Easily</li>
                 </ul>
             </div>
         </div>
@@ -228,282 +203,79 @@
         <div class="form-panel">
             <div class="reg-card">
                 <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Back to Home</a>
-                <div class="dr-progress">
-                    <div class="dr-step-item active" data-step="1">
-                        <div class="dr-step-dot">1</div>
-                        <div class="dr-step-label">Basic</div>
-                    </div>
-                    <div class="dr-step-item" data-step="2">
-                        <div class="dr-step-dot">2</div>
-                        <div class="dr-step-label">Professional</div>
-                    </div>
-                    <div class="dr-step-item" data-step="3">
-                        <div class="dr-step-dot">3</div>
-                        <div class="dr-step-label">Location</div>
-                    </div>
-                    <div class="dr-step-item" data-step="4">
-                        <div class="dr-step-dot">4</div>
-                        <div class="dr-step-label">Availability</div>
-                    </div>
-                    <div class="dr-step-item" data-step="5">
-                        <div class="dr-step-dot">5</div>
-                        <div class="dr-step-label">Verification</div>
-                    </div>
-                    <div class="dr-step-item" data-step="6">
-                        <div class="dr-step-dot">6</div>
-                        <div class="dr-step-label">Payment</div>
-                    </div>
-                </div>
+                
+                <h2 style="font-family:'Montserrat'; font-weight:800; color:var(--brand-purple); font-size:1.8rem; margin-bottom:8px;">Doctor Registration</h2>
+                <p style="color:#64748b; font-size:0.95rem; margin-bottom:30px; font-weight:500;">Create your account to start offering consultations.</p>
 
-                <form action="${pageContext.request.contextPath}/doctors/register" method="post" enctype="multipart/form-data" id="doctorRegForm" novalidate>
-                    <c:if test="${not empty error}"><div class="alert alert-danger mb-4 rounded-4">${error}</div></c:if>
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger">${error}</div>
+                </c:if>
 
-                    <!-- STEP 1: BASIC DETAILS -->
-                    <div class="dr-step-panel active" id="step1">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Basic Credentials</h2>
-                        
-                        <div class="fdf-group">
-                            <label>Profile Photo</label>
-                            <input type="file" id="profilePhoto" name="profilePhoto" class="fdf-input" accept="image/png, image/jpeg">
-                            <div class="error-msg">JPG/PNG only, Max 2MB.</div>
-                        </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Full Name</label>
-                                <input type="text" id="fullName" name="fullName" class="fdf-input" placeholder="e.g. Dr. Priya Sharma" maxlength="50">
-                                <div class="error-msg">Minimum 3 characters (alphabets only).</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Email Address</label>
-                                <input type="email" id="email" name="email" class="fdf-input" placeholder="priya@doc.com">
-                                <div class="error-msg">Valid email required.</div>
-                            </div>
-                        </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Phone Number *</label>
-                                <input type="tel" id="phone" name="phone" class="fdf-input" placeholder="e.g. 9876543210" required>
-                                <div class="error-msg">Valid 10-digit Indian phone number is required.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Gender</label>
-                                <select id="gender" name="gender" class="fdf-input">
-                                    <option value="">Select Gender</option>
-                                    <option value="FEMALE">Female</option>
-                                    <option value="MALE">Male</option>
-                                    <option value="OTHER">Other</option>
-                                </select>
-                                <div class="error-msg">Please select gender.</div>
-                            </div>
-                        </div>
-
-                        <div class="fdf-group">
-                            <label>Account Password</label>
-                            <div class="password-input-wrap">
-                                <input type="password" id="password" name="password" class="fdf-input" placeholder="••••••••" autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="error-msg">Min 6 characters with 1 uppercase letter and 1 number.</div>
-                        </div>
-
-                        <p id="stepValidationHint" class="step-hint">Please complete all required fields above to continue.</p>
-                        <button type="button" class="btn-dr btn-dr-next w-100 mt-3 is-disabled" data-next="2">Professional Info <i class="bi bi-arrow-right ms-2"></i></button>
+                <form action="${pageContext.request.contextPath}/doctors/register" method="post" id="registerForm">
+                    
+                    <div class="fdf-group">
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" name="fullName" class="fdf-input" placeholder="e.g. Dr. Priya Sharma" required minlength="3">
+                        <div class="error-msg" id="nameError">Name must be at least 3 characters and contain valid letters.</div>
                     </div>
 
-                    <!-- STEP 2: PROFESSIONAL INFO -->
-                    <div class="dr-step-panel" id="step2">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Professional Expertise</h2>
-                        
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Medical Registration Number</label>
-                                <input type="text" id="medicalRegNumber" name="medicalRegNumber" class="fdf-input" placeholder="ABC-12345">
-                                <div class="error-msg">Registration number is required.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Years of Experience</label>
-                                <input type="number" id="experienceYears" name="experienceYears" class="fdf-input" placeholder="0 - 50">
-                                <div class="error-msg">Experience must be 0-50 years.</div>
-                            </div>
-                        </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Primary Specialization</label>
-                                <select id="specialization" name="specialization" class="fdf-input">
-                                    <option value="">Select Specialty</option>
-                                    <option value="Gynecologist">Gynecologist</option>
-                                    <option value="Psychologist">Psychologist</option>
-                                    <option value="General Physician">General Physician</option>
-                                    <option value="Pediatrician">Pediatrician</option>
-                                    <option value="Dermatologist">Dermatologist</option>
-                                </select>
-                                <div class="error-msg">Select your specialization.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Qualification</label>
-                                <select id="qualification" name="qualification" class="fdf-input">
-                                    <option value="">Select Degree</option>
-                                    <option value="MBBS">MBBS</option>
-                                    <option value="MD">MD</option>
-                                    <option value="MS">MS</option>
-                                    <option value="DNB">DNB</option>
-                                    <option value="PhD">PhD</option>
-                                </select>
-                                <div class="error-msg">Select your highest qualification.</div>
-                            </div>
-                        </div>
-
-                        <div class="fdf-group">
-                            <label>Hospital / Clinic Name</label>
-                            <input type="text" id="hospitalName" name="hospitalName" class="fdf-input" placeholder="Full name of practice">
-                            <div class="error-msg">Minimum 3 characters required.</div>
-                        </div>
-
-                        <!-- Consultation Type Hidden/Default -->
-                        <input type="hidden" name="consultationType" value="CLINIC">
-
-                        <div class="d-flex gap-3 mt-4">
-                            <button type="button" class="btn-dr btn-dr-prev flex-fill" data-prev="1">Back</button>
-                            <button type="button" class="btn-dr btn-dr-next flex-fill is-disabled" data-next="3">Clinic Location</button>
-                        </div>
+                    <div class="fdf-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="fdf-input" placeholder="e.g. 9876543210" required pattern="[0-9]{10}">
+                        <div class="error-msg" id="phoneError">Please enter a valid 10-digit phone number.</div>
                     </div>
 
-                    <!-- STEP 3: CLINIC LOCATION -->
-                    <div class="dr-step-panel" id="step3">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Clinic Location</h2>
-                        
-                        <div class="fdf-group">
-                            <label>Detailed Practice Address</label>
-                            <textarea id="clinicAddress" name="clinicAddress" class="fdf-input" rows="3" placeholder="Street, landmark..."></textarea>
-                            <div class="error-msg">Detailed address is required.</div>
+                    <div class="fdf-group">
+                        <label>Email Address</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="email" id="email" name="email" class="fdf-input" placeholder="doctor@example.com" required>
+                            <button type="button" id="sendOtpBtn" class="btn-dr" style="padding: 14px 20px; width: auto; white-space: nowrap;">Send OTP</button>
                         </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>City</label>
-                                <input type="text" id="city" name="city" class="fdf-input" placeholder="City name">
-                                <div class="error-msg">City name (alphabets only).</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>State</label>
-                                <input type="text" id="state" name="state" class="fdf-input" placeholder="State name">
-                                <div class="error-msg">State name (alphabets only).</div>
-                            </div>
-                        </div>
-
-                        <div class="fdf-group">
-                            <label>Pincode</label>
-                            <input type="text" id="pincode" name="pincode" class="fdf-input" placeholder="6-digit PIN">
-                            <div class="error-msg">Valid 6-digit Indian pincode.</div>
-                        </div>
-
-                        <div class="d-flex gap-3 mt-4">
-                            <button type="button" class="btn-dr btn-dr-prev flex-fill" data-prev="2">Back</button>
-                            <button type="button" class="btn-dr btn-dr-next flex-fill is-disabled" data-next="4">Availability</button>
-                        </div>
+                        <div class="error-msg" id="emailError">Please enter a valid email address.</div>
                     </div>
 
-                    <!-- STEP 4: AVAILABILITY -->
-                    <div class="dr-step-panel" id="step4">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Practice Hours</h2>
-                        
-                        <div class="fdf-group">
-                            <label>Working Days</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-
-<c:set var="days"
-       value="MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY"/>
-
-<c:forTokens var="day" items="${days}" delims=",">
-    <label class="btn btn-outline-purple flex-fill py-2 px-1"
-           style="font-size:0.7rem; font-weight:700;">
-
-        <input type="checkbox"
-               name="availableDays"
-               value="${day}"
-               class="d-none">
-
-        ${fn:substring(day,0,3)}
-    </label>
-</c:forTokens>
-                            </div>
-                            <div class="error-msg">Select at least one day.</div>
+                    <!-- OTP Section (Hidden initially) -->
+                    <div class="fdf-group" id="otpGroup" style="display: none;">
+                        <label>Email OTP Verification</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="otpInput" class="fdf-input" placeholder="Enter OTP" maxlength="6">
+                            <button type="button" id="verifyOtpBtn" class="btn-dr" style="padding: 14px 20px; width: auto; white-space: nowrap; background: #22c55e;">Verify</button>
                         </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Shift Start Time</label>
-                                <input type="time" id="startTime" name="startTime" class="fdf-input">
-                                <div class="error-msg">Start time required.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Shift End Time</label>
-                                <input type="time" id="endTime" name="endTime" class="fdf-input">
-                                <div class="error-msg">End time must be after start time.</div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-3 mt-4">
-                            <button type="button" class="btn-dr btn-dr-prev flex-fill" data-prev="3">Back</button>
-                            <button type="button" class="btn-dr btn-dr-next flex-fill is-disabled" data-next="5">Documentation</button>
-                        </div>
+                        <div class="error-msg" id="otpError" style="color: var(--error-red);">Invalid OTP. Please try again.</div>
+                        <div id="otpSuccess" style="display: none; color: var(--success-green); font-size: 0.8rem; font-weight: 600; margin-top: 6px;">Email Verified Successfully! <i class="bi bi-check-circle-fill"></i></div>
                     </div>
 
-                    <!-- STEP 5: VERIFICATION -->
-                    <div class="dr-step-panel" id="step5">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Identity Verification</h2>
-                        
-                        <div class="fdf-group">
-                            <label>Medical License / Registration Proof (PDF/IMG)</label>
-                            <input type="file" id="medicalLicense" name="medicalLicense" class="fdf-input" style="padding:10px;" accept="image/*,.pdf">
-                            <div class="error-msg">Required: JPG, PNG or PDF (Max 2MB).</div>
+                    <div class="fdf-group">
+                        <label>Password</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="password" name="password" class="fdf-input" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
-
-                        <div class="fdf-group">
-                            <label>Government ID Proof (PDF/IMG)</label>
-                            <input type="file" id="idProof" name="idProof" class="fdf-input" style="padding:10px;" accept="image/*,.pdf">
-                            <div class="error-msg">Required: JPG, PNG or PDF (Max 2MB).</div>
-                        </div>
-
-                        <div class="fdf-group">
-                            <label>Highest Degree Certificate (PDF/IMG)</label>
-                            <input type="file" id="degreeCertificate" name="degreeCertificate" class="fdf-input" style="padding:10px;" accept="image/*,.pdf">
-                            <div class="error-msg">Required: JPG, PNG or PDF (Max 2MB).</div>
-                        </div>
-
-                        <div class="d-flex gap-3 mt-4">
-                            <button type="button" class="btn-dr btn-dr-prev flex-fill" data-prev="4">Back</button>
-                            <button type="button" class="btn-dr btn-dr-next flex-fill is-disabled" data-next="6">Payment Setup</button>
-                        </div>
+                        <div class="error-msg" id="pwdError">Password must be at least 8 characters, include 1 capital letter, 1 number, and 1 special character.</div>
                     </div>
 
-                    <!-- STEP 6: PAYMENT SETUP -->
-                    <div class="dr-step-panel" id="step6">
-                        <h2 class="fw-900 mb-4" style="color:var(--brand-purple-darker); font-family:'Montserrat';">Final Setup</h2>
-                        
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Consultation Fee (₹)</label>
-                                <input type="number" id="consultationFee" name="consultationFee" class="fdf-input" placeholder="e.g. 500">
-                                <div class="error-msg">Must be a positive amount.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>UPI ID for Payouts</label>
-                                <input type="text" id="upiId" name="upiId" class="fdf-input" placeholder="doctor@upi">
-                                <div class="error-msg">Invalid format (e.g., name@bank).</div>
-                            </div>
+                    <div class="fdf-group">
+                        <label>Confirm Password</label>
+                        <div class="password-input-wrap">
+                            <input type="password" id="confirmPassword" class="fdf-input" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle-btn" onclick="togglePassword('confirmPassword', this)" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye"></i>
+                            </button>
                         </div>
+                        <div class="error-msg" id="matchError">Passwords do not match.</div>
+                    </div>
 
-                        <div class="d-flex gap-3 mt-4">
-                            <button type="button" class="btn-dr btn-dr-prev flex-fill" data-prev="5">Back</button>
-                            <button type="submit" id="submitBtn" class="btn-dr btn-dr-next flex-fill is-disabled">Submit Registration</button>
-                        </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">I agree to the <a href="#">Terms & Conditions</a> and <a href="#">Privacy Policy</a> of Fight D Fear.</label>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-dr" disabled>Create Account</button>
+                    
+                    <div class="login-link">
+                        Already have an account? <a href="${pageContext.request.contextPath}/doctors/login">Login here</a>
                     </div>
                 </form>
             </div>
@@ -511,212 +283,198 @@
     </div>
 
     <script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
-            let currentStep = 1;
-            const form = document.getElementById('doctorRegForm');
-            const stepPanels = document.querySelectorAll('.dr-step-panel');
-            const stepDots = document.querySelectorAll('.dr-step-item');
+            const form = document.getElementById('registerForm');
+            const fullName = document.getElementById('fullName');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const email = document.getElementById('email');
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const sendOtpBtn = document.getElementById('sendOtpBtn');
+            const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+            const otpGroup = document.getElementById('otpGroup');
+            const otpInput = document.getElementById('otpInput');
+            const otpSuccess = document.getElementById('otpSuccess');
+            const otpError = document.getElementById('otpError');
 
-            const validateStep = (step) => {
-                const panel = document.getElementById('step' + step);
-                const nextBtn = panel.querySelector('.btn-dr-next');
-                let isValid = true;
+            let isEmailVerified = false;
 
-                if (step === 1) {
-                    isValid &= checkFile('profilePhoto', ['jpg','jpeg','png'], 2) &&
-                               checkText('fullName', 3, /^[a-zA-Z\s]+$/) &&
-                               checkEmail('email') &&
-                               checkRegex('phone', /^[6-9]\d{9}$/) &&
-                               checkNotEmpty('gender') &&
-                               checkPassword('password');
-                } else if (step === 2) {
-                    isValid &= checkNotEmpty('medicalRegNumber') &&
-                               checkRange('experienceYears', 0, 50) &&
-                               checkNotEmpty('specialization') &&
-                               checkNotEmpty('qualification') &&
-                               checkText('hospitalName', 3);
-                } else if (step === 3) {
-                    isValid &= checkNotEmpty('clinicAddress') &&
-                               checkText('city', 1, /^[a-zA-Z\s]+$/) &&
-                               checkText('state', 1, /^[a-zA-Z\s]+$/) &&
-                               checkRegex('pincode', /^\d{6}$/);
-                } else if (step === 4) {
-                    const daysSelected = panel.querySelectorAll('input[name="availableDays"]:checked').length > 0;
-                    toggleError('availableDays', daysSelected);
-                    
-                    const start = document.getElementById('startTime').value;
-                    const end = document.getElementById('endTime').value;
-                    const timeValid = start && end && (end > start);
-                    toggleError('endTime', timeValid);
-                    toggleError('startTime', start !== "");
-                    
-                    isValid &= daysSelected && timeValid;
-                } else if (step === 5) {
-                    isValid &= checkFile('medicalLicense', ['jpg','jpeg','png','pdf'], 2) &&
-                               checkFile('idProof', ['jpg','jpeg','png','pdf'], 2) &&
-                               checkFile('degreeCertificate', ['jpg','jpeg','png','pdf'], 2);
-                } else if (step === 6) {
-                    isValid &= checkRange('consultationFee', 1, 100000) &&
-                               checkRegex('upiId', /^[\w.-]+@[\w.-]+$/);
-                }
-
-                if (nextBtn) {
-                    nextBtn.classList.toggle("is-disabled", !isValid);
-                    nextBtn.setAttribute("aria-disabled", String(!isValid));
-                }
-                return isValid;
-            };
-
-            const toggleError = (id, valid) => {
-                const el = (id === 'availableDays') ? document.querySelector('input[name="availableDays"]').parentElement.parentElement : document.getElementById(id);
-                const err = el.parentElement.querySelector('.error-msg');
-                if (valid) {
-                    el.classList.remove('is-invalid');
-                    el.classList.add('is-valid');
-                    if(err) err.style.display = 'none';
+            // Real-time validation for Full Name
+            fullName.addEventListener('input', () => {
+                const isValid = /^[a-zA-Z\s\.\-]{3,}$/.test(fullName.value.trim());
+                if(!isValid && fullName.value.length > 0) {
+                    fullName.classList.add('is-invalid');
+                    document.getElementById('nameError').style.display = 'block';
                 } else {
-                    el.classList.remove('is-valid');
-                    el.classList.add('is-invalid');
-                    if(err) err.style.display = 'block';
+                    fullName.classList.remove('is-invalid');
+                    document.getElementById('nameError').style.display = 'none';
                 }
-            };
-
-            const checkNotEmpty = (id) => {
-                const val = document.getElementById(id).value.trim();
-                const valid = val.length > 0;
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const checkText = (id, min, regex) => {
-                const val = document.getElementById(id).value.trim();
-                let valid = val.length >= min;
-                if (regex) valid &= regex.test(val);
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const checkRegex = (id, regex) => {
-                const val = document.getElementById(id).value.trim();
-                const valid = regex.test(val);
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const checkRange = (id, min, max) => {
-                const val = parseFloat(document.getElementById(id).value);
-                const valid = !isNaN(val) && val >= min && val <= max;
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const checkEmail = (id) => {
-                const val = document.getElementById(id).value.trim();
-                const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const checkPassword = (id) => {
-                const val = document.getElementById(id).value;
-                const valid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
-                toggleError(id, valid);
-                return valid;
-            };
-
-            const stepHint = document.getElementById('stepValidationHint');
-
-            const focusFirstInvalid = (panel) => {
-                const invalid = panel.querySelector('.fdf-input.is-invalid, select.fdf-input.is-invalid');
-                if (invalid) {
-                    invalid.focus();
-                    invalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            };
-
-            const checkFile = (id, allowedExts, maxSizeMB) => {
-                const el = document.getElementById(id);
-                if (el.files.length === 0) {
-                    toggleError(id, false);
-                    return false;
-                }
-                const file = el.files[0];
-                const ext = file.name.split('.').pop().toLowerCase();
-                const valid = allowedExts.includes(ext) && (file.size <= maxSizeMB * 1024 * 1024);
-                toggleError(id, valid);
-                return valid;
-            };
-
-            // Attach listeners for live validation
-            form.addEventListener('input', (e) => {
-                if(e.target.id) validateStep(currentStep);
-            });
-            form.addEventListener('change', (e) => {
-                if (e.target.id || e.target.name === 'availableDays') {
-                    validateStep(currentStep);
-                    if (stepHint) stepHint.classList.remove('visible');
-                }
+                checkFormValidity();
             });
 
-            // Navigation
-            document.querySelectorAll('.btn-dr-next').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (btn.type === 'submit') return;
-                    const next = parseInt(btn.dataset.next, 10);
-                    if (!next) return;
-                    const panel = document.getElementById('step' + currentStep);
-                    if (!validateStep(currentStep)) {
-                        e.preventDefault();
-                        if (stepHint) stepHint.classList.add('visible');
-                        if (panel) focusFirstInvalid(panel);
-                        return;
-                    }
-                    if (stepHint) stepHint.classList.remove('visible');
-                    showStep(next);
-                });
+            // Real-time validation for Password
+            password.addEventListener('input', () => {
+                const pwdPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+                const isValid = pwdPattern.test(password.value);
+                if(!isValid && password.value.length > 0) {
+                    password.classList.add('is-invalid');
+                    document.getElementById('pwdError').style.display = 'block';
+                } else {
+                    password.classList.remove('is-invalid');
+                    document.getElementById('pwdError').style.display = 'none';
+                }
+                checkFormValidity();
             });
 
-            document.getElementById('doctorRegForm')?.addEventListener('submit', (e) => {
-                if (!validateStep(currentStep)) {
+            // Real-time validation for Confirm Password
+            confirmPassword.addEventListener('input', () => {
+                if(confirmPassword.value !== password.value && confirmPassword.value.length > 0) {
+                    confirmPassword.classList.add('is-invalid');
+                    document.getElementById('matchError').style.display = 'block';
+                } else {
+                    confirmPassword.classList.remove('is-invalid');
+                    document.getElementById('matchError').style.display = 'none';
+                }
+                checkFormValidity();
+            });
+
+            // Form Submit Intercept
+            form.addEventListener('submit', (e) => {
+                const pwdPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+                let hasError = false;
+
+                if (!/^[a-zA-Z\s\.\-]{3,}$/.test(fullName.value.trim())) {
+                    fullName.classList.add('is-invalid');
+                    document.getElementById('nameError').style.display = 'block';
+                    hasError = true;
+                }
+                
+                if (!pwdPattern.test(password.value)) {
+                    password.classList.add('is-invalid');
+                    document.getElementById('pwdError').style.display = 'block';
+                    hasError = true;
+                }
+
+                if (password.value !== confirmPassword.value) {
+                    confirmPassword.classList.add('is-invalid');
+                    document.getElementById('matchError').style.display = 'block';
+                    hasError = true;
+                }
+
+                if (!isEmailVerified) {
+                    document.getElementById('emailError').textContent = "Please verify your email via OTP first.";
+                    document.getElementById('emailError').style.display = 'block';
+                    hasError = true;
+                }
+
+                if (hasError) {
                     e.preventDefault();
                 }
             });
 
-            document.querySelectorAll('.btn-dr-prev').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showStep(parseInt(btn.dataset.prev));
-                });
+            // Check if we can enable submit btn
+            function checkFormValidity() {
+                if (isEmailVerified) {
+                    submitBtn.disabled = false;
+                } else {
+                    submitBtn.disabled = true;
+                }
+            }
+
+            // --- OTP Logic ---
+            sendOtpBtn.addEventListener('click', async () => {
+                const emailVal = email.value.trim();
+                if (!emailVal || !email.checkValidity()) {
+                    email.classList.add('is-invalid');
+                    document.getElementById('emailError').textContent = "Please enter a valid email address.";
+                    document.getElementById('emailError').style.display = 'block';
+                    return;
+                }
+                email.classList.remove('is-invalid');
+                document.getElementById('emailError').style.display = 'none';
+
+                sendOtpBtn.disabled = true;
+                sendOtpBtn.textContent = 'Sending...';
+
+                try {
+                    const res = await fetch('${pageContext.request.contextPath}/api/doctors/provider/otp/send-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailVal })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        otpGroup.style.display = 'block';
+                        sendOtpBtn.textContent = 'OTP Sent';
+                        email.readOnly = true; 
+                    } else {
+                        document.getElementById('emailError').textContent = data.error || data.message || "Failed to send OTP.";
+                        document.getElementById('emailError').style.display = 'block';
+                        sendOtpBtn.disabled = false;
+                        sendOtpBtn.textContent = 'Send OTP';
+                    }
+                } catch (err) {
+                    document.getElementById('emailError').textContent = "Network error. Try again.";
+                    document.getElementById('emailError').style.display = 'block';
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.textContent = 'Send OTP';
+                }
             });
 
-            const showStep = (s) => {
-                stepPanels.forEach(p => p.classList.remove('active'));
-                document.getElementById('step' + s).classList.add('active');
-                
-                stepDots.forEach(dot => {
-                    const step = parseInt(dot.dataset.step);
-                    dot.classList.remove('active', 'completed');
-                    if (step === s) dot.classList.add('active');
-                    else if (step < s) dot.classList.add('completed');
-                });
-                
-                currentStep = s;
-                validateStep(s);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
+            verifyOtpBtn.addEventListener('click', async () => {
+                const emailVal = email.value.trim();
+                const otpVal = otpInput.value.trim();
+                if (!otpVal) return;
 
-            // Custom Checkbox UI toggle
-            document.querySelectorAll('input[name="availableDays"]').forEach(cb => {
-                cb.addEventListener('change', function() {
-                    this.parentElement.classList.toggle('btn-purple', this.checked);
-                    this.parentElement.classList.toggle('btn-outline-purple', !this.checked);
-                });
+                verifyOtpBtn.disabled = true;
+                verifyOtpBtn.textContent = 'Verifying...';
+
+                try {
+                    const res = await fetch('${pageContext.request.contextPath}/api/doctors/provider/otp/verify-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailVal, otp: otpVal })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        isEmailVerified = true;
+                        otpInput.style.display = 'none';
+                        verifyOtpBtn.style.display = 'none';
+                        otpError.style.display = 'none';
+                        otpSuccess.style.display = 'block';
+                        checkFormValidity();
+                    } else {
+                        otpError.textContent = data.error || data.message || "Invalid OTP.";
+                        otpError.style.display = 'block';
+                        verifyOtpBtn.disabled = false;
+                        verifyOtpBtn.textContent = 'Verify';
+                    }
+                } catch (err) {
+                    otpError.textContent = "Network error. Try again.";
+                    otpError.style.display = 'block';
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.textContent = 'Verify';
+                }
             });
 
-            // Initial validation
-            validateStep(1);
         });
     </script>
-    <script src="${pageContext.request.contextPath}/assets/js/password-toggle.js"></script>
 </body>
 </html>
-

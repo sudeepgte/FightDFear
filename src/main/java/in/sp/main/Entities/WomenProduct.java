@@ -200,6 +200,22 @@ public class WomenProduct {
         return Boolean.TRUE.equals(active) && !getDeleted() && seller != null && seller.isApprovedForCatalog();
     }
 
+    public boolean isOutOfStock() {
+        return stock == null || stock <= 0;
+    }
+
+    public boolean isLowStock() {
+        if (isOutOfStock()) return false;
+        int alert = lowStockAlertLevel == null ? 5 : lowStockAlertLevel;
+        return stock <= alert;
+    }
+
+    public String getInventoryLabel() {
+        if (isOutOfStock()) return "Out of stock";
+        if (isLowStock()) return "Low stock";
+        return "In stock";
+    }
+
     public int getDiscountPercent() {
         if (originalPrice == null || price == null || originalPrice <= 0 || price >= originalPrice) return 0;
         return (int) Math.round(((originalPrice - price) / originalPrice) * 100);

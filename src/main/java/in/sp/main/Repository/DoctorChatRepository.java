@@ -15,4 +15,7 @@ public interface DoctorChatRepository extends JpaRepository<DoctorChatMessage, L
     List<DoctorChatMessage> findByDoctorAndSenderTypeAndReadByDoctorFalse(Doctor doctor, String senderType);
 
     List<DoctorChatMessage> findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(Doctor doctor, User user, String senderType);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT m.doctor FROM DoctorChatMessage m WHERE m.user.id = :userId")
+    List<Doctor> findChattedDoctorsByUser(@org.springframework.data.repository.query.Param("userId") Long userId);
 }
