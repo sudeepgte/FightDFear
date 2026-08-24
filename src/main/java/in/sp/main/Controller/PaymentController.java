@@ -165,6 +165,9 @@ public class PaymentController {
     @Autowired
     private Booking1Repository booking1Repository;
 
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
     @GetMapping("")
     public String showPaymentPage(HttpSession session) {
         if (session.getAttribute("user") == null) {
@@ -923,6 +926,14 @@ public class PaymentController {
                 }
                 booking.setStatus("PAID");
                 workerBookingRepo.save(booking);
+
+                // Broadcast live refresh to worker dashboard
+                try {
+                    if (booking.getJobApplication() != null && booking.getJobApplication().getUser() != null) {
+                        Long workerUserId = booking.getJobApplication().getUser().getId();
+                        messagingTemplate.convertAndSend("/topic/worker-bookings/" + workerUserId, "REFRESH");
+                    }
+                } catch (Exception ignored) {}
 
                 double walletAmount = expectedAmount > 0 ? expectedAmount : amountPaid;
 

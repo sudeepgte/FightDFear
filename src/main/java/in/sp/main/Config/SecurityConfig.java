@@ -39,6 +39,7 @@ public class SecurityConfig {
             "/login/**",
             "/auth/**",
             "/api/auth/**",
+            "/women-jobs/**",
             "/api/glow/provider/register/**",
             "/api/glow/provider/login/**",
             "/api/glow/provider/salon/register-quick",

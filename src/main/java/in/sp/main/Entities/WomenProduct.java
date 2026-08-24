@@ -10,7 +10,7 @@ public class WomenProduct {
     public static final int NAME_MAX_LENGTH = 100;
     public static final int BRAND_MAX_LENGTH = 80;
     /** Short description — strict Add Item form limit. */
-    public static final int SHORT_DESCRIPTION_MAX_LENGTH = 22;
+    public static final int SHORT_DESCRIPTION_MAX_LENGTH = 255;
     public static final int FULL_DESCRIPTION_MAX_LENGTH = 5000;
     public static final int OFFER_BADGE_MAX_LENGTH = 40;
     public static final int SKU_MAX_LENGTH = 50;
