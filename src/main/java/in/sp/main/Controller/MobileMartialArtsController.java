@@ -168,7 +168,9 @@ public class MobileMartialArtsController {
             }
 
             boolean alreadyEnrolled = enrollmentRepository.findByUser(user).stream()
-                    .anyMatch(e -> e.getBatch() != null && e.getBatch().getId().equals(batch.getId()));
+                    .anyMatch(e -> e.getBatch() != null && e.getBatch().getId().equals(batch.getId())
+                            && e.getStatus() != TrainingStatus.CANCELLED
+                            && e.getStatus() != TrainingStatus.REJECTED);
             if (alreadyEnrolled) {
                 return badRequest("You are already enrolled in this batch.");
             }
@@ -218,37 +220,24 @@ public class MobileMartialArtsController {
             enrollment.setFitnessNotes(request.getFitnessNotes());
             enrollment.setProposedStartDate(request.getStartDate());
             enrollment.setTrainerPreference(request.getTrainerPreference());
-            Double fee = request.getMonthlyFee() != null ? request.getMonthlyFee() : batch.getFee();
-            enrollment.setAmountPaid(fee);
+            enrollment.setAmountPaid(null);
             enrollment.setConsentAccuracy(request.isConsentAccuracy());
             enrollment.setConsentRules(request.isConsentRules());
 
             Enrollment saved = enrollmentRepository.save(enrollment);
 
             boolean isFree = batch.getFee() == null || batch.getFee() <= 0;
-            if (isFree) {
-                saved.setPaymentStatus("PAID");
-                saved.setStatus(TrainingStatus.APPROVED);
-                saved.setAmountPaid(0.0);
-                enrollmentRepository.save(saved);
-                if (batch.getCapacity() != null && batch.getCapacity() > 0) {
-                    long newCount = enrollmentRepository.countPaidByBatchId(batch.getId());
-                    if (newCount >= batch.getCapacity()) {
-                        batch.setStatus("Full");
-                        batchRepository.save(batch);
-                    }
-                }
-            }
+            double fee = isFree ? 0.0 : batch.getFee();
 
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("success", true);
-            body.put("message", isFree
-                    ? "Enrolled successfully!"
-                    : "Enrollment saved. Complete payment to confirm your seat.");
+            body.put("message", "Application submitted. Waiting for centre review.");
             body.put("enrollmentId", saved.getId());
             body.put("free", isFree);
-            body.put("paymentRequired", !isFree);
-            body.put("amount", isFree ? 0.0 : (batch.getFee() == null ? 0.0 : batch.getFee()));
+            body.put("paymentRequired", false);
+            body.put("awaitingCentreReview", true);
+            body.put("status", TrainingStatus.PENDING.name());
+            body.put("amount", fee);
             body.put("enrollment", enrollmentDto(saved));
             body.put("cancelPolicy", in.sp.main.Service.MartialArtsCareService.CANCEL_POLICY);
             return ResponseEntity.ok(body);
@@ -515,7 +504,9 @@ public class MobileMartialArtsController {
         m.put("fee", fee);
         m.put("amount", fee > 0 ? fee : (e.getAmountPaid() != null ? e.getAmountPaid() : 0));
         m.put("progress", e.getProgressPercentage() != null ? e.getProgressPercentage() : 0);
-        m.put("paymentRequired", !free && !"PAID".equalsIgnoreCase(e.getPaymentStatus()));
+        boolean approvedForPay = e.getStatus() == TrainingStatus.APPROVED || e.getStatus() == TrainingStatus.IN_PROGRESS;
+        m.put("paymentRequired", !free && approvedForPay && !"PAID".equalsIgnoreCase(e.getPaymentStatus()));
+        m.put("awaitingCentreReview", e.getStatus() == TrainingStatus.PENDING);
         m.put("cancelPolicy", in.sp.main.Service.MartialArtsCareService.CANCEL_POLICY);
         m.put("transferUsed", Boolean.TRUE.equals(e.getTransferUsed()));
         m.put("canCancel", e.getStatus() != TrainingStatus.CANCELLED && e.getStatus() != TrainingStatus.COMPLETED);

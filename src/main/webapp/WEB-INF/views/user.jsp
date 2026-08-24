@@ -1,543 +1,508 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Join the Movement | User Registration</title>
-
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    
-    <!-- Theme CSS (Assuming it defines the variables) -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — Fight D Fear</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --brand-purple: #1e1b4b;
-            --brand-purple-dark: #1e1b4b;
-            --brand-purple-darker: #3F1430;
-            --brand-pink: #f43f5e;
-            --brand-pink-light: #FB7185;
-            --fdf-border: #f1f3f5;
-            --fdf-text: #1e293b;
-            --fdf-muted: #64748b;
-            --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%);
-            --error-red: #ef4444;
-            --success-green: #22c55e;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            min-height: 100vh; 
-            display: flex; 
-            background: #fff; 
-            color: var(--fdf-text); 
-        }
-        
-        .auth-container { flex: 1; display: flex; width: 100%; }
-        
-        /* === Left Panel — Visual Side === */
-        .left-panel {
-            flex: 1;
-            background: linear-gradient(135deg, #1e1b4b 0%, #1e1b4b 40%, #f43f5e 100%);
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
             display: flex;
             flex-direction: column;
-            justify-content: center;
+        }
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
             align-items: center;
-            padding: 60px 40px;
-            position: relative;
-            overflow: hidden;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
-
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            top: -100px; right: -100px;
-            width: 400px; height: 400px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.06);
-        }
-
-        .left-panel::after {
-            content: '';
-            position: absolute;
-            bottom: -150px; left: -80px;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.04);
-        }
-
-        .left-panel .brand {
-            position: relative; z-index: 2;
-            text-align: center;
-            color: white;
-        }
-
-        .brand-logo {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-
-        .brand-logo i {
-            font-size: 2rem;
-            margin-right: 8px;
-            opacity: 0.9;
-        }
-
-        .brand-tagline {
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 1.15rem;
-            font-weight: 300;
-            opacity: 0.9;
-            max-width: 360px;
-            line-height: 1.7;
-            margin-bottom: 40px;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
         }
-
-        .feature-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            text-align: left;
+        .header-brand i { color: var(--primary); font-size: 1.3rem; }
+        .header-links a {
+            color: var(--text-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
         }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            font-weight: 400;
-        }
-
-        .feature-list li .feat-icon {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-
-        .form-panel { flex: 1.2; display: flex; justify-content: center; align-items: center; padding: 40px; background: #fff; overflow-y: auto; }
-        .reg-card { width: 100%; max-width: 650px; }
-        .reg-card h2 { font-family: 'Montserrat', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--brand-purple-darker); margin-bottom: 35px; border-left: 6px solid var(--brand-pink); padding-left: 20px; }
-
-        .fdf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
-        .fdf-group { margin-bottom: 20px; position: relative; }
-        .fdf-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--brand-purple-dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .required-star { color: var(--error-red); margin-left: 2px; }
-        .field-hint { font-size: 0.72rem; color: var(--fdf-muted); margin-top: 6px; line-height: 1.4; }
-        .fdf-input { width: 100%; padding: 14px 18px; border: 2px solid var(--fdf-border); border-radius: 16px; background: #f8fafc; outline: none; transition: all 0.3s ease; font-family: inherit; font-weight: 500; }
-        .fdf-input:focus { border-color: var(--brand-pink); background: #fff; box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05); }
-        .password-input-wrap { position: relative; width: 100%; }
-        .password-input-wrap .fdf-input {
+        .header-links a:hover { color: var(--primary); }
+        .main-container {
+            flex: 1;
+            max-width: 640px;
             width: 100%;
-            box-sizing: border-box;
-            padding-right: 3rem;
-            line-height: 1.5;
-            min-height: 52px;
+            margin: 28px auto 40px;
+            padding: 0 16px;
         }
-        .password-input-wrap input[type="password"]::-ms-reveal,
-        .password-input-wrap input[type="password"]::-ms-clear { display: none; }
-        .password-input-wrap input::-webkit-credentials-auto-fill-button,
-        .password-input-wrap input::-webkit-contacts-auto-fill-button { visibility: hidden; display: none !important; pointer-events: none; }
+        .info-banner {
+            background: var(--rose-soft);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #FECDD3;
+        }
+        .info-banner h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+        .info-banner p {
+            font-size: 0.9rem;
+            color: var(--navy);
+            line-height: 1.45;
+            margin: 0;
+        }
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: #fff;
+            color: var(--navy);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+        }
+        .password-field {
+            position: relative;
+        }
+        .password-field .form-input {
+            padding-right: 48px;
+        }
         .password-toggle-btn {
-            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-            border: none; background: transparent; color: #475569; cursor: pointer;
-            padding: 0; width: 36px; height: 36px;
-            display: inline-flex; align-items: center; justify-content: center;
-            z-index: 2;
-        }
-        .password-toggle-btn svg {
-            width: 20px; height: 20px; display: block; pointer-events: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            padding: 0;
         }
         .password-toggle-btn:hover,
-        .password-toggle-btn:focus { color: var(--brand-purple); outline: none; }
-        /* Open eye = password visible | Closed/slashed eye = password hidden */
-        .password-toggle-btn .icon-eye-show { display: none; }
-        .password-toggle-btn .icon-eye-hide { display: block; }
-        .password-toggle-btn.is-visible .icon-eye-show { display: block; }
-        .password-toggle-btn.is-visible .icon-eye-hide { display: none; }
-
-        .btn-dr { padding: 14px 28px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.3s; border: none; font-size: 1rem; width: 100%; }
-        .btn-dr-next { background: var(--gradient-primary); color: #fff; box-shadow: 0 8px 20px rgba(124, 45, 94, 0.2); }
-        .btn-dr-prev { background: #f1f5f9; color: var(--fdf-muted); }
-
-        .dr-progress { display: flex; justify-content: flex-start; gap: 15px; margin-bottom: 30px; }
-        .dr-step-dot { width: 35px; height: 35px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.3s; color: var(--fdf-muted); border: 2px solid #fff; box-shadow: 0 0 0 2px #f1f5f9; }
-        .dr-step-dot.active { background: var(--brand-pink); color: #fff; transform: scale(1.1); box-shadow: 0 0 15px rgba(219, 39, 119, 0.3); }
-        .dr-step-dot.completed { background: var(--brand-purple); color: #fff; }
-        
-        .dr-step-panel { display: none; animation: fadeIn 0.4s ease; }
-        .dr-step-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .is-invalid { border-color: var(--error-red) !important; background-color: #fef2f2; }
-        .error-feedback { color: var(--error-red); font-size: 0.7rem; font-weight: 700; margin-top: 6px; display: none; }
-
-        .back-home { display: inline-flex; align-items: center; gap: 10px; color: var(--fdf-muted); text-decoration: none; font-size: 0.95rem; font-weight: 600; margin-bottom: 30px; transition: 0.3s; }
-        .back-home:hover { color: var(--brand-purple); }
-
-        @media (max-width: 992px) {
-            body { flex-direction: column; }
-            .left-panel {
-                min-height: 30vh;
-                padding: 40px 20px;
-                text-align: center;
-            }
-            .feature-list { display: none; }
-            .brand-tagline { margin: 0 auto; font-size: 1rem; }
-            .form-panel {
-                padding: 40px 20px;
-                border-top-left-radius: 30px;
-                border-top-right-radius: 30px;
-                margin-top: -30px;
-                position: relative;
-                z-index: 5;
-            }
-            .reg-card h2 { font-size: 1.8rem; margin-bottom: 25px; }
+        .password-toggle-btn:focus {
+            color: var(--primary);
+            outline: none;
+            background: var(--rose-soft);
         }
-
-        @media (max-width: 650px) {
-            .fdf-row { grid-template-columns: 1fr; gap: 0; }
-            .dr-progress { justify-content: center; }
+        .password-toggle-btn i { font-size: 1.1rem; pointer-events: none; }
+        .hint { font-size: 0.75rem; color: var(--text-gray); margin-top: 5px; }
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
         }
-
-        @media (max-width: 480px) {
-            .brand-logo { font-size: 2rem; }
-            .reg-card h2 { font-size: 1.5rem; padding-left: 15px; }
-            .fdf-input { padding: 12px 15px; }
-            .btn-dr { padding: 12px 20px; }
+        .otp-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .otp-row input { flex: 1; min-width: 120px; }
+        .btn-secondary {
+            background: var(--rose-soft);
+            color: var(--primary-hover);
+            border: 1px solid #FECDD3;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 8px;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+        .alert {
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+        .alert-error { background: var(--error-bg); color: var(--error); border: 1px solid #FECACA; }
+        .alert-ok { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
+        .terms {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            margin: 12px 0 8px;
+        }
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+        .footer-link a { color: var(--primary); font-weight: 700; text-decoration: none; }
+        .otp-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--success);
+            display: none;
+        }
+        .otp-badge.show { display: inline; }
+        @media (max-width: 600px) {
+            .row-2 { grid-template-columns: 1fr; }
+            .form-card { padding: 22px 16px; }
         }
     </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="left-panel">
-            <div class="brand">
-                <div class="brand-logo" style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-                    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 52px; width: 52px; border-radius: 12px; object-fit: cover;"> Fight D Fear
-                </div>
-                <p class="brand-tagline">Empowering Women's Safety Through Technology. Your safety is our mission — anytime, anywhere.</p>
-                <ul class="feature-list">
-                    <li><span class="feat-icon"><i class="bi bi-bell-fill"></i></span> One-tap SOS Emergency Alerts</li>
-                    <li><span class="feat-icon"><i class="bi bi-geo-alt-fill"></i></span> Real-time Location Sharing</li>
-                    <li><span class="feat-icon"><i class="bi bi-people-fill"></i></span> Verified Volunteer Network</li>
-                    <li><span class="feat-icon"><i class="bi bi-shield-lock-fill"></i></span> Self-Defense Training & Resources</li>
-                    <li><span class="feat-icon"><i class="bi bi-camera-reels-fill"></i></span> Community Reels & Video Sharing</li>
-                </ul>
-            </div>
+    <header class="app-header">
+        <a class="header-brand" href="${pageContext.request.contextPath}/">
+            <i class="bi bi-heart-fill"></i> Fight D Fear
+        </a>
+        <div class="header-links">
+            <a href="${pageContext.request.contextPath}/login">Sign in</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="info-banner">
+            <h2>Create your Fight D Fear account</h2>
+            <p>Registration collects only what you need to sign in. Complete your profile later from the dashboard. Email OTP verification is required.</p>
         </div>
 
-        <div class="form-panel">
-            <div class="reg-card">
-                <div class="dr-progress">
-                    <div class="dr-step-dot active" data-step="1" onclick="showStep(1)">1</div>
-                    <div class="dr-step-dot" data-step="2" onclick="showStep(2)">2</div>
+        <div class="form-card">
+            <c:if test="${not empty error}">
+                <div class="alert alert-error"><i class="bi bi-exclamation-circle me-1"></i> ${error}</div>
+            </c:if>
+
+            <form action="${pageContext.request.contextPath}/users/register" method="post" enctype="multipart/form-data" id="userRegisterForm">
+                <div class="form-group">
+                    <label>Profile photo <span style="color:var(--text-gray);font-weight:500;">(optional)</span></label>
+                    <input type="file" name="image" class="form-input" accept="image/*">
                 </div>
 
-                <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
-                <h2>User Registration</h2>
+                <div class="form-group">
+                    <label>Full name *</label>
+                    <input type="text" name="fullName" id="fullName" class="form-input" required autocomplete="name">
+                </div>
 
-                <c:if test="${not empty error}"><div class="alert alert-danger" style="border-radius:12px; padding:12px 16px; font-size:0.9rem; margin-bottom:20px; background:#fef2f2; color:#b91c1c; border:1px solid #fee2e2;">${error}</div></c:if>
-                <c:if test="${not empty success}"><div class="alert alert-success" style="border-radius:12px; padding:12px 16px; font-size:0.9rem; margin-bottom:20px; background:#f0fdf4; color:#15803d; border:1px solid #dcfce7;">${success}</div></c:if>
-
-                <form action="${pageContext.request.contextPath}/users/register" method="post" enctype="multipart/form-data" id="userForm">
-                    <!-- Step 1: Basic Information -->
-                    <div class="dr-step-panel active" id="step1">
-                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat';">Basic Information</h3>
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Username <span class="required-star">*</span></label>
-                                <input type="text" name="fullName" id="fullName" class="fdf-input" placeholder="e.g. priya_sharma" minlength="3" maxlength="20" required
-                                       oninput="this.value=this.value.slice(0,20).replace(/[^a-zA-Z0-9._\-\s]/g,'')">
-                                <div class="field-hint">3–20 characters (letters, numbers, dots, underscores, hyphens).</div>
-                                <div class="error-feedback">Username must be 3-20 characters.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Phone Number <span class="required-star">*</span></label>
-                                <input type="tel" name="phoneNumber" id="phoneNumber" class="fdf-input" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
-                                <div class="error-feedback">Enter a valid 10-digit number.</div>
-                            </div>
-                        </div>
-                        <div class="fdf-group">
-                            <label>Email Address <span class="required-star">*</span></label>
-                            <input type="text" name="email" id="email" class="fdf-input" placeholder="name@example.com" inputmode="email" autocomplete="email"
-                                   pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}"
-                                   title="Use only letters, numbers, dots, underscores, hyphens, and plus in the email"
-                                   oninput="this.value=this.value.replace(/[^a-zA-Z0-9@._+\-]/g,'')" required>
-                            <div class="error-feedback">Enter a valid email address (no special characters like # $ % ^).</div>
-                        </div>
-                        <div class="fdf-group">
-                            <label>Password <span class="required-star">*</span></label>
-                            <div class="password-input-wrap">
-                                <input type="password" name="password" id="password" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="password" aria-label="Show password" aria-pressed="false">
-                                    <span class="icon-eye-show" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </span>
-                                    <span class="icon-eye-hide" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
-                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
-                                            <path d="M1 1l22 22"></path>
-                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
-                                        </svg>
-                                    </span>
-                                </button>
-                            </div>
-                            <div class="field-hint"><strong>Password must be at least 8 characters.</strong> Also include uppercase, lowercase, a number, and a special character (!@#$%^&amp;*).</div>
-                            <div class="error-feedback">Password must meet the requirements above.</div>
-                        </div>
-                        <div class="fdf-group">
-                            <label>Confirm Password <span class="required-star">*</span></label>
-                            <div class="password-input-wrap">
-                                <input type="password" name="confirmPassword" id="confirmPassword" class="fdf-input" placeholder="••••••••" minlength="8" required autocomplete="new-password">
-                                <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword" aria-label="Show confirm password" aria-pressed="false">
-                                    <span class="icon-eye-show" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
-                                            <circle cx="12" cy="12" r="3"></circle>
-                                        </svg>
-                                    </span>
-                                    <span class="icon-eye-hide" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
-                                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
-                                            <path d="M1 1l22 22"></path>
-                                            <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"></path>
-                                        </svg>
-                                    </span>
-                                </button>
-                            </div>
-                            <div class="error-feedback">Passwords do not match.</div>
-                        </div>
-                        <div class="fdf-group">
-                            <label>Home Address <span class="required-star">*</span></label>
-                            <input type="text" name="homeAddress" id="homeAddress" class="fdf-input" placeholder="Current residential address" required>
-                            <div class="error-feedback">Address is required.</div>
-                        </div>
-                        
-                        <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Identity Verification</button>
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" id="email" class="form-input" required autocomplete="email">
+                    <div class="otp-row">
+                        <button type="button" class="btn-secondary" id="btnSendEmailOtp">Send email OTP</button>
+                        <input type="text" id="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+                        <button type="button" class="btn-secondary" id="btnVerifyEmailOtp">Verify</button>
+                        <span class="otp-badge" id="emailOtpOk"><i class="bi bi-check-circle-fill"></i> Verified</span>
                     </div>
+                    <div class="hint">We send a code to your inbox. Resend after cooldown if needed.</div>
+                </div>
 
-                    <!-- Step 2: Personal & Identity -->
-                    <div class="dr-step-panel" id="step2">
-                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat';">Personal & Identity</h3>
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Date of Birth <span class="required-star">*</span></label>
-                                <input type="date" id="dob" name="dob" class="fdf-input" required
-                                       min="<%= java.time.LocalDate.now().minusYears(100) %>"
-                                       max="<%= java.time.LocalDate.now().minusYears(18) %>">
-                                <div class="field-hint">You must be between 18 and 100 years old.</div>
-                                <div class="error-feedback">DOB must give an age between 18 and 100 years.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Age <span class="required-star">*</span></label>
-                                <input type="number" id="ageDisplay" class="fdf-input" placeholder="Auto-calculated from DOB" min="18" max="100" readonly tabindex="-1">
-                                <input type="hidden" id="age" name="age" value="">
-                                <div class="error-feedback">Age must be between 18 and 100 years.</div>
-                            </div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Phone (10 digits) *</label>
+                        <input type="tel" name="phoneNumber" id="phoneNumber" class="form-input" required maxlength="10" pattern="\d{10}" inputmode="numeric">
+                        <div class="otp-row">
+                            <button type="button" class="btn-secondary" id="btnSendPhoneOtp">Send phone OTP</button>
+                            <input type="text" id="phoneOtp" class="form-input" placeholder="OTP" maxlength="6" inputmode="numeric">
+                            <button type="button" class="btn-secondary" id="btnVerifyPhoneOtp">Verify</button>
+                            <span class="otp-badge" id="phoneOtpOk"><i class="bi bi-check-circle-fill"></i> OK</span>
                         </div>
+                        <div class="hint">Demo phone OTP: 123456 (same as mobile)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Emergency contact *</label>
+                        <input type="tel" name="emergencyContact" id="emergencyContact" class="form-input" required maxlength="10" pattern="\d{10}" inputmode="numeric">
+                        <div class="hint">Must differ from your phone</div>
+                    </div>
+                </div>
 
-                        <div class="fdf-group">
-                            <label>Gender Identification <span class="required-star">*</span></label>
-                            <select name="gender" id="gender" class="fdf-input" required>
-                                <option value="">Select Gender</option>
-                                <option value="FEMALE">FEMALE</option>
-                                <option value="MALE">MALE</option>
-                                <option value="OTHER">OTHER</option>
-                            </select>
-                            <div class="error-feedback">Please select gender.</div>
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>Date of birth *</label>
+                        <input type="date" name="dob" id="dob" class="form-input" required
+                               max="<%= java.time.LocalDate.now() %>">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender (optional)</label>
+                        <select name="gender" id="gender" class="form-select">
+                            <option value="">Prefer not to say</option>
+                            <option value="FEMALE">Female</option>
+                            <option value="MALE">Male</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Preferred language *</label>
+                    <select name="preferredLanguage" id="preferredLanguage" class="form-select" required>
+                        <option>English</option>
+                        <option>Hindi</option>
+                        <option>Marathi</option>
+                        <option>Tamil</option>
+                        <option>Telugu</option>
+                        <option>Kannada</option>
+                        <option>Bengali</option>
+                        <option>Gujarati</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Current location / address *</label>
+                    <textarea name="homeAddress" id="homeAddress" class="form-input" rows="2" required placeholder="Address or Google Maps link"></textarea>
+                </div>
+
+                <div class="row-2">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <div class="password-field">
+                            <input type="password" name="password" id="password" class="form-input" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle-password="password"
+                                    aria-label="Show password" title="Show password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Identity Proof (PDF/IMG) <span class="required-star">*</span></label>
-                                <input type="file" name="identityDoc" id="identityDoc" class="fdf-input" style="padding:10px;" accept="image/*,.pdf" required>
-                                <div class="field-hint">Max file size: 5 MB. Accepted formats: JPG, PNG, PDF.</div>
-                                <div class="error-feedback">Identity proof required (Image or PDF, max 5 MB).</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Profile Photo <span class="required-star">*</span></label>
-                                <input type="file" name="image" id="profilePhoto" class="fdf-input" style="padding:10px;" accept="image/*" required>
-                                <div class="field-hint">Max file size: 5 MB. Accepted formats: JPG, PNG.</div>
-                                <div class="error-feedback">Photo is required (max 5 MB).</div>
-                            </div>
-                        </div>
-
-                        <div style="display:flex; justify-content:space-between; gap:15px; margin-top:20px;">
-                            <button type="button" class="btn-dr btn-dr-prev w-50" onclick="showStep(1)">Back</button>
-                            <button type="submit" class="btn-dr btn-dr-next w-50" style="margin-top:0;">Complete Sign Up</button>
+                        <div class="hint">Min 6 characters with a number and special character (!@#$%^&amp;*)</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm password *</label>
+                        <div class="password-field">
+                            <input type="password" name="confirmPassword" id="confirmPassword" class="form-input" required autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" data-toggle-password="confirmPassword"
+                                    aria-label="Show confirm password" title="Show confirm password" aria-pressed="false">
+                                <i class="bi bi-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
-                </form>
-                
-                <p style="text-align:center; margin-top:30px; font-size:0.95rem; color:var(--fdf-muted);">Already protected? <a href="${pageContext.request.contextPath}/login" style="color:var(--brand-pink); font-weight:800; text-decoration:none;">Sign In Now</a></p>
-            </div>
+                </div>
+
+                <label class="terms">
+                    <input type="checkbox" name="acceptedTerms" id="acceptedTerms" value="true" required>
+                    <span>I agree to the Terms &amp; Conditions and Privacy Policy *</span>
+                </label>
+
+                <button type="submit" class="btn-primary" id="btnSubmit" disabled>Create account</button>
+            </form>
+
+            <p class="footer-link">Already have an account? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
         </div>
     </div>
 
-    <script>
-        function showStep(s) {
-            document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('step' + s).classList.add('active');
-            document.querySelectorAll('.dr-step-dot').forEach(d => {
-                const step = parseInt(d.dataset.step);
-                d.classList.remove('active', 'completed');
-                if (step === s) d.classList.add('active');
-                else if (step < s) d.classList.add('completed');
-            });
+<script>
+(function () {
+    var ctx = '${pageContext.request.contextPath}';
+    var emailVerified = false;
+    var phoneVerified = false;
+
+    function refreshSubmit() {
+        document.getElementById('btnSubmit').disabled = !(emailVerified && phoneVerified && document.getElementById('acceptedTerms').checked);
+    }
+
+    document.getElementById('acceptedTerms').addEventListener('change', refreshSubmit);
+    document.getElementById('email').addEventListener('input', function () {
+        emailVerified = false;
+        document.getElementById('emailOtpOk').classList.remove('show');
+        refreshSubmit();
+    });
+    document.getElementById('phoneNumber').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+        phoneVerified = false;
+        document.getElementById('phoneOtpOk').classList.remove('show');
+        refreshSubmit();
+    });
+    document.getElementById('emergencyContact').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+    });
+
+    document.getElementById('btnSendEmailOtp').addEventListener('click', async function () {
+        var email = document.getElementById('email').value.trim().toLowerCase();
+        if (!email || email.indexOf('@') < 0) {
+            alert('Enter a valid email first');
+            return;
         }
-
-        const validateField = (el) => {
-            let isValid = true;
-            const err = el.closest('.fdf-group')?.querySelector('.error-feedback');
-
-            if (el.type === 'file') {
-                const maxBytes = 5 * 1024 * 1024;
-                if (el.hasAttribute('required') && (!el.files || el.files.length === 0)) isValid = false;
-                if (isValid && el.files && el.files.length > 0 && el.files[0].size > maxBytes) isValid = false;
+        this.disabled = true;
+        try {
+            var res = await fetch(ctx + '/api/auth/otp/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            var data = await res.json();
+            if (data.success) {
+                alert(data.message || 'OTP sent to your email');
             } else {
-                const val = el.value.trim();
-                if (el.hasAttribute('required') && !val) isValid = false;
-
-                if (isValid && el.id === 'fullName') isValid = val.length >= 3 && val.length <= 20;
-                if (isValid && el.id === 'phoneNumber') isValid = /^[6-9]\d{9}$/.test(val);
-                if (isValid && el.id === 'email') isValid = /^[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(val);
-                if (isValid && el.id === 'password') {
-                    isValid = val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /\d/.test(val) && /[!@#$%^&*]/.test(val);
-                }
-                if (isValid && el.id === 'confirmPassword') {
-                    isValid = val === document.getElementById('password').value.trim();
-                }
-                if (isValid && (el.id === 'age' || el.id === 'ageDisplay')) {
-                    const ageVal = document.getElementById('age').value || document.getElementById('ageDisplay').value;
-                    const ageNum = parseInt(ageVal, 10);
-                    isValid = !isNaN(ageNum) && ageNum >= 18 && ageNum <= 100;
-                }
-                if (isValid && el.id === 'dob') {
-                    const selectedDate = new Date(val + 'T00:00:00');
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    if (selectedDate > today) isValid = false;
-                    const minDate = new Date(today);
-                    minDate.setFullYear(today.getFullYear() - 100);
-                    const maxDate = new Date(today);
-                    maxDate.setFullYear(today.getFullYear() - 18);
-                    isValid = isValid && selectedDate >= minDate && selectedDate <= maxDate;
-                }
+                alert(data.error || 'Failed to send OTP');
             }
-
-            if (isValid) {
-                el.classList.remove('is-invalid');
-                if (err) err.style.display = 'none';
-            } else {
-                el.classList.add('is-invalid');
-                if (err) err.style.display = 'block';
-            }
-            return isValid;
-        };
-
-        function nextStep(s) {
-            const panel = document.getElementById('step' + s);
-            const fields = panel.querySelectorAll('.fdf-input');
-            let allValid = true;
-            fields.forEach(f => { if (!validateField(f)) allValid = false; });
-            if (allValid) showStep(s + 1);
+        } catch (e) {
+            alert('Network error sending OTP');
+        } finally {
+            this.disabled = false;
         }
+    });
 
-        document.addEventListener("DOMContentLoaded", function() {
-            const dob = document.getElementById('dob');
-            const ageHidden = document.getElementById('age');
-            const ageDisplay = document.getElementById('ageDisplay');
-
-            const today = new Date();
-            const maxDob = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-            const minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-            const fmt = (d) => d.toISOString().split('T')[0];
-            dob.setAttribute('max', fmt(maxDob));
-            dob.setAttribute('min', fmt(minDob));
-            
-            dob.addEventListener('change', function() {
-                if (this.value) {
-                    const birthDate = new Date(this.value + 'T00:00:00');
-                    if (!isNaN(birthDate.getTime())) {
-                        const today = new Date();
-                        let computedAge = today.getFullYear() - birthDate.getFullYear();
-                        const m = today.getMonth() - birthDate.getMonth();
-                        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                            computedAge--;
-                        }
-                        ageDisplay.value = computedAge;
-                        ageHidden.value = computedAge;
-                        validateField(ageHidden);
-                    }
-                } else {
-                    ageDisplay.value = '';
-                    ageHidden.value = '';
-                }
+    document.getElementById('btnVerifyEmailOtp').addEventListener('click', async function () {
+        var email = document.getElementById('email').value.trim().toLowerCase();
+        var otp = document.getElementById('emailOtp').value.trim();
+        if (!otp) { alert('Enter the OTP code'); return; }
+        try {
+            var res = await fetch(ctx + '/api/auth/otp/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ email: email, otp: otp })
             });
+            var data = await res.json();
+            if (data.success) {
+                emailVerified = true;
+                document.getElementById('emailOtpOk').classList.add('show');
+                refreshSubmit();
+            } else {
+                alert(data.error || 'Invalid or expired OTP');
+            }
+        } catch (e) {
+            alert('Network error verifying OTP');
+        }
+    });
 
-            document.getElementById('email').addEventListener('blur', function() {
-                validateField(this);
-            });
+    document.getElementById('btnSendPhoneOtp').addEventListener('click', function () {
+        var phone = document.getElementById('phoneNumber').value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+            alert('Enter a valid 10-digit phone first');
+            return;
+        }
+        alert('Demo OTP sent for Phone. Use 123456.');
+    });
 
-            document.getElementById('userForm').addEventListener('submit', function(e) {
-                const panels = document.querySelectorAll('.dr-step-panel');
-                let allValid = true;
-                panels.forEach(function(panel) {
-                    panel.querySelectorAll('.fdf-input, input[type="hidden"]#age').forEach(function(f) {
-                        if (!validateField(f)) allValid = false;
-                    });
-                });
-                if (!allValid) e.preventDefault();
-            });
-        });
-    </script>
-    <script>
-    (function () {
-        function setVisible(btn, show) {
+    document.getElementById('btnVerifyPhoneOtp').addEventListener('click', function () {
+        var otp = document.getElementById('phoneOtp').value.trim();
+        if (otp === '123456') {
+            phoneVerified = true;
+            document.getElementById('phoneOtpOk').classList.add('show');
+            refreshSubmit();
+        } else {
+            alert('Invalid OTP. Demo code is 123456.');
+        }
+    });
+
+    document.getElementById('userRegisterForm').addEventListener('submit', function (e) {
+        var pass = document.getElementById('password').value;
+        var confirm = document.getElementById('confirmPassword').value;
+        var phone = document.getElementById('phoneNumber').value.trim();
+        var emergency = document.getElementById('emergencyContact').value.trim();
+        var re = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
+        if (!emailVerified) {
+            e.preventDefault();
+            alert('Please verify your email OTP first.');
+            return;
+        }
+        if (!phoneVerified) {
+            e.preventDefault();
+            alert('Please verify your phone OTP first.');
+            return;
+        }
+        if (!re.test(pass)) {
+            e.preventDefault();
+            alert('Password must be at least 6 characters and include a number and special character (!@#$%^&*).');
+            return;
+        }
+        if (pass !== confirm) {
+            e.preventDefault();
+            alert('Passwords do not match.');
+            return;
+        }
+        if (phone === emergency) {
+            e.preventDefault();
+            alert('Emergency contact should differ from your phone.');
+        }
+    });
+
+    document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
             var id = btn.getAttribute('data-toggle-password');
             var input = document.getElementById(id);
             if (!input) return;
-
+            var show = input.type === 'password';
             input.type = show ? 'text' : 'password';
-            btn.classList.toggle('is-visible', show);
             btn.setAttribute('aria-pressed', show ? 'true' : 'false');
             btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-        }
-
-        document.querySelectorAll('.password-toggle-btn[data-toggle-password]').forEach(function (btn) {
-            btn.addEventListener('mousedown', function (e) {
-                e.preventDefault();
-            });
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var id = btn.getAttribute('data-toggle-password');
-                var input = document.getElementById(id);
-                if (!input) return;
-                setVisible(btn, input.type === 'password');
-                input.focus();
-            });
+            btn.setAttribute('title', show ? 'Hide password' : 'Show password');
+            var icon = btn.querySelector('i');
+            if (icon) icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
         });
-    })();
-    </script>
+    });
+})();
+</script>
 </body>
 </html>
-
