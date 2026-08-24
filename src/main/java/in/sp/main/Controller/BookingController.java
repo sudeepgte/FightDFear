@@ -242,8 +242,9 @@ public class BookingController {
             return "redirect:/salons/login";
         }
 
-        // Fetch bookings linked to this salon
-        List<Booking1> allBookings = booking1Repository.findBySalon(loggedSalon);
+        // Fetch bookings by salon ID (safer than session entity which may be detached)
+        Long salonId = loggedSalon.getId();
+        List<Booking1> allBookings = booking1Repository.findBySalon_IdOrderByIdDesc(salonId);
 
         // Separate the bookings based on type
         List<Booking1> serviceBookings = allBookings.stream()
@@ -254,8 +255,8 @@ public class BookingController {
                 .filter(b -> b.getTreatment() != null)
                 .toList();
 
-        // Fetch OfferBookings from another repository
-        List<OfferBooking> offerBookings = offerbookingRepository.findBySalon(loggedSalon);
+        // Fetch OfferBookings from another repository (also by ID)
+        List<OfferBooking> offerBookings = offerbookingRepository.findBySalonId(salonId);
 
         // ✅ Merge all into one list for "bookings"
         List<Booking1> bookings = new ArrayList<>();

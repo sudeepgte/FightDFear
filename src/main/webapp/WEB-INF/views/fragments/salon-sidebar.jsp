@@ -5,28 +5,26 @@
 <style>
     :root {
         --sidebar-width: 280px;
-        --fdf-burgundy: #2d0b20;
-        --fdf-burgundy-dark: #1f0615;
-        --fdf-pink: #db2777;
-        --fdf-pink-light: #fbcfe8;
-        --fdf-rose: #f43f5e;
-        --fdf-text-dark: #1e1b4b;
-        --fdf-text-muted: #64748b;
-        --fdf-border: #f1e9f0;
+        --primary: #F43F5E;
+        --primary-light: #FFE4E6;
+        --navy: #1E1B4B;
+        --text-gray: #64748B;
+        --bg-page: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --border-color: #E2E8F0;
     }
 
     .sidebar {
-        background: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%) !important;
-        color: white;
+        background: var(--card-bg) !important;
         display: flex;
         flex-direction: column;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        border-right: 1px solid var(--border-color);
         padding: 0 !important;
     }
 
     .sidebar-brand-wrapper {
         padding: 24px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: 1px solid var(--border-color);
         margin-bottom: 20px;
     }
 
@@ -34,7 +32,7 @@
         font-family: 'Montserrat', sans-serif;
         font-weight: 800;
         font-size: 1.15rem;
-        color: white !important;
+        color: var(--navy) !important;
         text-decoration: none;
         display: flex;
         align-items: center;
@@ -42,13 +40,13 @@
     }
     
     .sidebar-brand i {
-        color: var(--fdf-pink);
+        color: var(--primary);
         font-size: 1.5rem;
     }
 
     .sidebar-brand-wrapper .subtitle {
         font-size: 0.72rem;
-        color: rgba(255,255,255,0.4);
+        color: var(--text-gray);
         margin-top: 4px;
         font-weight: 500;
         letter-spacing: 0.5px;
@@ -65,26 +63,27 @@
         align-items: center;
         gap: 14px;
         padding: 11px 16px;
-        color: rgba(255,255,255,0.65) !important;
+        color: var(--text-gray) !important;
         text-decoration: none;
         border-radius: 12px;
         margin-bottom: 4px;
         transition: all 0.2s ease;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.88rem;
     }
 
     .nav-link-custom:hover {
-        background: rgba(255,255,255,0.05);
-        color: white !important;
+        background: var(--bg-page);
+        color: var(--navy) !important;
         transform: translateX(4px);
     }
 
     .nav-link-custom.active {
-        background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%) !important;
-        color: white !important;
-        box-shadow: 0 4px 15px rgba(219, 39, 119, 0.25);
-        font-weight: 600;
+        background: var(--primary-light) !important;
+        color: var(--primary) !important;
+        font-weight: 700;
+        border-left: 4px solid var(--primary);
+        padding-left: 12px;
     }
 
     .nav-link-custom i {
@@ -99,7 +98,7 @@
             left: 0;
             top: 0;
             z-index: 1000;
-            box-shadow: 10px 0 35px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.03);
         }
     }
 </style>
@@ -118,10 +117,6 @@
             <a class="nav-link-custom ${param.activeNav == 'dashboard' ? 'active' : ''}" href="${pageContext.request.contextPath}/salons/dashboard">
                 <i class="bi bi-grid-1x2"></i>
                 <span>Dashboard</span>
-            </a>
-            <a class="nav-link-custom ${param.activeNav == 'profile' ? 'active' : ''}" href="${pageContext.request.contextPath}/salons/profile">
-                <i class="bi bi-shop"></i>
-                <span>Salon Profile</span>
             </a>
             <a class="nav-link-custom ${param.activeNav == 'appointments' ? 'active' : ''}" href="${pageContext.request.contextPath}/booking/list">
                 <i class="bi bi-calendar-check"></i>

@@ -169,6 +169,8 @@
         window.onload = function() {
             fetchChatHistory();
             connectWebSocket();
+            // Poll every 3 seconds as fallback to catch new messages
+            setInterval(fetchChatHistory, 3000);
         };
 
         function connectWebSocket() {

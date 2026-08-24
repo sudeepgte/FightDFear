@@ -328,18 +328,84 @@
 
     <!-- Global Dashboard Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
+
+    <style>
+        .app-header {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color, #E2E8F0);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--fdf-burgundy, #2d0b20);
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-skip {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--fdf-border, #E2E8F0);
+            color: var(--fdf-text-muted, #64748b);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .btn-header-save {
+            padding: 8px 20px;
+            background: var(--fdf-pink, #db2777);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .main-content { margin-left: 0 !important; padding: 25px max(35px, calc((100vw - 1200px)/2)) 80px !important; }
+        .bottom-action-bar { left: 0 !important; }
+        
+        /* Hide existing top header and bottom save bar since we have the top header */
+        .top-header { display: none !important; }
+        .bottom-action-bar { display: none !important; }
+    </style>
 </head>
 <body>
 
+    <!-- Header with Mobile Parity Actions -->
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/salons/dashboard" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" 
+style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+        </a>
+        <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn-skip">Skip for now</a>
+            <button type="button" class="btn-header-save" 
+onclick="document.getElementById('profileForm').submit()">Save Profile</button>
+        </div>
+    </header>
+
+
     <!-- Sidebar -->
-    <jsp:include page="../fragments/salon-sidebar.jsp">
-    <jsp:param name="activeNav" value="profile"/>
-</jsp:include>
+    
 
     
     <!-- Main Content Area -->
     <div class="main-content">
-        <form action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
+        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
             <input type="hidden" name="id" value="${salon.id}">
             
             <!-- Top Header -->

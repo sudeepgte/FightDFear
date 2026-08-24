@@ -96,22 +96,22 @@ public class Offer {
     @JoinColumn(name = "salon_id")
     private Salon salon;
 
-    // 🟦 Automatically calculate discounted price whenever set
     public void setOriginalPrice(double originalPrice) {
         this.originalPrice = originalPrice;
-        calculateDiscountedPrice();
     }
 
     public void setDiscountPercent(double discountPercent) {
         this.discountPercent = discountPercent;
-        calculateDiscountedPrice();
+    }
+    
+    public void setDiscountedPrice(double discountedPrice) {
+        this.discountedPrice = discountedPrice;
     }
 
-    private void calculateDiscountedPrice() {
-        if (originalPrice > 0 && discountPercent > 0) {
+    // You can keep calculate if you need it, but the form submits the value explicitly.
+    public void calculateDiscountedPrice() {
+        if (originalPrice > 0 && discountPercent > 0 && this.discountedPrice == 0) {
             this.discountedPrice = originalPrice - (originalPrice * discountPercent / 100);
-        } else {
-            this.discountedPrice = originalPrice;
         }
     }
 

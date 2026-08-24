@@ -2,22 +2,23 @@
 :root {
     /* Dashboard Standard Colors */
     --sidebar-width: 280px;
-    --dashboard-bg: #f8f9fc !important;
-    --fdf-burgundy: #2d0b20 !important;
-    --fdf-burgundy-dark: #1f0615 !important;
-    --fdf-pink: #db2777 !important;
-    --fdf-pink-light: #fbcfe8 !important;
-    --fdf-rose: #f43f5e !important;
-    --fdf-lavender: #f3e8ff !important;
-    --fdf-text-dark: #1e1b4b !important;
-    --fdf-text-muted: #64748b !important;
-    --fdf-border: #f1e9f0 !important;
-    --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04) !important;
+    --dashboard-bg: #F8FAFC !important;
+    --fdf-burgundy: #1E1B4B !important; /* Replaced with Navy */
+    --fdf-burgundy-dark: #1E1B4B !important;
+    --fdf-pink: #F43F5E !important; /* Replaced with Coral/Rose */
+    --fdf-pink-light: #FFE4E6 !important;
+    --fdf-rose: #E11D48 !important; /* Darker red */
+    --fdf-lavender: #FFE4E6 !important;
+    --fdf-text-dark: #1E1B4B !important;
+    --fdf-text-muted: #64748B !important;
+    --fdf-border: #E2E8F0 !important;
+    --card-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
+    --card-bg: #FFFFFF !important;
 
     /* Legacy Mappings to Force Theme Conformity */
     --brand-purple: var(--fdf-pink) !important;
     --brand-purple-darker: var(--fdf-text-dark) !important;
-    --gradient-dark: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%) !important;
+    --gradient-dark: var(--fdf-text-dark) !important;
     --fdf-primary: var(--fdf-pink) !important;
     --primary-purple: var(--fdf-pink) !important;
     --primary-color: var(--fdf-pink) !important;
@@ -29,15 +30,17 @@ body {
     color: var(--fdf-text-dark) !important;
 }
 
-/* Ensure buttons follow the pink gradient style */
+/* Ensure buttons follow the new pink style */
 .btn-add-new, .btn-action-pill {
-    background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%) !important;
+    background: var(--fdf-pink) !important;
     color: white !important;
     border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
 }
 .btn-add-new:hover, .btn-action-pill:hover {
-    filter: brightness(1.1) !important;
-    box-shadow: 0 8px 20px rgba(219, 39, 119, 0.25) !important;
+    background: var(--fdf-rose) !important;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25) !important;
 }
 
 /* Page headers to use the dark text color */
@@ -47,6 +50,8 @@ body {
 
 /* Cards background and border */
 .glass-card, .premium-card, .stylist-card, .dashboard-card, .fdf-card, .offer-card, .client-card, .package-card {
-    background-color: white !important;
-    border-color: var(--fdf-border) !important;
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--fdf-border) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: 16px !important;
 }

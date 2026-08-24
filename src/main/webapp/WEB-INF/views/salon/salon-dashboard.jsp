@@ -976,6 +976,81 @@
         .btn-resume:hover { background: #20c997; color: white; }
         .btn-archive { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
         .btn-archive:hover { background: #dc3545; color: white; }
+    
+        
+        /* Profile Summary Card */
+        .salon-card {
+            background: white;
+            border: 1px solid var(--fdf-border);
+            border-radius: 18px;
+            padding: 22px 26px;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .salon-card-left { display: flex; align-items: center; gap: 18px; }
+        .salon-avatar {
+            width: 76px; height: 76px; border-radius: 16px;
+            background: var(--fdf-pink-light); color: var(--fdf-pink);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.9rem; font-weight: 800; overflow: hidden;
+        }
+        .salon-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .salon-info h2 { font-size: 1.28rem; font-weight: 800; color: var(--fdf-text-dark); margin-bottom: 4px; letter-spacing: -0.2px; }
+        .salon-meta { display: flex; align-items: center; gap: 12px; font-size: 0.84rem; color: var(--fdf-text-muted); flex-wrap: wrap; }
+        .pill-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; }
+        .pill-verified { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+        .pill-pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .pill-changes { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+        .btn-edit-profile {
+            padding: 8px 16px; border: 1px solid var(--fdf-border); background: white; color: var(--fdf-text-dark);
+            border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 6px; transition: all 0.2s ease;
+        }
+        .btn-edit-profile:hover { border-color: var(--fdf-pink); color: var(--fdf-pink); background: var(--fdf-pink-light); }
+
+        /* Profile Completion Warning Card */
+        .completion-banner {
+            background: white;
+            border: 1px solid #FECDD3;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.04);
+        }
+        .completion-banner-left {
+            flex: 1;
+            min-width: 260px;
+        }
+        .completion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F43F5E, #FB7185);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -1043,7 +1118,81 @@
                 </div>
             </div>
 
-            <!-- Subheader Details Row -->
+                          <!-- Subheader Details Row -->
+              
+              
+              <!-- Salon Profile Summary Card -->
+              <div class="salon-card mt-3">
+                  <div class="salon-card-left">
+                      <div class="salon-avatar">
+                          <c:choose>
+                              <c:when test="${not empty salon.profileImageUrl}">
+                                  <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Logo">
+                              </c:when>
+                              <c:otherwise>
+                                  ${empty salon.name ? 'S' : salon.name.substring(0,1).toUpperCase()}
+                              </c:otherwise>
+                          </c:choose>
+                      </div>
+                      <div class="salon-info">
+                          <h2><c:out value="${empty salon.name ? 'My Salon' : salon.name}"/></h2>
+                          <div class="salon-meta">
+                              <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty salon.city ? salon.city : 'Location not set'}"/></span>
+                              <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${salon.phone}"/></span>
+                              <span><i class="bi bi-star-fill text-warning"></i> ${avgRating} Rating</span>
+                              <c:choose>
+                                  <c:when test="${salon.partnerProfileStatus == 'APPROVED'}">
+                                      <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                                  </c:when>
+                                  <c:when test="${salon.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                      <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Review</span>
+                                  </c:when>
+                                  <c:when test="${salon.partnerProfileStatus == 'CHANGES_REQUESTED'}">
+                                      <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
+                                  </c:when>
+                                  <c:otherwise>
+                                      <span class="pill-badge pill-pending">Verification Required</span>
+                                  </c:otherwise>
+                              </c:choose>
+                          </div>
+                      </div>
+                  </div>
+                  <div>
+                      <a href="${pageContext.request.contextPath}/salons/profile" class="btn-edit-profile">
+                          <i class="bi bi-pencil-square"></i> Edit Profile
+                      </a>
+                  </div>
+              </div>
+
+              <!-- Profile Completion Banner -->
+              <c:if test="${completionPercentage < 100}">
+                  <div class="completion-banner">
+                      <div class="completion-banner-left">
+                          <div class="completion-header">
+                              <span>Salon Profile Completion</span>
+                              <span style="color: var(--fdf-pink); font-weight: 800;">${completionPercentage}%</span>
+                          </div>
+                          <div class="progress-bar-bg">
+                              <div class="progress-bar-fill" style="width: ${completionPercentage}%;"></div>
+                          </div>
+                          <p style="font-size: 0.82rem; color: var(--fdf-text-muted); margin-bottom: 8px;">
+                              Complete these sections to improve discovery, customer trust, and get verified:
+                          </p>
+                          <div class="d-flex flex-wrap gap-1 mt-1">
+                              <c:if test="${empty salon.salonCategory}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Category</span></c:if>
+                              <c:if test="${empty salon.profileImageUrl}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Photos</span></c:if>
+                              <c:if test="${empty salon.businessRegistrationUrl}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Documents</span></c:if>
+                              <c:if test="${empty salon.socialMediaJson}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Social Media</span></c:if>
+                          </div>
+                      </div>
+                      <div>
+                          <a href="${pageContext.request.contextPath}/salons/profile" style="color: var(--fdf-burgundy); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                              <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile
+                          </a>
+                      </div>
+                  </div>
+              </c:if>
+
             <div class="subheader-row">
                 <div class="date-picker-custom">
                     <i class="bi bi-calendar-event"></i>

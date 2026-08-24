@@ -40,36 +40,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-     footer {
-    margin-top: 60px;
-}
-        body {
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+     
+        
 
-        #ftco-navbar {
-            position: sticky !important;
-            top: 0;
-            z-index: 1050;
-            background-color: #6a0dad !important;
-        }
-
-        #ftco-navbar .navbar-brand,
-        #ftco-navbar .nav-link {
-            color: #ffffff !important;
-        }
-
-        #ftco-navbar .nav-link:hover {
-            color: #ffd6ff !important;
-        }
-
-        main {
-            flex: 1;
-            padding-top: 40px;
-        }
+        
 
         .offer-form {
             background: #fff;
@@ -84,10 +58,7 @@
         .final-price { color: #28a745; font-weight: bold; }
   
      
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Poppins', sans-serif;
-        }
+        
         .review-card {
             background: #fff;
             border-radius: 12px;
@@ -104,51 +75,23 @@
             border-radius: 8px;
             padding: 10px;
         }
-        .btn-purple {
-            background-color: #6a0572;
-            color: white;
-        }
-        .btn-purple:hover {
-            background-color: #520358;
-        }
+        .btn-purple { background-color: var(--fdf-pink) !important; color: white !important; border: none; }
+        .btn-purple:hover { background-color: var(--fdf-rose) !important; }
     </style>
 
     <!-- Global Dashboard Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 </head>
 <body>
- <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/index/templates">
-            <span class="flaticon-lotus"></span> Fight D Fear
-        </a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse"
-                data-target="#ftco-nav" aria-controls="ftco-nav"
-                aria-expanded="false" aria-label="Toggle navigation">
-            <span class="oi oi-menu"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/dashboard">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/profile">Profile</a></li>
-        
-                <li class="nav-item active"><a class="nav-link" href="${pageContext.request.contextPath}/booking/list">View Bookings</a>
-                </li>
-                 
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salon/viewServices">View Services</a>
-              </li>
-               
-                <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/salons/logout">Logout</a>
-               </li>
-            </ul>
-        </div>
-    </div>
-</nav>
  
-<div class="container mt-5">
-    <h2 class="text-center text-primary mb-4">
+ 
+<div class="d-flex">
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+        <jsp:param name="activeNav" value="reviews"/>
+    </jsp:include>
+    <div class="main-content w-100">
+        <div class="container mt-5">
+    <h2 class="text-center mb-4 header-title" style="color: var(--fdf-text-dark); font-weight: 700;">
         <i class="fas fa-comments"></i> All Salon Reviews
     </h2>
  
@@ -210,61 +153,11 @@
         </a>
     </div>
 </div>
- <footer id="footer" class="footer position-relative">
-    <div class="container footer-top">
-        <div class="row gy-4">
+ 
 
-            <div class="col-lg-4 col-md-6 footer-about">
-                <a href="${pageContext.request.contextPath}/index/templates"
-                   class="d-flex align-items-center">
-                   Fight D Fear
-                </a>
-                <div class="pt-3">
-                    <p class="fw-semibold">Our Values</p>
-                    <p>Awareness • Safety • Equality • Empowerment</p>
-                    <p class="mt-2">Building a safer tomorrow, together.</p>
-                </div>
-            </div>
 
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Useful Links</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates">Home</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/services">Services</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
-                </ul>
-            </div>
-
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Our Services</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> Emergency Assistance</li>
-                    <li><i class="bi bi-chevron-right"></i> Safety Education</li>
-                    <li><i class="bi bi-chevron-right"></i> Self-defense Training</li>
-                    <li><i class="bi bi-chevron-right"></i> Community Support</li>
-                </ul>
-            </div>
-
-            <div class="col-lg-4 col-md-12">
-                <h4>Follow Us</h4>
-                <p>Stay connected with us for safety updates and empowerment.</p>
-                <div class="social-links d-flex">
-                    <a href="#"><i class="bi bi-twitter"></i></a>
-                    <a href="#"><i class="bi bi-facebook"></i></a>
-                    <a href="#"><i class="bi bi-instagram"></i></a>
-                    <a href="#"><i class="bi bi-linkedin"></i></a>
-                </div>
-            </div>
-
-        </div>
     </div>
-
-    <div class="container text-center mt-4">
-        <p>© <strong>Fight D Fear</strong> All Rights Reserved</p>
-    </div>
-</footer>
-
+</div>
 <!-- ================= JS FILES ================= -->
 <script src="${pageContext.request.contextPath}/beauty/js/jquery.min.js"></script>
 <script src="${pageContext.request.contextPath}/beauty/js/jquery-migrate-3.0.1.min.js"></script>
