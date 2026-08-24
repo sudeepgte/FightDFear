@@ -47,11 +47,19 @@ public class BookingController {
     @Autowired
     private SalonNotificationRepository salonNotificationRepository;
 
+    @Autowired
+    private SalonPackageRepository salonPackageRepository;
+
+    @Autowired
+    private SalonMembershipRepository salonMembershipRepository;
+
     // Show booking form
     @GetMapping("/new")
     public String showBookingForm(@RequestParam(required = false) Long serviceId,
                                   @RequestParam(required = false) Long treatmentId,
                                   @RequestParam(required = false) Long offerId,
+                                  @RequestParam(required = false) Long packageId,
+                                  @RequestParam(required = false) Long membershipId,
                                   HttpSession session,
                                   Model model) {
  
@@ -73,6 +81,16 @@ public class BookingController {
             if (offer == null) return "redirect:/user/salons";
             model.addAttribute("item", offer);
             model.addAttribute("type", "OFFER");
+        } else if (packageId != null) {
+            SalonPackage salonPackage = salonPackageRepository.findById(packageId).orElse(null);
+            if (salonPackage == null) return "redirect:/user/salons";
+            model.addAttribute("item", salonPackage);
+            model.addAttribute("type", "PACKAGE");
+        } else if (membershipId != null) {
+            SalonMembership salonMembership = salonMembershipRepository.findById(membershipId).orElse(null);
+            if (salonMembership == null) return "redirect:/user/salons";
+            model.addAttribute("item", salonMembership);
+            model.addAttribute("type", "MEMBERSHIP");
         } else {
             return "redirect:/user/salons";
         }
@@ -86,6 +104,8 @@ public class BookingController {
     public String createBooking(@RequestParam(required = false) Long serviceId,
                                 @RequestParam(required = false) Long treatmentId,
                                 @RequestParam(required = false) Long offerId,
+                                @RequestParam(required = false) Long packageId,
+                                @RequestParam(required = false) Long membershipId,
                                 @RequestParam String bookingType,
                                 @RequestParam(required = false) String address,
                                 @RequestParam(required = false) String notes,
@@ -135,6 +155,20 @@ public class BookingController {
             booking.setOffer(offer);
             booking.setPrice(offer.getDiscountedPrice() > 0 ? offer.getDiscountedPrice() : offer.getOriginalPrice());
             activeTab = "offers";
+        } else if (packageId != null) {
+            SalonPackage salonPackage = salonPackageRepository.findById(packageId).orElse(null);
+            if (salonPackage == null) return "redirect:/user/salons";
+            booking.setSalon(salonPackage.getSalon());
+            booking.setSalonPackage(salonPackage);
+            booking.setPrice(salonPackage.getPrice() != null ? salonPackage.getPrice() : 0.0);
+            activeTab = "all";
+        } else if (membershipId != null) {
+            SalonMembership salonMembership = salonMembershipRepository.findById(membershipId).orElse(null);
+            if (salonMembership == null) return "redirect:/user/salons";
+            booking.setSalon(salonMembership.getSalon());
+            booking.setSalonMembership(salonMembership);
+            booking.setPrice(salonMembership.getPrice() != null ? salonMembership.getPrice() : 0.0);
+            activeTab = "all";
         } else {
             return "redirect:/user/salons";
         }

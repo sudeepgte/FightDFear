@@ -712,7 +712,7 @@
                                         </c:if>
                                         
                                         <div class="mt-auto">
-                                            <a href="${pageContext.request.contextPath}/salon/bookPackage?packageId=${pkg.id}" class="btn btn-action-primary rounded-pill w-100 py-2">
+                                            <a href="${pageContext.request.contextPath}/booking/new?packageId=${pkg.id}" class="btn btn-action-primary rounded-pill w-100 py-2">
                                                 Book Package
                                             </a>
                                         </div>
@@ -746,7 +746,7 @@
                                         <div class="text-light opacity-75 small mb-4" style="white-space: pre-line;">${mem.benefits}</div>
                                         
                                         <div class="mt-auto">
-                                            <a href="${pageContext.request.contextPath}/salon/bookMembership?membershipId=${mem.id}" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark">
+                                            <a href="${pageContext.request.contextPath}/booking/new?membershipId=${mem.id}" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark">
                                                 Join Membership
                                             </a>
                                         </div>

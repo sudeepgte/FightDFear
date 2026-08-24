@@ -11,9 +11,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    
     <style>
         :root {
-            --sidebar-width: 250px;
+            --sidebar-width: 280px;
             --brand-pink: #ec1868;
             --brand-pink-light: #fbe6f0;
             --sidebar-bg: #27142b;
@@ -22,6 +25,15 @@
             --text-dark: #1f2937;
             --text-muted: #6b7280;
             --border-color: #e5e7eb;
+            --fdf-burgundy: #2d0b20;
+            --fdf-burgundy-dark: #1f0615;
+            --fdf-pink: #db2777;
+            --fdf-pink-light: #fbcfe8;
+            --fdf-rose: #f43f5e;
+            --fdf-lavender: #f3e8ff;
+            --fdf-text-dark: #1e1b4b;
+            --fdf-text-muted: #64748b;
+            --fdf-border: #f1e9f0;
         }
 
         body {
@@ -35,20 +47,81 @@
         /* Sidebar */
         .sidebar { background: var(--sidebar-bg); width: var(--sidebar-width); position: fixed; height: 100vh; overflow-y: auto; color: white; padding: 20px 15px; z-index: 1000; }
         .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        /* Unified Premium Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-brand-wrapper {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding: 0 10px; }
-        .sidebar-brand img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .sidebar-brand .sb-name { font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
-        .sidebar-brand .sb-sub { font-size: 0.65rem; color: #a39ca8; }
-        
-        .nav-item { display: flex; align-items: center; gap: 12px; color: var(--sidebar-text); text-decoration: none; padding: 10px 12px; margin-bottom: 2px; border-radius: 8px; font-weight: 500; font-size: 0.85rem; transition: 0.2s;}
-        .nav-item i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: var(--brand-pink); color: white; }
-        
-        .nav-item.sign-out { color: var(--brand-pink); margin-top: 20px;}
-        .nav-item.sign-out:hover { background: rgba(236, 24, 104, 0.1); }
+        .sidebar-brand i {
+            color: var(--fdf-pink);
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-wrapper .subtitle {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-container {
+            flex: 1;
+            padding: 0 16px;
+            overflow-y: auto;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 11px 16px;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+
+        .nav-link-custom:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link-custom.active {
+            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.25);
+            font-weight: 600;
+        }
+
+        .nav-link-custom i {
+            font-size: 1.15rem;
+        }
 
         /* Main Content */
         .main-wrapper { margin-left: var(--sidebar-width); padding: 25px 35px 80px; }
@@ -195,43 +268,90 @@
 <body>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <c:choose>
-                <c:when test="${not empty salon.profileImageUrl}">
-                    <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Logo">
-                </c:when>
-                <c:otherwise>
-                    <img src="https://ui-avatars.com/api/?name=${salon.name}&background=ec1868&color=fff" alt="Logo">
-                </c:otherwise>
-            </c:choose>
-            <div>
-                <div class="sb-name">${salon.name}</div>
-                <div class="sb-sub">Women's Salon • Beauty • <br> Wellness • Hair Styling</div>
-            </div>
+    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
+        <div class="sidebar-brand-wrapper">
+            <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand">
+                <i class="bi bi-gender-female"></i>
+                <span>${empty salon.name ? 'Priya Beauty & Wellness' : salon.name}</span>
+            </a>
+            <div class="subtitle">Women's Salon • Beauty • Wellness • Hair Styling</div>
         </div>
-        
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="nav-item"><i class="bi bi-house"></i> Dashboard</a>
-        <a href="${pageContext.request.contextPath}/salons/profile" class="nav-item active"><i class="bi bi-shop"></i> Salon Profile</a>
-        <a href="#" class="nav-item"><i class="bi bi-calendar-check"></i> Appointments</a>
-        <a href="#" class="nav-item"><i class="bi bi-calendar3"></i> Calendar</a>
-        <a href="${pageContext.request.contextPath}/salon/viewServices" class="nav-item"><i class="bi bi-scissors"></i> Services</a>
-        <a href="#" class="nav-item"><i class="bi bi-people"></i> Staff / Stylists</a>
-        <a href="#" class="nav-item"><i class="bi bi-person"></i> Clients</a>
-        <a href="#" class="nav-item"><i class="bi bi-person-walking"></i> Walk-in Clients</a>
-        <a href="#" class="nav-item"><i class="bi bi-box"></i> Packages & Memberships</a>
-        <a href="#" class="nav-item"><i class="bi bi-megaphone"></i> Promotions</a>
-        <a href="#" class="nav-item"><i class="bi bi-tags"></i> Offers & Discounts</a>
-        <a href="#" class="nav-item"><i class="bi bi-receipt"></i> Billing & Invoices</a>
-        <a href="#" class="nav-item"><i class="bi bi-credit-card"></i> Payments & Payouts</a>
-        <a href="#" class="nav-item"><i class="bi bi-award"></i> Loyalty Program</a>
-        <a href="#" class="nav-item"><i class="bi bi-box-seam"></i> Inventory</a>
-        <a href="#" class="nav-item"><i class="bi bi-star"></i> Reviews & Feedback</a>
-        <a href="#" class="nav-item"><i class="bi bi-bar-chart"></i> Reports & Analytics</a>
-        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Settings</a>
-        <br>
-        <a href="#" class="nav-item"><i class="bi bi-question-circle"></i> Help & Support</a>
-        <a href="${pageContext.request.contextPath}/salons/logout" class="nav-item sign-out"><i class="bi bi-box-arrow-right"></i> Sign Out</a>
+
+        <div class="nav-container">
+            <nav class="nav flex-column">
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salons/profile">
+                    <i class="bi bi-shop"></i>
+                    <span>Salon Profile</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+                <a class="nav-link-custom" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Calendar</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
+                    <i class="bi bi-magic"></i>
+                    <span>Services</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists">
+                    <i class="bi bi-people"></i>
+                    <span>Staff / Stylists</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Clients</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Packages & Memberships</span>
+                </a>
+                
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}">
+                    <i class="bi bi-percent"></i>
+                    <span>Offers & Discounts</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing">
+                    <i class="bi bi-receipt"></i>
+                    <span>Billing & Invoices</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments">
+                    <i class="bi bi-credit-card-2-front"></i>
+                    <span>Payments & Payouts</span>
+                </a>
+                
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory">
+                    <i class="bi bi-box"></i>
+                    <span>Inventory</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
+                    <i class="bi bi-star-half"></i>
+                    <span>Reviews & Feedback</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics">
+                    <i class="bi bi-bar-chart-line"></i>
+                    <span>Reports & Analytics</span>
+                </a>
+
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/settings">
+                    <i class="bi bi-sliders"></i>
+                    <span>Settings</span>
+                </a>
+                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/support">
+                    <i class="bi bi-question-circle"></i>
+                    <span>Help & Support</span>
+                </a>
+                <a class="nav-link-custom text-danger mt-3" href="${pageContext.request.contextPath}/salons/logout">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Sign Out</span>
+                </a>
+            </nav>
+        </div>
     </div>
 
     <!-- Main Content Area -->

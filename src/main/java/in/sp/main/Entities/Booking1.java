@@ -32,6 +32,14 @@ public class Booking1 {
     @JoinColumn(name = "offer_id")
     private Offer offer; // <-- New field for offer booking
 
+    @ManyToOne
+    @JoinColumn(name = "package_id")
+    private SalonPackage salonPackage;
+
+    @ManyToOne
+    @JoinColumn(name = "membership_id")
+    private SalonMembership salonMembership;
+
     private String status = "PENDING";
     public String getStatus() {
 		return status;
@@ -106,4 +114,8 @@ public class Booking1 {
 	public void setReminder1hSent(Boolean reminder1hSent) { this.reminder1hSent = reminder1hSent; }
 	public Boolean getConsentPolicy() { return consentPolicy; }
 	public void setConsentPolicy(Boolean consentPolicy) { this.consentPolicy = consentPolicy; }
+	public SalonPackage getSalonPackage() { return salonPackage; }
+	public void setSalonPackage(SalonPackage salonPackage) { this.salonPackage = salonPackage; }
+	public SalonMembership getSalonMembership() { return salonMembership; }
+	public void setSalonMembership(SalonMembership salonMembership) { this.salonMembership = salonMembership; }
 }
