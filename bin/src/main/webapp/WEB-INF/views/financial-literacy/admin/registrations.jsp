@@ -178,6 +178,50 @@
             background: #dc2626;
             color: white;
         }
+
+        .main {
+            min-width: 0;
+        }
+
+        .table-responsive {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Mobile: remove forced full-viewport blank space; stack layout */
+        @media (max-width: 768px) {
+            .layout {
+                flex-direction: column;
+                min-height: 0;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                border-right: none;
+                border-bottom: 1px solid rgba(124, 45, 94, 0.18);
+                padding: 10px;
+                overflow: visible;
+            }
+
+            .main {
+                padding: 16px 12px 24px;
+                flex: none;
+            }
+
+            .admin-card {
+                padding: 20px 16px;
+            }
+
+            .topbar .wrap {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -197,31 +241,8 @@
     <!-- Layout -->
     <div class="layout">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="mb-4">
-                <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="navlink">
-                    <i class="fas fa-home"></i> Home
-                </a>
-            </div>
-            
-            <h6 class="mb-2" style="font-weight:700; color: #666; font-size: 0.8rem;">Videos</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video" class="navlink">
-                <i class="fas fa-plus-circle"></i> Add Video
-            </a>
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Live Sessions</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" class="navlink">
-                <i class="fas fa-video"></i> Add Session
-            </a>
-            
-            <h6 class="mb-2 mt-4" style="font-weight:700; color: #666; font-size: 0.8rem;">Workshops</h6>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" class="navlink">
-                <i class="fas fa-calendar-check"></i> Add Workshop
-            </a>
-            <a href="${pageContext.request.contextPath}/financial-literacy/admin/registrations" class="navlink active">
-                <i class="fas fa-users"></i> View Registrations
-            </a>
-        </div>
+        <!-- Sidebar -->
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <!-- Main Content -->
         <main class="main">

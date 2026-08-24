@@ -1,7 +1,10 @@
 package in.sp.main.Controller;
 
 import in.sp.main.Config.JwtUtil;
+import in.sp.main.Entities.FitnessAttendance;
 import in.sp.main.Entities.FitnessBooking;
+import in.sp.main.Entities.FitnessPackage;
+import in.sp.main.Entities.FitnessProgressLog;
 import in.sp.main.Entities.FitnessTrainer;
 import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.VerificationStatus;
@@ -22,12 +25,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/fitness/trainer")
@@ -51,8 +58,20 @@ public class MobileFitnessTrainerAuthController {
     private FitnessTrainerProfileService trainerProfileService;
     @Autowired
     private FileUploadService fileUploadService;
+
     @Autowired
     private FitnessCareService fitnessCareService;
+    @Autowired
+    private in.sp.main.Service.FitnessService fitnessService;
+    @Autowired
+    private in.sp.main.Repository.FitnessPackageRepository fitnessPackageRepo;
+    @Autowired
+    private in.sp.main.Repository.FitnessAttendanceRepository fitnessAttendanceRepo;
+    @Autowired
+    private in.sp.main.Repository.FitnessProgressLogRepository fitnessProgressLogRepo;
+    @Autowired
+    private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
+
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -231,10 +250,13 @@ public class MobileFitnessTrainerAuthController {
         res.put("role", "TRAINER");
         res.put("trainer", trainerSummary(t));
         res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(t.getPartnerProfileStatus()));
+
+                PartnerLifecycleSupport.needsProfileCompletion(t.getPartnerProfileStatus())
+                        || !trainerProfileService.isReadyForVerification(t));
         res.put("canSubmitForVerification",
                 trainerProfileService.isReadyForVerification(t)
                         && t.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+
         return ResponseEntity.ok(res);
     }
 
@@ -514,7 +536,264 @@ public class MobileFitnessTrainerAuthController {
         }
     }
 
+    @GetMapping("/packages")
+    public ResponseEntity<Map<String, Object>> getTrainerPackages(HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+        List<FitnessPackage> packages = fitnessPackageRepo.findByTrainer_Id(t.getId());
+        List<Map<String, Object>> dtos = packages.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<String, Object>();
+            m.put("id", p.getId());
+            m.put("packageName", p.getPackageName());
+            m.put("category", p.getCategory());
+            m.put("description", p.getDescription());
+            m.put("sessionCount", p.getSessionCount());
+            m.put("durationDays", p.getDurationDays());
+            m.put("price", p.getPrice());
+            m.put("sessionType", p.getSessionType());
+            m.put("active", p.isActive());
+            return m;
+        }).collect(Collectors.toList());
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("packages", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/packages")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> savePackage(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        Long packageId = null;
+        if (body.get("id") != null && !str(body, "id").isBlank()) {
+            try { packageId = Long.parseLong(str(body, "id")); } catch (Exception ignored) {}
+        }
+        String name = str(body, "packageName");
+        String category = str(body, "category");
+        String description = str(body, "description");
+        Integer sessionCount = 1;
+        Integer durationDays = 30;
+        Double price = 0.0;
+        try { if (body.get("sessionCount") != null) sessionCount = Integer.parseInt(str(body, "sessionCount")); } catch (Exception ignored) {}
+        try { if (body.get("durationDays") != null) durationDays = Integer.parseInt(str(body, "durationDays")); } catch (Exception ignored) {}
+        try { if (body.get("price") != null) price = Double.parseDouble(str(body, "price")); } catch (Exception ignored) {}
+        String sessionType = str(body, "sessionType");
+
+        try {
+            FitnessPackage pkg = fitnessService.createOrUpdatePackage(t, packageId, name, category, description,
+                    sessionCount, durationDays, price, sessionType);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Package saved successfully");
+            res.put("packageId", pkg.getId());
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Save failed" : ex.getMessage());
+        }
+    }
+
+    @DeleteMapping("/packages/{id}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deletePackage(@PathVariable Long id, HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+        try {
+            fitnessService.deletePackage(t, id);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Package deleted");
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Delete failed" : ex.getMessage());
+        }
+    }
+
+    @PostMapping("/attendance")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> markAttendance(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        Long bookingId;
+        try {
+            bookingId = Long.parseLong(str(body, "bookingId"));
+        } catch (Exception e) {
+            return badRequest("Valid bookingId is required");
+        }
+
+        String sessionDateStr = str(body, "sessionDate");
+        LocalDate date = sessionDateStr.isBlank() ? LocalDate.now() : LocalDate.parse(sessionDateStr);
+        String sessionTime = str(body, "sessionTime");
+        String status = str(body, "status");
+        if (status.isBlank()) status = "PRESENT";
+        String notes = str(body, "notes");
+
+        try {
+            FitnessAttendance att = fitnessService.markAttendance(t, bookingId, date, sessionTime, status, notes);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Attendance recorded");
+            res.put("attendanceId", att.getId());
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Attendance failed" : ex.getMessage());
+        }
+    }
+
+    @PostMapping("/progress")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> logProgress(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        Long userId;
+        try {
+            userId = Long.parseLong(str(body, "userId"));
+        } catch (Exception e) {
+            return badRequest("Valid userId is required");
+        }
+
+        Double weightKg = null;
+        Double bodyFat = null;
+        Integer workouts = 1;
+        try { if (body.get("weightKg") != null) weightKg = Double.parseDouble(str(body, "weightKg")); } catch (Exception ignored) {}
+        try { if (body.get("bodyFatPct") != null) bodyFat = Double.parseDouble(str(body, "bodyFatPct")); } catch (Exception ignored) {}
+        try { if (body.get("workoutsCompleted") != null) workouts = Integer.parseInt(str(body, "workoutsCompleted")); } catch (Exception ignored) {}
+        String metricsJson = str(body, "metricsJson");
+        String workoutNotes = str(body, "workoutNotes");
+
+        try {
+            FitnessProgressLog log = fitnessService.logClientProgress(userId, t, LocalDate.now(), weightKg, bodyFat,
+                    workouts, metricsJson, workoutNotes);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Progress logged");
+            res.put("logId", log.getId());
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Logging progress failed" : ex.getMessage());
+        }
+    }
+
+    // ==========================================
+    // DYNAMIC QR ATTENDANCE (MOBILE TRAINER)
+    // ==========================================
+
+    @PostMapping("/qr-session")
+    public ResponseEntity<Map<String, Object>> createQrSession(
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            Long classId = null;
+            int duration = 15;
+            Double lat = null;
+            Double lng = null;
+
+            if (body != null) {
+                if (body.get("classId") != null && !body.get("classId").toString().isEmpty()) {
+                    classId = Long.valueOf(body.get("classId").toString());
+                }
+                if (body.get("duration") != null && !body.get("duration").toString().isEmpty()) {
+                    duration = Integer.parseInt(body.get("duration").toString());
+                }
+                if (body.get("latitude") != null) {
+                    lat = Double.parseDouble(body.get("latitude").toString());
+                }
+                if (body.get("longitude") != null) {
+                    lng = Double.parseDouble(body.get("longitude").toString());
+                }
+            }
+
+            in.sp.main.Entities.FitnessQrAttendanceSession qrSession = fitnessQrAttendanceService.createOrRefreshSession(
+                    t, classId, LocalDate.now(), duration, lat, lng);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("qrPayload", qrSession.getToken());
+            res.put("trainerName", t.getFullName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("durationMinutes", duration);
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "QR creation failed" : ex.getMessage());
+        }
+    }
+
+    @PostMapping("/qr-session/{id}/close")
+    public ResponseEntity<Map<String, Object>> closeQrSession(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            fitnessQrAttendanceService.closeSession(id, t);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "QR session closed");
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Failed to close QR" : ex.getMessage());
+        }
+    }
+
+    @GetMapping("/qr-session/{id}/attendees")
+    public ResponseEntity<Map<String, Object>> getQrAttendees(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            List<Map<String, Object>> attendees = fitnessQrAttendanceService.getSessionAttendees(t, id);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("attendees", attendees);
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Failed to fetch attendees" : ex.getMessage());
+        }
+    }
+
+    @GetMapping("/qr-session/active")
+    public ResponseEntity<Map<String, Object>> getActiveQrSession(HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        Optional<in.sp.main.Entities.FitnessQrAttendanceSession> active = fitnessQrAttendanceService.getActiveSession(t, LocalDate.now());
+        Map<String, Object> res = new LinkedHashMap<>();
+        if (active.isPresent()) {
+            in.sp.main.Entities.FitnessQrAttendanceSession s = active.get();
+            res.put("success", true);
+            res.put("active", true);
+            res.put("sessionId", s.getId());
+            res.put("token", s.getToken());
+            res.put("qrPayload", s.getToken());
+            res.put("trainerName", t.getFullName());
+            res.put("sessionDate", s.getSessionDate().toString());
+            res.put("expiresAt", s.getExpiresAt().toString());
+        } else {
+            res.put("success", true);
+            res.put("active", false);
+        }
+        return ResponseEntity.ok(res);
+    }
+
     private FitnessTrainer requireTrainer(HttpSession session) {
+
         Object t = session == null ? null : session.getAttribute("loggedTrainer");
         return t instanceof FitnessTrainer ? (FitnessTrainer) t : null;
     }

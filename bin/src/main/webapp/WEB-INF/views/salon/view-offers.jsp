@@ -233,39 +233,8 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
         </div>
 
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
-            <i class="bi bi-stars"></i>
-            <span>Fight D Fear</span>
-        </a>
-
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
-                <i class="bi bi-person-circle"></i>
-                <span>Salon Profile</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
-                <i class="bi bi-calendar-check"></i>
-                <span>Manage Bookings</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
-                <i class="bi bi-magic"></i>
-                <span>Our Services</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
-                <i class="bi bi-star-half"></i>
-                <span>Customer Reviews</span>
-            </a>
-            <div class="mt-5">
-                <a class="nav-link-custom text-danger" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-        </nav>
+        <c:set var="activeNav" value="offers" scope="request"/>
+        <jsp:include page="/WEB-INF/views/fragments/salon-sidebar.jsp"/>
     </div>
 
     <!-- Main Content -->

@@ -180,8 +180,8 @@
       <div class="product-card">
         <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="product-img-wrapper">
           <c:choose>
-            <c:when test="${not empty p.imagePath}">
-              <img src="${pageContext.request.contextPath}${p.imagePath}" class="product-img" alt="${p.name}">
+            <c:when test="${not empty p.publicImagePath}">
+              <img src="<c:choose><c:when test="${p.remoteImage}">${p.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${p.publicImagePath}</c:otherwise></c:choose>" class="product-img" alt="<c:out value='${p.name}'/>">
             </c:when>
             <c:otherwise>
               <div class="product-img-placeholder"><i class="bi bi-gift"></i></div>

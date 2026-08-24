@@ -1,6 +1,5 @@
 package in.sp.main.Controller;
 
-import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.WomenCartItem;
 import in.sp.main.Entities.WomenProduct;
@@ -67,15 +66,14 @@ public class MobileWomenProductController {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
-        String cat = ProductCategories.normalize(category);
         String cityQ = city == null ? "" : city.trim().toLowerCase();
         List<WomenProduct> products = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
         List<Map<String, Object>> items = new ArrayList<>();
         for (WomenProduct p : products) {
-            if (p.getSeller() == null || p.getSeller().getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            if (!ProductCategories.matchesFilter(p.getCategory(), category)) continue;
+            if (p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) {
                 continue;
             }
-            if (cat != null && !cat.isBlank() && !cat.equals(ProductCategories.normalize(p.getCategory()))) continue;
             String sellerCity = p.getSeller().getCity() == null ? "" : p.getSeller().getCity().toLowerCase();
             if (!cityQ.isBlank() && !sellerCity.contains(cityQ)) continue;
             double price = p.getPrice() == null ? 0 : p.getPrice();
@@ -117,7 +115,7 @@ public class MobileWomenProductController {
         if (user == null) return unauthorized();
 
         WomenProduct p = productRepo.findById(id).orElse(null);
-        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted()) {
+        if (p == null || !p.isListedForShop()) {
             return badRequest("Product not found.");
         }
 
@@ -290,7 +288,7 @@ public class MobileWomenProductController {
         for (WomenCartItem ci : items) {
             WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
             if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())) continue;
-            if (p.getSeller() == null || p.getSeller().getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) continue;
+            if (p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) continue;
             int stock = p.getStock() == null ? 0 : p.getStock();
             if (stock <= 0) continue;
             int qty = Math.min(ci.getQuantity(), stock);
@@ -444,7 +442,7 @@ public class MobileWomenProductController {
         dto.put("benefits", p.getBenefits());
         dto.put("usageInstructions", p.getUsageInstructions());
         dto.put("tags", p.getTags());
-        dto.put("imagePath", p.getImagePath());
+        dto.put("imagePath", p.getPublicImagePath());
         dto.put("additionalImagePaths", p.getAdditionalImagePaths());
         dto.put("featured", p.getFeatured());
         dto.put("sellerName", p.getSeller() != null ? p.getSeller().getBusinessName() : null);

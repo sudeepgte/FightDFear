@@ -9,23 +9,46 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --navy-dark: #1e1b4b;
             --navy-light: #312e81;
             --primary: #f43f5e;
             --bg-light: #f4f6fa;
+            --maroon: #1e1b4b;
+            --maroon-pale: #f8fafc;
+            --maroon-border: rgba(30, 27, 75, 0.12);
+            --sidebar-w: 272px;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-light);
             color: #0f172a;
+            margin: 0;
         }
+
+        .topbar {
+            background: var(--maroon); color:#fff; padding: 0 20px; height: 58px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .topbar .brand { font-size:1.1rem; font-weight:700; }
+        .topbar .btn-logout {
+            background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);
+            border-radius:7px; padding:5px 16px; font-size:0.85rem; font-weight:600; text-decoration:none;
+        }
+        .layout { display:flex; min-height:calc(100vh - 58px); }
+        .sidebar {
+            width: var(--sidebar-w); background:#fff; border-right:1px solid var(--maroon-border);
+            position:sticky; top:58px; height:calc(100vh - 58px); padding:14px 12px; overflow-y:auto; flex-shrink:0;
+        }
+        .main { flex:1; padding:24px; min-width:0; }
 
         .container {
             max-width: 1000px;
-            margin-top: 40px;
+            margin-top: 20px;
         }
 
         .stat-card {
@@ -69,9 +92,16 @@
 </head>
 <body>
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div class="topbar">
+    <div class="brand"><i class="fas fa-shield-alt me-2"></i>Fight D Fear Admin</div>
+    <a class="btn-logout" href="${pageContext.request.contextPath}/admin/logout">Logout</a>
+</div>
 
-<div class="container">
+<div class="layout">
+    <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
+
+    <main class="main">
+        <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold" style="color: var(--navy-dark);"><i class="bi bi-graph-up-arrow text-success"></i> Platform Revenue Desk</h2>
@@ -200,8 +230,9 @@
             </table>
         </div>
     </div>
+    </main>
 </div>
 
-<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

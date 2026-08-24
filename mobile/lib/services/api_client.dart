@@ -5,9 +5,42 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
-  ApiClient(this.baseUrl);
+  ApiClient(this._defaultBaseUrl) {
+    _initCustomBaseUrl();
+  }
 
-  final String baseUrl;
+  final String _defaultBaseUrl;
+  String? _customBaseUrl;
+
+  String get baseUrl => _customBaseUrl ?? _defaultBaseUrl;
+
+  static const _customBaseUrlKey = 'custom_api_base_url';
+
+  Future<void> _initCustomBaseUrl() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_customBaseUrlKey);
+      if (saved != null && saved.trim().isNotEmpty) {
+        _customBaseUrl = saved.trim();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> setCustomBaseUrl(String? url) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (url == null || url.trim().isEmpty) {
+      _customBaseUrl = null;
+      await prefs.remove(_customBaseUrlKey);
+    } else {
+      _customBaseUrl = url.trim();
+      await prefs.setString(_customBaseUrlKey, url.trim());
+    }
+  }
+
+  Future<String?> getCustomBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_customBaseUrlKey);
+  }
   static const _tokenKey = 'auth_token';
   static const _doctorTokenKey = 'doctor_auth_token';
   static const _centreTokenKey = 'centre_auth_token';

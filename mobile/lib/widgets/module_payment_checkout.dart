@@ -31,24 +31,30 @@ class ModulePaymentCheckout {
 
   Future<void> pay({
     required BuildContext context,
-    required double amount,
     required Map<String, dynamic> Function(PaymentSuccessResponse response) verifyPayload,
     VoidCallback? onSuccess,
     void Function(String message)? onError,
     String description = 'Payment',
+    double? amount,
+    Future<Map<String, dynamic>> Function()? createOrderFn,
   }) async {
     if (_paying) return;
-    if (amount <= 0) {
-      onError?.call('No payment required');
-      return;
-    }
     _paying = true;
     _verifyPayload = verifyPayload;
     _onSuccess = onSuccess;
     _onError = onError;
 
     try {
-      final orderRes = await _payments.createOrder(amount);
+      final Map<String, dynamic> orderRes;
+      if (createOrderFn != null) {
+        orderRes = await createOrderFn();
+      } else {
+        if (amount == null || amount <= 0) {
+          onError?.call('No payment required');
+          return;
+        }
+        orderRes = await _payments.createOrder(amount);
+      }
       if (!context.mounted) return;
 
       if (orderRes['orderId'] == null || orderRes['key'] == null) {

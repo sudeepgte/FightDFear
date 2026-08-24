@@ -519,6 +519,62 @@ public class PaymentController {
                     }
                     targetId = creator.getId();
                 }
+            } else if ("GLOW_BOOKING".equals(type)) {
+                Object bookingIdObj = data.get("bookingId") != null ? data.get("bookingId") : data.get("targetId");
+                if (bookingIdObj == null) {
+                    errorBody.put("error", "bookingId is required for Glow booking payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                Long bookingId = Long.parseLong(bookingIdObj.toString());
+                Booking1 glowBooking = booking1Repository.findById(bookingId).orElse(null);
+                if (glowBooking == null || glowBooking.getUser() == null
+                        || !glowBooking.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Booking not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if (glowBooking.getSalon() == null) {
+                    errorBody.put("error", "Invalid Glow Space booking");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                String glowSt = glowBooking.getStatus() == null ? "" : glowBooking.getStatus().trim().toUpperCase(Locale.ROOT);
+                if ("CONFIRMED".equals(glowSt) || "PAID".equals(glowSt) || "COMPLETED".equals(glowSt)) {
+                    errorBody.put("error", "Booking already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if ("CANCELLED".equals(glowSt) || "REJECTED".equals(glowSt)) {
+                    errorBody.put("error", "Booking is not eligible for payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = glowBooking.getPrice();
+                if (amount <= 0) {
+                    errorBody.put("error", "This booking does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = bookingId;
+            } else if ("WOMEN_PRODUCT".equals(type)) {
+                List<Long> orderIds = parseWomenProductOrderIds(data);
+                if (orderIds.isEmpty()) {
+                    errorBody.put("error", "orderId is required for product payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = 0;
+                for (Long oid : orderIds) {
+                    WomenProductOrder o = womenProductOrderPayRepo.findById(oid).orElse(null);
+                    if (o == null || o.getUser() == null || !o.getUser().getId().equals(user.getId())) {
+                        errorBody.put("error", "Order not found or access denied");
+                        return ResponseEntity.status(403).body(errorBody);
+                    }
+                    if ("PAID".equalsIgnoreCase(o.getPaymentStatus())) {
+                        errorBody.put("error", "Order already paid");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    if (!"ONLINE".equalsIgnoreCase(o.getPaymentMethod())) {
+                        errorBody.put("error", "Order is not an online payment order");
+                        return ResponseEntity.badRequest().body(errorBody);
+                    }
+                    amount += o.getTotalPrice() == null ? 0 : Math.max(0, o.getTotalPrice());
+                }
+                targetId = orderIds.get(0);
             } else {
                 Object amountRaw = data.get("amount");
                 if (amountRaw == null) {
@@ -805,31 +861,48 @@ public class PaymentController {
                 try {
                     womenLawyerCareService.creditPayout(booking.getProvider(), expectedAmount > 0 ? expectedAmount : amountPaid);
                 } catch (Exception ignored) {}
-            } else if ("WOMEN_PRODUCT".equals(type)) {
-                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("orderId");
-                Long targetId = Long.parseLong(targetIdObj.toString());
-                WomenProductOrder order = womenProductOrderPayRepo.findById(targetId).orElse(null);
-                if (order == null || order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
-                    responseMap.put("error", "Order not found or access denied.");
-                    return ResponseEntity.status(403).body(responseMap);
+            } else if ("WOMEN_PRODUCT".equalsIgnoreCase(type)
+                    || "WOMEN_PRODUCT".equalsIgnoreCase(Objects.toString(pending.type(), ""))) {
+                List<Long> orderIds = parseWomenProductOrderIds(data);
+                if (orderIds.isEmpty() && pending.targetId() != null) {
+                    orderIds = List.of(pending.targetId());
                 }
-                if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+                if (orderIds.isEmpty()) {
+                    responseMap.put("error", "Order id is missing from this payment.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                double expectedTotal = 0;
+                List<WomenProductOrder> toPay = new ArrayList<>();
+                for (Long oid : orderIds) {
+                    WomenProductOrder order = womenProductOrderPayRepo.findById(oid).orElse(null);
+                    if (order == null || order.getUser() == null || !order.getUser().getId().equals(user.getId())) {
+                        responseMap.put("error", "Order not found or access denied.");
+                        return ResponseEntity.status(403).body(responseMap);
+                    }
+                    if ("PAID".equalsIgnoreCase(order.getPaymentStatus())) {
+                        continue;
+                    }
+                    expectedTotal += order.getTotalPrice() == null ? 0 : order.getTotalPrice();
+                    toPay.add(order);
+                }
+                if (toPay.isEmpty()) {
                     responseMap.put("status", "success");
                     responseMap.put("message", "Already paid");
                     return ResponseEntity.ok(responseMap);
                 }
-                double expectedAmount = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
-                if (expectedAmount > 0 && Math.abs(expectedAmount - amountPaid) > 0.05) {
+                if (expectedTotal > 0 && Math.abs(expectedTotal - amountPaid) > 0.05) {
                     responseMap.put("error", "Payment amount does not match order total.");
                     return ResponseEntity.status(400).body(responseMap);
                 }
-                order.setPaymentMethod("ONLINE");
-                order.setPaymentStatus("PAID");
-                order.setRazorpayPaymentId(paymentId);
-                womenProductOrderPayRepo.save(order);
-                try {
-                    womenProductsCareService.creditSeller(order);
-                } catch (Exception ignored) {}
+                for (WomenProductOrder order : toPay) {
+                    order.setPaymentMethod("ONLINE");
+                    order.setPaymentStatus("PAID");
+                    order.setRazorpayPaymentId(paymentId);
+                    womenProductOrderPayRepo.save(order);
+                    try {
+                        womenProductsCareService.creditSeller(order);
+                    } catch (Exception ignored) {}
+                }
             } else if ("WORKER_BOOKING".equals(type)) {
                 Object targetIdObj = data.get("targetId");
                 Long targetId = Long.parseLong(targetIdObj.toString());
@@ -874,8 +947,12 @@ public class PaymentController {
                     );
                     walletTransactionRepo.save(clientTx);
                 }
-            } else if ("GLOW_BOOKING".equals(type)) {
-                Object bookingIdObj = data.get("bookingId");
+            } else if ("GLOW_BOOKING".equalsIgnoreCase(type)
+                    || "GLOW_BOOKING".equalsIgnoreCase(Objects.toString(pending.type(), ""))) {
+                Object bookingIdObj = data.get("bookingId") != null ? data.get("bookingId") : data.get("targetId");
+                if (bookingIdObj == null && pending.targetId() != null) {
+                    bookingIdObj = pending.targetId();
+                }
                 if (bookingIdObj == null) {
                     responseMap.put("error", "bookingId is required for Glow booking payment.");
                     return ResponseEntity.badRequest().body(responseMap);
@@ -886,13 +963,26 @@ public class PaymentController {
                     responseMap.put("error", "Glow booking not found or access denied.");
                     return ResponseEntity.status(403).body(responseMap);
                 }
-                if ("CONFIRMED".equalsIgnoreCase(glowBooking.getStatus())
-                        || "PAID".equalsIgnoreCase(glowBooking.getStatus())) {
+                if (glowBooking.getSalon() == null) {
+                    responseMap.put("error", "Invalid Glow Space booking.");
+                    return ResponseEntity.badRequest().body(responseMap);
+                }
+                String glowSt = glowBooking.getStatus() == null ? "" : glowBooking.getStatus().trim().toUpperCase(Locale.ROOT);
+                if ("CONFIRMED".equals(glowSt) || "PAID".equals(glowSt) || "COMPLETED".equals(glowSt)) {
                     responseMap.put("status", "success");
                     responseMap.put("message", "Already paid");
                     return ResponseEntity.ok(responseMap);
                 }
-                if (Math.abs(glowBooking.getPrice() - amountPaid) > 0.05) {
+                if ("CANCELLED".equals(glowSt) || "REJECTED".equals(glowSt)) {
+                    responseMap.put("error", "Booking is not eligible for payment.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                if (!"PENDING".equals(glowSt)) {
+                    responseMap.put("error", "Booking is not awaiting payment.");
+                    return ResponseEntity.status(400).body(responseMap);
+                }
+                double expectedPrice = glowBooking.getPrice();
+                if (expectedPrice > 0 && Math.abs(expectedPrice - amountPaid) > 0.05) {
                     responseMap.put("error", "Payment amount does not match booking price.");
                     return ResponseEntity.status(400).body(responseMap);
                 }
@@ -1166,6 +1256,32 @@ public class PaymentController {
             res.put("error", "Webhook processing failed");
             return ResponseEntity.status(500).body(res);
         }
+    }
+
+    private static List<Long> parseWomenProductOrderIds(Map<String, Object> data) {
+        List<Long> ids = new ArrayList<>();
+        Object raw = data.get("orderIds");
+        if (raw instanceof List<?> list) {
+            for (Object item : list) {
+                if (item == null) continue;
+                try {
+                    ids.add(Long.parseLong(item.toString()));
+                } catch (NumberFormatException ignored) {
+                    // skip invalid id
+                }
+            }
+        }
+        if (ids.isEmpty()) {
+            Object one = data.get("targetId") != null ? data.get("targetId") : data.get("orderId");
+            if (one != null) {
+                try {
+                    ids.add(Long.parseLong(one.toString()));
+                } catch (NumberFormatException ignored) {
+                    // skip invalid id
+                }
+            }
+        }
+        return ids;
     }
 }
 

@@ -110,5 +110,69 @@ class FitnessTrainerAuthService {
     );
   }
 
+  Future<Map<String, dynamic>> getPackages() =>
+      _api.get('/api/fitness/trainer/packages');
+
+  Future<Map<String, dynamic>> savePackage(Map<String, dynamic> body) =>
+      _api.post('/api/fitness/trainer/packages', body: body);
+
+  Future<Map<String, dynamic>> deletePackage(int id) =>
+      _api.delete('/api/fitness/trainer/packages/$id');
+
+  Future<Map<String, dynamic>> markAttendance({
+    required int bookingId,
+    String? sessionDate,
+    String? sessionTime,
+    String status = 'PRESENT',
+    String? notes,
+  }) =>
+      _api.post('/api/fitness/trainer/attendance', body: {
+        'bookingId': bookingId,
+        if (sessionDate != null) 'sessionDate': sessionDate,
+        if (sessionTime != null) 'sessionTime': sessionTime,
+        'status': status,
+        if (notes != null) 'notes': notes,
+      });
+
+  Future<Map<String, dynamic>> logProgress({
+    required int userId,
+    double? weightKg,
+    double? bodyFatPct,
+    int workoutsCompleted = 1,
+    String? metricsJson,
+    String? workoutNotes,
+  }) =>
+      _api.post('/api/fitness/trainer/progress', body: {
+        'userId': userId,
+        if (weightKg != null) 'weightKg': weightKg,
+        if (bodyFatPct != null) 'bodyFatPct': bodyFatPct,
+        'workoutsCompleted': workoutsCompleted,
+        if (metricsJson != null) 'metricsJson': metricsJson,
+        if (workoutNotes != null) 'workoutNotes': workoutNotes,
+      });
+
+  Future<Map<String, dynamic>> createQrSession({
+    int duration = 15,
+    int? classId,
+    double? latitude,
+    double? longitude,
+  }) =>
+      _api.post('/api/fitness/trainer/qr-session', body: {
+        'duration': duration,
+        if (classId != null) 'classId': classId,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+      });
+
+  Future<Map<String, dynamic>> closeQrSession(int sessionId) =>
+      _api.post('/api/fitness/trainer/qr-session/$sessionId/close');
+
+  Future<Map<String, dynamic>> getQrAttendees(int sessionId) =>
+      _api.get('/api/fitness/trainer/qr-session/$sessionId/attendees');
+
+  Future<Map<String, dynamic>> getActiveQrSession() =>
+      _api.get('/api/fitness/trainer/qr-session/active');
+
   Future<void> logout() => _api.clearToken();
 }
+

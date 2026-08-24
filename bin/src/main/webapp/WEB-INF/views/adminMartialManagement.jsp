@@ -242,8 +242,10 @@
             <thead>
               <tr>
                   <th>Center Name</th>
-                  <th>Martial Arts Types & Cost</th>
+                  <th>Status</th>
+                  <th>Programs / Fees</th>
                   <th>Location</th>
+                  <th>Contact</th>
                   <th>Trainer Certificate</th>
                   <th>Action</th>
               </tr>
@@ -265,15 +267,54 @@
                                           </div>
                                       </c:otherwise>
                                   </c:choose>
-                                  <span class="fw-bold">${centre.name}</span>
+                                  <div>
+                                      <span class="fw-bold d-block">${centre.name}</span>
+                                      <small class="text-muted">${centre.email}</small>
+                                  </div>
                               </div>
                           </td>
+                          <td>
+                              <c:choose>
+                                  <c:when test="${centre.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                      <span class="badge bg-warning text-dark">Pending approval</span>
+                                  </c:when>
+                                  <c:when test="${centre.centreProfileStatus == 'READY_FOR_VERIFICATION'}">
+                                      <span class="badge bg-info text-dark">Ready to submit</span>
+                                  </c:when>
+                                  <c:when test="${centre.centreProfileStatus == 'CHANGES_REQUESTED'}">
+                                      <span class="badge bg-orange text-dark" style="background:#fdba74;">Changes requested</span>
+                                  </c:when>
+                                  <c:when test="${centre.centreProfileStatus == 'PROFILE_INCOMPLETE' || centre.centreProfileStatus == 'REGISTERED'}">
+                                      <span class="badge bg-secondary">Profile incomplete</span>
+                                  </c:when>
+                                  <c:otherwise>
+                                      <span class="badge bg-light text-dark">${empty centre.centreProfileStatus ? 'Legacy pending' : centre.centreProfileStatus}</span>
+                                  </c:otherwise>
+                              </c:choose>
+                              <div class="small text-muted mt-1">${centre.profileCompletionPct != null ? centre.profileCompletionPct : 0}%</div>
+                          </td>
                           <td class="text-start">
+                              <c:set var="hasTypes" value="${false}"/>
                               <c:forEach var="type" items="${centre.martialArtsTypes}">
+                                  <c:set var="hasTypes" value="${true}"/>
                                   <div class="mb-1"><span class="fw-600">${type.name}</span> - ₹${type.cost}</div>
                               </c:forEach>
+                              <c:forEach var="batch" items="${centre.batches}">
+                                  <c:set var="hasTypes" value="${true}"/>
+                                  <div class="mb-1"><span class="fw-600">${batch.name}</span>
+                                      <c:if test="${not empty batch.style}"> (${batch.style})</c:if>
+                                      <c:if test="${batch.fee != null}"> - ₹${batch.fee}</c:if>
+                                  </div>
+                              </c:forEach>
+                              <c:if test="${!hasTypes}">
+                                  <span class="text-muted small">No programs yet</span>
+                              </c:if>
                           </td>
-                          <td><i class="fas fa-map-marker-alt text-muted me-1"></i> ${centre.location}</td>
+                          <td><i class="fas fa-map-marker-alt text-muted me-1"></i> ${empty centre.location ? '—' : centre.location}</td>
+                          <td class="small">
+                              <div>${empty centre.phoneNumber ? '—' : centre.phoneNumber}</div>
+                              <div class="text-muted">${empty centre.contactPerson ? '' : centre.contactPerson}</div>
+                          </td>
                           <td>
                               <c:if test="${not empty centre.trainerCertificatePath}">
                                   <a href="${pageContext.request.contextPath}${centre.trainerCertificatePath}" target="_blank" class="btn-view-media">
@@ -281,18 +322,19 @@
                                   </a>
                               </c:if>
                               <c:if test="${empty centre.trainerCertificatePath}">
-                                  <span class="text-muted small">No certificate</span>
+                                  <span class="text-muted small">Optional</span>
                               </c:if>
                           </td>
                           <td>
-                              <div class="d-flex justify-content-center gap-2">
+                              <div class="d-flex justify-content-center gap-2 flex-wrap">
                                   <a href="${pageContext.request.contextPath}/centres/about/${centre.id}" class="btn-profile-view">
                                       <i class="fas fa-user me-1"></i> Profile
                                   </a>
                                 <form action="${pageContext.request.contextPath}/admin/approve/${centre.id}" method="post" class="m-0">
                                     <button type="submit" class="btn-approve"><i class="fas fa-check me-1"></i> Approve</button>
                                 </form>
-                                <form action="${pageContext.request.contextPath}/admin/reject/${centre.id}" method="post" class="m-0">
+                                <form action="${pageContext.request.contextPath}/admin/reject/${centre.id}" method="post" class="m-0"
+                                      onsubmit="return confirm('Reject this trainer/centre registration?');">
                                     <button type="submit" class="btn-reject"><i class="fas fa-times me-1"></i> Reject</button>
                                 </form>
                               </div>
@@ -302,7 +344,7 @@
                 </c:when>
                 <c:otherwise>
                   <tr>
-                    <td colspan="5" class="py-4 text-center text-muted">
+                    <td colspan="7" class="py-4 text-center text-muted">
                       <i class="fas fa-check-circle fa-2x mb-2 d-block" style="opacity:0.4;"></i>
                       No pending requests.
                     </td>

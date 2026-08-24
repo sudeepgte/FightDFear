@@ -478,18 +478,13 @@
     }
 </style>
 <body>
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+    <!-- Header -->
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
-
-<div class="profile-back-bar mb-3 px-3 px-md-4 pt-2">
-    <a href="${pageContext.request.contextPath}/users/dashboard" class="profile-back-btn">
-        <i class="bi bi-arrow-left"></i>
-        <span class="back-label-long">Back to Dashboard</span>
-        <span class="back-label-short">Back</span>
-    </a>
-</div>
 
 <section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: transparent;">
 					     <div class="container-fluid p-0">
@@ -598,7 +593,7 @@
 
 
  <!-- 🌸 Footer -->
-  <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+  
 
 <!-- Scripts -->
 					  	<script src="${pageContext.request.contextPath}/beauty/js/jquery.min.js"></script>

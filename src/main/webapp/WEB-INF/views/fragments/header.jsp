@@ -249,7 +249,10 @@
 <!-- ======= Header ======= -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
-    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto" style="text-decoration: none;"><h1>Fight D Fear</h1></a>
+    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
+        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 36px; width: 36px; border-radius: 8px; object-fit: cover;">
+        <h1 style="margin:0;">Fight D Fear</h1>
+    </a>
     <nav id="navmenu" class="navmenu">
       <ul>
         <c:choose>

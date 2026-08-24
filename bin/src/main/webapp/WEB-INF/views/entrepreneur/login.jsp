@@ -139,6 +139,17 @@
             font-size: 1rem;
         }
 
+        .input-wrapper .toggle-password {
+            left: auto;
+            right: 16px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .input-wrapper .toggle-password:hover {
+            color: #f43f5e;
+        }
+
         .form-input {
             width: 100%;
             padding: 14px 16px 14px 46px;
@@ -246,6 +257,13 @@
             .feature-list { display: none; }
             .right-panel { padding: 40px 20px; background: #fff; margin-top: -30px; border-radius: 30px 30px 0 0; }
         }
+
+        @media (max-width: 768px) {
+            .left-panel .brand-logo { font-size: 2rem; }
+            .left-panel .brand-tagline { font-size: 1rem; }
+            .right-panel { padding: 30px 15px; }
+            .login-card h2 { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
@@ -305,21 +323,29 @@
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/entrepreneur/login" method="post">
+            <form action="${pageContext.request.contextPath}/entrepreneur/login" method="post" id="loginForm" novalidate>
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <div class="input-wrapper">
                         <i class="bi bi-envelope"></i>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your registered email" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your registered email" required pattern="^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$">
+                    </div>
+                    <div id="emailError" style="display: none; color: #dc2626; font-size: 0.85rem; margin-top: 5px;">
+                        Please enter a valid email address.
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group mb-2">
                     <label for="password">Password</label>
                     <div class="input-wrapper">
                         <i class="bi bi-lock"></i>
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
+                        <input type="password" id="password" name="password" class="form-input" style="padding-right: 45px;" placeholder="Enter your password" required>
+                        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
                     </div>
+                </div>
+
+                <div class="text-end mb-4">
+                    <a href="${pageContext.request.contextPath}/entrepreneur/forgot-password" style="font-size: 0.85rem; color: #f43f5e; font-weight: 600; text-decoration: none;">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn-login">
@@ -334,5 +360,38 @@
             </p>
         </div>
     </div>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            var emailInput = document.getElementById('email');
+            var emailError = document.getElementById('emailError');
+            var regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+            if (!regex.test(emailInput.value)) {
+                e.preventDefault();
+                emailError.style.display = 'block';
+                emailInput.style.borderColor = '#f43f5e';
+            } else {
+                emailError.style.display = 'none';
+                emailInput.style.borderColor = '';
+            }
+        });
+        
+        document.getElementById('email').addEventListener('input', function() {
+            document.getElementById('emailError').style.display = 'none';
+            this.style.borderColor = '';
+        });
+
+        // Toggle Password Visibility
+        const togglePassword = document.querySelector('#togglePassword');
+        const password = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function (e) {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            // Toggle the eye / eye slash icon
+            this.classList.toggle('bi-eye');
+            this.classList.toggle('bi-eye-slash');
+        });
+    </script>
 </body>
 </html>

@@ -467,6 +467,13 @@
 
             </div>
 
+            <!-- Toast Notification for other chats -->
+            <div id="chatToast" class="chat-toast" role="alert" style="position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 280px; background: #fff; border: 1px solid #ddd; border-left: 4px solid var(--primary-coral, #f43f5e); border-radius: 12px; padding: 14px 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none;">
+                <div class="fw-bold mb-1"><i class="bi bi-chat-dots-fill text-primary me-1"></i> New Message</div>
+                <div id="chatToastBody" class="small text-muted mb-2"></div>
+                <a id="chatToastLink" href="#" style="color: var(--primary-purple, #1e1b4b); font-weight: 700; text-decoration: none;">Open Chat →</a>
+            </div>
+
             <!-- Incoming Call Modal -->
             <div class="modal fade" id="incomingCallModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
@@ -603,14 +610,45 @@
 
                 function formatMsgTime(ts) {
                     if (!ts) return '';
-                    const d = new Date(ts);
-                    if (isNaN(d.getTime())) {
-                        return ts.replace('T', ' ').substring(0, 16);
+                    
+                    let d;
+                    if (Array.isArray(ts)) {
+                        d = new Date(ts[0], ts[1] - 1, ts[2], ts[3], ts[4], ts.length > 5 ? ts[5] : 0);
+                    } else if (typeof ts === 'string') {
+                        d = new Date(ts);
+                    } else {
+                        d = new Date(ts);
                     }
-                    return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    
+                    if (!isNaN(d.getTime())) {
+                        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+                    return ts;
+                }
+
+                let toastTimer = null;
+                function showChatToast(msg) {
+                    const toast = document.getElementById('chatToast');
+                    const senderName = msg.sender && msg.sender.fullName ? msg.sender.fullName : 'Someone';
+                    const preview = msg.message ? msg.message.substring(0, 80) : 'Sent you a message';
+                    document.getElementById('chatToastBody').textContent = senderName + ': ' + preview;
+                    document.getElementById('chatToastLink').href = '${pageContext.request.contextPath}/chat/window/' + msg.sender.id;
+                    toast.style.display = 'block';
+                    clearTimeout(toastTimer);
+                    toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 8000);
                 }
 
                 function displayMessage(msg) {
+                    const currentReceiverId = Number(document.getElementById("receiverId").value);
+                    const isSender = Number(msg.sender?.id) === Number(userId) || Number(msg.sender) === Number(userId);
+                    
+                    // If the message is NOT from me and NOT from the current receiver, it belongs to another chat.
+                    // Show a toast notification instead of appending it to the wrong chat box.
+                    if (!isSender && Number(msg.sender?.id) !== currentReceiverId) {
+                        showChatToast(msg);
+                        return;
+                    }
+
                     const chatBox = document.getElementById("chatBox");
 
                     const wrapper = document.createElement("div");
@@ -618,7 +656,7 @@
 
                     const bubble = document.createElement("div");
 
-                    if (Number(msg.sender.id) === Number(userId)) {
+                    if (isSender) {
                         wrapper.classList.add("justify-content-end");
                         bubble.classList.add("message-sent");
                     } else {
@@ -642,6 +680,13 @@
                         timeEl.className = "msg-time";
                         timeEl.textContent = formatMsgTime(msg.timestamp);
                         bubble.appendChild(timeEl);
+                    }
+
+                    if (isSender) {
+                        const tickEl = document.createElement("span");
+                        tickEl.className = "tick" + (msg.readStatus ? " read" : "");
+                        tickEl.textContent = " ✔✔";
+                        bubble.appendChild(tickEl);
                     }
 
                     wrapper.appendChild(bubble);

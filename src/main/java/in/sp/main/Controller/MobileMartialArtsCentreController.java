@@ -21,7 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+
 
 /**
  * Centre owner APIs for Flutter — register, login, dashboard (Bearer JWT role CENTRE).
@@ -78,7 +81,18 @@ public class MobileMartialArtsCentreController {
     @Autowired
     private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
 
+
+    @Autowired
+    private in.sp.main.Service.QrAttendanceService qrAttendanceService;
+
+    @Autowired
+    private in.sp.main.Service.BeltGradingService beltGradingService;
+
+    @Autowired
+    private in.sp.main.Repository.CentreInstructorRepository instructorRepository;
+
     @PostMapping("/otp/send-email")
+
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
         try {
             centreRegistrationService.sendRegistrationOtp(body == null ? null : body.get("email"));
@@ -1448,6 +1462,256 @@ public class MobileMartialArtsCentreController {
         return body;
     }
 
+    // ==========================================
+    // QR ATTENDANCE SESSIONS (MOBILE CENTRE API)
+    // ==========================================
+
+    @PostMapping("/qr-session")
+    public ResponseEntity<Map<String, Object>> createMobileQrSession(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        try {
+            Long batchId = Long.parseLong(body.get("batchId").toString());
+            String dateStr = (String) body.get("date");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            int duration = body.get("duration") != null ? Integer.parseInt(body.get("duration").toString()) : 15;
+
+            QrAttendanceSession qrSession = qrAttendanceService.createOrRefreshSession(centre, batchId, date, duration);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("batchId", batchId);
+            res.put("batchName", qrSession.getBatch().getName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("active", qrSession.isActive());
+            return ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    @GetMapping("/qr-session")
+    public ResponseEntity<Map<String, Object>> getMobileQrSession(
+            @RequestParam Long batchId,
+            @RequestParam(required = false) String date,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        LocalDate sessionDate = (date != null && !date.isBlank()) ? LocalDate.parse(date) : LocalDate.now();
+        Optional<QrAttendanceSession> opt = qrAttendanceService.getActiveSession(batchId, sessionDate);
+
+        if (opt.isEmpty()) {
+            return ResponseEntity.ok(Map.of("success", false, "active", false, "message", "No active QR session for this batch today"));
+        }
+
+        QrAttendanceSession s = opt.get();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("active", true);
+        res.put("sessionId", s.getId());
+        res.put("token", s.getToken());
+        res.put("batchName", s.getBatch().getName());
+        res.put("sessionDate", s.getSessionDate().toString());
+        res.put("expiresAt", s.getExpiresAt().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/qr-session/{id}/close")
+    public ResponseEntity<Map<String, Object>> closeMobileQrSession(
+            @PathVariable Long id,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        try {
+            qrAttendanceService.closeSession(id, centre);
+            return ResponseEntity.ok(Map.of("success", true, "message", "QR session closed"));
+        } catch (Exception e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    // ==========================================
+    // BELT GRADING & SKILL ASSESSMENTS (MOBILE)
+    // ==========================================
+
+    @GetMapping("/grading/criteria")
+    public ResponseEntity<Map<String, Object>> getMobileGradingCriteria(@RequestParam(required = false) String discipline) {
+        List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
+        List<String> belts = beltGradingService.getBeltHierarchy(discipline);
+        return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
+    }
+
+    @GetMapping("/gradings")
+    public ResponseEntity<Map<String, Object>> getMobileCentreGradings(HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        List<Map<String, Object>> list = beltGradingService.getCentreGradingHistory(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "gradings", list));
+    }
+
+    @PostMapping("/gradings/schedule")
+    public ResponseEntity<Map<String, Object>> scheduleMobileGrading(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        try {
+            Long studentId = Long.parseLong(body.get("studentId").toString());
+            Long batchId = body.get("batchId") != null ? Long.parseLong(body.get("batchId").toString()) : null;
+            String discipline = (String) body.get("discipline");
+            String targetBelt = (String) body.get("targetBelt");
+            String dateStr = (String) body.get("scheduledDate");
+            LocalDate date = (dateStr != null && !dateStr.isBlank()) ? LocalDate.parse(dateStr) : LocalDate.now();
+            String trainer = (String) body.get("trainerName");
+
+            BeltGradingAssessment assessment = beltGradingService.scheduleGrading(
+                    centre, studentId, batchId, discipline, targetBelt, date, trainer
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Grading scheduled",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    @PostMapping("/gradings/{id}/score")
+    public ResponseEntity<Map<String, Object>> conductMobileAssessment(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        try {
+            Map<String, Integer> criteriaScores = (Map<String, Integer>) body.get("scores");
+            String remarks = (String) body.get("remarks");
+            String examinerNotes = (String) body.get("examinerNotes");
+            String trainerName = (String) body.get("trainerName");
+            boolean autoPromote = body.get("autoPromote") != null && Boolean.parseBoolean(body.get("autoPromote").toString());
+
+            BeltGradingAssessment assessment = beltGradingService.conductAndScoreAssessment(
+                    centre, id, criteriaScores, remarks, examinerNotes, trainerName, autoPromote
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", assessment.getPassed() ? "Assessment passed! " + (autoPromote ? "Promoted." : "") : "Assessment failed",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    @PostMapping("/gradings/{id}/promote")
+    public ResponseEntity<Map<String, Object>> approveMobilePromotion(
+            @PathVariable Long id,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        try {
+            BeltGradingAssessment assessment = beltGradingService.approveAndPromote(centre, id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Belt promotion approved! Digital Certificate generated.",
+                    "assessment", beltGradingService.assessmentSummary(assessment)
+            ));
+        } catch (Exception e) {
+            return badRequest(e.getMessage());
+        }
+    }
+
+    // ==========================================
+    // INSTRUCTORS & RENEWALS (MOBILE)
+    // ==========================================
+
+    @GetMapping("/instructors")
+    public ResponseEntity<Map<String, Object>> getMobileInstructors(HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        List<CentreInstructor> list = instructorRepository.findByCenter_IdAndActiveTrue(centre.getId());
+        return ResponseEntity.ok(Map.of("success", true, "instructors", list));
+    }
+
+    @PostMapping("/instructors")
+    public ResponseEntity<Map<String, Object>> createMobileInstructor(
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        String name = body.get("name");
+        if (name == null || name.isBlank()) return badRequest("Name is required");
+
+        CentreInstructor inst = new CentreInstructor();
+        inst.setCenter(centre);
+        inst.setName(name.trim());
+        inst.setEmail(body.get("email"));
+        inst.setPhone(body.get("phone"));
+        inst.setDesignation(body.getOrDefault("designation", "Instructor"));
+        inst.setSpecialization(body.getOrDefault("specialization", "General Martial Arts"));
+        inst.setExperienceYears(body.getOrDefault("experienceYears", "1+ years"));
+        inst.setActive(true);
+        instructorRepository.save(inst);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor added", "instructor", inst));
+    }
+
+    @DeleteMapping("/instructors/{id}")
+    public ResponseEntity<Map<String, Object>> removeMobileInstructor(
+            @PathVariable Long id,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        CentreInstructor inst = instructorRepository.findById(id).orElse(null);
+        if (inst == null || !inst.getCenter().getId().equals(centre.getId())) {
+            return badRequest("Instructor not found");
+        }
+        inst.setActive(false);
+        instructorRepository.save(inst);
+        return ResponseEntity.ok(Map.of("success", true, "message", "Instructor removed"));
+    }
+
+    @PostMapping("/enrollments/{id}/renewal")
+    public ResponseEntity<Map<String, Object>> updateMobileRenewal(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body,
+            HttpSession session) {
+        MartialArtsCenter centre = requireCentre(session);
+        if (centre == null) return unauthorized();
+
+        Enrollment e = enrollmentRepository.findById(id).orElse(null);
+        if (e == null || e.getCenter() == null || !e.getCenter().getId().equals(centre.getId())) {
+            return badRequest("Enrollment not found");
+        }
+
+        String renewalStatus = body.get("renewalStatus");
+        String nextDueDateStr = body.get("nextRenewalDate");
+
+        if (renewalStatus != null) e.setRenewalStatus(renewalStatus);
+        if (nextDueDateStr != null && !nextDueDateStr.isBlank()) {
+            e.setNextRenewalDate(LocalDate.parse(nextDueDateStr));
+        }
+        enrollmentRepository.save(e);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", "Renewal status updated"));
+    }
+
     private static String str(Object v) {
         return v == null ? "" : v.toString().trim();
     }
@@ -1458,3 +1722,4 @@ public class MobileMartialArtsCentreController {
         return v == null ? "" : v.toString().trim();
     }
 }
+

@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Marketplace Provider Verification — Admin</title>
+  <title>Service Partner Verification — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -38,30 +38,7 @@
     text-decoration:none; transition:background 0.2s;
   }
 
-  /* ── LAYOUT ── */
-  .layout { display:flex; min-height:calc(100vh - 58px); }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: var(--sidebar-w); background:#fff;
-    border-right:1px solid var(--maroon-border);
-    position:sticky; top:58px; height:calc(100vh - 58px);
-    padding:14px 12px; overflow-y:auto; flex-shrink:0;
-  }
-  .sidebar .brand-label { font-weight:700; color:var(--maroon); font-size:0.95rem; margin-bottom:10px; padding:0 6px; }
-  .sidebar .sec-title { margin:14px 8px 6px; font-size:0.72rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.06em; }
-  .sidebar a.nl {
-    display:flex; align-items:center; gap:9px;
-    padding:9px 10px; border-radius:9px;
-    color:#374151; text-decoration:none; font-weight:500; font-size:0.88rem;
-    transition:all 0.18s;
-  }
-  .sidebar a.nl i { width:18px; text-align:center; color:var(--maroon); font-size:0.9rem; }
-  .sidebar a.nl:hover { background:rgba(125,42,90,0.08); padding-left:14px; color:#1a1a2e; }
-  .sidebar a.nl.active { background:rgba(125,42,90,0.12); color:var(--maroon); font-weight:700; }
-
   /* ── MAIN ── */
-  .main { flex:1; min-width:0; padding:28px 20px 48px; }
   .mainInner { max-width:1200px; margin:0 auto; animation:fadeUp 0.35s ease-out; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
 
@@ -161,45 +138,25 @@
     box-shadow: 0 4px 12px rgba(125,42,90,0.15);
   }
 
-  @media(max-width:992px){
-    .layout{flex-direction:column;}
-    .sidebar{width:100%;position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--maroon-border);}
-  }
+
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
-  <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
+  <span class="brand ms-lg-3">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
+  <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout me-lg-3">
     <i class="fas fa-sign-out-alt"></i> Logout
   </a>
 </div>
 
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 <div class="layout">
-  <aside class="sidebar">
-    <div class="brand-label">Admin Menu</div>
-    <div class="sec-title">Dashboard</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/adminDashboard"><i class="fas fa-home"></i> Home</a>
+  <%@ include file="globalAdminMenu.jsp" %>
 
-    <div class="sec-title">Moderation</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/sos"><i class="fas fa-broadcast-tower"></i> SOS Monitoring</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/reported-videos"><i class="fas fa-flag"></i> Reported Videos</a>
-    <a class="nl" href="${pageContext.request.contextPath}/qna/admin/questions"><i class="fas fa-question-circle"></i> Q&amp;A Panel</a>
-
-    <div class="sec-title">Approvals</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/martialManagement"><i class="fas fa-dumbbell"></i> Martial Arts Centres</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-suggestions"><i class="fas fa-users"></i> Volunteer Suggestions</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-doctors"><i class="fas fa-user-md"></i> Doctor Verification</a>
-    <a class="nl active" href="${pageContext.request.contextPath}/admin/pending-providers"><i class="fas fa-store"></i> Provider Verification</a>
-    <a class="nl" href="${pageContext.request.contextPath}/video/videoManagement"><i class="fas fa-video"></i> Video Library</a>
-
-    <div class="sec-title">Account</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/users"><i class="fas fa-user-cog"></i> User Management</a>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/profile/${admin.id}"><i class="fas fa-user"></i> Profile</a>
-  </aside>
-
-  <main class="main">
+  <main class="main w-100">
     <div class="mainInner">
       
       <!-- Header -->
@@ -211,10 +168,15 @@
                 <c:when test="${selectedCategory == 'WOMEN_PRODUCTS'}">Women Products Verification</c:when>
                 <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification</c:when>
                 <c:when test="${selectedCategory == 'FITNESS_ZUMBA'}">Fitness & Zumba Verification</c:when>
-                <c:otherwise>Marketplace Provider Verification</c:otherwise>
+                <c:otherwise>Service Partner Verification</c:otherwise>
             </c:choose>
           </h4>
-          <p>Review and verify marketplace providers</p>
+          <p>
+            <c:choose>
+              <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Review lawyer profiles from Join Us → Women Lawyer (practice areas, bar ID, fee)</c:when>
+              <c:otherwise>Review and verify service partners registered from mobile / web</c:otherwise>
+            </c:choose>
+          </p>
         </div>
       </div>
 
@@ -236,6 +198,12 @@
                       <th>Phone</th>
                       <th>Category</th>
                       <th>Location</th>
+                      <c:if test="${selectedCategory == 'WOMEN_LAWYER'}">
+                          <th>Practice areas</th>
+                          <th>Bar ID</th>
+                          <th>Exp / Fee</th>
+                          <th>Bio</th>
+                      </c:if>
                       <th>Identity Doc</th>
                       <th>Status</th>
                       <th>Action</th>
@@ -251,6 +219,22 @@
                               <td>${p.phone}</td>
                               <td><span class="badge bg-light text-dark border">${p.category}</span></td>
                               <td>${p.locationText}</td>
+                              <c:if test="${selectedCategory == 'WOMEN_LAWYER'}">
+                                  <td class="text-start" style="max-width:180px;white-space:normal;">${empty p.practiceAreas ? '—' : p.practiceAreas}</td>
+                                  <td>${empty p.barCouncilId ? '—' : p.barCouncilId}</td>
+                                  <td>
+                                      <c:choose>
+                                          <c:when test="${p.experienceYears != null}">${p.experienceYears} yrs</c:when>
+                                          <c:otherwise>—</c:otherwise>
+                                      </c:choose>
+                                      <br>
+                                      <c:choose>
+                                          <c:when test="${p.consultationFee != null}">Rs ${p.consultationFee}</c:when>
+                                          <c:otherwise>—</c:otherwise>
+                                      </c:choose>
+                                  </td>
+                                  <td class="text-start" style="max-width:220px;white-space:normal;font-size:0.8rem;">${empty p.description ? '—' : p.description}</td>
+                              </c:if>
                               <td>
                                   <c:choose>
                                       <c:when test="${not empty p.identityDocumentPath}">
@@ -277,7 +261,7 @@
                   </c:when>
                   <c:otherwise>
                       <tr>
-                          <td colspan="8" class="py-4 text-center text-muted"><i class="fas fa-check-circle fa-2x mb-2 d-block text-success" style="opacity:0.4;"></i>No pending providers.</td>
+                          <td colspan="12" class="py-4 text-center text-muted"><i class="fas fa-check-circle fa-2x mb-2 d-block text-success" style="opacity:0.4;"></i>No pending providers.</td>
                       </tr>
                   </c:otherwise>
               </c:choose>

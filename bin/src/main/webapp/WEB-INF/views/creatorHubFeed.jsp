@@ -456,8 +456,8 @@
         .comment-drawer {
             position: fixed;
             top: 0;
-            right: -420px;
-            width: 420px;
+            right: -360px;
+            width: 360px;
             height: 100vh;
             height: 100dvh;
             background: #ffffff;
@@ -887,18 +887,18 @@
 
     <!-- COMMENTS SIDE-DRAWER -->
     <div class="comment-drawer" id="commentDrawer">
-        <div class="comment-header">
-            <h5 class="text-white m-0"><i class="fa-regular fa-comments text-danger me-2"></i>Comments</h5>
-            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="closeComments()">Close</button>
+        <div class="comment-header bg-white">
+            <h5 class="text-dark fw-bold m-0"><i class="fa-regular fa-comments text-danger me-2"></i>Comments</h5>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="closeComments()">Close</button>
         </div>
-        <div class="comment-list" id="commentList">
+        <div class="comment-list bg-white" id="commentList">
             <!-- Loaded via AJAX -->
         </div>
-        <div class="comment-input-area">
+        <div class="comment-input-area border-top">
             <div class="input-group">
-                <input type="text" id="commentInput" class="form-control bg-dark border-secondary text-white rounded-start-pill" placeholder="Write a comment...">
-                <button class="btn btn-danger rounded-end-pill px-3" onclick="submitComment()">
-                    <i class="fa-solid fa-paper-plane"></i>
+                <input type="text" id="commentInput" class="form-control bg-light border-0 text-dark rounded-start-pill px-3" placeholder="Add a comment...">
+                <button class="btn btn-light border-0 text-danger rounded-end-pill px-3 fw-bold bg-light" onclick="submitComment()">
+                    ➤
                 </button>
             </div>
         </div>
@@ -1186,15 +1186,26 @@
                 comments.forEach(function(c) {
                     const item = document.createElement('div');
                     item.className = 'comment-item mb-3';
-                    item.innerHTML = '<div class="comment-user fw-bold text-white">' + c.username + '</div>' +
-                        '<div class="comment-text text-light">' + c.text + '</div>' +
-                        '<button type="button" class="btn btn-link btn-sm text-danger p-0 mt-1" onclick="startReply(' + c.id + ', \'' + c.username.replace(/'/g, '') + '\')">Reply</button>';
+                    item.innerHTML = '<div class="d-flex w-100">' +
+                            '<img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="rounded-circle me-2 mt-1" style="width: 28px; height: 28px; object-fit: cover;">' +
+                            '<div class="flex-grow-1">' +
+                                '<div class="comment-user fw-bold text-dark m-0 d-inline-block me-1">' + c.username + '</div>' +
+                                '<span class="comment-text text-dark" style="font-size:0.9rem;">' + c.text + '</span>' +
+                                '<div class="mt-1"><button type="button" class="btn btn-link btn-sm text-muted p-0 text-decoration-none fw-bold" style="font-size:0.75rem" onclick="startReply(' + c.id + ', \'' + c.username.replace(/'/g, '') + '\')">Reply</button></div>' +
+                            '</div>' +
+                            '<i class="bi bi-heart text-muted mt-1 ms-2" style="font-size:0.75rem;"></i>' +
+                        '</div>';
                     if (Array.isArray(c.replies)) {
                         c.replies.forEach(function(r) {
                             const reply = document.createElement('div');
-                            reply.className = 'comment-item ms-3 mt-2 ps-3 border-start border-secondary';
-                            reply.innerHTML = '<div class="comment-user fw-bold text-white">' + r.username + '</div>' +
-                                '<div class="comment-text text-light">' + r.text + '</div>';
+                            reply.className = 'comment-item ms-4 mt-2 ps-2 border-start';
+                            reply.innerHTML = '<div class="d-flex w-100">' +
+                                '<img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="rounded-circle me-2" style="width: 22px; height: 22px; object-fit: cover;">' +
+                                '<div class="flex-grow-1">' +
+                                    '<div class="comment-user fw-bold text-dark m-0 d-inline-block me-1">' + r.username + '</div>' +
+                                    '<span class="comment-text text-dark" style="font-size:0.9rem;">' + r.text + '</span>' +
+                                '</div>' +
+                            '</div>';
                             item.appendChild(reply);
                         });
                     }

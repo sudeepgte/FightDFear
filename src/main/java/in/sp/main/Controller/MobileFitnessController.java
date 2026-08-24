@@ -13,10 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.time.LocalTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/fitness")
@@ -30,6 +29,15 @@ public class MobileFitnessController {
     private FitnessReviewRepository reviewRepo;
     @Autowired
     private FitnessCareService fitnessCareService;
+    @Autowired
+    private in.sp.main.Service.FitnessService fitnessService;
+    @Autowired
+    private in.sp.main.Repository.FitnessPackageRepository fitnessPackageRepo;
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepo;
+    @Autowired
+    private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
+
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories() {
@@ -90,6 +98,79 @@ public class MobileFitnessController {
         return ResponseEntity.ok(ok(Map.of("trainer", dto)));
     }
 
+    @GetMapping("/trainers/{id}/available-slots")
+    public ResponseEntity<Map<String, Object>> getAvailableSlots(
+            @PathVariable Long id,
+            @RequestParam(required = false) String date) {
+        FitnessTrainer t = trainerRepo.findById(id).orElse(null);
+        if (t == null || t.isSuspended()) {
+            return badRequest("Trainer not found");
+        }
+
+        LocalDate targetDate;
+        try {
+            targetDate = (date == null || date.isBlank()) ? LocalDate.now().plusDays(1) : LocalDate.parse(date.trim());
+        } catch (Exception e) {
+            return badRequest("Invalid date format. Expected YYYY-MM-DD");
+        }
+
+        if (targetDate.isBefore(LocalDate.now())) {
+            return ResponseEntity.ok(ok(Map.of("trainerId", id, "date", targetDate.toString(), "slots", List.of(), "message", "Cannot select past dates")));
+        }
+
+        List<String> defaultSlots = List.of(
+                "06:00 AM - 07:00 AM",
+                "07:00 AM - 08:00 AM",
+                "08:00 AM - 09:00 AM",
+                "09:00 AM - 10:00 AM",
+                "10:00 AM - 11:00 AM",
+                "11:00 AM - 12:00 PM",
+                "04:00 PM - 05:00 PM",
+                "05:00 PM - 06:00 PM",
+                "06:00 PM - 07:00 PM",
+                "07:00 PM - 08:00 PM",
+                "08:00 PM - 09:00 PM"
+        );
+
+        List<FitnessBooking> bookedList = bookingRepo.findByTrainer_IdAndBookingDate(id, targetDate);
+        Set<String> bookedTimes = bookedList.stream()
+                .filter(b -> !"CANCELLED".equalsIgnoreCase(b.getStatus()) && !"REJECTED".equalsIgnoreCase(b.getStatus()))
+                .map(b -> b.getBookingTime() != null ? b.getBookingTime().trim() : "")
+                .collect(Collectors.toSet());
+
+        List<Map<String, Object>> resultSlots = new ArrayList<>();
+        LocalTime nowTime = LocalTime.now();
+        boolean isToday = targetDate.equals(LocalDate.now());
+
+        for (String slot : defaultSlots) {
+            boolean isBooked = bookedTimes.contains(slot);
+            boolean isPast = false;
+            if (isToday) {
+                try {
+                    String startTimeStr = slot.split(" - ")[0].trim();
+                    java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+                    LocalTime slotStart = LocalTime.parse(startTimeStr, dtf);
+                    if (slotStart.isBefore(nowTime)) {
+                        isPast = true;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            boolean available = !isBooked && !isPast;
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("time", slot);
+            item.put("available", available);
+            item.put("reason", isBooked ? "Booked" : (isPast ? "Time Passed" : "Available"));
+            resultSlots.add(item);
+        }
+
+        return ResponseEntity.ok(ok(Map.of(
+                "trainerId", id,
+                "date", targetDate.toString(),
+                "slots", resultSlots
+        )));
+    }
+
     @PostMapping("/trainers/{id}/bookings")
     @Transactional
     public ResponseEntity<Map<String, Object>> book(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
@@ -124,7 +205,18 @@ public class MobileFitnessController {
         }
 
         String bookingTime = trim(body == null ? null : body.get("bookingTime"));
-        if (bookingTime.isBlank()) bookingTime = "10:00 - 11:00";
+        if (bookingTime.isBlank()) {
+            return badRequest("Please choose a valid timing slot");
+        }
+
+        boolean alreadyBooked = bookingRepo.findByTrainer_IdAndBookingDate(t.getId(), bookingDate)
+                .stream()
+                .anyMatch(bk -> !"CANCELLED".equalsIgnoreCase(bk.getStatus()) 
+                            && !"REJECTED".equalsIgnoreCase(bk.getStatus()) 
+                            && bookingTime.equalsIgnoreCase(bk.getBookingTime() != null ? bk.getBookingTime().trim() : ""));
+        if (alreadyBooked) {
+            return badRequest("The timing slot " + bookingTime + " is already booked for " + bookingDate + ". Please choose an available slot.");
+        }
 
         double baseFees = t.getSessionFees() == null ? 0.0 : Math.max(0, t.getSessionFees());
         PackagePricing pricing = resolvePackagePricing(baseFees, duration);
@@ -268,7 +360,95 @@ public class MobileFitnessController {
         return ResponseEntity.ok(res);
     }
 
+    @GetMapping("/trainers/{id}/packages")
+    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable Long id) {
+        List<FitnessPackage> packages = fitnessPackageRepo.findByTrainer_IdAndActiveTrue(id);
+        List<Map<String, Object>> dtos = packages.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", p.getId());
+            m.put("packageName", p.getPackageName());
+            m.put("category", p.getCategory());
+            m.put("description", p.getDescription());
+            m.put("sessionCount", p.getSessionCount());
+            m.put("durationDays", p.getDurationDays());
+            m.put("price", p.getPrice());
+            m.put("sessionType", p.getSessionType());
+            m.put("active", p.isActive());
+            return m;
+        }).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("packages", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/book-package")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> bookPackage(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        Long packageId;
+        try {
+            packageId = Long.parseLong(String.valueOf(body.get("packageId")).trim());
+        } catch (Exception e) {
+            return badRequest("Valid packageId is required");
+        }
+
+        FitnessPackage pkg = fitnessPackageRepo.findById(packageId).orElse(null);
+        if (pkg == null || !pkg.isActive()) {
+            return badRequest("Package is unavailable");
+        }
+
+        Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+        user.setWalletBalance(walletBalance - pkg.getPrice());
+        userRepo.save(user);
+        session.setAttribute("user", user);
+
+        FitnessBooking booking = new FitnessBooking();
+        booking.setUser(user);
+        booking.setTrainer(pkg.getTrainer());
+        booking.setFitnessPackage(pkg);
+        booking.setCategory(pkg.getCategory());
+        booking.setBookingDate(LocalDate.now());
+        booking.setBookingTime("Package Membership");
+        booking.setSessionType(pkg.getSessionType());
+        booking.setStatus("APPROVED");
+        booking.setPaymentAmount(pkg.getPrice());
+        booking.setPaymentStatus("PAID");
+        booking.setTotalSessions(pkg.getSessionCount());
+        booking.setRemainingSessions(pkg.getSessionCount());
+        booking.setCompletedSessions(0);
+        booking.setStartDate(LocalDate.now());
+        booking.setValidUntil(LocalDate.now().plusDays(pkg.getDurationDays()));
+        booking.setEndDate(LocalDate.now().plusDays(pkg.getDurationDays()));
+
+        bookingRepo.save(booking);
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Subscribed to " + pkg.getPackageName());
+        res.put("bookingId", booking.getId());
+        res.put("totalSessions", booking.getTotalSessions());
+        res.put("validUntil", booking.getValidUntil().toString());
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/my-progress")
+    public ResponseEntity<Map<String, Object>> getMyProgress(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        Map<String, Object> summary = fitnessService.getUserFitnessProgressSummary(user.getId());
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.putAll(summary);
+        return ResponseEntity.ok(res);
+    }
+
     private Map<String, Object> trainerDto(FitnessTrainer t) {
+
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", t.getId());
         m.put("fullName", t.getFullName());
@@ -323,6 +503,38 @@ public class MobileFitnessController {
                 "18:00 - 20:00",
                 "20:00 - 21:00"
         );
+    }
+
+    // ==========================================
+    // CLIENT QR ATTENDANCE CHECK-IN
+    // ==========================================
+
+    @PostMapping("/qr/check-in")
+    public ResponseEntity<Map<String, Object>> checkInWithQr(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        String token = body == null ? "" : String.valueOf(body.getOrDefault("token", "")).trim();
+        if (token.isEmpty()) return badRequest("QR token is required");
+
+        Double lat = null;
+        Double lng = null;
+        if (body != null) {
+            if (body.get("latitude") != null) lat = Double.parseDouble(body.get("latitude").toString());
+            if (body.get("longitude") != null) lng = Double.parseDouble(body.get("longitude").toString());
+        }
+
+        try {
+            Map<String, Object> res = fitnessQrAttendanceService.checkInClient(user, token, lat, lng);
+            return ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode())
+                    .body(Map.of("success", false, "error", ex.getReason()));
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "QR check-in failed" : ex.getMessage());
+        }
     }
 
     private static String firstSpecialization(String raw) {
