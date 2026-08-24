@@ -22,7 +22,6 @@ public interface SalonReviewRepository extends JpaRepository<SalonReview, Long> 
 
     boolean existsByUserIdAndSalon_Id(Long userId, Long salonId);
     
-    List<SalonReview> findTop20ByOrderByCreatedAtDesc();
 }
  
  
