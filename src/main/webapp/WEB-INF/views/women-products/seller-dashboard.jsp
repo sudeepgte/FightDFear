@@ -1639,6 +1639,7 @@
                   class="bi bi-x-circle"></i></button>
             </div>
 
+
             <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" novalidate>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
@@ -1646,6 +1647,7 @@
                        required minlength="2" maxlength="80"
                        pattern="[A-Za-z][A-Za-z .'-]{1,79}"
                        title="2–80 letters only; spaces, apostrophes, periods, hyphens allowed">
+
 
 
             <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data">
@@ -1669,6 +1671,7 @@
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
 
+
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
                   <input type="text" name="businessName" id="profileBusinessName" class="form-ctrl" value="${seller.businessName}"
                          required minlength="2" maxlength="100"
@@ -1681,6 +1684,7 @@
                          required minlength="10" maxlength="10" pattern="[0-9]{10}"
                          title="Exactly 10 digits"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
 
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
                   <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
@@ -1734,9 +1738,11 @@
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
 
+
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
                           minlength="10" maxlength="1000">${seller.address}</textarea>
+
 
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
@@ -2255,6 +2261,8 @@
                     offerBadge: this.getAttribute('data-offerbadge') || this.getAttribute('data-offer-badge'),
 
                     offerBadge: this.getAttribute('data-offerBadge'),
+
+
 
                     stock: this.getAttribute('data-stock'),
                     lowStockAlertLevel: this.getAttribute('data-lowStockAlertLevel'),

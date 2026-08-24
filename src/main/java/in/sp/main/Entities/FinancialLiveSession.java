@@ -26,6 +26,8 @@ public class FinancialLiveSession {
     private Integer seats;
     private Double fee = 0.0;
     private String category;
+    @Column(name = "custom_category")
+    private String customCategory;
     @Column(columnDefinition = "TEXT")
     private String description;
     private boolean published = true;
@@ -54,6 +56,8 @@ public class FinancialLiveSession {
     public void setFee(Double fee) { this.fee = fee; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getCustomCategory() { return customCategory; }
+    public void setCustomCategory(String customCategory) { this.customCategory = customCategory; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public boolean isPublished() { return published; }

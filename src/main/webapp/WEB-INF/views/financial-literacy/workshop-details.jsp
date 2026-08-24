@@ -28,35 +28,29 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--fl-bg);
+            background: #F4F6FA;
             color: #333;
             min-height: 100vh;
+            padding-top: 70px;
         }
 
         /* Hero Header */
         .details-hero {
-            background: linear-gradient(135deg, var(--fl-purple) 0%, var(--fl-pink) 100%);
-            padding: 60px 0 80px;
-            color: white;
-            border-bottom-left-radius: 50% 20px;
-            border-bottom-right-radius: 50% 20px;
+            background: #F4F6FA;
+            padding: 35px 0 45px;
+            color: #0F172A;
+            border-bottom: 1px solid #E2E8F0;
             position: relative;
-            overflow: hidden;
-        }
-
-        .details-hero::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/cubes.png');
-            opacity: 0.1;
         }
 
         .details-hero h1 {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            font-size: 2.5rem;
+            font-weight: 800;
+            font-size: 2.2rem;
+            color: #0B1736;
+            margin-top: 10px;
             margin-bottom: 15px;
+            line-height: 1.3;
         }
 
         /* Section Card */
@@ -66,14 +60,14 @@
             padding: 30px;
             margin-bottom: 25px;
             box-shadow: var(--fl-shadow);
-            border: 1px solid rgba(30, 27, 75, 0.05);
+            border: 1px solid rgba(11, 23, 54, 0.05);
         }
 
         .section-card h3 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
             font-size: 1.5rem;
-            color: var(--fl-purple);
+            color: #0B1736;
             margin-bottom: 20px;
         }
 
@@ -111,33 +105,10 @@
             color: white;
         }
 
-        /* Back Button */
-        .back-btn {
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            opacity: 0.8;
-            transition: 0.3s;
-            z-index: 100;
-        }
-
-        .back-btn:hover {
-            opacity: 1;
-            transform: translateX(-5px);
-        }
-
         @media (max-width: 768px) {
             .details-hero h1 { font-size: 1.8rem; }
             .details-hero { 
-                padding: 60px 15px 80px; 
-                border-bottom-left-radius: 0;
-                border-bottom-right-radius: 0;
+                padding: 25px 15px 35px; 
             }
         }
 
@@ -156,16 +127,22 @@
 <body>
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <header class="details-hero">
-        <a href="${pageContext.request.contextPath}/financial-literacy" class="back-btn">
-            <i class="bi bi-arrow-left"></i> Back to Hub
-        </a>
-        <div class="container text-center">
-            <div class="badge-list justify-content-center" id="workshopBadges">
+        <div class="container position-relative">
+            <a href="${pageContext.request.contextPath}/financial-literacy" class="btn btn-outline-dark btn-sm rounded-pill mb-3 fw-bold px-3">
+                <i class="fas fa-arrow-left me-1"></i> Back to Hub
+            </a>
+
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="workshopBadges">
                 <c:if test="${workshop != null}">
-                    <span class="badge-item"><i class="fas fa-map-marker-alt me-1"></i>${workshop.city}</span>
-                    <span class="badge-item"><i class="fas fa-users me-1"></i>${workshop.seats} Seats</span>
+                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold" style="background: #1e1b4b;">
+                        <i class="fas fa-map-marker-alt me-1 text-danger"></i> ${workshop.city != null ? workshop.city : workshop.venue}
+                    </span>
+                    <span class="badge bg-secondary text-white px-3 py-2 rounded-pill fw-bold">
+                        <i class="fas fa-users me-1"></i> ${workshop.seatsLeft != null ? workshop.seatsLeft : workshop.seats} Seats Available
+                    </span>
                 </c:if>
             </div>
+
             <h1 id="workshopTitle">${workshop != null ? workshop.title : 'Workshop Not Found'}</h1>
         </div>
     </header>
