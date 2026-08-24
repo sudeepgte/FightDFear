@@ -93,8 +93,15 @@ class MartialArtsService {
         'action': action,
       });
 
-  Future<Map<String, dynamic>> createPaymentOrder(double amount) =>
-      _api.post('/payment/create-order', body: {'amount': amount}, timeout: const Duration(seconds: 45));
+  Future<Map<String, dynamic>> createPaymentOrder(double amount, {int? enrollmentId}) =>
+      _api.post('/payment/create-order', body: {
+        if (enrollmentId != null) 'type': 'MARTIAL_ARTS',
+        if (enrollmentId != null) 'enrollmentId': enrollmentId,
+        if (enrollmentId == null) 'amount': amount,
+      }, timeout: const Duration(seconds: 45));
+
+  Future<Map<String, dynamic>> verifyPayment(Map<String, dynamic> body) =>
+      _api.post('/payment/verify', body: body, timeout: const Duration(seconds: 45));
 
   Future<Map<String, dynamic>> qrCheckIn(String token) =>
       _api.post('/api/attendance/qr-checkin', body: {'token': token});

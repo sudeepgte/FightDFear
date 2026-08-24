@@ -18,6 +18,7 @@ import 'martial_arts_centre_dashboard_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
 import 'martial_arts_centre_register_screen.dart';
 import 'martial_arts_centre_screen.dart';
+import 'martial_arts_qr_scanner_screen.dart';
 
 /// Browse approved martial arts centres + My Trainings.
 class MartialArtsScreen extends StatefulWidget {
@@ -35,6 +36,7 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
     with SingleTickerProviderStateMixin {
   late final MartialArtsService _api;
   late final CentreAuthService _centreAuth;
+  late final PaymentService _payments;
   late final ModulePaymentCheckout _checkout;
   late final TabController _tabs;
   final _searchCtrl = TextEditingController();
@@ -59,7 +61,8 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
     super.initState();
     _api = MartialArtsService(context.read<AuthState>().api);
     _centreAuth = CentreAuthService(context.read<AuthState>().api);
-    _checkout = ModulePaymentCheckout(PaymentService(context.read<AuthState>().api));
+    _payments = PaymentService(context.read<AuthState>().api);
+    _checkout = ModulePaymentCheckout(_payments);
     _checkout.bind(
       onSuccess: (r) => _checkout.handleSuccess(context, r),
       onError: (r) => _checkout.handleError(r),
@@ -165,6 +168,11 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
       context: context,
       amount: amount,
       description: 'Martial Arts · ${e['batchName'] ?? 'Enrollment'}',
+      createOrderFn: () => _payments.createOrder(
+        amount,
+        type: 'MARTIAL_ARTS',
+        extra: {'enrollmentId': enrollmentId},
+      ),
       verifyPayload: (response) => {
         'razorpay_order_id': response.orderId,
         'razorpay_payment_id': response.paymentId,
@@ -173,7 +181,6 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
         'enrollmentId': enrollmentId,
         if (centreId != null) 'centerId': centreId,
         if (batchId != null) 'batchId': batchId,
-        'amount': amount,
       },
       onSuccess: _loadEnrollments,
     );
@@ -315,6 +322,16 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         actions: [
+          IconButton(
+            tooltip: 'QR Check-in',
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MartialArtsQrScannerScreen()),
+              );
+              _loadAttendance();
+            },
+          ),
           IconButton(
             tooltip: 'Admin approval',
             icon: const Icon(Icons.admin_panel_settings_outlined),
@@ -689,10 +706,17 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                   const SizedBox(height: 8),
                   Text('Slot: ${e['slot']}', style: const TextStyle(fontSize: 13)),
                 ],
+                if (e['awaitingCentreReview'] == true) ...[
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Waiting for centre review. Payment unlocks after approval.',
+                    style: TextStyle(fontSize: 12, color: Colors.orange),
+                  ),
+                ],
                 if (needsPay) ...[
                   const SizedBox(height: 10),
                   Text(
-                    'Payment pending (₹${e['amount'] ?? e['fee'] ?? 0}). Complete payment to confirm your seat.',
+                    'Approved — payment pending (₹${e['amount'] ?? e['fee'] ?? 0}). Complete payment to activate enrollment.',
                     style: const TextStyle(fontSize: 12, color: Colors.orange),
                   ),
                   const SizedBox(height: 8),
@@ -831,6 +855,18 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                 _statTile('Present', '${_attendance!['presentCount'] ?? 0}'),
                 _statTile('Rate', '${_attendance!['attendancePercentage'] ?? 0}%'),
               ],
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MartialArtsQrScannerScreen()),
+                );
+                _loadAttendance();
+              },
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Scan QR to Check In'),
             ),
             const SizedBox(height: 16),
           ],
