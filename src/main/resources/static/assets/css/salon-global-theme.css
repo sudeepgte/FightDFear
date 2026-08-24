@@ -1,0 +1,52 @@
+/* Global Color Theme Overrides for Salon Dashboard Pages */
+:root {
+    /* Dashboard Standard Colors */
+    --sidebar-width: 280px;
+    --dashboard-bg: #f8f9fc !important;
+    --fdf-burgundy: #2d0b20 !important;
+    --fdf-burgundy-dark: #1f0615 !important;
+    --fdf-pink: #db2777 !important;
+    --fdf-pink-light: #fbcfe8 !important;
+    --fdf-rose: #f43f5e !important;
+    --fdf-lavender: #f3e8ff !important;
+    --fdf-text-dark: #1e1b4b !important;
+    --fdf-text-muted: #64748b !important;
+    --fdf-border: #f1e9f0 !important;
+    --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04) !important;
+
+    /* Legacy Mappings to Force Theme Conformity */
+    --brand-purple: var(--fdf-pink) !important;
+    --brand-purple-darker: var(--fdf-text-dark) !important;
+    --gradient-dark: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%) !important;
+    --fdf-primary: var(--fdf-pink) !important;
+    --primary-purple: var(--fdf-pink) !important;
+    --primary-color: var(--fdf-pink) !important;
+    --secondary-color: var(--fdf-rose) !important;
+}
+
+body {
+    background-color: var(--dashboard-bg) !important;
+    color: var(--fdf-text-dark) !important;
+}
+
+/* Ensure buttons follow the pink gradient style */
+.btn-add-new, .btn-action-pill {
+    background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%) !important;
+    color: white !important;
+    border: none !important;
+}
+.btn-add-new:hover, .btn-action-pill:hover {
+    filter: brightness(1.1) !important;
+    box-shadow: 0 8px 20px rgba(219, 39, 119, 0.25) !important;
+}
+
+/* Page headers to use the dark text color */
+.page-header h2, .header-title-box h2, h2, h3, h4, h5 {
+    color: var(--fdf-text-dark) !important;
+}
+
+/* Cards background and border */
+.glass-card, .premium-card, .stylist-card, .dashboard-card, .fdf-card, .offer-card, .client-card, .package-card {
+    background-color: white !important;
+    border-color: var(--fdf-border) !important;
+}

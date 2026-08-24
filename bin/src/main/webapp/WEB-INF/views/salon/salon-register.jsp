@@ -90,8 +90,6 @@
         .is-invalid { border-color: var(--error-red) !important; background-color: #fef2f2 !important; }
         .is-valid { border-color: #10b981 !important; background-color: #ecfdf5 !important; }
         .error-msg { color: var(--error-red); font-size: 0.75rem; font-weight: 700; margin-top: 6px; display: none; }
-        .field-hint { color: #6b7280; font-size: 0.72rem; font-weight: 500; margin-top: 6px; line-height: 1.4; }
-        .fdf-input.is-invalid ~ .field-hint { display: none; }
         .valid-msg { color: #10b981; font-size: 0.75rem; font-weight: 700; margin-top: 6px; display: none; }
 
         .back-home { display: inline-flex; align-items: center; gap: 10px; color: var(--fdf-muted); text-decoration: none; font-size: 0.95rem; font-weight: 600; margin-bottom: 25px; transition: 0.3s; }
@@ -162,16 +160,7 @@
 
         <div class="form-panel">
             <div class="reg-card">
-
-                <div class="dr-progress">
-                    <div class="dr-step-dot active" data-step="1" onclick="showStep(1)">1</div>
-                    <div class="dr-step-dot" data-step="2" onclick="showStep(2)">2</div>
-                </div>
-
-                <a href="${pageContext.request.contextPath}/" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
-
                 <a href="${pageContext.request.contextPath}/index" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
-
                 <h2>Join our Ecosystem</h2>
 
                 <c:if test="${not empty error}">
@@ -179,22 +168,6 @@
                         <i class="bi bi-shield-exclamation me-2"></i> ${error}
                     </div>
                 </c:if>
-
-
-                <form action="${pageContext.request.contextPath}/salons/register" method="post" enctype="multipart/form-data" id="salonRegForm">
-                    <!-- Step 1: Salon Account Setup -->
-                    <div class="dr-step-panel active" id="step1">
-                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Step 1: Salon Account Setup</h3>
-                        
-                        <div class="fdf-group">
-                            <label>Salon Name</label>
-                            <input type="text" name="name" id="salonName" class="fdf-input"
-                                   placeholder="e.g. Radiance Wellness Hub"
-                                   required minlength="3" maxlength="255"
-                                   autocomplete="organization">
-                            <div class="field-hint" id="hint-salonName">3–255 characters.</div>
-                            <div class="error-msg" id="err-salonName">Salon name must be 3–255 characters.</div>
-                        </div>
 
                 <form action="${pageContext.request.contextPath}/salons/register" method="post" id="salonRegForm">
                     <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Salon Account Setup</h3>
@@ -205,42 +178,11 @@
                         <div class="error-msg" id="err-salonName">Salon name must be at least 3 characters.</div>
                     </div>
 
-
                     <div class="fdf-row">
                         <div class="fdf-group">
                             <label>Username</label>
-                            <input type="text" name="username" id="username" class="fdf-input"
-                                   placeholder="e.g. radiance_hub"
-                                   required minlength="3" maxlength="20"
-                                   pattern="[A-Za-z0-9_]{3,20}"
-                                   title="3–20 characters: letters, numbers, and underscores only"
-                                   autocomplete="username">
-                            <div class="field-hint" id="hint-username">Allowed: letters (A–Z, a–z), numbers (0–9), and underscore (_). Length: 3–20. No spaces or special characters.</div>
-                            <div class="error-msg" id="err-username">Username must be 3–20 characters and may only contain letters, numbers, and underscores (no spaces or special characters).</div>
-                        </div>
-
-                        <div class="fdf-row">
-                            <div class="fdf-group">
-                                <label>Email ID</label>
-                                <input type="email" name="email" id="email" class="fdf-input"
-                                       placeholder="e.g. salon@example.com"
-                                       required maxlength="255"
-                                       autocomplete="email">
-                                <div class="field-hint" id="hint-email">Enter a valid email address (e.g. name@domain.com).</div>
-                                <div class="error-msg" id="err-email">Please enter a valid email address.</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Phone Number</label>
-                                <input type="tel" name="phone" id="phone" class="fdf-input"
-                                       placeholder="e.g. 9876543210"
-                                       required minlength="10" maxlength="10"
-                                       pattern="[0-9]{10}"
-                                       inputmode="numeric"
-                                       title="Exactly 10 digits"
-                                       autocomplete="tel">
-                                <div class="field-hint" id="hint-phone">Exactly 10 digits (numbers only).</div>
-                                <div class="error-msg" id="err-phone">Phone number must be exactly 10 digits.</div>
-                            </div>
+                            <input type="text" name="username" id="username" class="fdf-input" placeholder="e.g. radiance_hub" required>
+                            <div class="error-msg" id="err-username">3-20 characters (alphanumeric and underscores).</div>
                         </div>
                         <div class="fdf-group">
                             <label>Phone Number</label>
@@ -300,17 +242,11 @@
             if (el.hasAttribute('required') && !val) isValid = false;
             
             if (isValid) {
-                if (fieldId === 'salonName') isValid = val.length >= 3 && val.length <= 255;
+                if (fieldId === 'salonName') isValid = val.length >= 3;
                 if (fieldId === 'username') isValid = /^[a-zA-Z0-9_]{3,20}$/.test(val);
-
-                if (fieldId === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) && val.length <= 255;
-                if (fieldId === 'phone') isValid = /^\d{10}$/.test(val);
-                if (fieldId === 'password') isValid = val.length >= 6 && val.length <= 8 && /[A-Z]/.test(val) && /\d/.test(val);
-
                 if (fieldId === 'phone') isValid = /^\d{10}$/.test(val);
                 if (fieldId === 'email') isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
                 if (fieldId === 'password') isValid = val.length >= 6 && /[A-Z]/.test(val) && /\d/.test(val);
-
                 if (fieldId === 'confirmPassword') isValid = val === document.getElementById('password').value;
             }
 
@@ -330,15 +266,8 @@
         };
 
         function checkFormValidity() {
-
-            const step1Fields = ['salonName', 'username', 'email', 'phone', 'password', 'confirmPassword'];
-            const step2Fields = ['bio', 'hygieneCertificate'];
-            
-            const isStep1Valid = step1Fields.every(id => {
-
             const fields = ['salonName', 'username', 'email', 'phone', 'password', 'confirmPassword'];
             const isValid = fields.every(id => {
-
                 const el = document.getElementById(id);
                 return el && el.classList.contains('is-valid');
             });
@@ -376,13 +305,6 @@
                     e.preventDefault();
                 }
             });
-
-            const phoneInput = document.getElementById('phone');
-            if (phoneInput) {
-                phoneInput.addEventListener('input', function() {
-                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
-                });
-            }
 
             checkFormValidity();
         });

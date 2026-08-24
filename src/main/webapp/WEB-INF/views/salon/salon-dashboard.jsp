@@ -16,6 +16,8 @@
     
     <!-- Theme CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
     <style>
         :root {
@@ -196,14 +198,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-
-            /* Confine Bootstrap stretched-link hit areas to each card (not the whole page). */
-            position: relative;
-            z-index: 1;
-
             margin-bottom: 30px;
             gap: 20px;
-
         }
 
         .header-title-box h2 {
@@ -980,161 +976,6 @@
         .btn-resume:hover { background: #20c997; color: white; }
         .btn-archive { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
         .btn-archive:hover { background: #dc3545; color: white; }
-
-        /* Welcome Banner */
-        .welcome-banner {
-            background: linear-gradient(135deg, #fdf2f8 0%, #f3e8ff 50%, #eff6ff 100%);
-            border-radius: 24px;
-            padding: 32px 36px;
-            margin-bottom: 28px;
-            border: 1px solid rgba(241, 233, 240, 0.6);
-            box-shadow: 0 8px 30px rgba(219, 39, 119, 0.04);
-        }
-        .welcome-banner h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            font-size: 1.6rem;
-            color: var(--fdf-text-dark);
-            margin: 0 0 6px 0;
-        }
-        .welcome-banner p {
-            color: var(--fdf-text-muted);
-            margin: 0;
-            font-size: 0.92rem;
-        }
-
-        /* Stat Cards */
-        .stat-card {
-            background: white;
-            border-radius: 20px;
-            padding: 24px;
-            border: 1px solid var(--fdf-border);
-            box-shadow: var(--card-shadow);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            text-decoration: none;
-            color: var(--fdf-text-dark);
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(30, 27, 75, 0.06);
-        }
-
-        /* Icon Boxes */
-        .icon-box {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            margin-bottom: 16px;
-        }
-        .bg-glass-purple {
-            background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-            color: #7c3aed;
-        }
-        .bg-glass-pink {
-            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
-            color: var(--fdf-pink);
-        }
-        .bg-glass-gold {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #d97706;
-        }
-
-        /* Card Content */
-        .card-title-custom {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            font-size: 1rem;
-            margin: 0 0 6px 0;
-            color: var(--fdf-text-dark);
-        }
-        .card-desc {
-            font-size: 0.82rem;
-            color: var(--fdf-text-muted);
-            margin: 0 0 16px 0;
-            line-height: 1.5;
-        }
-
-        /* Action Buttons */
-        .btn-purple {
-            background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.82rem;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
-        }
-        .btn-purple:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
-            color: white;
-        }
-        .btn-add-new {
-            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            font-weight: 700;
-            font-size: 0.82rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-        .btn-add-new:hover {
-            filter: brightness(1.1);
-            color: white;
-        }
-
-        /* Mobile responsive fixes */
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 16px;
-            }
-            .dashboard-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .header-actions {
-                width: 100%;
-                justify-content: flex-start;
-                flex-wrap: wrap;
-            }
-            .summary-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .summary-item {
-                border-right: none;
-                border-bottom: 1px solid var(--fdf-border);
-                padding: 10px 0;
-            }
-            .anti-gravity-banner {
-                flex-direction: column;
-            }
-            .kpi-card {
-                padding: 16px;
-            }
-            .welcome-banner {
-                padding: 24px;
-            }
-            .welcome-banner h2 {
-                font-size: 1.3rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -1148,162 +989,14 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <div class="sidebar-brand-wrapper">
-            <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand">
-                <i class="bi bi-gender-female"></i>
-                <span>${empty salon.name ? 'Priya Beauty & Wellness' : salon.name}</span>
-            </a>
-            <div class="subtitle">Women's Salon • Beauty • Wellness • Hair Styling</div>
-        </div>
-
-        <div class="nav-container">
-            <nav class="nav flex-column">
-                <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salons/dashboard">
-                    <i class="bi bi-grid-1x2"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
-                    <i class="bi bi-shop"></i>
-                    <span>Salon Profile</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>Appointments</span>
-                </a>
-                <a class="nav-link-custom" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal">
-                    <i class="bi bi-calendar3"></i>
-                    <span>Calendar</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
-                    <i class="bi bi-magic"></i>
-                    <span>Services</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists">
-                    <i class="bi bi-people"></i>
-                    <span>Staff / Stylists</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Clients</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages">
-                    <i class="bi bi-box-seam"></i>
-                    <span>Packages & Memberships</span>
-                </a>
-                
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}">
-                    <i class="bi bi-percent"></i>
-                    <span>Offers & Discounts</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing">
-                    <i class="bi bi-receipt"></i>
-                    <span>Billing & Invoices</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments">
-                    <i class="bi bi-credit-card-2-front"></i>
-                    <span>Payments & Payouts</span>
-                </a>
-                
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory">
-                    <i class="bi bi-box"></i>
-                    <span>Inventory</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
-                    <i class="bi bi-star-half"></i>
-                    <span>Reviews & Feedback</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics">
-                    <i class="bi bi-bar-chart-line"></i>
-                    <span>Reports & Analytics</span>
-                </a>
-
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/settings">
-                    <i class="bi bi-sliders"></i>
-                    <span>Settings</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/support">
-                    <i class="bi bi-question-circle"></i>
-                    <span>Help & Support</span>
-                </a>
-                <a class="nav-link-custom text-danger mt-3" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Sign Out</span>
-                </a>
-            </nav>
-        </div>
-
-
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="dashboard"/>
+</jsp:include>
 
     <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid p-0">
             
-
-            <div class="welcome-banner">
-                <h2>Hello, <c:out value="${salon.name}"/>!</h2>
-                <p>Welcome back to your partner dashboard. Here's what's happening today.</p>
-            </div>
-
-            <div class="row g-4 mb-5">
-                <!-- Bookings -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-purple">
-                                <i class="bi bi-calendar2-week"></i>
-                            </div>
-                            <h5 class="card-title-custom">Bookings</h5>
-                            <p class="card-desc">Review and manage your incoming customer appointments.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/booking/list" class="btn-purple">View All Bookings</a>
-                    </div>
-                </div>
-
-                <!-- Services -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-pink">
-                                <i class="bi bi-flower1"></i>
-                            </div>
-                            <h5 class="card-title-custom">Services</h5>
-                            <p class="card-desc">Update your service menu, pricing, and specialized treatments.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/salon/viewServices" class="btn-purple">Manage Services</a>
-                    </div>
-                </div>
-
-                <!-- Profile -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-gold">
-                                <i class="bi bi-shop"></i>
-                            </div>
-                            <h5 class="card-title-custom">Salon Profile</h5>
-                            <p class="card-desc">Keep your salon profile updated for better visibility.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/salons/profile" class="btn-purple">Edit Profile</a>
-                    </div>
-                </div>
-
-                <!-- Offers -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-pink">
-                                <i class="bi bi-tag"></i>
-                            </div>
-                            <h5 class="card-title-custom">Offers</h5>
-                            <p class="card-desc">Create and manage exclusive offers and discounts.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}" class="btn-purple">View Offers</a>
-                    </div>
-                </div>
-            </div>
-
             <!-- Dashboard Header -->
             <div class="dashboard-header">
                 <div class="header-title-box">
@@ -1347,34 +1040,6 @@
                             <span>Owner</span>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <h4 class="fw-bold mb-4">Quick Actions</h4>
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/addService" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-purple mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-plus-lg"></i>
-                        </div>
-                        <span>Add New Service</span>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-gold mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-tag"></i>
-                        </div>
-                        <span>Create New Offer</span>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/treatments/add" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-pink mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-droplet"></i>
-                        </div>
-                        <span>Add Treatment</span>
-                    </a>
                 </div>
             </div>
 
@@ -1453,7 +1118,6 @@
                             <i class="bi bi-star"></i>
                         </div>
                     </div>
-
                 </div>
             </div>
 

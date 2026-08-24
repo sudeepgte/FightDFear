@@ -231,17 +231,7 @@
             </div>
 
             <div class="form-card">
-                <c:if test="${not empty error}">
-                    <div class="alert alert-danger rounded-4 mb-4" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i><c:out value="${error}"/>
-                    </div>
-                </c:if>
-                <c:if test="${not empty message}">
-                    <div class="alert alert-success rounded-4 mb-4" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i><c:out value="${message}"/>
-                    </div>
-                </c:if>
-                <form id="treatmentForm" action="${pageContext.request.contextPath}/salon/treatments/save" method="post">
+                <form action="${pageContext.request.contextPath}/salon/treatments/save" method="post">
                     <input type="hidden" name="id" value="${treatment.id}">
 
                     <div class="section-header">
@@ -250,7 +240,7 @@
 
                     <div class="row g-4 mb-5">
                         <div class="col-md-6">
-                            <label class="form-label">Category <span class="text-danger">*</span></label>
+                            <label class="form-label">Category</label>
                             <select name="category" id="category" class="form-select form-control-custom" required onchange="toggleTreatmentSkin()">
                                 <option value="">Select Category</option>
                                 <option value="Skin" ${treatment.category == 'Skin' ? 'selected' : ''}>Skin Care</option>
@@ -259,17 +249,14 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Service Name <span class="text-danger">*</span></label>
-                            <input type="text" name="serviceName" id="serviceName" class="form-control form-control-custom"
-                                   value="<c:out value='${treatment.serviceName}'/>"
-                                   maxlength="150" minlength="2"
-                                   placeholder="e.g. Deep Hydration Facial" required>
+                            <label class="form-label">Service Name</label>
+                            <input type="text" name="serviceName" class="form-control form-control-custom" value="${treatment.serviceName}" placeholder="e.g. Deep Hydration Facial" required>
                         </div>
 
                         <!-- Treatment Type (Conditional) -->
                         <div class="col-md-6" id="treatmentTypeDiv" style="${treatment.category == 'Skin' ? 'display:block;' : 'display:none;'}">
-                            <label class="form-label">Specific Treatment Type <span class="text-danger skin-required-mark">*</span></label>
-                            <select name="treatmentType" id="treatmentType" class="form-select form-control-custom">
+                            <label class="form-label">Specific Treatment Type</label>
+                            <select name="treatmentType" class="form-select form-control-custom">
                                 <option value="">--Select Type--</option>
                                 <c:forEach var="type" items="${treatmentTypes}">
                                     <option value="${type}" ${treatment.treatmentType == type ? 'selected' : ''}>${type}</option>
@@ -279,8 +266,8 @@
 
                         <!-- Skin Type (Conditional) -->
                         <div class="col-md-6" id="skinTypeDiv" style="${treatment.category == 'Skin' ? 'display:block;' : 'display:none;'}">
-                            <label class="form-label">Recommended Skin Type <span class="text-danger skin-required-mark">*</span></label>
-                            <select name="skinType" id="skinType" class="form-select form-control-custom">
+                            <label class="form-label">Recommended Skin Type</label>
+                            <select name="skinType" class="form-select form-control-custom">
                                 <option value="">--Select Skin Type--</option>
                                 <c:forEach var="skin" items="${skinTypes}">
                                     <option value="${skin}" ${treatment.skinType == skin ? 'selected' : ''}>${skin}</option>
@@ -295,37 +282,24 @@
 
                     <div class="row g-4 mb-5">
                         <div class="col-md-6">
-                            <label class="form-label">Base Price (₹) <span class="text-danger">*</span></label>
+                            <label class="form-label">Base Price (₹)</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-2 border-end-0" style="border-radius: 12px 0 0 12px;">₹</span>
-                                <input type="number" step="0.01" min="0" name="price" id="price"
-                                       class="form-control form-control-custom border-start-0"
-                                       style="border-radius: 0 12px 12px 0;"
-                                       value="${treatment.id == null && treatment.price == 0 ? '' : treatment.price}"
-                                       placeholder="0.00" required title="Base Price must be zero or a positive amount.">
+                                <input type="number" step="0.01" name="price" class="form-control form-control-custom border-start-0" style="border-radius: 0 12px 12px 0;" value="${treatment.price}" placeholder="0.00" required>
                             </div>
-                            <div class="form-text">Must be ₹0 or greater. Negative amounts are not allowed.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <label class="form-label">Duration (Minutes)</label>
                             <div class="input-group">
-                                <input type="number" name="duration" id="duration" min="1" max="1440" step="1"
-                                       class="form-control form-control-custom border-end-0"
-                                       style="border-radius: 12px 0 0 12px;"
-                                       value="${treatment.duration == 0 ? '' : treatment.duration}"
-                                       placeholder="e.g. 60" required title="Duration must be a positive number of minutes.">
+                                <input type="number" name="duration" class="form-control form-control-custom border-end-0" style="border-radius: 12px 0 0 12px;" value="${treatment.duration}" placeholder="e.g. 60" required>
                                 <span class="input-group-text bg-light border-2 border-start-0" style="border-radius: 0 12px 12px 0;">min</span>
                             </div>
-                            <div class="form-text">Must be at least 1 minute. Negative or zero values are not allowed.</div>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Detailed Description <span class="text-danger">*</span></label>
-                            <textarea name="description" id="description" class="form-control form-control-custom" rows="4"
-                                      minlength="10" maxlength="2000"
-                                      placeholder="Describe the benefits, procedure, and expected results..." required><c:out value="${treatment.description}"/></textarea>
-                            <div class="form-text">Required. Between 10 and 2000 characters.</div>
+                            <label class="form-label">Detailed Description</label>
+                            <textarea name="description" class="form-control form-control-custom" rows="4" placeholder="Describe the benefits, procedure, and expected results...">${treatment.description}</textarea>
                         </div>
                     </div>
 
@@ -346,69 +320,17 @@
             const cat = document.getElementById('category').value;
             const typeDiv = document.getElementById('treatmentTypeDiv');
             const skinDiv = document.getElementById('skinTypeDiv');
-            const typeSelect = document.getElementById('treatmentType');
-            const skinSelect = document.getElementById('skinType');
-
+            
             if (cat === "Skin") {
                 typeDiv.style.display = "block";
                 skinDiv.style.display = "block";
-                if (typeSelect) typeSelect.required = true;
-                if (skinSelect) skinSelect.required = true;
+                typeDiv.classList.add('animate__animated', 'animate__fadeIn');
+                skinDiv.classList.add('animate__animated', 'animate__fadeIn');
             } else {
                 typeDiv.style.display = "none";
                 skinDiv.style.display = "none";
-                if (typeSelect) { typeSelect.required = false; typeSelect.value = ""; }
-                if (skinSelect) { skinSelect.required = false; skinSelect.value = ""; }
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            toggleTreatmentSkin();
-            const form = document.getElementById('treatmentForm');
-            if (!form) return;
-            form.addEventListener('submit', function (e) {
-                const priceEl = document.getElementById('price');
-                const durationEl = document.getElementById('duration');
-                const descriptionEl = document.getElementById('description');
-                const serviceNameEl = document.getElementById('serviceName');
-                const price = parseFloat(priceEl.value);
-                const duration = parseInt(durationEl.value, 10);
-                const description = (descriptionEl.value || '').trim();
-                const serviceName = (serviceNameEl.value || '').trim();
-
-                if (!serviceName || serviceName.length < 2) {
-                    e.preventDefault();
-                    serviceNameEl.setCustomValidity('Service Name is required (at least 2 characters).');
-                    serviceNameEl.reportValidity();
-                    return;
-                }
-                serviceNameEl.setCustomValidity('');
-
-                if (isNaN(price) || price < 0) {
-                    e.preventDefault();
-                    priceEl.setCustomValidity('Base Price cannot be negative.');
-                    priceEl.reportValidity();
-                    return;
-                }
-                priceEl.setCustomValidity('');
-
-                if (isNaN(duration) || duration < 1) {
-                    e.preventDefault();
-                    durationEl.setCustomValidity('Duration must be at least 1 minute.');
-                    durationEl.reportValidity();
-                    return;
-                }
-                durationEl.setCustomValidity('');
-
-                if (description.length < 10) {
-                    e.preventDefault();
-                    descriptionEl.setCustomValidity('Detailed Description must be at least 10 characters.');
-                    descriptionEl.reportValidity();
-                    return;
-                }
-                descriptionEl.setCustomValidity('');
-            });
-        });
     </script>
 
     <!-- Bootstrap Bundle -->

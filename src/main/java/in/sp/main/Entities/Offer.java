@@ -54,6 +54,17 @@ public class Offer {
     )
     private List<Service1> applicableServices;
     
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OfferBooking> offerBookings;
+
+    public List<OfferBooking> getOfferBookings() {
+        return offerBookings;
+    }
+
+    public void setOfferBookings(List<OfferBooking> offerBookings) {
+        this.offerBookings = offerBookings;
+    }
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
