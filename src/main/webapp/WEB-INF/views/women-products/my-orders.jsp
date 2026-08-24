@@ -542,15 +542,15 @@
               
               <div class="tracking-container" style="display: none;">
                 <div class="tracking-wrapper">
-                  <c:set var="placedState" value="${o.status == 'PLACED' ? 'active' : 'completed'}" />
-                  <c:set var="confirmedState" value="${o.status == 'CONFIRMED' ? 'active' : (o.status == 'SHIPPED' || o.status == 'DELIVERED' ? 'completed' : '')}" />
-                  <c:set var="shippedState" value="${o.status == 'SHIPPED' ? 'active' : (o.status == 'DELIVERED' ? 'completed' : '')}" />
-                  <c:set var="deliveredState" value="${o.status == 'DELIVERED' ? 'completed' : ''}" />
-                  
-                  <div class="track-step ${placedState}"><div class="track-icon"><i class="bi bi-receipt"></i></div><div class="track-label">Placed</div></div>
-                  <div class="track-step ${confirmedState}"><div class="track-icon"><i class="bi bi-box-seam"></i></div><div class="track-label">Confirmed</div></div>
-                  <div class="track-step ${shippedState}"><div class="track-icon"><i class="bi bi-truck"></i></div><div class="track-label">Shipped</div></div>
-                  <div class="track-step ${deliveredState}"><div class="track-icon"><i class="bi bi-house-door"></i></div><div class="track-label">Delivered</div></div>
+                  <c:forEach var="step" items="${orderTracking[o.id]}">
+                    <div class="track-step ${step.state}">
+                      <div class="track-icon"><i class="bi bi-check2"></i></div>
+                      <div class="track-label">${step.label}</div>
+                    </div>
+                  </c:forEach>
+                  <c:if test="${empty orderTracking[o.id]}">
+                    <div class="track-step"><div class="track-label">Cancelled</div></div>
+                  </c:if>
                 </div>
               </div>
             </c:if>
@@ -559,6 +559,8 @@
           <div class="order-right">
             <div class="price-tag">&#8377;${o.totalPrice}</div>
             <div class="qty-display">Quantity: ${o.quantity}</div>
+            <div class="qty-display">Payment: ${empty o.paymentStatus ? o.paymentMethod : o.paymentStatus}</div>
+            <div class="qty-display">Status: ${o.status}</div>
           </div>
         </div>
       </div>

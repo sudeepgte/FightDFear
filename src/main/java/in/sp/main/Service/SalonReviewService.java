@@ -83,7 +83,7 @@ public class SalonReviewService {
 
     }
     public List<SalonReview> getReviewsBySalonId(int salonId) {
-        return reviewRepo.findBySalonId(salonId);
+        return reviewRepo.findBySalonId((long) salonId);
     }
     
     public List<SalonReview> getReviewsBySalon(Salon salon) {

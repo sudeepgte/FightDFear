@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface WomenProductSellerRepository extends JpaRepository<WomenProductSeller, Long> {
     Optional<WomenProductSeller> findByEmail(String email);
+    Optional<WomenProductSeller> findByPhone(String phone);
     List<WomenProductSeller> findByVerificationStatus(VerificationStatus status);
     long countByVerificationStatus(VerificationStatus status);
     List<WomenProductSeller> findAllByOrderByCreatedAtDesc();

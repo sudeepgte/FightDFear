@@ -117,7 +117,9 @@
         // Ensure the message is for the current conversation
         if (targetUserId && msg.userId && msg.userId != targetUserId) return;
         
-        appendMsg(msg.message, msg.senderType === senderType ? 'sent' : 'received');
+        if (msg.senderType === senderType) return; // ignore echoes
+        
+        appendMsg(msg.message, 'received');
       });
     });
 
@@ -130,6 +132,8 @@
       // Clear empty state
       const empty = chatBox.querySelector('.ch-empty');
       if (empty) empty.remove();
+      
+      appendMsg(text, 'sent');
 
       fetch(ctx + '/doctors/chat/send', {
         method: 'POST',

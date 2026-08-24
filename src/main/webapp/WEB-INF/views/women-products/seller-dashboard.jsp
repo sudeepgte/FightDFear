@@ -626,6 +626,14 @@
                 </div>
               </div>
             </div>
+            <div class="stats-grid" style="margin-top:12px;">
+              <div class="stat-box"><div class="stat-data"><h3>${outOfStockCount}</h3><p>Out of stock</p></div></div>
+              <div class="stat-box"><div class="stat-data"><h3>${lowStockCount}</h3><p>Low stock</p></div></div>
+              <div class="stat-box"><div class="stat-data"><h3>${pendingOrders}</h3><p>Pending orders</p></div></div>
+              <div class="stat-box"><div class="stat-data"><h3>${processingOrders}</h3><p>Processing</p></div></div>
+              <div class="stat-box"><div class="stat-data"><h3>${deliveredOrders}</h3><p>Delivered</p></div></div>
+              <div class="stat-box"><div class="stat-data"><h3>${cancelledOrders}</h3><p>Cancelled</p></div></div>
+            </div>
 
             <div class="fdf-section">
               <div class="fdf-section-header" style="display:flex; justify-content:space-between; align-items:center;">
@@ -729,7 +737,7 @@
             <c:if test="${section == 'products'}">
               <div class="header-info">
                 <h1>Catalog Manager</h1>
-                <button class="btn-fdf-action" onclick="openAddModal()">
+                <button type="button" class="btn-fdf-action" onclick="openAddModal()">
                   <i class="bi bi-plus-lg"></i> Deploy New Item
                 </button>
               </div>
@@ -782,7 +790,15 @@
                             </td>
                             <td>${p.categoryLabel}</td>
                             <td><span style="font-weight: 900; color: #16a34a;">&#8377;${p.price}</span></td>
-                            <td>${p.stock} units</td>
+                            <td>${p.stock} units
+                              <div style="font-size:0.7rem; font-weight:800; color:${p.outOfStock ? '#b91c1c' : (p.lowStock ? '#b45309' : '#15803d')};">
+                                ${p.inventoryLabel}
+                              </div>
+                              <form action="${pageContext.request.contextPath}/women-products/seller/products/${p.id}/stock" method="post" style="margin-top:6px; display:flex; gap:4px;">
+                                <input type="number" name="stock" value="${p.stock}" min="0" max="1000000" style="width:70px; padding:4px 6px; border-radius:8px; border:1px solid #e2e8f0;">
+                                <button type="submit" style="border:none; background:#fdf2f8; color:#9d174d; font-weight:800; border-radius:8px; padding:4px 8px; cursor:pointer;">Save</button>
+                              </form>
+                            </td>
                             <td><span
                                 class="fdf-badge badge-${p.stock > 0 && p.active ? 'INSTOCK' : 'OUTOFSTOCK'}">${p.stock
                                 > 0 && p.active ? 'Operational' : 'Depleted'}</span></td>
@@ -1002,6 +1018,22 @@
                     <span style="color:var(--brand-pink); font-size:1.1rem; font-weight:900;">${not empty orders ? orders.size() : 0}</span>
                   </div>
                 </div>
+                <form method="get" action="${pageContext.request.contextPath}/women-products/seller/dashboard" style="margin:0 0 16px 0; display:flex; gap:8px; align-items:center;">
+                  <input type="hidden" name="section" value="orders">
+                  <label style="font-weight:800; font-size:0.85rem;">Filter</label>
+                  <select name="orderStatus" class="form-ctrl" style="width:auto; padding:8px 12px;" onchange="this.form.submit()">
+                    <option value="" ${empty orderStatusFilter ? 'selected' : ''}>All</option>
+                    <option value="PLACED" ${orderStatusFilter=='PLACED' ? 'selected' : ''}>Placed</option>
+                    <option value="CONFIRMED" ${orderStatusFilter=='CONFIRMED' ? 'selected' : ''}>Confirmed</option>
+                    <option value="PROCESSING" ${orderStatusFilter=='PROCESSING' ? 'selected' : ''}>Processing</option>
+                    <option value="PACKED" ${orderStatusFilter=='PACKED' ? 'selected' : ''}>Packed</option>
+                    <option value="READY_FOR_PICKUP" ${orderStatusFilter=='READY_FOR_PICKUP' ? 'selected' : ''}>Ready for pickup</option>
+                    <option value="ASSIGNED" ${orderStatusFilter=='ASSIGNED' ? 'selected' : ''}>Assigned</option>
+                    <option value="OUT_FOR_DELIVERY" ${orderStatusFilter=='OUT_FOR_DELIVERY' ? 'selected' : ''}>Out for delivery</option>
+                    <option value="DELIVERED" ${orderStatusFilter=='DELIVERED' ? 'selected' : ''}>Delivered</option>
+                    <option value="CANCELLED" ${orderStatusFilter=='CANCELLED' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </form>
 
                 <div class="fdf-section">
                   <div class="fdf-section-body" style="padding: 0;">
@@ -1100,26 +1132,32 @@
                               </td>
                               <td id="orderStatusCell_${o.id}" style="text-align:center;">
                                 <c:set var="curr" value="${o.status}" />
-                                <c:if test="${curr != 'DELIVERED' && curr != 'CANCELLED'}">
+                                <c:set var="opts" value="${nextSellerStatuses[o.id]}" />
+                                <div style="font-size:0.75rem; color:#64748b; margin-bottom:6px;">Pay: ${o.paymentStatus}</div>
+                                <c:if test="${not empty o.deliveryPartner}">
+                                  <div style="font-size:0.75rem; font-weight:700;">Rider: ${o.deliveryPartner.fullName}</div>
+                                </c:if>
+                                <c:if test="${not empty opts}">
                                   <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
                                     method="post" class="seller-order-form" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
-                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:120px; border-radius:10px;">
-                                      <option value="PLACED" ${curr=='PLACED' ? 'selected' : ''}>Placed</option>
-                                      <option value="CONFIRMED" ${curr=='CONFIRMED' ? 'selected' : ''}>Confirmed</option>
-                                      <option value="SHIPPED" ${(curr=='SHIPPED' || curr=='IN_TRANSIT') ? 'selected' : ''}>In Transit</option>
-                                      <option value="DELIVERED" ${curr=='DELIVERED' ? 'selected' : ''}>Delivered</option>
-                                      <option value="CANCELLED" ${curr=='CANCELLED' ? 'selected' : ''}>Cancelled</option>
+                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:160px; border-radius:10px;">
+                                      <c:forEach var="st" items="${opts}">
+                                        <option value="${st}">${st}</option>
+                                      </c:forEach>
                                     </select>
-                                    <button type="submit" style="background:var(--gradient-primary); color:#fff; border:none; padding:6px 12px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Update Status">
-                                      <i class="bi bi-arrow-repeat"></i> Update
-                                    </button>
+                                    <button type="submit" style="background:var(--gradient-primary); color:#fff; border:none; padding:6px 12px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer;">Update</button>
                                   </form>
                                 </c:if>
-                                <c:if test="${curr == 'DELIVERED' || curr == 'CANCELLED'}">
-                                  <div style="display:inline-flex; align-items:center; gap:6px; background:#f8fafc; padding:6px 14px; border-radius:20px; border:1px solid #e2e8f0;">
-                                    <span style="font-size:0.8rem; font-weight:700; color:var(--fdf-muted);">${curr == 'DELIVERED' ? 'Fulfilled' : 'Terminated'}</span>
-                                    <i class="bi bi-lock-fill" style="opacity:0.4; font-size:0.8rem;"></i>
-                                  </div>
+                                <c:if test="${canAssign[o.id]}">
+                                  <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/assign" method="post" style="margin-top:8px;">
+                                    <select name="partnerId" required style="padding:6px; border-radius:8px; max-width:160px;">
+                                      <option value="">Assign partner</option>
+                                      <c:forEach var="dp" items="${deliveryPartners}">
+                                        <option value="${dp.id}">${dp.fullName}</option>
+                                      </c:forEach>
+                                    </select>
+                                    <button type="submit" style="background:#1e1b4b; color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:0.75rem;">Assign</button>
+                                  </form>
                                 </c:if>
                               </td>
                             </tr>
@@ -1601,6 +1639,7 @@
                   class="bi bi-x-circle"></i></button>
             </div>
 
+
             <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" novalidate>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
@@ -1608,6 +1647,7 @@
                        required minlength="2" maxlength="80"
                        pattern="[A-Za-z][A-Za-z .'-]{1,79}"
                        title="2–80 letters only; spaces, apostrophes, periods, hyphens allowed">
+
 
 
             <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data">
@@ -1631,6 +1671,7 @@
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
 
+
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
                   <input type="text" name="businessName" id="profileBusinessName" class="form-ctrl" value="${seller.businessName}"
                          required minlength="2" maxlength="100"
@@ -1643,6 +1684,7 @@
                          required minlength="10" maxlength="10" pattern="[0-9]{10}"
                          title="Exactly 10 digits"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
 
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
                   <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
@@ -1696,9 +1738,11 @@
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
 
+
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
                           minlength="10" maxlength="1000">${seller.address}</textarea>
+
 
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
@@ -2162,6 +2206,7 @@
                   }
                 });
               }
+            });
 
             function calculateAutoOfferBadge() {
               const priceInput = document.querySelector('#productForm [name="price"]');
@@ -2216,6 +2261,8 @@
                     offerBadge: this.getAttribute('data-offerbadge') || this.getAttribute('data-offer-badge'),
 
                     offerBadge: this.getAttribute('data-offerBadge'),
+
+
 
                     stock: this.getAttribute('data-stock'),
                     lowStockAlertLevel: this.getAttribute('data-lowStockAlertLevel'),

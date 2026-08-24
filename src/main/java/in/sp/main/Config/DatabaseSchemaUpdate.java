@@ -21,6 +21,41 @@ public class DatabaseSchemaUpdate implements CommandLineRunner {
             System.err.println("Note: Could not alter column status (it may already be correct): " + e.getMessage());
         }
 
+        try {
+            jdbcTemplate.execute("ALTER TABLE financial_videos ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
+            System.out.println("Added custom_category column to financial_videos table.");
+        } catch (Exception e) {
+            // Column may already exist
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE financial_live_sessions ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
+            System.out.println("Added custom_category column to financial_live_sessions table.");
+        } catch (Exception e) {
+            // Column may already exist
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE financial_workshops ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
+            System.out.println("Added custom_category column to financial_workshops table.");
+        } catch (Exception e) {
+            // Column may already exist
+        }
+
+        try {
+            jdbcTemplate.execute("UPDATE financial_videos SET duration = NULL, level = NULL");
+            System.out.println("Cleared legacy duration/level values in financial_videos table.");
+        } catch (Exception e) {
+            // Table/columns may vary
+        }
+
+        try {
+            jdbcTemplate.execute("UPDATE financial_live_sessions SET meeting_url = '' WHERE meeting_url LIKE '%/admin%' OR meeting_url = 'admin'");
+            System.out.println("Cleaned legacy admin meeting_url values in financial_live_sessions table.");
+        } catch (Exception e) {
+            // Table/columns may vary
+        }
+
         // Women Marketplace: keep entity-mapped columns in sync with legacy columns
         try {
             jdbcTemplate.execute(

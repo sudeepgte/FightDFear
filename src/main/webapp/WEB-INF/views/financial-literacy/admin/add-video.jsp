@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add Video - Financial Literacy</title>
+    <title>Add Recorded Video - Financial Literacy</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -13,73 +13,90 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
 </head>
 <body>
-    <c:set var="flAdminTitle" value="Add Video" scope="request"/>
+    <c:set var="flAdminTitle" value="Add Recorded Video" scope="request"/>
     <c:set var="flAdminActive" value="add-video" scope="request"/>
     <%@ include file="_topbar.jsp" %>
 
     <div class="layout">
-
-        <!-- Sidebar -->
-        <!-- Sidebar -->
         <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
-
 
         <main class="main">
             <div class="mainInner narrow">
                 <div class="admin-card">
-                    <h3>Add New Video</h3>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h3 class="mb-0">Add Recorded Video</h3>
+                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </a>
+                    </div>
+
                     <c:if test="${not empty error}">
-                        <div class="alert alert-danger">${error}</div>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i> ${error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
                     </c:if>
+
                     <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST" id="videoForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <!-- 1. Video Title -->
                         <div class="mb-3 position-relative">
-                            <label for="title" class="form-label">Video Title</label>
-                            <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter video title">
-                            <div class="invalid-feedback">Please provide a valid title (min 5 characters).</div>
+                            <label for="title" class="form-label fw-bold">Video Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required value="${title}" placeholder="Enter video title">
+                            <div class="invalid-feedback">Video Title cannot be empty.</div>
                         </div>
                         
+                        <!-- 2. Description -->
                         <div class="mb-3 position-relative">
-                            <label for="category" class="form-label">Category</label>
+                            <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Enter description of the video">${description}</textarea>
+                            <div class="invalid-feedback">Description cannot be empty.</div>
+                        </div>
 
+                        <!-- 3. Category Dropdown -->
+                        <div class="mb-3 position-relative">
+                            <label for="category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
                             <select class="form-select" id="category" name="category" required>
-                                <option value="" disabled selected>Select a category</option>
-                                <option value="saving">Saving</option>
-                                <option value="investing">Investing</option>
-                                <option value="loans">Loans</option>
-                                <option value="banking">Banking</option>
-                                <option value="insurance">Insurance</option>
-                                <option value="government">Government Schemes</option>
+                                <option value="" disabled <c:if test="${empty category}">selected</c:if>>Select Category</option>
+                                <option value="Saving" <c:if test="${category eq 'Saving'}">selected</c:if>>Saving</option>
+                                <option value="Investing" <c:if test="${category eq 'Investing'}">selected</c:if>>Investing</option>
+                                <option value="Loans" <c:if test="${category eq 'Loans'}">selected</c:if>>Loans</option>
+                                <option value="Banking" <c:if test="${category eq 'Banking'}">selected</c:if>>Banking</option>
+                                <option value="Insurance" <c:if test="${category eq 'Insurance'}">selected</c:if>>Insurance</option>
+                                <option value="Government Schemes" <c:if test="${category eq 'Government Schemes'}">selected</c:if>>Government Schemes</option>
+                                <option value="Others" <c:if test="${category eq 'Others'}">selected</c:if>>Others</option>
                             </select>
-                            <div class="invalid-feedback">Please select a category.</div>
+                            <div class="invalid-feedback">Category cannot be empty.</div>
                         </div>
 
-
-
-                        <div class="mb-3 position-relative">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" maxlength="5000" placeholder="Brief description of the video..."></textarea>
-                            <div class="invalid-feedback">Please provide a description (between 10 and 5000 characters).</div>
+                        <!-- Custom Category Input (shown when Others is selected) -->
+                        <div class="mb-3 position-relative" id="customCategoryGroup" style="display: <c:choose><c:when test="${category eq 'Others'}">block</c:when><c:otherwise>none</c:otherwise></c:choose>;">
+                            <label for="customCategory" class="form-label fw-bold">Enter Category <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="customCategory" name="customCategory" value="${customCategory}" placeholder="Enter Category">
+                            <div class="invalid-feedback" id="customCategoryError">Custom category cannot be empty when 'Others' is selected.</div>
                         </div>
-                        
+
+                        <!-- 4. Video URL / Upload Video -->
                         <div class="mb-4 position-relative">
-                            <label class="form-label d-block">Video Source (Optional: Provide URL OR Upload File)</label>
+                            <label class="form-label fw-bold d-block">Video URL / Upload Video <span class="text-danger">*</span></label>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="videoUrl" class="form-label" style="font-size: 0.85rem; color: #666;">YouTube / External URL</label>
-                                    <input type="url" class="form-control" id="videoUrl" name="videoUrl" placeholder="https://youtube.com/watch?v=..." pattern="https?://.+">
+                                    <label for="videoUrl" class="form-label text-muted small">Video URL (YouTube / Hosted URL)</label>
+                                    <input type="url" class="form-control" id="videoUrl" name="videoUrl" value="${videoUrl}" placeholder="https://www.youtube.com/watch?v=...">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="videoFile" class="form-label" style="font-size: 0.85rem; color: #666;">Upload Video File</label>
+                                    <label for="videoFile" class="form-label text-muted small">Upload Video File <span class="text-primary">(Supports large files up to 1GB+)</span></label>
                                     <input type="file" class="form-control" id="videoFile" name="videoFile" accept="video/*">
                                 </div>
                             </div>
-                            <div id="sourceError" class="invalid-feedback" style="display: none;">Please provide either a video URL or upload a video file.</div>
+                            <div id="sourceError" class="text-danger small mt-1" style="display: none;">Video URL / uploaded video cannot be empty.</div>
                         </div>
                         
-                        <button type="submit" class="btn-purple" id="submitBtn">
-                            <i class="fas fa-upload me-2"></i> Publish Video
-
-                        </button>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn-purple" id="submitBtn">
+                                <i class="fas fa-save me-2"></i> Save Video
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -87,99 +104,76 @@
     </div>
 
     <script>
-
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('videoForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const inputs = form.querySelectorAll('input, select, textarea');
-
-            const urlInput = document.getElementById('videoUrl');
-            const fileInput = document.getElementById('videoFile');
+            const categorySelect = document.getElementById('category');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            const customCategoryInput = document.getElementById('customCategory');
+            const videoUrlInput = document.getElementById('videoUrl');
+            const videoFileInput = document.getElementById('videoFile');
             const sourceError = document.getElementById('sourceError');
+            const submitBtn = document.getElementById('submitBtn');
 
-            function validateSource() {
-                // Made optional as requested by user
-                sourceError.style.display = 'none';
-                urlInput.classList.remove('is-invalid');
-                fileInput.classList.remove('is-invalid');
-                return true;
-            }
-
-            // Real-time validation on input/change
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    if (this !== urlInput && this !== fileInput) validateField(this);
-                    checkFormValidity();
-                });
-                
-                input.addEventListener('change', function() {
-                    if (this !== urlInput && this !== fileInput) {
-                        validateField(this);
-                    } else {
-                        validateSource();
-                    }
-                    checkFormValidity();
-                });
-                
-                input.addEventListener('blur', function() {
-                    if (this !== urlInput && this !== fileInput) validateField(this);
-                });
-            });
-
-            function validateField(field) {
-                if (field.checkValidity()) {
-                    field.classList.remove('is-invalid');
-                    field.classList.add('is-valid');
+            function toggleCustomCategory() {
+                if (categorySelect.value === 'Others') {
+                    customCategoryGroup.style.display = 'block';
+                    customCategoryInput.setAttribute('required', 'true');
                 } else {
-                    field.classList.remove('is-valid');
-                    field.classList.add('is-invalid');
+                    customCategoryGroup.style.display = 'none';
+                    customCategoryInput.removeAttribute('required');
+                    customCategoryInput.value = '';
                 }
             }
 
-            function checkFormValidity() {
-                const isFormValid = form.checkValidity();
-                const isSourceValid = validateSource();
-                
-                if (isFormValid && isSourceValid) {
-                    submitBtn.classList.remove('disabled');
-                    submitBtn.removeAttribute('disabled');
+            categorySelect.addEventListener('change', toggleCustomCategory);
+
+            function validateVideoSource() {
+                const urlVal = videoUrlInput.value.trim();
+                const fileVal = videoFileInput.files.length > 0;
+                if (!urlVal && !fileVal) {
+                    sourceError.style.display = 'block';
+                    videoUrlInput.classList.add('is-invalid');
+                    videoFileInput.classList.add('is-invalid');
+                    return false;
                 } else {
-                    submitBtn.classList.add('disabled');
-                    submitBtn.setAttribute('disabled', 'true');
+                    sourceError.style.display = 'none';
+                    videoUrlInput.classList.remove('is-invalid');
+                    videoFileInput.classList.remove('is-invalid');
+                    return true;
                 }
             }
 
-            // Form submission validation
+            videoUrlInput.addEventListener('input', validateVideoSource);
+            videoFileInput.addEventListener('change', validateVideoSource);
+
             form.addEventListener('submit', function (event) {
-                const isFormValid = form.checkValidity();
-                const isSourceValid = validateSource();
-                
-                if (!isFormValid || !isSourceValid) {
+                let valid = true;
+
+                if (!form.checkValidity()) {
+                    valid = false;
+                }
+
+                if (categorySelect.value === 'Others' && !customCategoryInput.value.trim()) {
+                    customCategoryInput.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    customCategoryInput.classList.remove('is-invalid');
+                }
+
+                if (!validateVideoSource()) {
+                    valid = false;
+                }
+
+                if (!valid) {
                     event.preventDefault();
                     event.stopPropagation();
-                    
-                    // Mark all fields to show invalid state
-                    inputs.forEach(input => {
-                        if (input !== urlInput && input !== fileInput) validateField(input);
-                    });
-                    
-                    // Focus on the first invalid field
-                    const firstInvalid = form.querySelector('.is-invalid, :invalid');
-                    if(firstInvalid) firstInvalid.focus();
+                    form.classList.add('was-validated');
                 } else {
-                    // Show loading state
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Publishing...';
-                    submitBtn.style.pointerEvents = 'none';
-                    submitBtn.style.opacity = '0.8';
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving...';
+                    submitBtn.disabled = true;
                 }
-                
-                form.classList.add('was-validated');
-            }, false);
-            
-            // Initial check to disable button
-            checkFormValidity();
+            });
         });
-
     </script>
 </body>
 </html>
