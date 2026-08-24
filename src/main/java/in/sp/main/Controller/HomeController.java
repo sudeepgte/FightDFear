@@ -34,6 +34,11 @@ public class HomeController {
 		return "heatmap";
 	}
 
+	@RequestMapping({"/dashboard", "/dashboard.html"})
+	public String dashboardRedirect() {
+		return "redirect:/users/dashboard";
+	}
+
 	@RequestMapping({"/trainer/login", "/trainer/login.html"})
 	public String trainerLoginRedirect() {
 		return "redirect:/fitness/trainer/login";

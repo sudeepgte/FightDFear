@@ -8,9 +8,9 @@ import org.springframework.web.multipart.MultipartFile;
 public final class StorageValidation {
 
     private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
-    private static final long MAX_VIDEO_BYTES = 200L * 1024 * 1024;
-    private static final long MAX_DOCUMENT_BYTES = 20L * 1024 * 1024;
-    private static final long MAX_GENERAL_BYTES = 200L * 1024 * 1024;
+    private static final long MAX_VIDEO_BYTES = 2048L * 1024 * 1024;
+    private static final long MAX_DOCUMENT_BYTES = 50L * 1024 * 1024;
+    private static final long MAX_GENERAL_BYTES = 2048L * 1024 * 1024;
 
     private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
             "exe", "bat", "cmd", "com", "scr", "pif", "vbs", "js", "jsp",

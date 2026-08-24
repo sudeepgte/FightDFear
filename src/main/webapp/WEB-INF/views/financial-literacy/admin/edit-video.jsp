@@ -1,11 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add Recorded Video - Financial Literacy</title>
+    <title>Edit Recorded Video - Financial Literacy</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -13,8 +14,8 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
 </head>
 <body>
-    <c:set var="flAdminTitle" value="Add Recorded Video" scope="request"/>
-    <c:set var="flAdminActive" value="add-video" scope="request"/>
+    <c:set var="flAdminTitle" value="Edit Recorded Video" scope="request"/>
+    <c:set var="flAdminActive" value="edit-video" scope="request"/>
     <%@ include file="_topbar.jsp" %>
 
     <div class="layout">
@@ -24,7 +25,7 @@
             <div class="mainInner narrow">
                 <div class="admin-card">
                     <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h3 class="mb-0">Add Recorded Video</h3>
+                        <h3 class="mb-0">Edit Recorded Video</h3>
                         <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Back
                         </a>
@@ -37,7 +38,7 @@
                         </div>
                     </c:if>
 
-                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-video" method="POST" id="videoForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/edit-video/${video.id}" method="POST" id="videoForm" enctype="multipart/form-data" class="needs-validation" novalidate>
                         <!-- 1. Video Title -->
                         <div class="mb-3 position-relative">
                             <label for="title" class="form-label fw-bold">Video Title <span class="text-danger">*</span></label>
@@ -84,7 +85,7 @@
                                     <input type="url" class="form-control" id="videoUrl" name="videoUrl" value="${videoUrl}" placeholder="https://www.youtube.com/watch?v=...">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="videoFile" class="form-label text-muted small">Upload Video File <span class="text-primary">(Supports large files up to 1GB+)</span></label>
+                                    <label for="videoFile" class="form-label text-muted small">Replace Video File (Optional) <span class="text-primary">(Supports large files up to 1GB+)</span></label>
                                     <input type="file" class="form-control" id="videoFile" name="videoFile" accept="video/*">
                                 </div>
                             </div>
@@ -94,7 +95,7 @@
                         <div class="d-flex justify-content-end gap-2">
                             <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-light">Cancel</a>
                             <button type="submit" class="btn-purple" id="submitBtn">
-                                <i class="fas fa-save me-2"></i> Save Video
+                                <i class="fas fa-save me-2"></i> Update Video
                             </button>
                         </div>
                     </form>
@@ -121,7 +122,6 @@
                 } else {
                     customCategoryGroup.style.display = 'none';
                     customCategoryInput.removeAttribute('required');
-                    customCategoryInput.value = '';
                 }
             }
 
@@ -169,7 +169,7 @@
                     event.stopPropagation();
                     form.classList.add('was-validated');
                 } else {
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Saving...';
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Updating...';
                     submitBtn.disabled = true;
                 }
             });

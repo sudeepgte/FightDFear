@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add Workshop - Financial Literacy</title>
+    <title>Edit Workshop - Financial Literacy</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
 </head>
 <body>
-    <c:set var="flAdminTitle" value="Add Workshop" scope="request"/>
-    <c:set var="flAdminActive" value="add-workshop" scope="request"/>
+    <c:set var="flAdminTitle" value="Edit Workshop" scope="request"/>
+    <c:set var="flAdminActive" value="edit-workshop" scope="request"/>
     <%@ include file="_topbar.jsp" %>
 
     <div class="layout">
@@ -25,17 +25,24 @@
             <div class="mainInner narrow">
                 <div class="admin-card">
                     <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h3 class="mb-0">Add New Workshop</h3>
+                        <h3 class="mb-0">Edit Workshop</h3>
                         <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Back
                         </a>
                     </div>
 
-                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" method="POST" id="workshopForm" class="needs-validation" novalidate>
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i> ${error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </c:if>
+
+                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/edit-workshop/${workshop.id}" method="POST" id="workshopForm" class="needs-validation" novalidate>
                         <!-- Workshop Title -->
                         <div class="mb-3 position-relative">
                             <label for="title" class="form-label fw-bold">Workshop Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter workshop title">
+                            <input type="text" class="form-control" id="title" name="title" required minlength="5" value="${title}" placeholder="Enter workshop title">
                             <div class="invalid-feedback">Please provide a valid title (min 5 characters).</div>
                         </div>
 
@@ -43,22 +50,22 @@
                         <div class="mb-3 position-relative">
                             <label for="category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
                             <select class="form-select" id="category" name="category" required>
-                                <option value="" disabled selected>Select Category</option>
-                                <option value="Saving">Saving</option>
-                                <option value="Investing">Investing</option>
-                                <option value="Loans">Loans</option>
-                                <option value="Banking">Banking</option>
-                                <option value="Insurance">Insurance</option>
-                                <option value="Government Schemes">Government Schemes</option>
-                                <option value="Others">Others</option>
+                                <option value="" disabled <c:if test="${empty category}">selected</c:if>>Select Category</option>
+                                <option value="Saving" <c:if test="${category eq 'Saving'}">selected</c:if>>Saving</option>
+                                <option value="Investing" <c:if test="${category eq 'Investing'}">selected</c:if>>Investing</option>
+                                <option value="Loans" <c:if test="${category eq 'Loans'}">selected</c:if>>Loans</option>
+                                <option value="Banking" <c:if test="${category eq 'Banking'}">selected</c:if>>Banking</option>
+                                <option value="Insurance" <c:if test="${category eq 'Insurance'}">selected</c:if>>Insurance</option>
+                                <option value="Government Schemes" <c:if test="${category eq 'Government Schemes'}">selected</c:if>>Government Schemes</option>
+                                <option value="Others" <c:if test="${category eq 'Others'}">selected</c:if>>Others</option>
                             </select>
                             <div class="invalid-feedback">Category cannot be empty.</div>
                         </div>
 
                         <!-- Custom Category Input (shown when Others is selected) -->
-                        <div class="mb-3 position-relative" id="customCategoryGroup" style="display: none;">
+                        <div class="mb-3 position-relative" id="customCategoryGroup" style="display: <c:choose><c:when test="${category eq 'Others'}">block</c:when><c:otherwise>none</c:otherwise></c:choose>;">
                             <label for="customCategory" class="form-label fw-bold">Enter Category <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" id="customCategory" name="customCategory" placeholder="Enter Category">
+                            <input type="text" class="form-control form-control-sm" id="customCategory" name="customCategory" value="${customCategory}" placeholder="Enter Category">
                             <div class="invalid-feedback">Custom category cannot be empty when 'Others' is selected.</div>
                         </div>
 
@@ -66,13 +73,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3 position-relative">
                                 <label for="venue" class="form-label fw-bold">Venue <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="venue" name="venue" required minlength="3" placeholder="E.g. Town Hall">
+                                <input type="text" class="form-control" id="venue" name="venue" required minlength="3" value="${venue}" placeholder="E.g. Town Hall">
                                 <div class="invalid-feedback">Please provide the venue (min 3 characters).</div>
                             </div>
                             
                             <div class="col-md-6 mb-3 position-relative">
                                 <label for="city" class="form-label fw-bold">City <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="city" name="city" required minlength="2" placeholder="E.g. Mumbai">
+                                <input type="text" class="form-control" id="city" name="city" required minlength="2" value="${city}" placeholder="E.g. Mumbai">
                                 <div class="invalid-feedback">Please provide the city name.</div>
                             </div>
                         </div>
@@ -81,19 +88,19 @@
                         <div class="row">
                             <div class="col-md-4 mb-3 position-relative">
                                 <label for="date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="date" name="date" required>
-                                <div class="invalid-feedback">Please select a valid future date.</div>
+                                <input type="date" class="form-control" id="date" name="date" value="${date}" required>
+                                <div class="invalid-feedback">Please select a valid date.</div>
                             </div>
                             
                             <div class="col-md-4 mb-3 position-relative">
                                 <label for="startTime" class="form-label fw-bold">Start Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="startTime" name="startTime" required>
+                                <input type="time" class="form-control" id="startTime" name="startTime" value="${startTime}" required>
                                 <div class="invalid-feedback">Please provide the start time.</div>
                             </div>
 
                             <div class="col-md-4 mb-3 position-relative">
                                 <label for="endTime" class="form-label fw-bold">End Time <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="endTime" name="endTime" required>
+                                <input type="time" class="form-control" id="endTime" name="endTime" value="${endTime}" required>
                                 <div class="invalid-feedback">Please provide the end time.</div>
                             </div>
                         </div>
@@ -101,21 +108,21 @@
                         <!-- Number of Seats -->
                         <div class="mb-3 position-relative">
                             <label for="seats" class="form-label fw-bold">Number of Seats <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="seats" name="seats" min="1" max="5000" required placeholder="E.g. 50">
+                            <input type="number" class="form-control" id="seats" name="seats" min="1" max="5000" required placeholder="E.g. 50" value="${seats}">
                             <div class="invalid-feedback">Please enter a valid number of seats (1-5000).</div>
                         </div>
 
                         <!-- Description -->
                         <div class="mb-4 position-relative">
                             <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Provide a brief description..."></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Provide a brief description...">${description}</textarea>
                             <div class="invalid-feedback">Please provide a description (min 10 characters).</div>
                         </div>
                         
                         <div class="d-flex justify-content-end gap-2">
                             <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-light">Cancel</a>
                             <button type="submit" class="btn-purple" id="submitBtn">
-                                <i class="fas fa-upload me-2"></i> Publish Workshop
+                                <i class="fas fa-save me-2"></i> Update Workshop
                             </button>
                         </div>
                     </form>
@@ -131,13 +138,6 @@
             const customCategoryGroup = document.getElementById('customCategoryGroup');
             const customCategoryInput = document.getElementById('customCategory');
             const submitBtn = document.getElementById('submitBtn');
-
-            // Set min date to today for date input
-            const dateInput = document.getElementById('date');
-            if(dateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                dateInput.setAttribute('min', today);
-            }
 
             function toggleCustomCategory() {
                 if (categorySelect.value === 'Others') {
@@ -170,7 +170,7 @@
                     event.stopPropagation();
                     form.classList.add('was-validated');
                 } else {
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Publishing...';
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Updating...';
                     submitBtn.disabled = true;
                 }
             });
