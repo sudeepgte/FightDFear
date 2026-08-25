@@ -97,7 +97,11 @@ class WomenProductsModuleTest {
     void orderLifecycleTransitionsAreControlled() {
         assertTrue(WomenProductOrderLifecycleService.sellerMaySet("PLACED", "CONFIRMED"));
         assertTrue(WomenProductOrderLifecycleService.sellerMaySet("CONFIRMED", "PROCESSING"));
-        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("CONFIRMED", "READY_FOR_PICKUP"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("PROCESSING", "PACKED"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("PACKED", "SHIPPED"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("SHIPPED", "OUT_FOR_DELIVERY"));
+        assertTrue(WomenProductOrderLifecycleService.sellerMaySet("OUT_FOR_DELIVERY", "DELIVERED"));
+        assertFalse(WomenProductOrderLifecycleService.sellerMaySet("CONFIRMED", "READY_FOR_PICKUP"));
         assertFalse(WomenProductOrderLifecycleService.sellerMaySet("DELIVERED", "PROCESSING"));
         assertFalse(WomenProductOrderLifecycleService.sellerMaySet("CANCELLED", "SHIPPED"));
         assertTrue(WomenProductOrderLifecycleService.deliveryMaySet("ASSIGNED", "PICKED_UP"));

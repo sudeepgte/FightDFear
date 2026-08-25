@@ -284,12 +284,9 @@ public class WomenProductController {
         }
 
         Map<Long, List<String>> nextSellerStatuses = new HashMap<>();
-        Map<Long, Boolean> canAssign = new HashMap<>();
         for (WomenProductOrder o : visibleOrders) {
             nextSellerStatuses.put(o.getId(),
                     in.sp.main.Service.WomenProductOrderLifecycleService.sellerNextStatuses(o.getStatus()));
-            canAssign.put(o.getId(),
-                    in.sp.main.Service.WomenProductOrderLifecycleService.canAssign(o));
         }
 
         List<WomenReturnRequest> returns = returnRepo.findBySellerOrderByRequestTimeDesc(s);
@@ -299,8 +296,6 @@ public class WomenProductController {
         model.addAttribute("orders", visibleOrders);
         model.addAttribute("orderStatusFilter", filter);
         model.addAttribute("nextSellerStatuses", nextSellerStatuses);
-        model.addAttribute("canAssign", canAssign);
-        model.addAttribute("deliveryPartners", orderLifecycle.listAssignablePartners());
         model.addAttribute("returns", returns);
         model.addAttribute("section", section);
         model.addAttribute("totalEarnings", totalEarnings);
@@ -790,6 +785,7 @@ public class WomenProductController {
             resp.put("newStatus", updated.getStatus());
             resp.put("orderId", updated.getId());
             resp.put("label", in.sp.main.Service.WomenProductOrderLifecycleService.displayLabel(updated.getStatus()));
+            resp.put("nextStatuses", in.sp.main.Service.WomenProductOrderLifecycleService.sellerNextStatuses(updated.getStatus()));
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             resp.put("status", "ERROR");
             resp.put("message", ex.getReason() != null ? ex.getReason() : "Could not update order status.");

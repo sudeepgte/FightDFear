@@ -108,10 +108,13 @@ public class WomenProductOrderLifecycleService {
     public static List<String> sellerNextStatuses(String current) {
         return switch (canonical(current)) {
             case PLACED -> List.of(CONFIRMED, CANCELLED);
-            case CONFIRMED -> List.of(PROCESSING, READY_FOR_PICKUP, CANCELLED);
-            case PROCESSING -> List.of(PACKED, READY_FOR_PICKUP, CANCELLED);
-            case PACKED -> List.of(READY_FOR_PICKUP, CANCELLED);
-            case READY_FOR_PICKUP -> List.of(CANCELLED);
+            case CONFIRMED -> List.of(PROCESSING, CANCELLED);
+            case PROCESSING -> List.of(PACKED, CANCELLED);
+            case PACKED -> List.of(SHIPPED, CANCELLED);
+            case READY_FOR_PICKUP -> List.of(SHIPPED, CANCELLED);
+            case ASSIGNED, PICKED_UP, IN_TRANSIT -> List.of(OUT_FOR_DELIVERY);
+            case SHIPPED -> List.of(OUT_FOR_DELIVERY);
+            case OUT_FOR_DELIVERY -> List.of(DELIVERED);
             default -> List.of();
         };
     }
@@ -136,11 +139,8 @@ public class WomenProductOrderLifecycleService {
         return deliveryNextStatuses(current).contains(next);
     }
 
-    /** Seller SHIPPED historically meant packed for pickup. */
     public static String mapSellerRequest(String requested) {
-        String s = canonical(requested);
-        if (SHIPPED.equals(s) || "IN_TRANSIT".equals(s)) return READY_FOR_PICKUP;
-        return s;
+        return canonical(requested);
     }
 
     public static String mapDeliveryRequest(String requested) {
@@ -260,12 +260,24 @@ public class WomenProductOrderLifecycleService {
             order.setTrackingNote("Seller is processing the order");
         } else if (PACKED.equals(next)) {
             order.setTrackingNote("Order packed");
-        } else if (READY_FOR_PICKUP.equals(next)) {
-            order.setTrackingNote("Packed and ready for delivery pickup");
+        } else if (READY_FOR_PICKUP.equals(next) || SHIPPED.equals(next)) {
+            order.setTrackingNote("Order shipped");
+        } else if (OUT_FOR_DELIVERY.equals(next)) {
+            order.setTrackingNote("Out for delivery");
+        } else if (DELIVERED.equals(next)) {
+            if (order.getDeliveredAt() == null) {
+                order.setDeliveredAt(LocalDateTime.now());
+            }
+            order.setTrackingNote("Delivered");
         }
         order.setStatus(next);
         orderRepository.save(order);
-        if (READY_FOR_PICKUP.equals(next)) {
+        if (DELIVERED.equals(next)) {
+            if ("COD".equalsIgnoreCase(order.getPaymentMethod()) || "COD".equalsIgnoreCase(order.getPaymentStatus())) {
+                productsCareService.creditSeller(order);
+            }
+        }
+        if (READY_FOR_PICKUP.equals(next) || SHIPPED.equals(next) || OUT_FOR_DELIVERY.equals(next)) {
             trackingService.ensureGeocoded(order);
         }
         return order;

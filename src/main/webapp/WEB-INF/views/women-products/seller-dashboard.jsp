@@ -1035,8 +1035,7 @@
                     <option value="CONFIRMED" ${orderStatusFilter=='CONFIRMED' ? 'selected' : ''}>Confirmed</option>
                     <option value="PROCESSING" ${orderStatusFilter=='PROCESSING' ? 'selected' : ''}>Processing</option>
                     <option value="PACKED" ${orderStatusFilter=='PACKED' ? 'selected' : ''}>Packed</option>
-                    <option value="READY_FOR_PICKUP" ${orderStatusFilter=='READY_FOR_PICKUP' ? 'selected' : ''}>Ready for pickup</option>
-                    <option value="ASSIGNED" ${orderStatusFilter=='ASSIGNED' ? 'selected' : ''}>Assigned</option>
+                    <option value="SHIPPED" ${orderStatusFilter=='SHIPPED' ? 'selected' : ''}>Shipped</option>
                     <option value="OUT_FOR_DELIVERY" ${orderStatusFilter=='OUT_FOR_DELIVERY' ? 'selected' : ''}>Out for delivery</option>
                     <option value="DELIVERED" ${orderStatusFilter=='DELIVERED' ? 'selected' : ''}>Delivered</option>
                     <option value="CANCELLED" ${orderStatusFilter=='CANCELLED' ? 'selected' : ''}>Cancelled</option>
@@ -1142,29 +1141,15 @@
                                 <c:set var="curr" value="${o.status}" />
                                 <c:set var="opts" value="${nextSellerStatuses[o.id]}" />
                                 <div style="font-size:0.75rem; color:#64748b; margin-bottom:6px;">Pay: ${o.paymentStatus}</div>
-                                <c:if test="${not empty o.deliveryPartner}">
-                                  <div style="font-size:0.75rem; font-weight:700;">Rider: ${o.deliveryPartner.fullName}</div>
-                                </c:if>
                                 <c:if test="${not empty opts}">
                                   <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
-                                    method="post" class="seller-order-form wp-order-update" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
-                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:160px; border-radius:10px;">
+                                    method="post" class="seller-order-form wp-order-update" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; min-width:170px; border-radius:10px;">
                                       <c:forEach var="st" items="${opts}">
                                         <option value="${st}">${st}</option>
                                       </c:forEach>
                                     </select>
                                     <button type="submit" style="background:var(--gradient-primary); color:#fff; border:none; padding:6px 12px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer;">Update</button>
-                                  </form>
-                                </c:if>
-                                <c:if test="${canAssign[o.id]}">
-                                  <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/assign" method="post" style="margin-top:8px;">
-                                    <select name="partnerId" required style="padding:6px; border-radius:8px; max-width:160px;">
-                                      <option value="">Assign partner</option>
-                                      <c:forEach var="dp" items="${deliveryPartners}">
-                                        <option value="${dp.id}">${dp.fullName}</option>
-                                      </c:forEach>
-                                    </select>
-                                    <button type="submit" style="background:#1e1b4b; color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:0.75rem;">Assign</button>
                                   </form>
                                 </c:if>
                               </td>
@@ -2355,7 +2340,6 @@
                   .then(data => {
                     if (btn) btn.disabled = false;
                     if (data.status === 'SUCCESS') {
-                      // Dynamically update status badge cell in table
                       const row = form.closest('tr');
                       if (row) {
                         const badgeSpan = row.querySelector('.fdf-badge');
@@ -2364,12 +2348,17 @@
                           badgeSpan.textContent = data.newStatus;
                         }
                       }
-                      if (data.newStatus === 'DELIVERED' || data.newStatus === 'CANCELLED') {
-                        const cell = document.getElementById('orderStatusCell_' + orderId);
+                      const cell = document.getElementById('orderStatusCell_' + orderId);
+                      const next = data.nextStatuses || [];
+                      if (data.newStatus === 'DELIVERED' || data.newStatus === 'CANCELLED' || next.length === 0) {
                         if (cell) {
-                          const text = data.newStatus === 'DELIVERED' ? 'Fulfilled' : 'Terminated';
-                          cell.innerHTML = '<div style="display:flex; align-items:center; gap:8px; padding-left:12px;"><span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">' + text + '</span><i class="bi bi-lock-fill" style="opacity:0.3;"></i></div>';
+                          const text = data.newStatus === 'DELIVERED' ? 'Fulfilled' : (data.newStatus === 'CANCELLED' ? 'Terminated' : 'Updated');
+                          cell.innerHTML = '<div style="display:flex; align-items:center; gap:8px; justify-content:center;"><span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">' + text + '</span></div>';
                         }
+                      } else if (selectEl) {
+                        selectEl.innerHTML = next.map(function(st) {
+                          return '<option value="' + st + '">' + st + '</option>';
+                        }).join('');
                       }
                     } else {
                       alert('Failed to update status: ' + (data.message || 'Error'));
