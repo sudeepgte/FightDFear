@@ -3,208 +3,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Event Host Login | Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Host Sign In — Fight D Fear</title>
+    <!-- Google Fonts & Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --primary-navy: #1e1b4b;
-            --primary-pink: #f43f5e;
-            --soft-pink: #fff1f2;
-            --bg-soft: #faf7f8;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border-clr: #e2e8f0;
-            --gradient-main: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%);
-            --success-bg: #ecfdf5;
-            --success-text: #047857;
-            --danger-bg: #fee2e2;
-            --danger-text: #b91c1c;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; min-height: 100vh; display: block; color: var(--text-dark); background: var(--bg-soft); }
-        
-        .split-layout { display: flex; width: 100%; min-height: 100vh; }
-        
-        /* Left Panel */
-        .left-panel {
-            flex: 0.85;
-            background: linear-gradient(135deg, #1e1b4b 0%, #1e1b4b 45%, #f43f5e 100%);
-            padding: 60px 70px;
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid var(--border-clr);
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .header-brand i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 440px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .card-header p {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
             position: relative;
         }
-        .icon-circle {
-            width: 70px; height: 70px; background: rgba(255,255,255,0.15); color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; margin-bottom: 35px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .welcome-title { font-size: 2.6rem; font-weight: 800; line-height: 1.15; margin-bottom: 18px; color: white; }
-        .welcome-title span { color: var(--primary-pink); }
-        .welcome-desc { color: rgba(255,255,255,0.9); font-size: 1.05rem; line-height: 1.6; margin-bottom: 45px; max-width: 90%; font-weight: 300; }
-        
-        .feature-item { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 25px; }
-        .feature-icon { 
-            width: 48px; height: 48px; min-width: 48px; background: rgba(255,255,255,0.15); color: white;
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem;
-        }
-        .feature-text h5 { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; color: white; }
-        .feature-text p { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin: 0; line-height: 1.45; }
-        
-        /* Right Panel */
-        .right-panel {
-            flex: 1.15;
-            padding: 50px 70px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: white;
-            overflow-y: auto;
-        }
-        
-        .form-container { width: 100%; max-width: 480px; }
-        
-        .form-header { display: flex; align-items: center; gap: 14px; margin-bottom: 35px; }
-        .form-header .icon {
-            width: 46px; height: 46px; border-radius: 12px; border: 1.5px solid var(--border-clr); background: var(--soft-pink);
-            color: var(--primary-pink); display: flex; align-items: center; justify-content: center; font-size: 1.35rem;
-        }
-        .form-header h2 { font-size: 1.75rem; font-weight: 800; color: var(--primary-navy); margin: 0; border-left: 4px solid var(--primary-pink); padding-left: 14px; }
-        
-        .input-group-custom { margin-bottom: 22px; position: relative; }
-        .input-group-custom label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); }
-        .input-wrap { position: relative; display: flex; align-items: center; }
-        .input-wrap i.prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
-        .input-wrap i.suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; cursor: pointer; }
-        
-        .input-wrap input {
-            width: 100%; padding: 13px 14px 13px 44px; border: 1.5px solid var(--border-clr);
-            border-radius: 10px; font-family: inherit; font-size: 0.95rem; color: var(--text-dark); outline: none; transition: 0.2s;
-        }
-        .input-wrap input::placeholder { color: #94a3b8; font-weight: 400; }
-        .input-wrap input:focus { border-color: var(--primary-pink); box-shadow: 0 0 0 3.5px rgba(244,63,94,0.1); background: white; }
-        
-        .btn-submit {
-            width: 100%; padding: 16px; background: var(--gradient-main); color: white;
-            border: none; border-radius: 12px; font-family: inherit; font-size: 1.05rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
-            transition: 0.3s; margin-top: 10px; box-shadow: 0 6px 18px rgba(244, 63, 94, 0.25);
-        }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(244, 63, 94, 0.35); }
-        
-        .signin-link { text-align: center; margin-top: 25px; font-size: 0.92rem; color: var(--text-muted); }
-        .signin-link a { color: var(--primary-pink); font-weight: 700; text-decoration: none; }
-        .signin-link a:hover { text-decoration: underline; }
 
-        .alert-custom { padding: 14px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        .alert-custom.danger { background: var(--danger-bg); color: var(--danger-text); border: 1px solid #fca5a5; }
-        .alert-custom.success { background: var(--success-bg); color: var(--success-text); border: 1px solid #a7f3d0; }
-        
-        @media (max-width: 992px) {
-            .split-layout { flex-direction: column; display: block; }
-            .left-panel { padding: 35px 20px; min-height: auto; text-align: center; align-items: center; }
-            .welcome-desc { text-align: center; margin: 0 auto 20px; }
-            .feature-item { display: none; }
-            .right-panel { padding: 35px 20px; display: block; height: auto; border-top: 1px solid var(--border-clr); }
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+        }
+
+        .password-field .form-input {
+            padding-right: 42px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .alert-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            color: var(--error);
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid #BBF7D0;
+            color: var(--success);
         }
     </style>
 </head>
 <body>
 
-<div class="split-layout">
-    <!-- Left Visual Panel -->
-    <div class="left-panel">
-        <div class="icon-circle">
-            <i class="bi bi-box-arrow-in-right"></i>
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/women-events" class="header-brand">
+            <i class="bi bi-shield-heart-fill"></i> Fight D Fear Event Studio
+        </a>
+        <div style="font-size: 0.88rem;">
+            New Host? <a href="${pageContext.request.contextPath}/women-events/host/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register here</a>
         </div>
-        <h2 class="welcome-title">Welcome Back,<br><span>Event Organizer!</span></h2>
-        <p class="welcome-desc">Log in to manage your profile, create safety events, and view attendee registrations.</p>
-        
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-calendar2-check"></i></div>
-            <div class="feature-text">
-                <h5>Create & Manage Events</h5>
-                <p>Submit events for community participation.</p>
-            </div>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-people"></i></div>
-            <div class="feature-text">
-                <h5>Attendee Management</h5>
-                <p>Track signups and perform fast check-ins.</p>
-            </div>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-cash-stack"></i></div>
-            <div class="feature-text">
-                <h5>Payout Management</h5>
-                <p>Request payouts for paid event ticket sales.</p>
-            </div>
-        </div>
-    </div>
+    </header>
 
-    <!-- Right Form Panel -->
-    <div class="right-panel">
-        <div class="form-container">
-            <div class="form-header">
-                <div class="icon"><i class="bi bi-person-circle"></i></div>
-                <h2>Host Portal Login</h2>
+    <main class="main-container">
+        <div class="form-card">
+            <div class="card-header">
+                <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--rose-soft); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 12px;">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <h2>Host Sign In</h2>
+                <p>Sign in to manage women safety events, attendees & profile</p>
             </div>
-            
+
             <c:if test="${not empty error}">
-                <div class="alert-custom danger">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${error}
+                <div class="alert-box alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
                 </div>
             </c:if>
-
             <c:if test="${param.registered}">
-                <div class="alert-custom success">
-                    <i class="bi bi-check-circle-fill"></i> Account created! Please log in to complete your organizer profile.
-                </div>
-            </c:if>
-
-            <c:if test="${param.submitted}">
-                <div class="alert-custom success">
-                    <i class="bi bi-clock-history"></i> Profile submitted for verification. Waiting for admin approval.
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Account created! Please log in to complete your host profile.
                 </div>
             </c:if>
 
             <form action="${pageContext.request.contextPath}/women-events/host/login" method="post">
-                <div class="input-group-custom">
-                    <label>Email Address</label>
-                    <div class="input-wrap">
-                        <i class="bi bi-envelope prefix"></i>
-                        <input type="email" name="email" placeholder="organizer@example.com" required/>
-                    </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus>
                 </div>
 
-                <div class="input-group-custom">
-                    <label>Password</label>
-                    <div class="input-wrap">
-                        <i class="bi bi-lock prefix"></i>
-                        <input type="password" id="evPassword" name="password" placeholder="•••••••••" required/>
-                        <i class="bi bi-eye suffix" onclick="const p=document.getElementById('evPassword'); p.type=p.type==='password'?'text':'password';"></i>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper password-field">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-submit">
-                    Sign In as Host <i class="bi bi-arrow-right"></i>
+                    Sign In <i class="bi bi-arrow-right"></i>
                 </button>
-
-                <p class="signin-link">
-                    Want to host events? <a href="${pageContext.request.contextPath}/women-events/host/register">Register Now</a>
-                </p>
             </form>
-        </div>
-    </div>
-</div>
 
+            <div class="login-footer">
+                New Host? <a href="${pageContext.request.contextPath}/women-events/host/register">Register here</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+    </script>
 </body>
 </html>

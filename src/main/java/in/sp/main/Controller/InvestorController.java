@@ -2,8 +2,8 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
-import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.InvestorRegistrationService;
 import in.sp.main.Config.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -48,10 +47,13 @@ public class InvestorController {
     private ProposalChatMessageRepository proposalChatMessageRepository;
 
     @Autowired
-    private FileUploadService fileUploadService;
+    private PasswordService passwordService;
 
     @Autowired
-    private PasswordService passwordService;
+    private in.sp.main.Service.InvestorProfileService investorProfileService;
+
+    @Autowired
+    private InvestorRegistrationService investorRegistrationService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -69,45 +71,25 @@ public class InvestorController {
             @RequestParam("email") String email,
             @RequestParam("phone") String phone,
             @RequestParam("password") String password,
-            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
-            @RequestParam("companyName") String companyName,
-            @RequestParam("investmentInterests") String investmentInterests,
-            @RequestParam("budgetRange") String budgetRange,
-            @RequestParam("preferredLocations") String preferredLocations,
-            @RequestParam("preferredCategories") String preferredCategories,
-            @RequestParam("verificationDocs") MultipartFile verificationDocs,
+            @RequestParam("confirmPassword") String confirmPassword,
+            @RequestParam("emailOtp") String emailOtp,
+            @RequestParam(value = "acceptedTerms", required = false) String acceptedTermsVal,
             RedirectAttributes redirectAttributes) {
 
         try {
-            if (investorRepository.findByEmail(email.toLowerCase().trim()).isPresent()) {
-                redirectAttributes.addFlashAttribute("error", "Email already exists. Please login.");
-                return "redirect:/investor/login";
-            }
+            boolean acceptedTerms = "on".equalsIgnoreCase(acceptedTermsVal)
+                    || "true".equalsIgnoreCase(acceptedTermsVal)
+                    || "checked".equalsIgnoreCase(acceptedTermsVal);
 
-            Investor inv = new Investor();
-            inv.setFullName(fullName);
-            inv.setEmail(email.toLowerCase().trim());
-            inv.setPhone(phone);
-            inv.setPassword(passwordService.encode(password));
-            inv.setCompanyName(companyName);
-            inv.setInvestmentInterests(investmentInterests);
-            inv.setBudgetRange(budgetRange);
-            inv.setPreferredLocations(preferredLocations);
-            inv.setPreferredCategories(preferredCategories);
-            inv.setVerificationStatus(VerificationStatus.PENDING);
-            inv.setSubscribed(false);
+            investorRegistrationService.registerQuick(
+                    fullName, email, phone, password, confirmPassword, emailOtp, acceptedTerms);
 
-            if (profilePhoto != null && !profilePhoto.isEmpty()) {
-                inv.setProfilePhoto(fileUploadService.saveFile(profilePhoto));
-            }
-            if (verificationDocs != null && !verificationDocs.isEmpty()) {
-                inv.setVerificationDocuments(fileUploadService.saveFile(verificationDocs));
-            }
-
-            investorRepository.save(inv);
             redirectAttributes.addFlashAttribute("success", "Registration successful! You will be able to log in once verified by Admin.");
             return "redirect:/investor/login";
 
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getReason());
+            return "redirect:/investor/register";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "Registration failed: " + ex.getMessage());
             return "redirect:/investor/register";
@@ -175,6 +157,104 @@ public class InvestorController {
         return "investor/login";
     }
 
+    @GetMapping("/complete-profile")
+    public String showCompleteProfileForm(HttpSession session, Model model) {
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        // Refresh state
+        Investor refreshedInv = investorRepository.findById(inv.getId()).orElse(inv);
+        session.setAttribute("loggedInvestor", refreshedInv);
+
+        model.addAttribute("investor", refreshedInv);
+        return "investor/completeProfile";
+    }
+
+    @PostMapping("/complete-profile")
+    public String saveProfileCompletion(
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "companyName", required = false) String companyName,
+            @RequestParam(value = "credentialNumber", required = false) String credentialNumber,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "categoriesOffered", required = false) String categoriesOffered,
+            @RequestParam(value = "audience", required = false) String audience,
+            @RequestParam(value = "openDays", required = false) String openDays,
+            @RequestParam(value = "openTime", required = false) String openTime,
+            @RequestParam(value = "closeTime", required = false) String closeTime,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "ticketMode", required = false) String ticketMode,
+            @RequestParam(value = "typicalPrice", required = false) Double typicalPrice,
+            @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankDetails", required = false) String bankDetails,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        try {
+            Investor refreshed = investorRepository.findById(inv.getId()).orElse(inv);
+
+            java.util.Map<String, Object> body = new java.util.HashMap<>();
+            if (fullName != null) body.put("fullName", fullName);
+            if (phone != null) body.put("phone", phone);
+            if (designation != null) body.put("designation", designation);
+            if (companyName != null) body.put("companyName", companyName);
+            if (credentialNumber != null) body.put("credentialNumber", credentialNumber);
+            if (address != null) body.put("address", address);
+            if (city != null) body.put("city", city);
+            if (state != null) body.put("state", state);
+            if (pincode != null) body.put("pincode", pincode);
+            if (categoriesOffered != null) body.put("categoriesOffered", categoriesOffered);
+            if (audience != null) body.put("audience", audience);
+            if (openDays != null) body.put("openDays", openDays);
+            if (openTime != null) body.put("openTime", openTime);
+            if (closeTime != null) body.put("closeTime", closeTime);
+            if (bio != null) body.put("bio", bio);
+            if (ticketMode != null) body.put("ticketMode", ticketMode);
+            if (typicalPrice != null) body.put("typicalPrice", typicalPrice);
+            if (upiId != null) body.put("upiId", upiId);
+            if (bankDetails != null) body.put("bankDetails", bankDetails);
+
+            investorProfileService.applyExtraFields(refreshed, body);
+            investorProfileService.refreshCompletion(refreshed);
+
+            session.setAttribute("loggedInvestor", refreshed);
+            redirectAttributes.addFlashAttribute("success", "Profile details saved successfully!");
+            return "redirect:/investor/complete-profile";
+
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Failed to save profile: " + ex.getMessage());
+            return "redirect:/investor/complete-profile";
+        }
+    }
+
+    @PostMapping("/submit-verification")
+    public String submitVerification(HttpSession session, RedirectAttributes redirectAttributes) {
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        try {
+            Investor refreshed = investorRepository.findById(inv.getId()).orElse(inv);
+            investorProfileService.setLifecycleStatus(refreshed, PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            refreshed.setProfileCompletionPct(100);
+            investorRepository.save(refreshed);
+
+            session.setAttribute("loggedInvestor", refreshed);
+            redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! It is now pending Admin Verification.");
+            return "redirect:/investor/complete-profile";
+
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Submission failed: " + ex.getMessage());
+            return "redirect:/investor/complete-profile";
+        }
+    }
+
     // --- Dashboard & Portfolio ---
 
     @GetMapping("/dashboard")
@@ -185,6 +265,10 @@ public class InvestorController {
         // Refresh state
         final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
         session.setAttribute("loggedInvestor", refreshedInv);
+
+        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+            return "redirect:/investor/complete-profile";
+        }
 
         List<Investment> investments = investmentRepository.findByInvestor(refreshedInv);
         List<InvestmentMeeting> meetings = investmentMeetingRepository.findByInvestor(refreshedInv);
@@ -238,6 +322,14 @@ public class InvestorController {
         Investor inv = (Investor) session.getAttribute("loggedInvestor");
         if (inv == null) return "redirect:/investor/login";
 
+        // Refresh state
+        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
+        session.setAttribute("loggedInvestor", refreshedInv);
+
+        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+            return "redirect:/investor/complete-profile";
+        }
+
         List<BusinessProposal> proposals;
         if (category != null && !category.isEmpty() && location != null && !location.isEmpty()) {
             proposals = businessProposalRepository.findByStatusAndCategoryContainingIgnoreCaseAndLocationContainingIgnoreCase(
@@ -271,6 +363,10 @@ public class InvestorController {
         // Refresh state
         final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
         session.setAttribute("loggedInvestor", refreshedInv);
+
+        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+            return "redirect:/investor/complete-profile";
+        }
 
         Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
         if (opt.isPresent()) {
@@ -343,12 +439,90 @@ public class InvestorController {
             investment.setProposal(proposal);
             investment.setInvestor(inv);
             investment.setAmount(amount);
-            investment.setStatus("PENDING"); // Held by Admin gateway
+            investment.setStatus("PENDING"); // Held by Admin gateway / Awaiting Transfer
             investmentRepository.save(investment);
 
             redirectAttributes.addFlashAttribute("success", "Investment of ₹" + amount + " submitted to Admin! It is currently held in gateway and will be released to the entrepreneur upon Admin verification.");
         }
         return "redirect:/investor/proposal/" + id;
+    }
+
+    @PostMapping("/investment/{id}/withdraw")
+    public String withdrawInvestment(
+            @PathVariable("id") Long id,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        Optional<Investment> opt = investmentRepository.findById(id);
+        if (opt.isPresent()) {
+            Investment investment = opt.get();
+            if (investment.getInvestor().getId().equals(inv.getId()) && "PENDING".equals(investment.getStatus())) {
+                investment.setStatus("WITHDRAWN");
+                investmentRepository.save(investment);
+                redirectAttributes.addFlashAttribute("success", "Investment interest withdrawn successfully.");
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Cannot withdraw completed or invalid investment.");
+            }
+        }
+        return "redirect:/investor/dashboard";
+    }
+
+    @PostMapping("/investment/{id}/confirm")
+    public String confirmInvestmentTransfer(
+            @PathVariable("id") Long id,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        Optional<Investment> opt = investmentRepository.findById(id);
+        if (opt.isPresent()) {
+            Investment investment = opt.get();
+            if (investment.getInvestor().getId().equals(inv.getId()) && "PENDING".equals(investment.getStatus())) {
+                investment.setStatus("COMPLETED");
+                BusinessProposal proposal = investment.getProposal();
+                double currentRaised = proposal.getAmountRaised() != null ? proposal.getAmountRaised() : 0.0;
+                proposal.setAmountRaised(currentRaised + investment.getAmount());
+                businessProposalRepository.save(proposal);
+                investmentRepository.save(investment);
+                redirectAttributes.addFlashAttribute("success", "Fund transfer confirmed! Deal completed successfully.");
+            }
+        }
+        return "redirect:/investor/dashboard";
+    }
+
+    @PostMapping("/investment/{id}/rate")
+    public String rateInvestment(
+            @PathVariable("id") Long id,
+            @RequestParam("rating") Integer rating,
+            @RequestParam(value = "review", required = false) String review,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) return "redirect:/investor/login";
+
+        Optional<Investment> opt = investmentRepository.findById(id);
+        if (opt.isPresent()) {
+            Investment investment = opt.get();
+            if (investment.getInvestor().getId().equals(inv.getId()) && "COMPLETED".equals(investment.getStatus())) {
+                if (rating != null && rating >= 1 && rating <= 5) {
+                    investment.setRating(rating);
+                    investment.setReview(review);
+                    investmentRepository.save(investment);
+                    redirectAttributes.addFlashAttribute("success", "Thank you! Your rating and review for this deal have been submitted.");
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "Please provide a valid rating between 1 and 5 stars.");
+                }
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Only completed deals can be rated.");
+            }
+        }
+        return "redirect:/investor/dashboard";
     }
 
     // --- Schedule Meeting ---
@@ -427,6 +601,14 @@ public class InvestorController {
 
         Investor inv = (Investor) session.getAttribute("loggedInvestor");
         if (inv == null) return "redirect:/investor/login";
+
+        // Refresh state
+        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
+        session.setAttribute("loggedInvestor", refreshedInv);
+
+        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+            return "redirect:/investor/complete-profile";
+        }
 
         Optional<Entrepreneur> optE = entrepreneurRepository.findById(entrepreneurId);
         Optional<BusinessProposal> optP = businessProposalRepository.findById(proposalId);

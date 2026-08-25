@@ -2207,8 +2207,18 @@ public class AdminController {
         businessProposalRepository.findById(id).ifPresent(p -> {
             p.setStatus(VerificationStatus.VERIFIED);
             businessProposalRepository.save(p);
+
+            if (p.getEntrepreneur() != null) {
+                Entrepreneur e = p.getEntrepreneur();
+                e.setPartnerProfileStatus(PartnerProfileStatus.APPROVED);
+                e.setVerificationStatus(VerificationStatus.VERIFIED);
+                e.setProfileCompletionPct(100);
+                e.setRejectionReason(null);
+                e.setChangesRequestedNote(null);
+                entrepreneurRepository.save(e);
+            }
         });
-        ra.addFlashAttribute("message", "Business proposal approved successfully.");
+        ra.addFlashAttribute("message", "Business proposal approved & entrepreneur unlocked successfully.");
         return "redirect:/admin/pending-proposals";
     }
 
@@ -2229,11 +2239,19 @@ public class AdminController {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
             entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.APPROVED);
+            e.setVerificationStatus(VerificationStatus.VERIFIED);
             e.setRejectionReason(null);
             e.setChangesRequestedNote(null);
+            e.setProfileCompletionPct(100);
             entrepreneurRepository.save(e);
+
+            List<BusinessProposal> proposals = businessProposalRepository.findByEntrepreneur(e);
+            for (BusinessProposal p : proposals) {
+                p.setStatus(VerificationStatus.VERIFIED);
+                businessProposalRepository.save(p);
+            }
         });
-        ra.addFlashAttribute("message", "Entrepreneur verified successfully.");
+        ra.addFlashAttribute("message", "Entrepreneur verified & approved successfully.");
         return "redirect:/admin/pending-proposals";
     }
 

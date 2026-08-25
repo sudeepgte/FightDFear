@@ -464,12 +464,10 @@ public class WomenEventController {
         }
 
         if (partnerStatus == PartnerProfileStatus.APPROVED || verStatus == VerificationStatus.VERIFIED) {
-            return "redirect:/women-events/organizer/dashboard";
-        } else if (partnerStatus == PartnerProfileStatus.PENDING_ADMIN_APPROVAL) {
-            return "redirect:/women-events/organizer/edit-profile?submitted=true";
+            return "redirect:/women-events/organizer/profile-completion";
         } else {
-            // PROFILE_INCOMPLETE or null or CHANGES_REQUESTED
-            return "redirect:/women-events/organizer/edit-profile";
+            // All non-approved hosts (REGISTERED, PROFILE_INCOMPLETE, PENDING_ADMIN_APPROVAL, CHANGES_REQUESTED) go to Profile Completion
+            return "redirect:/women-events/organizer/profile-completion";
         }
     }
 
@@ -498,9 +496,9 @@ public class WomenEventController {
             return "redirect:/women-events/host/login";
         }
 
-        // Strict Mobile Parity: Only APPROVED hosts can access the Dashboard
+        // Strict Mobile & Fitness Parity: Access to Dashboard is restricted ONLY to APPROVED hosts
         if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return "redirect:/women-events/organizer/edit-profile";
+            return "redirect:/women-events/organizer/profile-completion";
         }
 
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
@@ -604,8 +602,8 @@ public class WomenEventController {
         return "women-events/organizer-notifications";
     }
 
-    /** Edit Profile – GET */
-    @GetMapping("/organizer/edit-profile")
+    /** Host Profile Completion / Edit Profile – GET */
+    @GetMapping({"/organizer/profile-completion", "/organizer/edit-profile"})
     public String editProfileForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
@@ -688,6 +686,9 @@ public class WomenEventController {
     public String createEventForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
         model.addAttribute("categories", WomenEventCategory.values());
         model.addAttribute("loggedUser", host);
         model.addAttribute("user", host);
@@ -718,6 +719,10 @@ public class WomenEventController {
                                HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            ra.addFlashAttribute("error", "Event creation is locked until Admin profile approval.");
+            return "redirect:/women-events/organizer/profile-completion";
+        }
 
         WomenEvent event = new WomenEvent();
         event.setName(name);

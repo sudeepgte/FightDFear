@@ -302,9 +302,7 @@
             <span class="nav-badge">3</span>
         </a>
         <div class="nav-label">Account</div>
-        <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="nav-item">
-            <i class="bi bi-person-circle"></i><span>Edit Profile</span>
-        </a>
+        <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="nav-item"><i class="bi bi-person-circle"></i><span>Profile Completion</span></a>
         <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="nav-item">
             <i class="bi bi-gear-fill"></i><span>Settings</span>
         </a>

@@ -211,7 +211,14 @@
             .right-panel { padding: 30px 15px; }
             .login-card h2 { font-size: 1.5rem; }
         }
-    </style>
+    
+        .bg-brand-pink { background-color: var(--brand-pink) !important; color: white !important; }
+        .text-brand-pink { color: var(--brand-pink) !important; }
+        .bg-soft-pink { background-color: var(--pink-soft-bg) !important; }
+        .badge-brand { background-color: var(--pink-soft-bg) !important; color: var(--brand-pink) !important; border: 1px solid var(--border-light); }
+        .btn-brand-pink { background-color: var(--brand-pink) !important; color: white !important; border: none; }
+        .btn-brand-pink:hover { background-color: var(--brand-pink-hover) !important; color: white !important; }
+</style>
 </head>
 <body>
 

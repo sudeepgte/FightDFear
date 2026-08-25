@@ -329,8 +329,8 @@
             <span class="nav-badge">${newNotifCount > 0 ? newNotifCount : ''}</span>
         </a>
         <div class="nav-label">Account</div>
-        <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="nav-item">
-            <i class="bi bi-person-circle"></i><span>Edit Profile</span>
+        <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="nav-item">
+            <i class="bi bi-person-circle"></i><span>Profile Completion</span>
         </a>
         <a href="${pageContext.request.contextPath}/women-events/organizer/settings" class="nav-item">
             <i class="bi bi-gear-fill"></i><span>Settings</span>
@@ -398,10 +398,10 @@
                                 Your profile is currently under review by Admin. Event creation will be enabled once approved.
                             </c:when>
                             <c:when test="${hostStatus eq 'CHANGES_REQUESTED'}">
-                                Admin has requested profile updates. <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="alert-link">Update your profile here</a>.
+                                Admin has requested profile updates. <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="alert-link">Update your profile here</a>.
                             </c:when>
                             <c:otherwise>
-                                Please complete all 11 profile sections and submit for verification to unlock event creation. <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="alert-link">Complete Profile (${host.profileCompletionPct != null ? host.profileCompletionPct : 0}%)</a>.
+                                Please complete all 11 profile sections and submit for verification to unlock event creation. <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="alert-link">Complete Profile (${host.profileCompletionPct != null ? host.profileCompletionPct : 0}%)</a>.
                             </c:otherwise>
                         </c:choose>
                     </div>

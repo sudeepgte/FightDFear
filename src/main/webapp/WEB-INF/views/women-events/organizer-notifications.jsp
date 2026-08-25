@@ -78,7 +78,7 @@
         <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="nav-item"><i class="bi bi-chat-dots-fill"></i><span>Messages</span></a>
         <a href="${pageContext.request.contextPath}/women-events/organizer/notifications" class="nav-item active"><i class="bi bi-bell-fill"></i><span>Notifications</span></a>
         <div class="nav-label">Account</div>
-        <a href="${pageContext.request.contextPath}/women-events/organizer/edit-profile" class="nav-item"><i class="bi bi-person-circle"></i><span>Edit Profile</span></a>
+        <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="nav-item"><i class="bi bi-person-circle"></i><span>Profile Completion</span></a>
         <a href="${pageContext.request.contextPath}/women-events/organizer/settings" class="nav-item"><i class="bi bi-gear-fill"></i><span>Settings</span></a>
         <a href="${pageContext.request.contextPath}/women-events/host/logout" class="nav-item"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
     </nav>
