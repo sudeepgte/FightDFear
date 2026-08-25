@@ -45,6 +45,9 @@ public class WomenProductController {
     private in.sp.main.Service.WomenProductsCareService productsCareService;
 
     @Autowired
+    private in.sp.main.Service.WomenProductOrderLifecycleService orderLifecycle;
+
+    @Autowired
     private in.sp.main.Service.DoctorPaymentService doctorPaymentService;
 
     private static final String BUY_NOW_PRODUCT_ID = "wpBuyNowProductId";
@@ -64,9 +67,12 @@ public class WomenProductController {
                                  @RequestParam String email,
                                  @RequestParam String phone,
                                  @RequestParam String password,
+                                 @RequestParam(required = false) String confirmPassword,
                                  @RequestParam String businessName,
                                  @RequestParam(required = false) String description,
                                  @RequestParam String address,
+                                 @RequestParam(required = false) String city,
+                                 @RequestParam(required = false) Boolean acceptedTerms,
                                  @RequestParam("profilePhoto") MultipartFile profilePhoto,
                                  @RequestParam("identityDoc") MultipartFile identityDoc,
                                  Model model,
@@ -75,7 +81,12 @@ public class WomenProductController {
             model.addAttribute("error", "Email is required.");
             return "women-products/seller-register";
         }
-        if (sellerRepo.findByEmail(email.trim().toLowerCase()).isPresent()) {
+        String cleanedEmail = email.trim().toLowerCase();
+        if (!cleanedEmail.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            model.addAttribute("error", "Enter a valid email address.");
+            return "women-products/seller-register";
+        }
+        if (sellerRepo.findByEmail(cleanedEmail).isPresent()) {
             model.addAttribute("error", "Email already registered.");
             return "women-products/seller-register";
         }
@@ -96,19 +107,49 @@ public class WomenProductController {
             return "women-products/seller-register";
         }
 
-        if (phone == null || !phone.trim().matches("^\\d{10}$")) {
-            model.addAttribute("error", "Phone number must be exactly 10 digits.");
+        String cleanedPhone = phone == null ? "" : phone.trim();
+        if (!cleanedPhone.matches("^[6-9]\\d{9}$")) {
+            model.addAttribute("error", "Enter a valid 10-digit Indian mobile number.");
+            return "women-products/seller-register";
+        }
+        if (sellerRepo.findByPhone(cleanedPhone).isPresent()) {
+            model.addAttribute("error", "This mobile number is already registered.");
+            return "women-products/seller-register";
+        }
+
+        String passErr = in.sp.main.Util.MobileValidation.requirePassword(password);
+        if (passErr != null) {
+            model.addAttribute("error", passErr);
+            return "women-products/seller-register";
+        }
+        String confirmErr = in.sp.main.Util.MobileValidation.requireConfirm(password, confirmPassword);
+        if (confirmErr != null) {
+            model.addAttribute("error", confirmErr);
+            return "women-products/seller-register";
+        }
+        if (!Boolean.TRUE.equals(acceptedTerms)) {
+            model.addAttribute("error", "Please accept the Terms and Privacy Policy.");
+            return "women-products/seller-register";
+        }
+
+        String cleanedAddress = address == null ? "" : address.trim();
+        if (cleanedAddress.length() < WomenProductSeller.ADDRESS_MIN_LENGTH
+                || cleanedAddress.length() > WomenProductSeller.ADDRESS_MAX_LENGTH) {
+            model.addAttribute("error", "Please enter a complete address (at least 10 characters).");
             return "women-products/seller-register";
         }
         try {
             WomenProductSeller s = new WomenProductSeller();
             s.setFullName(cleanedFullName);
-            s.setEmail(email.trim().toLowerCase());
-            s.setPhone(phone);
+            s.setEmail(cleanedEmail);
+            s.setPhone(cleanedPhone);
             s.setPassword(passwordService.encode(password));
             s.setBusinessName(cleanedBusinessName);
             s.setDescription(description);
-            s.setAddress(address);
+            s.setAddress(cleanedAddress);
+            if (city != null && !city.trim().isBlank()) {
+                s.setCity(city.trim());
+            }
             if (profilePhoto == null || profilePhoto.isEmpty() || identityDoc == null || identityDoc.isEmpty()) {
                 model.addAttribute("error", "Profile photo and identity proof are required.");
                 return "women-products/seller-register";
@@ -118,7 +159,7 @@ public class WomenProductController {
             s.setVerificationStatus(VerificationStatus.PENDING);
             sellerRepo.save(s);
             ra.addFlashAttribute("success",
-                    "Registration successful! Your account is pending admin verification. You can sign in once approved.");
+                    "Your seller account is awaiting approval. You can sign in after admin verification.");
             return "redirect:/women-products/seller/register";
         } catch (IOException e) {
             model.addAttribute("error", "Registration failed: could not upload files. Please try again.");
@@ -152,16 +193,20 @@ public class WomenProductController {
                               HttpSession session,
                               jakarta.servlet.http.HttpServletResponse response,
                               Model model) {
-        Optional<WomenProductSeller> sOpt = sellerRepo.findByEmail(email.trim().toLowerCase());
-        if (sOpt.isEmpty()) { model.addAttribute("error", "Seller not found."); return "women-products/seller-login"; }
+        Optional<WomenProductSeller> sOpt = sellerRepo.findByEmail(email == null ? "" : email.trim().toLowerCase());
+        if (sOpt.isEmpty()) { model.addAttribute("error", "Invalid email or password."); return "women-products/seller-login"; }
         WomenProductSeller s = sOpt.get();
         boolean ok = passwordService.matchesAndUpgrade(password, s.getPassword(), hashed -> {
             s.setPassword(hashed);
             sellerRepo.save(s);
         });
-        if (!ok) { model.addAttribute("error", "Invalid password."); return "women-products/seller-login"; }
+        if (!ok) { model.addAttribute("error", "Invalid email or password."); return "women-products/seller-login"; }
+        if (s.getPartnerProfileStatus() == PartnerProfileStatus.SUSPENDED) {
+            model.addAttribute("error", "Your seller account has been suspended.");
+            return "women-products/seller-login";
+        }
         if (s.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending verification by Admin. Please check back later.");
+            model.addAttribute("error", "Your seller account is awaiting approval.");
             return "women-products/seller-login";
         }
         if (s.getVerificationStatus() == VerificationStatus.REJECTED) {
@@ -181,11 +226,23 @@ public class WomenProductController {
         return "redirect:/women-products/seller/dashboard";
     }
 
+    @GetMapping("/seller/logout")
+    public String sellerLogout(HttpSession session, jakarta.servlet.http.HttpServletResponse response) {
+        session.removeAttribute("loggedSeller");
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", "");
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return "redirect:/women-products/seller/login";
+    }
+
     // ══════════════════════════════════════
     // SELLER: Dashboard
     // ══════════════════════════════════════
     @GetMapping("/seller/dashboard")
     public String sellerDashboard(@RequestParam(defaultValue = "overview") String section,
+                                  @RequestParam(required = false) String orderStatus,
                                   HttpSession session, Model model) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -195,20 +252,69 @@ public class WomenProductController {
         List<WomenProductOrder> orders = orderRepo.findBySellerOrderByOrderTimeDesc(s);
 
         double totalEarnings = orders.stream()
-                .filter(o -> !"CANCELLED".equals(o.getStatus()))
+                .filter(o -> !"CANCELLED".equals(in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus())))
                 .mapToDouble(o -> o.getTotalPrice() != null ? o.getTotalPrice() : 0)
                 .sum();
+
+        long activeProducts = products.stream().filter(p -> Boolean.TRUE.equals(p.getActive())).count();
+        long outOfStock = products.stream().filter(WomenProduct::isOutOfStock).count();
+        long lowStock = products.stream().filter(WomenProduct::isLowStock).count();
+        long pendingOrders = orders.stream().filter(o -> {
+            String st = in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus());
+            return "PLACED".equals(st);
+        }).count();
+        long processingOrders = orders.stream().filter(o -> {
+            String st = in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus());
+            return "CONFIRMED".equals(st) || "PROCESSING".equals(st) || "PACKED".equals(st)
+                    || "READY_FOR_PICKUP".equals(st) || "ASSIGNED".equals(st)
+                    || "PICKED_UP".equals(st) || "IN_TRANSIT".equals(st)
+                    || "SHIPPED".equals(st) || "OUT_FOR_DELIVERY".equals(st);
+        }).count();
+        long deliveredOrders = orders.stream().filter(o ->
+                "DELIVERED".equals(in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus()))).count();
+        long cancelledOrders = orders.stream().filter(o ->
+                "CANCELLED".equals(in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus()))).count();
+
+        String filter = orderStatus == null ? "" : orderStatus.trim().toUpperCase();
+        List<WomenProductOrder> visibleOrders = orders;
+        if (!filter.isBlank()) {
+            visibleOrders = orders.stream()
+                    .filter(o -> filter.equals(in.sp.main.Service.WomenProductOrderLifecycleService.canonical(o.getStatus())))
+                    .toList();
+        }
+
+        Map<Long, List<String>> nextSellerStatuses = new HashMap<>();
+        Map<Long, Boolean> canAssign = new HashMap<>();
+        for (WomenProductOrder o : visibleOrders) {
+            nextSellerStatuses.put(o.getId(),
+                    in.sp.main.Service.WomenProductOrderLifecycleService.sellerNextStatuses(o.getStatus()));
+            canAssign.put(o.getId(),
+                    in.sp.main.Service.WomenProductOrderLifecycleService.canAssign(o));
+        }
 
         List<WomenReturnRequest> returns = returnRepo.findBySellerOrderByRequestTimeDesc(s);
 
         model.addAttribute("seller", s);
         model.addAttribute("products", products);
-        model.addAttribute("orders", orders);
+        model.addAttribute("orders", visibleOrders);
+        model.addAttribute("orderStatusFilter", filter);
+        model.addAttribute("nextSellerStatuses", nextSellerStatuses);
+        model.addAttribute("canAssign", canAssign);
+        model.addAttribute("deliveryPartners", orderLifecycle.listAssignablePartners());
         model.addAttribute("returns", returns);
         model.addAttribute("section", section);
         model.addAttribute("totalEarnings", totalEarnings);
         model.addAttribute("totalOrders", orders.size());
         model.addAttribute("totalProducts", products.size());
+        model.addAttribute("activeProducts", activeProducts);
+        model.addAttribute("outOfStockProducts", outOfStock);
+        model.addAttribute("lowStockProducts", lowStock);
+        model.addAttribute("outOfStockCount", outOfStock);
+        model.addAttribute("lowStockCount", lowStock);
+        model.addAttribute("pendingOrders", pendingOrders);
+        model.addAttribute("processingOrders", processingOrders);
+        model.addAttribute("deliveredOrders", deliveredOrders);
+        model.addAttribute("cancelledOrders", cancelledOrders);
         return "women-products/seller-dashboard";
     }
 
@@ -661,12 +767,11 @@ public class WomenProductController {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
-        if (o != null && o.getSeller().getId().equals(s.getId())) {
-            String normStatus = status != null ? status.trim().toUpperCase() : "PLACED";
-            if ("IN_TRANSIT".equals(normStatus)) normStatus = "SHIPPED";
-            o.setStatus(normStatus);
-            orderRepo.save(o);
+        try {
+            orderLifecycle.applySellerStatus(o, sellerRepo.findById(s.getId()).orElse(s), status);
             ra.addFlashAttribute("message", "Order status updated.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Could not update order status.");
         }
         return "redirect:/women-products/seller/dashboard?section=orders";
     }
@@ -679,19 +784,51 @@ public class WomenProductController {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) { resp.put("status", "ERROR"); resp.put("message", "Not logged in"); return resp; }
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
-        if (o != null && o.getSeller().getId().equals(s.getId())) {
-            String normStatus = status != null ? status.trim().toUpperCase() : "PLACED";
-            if ("IN_TRANSIT".equals(normStatus)) normStatus = "SHIPPED";
-            o.setStatus(normStatus);
-            orderRepo.save(o);
+        try {
+            WomenProductOrder updated = orderLifecycle.applySellerStatus(o, sellerRepo.findById(s.getId()).orElse(s), status);
             resp.put("status", "SUCCESS");
-            resp.put("newStatus", normStatus);
-            resp.put("orderId", o.getId());
-        } else {
+            resp.put("newStatus", updated.getStatus());
+            resp.put("orderId", updated.getId());
+            resp.put("label", in.sp.main.Service.WomenProductOrderLifecycleService.displayLabel(updated.getStatus()));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
             resp.put("status", "ERROR");
-            resp.put("message", "Order not found");
+            resp.put("message", ex.getReason() != null ? ex.getReason() : "Could not update order status.");
         }
         return resp;
+    }
+
+    @PostMapping("/seller/orders/{id}/assign")
+    public String assignDeliveryPartner(@PathVariable Long id, @RequestParam Long partnerId,
+                                        HttpSession session, RedirectAttributes ra) {
+        WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
+        if (s == null) return "redirect:/women-products/seller/login";
+        WomenProductOrder o = orderRepo.findById(id).orElse(null);
+        try {
+            orderLifecycle.assignDeliveryPartner(o, sellerRepo.findById(s.getId()).orElse(s), partnerId);
+            ra.addFlashAttribute("message", "Delivery partner assigned.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Could not assign delivery partner.");
+        }
+        return "redirect:/women-products/seller/dashboard?section=orders";
+    }
+
+    @PostMapping("/seller/products/{id}/stock")
+    public String updateProductStock(@PathVariable Long id, @RequestParam Integer stock,
+                                     HttpSession session, RedirectAttributes ra) {
+        WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
+        if (s == null) return "redirect:/women-products/seller/login";
+        WomenProduct p = productRepo.findById(id).orElse(null);
+        if (p == null || p.getDeleted() || p.getSeller() == null || !p.getSeller().getId().equals(s.getId())) {
+            ra.addFlashAttribute("error", "Product not found.");
+            return "redirect:/women-products/seller/dashboard?section=products";
+        }
+        try {
+            orderLifecycle.applyStockUpdate(p, stock == null ? -1 : stock);
+            ra.addFlashAttribute("message", "Stock updated.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Invalid stock quantity.");
+        }
+        return "redirect:/women-products/seller/dashboard?section=products";
     }
 
     @PostMapping("/seller/returns/{id}/status")
@@ -1152,7 +1289,13 @@ public class WomenProductController {
             return buyNowMode ? checkoutRedirect(session) : "redirect:/women-products/cart";
         }
 
-        List<Long> orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        List<Long> orderIds;
+        try {
+            orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Could not place order.");
+            return buyNowMode ? checkoutRedirect(session) : "redirect:/women-products/cart";
+        }
         if (!buyNowMode) {
             cartRepo.deleteByUser(u);
         }
@@ -1198,7 +1341,14 @@ public class WomenProductController {
             return response;
         }
 
-        List<Long> orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        List<Long> orderIds;
+        try {
+            orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            response.put("status", "ERROR");
+            response.put("message", ex.getReason() != null ? ex.getReason() : "Could not place order.");
+            return response;
+        }
         if (!buyNowMode) {
             cartRepo.deleteByUser(u);
         }
@@ -1287,11 +1437,7 @@ public class WomenProductController {
                     .atStartOfDay());
             orderRepo.save(order);
             orderIds.add(order.getId());
-
-            int remainingStock = (p.getStock() == null ? 0 : p.getStock()) - finalQty;
-            if (remainingStock < 0) remainingStock = 0;
-            p.setStock(remainingStock);
-            productRepo.save(p);
+            orderLifecycle.decrementStock(p, finalQty);
         }
         return orderIds;
     }
@@ -1370,12 +1516,16 @@ public class WomenProductController {
             expectedDeliveryLabels.put(String.valueOf(o.getId()), eta.format(fmt));
         }
         Map<String, Boolean> canCancel = new HashMap<>();
+        Map<Long, java.util.List<java.util.Map<String, String>>> orderTracking = new HashMap<>();
         for (WomenProductOrder o : orders) {
             canCancel.put(String.valueOf(o.getId()), productsCareService.canCancel(o));
+            orderTracking.put(o.getId(),
+                    in.sp.main.Service.WomenProductOrderLifecycleService.trackingSteps(o.getStatus()));
         }
         model.addAttribute("orders", orders);
         model.addAttribute("expectedDeliveryLabels", expectedDeliveryLabels);
         model.addAttribute("canCancel", canCancel);
+        model.addAttribute("orderTracking", orderTracking);
         model.addAttribute("cancelPolicy", in.sp.main.Service.WomenProductsCareService.CANCEL_POLICY);
         return "women-products/my-orders";
     }

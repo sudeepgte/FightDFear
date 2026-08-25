@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
@@ -13,45 +13,179 @@
     
     <style>
         :root {
-            --sidebar-width: 250px;
-            --brand-pink: #ec1868;
-            --brand-pink-light: #fbe6f0;
-            --sidebar-bg: #27142b;
-            --sidebar-text: #d1cbd5;
-            --bg-color: #f7f9fa;
-            --text-dark: #1f2937;
-            --text-muted: #6b7280;
-            --border-color: #e5e7eb;
+            --sidebar-width: 280px;
+            --dashboard-bg: #f8f9fc;
+            --fdf-burgundy: #2d0b20;
+            --fdf-burgundy-dark: #1f0615;
+            --fdf-pink: #db2777;
+            --fdf-pink-light: #fbcfe8;
+            --fdf-rose: #f43f5e;
+            --fdf-lavender: #f3e8ff;
+            --fdf-text-dark: #1e1b4b;
+            --fdf-text-muted: #64748b;
+            --fdf-border: #f1e9f0;
+            --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color) !important;
-            color: var(--text-dark);
+            background-color: var(--dashboard-bg);
+            color: var(--fdf-text-dark);
             margin: 0;
-            font-size: 0.8rem;
+            overflow-x: hidden;
         }
 
-        /* Sidebar */
-        .sidebar { background: var(--sidebar-bg); width: var(--sidebar-width); position: fixed; height: 100vh; overflow-y: auto; color: white; padding: 20px 15px; z-index: 1000; }
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(30, 27, 75, 0.1); border-radius: 10px; }
+
+        /* Unified Premium Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-brand-wrapper {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         
-        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding: 0 10px; }
-        .sidebar-brand img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .sidebar-brand .sb-name { font-weight: 700; font-size: 0.95rem; line-height: 1.2; }
-        .sidebar-brand .sb-sub { font-size: 0.65rem; color: #a39ca8; }
-        
-        .nav-item { display: flex; align-items: center; gap: 12px; color: var(--sidebar-text); text-decoration: none; padding: 10px 12px; margin-bottom: 2px; border-radius: 8px; font-weight: 500; font-size: 0.85rem; transition: 0.2s;}
-        .nav-item i { font-size: 1.1rem; width: 20px; text-align: center; }
-        .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-item.active { background: var(--brand-pink); color: white; }
-        
-        .nav-item.sign-out { color: var(--brand-pink); margin-top: 20px;}
-        .nav-item.sign-out:hover { background: rgba(236, 24, 104, 0.1); }
+        .sidebar-brand i {
+            color: var(--fdf-pink);
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-wrapper .subtitle {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-container {
+            flex: 1;
+            padding: 0 16px;
+            overflow-y: auto;
+        }
+
+        .nav-link-custom {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 11px 16px;
+            color: rgba(255,255,255,0.65);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+
+        .nav-link-custom:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link-custom.active {
+            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.25);
+            font-weight: 600;
+        }
+
+        .nav-link-custom i {
+            font-size: 1.15rem;
+        }
+
+        /* Upgrade card in sidebar */
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 16px;
+            font-size: 0.8rem;
+        }
+        .upgrade-card h6 {
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .upgrade-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+            color: rgba(255,255,255,0.5);
+        }
+        .upgrade-card ul li {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upgrade-card ul li::before {
+            content: "•";
+            color: var(--fdf-pink);
+            font-weight: bold;
+        }
+        .btn-upgrade {
+            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
+            color: white;
+            border: none;
+            padding: 8px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-upgrade:hover {
+            filter: brightness(1.1);
+        }
 
         /* Main Content */
-        .main-wrapper { margin-left: var(--sidebar-width); padding: 25px 35px 80px; }
+        .main-content {
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                z-index: 1000;
+                box-shadow: 10px 0 35px rgba(0,0,0,0.05);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+        }
+
+        .main-content { margin-left: var(--sidebar-width); padding: 25px 35px 80px; }
         
         /* Top Header */
         .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -191,190 +325,89 @@
         .btn-visibility { background: white; border: 1px solid var(--brand-pink); color: var(--brand-pink); padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.2s;}
         .btn-visibility:hover { background: var(--brand-pink-light); color: var(--brand-pink); }
     </style>
+
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
+
+    <style>
+        .app-header {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color, #E2E8F0);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            color: var(--fdf-burgundy, #2d0b20);
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-skip {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--fdf-border, #E2E8F0);
+            color: var(--fdf-text-muted, #64748b);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .btn-header-save {
+            padding: 8px 20px;
+            background: var(--fdf-pink, #db2777);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .main-content { margin-left: 0 !important; padding: 25px max(35px, calc((100vw - 1200px)/2)) 80px !important; }
+        .bottom-action-bar { left: 0 !important; }
+        
+        /* Hide existing top header and bottom save bar since we have the top header */
+        .top-header { display: none !important; }
+        .bottom-action-bar { display: none !important; }
+    </style>
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-brand">
-            <c:choose>
-                <c:when test="${not empty salon.profileImageUrl}">
-                    <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Logo">
-                </c:when>
-                <c:otherwise>
-                    <img src="https://ui-avatars.com/api/?name=${salon.name}&background=ec1868&color=fff" alt="Logo">
-                </c:otherwise>
-            </c:choose>
-            <div>
-                <div class="sb-name">${salon.name}</div>
-                <div class="sb-sub">Women's Salon • Beauty • <br> Wellness • Hair Styling</div>
-            </div>
+    <!-- Header with Mobile Parity Actions -->
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/salons/dashboard" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" 
+style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+        </a>
+        <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn-skip">Skip for now</a>
+            <button type="button" class="btn-header-save" 
+onclick="document.getElementById('profileForm').submit()">Save Profile</button>
         </div>
-        
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="nav-item"><i class="bi bi-house"></i> Dashboard</a>
-        <a href="${pageContext.request.contextPath}/salons/profile" class="nav-item active"><i class="bi bi-shop"></i> Salon Profile</a>
-        <a href="#" class="nav-item"><i class="bi bi-calendar-check"></i> Appointments</a>
-        <a href="#" class="nav-item"><i class="bi bi-calendar3"></i> Calendar</a>
-        <a href="${pageContext.request.contextPath}/salon/viewServices" class="nav-item"><i class="bi bi-scissors"></i> Services</a>
-        <a href="#" class="nav-item"><i class="bi bi-people"></i> Staff / Stylists</a>
-        <a href="#" class="nav-item"><i class="bi bi-person"></i> Clients</a>
-        <a href="#" class="nav-item"><i class="bi bi-person-walking"></i> Walk-in Clients</a>
-        <a href="#" class="nav-item"><i class="bi bi-box"></i> Packages & Memberships</a>
-        <a href="#" class="nav-item"><i class="bi bi-megaphone"></i> Promotions</a>
-        <a href="#" class="nav-item"><i class="bi bi-tags"></i> Offers & Discounts</a>
-        <a href="#" class="nav-item"><i class="bi bi-receipt"></i> Billing & Invoices</a>
-        <a href="#" class="nav-item"><i class="bi bi-credit-card"></i> Payments & Payouts</a>
-        <a href="#" class="nav-item"><i class="bi bi-award"></i> Loyalty Program</a>
-        <a href="#" class="nav-item"><i class="bi bi-box-seam"></i> Inventory</a>
-        <a href="#" class="nav-item"><i class="bi bi-star"></i> Reviews & Feedback</a>
-        <a href="#" class="nav-item"><i class="bi bi-bar-chart"></i> Reports & Analytics</a>
-        <a href="#" class="nav-item"><i class="bi bi-gear"></i> Settings</a>
-        <br>
-        <a href="#" class="nav-item"><i class="bi bi-question-circle"></i> Help & Support</a>
-        <a href="${pageContext.request.contextPath}/salons/logout" class="nav-item sign-out"><i class="bi bi-box-arrow-right"></i> Sign Out</a>
-    </div>
+    </header>
 
+
+    <!-- Sidebar -->
+    
+
+    
     <!-- Main Content Area -->
-    <div class="main-wrapper">
-        <form action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
+    <div class="main-content">
+        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
             <input type="hidden" name="id" value="${salon.id}">
             
-
-            <div class="profile-card">
-                <c:if test="${not empty message}">
-                    <div class="alert alert-success rounded-4 border-0 mb-4" role="alert">
-                        <i class="bi bi-check-circle-fill me-2"></i>${message}
-                    </div>
-                </c:if>
-                <c:if test="${not empty error}">
-                    <div class="alert alert-danger rounded-4 border-0 mb-4" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
-                    </div>
-                </c:if>
-                <div class="profile-header">
-                    <div class="profile-img-wrapper">
-                        <c:choose>
-                            <c:when test="${not empty salon.profileImageUrl}">
-                                <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Profile" class="profile-img">
-                            </c:when>
-                            <c:otherwise>
-                                <img src="https://ui-avatars.com/api/?name=${salon.name}&background=7C2D5E&color=fff&size=200" alt="Default" class="profile-img">
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                    <div class="profile-info">
-                        <h3><c:out value="${salon.name}"/></h3>
-                        <p><i class="bi bi-geo-alt-fill me-2"></i><c:out value="${salon.city}, ${salon.state}"/></p>
-                        <div class="mt-3">
-                            <span class="badge bg-primary px-3 py-2 rounded-pill"><i class="bi bi-star-fill me-1"></i> ${salon.averageRating} Rating</span>
-                            <c:if test="${salon.isCertified}"><span class="badge bg-success px-3 py-2 rounded-pill ms-2"><i class="bi bi-patch-check-fill me-1"></i> Certified</span></c:if>
-                        </div>
-                    </div>
-                    <div class="ms-auto">
-                        <button type="button" id="editBtn" class="btn btn-edit-toggle"><i class="bi bi-pencil-square me-2"></i>Edit Profile</button>
-                    </div>
-                </div>
-
-                <form action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data" id="salonProfileForm" novalidate>
-                    <input type="hidden" name="id" value="${salon.id}">
-
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Salon Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-custom editable" name="name" id="name"
-                                   value="<c:out value='${salon.name}'/>" readonly required minlength="3" maxlength="255">
-                            <div class="invalid-feedback">Salon name must be 3–255 characters.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Username (Permanent)</label>
-                            <input type="text" class="form-control form-control-custom" name="username"
-                                   value="<c:out value='${salon.username}'/>" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control form-control-custom editable" name="email" id="email"
-                                   value="<c:out value='${salon.email}'/>" readonly required maxlength="255">
-                            <div class="invalid-feedback">Please enter a valid email address.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Contact Number <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control form-control-custom editable" name="phone" id="phone"
-                                   value="<c:out value='${salon.phone}'/>" readonly required pattern="[0-9]{10}"
-                                   minlength="10" maxlength="10" inputmode="numeric">
-                            <div class="invalid-feedback">Phone number must be exactly 10 digits.</div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Full Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-custom editable" name="address" id="address"
-                                   value="<c:out value='${salon.address}'/>" readonly required maxlength="500">
-                            <div class="invalid-feedback">Full Address is required (max 500 characters).</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">City <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-custom editable" name="city" id="city"
-                                   value="<c:out value='${salon.city}'/>" readonly required minlength="2" maxlength="100">
-                            <div class="invalid-feedback">City is required (2–100 characters).</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">State <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-custom editable" name="state" id="state"
-                                   value="<c:out value='${salon.state}'/>" readonly required minlength="2" maxlength="100">
-                            <div class="invalid-feedback">State is required (2–100 characters).</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Pincode</label>
-                            <input type="text" class="form-control form-control-custom editable" name="pincode" id="pincode"
-                                   value="<c:out value='${salon.pincode}'/>" readonly pattern="[0-9]{6}"
-                                   minlength="6" maxlength="6" inputmode="numeric">
-                            <div class="invalid-feedback">Pincode must be exactly 6 digits.</div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Bio / Description</label>
-                            <textarea class="form-control form-control-custom editable" name="bio" id="bio" rows="3"
-                                      readonly maxlength="2000"><c:out value="${salon.bio}"/></textarea>
-                            <div class="form-text">Optional. Maximum 2000 characters.</div>
-                            <div class="invalid-feedback">Bio cannot exceed 2000 characters.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Change Profile Photo</label>
-                            <input type="file" name="profileImage" id="profileImage"
-                                   class="form-control form-control-custom editable"
-                                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                                   disabled>
-                            <div class="form-text mt-2" style="font-size:0.8rem;color:#6b7280;font-weight:500;line-height:1.4;">
-                                Accepted formats: ${empty profileImageAccepted ? 'JPG, JPEG, PNG' : profileImageAccepted}
-                                | Maximum size: ${empty profileImageMaxSizeMb ? 2 : profileImageMaxSizeMb} MB
-                            </div>
-                            <div class="invalid-feedback" id="profileImageFeedback">
-                                Profile photo must be JPG/JPEG or PNG and at most ${empty profileImageMaxSizeMb ? 2 : profileImageMaxSizeMb} MB.
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Established Year</label>
-                            <input type="text" class="form-control form-control-custom editable" name="establishedYear" id="establishedYear"
-                                   value="${salon.establishedYear}" readonly
-                                   inputmode="numeric" pattern="\d{4}" maxlength="4"
-                                   title="Enter a 4-digit year between 1900 and the current year.">
-                            <div class="form-text">Exactly 4 digits. Allowed range: 1900–current year.</div>
-                            <div class="invalid-feedback" id="establishedYearFeedback">Enter a valid 4-digit year (1900–current year).</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Website</label>
-                            <input type="text" class="form-control form-control-custom editable" name="website" id="website"
-                                   value="<c:out value='${salon.website}'/>" readonly maxlength="255"
-                                   placeholder="https://www.example.com">
-                            <div class="form-text">Optional. Enter a valid URL (e.g. https://www.mysalon.com).</div>
-                            <div class="invalid-feedback">Please enter a valid website URL.</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Availability / Working Hours</label>
-                            <input type="text" class="form-control form-control-custom editable" name="availabilityHours" id="availabilityHours"
-                                   value="<c:out value='${salon.availabilityHours}'/>" readonly maxlength="255"
-                                   placeholder="e.g. Mon-Fri: 10am-8pm, Sat-Sun: 10am-6pm">
-                            <div class="form-text">Optional. Describe when the salon is open (max 255 characters).</div>
-                            <div class="invalid-feedback">Availability cannot exceed 255 characters.</div>
-                        </div>
-
             <!-- Top Header -->
             <div class="top-header">
                 <div class="header-title">
@@ -391,7 +424,6 @@
                             <li class="p-2 border-bottom fw-bold text-center">Notifications</li>
                             <li><a class="dropdown-item text-center text-pink py-2" href="#">View All Notifications</a></li>
                         </ul>
-
                     </div>
 
                     <!-- Messages Dropdown -->
@@ -1268,135 +1300,9 @@
                 }
             });
         });
-
-        const phoneInput = document.getElementById("phone");
-        if (phoneInput) {
-            phoneInput.addEventListener("input", function() {
-                this.value = this.value.replace(/\D/g, "").slice(0, 10);
-            });
-        }
-        const pincodeInput = document.getElementById("pincode");
-        if (pincodeInput) {
-            pincodeInput.addEventListener("input", function() {
-                this.value = this.value.replace(/\D/g, "").slice(0, 6);
-            });
-        }
-        const yearInput = document.getElementById("establishedYear");
-        if (yearInput) {
-            yearInput.addEventListener("input", function() {
-                this.value = this.value.replace(/\D/g, "").slice(0, 4);
-            });
-        }
-
-        document.getElementById("salonProfileForm").addEventListener("submit", function(e) {
-            const name = (document.getElementById("name").value || "").trim();
-            const email = (document.getElementById("email").value || "").trim();
-            const phone = (document.getElementById("phone").value || "").trim();
-            const address = (document.getElementById("address").value || "").trim();
-            const city = (document.getElementById("city").value || "").trim();
-            const state = (document.getElementById("state").value || "").trim();
-            const pincode = (document.getElementById("pincode").value || "").trim();
-            const bio = (document.getElementById("bio").value || "").trim();
-            const yearEl = document.getElementById("establishedYear");
-            const yearRaw = (yearEl.value || "").trim();
-            const currentYear = new Date().getFullYear();
-            const maxPhotoBytes = ${empty profileImageMaxBytes ? 2097152 : profileImageMaxBytes};
-            let valid = true;
-
-            function mark(id, ok) {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.classList.toggle("is-invalid", !ok);
-                el.classList.toggle("is-valid", ok);
-                if (!ok) valid = false;
-            }
-
-            mark("name", name.length >= 3 && name.length <= 255);
-            mark("email", /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 255);
-            mark("phone", /^\d{10}$/.test(phone));
-            mark("address", address.length > 0 && address.length <= 500);
-            mark("city", city.length >= 2 && city.length <= 100);
-            mark("state", state.length >= 2 && state.length <= 100);
-            mark("pincode", pincode === "" || /^\d{6}$/.test(pincode));
-            mark("bio", bio.length <= 2000);
-
-            let yearOk = true;
-            if (yearRaw !== "") {
-                if (!/^\d{4}$/.test(yearRaw)) {
-                    yearOk = false;
-                } else {
-                    const year = parseInt(yearRaw, 10);
-                    yearOk = !isNaN(year) && year >= 1900 && year <= currentYear;
-                }
-            }
-            mark("establishedYear", yearOk);
-            if (!yearOk) {
-                const fb = document.getElementById("establishedYearFeedback");
-                if (fb) {
-                    if (yearRaw !== "" && !/^\d{4}$/.test(yearRaw)) {
-                        fb.textContent = "Established Year must be exactly 4 digits.";
-                    } else {
-                        fb.textContent = "Established Year must be between 1900 and " + currentYear + ".";
-                    }
-                }
-            }
-
-            const website = (document.getElementById("website") ? document.getElementById("website").value : "").trim();
-            const hours = (document.getElementById("availabilityHours") ? document.getElementById("availabilityHours").value : "").trim();
-            const websiteOk = website === "" || /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i.test(website);
-            mark("website", websiteOk && website.length <= 255);
-            mark("availabilityHours", hours.length <= 255);
-            const photoEl = document.getElementById("profileImage");
-            if (photoEl && photoEl.files && photoEl.files[0]) {
-                const file = photoEl.files[0];
-                const type = (file.type || "").toLowerCase();
-                const fileName = (file.name || "").toLowerCase();
-                const typeOk = type === "image/jpeg" || type === "image/jpg" || type === "image/png"
-                    || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
-                const sizeOk = file.size <= maxPhotoBytes;
-                const photoOk = typeOk && sizeOk;
-                photoEl.classList.toggle("is-invalid", !photoOk);
-                photoEl.classList.toggle("is-valid", photoOk);
-                if (!photoOk) {
-                    valid = false;
-                    const fb = document.getElementById("profileImageFeedback");
-                    if (fb) {
-                        if (!typeOk) fb.textContent = "Profile photo must be JPG/JPEG or PNG only (PDF and other formats are not allowed).";
-                        else fb.textContent = "Profile photo must be at most " + Math.round(maxPhotoBytes / (1024 * 1024)) + " MB.";
-                    }
-                }
-            }
-
-            if (!valid) {
-                e.preventDefault();
-            }
-        });
-
-        const profileImageInput = document.getElementById("profileImage");
-        if (profileImageInput) {
-            profileImageInput.addEventListener("change", function() {
-                if (!this.files || !this.files[0]) {
-                    this.classList.remove("is-invalid", "is-valid");
-                    return;
-                }
-                const file = this.files[0];
-                const type = (file.type || "").toLowerCase();
-                const fileName = (file.name || "").toLowerCase();
-                const maxPhotoBytes = ${empty profileImageMaxBytes ? 2097152 : profileImageMaxBytes};
-                const typeOk = type === "image/jpeg" || type === "image/jpg" || type === "image/png"
-                    || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
-                const sizeOk = file.size <= maxPhotoBytes;
-                const ok = typeOk && sizeOk;
-                this.classList.toggle("is-invalid", !ok);
-                this.classList.toggle("is-valid", ok);
-                const fb = document.getElementById("profileImageFeedback");
-                if (fb && !ok) {
-                    if (!typeOk) fb.textContent = "Profile photo must be JPG/JPEG or PNG only (PDF and other formats are not allowed).";
-                    else fb.textContent = "Profile photo must be at most " + Math.round(maxPhotoBytes / (1024 * 1024)) + " MB.";
-                }
-            });
-        }
     </script>
 </body>
 </html>
+
+
 

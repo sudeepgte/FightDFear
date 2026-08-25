@@ -17,6 +17,7 @@ public class FinancialVideo {
 
     private String title;
     private String category;
+    private String customCategory;
     @Column(columnDefinition = "TEXT")
     private String description;
     @Column(length = 1000)
@@ -37,6 +38,8 @@ public class FinancialVideo {
     public void setTitle(String title) { this.title = title; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getCustomCategory() { return customCategory; }
+    public void setCustomCategory(String customCategory) { this.customCategory = customCategory; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getVideoUrl() { return videoUrl; }

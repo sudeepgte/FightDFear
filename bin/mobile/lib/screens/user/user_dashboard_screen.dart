@@ -307,7 +307,22 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         },
       ),
       appBar: AppBar(
-        title: const Text('My Dashboard'),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/fightdfear-logo.jpg',
+                height: 28,
+                width: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('My Dashboard'),
+          ],
+        ),
         backgroundColor: Colors.white,
         foregroundColor: UserDashboardScreen.navy,
         elevation: 0,

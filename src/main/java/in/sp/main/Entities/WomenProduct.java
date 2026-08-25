@@ -10,7 +10,7 @@ public class WomenProduct {
     public static final int NAME_MAX_LENGTH = 100;
     public static final int BRAND_MAX_LENGTH = 80;
     /** Short description — strict Add Item form limit. */
-    public static final int SHORT_DESCRIPTION_MAX_LENGTH = 22;
+    public static final int SHORT_DESCRIPTION_MAX_LENGTH = 255;
     public static final int FULL_DESCRIPTION_MAX_LENGTH = 5000;
     public static final int OFFER_BADGE_MAX_LENGTH = 40;
     public static final int SKU_MAX_LENGTH = 50;
@@ -198,6 +198,22 @@ public class WomenProduct {
 
     public boolean isListedForShop() {
         return Boolean.TRUE.equals(active) && !getDeleted() && seller != null && seller.isApprovedForCatalog();
+    }
+
+    public boolean isOutOfStock() {
+        return stock == null || stock <= 0;
+    }
+
+    public boolean isLowStock() {
+        if (isOutOfStock()) return false;
+        int alert = lowStockAlertLevel == null ? 5 : lowStockAlertLevel;
+        return stock <= alert;
+    }
+
+    public String getInventoryLabel() {
+        if (isOutOfStock()) return "Out of stock";
+        if (isLowStock()) return "Low stock";
+        return "In stock";
     }
 
     public int getDiscountPercent() {

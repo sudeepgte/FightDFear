@@ -35,6 +35,9 @@
         .doc-link:hover { background: #e9ecef; }
         .doc-link i { font-size: 1.5rem; color: #d63384; }
     </style>
+
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 </head>
 <body>
 

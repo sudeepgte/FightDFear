@@ -2,7 +2,6 @@ package in.sp.main.Service;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,16 +37,11 @@ public class WomenProductsCareService {
     private PushNotificationService pushNotificationService;
 
     public static String normStatus(String status) {
-        if (status == null || status.isBlank()) return "PLACED";
-        String s = status.trim().toUpperCase(Locale.ROOT);
-        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
-        return s;
+        return WomenProductOrderLifecycleService.canonical(status);
     }
 
     public boolean canCancel(WomenProductOrder o) {
-        if (o == null) return false;
-        String st = normStatus(o.getStatus());
-        return "PLACED".equals(st) || "CONFIRMED".equals(st) || "READY_FOR_PICKUP".equals(st);
+        return WomenProductOrderLifecycleService.canCancel(o);
     }
 
     @Transactional

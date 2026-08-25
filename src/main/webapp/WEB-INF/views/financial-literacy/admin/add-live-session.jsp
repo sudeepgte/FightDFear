@@ -18,175 +18,171 @@
     <%@ include file="_topbar.jsp" %>
 
     <div class="layout">
-
-        <!-- Sidebar -->
         <!-- Sidebar -->
         <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
-
 
         <main class="main">
             <div class="mainInner narrow">
                 <div class="admin-card">
-                    <h3>Add New Live Session</h3>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h3 class="mb-0">Add New Live Session</h3>
+                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </a>
+                    </div>
+
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i> ${error}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </c:if>
+
                     <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session" method="POST" id="liveSessionForm" class="needs-validation" novalidate>
+                        <!-- Session Title -->
                         <div class="mb-3 position-relative">
-                            <label for="title" class="form-label">Session Title</label>
+                            <label for="title" class="form-label fw-bold">Session Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter session title">
                             <div class="invalid-feedback">Please provide a valid title (min 5 characters).</div>
                         </div>
 
-                        <div class="mb-3">
-
-                        
+                        <!-- Speaker Name -->
                         <div class="mb-3 position-relative">
-
-                            <label for="speaker" class="form-label">Speaker Name</label>
+                            <label for="speaker" class="form-label fw-bold">Speaker Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="speaker" name="speaker" required minlength="3" placeholder="Enter speaker name">
                             <div class="invalid-feedback">Please provide the speaker's name (min 3 characters).</div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="date" class="form-label">Date</label>
-                            <input type="text" class="form-control" id="date" name="date" placeholder="Saturday, 15th July" required>
+                        <!-- Category Dropdown -->
+                        <div class="mb-3 position-relative">
+                            <label for="category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" disabled selected>Select Category</option>
+                                <option value="Saving">Saving</option>
+                                <option value="Investing">Investing</option>
+                                <option value="Loans">Loans</option>
+                                <option value="Banking">Banking</option>
+                                <option value="Insurance">Insurance</option>
+                                <option value="Government Schemes">Government Schemes</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <div class="invalid-feedback">Category cannot be empty.</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="time" class="form-label">Time</label>
-                            <input type="text" class="form-control" id="time" name="time" placeholder="6:00 PM" required>
-                        </div>
-                        <div class="mb-3">
 
-                        
+                        <!-- Custom Category Input (shown when Others is selected) -->
+                        <div class="mb-3 position-relative" id="customCategoryGroup" style="display: none;">
+                            <label for="customCategory" class="form-label fw-bold">Enter Category <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="customCategory" name="customCategory" placeholder="Enter Category">
+                            <div class="invalid-feedback">Custom category cannot be empty when 'Others' is selected.</div>
+                        </div>
+
+                        <!-- Date and Timing (Start Time & End Time) -->
                         <div class="row">
-                            <div class="col-md-6 mb-3 position-relative">
-                                <label for="date" class="form-label">Date</label>
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="date" name="date" required>
-                                <div class="invalid-feedback">Please select a valid future date.</div>
+                                <div class="invalid-feedback">Please select a valid date.</div>
                             </div>
                             
-                            <div class="col-md-6 mb-3 position-relative">
-                                <label for="time" class="form-label">Time</label>
-                                <input type="time" class="form-control" id="time" name="time" required>
-                                <div class="invalid-feedback">Please select a valid time.</div>
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="startTime" class="form-label fw-bold">Start Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="startTime" name="startTime" required>
+                                <div class="invalid-feedback">Please select a valid start time.</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="endTime" class="form-label fw-bold">End Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="endTime" name="endTime" required>
+                                <div class="invalid-feedback">Please select a valid end time.</div>
                             </div>
                         </div>
                         
+                        <!-- Meeting Link -->
                         <div class="mb-3 position-relative">
-
-                            <label for="meetingUrl" class="form-label">Meeting Link</label>
+                            <label for="meetingUrl" class="form-label fw-bold">Meeting Link <span class="text-danger">*</span></label>
                             <input type="url" class="form-control" id="meetingUrl" name="meetingUrl" placeholder="https://zoom.us/j/..." required pattern="https?://.+">
                             <div class="invalid-feedback">Please enter a valid URL (e.g., https://zoom.us/...).</div>
                         </div>
 
-                        <div class="mb-3">
-
-                        
+                        <!-- Number of Seats -->
                         <div class="mb-3 position-relative">
-
-                            <label for="seats" class="form-label">Number of Seats</label>
-                            <input type="number" class="form-control" id="seats" name="seats" min="1" max="1000" required placeholder="100">
+                            <label for="seats" class="form-label fw-bold">Number of Seats <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="seats" name="seats" min="1" max="1000" required placeholder="100" value="100">
                             <div class="invalid-feedback">Please enter a valid number of seats (1-1000).</div>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required maxlength="1000"></textarea>
-                        </div>
-                        <button type="submit" class="btn-purple full">
-                            <i class="fas fa-upload me-2"></i> Publish
-
-                        
+                        <!-- Description -->
                         <div class="mb-4 position-relative">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="20" placeholder="Provide a brief description..."></textarea>
-                            <div class="invalid-feedback">Please provide a description (min 20 characters).</div>
+                            <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Provide a brief description..."></textarea>
+                            <div class="invalid-feedback">Please provide a description (min 10 characters).</div>
                         </div>
                         
-                        <button type="submit" class="btn-purple" id="submitBtn">
-                            <i class="fas fa-upload me-2"></i> Publish Session
-
-                        </button>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn-purple" id="submitBtn">
+                                <i class="fas fa-upload me-2"></i> Publish Session
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </main>
     </div>
 
-
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('liveSessionForm');
+            const categorySelect = document.getElementById('category');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            const customCategoryInput = document.getElementById('customCategory');
             const submitBtn = document.getElementById('submitBtn');
-            const inputs = form.querySelectorAll('input, textarea');
+
+            // Toggle custom category input
+            function toggleCustomCategory() {
+                if (categorySelect.value === 'Others') {
+                    customCategoryGroup.style.display = 'block';
+                    customCategoryInput.setAttribute('required', 'true');
+                } else {
+                    customCategoryGroup.style.display = 'none';
+                    customCategoryInput.removeAttribute('required');
+                    customCategoryInput.value = '';
+                }
+            }
+
+            categorySelect.addEventListener('change', toggleCustomCategory);
 
             // Set min date to today for date input
             const dateInput = document.getElementById('date');
-            if(dateInput) {
+            if (dateInput) {
                 const today = new Date().toISOString().split('T')[0];
                 dateInput.setAttribute('min', today);
             }
 
-            // Real-time validation on input/change
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    validateField(this);
-                    checkFormValidity();
-                });
-                
-                input.addEventListener('blur', function() {
-                    validateField(this);
-                });
-            });
-
-            function validateField(field) {
-                if (field.checkValidity()) {
-                    field.classList.remove('is-invalid');
-                    field.classList.add('is-valid');
-                } else {
-                    field.classList.remove('is-valid');
-                    field.classList.add('is-invalid');
-                }
-            }
-
-            function checkFormValidity() {
-                if (form.checkValidity()) {
-                    submitBtn.classList.remove('disabled');
-                    submitBtn.removeAttribute('disabled');
-                } else {
-                    submitBtn.classList.add('disabled');
-                    submitBtn.setAttribute('disabled', 'true');
-                }
-            }
-
-            // Form submission validation
             form.addEventListener('submit', function (event) {
+                let valid = true;
+
                 if (!form.checkValidity()) {
+                    valid = false;
+                }
+
+                if (categorySelect.value === 'Others' && !customCategoryInput.value.trim()) {
+                    customCategoryInput.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    customCategoryInput.classList.remove('is-invalid');
+                }
+
+                if (!valid) {
                     event.preventDefault();
                     event.stopPropagation();
-                    
-                    // Mark all fields to show invalid state
-                    inputs.forEach(input => {
-                        validateField(input);
-                    });
-                    
-                    // Focus on the first invalid field
-                    const firstInvalid = form.querySelector(':invalid');
-                    if(firstInvalid) firstInvalid.focus();
+                    form.classList.add('was-validated');
                 } else {
-                    // Show loading state
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Publishing...';
-                    // We don't disable it here because some browsers cancel form submission if submit button is disabled
-                    submitBtn.style.pointerEvents = 'none';
-                    submitBtn.style.opacity = '0.8';
+                    submitBtn.disabled = true;
                 }
-                
-                form.classList.add('was-validated');
-            }, false);
-            
-            // Initial check to disable button
-            checkFormValidity();
+            });
         });
     </script>
-
 </body>
 </html>

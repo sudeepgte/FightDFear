@@ -14,6 +14,8 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
     <style>
         :root {
@@ -103,41 +105,9 @@
         </button>
     </div>
 
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
-            <i class="bi bi-stars"></i> <span>Fight D Fear</span>
-        </a>
-
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
-                <i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
-                <i class="bi bi-person-circle"></i> <span>Salon Profile</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
-                <i class="bi bi-calendar-check"></i> <span>Manage Bookings</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients">
-                <i class="bi bi-people-fill"></i> <span>Clients</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists">
-                <i class="bi bi-person-badge"></i> <span>Staff / Stylists</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages">
-                <i class="bi bi-box-seam"></i> <span>Packages & Memberships</span>
-            </a>
-            
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sessionScope.loggedSalon.id}">
-                <i class="bi bi-tags"></i> <span>Offers & Discounts</span>
-            </a>
-            <div class="mt-5">
-                <a class="nav-link-custom text-danger" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i> <span>Sign Out</span>
-                </a>
-            </div>
-        </nav>
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="offers"/>
+</jsp:include>
 
     <div class="main-content">
         <div class="container-fluid">

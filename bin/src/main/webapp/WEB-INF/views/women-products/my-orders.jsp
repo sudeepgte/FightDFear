@@ -456,8 +456,8 @@
         <!-- Order Body -->
         <div class="order-card-body">
           <c:choose>
-            <c:when test="${not empty o.product.imagePath}">
-              <img src="${pageContext.request.contextPath}${o.product.imagePath}" class="order-img" alt="${o.product.name}">
+            <c:when test="${not empty o.product.publicImagePath}">
+              <img src="<c:choose><c:when test="${o.product.remoteImage}">${o.product.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${o.product.publicImagePath}</c:otherwise></c:choose>" class="order-img" alt="<c:out value='${o.product.name}'/>">
             </c:when>
             <c:otherwise>
               <div class="placeholder-icon"><i class="bi bi-gift"></i></div>
@@ -496,6 +496,13 @@
                 <div class="tracking-toggle-btn" onclick="toggleTracking(this)">
                   <i class="bi bi-geo-alt-fill"></i> Order Tracking <i class="bi bi-chevron-down"></i>
                 </div>
+                <c:if test="${canCancel[o.id]}">
+                  <form action="${pageContext.request.contextPath}/women-products/orders/${o.id}/cancel" method="post" style="margin:0;" onsubmit="return confirm('Cancel this order? Stock will be restored if the order is still eligible.');">
+                    <button type="submit" class="action-btn" style="background:#fef2f2;color:#b91c1c;border:0;cursor:pointer;font-weight:800;">
+                      <i class="bi bi-x-circle"></i> Cancel Order
+                    </button>
+                  </form>
+                </c:if>
                 
                 <c:if test="${o.status == 'DELIVERED' && empty o.returnRequest}">
                   <c:if test="${empty o.rating}">

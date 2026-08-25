@@ -84,6 +84,9 @@
         .final-price { color: #28a745; font-weight: bold; }
    </style>
  
+
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar" id="ftco-navbar">
