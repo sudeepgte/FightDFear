@@ -11,13 +11,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
     :root {
-      --cart-bg: #fffcfd;
+      --cart-bg: #F8FAFC;
       --card-bg: #ffffff;
     }
     body {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', 'Poppins', sans-serif;
       background: var(--cart-bg);
       color: var(--fdf-text);
       min-height: 100vh;
@@ -165,7 +166,7 @@
       gap: 6px;
       font-weight: 600;
     }
-    .cart-info .seller i { color: #3b82f6; }
+    .cart-info .seller i { color: #F43F5E; }
     .cart-info .unit-price {
       margin-top: 8px;
       font-size: 18px;
@@ -360,7 +361,7 @@
     }
   </style>
 </head>
-<body>
+<body class="wp-shop">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <div id="wrapper">
   <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -378,6 +379,12 @@
             <c:otherwise>${cartItems.size()} item<c:if test="${cartItems.size() != 1}">s</c:if> in your cart</c:otherwise>
           </c:choose>
         </p>
+        <div class="wp-subnav" style="justify-content:flex-start;margin-top:14px;">
+          <a href="${pageContext.request.contextPath}/women-products">Shop</a>
+          <a href="${pageContext.request.contextPath}/women-products/wishlist">Wishlist</a>
+          <a class="active" href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
+          <a href="${pageContext.request.contextPath}/women-products/my-orders">My Orders</a>
+        </div>
       </div>
     </div>
 
@@ -465,7 +472,7 @@
       </c:if>
     </div>
 
-    <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+    <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </div>
 </div>

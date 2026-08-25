@@ -7,206 +7,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shop Preview — ${seller.businessName}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
-    :root {
-      --shop-bg: #fffcfd;
-      --card-bg: #ffffff;
-      --brand-purple: #1e1b4b;
-      --brand-pink: #f43f5e;
-      --fdf-border: #f1f3f5;
-      --fdf-text: #1e293b;
-      --fdf-muted: #64748b;
-      --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%);
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--shop-bg);
-      color: var(--fdf-text);
+    body.wp-shop-preview {
       margin: 0;
       min-height: 100vh;
+      font-family: Inter, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
     }
-    .preview-bar {
-      background: var(--brand-purple);
-      color: #fff;
-      padding: 14px 24px;
+    .wp-preview-top {
+      background: #fff;
+      border-bottom: 1px solid #fecdd3;
+      padding: 12px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 12px;
       flex-wrap: wrap;
     }
-    .preview-bar strong { font-weight: 800; }
-    .preview-bar a {
-      color: #fff;
+    .wp-preview-top strong { color: #e11d48; font-weight: 800; }
+    .wp-preview-top span { color: #64748b; font-size: 0.88rem; }
+    .wp-preview-top a {
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       padding: 8px 16px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.15);
+      background: #F43F5E;
+      color: #fff;
     }
-    .preview-bar a:hover { background: rgba(255,255,255,0.25); }
-    .shop-header {
-      padding: 48px 20px 32px;
+    .wp-preview-top a:hover { background: #E11D48; }
+    .wp-preview-hero {
+      max-width: 1100px;
+      margin: 20px auto 0;
+      padding: 0 16px;
       text-align: center;
-      background: white;
-      border-bottom: 1px solid var(--fdf-border);
     }
-    .shop-header h1 {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 34px;
-      font-weight: 900;
-      background: var(--gradient-primary);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin: 0 0 8px;
+    .wp-preview-hero h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0 0 6px;
+      color: #0f172a;
     }
-    .shop-header p { color: var(--fdf-muted); margin: 0 auto; max-width: 560px; }
-    .shop-nav {
+    .wp-preview-hero p { margin: 0; color: #64748b; font-size: 0.92rem; }
+    .wp-preview-cats {
+      max-width: 1100px;
+      margin: 16px auto 0;
+      padding: 0 16px;
       display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 24px;
       flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
     }
-    .shop-nav a {
-      padding: 8px 18px;
+    .wp-preview-cats a {
+      padding: 8px 16px;
       border-radius: 999px;
       background: #fff;
-      border: 1px solid var(--fdf-border);
-      color: var(--fdf-muted);
+      border: 1px solid #e2e8f0;
+      color: #64748b;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 0.85rem;
       font-weight: 600;
     }
-    .shop-nav a.active, .shop-nav a:hover {
-      background: var(--gradient-primary);
+    .wp-preview-cats a:hover,
+    .wp-preview-cats a.active {
+      background: #F43F5E;
       color: #fff;
-      border-color: transparent;
+      border-color: #F43F5E;
     }
-    .products-grid {
+    .wp-preview-grid {
+      max-width: 1100px;
+      margin: 20px auto;
+      padding: 0 16px 24px;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 22px;
-      padding: 36px 20px;
-      max-width: 1200px;
-      margin: 0 auto;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
     }
-    .product-card {
-      background: var(--card-bg);
-      border: 1px solid var(--fdf-border);
-      border-radius: 20px;
+    .wp-preview-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
-    .product-img-wrapper { display: block; height: 200px; background: #f8fafc; position: relative; text-decoration: none; color: inherit; }
-    .product-img { width: 100%; height: 100%; object-fit: cover; }
-    .product-img-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #cbd5e1; }
-    .product-body { padding: 16px; }
-    .product-category { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--brand-pink); letter-spacing: 0.06em; }
-    .product-name { font-weight: 700; margin: 6px 0 4px; min-height: 40px; }
-    .product-seller { font-size: 12px; color: var(--fdf-muted); margin-bottom: 10px; }
-    .product-price .current { font-size: 18px; font-weight: 800; color: var(--brand-purple); }
-    .product-price .original { font-size: 13px; color: #94a3b8; text-decoration: line-through; margin-left: 8px; }
-    .btn-shop {
+    .wp-preview-img {
+      display: block;
+      height: 180px;
+      background: #fff1f2;
+      position: relative;
+      text-decoration: none;
+      color: inherit;
+    }
+    .wp-preview-img img { width: 100%; height: 100%; object-fit: cover; }
+    .wp-preview-img .ph {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      color: #F43F5E;
+    }
+    .wp-preview-body { padding: 14px; display: flex; flex-direction: column; flex: 1; }
+    .wp-preview-cat { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #F43F5E; letter-spacing: 0.05em; }
+    .wp-preview-name { font-weight: 700; margin: 6px 0; min-height: 38px; font-size: 0.95rem; }
+    .wp-preview-seller { font-size: 0.78rem; color: #64748b; margin-bottom: 8px; }
+    .wp-preview-seller i { color: #F43F5E; }
+    .wp-preview-price .now { font-size: 1.05rem; font-weight: 800; }
+    .wp-preview-price .was { font-size: 0.8rem; color: #94a3b8; text-decoration: line-through; margin-left: 6px; }
+    .wp-preview-btn {
+      margin-top: auto;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      margin-top: 12px;
-      padding: 10px 14px;
-      border-radius: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #F43F5E;
+      color: #fff;
       text-decoration: none;
-      font-size: 13px;
+      font-size: 0.85rem;
       font-weight: 700;
-      background: #fdf2f8;
-      color: var(--brand-purple);
-      border: 1px solid var(--fdf-border);
     }
-    .empty-shop { text-align: center; padding: 80px 20px; color: var(--fdf-muted); }
-    .empty-shop i { font-size: 64px; color: var(--brand-pink); display: block; margin-bottom: 16px; }
-    .stock-badge {
-      position: absolute; top: 12px; left: 12px;
-      padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800;
-      background: #fff; color: #10b981;
+    .wp-preview-btn:hover { background: #E11D48; }
+    .wp-stock {
+      position: absolute; top: 10px; left: 10px;
+      padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 800;
+      background: #fff; color: #15803d;
     }
-    .stock-badge.out { background: rgba(0,0,0,0.6); color: #fff; }
+    .wp-stock.out { background: #ffe4e6; color: #be123c; }
+    .wp-preview-empty {
+      max-width: 500px;
+      margin: 60px auto;
+      text-align: center;
+      color: #64748b;
+      padding: 0 16px;
+    }
+    .wp-preview-empty i { font-size: 48px; color: #F43F5E; display: block; margin-bottom: 12px; }
+    @media (max-width: 600px) {
+      .wp-preview-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .wp-preview-img { height: 130px; }
+    }
   </style>
 </head>
-<body>
-  <div class="preview-bar">
+<body class="wp-shop wp-shop-preview">
+  <div class="wp-preview-top">
     <div>
       <strong><i class="bi bi-eye"></i> Shop Preview</strong>
-      <span style="opacity:0.85; margin-left:10px; font-size:0.9rem;">How customers see ${seller.businessName}</span>
+      <span> — ${seller.businessName}</span>
     </div>
     <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=overview">
-      <i class="bi bi-arrow-left"></i> Back to Seller Dashboard
+      <i class="bi bi-arrow-left"></i> Back to Dashboard
     </a>
   </div>
 
-  <div class="shop-header">
+  <div class="wp-preview-hero">
     <h1>${seller.businessName}</h1>
     <p>
       <c:choose>
         <c:when test="${not empty seller.description}">${seller.description}</c:when>
-        <c:otherwise>Your storefront preview — only your active products are listed here.</c:otherwise>
+        <c:otherwise>Preview of your active storefront listings.</c:otherwise>
       </c:choose>
     </p>
-    <div class="shop-nav">
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview" class="${empty selectedCategory ? 'active' : ''}">All</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=SKINCARE" class="${selectedCategory == 'SKINCARE' ? 'active' : ''}">Skincare</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=HAIRCARE" class="${selectedCategory == 'HAIRCARE' ? 'active' : ''}">Haircare</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=HYGIENE" class="${selectedCategory == 'HYGIENE' ? 'active' : ''}">Hygiene</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=CLOTHING" class="${selectedCategory == 'CLOTHING' ? 'active' : ''}">Clothing</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=ACCESSORIES" class="${selectedCategory == 'ACCESSORIES' ? 'active' : ''}">Accessories</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=WELLNESS" class="${selectedCategory == 'WELLNESS' ? 'active' : ''}">Wellness</a>
-      <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=OTHER" class="${selectedCategory == 'OTHER' ? 'active' : ''}">Other</a>
-    </div>
+  </div>
+
+  <div class="wp-preview-cats">
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview" class="${empty selectedCategory ? 'active' : ''}">All</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=SKINCARE" class="${selectedCategory == 'SKINCARE' ? 'active' : ''}">Skincare</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=HAIRCARE" class="${selectedCategory == 'HAIRCARE' ? 'active' : ''}">Haircare</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=HYGIENE" class="${selectedCategory == 'HYGIENE' ? 'active' : ''}">Hygiene</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=CLOTHING" class="${selectedCategory == 'CLOTHING' ? 'active' : ''}">Clothing</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=ACCESSORIES" class="${selectedCategory == 'ACCESSORIES' ? 'active' : ''}">Accessories</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=WELLNESS" class="${selectedCategory == 'WELLNESS' ? 'active' : ''}">Wellness</a>
+    <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview?category=OTHER" class="${selectedCategory == 'OTHER' ? 'active' : ''}">Other</a>
   </div>
 
   <c:if test="${empty products}">
-    <div class="empty-shop">
+    <div class="wp-preview-empty">
       <i class="bi bi-bag-heart"></i>
       <h2>No active products yet</h2>
-      <p>Add and activate products from your seller dashboard to see them here.</p>
+      <p>Add and activate products from your seller dashboard.</p>
     </div>
   </c:if>
 
-  <div class="products-grid">
+  <div class="wp-preview-grid">
     <c:forEach var="p" items="${products}">
-      <div class="product-card">
-        <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="product-img-wrapper">
+      <div class="wp-preview-card">
+        <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="wp-preview-img">
           <c:choose>
             <c:when test="${not empty p.publicImagePath}">
-              <img src="<c:choose><c:when test="${p.remoteImage}">${p.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${p.publicImagePath}</c:otherwise></c:choose>" class="product-img" alt="<c:out value='${p.name}'/>">
+              <img src="<c:choose><c:when test="${p.remoteImage}">${p.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${p.publicImagePath}</c:otherwise></c:choose>" alt="<c:out value='${p.name}'/>">
             </c:when>
-            <c:otherwise>
-              <div class="product-img-placeholder"><i class="bi bi-gift"></i></div>
-            </c:otherwise>
+            <c:otherwise><div class="ph"><i class="bi bi-gift"></i></div></c:otherwise>
           </c:choose>
-          <span class="stock-badge ${p.stock > 0 ? 'in' : 'out'}">
-            ${p.stock > 0 ? 'In Stock' : 'Out of Stock'}
-          </span>
+          <span class="wp-stock ${p.stock > 0 ? '' : 'out'}">${p.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
         </a>
-        <div class="product-body">
-          <div class="product-category">${p.categoryLabel}</div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-seller"><i class="bi bi-patch-check-fill"></i> ${seller.businessName}</div>
-          <div class="product-price">
-            <span class="current">&#8377;${p.price}</span>
+        <div class="wp-preview-body">
+          <div class="wp-preview-cat">${p.categoryLabel}</div>
+          <div class="wp-preview-name">${p.name}</div>
+          <div class="wp-preview-seller"><i class="bi bi-patch-check-fill"></i> ${seller.businessName}</div>
+          <div class="wp-preview-price">
+            <span class="now">&#8377;${p.price}</span>
             <c:if test="${p.originalPrice != null && p.originalPrice > p.price}">
-              <span class="original">&#8377;${p.originalPrice}</span>
+              <span class="was">&#8377;${p.originalPrice}</span>
             </c:if>
           </div>
-          <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="btn-shop">
+          <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="wp-preview-btn">
             <i class="bi bi-eye"></i> View Details
           </a>
         </div>
       </div>
     </c:forEach>
   </div>
+
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>

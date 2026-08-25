@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #fffcfd;
+      font-family: 'Inter', 'Poppins', sans-serif;
+      background: #F8FAFC;
       color: var(--fdf-text);
       min-height: 100vh;
       padding: 40px 20px;
@@ -302,13 +303,19 @@
     .form-row .fdf-form-group { flex: 1; }
   </style>
 </head>
-<body>
+<body class="wp-shop">
   <div class="checkout-wrapper">
     <a href="${pageContext.request.contextPath}/women-products/cart" class="back-link">
       <i class="bi bi-arrow-left"></i> My Collection
     </a>
     
     <div class="page-title">Shopping Checkout</div>
+    <div class="wp-subnav" style="justify-content:flex-start;margin:0 0 24px;">
+      <a href="${pageContext.request.contextPath}/women-products">Shop</a>
+      <a href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
+      <a class="active" href="${pageContext.request.contextPath}/women-products/checkout">Checkout</a>
+      <a href="${pageContext.request.contextPath}/women-products/my-orders">My Orders</a>
+    </div>
 
     <form method="post" action="${pageContext.request.contextPath}/women-products/checkout/place" id="checkoutForm">
       <c:if test="${buyNowMode}"><input type="hidden" name="buyNow" value="1"></c:if>
@@ -690,6 +697,7 @@
     };
   </script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>
 

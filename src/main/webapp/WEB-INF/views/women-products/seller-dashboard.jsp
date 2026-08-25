@@ -11,9 +11,10 @@
       <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
       <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap"
         rel="stylesheet">
       <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+      <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
       <style>
         * {
           margin: 0;
@@ -23,13 +24,12 @@
 
         html,
         body {
-          overflow-x: hidden;
           width: 100%;
         }
 
         body {
-          font-family: 'Poppins', sans-serif;
-          background: #fdf2f8;
+          font-family: 'Inter', 'Poppins', sans-serif;
+          background: #f8fafc;
           color: var(--fdf-text);
           min-height: 100vh;
           display: flex;
@@ -327,8 +327,8 @@
         }
 
         .badge-CONFIRMED {
-          background: #dbeafe;
-          color: #1e40af;
+          background: #ffe4e6;
+          color: #9f1239;
         }
 
         .badge-SHIPPED {
@@ -381,12 +381,15 @@
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(15, 10, 30, 0.6);
+          background: rgba(15, 23, 42, 0.55);
           backdrop-filter: blur(8px);
-          z-index: 9999;
+          z-index: 10050;
           align-items: center;
           justify-content: center;
           padding: 20px;
+        }
+        .fdf-modal.is-open {
+          display: flex !important;
         }
 
         .fdf-modal-content {
@@ -511,7 +514,7 @@
       </style>
     </head>
 
-    <body>
+    <body class="wp-portal">
       <div class="mobile-topbar">
         <div style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.1rem;">Seller Portal</div>
         <i class="bi bi-list" style="font-size:1.8rem; cursor:pointer;" onclick="toggleMobileSidebar()"></i>
@@ -563,7 +566,7 @@
           <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview" class="nav-link" target="_blank">
             <i class="bi bi-eye"></i> Preview Shop
           </a>
-          <a href="${pageContext.request.contextPath}/logout" class="nav-link" style="color: #ef4444; opacity: 1;">
+          <a href="${pageContext.request.contextPath}/women-products/seller/logout" class="nav-link" style="color: #ef4444; opacity: 1;">
             <i class="bi bi-box-arrow-left"></i> Logout
           </a>
         </div>
@@ -590,9 +593,10 @@
                 <h1>Overview</h1>
                 <div style="font-weight: 600; color: var(--fdf-muted); margin-top: 5px;">Welcome back, ${seller.fullName}!</div>
               </div>
-              <div style="display:flex; gap:12px; align-items:center;">
+              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=products" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-plus-lg"></i> Deploy New Item</a>
                 <a href="${pageContext.request.contextPath}/index.html" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-house-door-fill"></i> Back to Home</a>
-                <a href="${pageContext.request.contextPath}/logout" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; background: #ef4444; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="${pageContext.request.contextPath}/women-products/seller/logout" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; background: #ef4444; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-left"></i> Logout</a>
               </div>
             </div>
 
@@ -737,7 +741,7 @@
             <c:if test="${section == 'products'}">
               <div class="header-info">
                 <h1>Catalog Manager</h1>
-                <button type="button" class="btn-fdf-action" onclick="openAddModal()">
+                <button type="button" class="btn-fdf-action" id="deployNewItemBtn" onclick="openAddModal(event)">
                   <i class="bi bi-plus-lg"></i> Deploy New Item
                 </button>
               </div>
@@ -748,7 +752,11 @@
                     <div style="padding: 80px; text-align: center; color: var(--fdf-muted); font-weight: 500;"><i
                         class="bi bi-box-seam"
                         style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i> Your catalog is
-                      currently offline.</div>
+                      currently offline.
+                      <div style="margin-top:20px;">
+                        <button type="button" class="btn-fdf-action" onclick="openAddModal(event)">Add your first product</button>
+                      </div>
+                    </div>
                   </c:if>
                   <c:if test="${not empty products}">
                     <table class="premium-table">
@@ -827,7 +835,7 @@
                                         data-active="${p.active}"
                                         data-featured="${p.featured}"
                                         data-trackInventory="${p.trackInventory}"
-                                        style="background: #dbeafe; color: #1e40af; border: none; width: 36px; height: 36px;
+                                        style="background: #ffe4e6; color: #9f1239; border: none; width: 36px; height: 36px;
                                         border-radius: 10px; cursor: pointer;">
                                   <i class="bi bi-pencil-square"></i>
                                 </button>
@@ -847,14 +855,15 @@
                   </c:if>
                 </div>
               </div>
+            </c:if>
 
-              <div id="productModal" class="fdf-modal">
+              <div id="productModal" class="fdf-modal" aria-hidden="true">
                 <div class="fdf-modal-content" style="max-width: 800px;">
                   <div
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; position:sticky; top:0; background:#fff; z-index:10; padding-bottom:15px; border-bottom:1px solid #eee;">
                     <h2 id="modalTitle" style="font-family:'Montserrat',sans-serif; font-weight:900;"><i
                         class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Catalog Deployment</h2>
-                    <button onclick="document.getElementById('productModal').style.display='none'"
+                    <button type="button" onclick="closeProductModal()"
                       style="background:none; border:none; font-size:24px; opacity:0.3; cursor:pointer;"><i
                         class="bi bi-x-circle"></i></button>
                   </div>
@@ -1004,7 +1013,6 @@
                   </form>
                 </div>
               </div>
-            </c:if>
 
             <%-- ══════ ORDERS ══════ --%>
               <c:if test="${section == 'orders'}">
@@ -1114,7 +1122,7 @@
                                     </span>
                                   </c:when>
                                   <c:when test="${o.status == 'CONFIRMED'}">
-                                    <span style="background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                    <span style="background:#ffe4e6; color:#9f1239; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
                                       <i class="bi bi-clipboard-check-fill"></i> Confirmed
                                     </span>
                                   </c:when>
@@ -1139,7 +1147,7 @@
                                 </c:if>
                                 <c:if test="${not empty opts}">
                                   <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
-                                    method="post" class="seller-order-form" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
+                                    method="post" class="seller-order-form wp-order-update" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
                                     <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:160px; border-radius:10px;">
                                       <c:forEach var="st" items="${opts}">
                                         <option value="${st}">${st}</option>
@@ -1392,7 +1400,7 @@
                                       </td>
                                       <td>
                                         <div
-                                          style="font-size:0.75rem; background:#f0f9ff; padding:10px; border-radius:12px; border:1px solid #e0f2fe; color:#0369a1;">
+                                          style="font-size:0.75rem; background:#fff1f2; padding:10px; border-radius:12px; border:1px solid #fecdd3; color:#9f1239;">
                                           <strong>Details:</strong><br>${r.bankDetails}
                                         </div>
                                       </td>
@@ -1468,7 +1476,7 @@
 
             <fmt:formatNumber value="${completedCount * 100 / 13}" maxFractionDigits="0" var="profilePercent" />
 
-            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #0F172A 0%, #F43F5E 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div>
                   <h3 style="margin:0; font-weight:800; font-size:1.2rem; color:#fff;"><i class="bi bi-speedometer2" style="color:var(--brand-pink);"></i> Profile Completion</h3>
@@ -2048,26 +2056,50 @@
               return true;
             }
 
-            function openAddModal() {
+            function closeProductModal() {
+              const modal = document.getElementById('productModal');
+              if (!modal) return;
+              modal.style.display = 'none';
+              modal.classList.remove('is-open');
+              modal.setAttribute('aria-hidden', 'true');
+            }
+
+            function openAddModal(ev) {
+              if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
               const title = document.getElementById('modalTitle');
-
-              title.innerHTML = '<i class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Catalog Deployment';
+              if (!modal || !form) {
+                window.location.href = '${pageContext.request.contextPath}/women-products/seller/dashboard?section=products';
+                return false;
+              }
+              if (title) {
+                title.innerHTML = '<i class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Add product';
+              }
               form.action = '${pageContext.request.contextPath}/women-products/seller/products/add';
-              form.reset();
+              try { form.reset(); } catch (e) {}
 
               const idInput = document.getElementById('editProductId');
               if (idInput) idInput.value = '';
 
-              // Set defaults
-              form.querySelector('[name="active"]').checked = true;
-              form.querySelector('[name="trackInventory"]').checked = true;
-              form.querySelector('[name="featured"]').checked = false;
-              form.querySelector('[name="images"]').setAttribute('required', 'required');
+              const active = form.querySelector('[name="active"]');
+              const track = form.querySelector('[name="trackInventory"]');
+              const featured = form.querySelector('[name="featured"]');
+              const images = form.querySelector('[name="images"]');
+              if (active) active.checked = true;
+              if (track) track.checked = true;
+              if (featured) featured.checked = false;
+              if (images) images.setAttribute('required', 'required');
               updateShortDescCounter();
 
+              document.body.appendChild(modal);
               modal.style.display = 'flex';
+              modal.classList.add('is-open');
+              modal.setAttribute('aria-hidden', 'false');
+              return false;
             }
 
             function openEditModal(p) {
@@ -2078,15 +2110,18 @@
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
               const title = document.getElementById('modalTitle');
+              if (!modal || !form) return;
 
-              title.innerHTML = '<i class="bi bi-pencil-square" style="color:var(--brand-pink)"></i> Update Product Trace';
+              if (title) {
+                title.innerHTML = '<i class="bi bi-pencil-square" style="color:var(--brand-pink)"></i> Update Product';
+              }
               form.action = '${pageContext.request.contextPath}/women-products/seller/products/' + p.id + '/edit';
-              form.querySelector('[name="images"]').removeAttribute('required');
+              const images = form.querySelector('[name="images"]');
+              if (images) images.removeAttribute('required');
 
               const idInput = document.getElementById('editProductId');
               if (idInput) idInput.value = p.id;
 
-              // Fill fields
               form.querySelector('[name="name"]').value = p.name || '';
               form.querySelector('[name="brand"]').value = p.brand || '';
               form.querySelector('[name="description"]').value = (p.description || '').substring(0, SHORT_DESC_MAX);
@@ -2105,12 +2140,17 @@
               form.querySelector('[name="usageInstructions"]').value = p.usageInstructions || '';
               form.querySelector('[name="tags"]').value = p.tags || '';
 
-              form.querySelector('[name="active"]').checked = p.active;
-              form.querySelector('[name="featured"]').checked = p.featured;
-              form.querySelector('[name="trackInventory"]').checked = p.trackInventory;
+              const active = form.querySelector('[name="active"]');
+              const featured = form.querySelector('[name="featured"]');
+              const track = form.querySelector('[name="trackInventory"]');
+              if (active) active.checked = p.active;
+              if (featured) featured.checked = p.featured;
+              if (track) track.checked = p.trackInventory;
               updateShortDescCounter();
 
+              document.body.appendChild(modal);
               modal.style.display = 'flex';
+              modal.classList.add('is-open');
             }
 
             function openProfileEditModal() {
@@ -2121,11 +2161,12 @@
             window.onclick = function (event) {
               const pModal = document.getElementById('productModal');
               const sModal = document.getElementById('profileEditModal');
-              if (event.target == pModal) {
-                pModal.style.display = "none";
+              if (pModal && event.target == pModal) {
+                closeProductModal();
               }
-              if (event.target == sModal) {
+              if (sModal && event.target == sModal) {
                 sModal.style.display = "none";
+                sModal.classList.remove('is-open');
               }
             }
 
@@ -2171,6 +2212,11 @@
             }
 
             document.addEventListener("DOMContentLoaded", function() {
+              try {
+                if (new URLSearchParams(window.location.search).get('openAdd') === '1') {
+                  openAddModal();
+                }
+              } catch (e) {}
               const sellerProfileForm = document.getElementById('sellerProfileForm');
               if (sellerProfileForm) {
                 sellerProfileForm.addEventListener('submit', function(e) {
