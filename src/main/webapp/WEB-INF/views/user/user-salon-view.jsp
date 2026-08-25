@@ -712,7 +712,7 @@
                                         </c:if>
                                         
                                         <div class="mt-auto">
-                                            <a href="${pageContext.request.contextPath}/salon/bookPackage?packageId=${pkg.id}" class="btn btn-action-primary rounded-pill w-100 py-2">
+                                            <a href="${pageContext.request.contextPath}/booking/new?packageId=${pkg.id}" class="btn btn-action-primary rounded-pill w-100 py-2">
                                                 Book Package
                                             </a>
                                         </div>
@@ -746,7 +746,7 @@
                                         <div class="text-light opacity-75 small mb-4" style="white-space: pre-line;">${mem.benefits}</div>
                                         
                                         <div class="mt-auto">
-                                            <a href="${pageContext.request.contextPath}/salon/bookMembership?membershipId=${mem.id}" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark">
+                                            <a href="${pageContext.request.contextPath}/booking/new?membershipId=${mem.id}" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark">
                                                 Join Membership
                                             </a>
                                         </div>
@@ -912,6 +912,8 @@
         const currentUserId = ${sessionScope.user != null ? sessionScope.user.id : 'null'};
         const salonId = ${salon.id};
 
+        let chatPollInterval = null;
+
         document.getElementById('chatModal').addEventListener('show.bs.modal', function () {
             if (!currentUserId) {
                 alert("Please log in to chat with the salon.");
@@ -922,6 +924,15 @@
                 connectWebSocket();
             }
             fetchChatHistory();
+            // Poll every 3 seconds as fallback for salon replies
+            chatPollInterval = setInterval(fetchChatHistory, 3000);
+        });
+
+        document.getElementById('chatModal').addEventListener('hide.bs.modal', function () {
+            if (chatPollInterval) {
+                clearInterval(chatPollInterval);
+                chatPollInterval = null;
+            }
         });
 
         function connectWebSocket() {
@@ -947,6 +958,8 @@
             });
         }
 
+        let lastMessageId = null;
+
         function fetchChatHistory() {
             fetch('${pageContext.request.contextPath}/api/salon/chat?salonId=' + salonId)
                 .then(response => {
@@ -956,22 +969,34 @@
                     return response.json();
                 })
                 .then(messages => {
+                    if (!messages || !messages.length) {
+                        if (!lastMessageId) {
+                            document.getElementById('chatMessages').innerHTML = '<div class="text-center text-muted p-4">No previous messages. Start a conversation!</div>';
+                        }
+                        return;
+                    }
+                    // Show all messages for this user: messages sent BY user AND replies FROM salon to this user
+                    const conversation = messages.filter(m => m.userId != null && String(m.userId) === String(currentUserId));
+                    
+                    if (conversation.length === 0) {
+                        if (!lastMessageId) {
+                            document.getElementById('chatMessages').innerHTML = '<div class="text-center text-muted p-4">No previous messages. Start a conversation!</div>';
+                        }
+                        return;
+                    }
+                    
+                    // Only re-render if there are new messages (avoid flicker on poll)
+                    const newestId = conversation[conversation.length - 1].id;
+                    if (newestId === lastMessageId) return; // No change, skip re-render
+                    lastMessageId = newestId;
+                    
                     const chatMessages = document.getElementById('chatMessages');
                     chatMessages.innerHTML = '';
-                    if (messages && messages.length > 0) {
-                        const userMessages = messages.filter(m => m.userId === currentUserId);
-                        if (userMessages.length === 0) {
-                            chatMessages.innerHTML = '<div class="text-center text-muted p-4">No previous messages. Start a conversation!</div>';
-                        }
-                        userMessages.forEach(msg => appendMessage(msg));
-                    } else {
-                        chatMessages.innerHTML = '<div class="text-center text-muted p-4">No previous messages. Start a conversation!</div>';
-                    }
+                    conversation.forEach(msg => appendMessage(msg));
                     scrollToBottom();
                 })
                 .catch(err => {
                     console.error('Error fetching chat history:', err);
-                    document.getElementById('chatMessages').innerHTML = '<div class="text-center text-danger p-4">Failed to load chat.</div>';
                 });
         }
 
@@ -984,16 +1009,15 @@
 
             const msgUserId = msg.userId;
 
-            const isMine = msg.senderRole === 'USER' && msgUserId == currentUserId;
+            // isMine = true when the USER sent the message (shown on right, blue)
+            const isMine = msg.senderRole === 'USER' && String(msgUserId) === String(currentUserId);
             
-            // Only show messages for this user or from the salon to this user.
-            if (msg.senderRole === 'USER' && msgUserId != currentUserId) {
-                console.log("Ignoring user message not from current user");
-                return; 
-            }
-            if (msg.senderRole === 'SALON' && msgUserId != currentUserId) {
-                console.log("Ignoring salon message not for current user");
-                return; 
+            // Only show messages that belong to this user's conversation:
+            // - USER messages sent by this user
+            // - SALON replies that are addressed to this user (userId matches)
+            if (String(msgUserId) !== String(currentUserId)) {
+                // Not part of this user's conversation, skip
+                return;
             }
 
             const div = document.createElement('div');

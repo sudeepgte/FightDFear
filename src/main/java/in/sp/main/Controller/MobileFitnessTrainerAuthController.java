@@ -69,6 +69,8 @@ public class MobileFitnessTrainerAuthController {
     private in.sp.main.Repository.FitnessAttendanceRepository fitnessAttendanceRepo;
     @Autowired
     private in.sp.main.Repository.FitnessProgressLogRepository fitnessProgressLogRepo;
+    @Autowired
+    private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
 
 
     @PostMapping("/otp/send-email")
@@ -680,6 +682,114 @@ public class MobileFitnessTrainerAuthController {
         } catch (Exception ex) {
             return badRequest(ex.getMessage() == null ? "Logging progress failed" : ex.getMessage());
         }
+    }
+
+    // ==========================================
+    // DYNAMIC QR ATTENDANCE (MOBILE TRAINER)
+    // ==========================================
+
+    @PostMapping("/qr-session")
+    public ResponseEntity<Map<String, Object>> createQrSession(
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            Long classId = null;
+            int duration = 15;
+            Double lat = null;
+            Double lng = null;
+
+            if (body != null) {
+                if (body.get("classId") != null && !body.get("classId").toString().isEmpty()) {
+                    classId = Long.valueOf(body.get("classId").toString());
+                }
+                if (body.get("duration") != null && !body.get("duration").toString().isEmpty()) {
+                    duration = Integer.parseInt(body.get("duration").toString());
+                }
+                if (body.get("latitude") != null) {
+                    lat = Double.parseDouble(body.get("latitude").toString());
+                }
+                if (body.get("longitude") != null) {
+                    lng = Double.parseDouble(body.get("longitude").toString());
+                }
+            }
+
+            in.sp.main.Entities.FitnessQrAttendanceSession qrSession = fitnessQrAttendanceService.createOrRefreshSession(
+                    t, classId, LocalDate.now(), duration, lat, lng);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("qrPayload", qrSession.getToken());
+            res.put("trainerName", t.getFullName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("durationMinutes", duration);
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "QR creation failed" : ex.getMessage());
+        }
+    }
+
+    @PostMapping("/qr-session/{id}/close")
+    public ResponseEntity<Map<String, Object>> closeQrSession(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            fitnessQrAttendanceService.closeSession(id, t);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "QR session closed");
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Failed to close QR" : ex.getMessage());
+        }
+    }
+
+    @GetMapping("/qr-session/{id}/attendees")
+    public ResponseEntity<Map<String, Object>> getQrAttendees(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        try {
+            List<Map<String, Object>> attendees = fitnessQrAttendanceService.getSessionAttendees(t, id);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("attendees", attendees);
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Failed to fetch attendees" : ex.getMessage());
+        }
+    }
+
+    @GetMapping("/qr-session/active")
+    public ResponseEntity<Map<String, Object>> getActiveQrSession(HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+
+        Optional<in.sp.main.Entities.FitnessQrAttendanceSession> active = fitnessQrAttendanceService.getActiveSession(t, LocalDate.now());
+        Map<String, Object> res = new LinkedHashMap<>();
+        if (active.isPresent()) {
+            in.sp.main.Entities.FitnessQrAttendanceSession s = active.get();
+            res.put("success", true);
+            res.put("active", true);
+            res.put("sessionId", s.getId());
+            res.put("token", s.getToken());
+            res.put("qrPayload", s.getToken());
+            res.put("trainerName", t.getFullName());
+            res.put("sessionDate", s.getSessionDate().toString());
+            res.put("expiresAt", s.getExpiresAt().toString());
+        } else {
+            res.put("success", true);
+            res.put("active", false);
+        }
+        return ResponseEntity.ok(res);
     }
 
     private FitnessTrainer requireTrainer(HttpSession session) {

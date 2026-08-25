@@ -171,42 +171,16 @@
             transform: translateX(-5px);
         }
     </style>
+
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 </head>
 <body>
 
     <!-- Sidebar -->
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand">
-            <i class="bi bi-stars"></i>
-            <span>Fight D Fear</span>
-        </a>
-
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
-                <i class="bi bi-calendar-check"></i>
-                <span>Manage Bookings</span>
-            </a>
-            <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salon/clients">
-                <i class="bi bi-people-fill"></i>
-                <span>Clients</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists">
-                <i class="bi bi-person-badge"></i>
-                <span>Staff / Stylists</span>
-            </a>
-            <!-- more links if needed -->
-            <div class="mt-5">
-                <a class="nav-link-custom text-danger" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-        </nav>
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="clients"/>
+</jsp:include>
 
     <!-- Main Content -->
     <div class="main-content">

@@ -39,6 +39,7 @@ public class MobileGlowSpaceController {
     @GetMapping("/salons")
     public ResponseEntity<Map<String, Object>> salons(
             @RequestParam(required = false) String city,
+            @RequestParam(required = false) String q,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Double minFee,
             @RequestParam(required = false) Double maxFee,
@@ -52,6 +53,7 @@ public class MobileGlowSpaceController {
         if (user == null) return unauthorized();
 
         String cityQ = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
+        String searchQ = q == null ? "" : q.trim();
         ServiceCategory catFilter = ServiceCategory.fromFlexible(category);
         List<Salon> approved = salonRepo.findByApproved(true);
         List<Map<String, Object>> items = new ArrayList<>();
@@ -73,6 +75,18 @@ public class MobileGlowSpaceController {
             if (minFee != null && fee < minFee) continue;
             if (maxFee != null && (fee == 0 || fee > maxFee)) continue;
             if (Boolean.TRUE.equals(availableToday) && !glowCareService.availableToday(s)) continue;
+            if (!searchQ.isBlank()) {
+                boolean textMatch = glowCareService.salonMatchesSearch(s, services, searchQ);
+                if (!textMatch) {
+                    textMatch = treatmentRepo.findBySalonId(s.getId()).stream()
+                            .anyMatch(t -> matchesText(t.getServiceName(), searchQ) || matchesText(t.getDescription(), searchQ));
+                }
+                if (!textMatch) {
+                    textMatch = offerRepo.findBySalonId(s.getId()).stream()
+                            .anyMatch(o -> matchesText(o.getTitle(), searchQ) || matchesText(o.getDescription(), searchQ));
+                }
+                if (!textMatch) continue;
+            }
             items.add(salonCard(s, user, services, lat, lng));
         }
         String sortKey = sort == null ? "rating" : sort.trim().toLowerCase(Locale.ROOT);
@@ -132,6 +146,7 @@ public class MobileGlowSpaceController {
         out.put("nextSlot", next);
         out.put("noSlotsToday", slotsToday.isEmpty());
         out.put("favorite", glowCareService.isFavorite(user, id));
+        out.put("canReview", glowCareService.canReviewSalon(user, s));
         out.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
         return ResponseEntity.ok(out);
     }
@@ -427,6 +442,73 @@ public class MobileGlowSpaceController {
                 "cancelPolicy", GlowCareService.CANCEL_POLICY)));
     }
 
+    @PostMapping("/bookings/{id}/reschedule")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rescheduleBooking(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        Booking1 booking = bookingRepo.findById(id).orElse(null);
+        if (booking == null || booking.getUser() == null || !booking.getUser().getId().equals(user.getId())) {
+            return badRequest("Booking not found.");
+        }
+        if (!glowCareService.canReschedule(booking)) {
+            return badRequest("This booking cannot be rescheduled.");
+        }
+
+        String dateRaw = str(body.get("bookingDate"));
+        String timeRaw = str(body.get("preferredTime"));
+        if (dateRaw.isBlank() || timeRaw.isBlank()) {
+            return badRequest("bookingDate and preferredTime are required.");
+        }
+
+        LocalDate bookingDate;
+        LocalTime preferredTime;
+        try {
+            bookingDate = LocalDate.parse(dateRaw);
+            preferredTime = LocalTime.parse(timeRaw);
+        } catch (Exception e) {
+            return badRequest("Invalid bookingDate or preferredTime format.");
+        }
+        if (bookingDate.isBefore(LocalDate.now())) {
+            return badRequest("Cannot reschedule to a past date.");
+        }
+
+        Salon salon = booking.getSalon();
+        if (salon == null || !salon.isApproved()) {
+            return badRequest("Salon not found.");
+        }
+        if (!glowCareService.isOpenOn(salon, bookingDate)) {
+            return badRequest("Salon is closed on " + bookingDate + ".");
+        }
+        if (glowCareService.slotTaken(salon, bookingDate, preferredTime, booking.getId())) {
+            return badRequest("That slot is already booked. Please pick another time.");
+        }
+
+        booking.setBookingDate(bookingDate);
+        booking.setPreferredTime(preferredTime);
+        bookingRepo.save(booking);
+
+        return ResponseEntity.ok(ok(Map.of(
+                "message", "Booking rescheduled",
+                "booking", bookingDto(booking, user))));
+    }
+
+    @GetMapping("/bookings/{id}/confirmation")
+    public ResponseEntity<Map<String, Object>> bookingConfirmation(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        Booking1 booking = bookingRepo.findById(id).orElse(null);
+        if (booking == null || booking.getUser() == null || !booking.getUser().getId().equals(user.getId())) {
+            return badRequest("Booking not found.");
+        }
+        return ResponseEntity.ok(ok(Map.of("booking", confirmationDto(booking, user))));
+    }
+
     @GetMapping("/bookings/me")
     public ResponseEntity<Map<String, Object>> myBookings(HttpSession session) {
         User user = requireUser(session);
@@ -436,7 +518,7 @@ public class MobileGlowSpaceController {
                 .sorted((a, b) -> Long.compare(
                         b.getId() == null ? 0 : b.getId(),
                         a.getId() == null ? 0 : a.getId()))
-                .map(this::bookingDto)
+                .map(b -> bookingDto(b, user))
                 .toList();
         return ResponseEntity.ok(ok(Map.of("bookings", items, "count", items.size())));
     }
@@ -560,6 +642,10 @@ public class MobileGlowSpaceController {
     }
 
     private Map<String, Object> bookingDto(Booking1 b) {
+        return bookingDto(b, null);
+    }
+
+    private Map<String, Object> bookingDto(Booking1 b, User user) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", b.getId());
         m.put("status", b.getStatus());
@@ -571,13 +657,13 @@ public class MobileGlowSpaceController {
         m.put("notes", b.getNotes());
         m.put("emergencyContact", b.getEmergencyContact());
         m.put("allergyInfo", b.getAllergyInfo());
-        m.put("paymentRequired", !"CONFIRMED".equalsIgnoreCase(b.getStatus())
-                && !"PAID".equalsIgnoreCase(b.getStatus())
-                && !"COMPLETED".equalsIgnoreCase(b.getStatus())
-                && b.getPrice() > 0);
+        m.put("paymentRequired", glowCareService.isPaymentPending(b));
+        m.put("paymentStatus", paymentStatusLabel(b));
         m.put("canCancel", glowCareService.canCancelFree(b)
                 || "PENDING".equalsIgnoreCase(b.getStatus()));
         m.put("canCancelFree", glowCareService.canCancelFree(b));
+        m.put("canReschedule", glowCareService.canReschedule(b));
+        m.put("canReview", user != null && glowCareService.canReviewBooking(user, b));
         m.put("joinWindowOpen", glowCareService.joinWindowOpen(b));
         m.put("cancelPolicy", GlowCareService.CANCEL_POLICY);
         m.put("coachNotes", b.getCoachNotes());
@@ -593,6 +679,38 @@ public class MobileGlowSpaceController {
             m.put("item", offerDto(b.getOffer()));
         }
         return m;
+    }
+
+    private Map<String, Object> confirmationDto(Booking1 b, User user) {
+        Map<String, Object> m = bookingDto(b, user);
+        m.put("bookingId", b.getId());
+        m.put("salonName", b.getSalon() == null ? null : b.getSalon().getName());
+        m.put("bookingStatus", b.getStatus());
+        m.put("amount", b.getPrice());
+        m.put("free", b.getPrice() <= 0);
+        if (b.getService() != null) {
+            m.put("itemName", b.getService().getName());
+        } else if (b.getTreatment() != null) {
+            m.put("itemName", b.getTreatment().getServiceName());
+        } else if (b.getOffer() != null) {
+            m.put("itemName", b.getOffer().getTitle());
+        }
+        return m;
+    }
+
+    private static String paymentStatusLabel(Booking1 b) {
+        if (b == null) return "UNKNOWN";
+        String st = GlowCareService.normBookingStatus(b.getStatus());
+        if (b.getPrice() <= 0) return "FREE";
+        if ("PENDING".equals(st)) return "PAYMENT_PENDING";
+        if ("CONFIRMED".equals(st) || "PAID".equals(st) || "COMPLETED".equals(st)) return "PAID";
+        if ("CANCELLED".equals(st) || "REJECTED".equals(st)) return st;
+        return st;
+    }
+
+    private static boolean matchesText(String value, String needle) {
+        if (needle == null || needle.isBlank()) return true;
+        return value != null && value.toLowerCase(Locale.ROOT).contains(needle.trim().toLowerCase(Locale.ROOT));
     }
 
     private User requireUser(HttpSession session) {

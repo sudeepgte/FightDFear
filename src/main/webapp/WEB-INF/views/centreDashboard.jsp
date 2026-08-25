@@ -14,10 +14,23 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
+            --martial-rose: #f43f5e;
+            --martial-rose-dark: #e11d48;
+            --martial-rose-light: #ffe4e6;
+            --martial-rose-soft: #fff1f2;
+            --martial-text: #0f172a;
+            --martial-muted: #64748b;
+            --martial-border: #e2e8f0;
+            --martial-border-light: #f1f5f9;
+            --martial-bg: #f8fafc;
+            --martial-white: #ffffff;
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 8px 24px rgba(244, 63, 94, 0.08);
+
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
-            --navy-light: #2D2960;
+            --navy: #0F172A;
+            --navy-light: #1E293B;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -35,62 +48,72 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-page);
-            color: var(--navy);
+            background: var(--martial-bg);
+            color: var(--martial-text);
             min-height: 100vh;
             display: flex;
         }
 
-        /* Sidebar Navigation */
+        /* Clean Light Sidebar matching Fitness — future-proof flex column */
         .sidebar {
-            width: 260px;
-            background: var(--navy);
-            color: #FFFFFF;
+            width: 240px;
+            background: var(--martial-white);
+            color: var(--martial-text);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            position: sticky;
+            position: fixed;
+            left: 0;
             top: 0;
             height: 100vh;
-            z-index: 40;
-            transition: all 0.3s ease;
+            max-height: 100vh;
+            z-index: 1000;
+            border-right: 1px solid var(--martial-border);
+            box-shadow: 2px 0 12px rgba(0,0,0,0.02);
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
         }
 
         .sidebar-brand {
-            padding: 22px 20px;
+            padding: 20px 18px;
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 800;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid var(--martial-border);
             text-decoration: none;
-            color: #FFFFFF;
+            color: var(--martial-text);
+            flex-shrink: 0;
         }
 
         .sidebar-brand i {
-            color: var(--primary);
-            font-size: 1.4rem;
+            color: var(--martial-rose);
+            font-size: 1.3rem;
         }
 
+        /* Scrolls when many / future nav items are added */
         .sidebar-nav {
-            flex: 1;
-            padding: 16px 12px;
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 14px 10px;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 14px;
-            color: #94A3B8;
+            padding: 10px 14px;
+            color: var(--martial-muted);
             text-decoration: none;
-            border-radius: 12px;
-            font-size: 0.9rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
             font-weight: 600;
             transition: all 0.2s ease;
             cursor: pointer;
@@ -98,28 +121,64 @@
             background: transparent;
             width: 100%;
             text-align: left;
+            flex-shrink: 0;
         }
 
         .nav-item i {
-            font-size: 1.15rem;
-            width: 20px;
+            font-size: 1.1rem;
+            width: 22px;
             text-align: center;
+            color: #94a3b8;
+            transition: color 0.2s ease;
         }
 
         .nav-item:hover {
-            color: #FFFFFF;
-            background: rgba(255,255,255,0.06);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
+        }
+
+        .nav-item:hover i {
+            color: var(--martial-rose);
         }
 
         .nav-item.active {
-            color: #FFFFFF;
-            background: var(--primary);
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-light);
+            font-weight: 700;
+            box-shadow: none;
+        }
+
+        .nav-item.active i {
+            color: var(--martial-rose);
+        }
+
+        /* Decorative illustration — shrinks/hides before nav is compromised */
+        .sidebar-illustration {
+            flex: 0 1 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px 8px;
+            min-height: 0;
+            max-height: 200px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .sidebar-illustration img {
+            width: clamp(110px, 68%, 160px);
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            display: block;
+            user-select: none;
         }
 
         .sidebar-footer {
-            padding: 16px 14px;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            padding: 14px;
+            border-top: 1px solid var(--martial-border);
+            flex-shrink: 0;
+            background: var(--martial-white);
         }
 
         .btn-logout {
@@ -129,30 +188,32 @@
             padding: 10px 14px;
             color: #EF4444;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 600;
             border-radius: 10px;
             transition: background 0.2s;
         }
 
         .btn-logout:hover {
-            background: rgba(239, 68, 68, 0.1);
+            background: #FEF2F2;
         }
 
-        /* Main Content */
+        /* Main Content Wrapper */
         .main-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
             min-width: 0;
+            margin-left: 240px;
+            min-height: 100vh;
             overflow-y: auto;
         }
 
         /* Top Header */
         .topbar {
-            background: #FFFFFF;
-            border-bottom: 1px solid var(--border-color);
-            padding: 14px 28px;
+            background: var(--martial-white);
+            border-bottom: 1px solid var(--martial-border);
+            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -162,26 +223,30 @@
         }
 
         .topbar-greeting h1 {
-            font-size: 1.25rem;
+            font-size: 1.35rem;
             font-weight: 800;
-            color: var(--navy);
+            color: var(--martial-text);
+            margin: 0;
+            letter-spacing: -0.3px;
         }
 
         .topbar-greeting p {
-            font-size: 0.85rem;
-            color: var(--text-gray);
+            font-size: 0.86rem;
+            color: var(--martial-muted);
             font-weight: 500;
+            margin-top: 2px;
+            margin-bottom: 0;
         }
 
         .topbar-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
-        .btn-quick-add {
+        .btn-header-cta {
             padding: 9px 18px;
-            background: var(--primary);
+            background: var(--martial-rose);
             color: #FFFFFF;
             border: none;
             border-radius: 10px;
@@ -189,32 +254,48 @@
             font-weight: 700;
             font-family: inherit;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 10px rgba(244, 63, 94, 0.25);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
             text-decoration: none;
         }
 
-        .btn-quick-add:hover {
-            background: var(--primary-hover);
+        .btn-header-cta:hover {
+            background: var(--martial-rose-dark);
+            color: #FFFFFF;
+            transform: translateY(-1px);
         }
 
         .content-container {
-            padding: 24px 28px 60px;
-            max-width: 1200px;
+            padding: 26px 32px 60px;
+            max-width: 1240px;
             width: 100%;
         }
 
-        /* Centre Profile Summary Card Matching Mobile */
+        .tab-section {
+            display: none;
+        }
+
+        .tab-section.active {
+            display: block;
+            animation: fadeInTab 0.2s ease-in-out;
+        }
+
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Centre Profile Summary Card Matching Fitness */
         .centre-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 22px 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
+            border-radius: 18px;
+            padding: 22px 26px;
+            margin-bottom: 22px;
+            box-shadow: var(--shadow-card);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -229,18 +310,19 @@
         }
 
         .centre-avatar {
-            width: 80px;
-            height: 80px;
+            width: 76px;
+            height: 76px;
             border-radius: 16px;
-            background: var(--rose-soft);
-            color: var(--primary);
+            background: var(--martial-rose-light);
+            color: var(--martial-rose);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.9rem;
             font-weight: 800;
             overflow: hidden;
             flex-shrink: 0;
+            border: 2px solid #FECDD3;
         }
 
         .centre-avatar img {
@@ -250,18 +332,19 @@
         }
 
         .centre-info h2 {
-            font-size: 1.3rem;
+            font-size: 1.28rem;
             font-weight: 800;
-            color: var(--navy);
+            color: var(--martial-text);
             margin-bottom: 4px;
+            letter-spacing: -0.2px;
         }
 
         .centre-meta {
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 0.85rem;
-            color: var(--text-gray);
+            font-size: 0.84rem;
+            color: var(--martial-muted);
             flex-wrap: wrap;
         }
 
@@ -271,19 +354,19 @@
             gap: 5px;
             padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             font-weight: 700;
         }
 
-        .pill-verified { background: var(--success-bg); color: var(--success); border: 1px solid #BBF7D0; }
+        .pill-verified { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
         .pill-pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
-        .pill-changes { background: var(--warning-bg); color: var(--warning); border: 1px solid #FED7AA; }
+        .pill-changes { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
 
         .btn-edit-profile {
             padding: 8px 16px;
-            border: 1px solid var(--border-color);
-            background: #FFFFFF;
-            color: var(--navy);
+            border: 1px solid var(--martial-border);
+            background: var(--martial-white);
+            color: var(--martial-text);
             border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -291,27 +374,28 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
         .btn-edit-profile:hover {
-            border-color: var(--primary);
-            color: var(--primary);
+            border-color: var(--martial-rose);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
         }
 
         /* Profile Completion Warning Card */
         .completion-banner {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
+            background: var(--martial-white);
+            border: 1px solid #FECDD3;
             border-radius: 16px;
-            padding: 18px 22px;
-            margin-bottom: 24px;
+            padding: 20px 24px;
+            margin-bottom: 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
             flex-wrap: wrap;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.04);
         }
 
         .completion-banner-left {
@@ -342,77 +426,127 @@
             border-radius: 4px;
         }
 
-        /* 8 Metric Tiles Grid Matching Mobile */
-        .metrics-grid {
+        /* Unified Stat Cards Grid Matching Fitness (No Rainbow Colors) */
+        .stat-cards-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
         }
 
-        @media (max-width: 1024px) {
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 600px) {
-            .metrics-grid { grid-template-columns: 1fr; }
-        }
-
-        .metric-card {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
+        .stat-card-unified {
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
             border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            padding: 20px 22px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-
-        .metric-top {
-            display: flex;
-            align-items: center;
             justify-content: space-between;
+            gap: 10px;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            min-height: 125px;
+            color: var(--martial-text);
         }
 
-        .metric-icon-wrap {
+        .stat-card-unified:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            border-color: #FECDD3;
+        }
+
+        .stat-card-label {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--martial-muted);
+        }
+
+        .stat-card-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            color: var(--martial-text);
+        }
+
+        .stat-card-icon-badge {
             width: 42px;
             height: 42px;
-            border-radius: 12px;
+            border-radius: 50%;
+            background: var(--martial-rose-light);
+            color: var(--martial-rose);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.25rem;
+            flex-shrink: 0;
         }
 
-        .metric-val {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--navy);
+        .stat-card-footer {
+            font-size: 0.76rem;
+            color: #94A3B8;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
         }
 
-        .metric-label {
-            font-size: 0.85rem;
+        /* Clean Quick Actions Toolbar matching Fitness */
+        .quick-actions-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .btn-quick-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-size: 0.84rem;
             font-weight: 600;
-            color: var(--text-gray);
+            background: var(--martial-white);
+            border: 1px solid var(--martial-border);
+            color: var(--martial-text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
 
-        /* Tab Content Section */
-        .tab-section {
-            display: none;
+        .btn-quick-pill:hover {
+            border-color: var(--martial-rose);
+            color: var(--martial-rose-dark);
+            background: var(--martial-rose-soft);
+            transform: translateY(-1px);
         }
 
-        .tab-section.active {
-            display: block;
+        .btn-quick-pill i {
+            color: var(--martial-rose);
+            font-size: 0.95rem;
         }
 
-        /* Tables & Content Panels */
-        .content-panel {
-            background: #FFFFFF;
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 22px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        .btn-quick-pill.primary {
+            background: var(--martial-rose);
+            color: #FFFFFF;
+            border-color: var(--martial-rose);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+        }
+
+        .btn-quick-pill.primary i {
+            color: #FFFFFF;
+        }
+
+        .btn-quick-pill.primary:hover {
+            background: var(--martial-rose-dark);
+            border-color: var(--martial-rose-dark);
+            color: #FFFFFF;
         }
 
         .panel-header {
@@ -754,6 +888,278 @@
             z-index: 10;
         }
 
+        /* —— Review Application (Students / Trainees) —— */
+        .review-app-shell { display: none; }
+        .review-app-shell.is-open { display: block; }
+        .students-list-shell.is-hidden { display: none !important; }
+
+        .review-app-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+        .review-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--martial-rose);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        .review-back-link:hover { color: var(--martial-rose-dark); }
+        .review-app-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin: 0 0 6px;
+            letter-spacing: -0.02em;
+        }
+        .review-app-sub {
+            color: var(--text-gray);
+            font-size: 0.92rem;
+            margin: 0;
+            max-width: 420px;
+            line-height: 1.45;
+        }
+        .review-app-id {
+            display: inline-flex;
+            align-items: center;
+            background: var(--martial-rose-soft);
+            color: var(--martial-rose);
+            border: 1px solid #FECDD3;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .review-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-card);
+            padding: 22px 24px;
+            margin-bottom: 16px;
+        }
+        .review-card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin: 0 0 18px;
+        }
+        .review-card-title .ri {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--martial-rose-soft);
+            color: var(--martial-rose);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .review-student-layout {
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+        }
+        .review-photo {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #FECDD3;
+            flex-shrink: 0;
+            background: var(--martial-rose-soft);
+        }
+        .review-photo-fallback {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: var(--martial-rose-soft);
+            color: var(--martial-rose);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #FECDD3;
+        }
+        .review-field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px 28px;
+            flex: 1;
+            min-width: 0;
+        }
+        .review-field-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .review-field label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-gray);
+            margin-bottom: 3px;
+        }
+        .review-field .val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--navy);
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .review-two-col {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .review-two-col > .review-card { margin-bottom: 0; height: 100%; }
+
+        .review-fee-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            font-size: 0.92rem;
+            color: var(--navy);
+            border-bottom: 1px solid var(--martial-border-light);
+        }
+        .review-fee-row span:last-child { font-weight: 700; }
+        .review-fee-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: var(--martial-rose-soft);
+            border-radius: 12px;
+            font-weight: 800;
+            color: var(--navy);
+            font-size: 0.95rem;
+        }
+        .review-fee-note {
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 10px;
+            color: #92400E;
+            font-size: 0.82rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .review-goals-text {
+            color: var(--navy);
+            font-size: 0.95rem;
+            line-height: 1.55;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+        .review-goals-empty {
+            color: var(--text-gray);
+            font-size: 0.92rem;
+            font-style: italic;
+            margin: 0;
+        }
+
+        .review-pay-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 28px;
+        }
+        .review-status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+        .review-status-pill.pending { background: #FEF3C7; color: #92400E; }
+        .review-status-pill.approved,
+        .review-status-pill.in_progress,
+        .review-status-pill.paid { background: #DCFCE7; color: #166534; }
+        .review-status-pill.rejected { background: #FEE2E2; color: #991B1B; }
+
+        .review-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+        .btn-review-close {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--navy);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-review-close:hover { background: #F8FAFC; }
+        .btn-review-reject {
+            background: #fff;
+            border: 1.5px solid var(--martial-rose);
+            color: var(--martial-rose);
+            border-radius: 10px;
+            padding: 10px 18px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-review-reject:hover { background: var(--martial-rose-soft); }
+        .btn-review-approve {
+            background: var(--navy);
+            border: 1.5px solid var(--navy);
+            color: #fff;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-review-approve:hover { background: var(--navy-light); }
+
+        @media (max-width: 991px) {
+            .review-two-col { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .review-student-layout { flex-direction: column; align-items: center; text-align: left; }
+            .review-field-grid,
+            .review-field-grid.cols-2,
+            .review-pay-grid { grid-template-columns: 1fr; }
+            .review-actions { justify-content: stretch; }
+            .review-actions button { width: 100%; }
+            .review-app-title { font-size: 1.3rem; }
+        }
+
         .form-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -835,9 +1241,32 @@
                 position: fixed;
                 left: -260px;
                 height: 100vh;
+                max-height: 100vh;
                 top: 0;
             }
             .sidebar.open { left: 0; }
+            .sidebar-illustration img {
+                width: clamp(90px, 55%, 130px);
+                max-height: 120px;
+            }
+        }
+
+        /* Short viewports: shrink illustration further, never block nav/sign-out */
+        @media (max-height: 720px) {
+            .sidebar-illustration {
+                max-height: 110px;
+                padding: 6px 12px;
+            }
+            .sidebar-illustration img {
+                max-height: 96px;
+                width: clamp(90px, 55%, 130px);
+            }
+        }
+
+        @media (max-height: 580px) {
+            .sidebar-illustration {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -889,6 +1318,14 @@
             </button>
         </div>
 
+        <div class="sidebar-illustration" aria-hidden="true">
+            <img src="${pageContext.request.contextPath}/assets/img/centre/sidebar-illustration.png"
+                 alt=""
+                 width="160"
+                 height="160"
+                 loading="lazy"
+                 decoding="async">
+        </div>
 
         <div class="sidebar-footer">
             <a href="${pageContext.request.contextPath}/centres/logout" class="btn-logout">
@@ -903,7 +1340,17 @@
         <!-- Top Header -->
         <header class="topbar">
             <div class="topbar-greeting">
-                <h1>Welcome back, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
+                <%
+                    int currentHour = java.time.LocalTime.now().getHour();
+                    String martialGreeting = "Good morning";
+                    if (currentHour >= 12 && currentHour < 17) {
+                        martialGreeting = "Good afternoon";
+                    } else if (currentHour >= 17 || currentHour < 5) {
+                        martialGreeting = "Good evening";
+                    }
+                    request.setAttribute("martialGreeting", martialGreeting);
+                %>
+                <h1>${martialGreeting}, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
                 <p>Manage your martial arts programs, batch schedules, and student progress</p>
             </div>
             <div class="topbar-actions">
@@ -916,148 +1363,155 @@
         <!-- Content Area -->
         <div class="content-container">
 
-            <!-- Centre Profile Summary Card Matching Mobile -->
-            <div class="centre-card">
-                <div class="centre-card-left">
-                    <div class="centre-avatar">
-                        <c:choose>
-                            <c:when test="${not empty loggedCentre.profilePhoto}">
-                                <img src="${pageContext.request.contextPath}${loggedCentre.profilePhoto}" alt="Logo">
-                            </c:when>
-                            <c:otherwise>
-                                ${loggedCentre.name.substring(0,1).toUpperCase()}
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                    <div class="centre-info">
-                        <h2><c:out value="${loggedCentre.name}"/></h2>
-                        <div class="centre-meta">
-                            <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty loggedCentre.location ? loggedCentre.location : 'Location not set'}"/></span>
-                            <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${loggedCentre.phoneNumber}"/></span>
-                            <span><i class="bi bi-star-fill text-warning"></i> 4.8 Rating</span>
-                            <c:choose>
-                                <c:when test="${loggedCentre.approved}">
-                                    <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified Centre</span>
-                                </c:when>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
-                                    <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Admin Review</span>
-                                </c:when>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
-                                    <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="pill-badge pill-pending">Verification Required</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-edit-profile">
-                        <i class="bi bi-pencil-square"></i> Edit Profile
-                    </a>
-                </div>
-            </div>
-
-            <!-- Profile Completion Banner (When unapproved / incomplete) -->
-            <c:if test="${not loggedCentre.approved}">
-                <div class="completion-banner">
-                    <div class="completion-banner-left">
-                        <div class="completion-header">
-                            <span>Profile Completion Status</span>
-                            <span style="color: var(--primary);">${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%;"></div>
-                        </div>
-                        <p style="font-size: 0.8rem; color: var(--text-gray);">
-                            <c:choose>
-                                <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
-                                    <strong style="color: var(--warning);">Admin Note:</strong> <c:out value="${loggedCentre.rejectionReason}"/>
-                                </c:when>
-                                <c:otherwise>
-                                    Complete required profile information to submit your centre for Admin approval and unlock batch creation.
-                                </c:otherwise>
-                            </c:choose>
-                        </p>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-quick-add">
-                        <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile Now
-                    </a>
-                </div>
-            </c:if>
-
-            <!-- 8 Key Metrics Grid -->
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Enrolled Students</span>
-                        <div class="metric-icon-wrap" style="background:#FFE4E6;color:#F43F5E;"><i class="bi bi-people-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${enrolledUsersCount != null ? enrolledUsersCount : 0}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Active Batches</span>
-                        <div class="metric-icon-wrap" style="background:#F3E8FF;color:#9333EA;"><i class="bi bi-layers-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${batches != null ? batches.size() : 0}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Today's Classes</span>
-                        <div class="metric-icon-wrap" style="background:#FFEDD5;color:#EA580C;"><i class="bi bi-calendar-check-fill"></i></div>
-                    </div>
-                    <div class="metric-val">${todayClassesCount != null ? todayClassesCount : 1}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Monthly Revenue</span>
-                        <div class="metric-icon-wrap" style="background:#DCFCE7;color:#16A34A;"><i class="bi bi-wallet2"></i></div>
-                    </div>
-                    <div class="metric-val">₹${totalRevenue != null ? totalRevenue : '0'}</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Avg Attendance</span>
-                        <div class="metric-icon-wrap" style="background:#E0E7FF;color:#4F46E5;"><i class="bi bi-person-check-fill"></i></div>
-                    </div>
-                    <div class="metric-val">94%</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Live Sessions</span>
-                        <div class="metric-icon-wrap" style="background:#DBEAFE;color:#2563EB;"><i class="bi bi-camera-video-fill"></i></div>
-                    </div>
-                    <div class="metric-val">Online</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Centre Rating</span>
-                        <div class="metric-icon-wrap" style="background:#FEF3C7;color:#D97706;"><i class="bi bi-star-fill"></i></div>
-                    </div>
-                    <div class="metric-val">4.8 ★</div>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-top">
-                        <span class="metric-label">Status</span>
-                        <div class="metric-icon-wrap" style="background:#FFE4E6;color:#F43F5E;"><i class="bi bi-shield-check"></i></div>
-                    </div>
-                    <div class="metric-val" style="font-size: 1.1rem; text-transform: uppercase;">
-                        ${loggedCentre.centreProfileStatus != null ? loggedCentre.centreProfileStatus : 'Active'}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 1: Overview -->
+            <!-- Tab 1: Overview Workspace -->
             <div id="tab-overview" class="tab-section active">
+
+                <!-- Centre Profile Summary Card Matching Mobile -->
+                <div class="centre-card">
+                    <div class="centre-card-left">
+                        <div class="centre-avatar">
+                            <c:choose>
+                                <c:when test="${not empty loggedCentre.profilePhoto}">
+                                    <img src="${pageContext.request.contextPath}${loggedCentre.profilePhoto}" alt="Logo">
+                                </c:when>
+                                <c:otherwise>
+                                    ${loggedCentre.name.substring(0,1).toUpperCase()}
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div class="centre-info">
+                            <h2><c:out value="${loggedCentre.name}"/></h2>
+                            <div class="centre-meta">
+                                <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty loggedCentre.location ? loggedCentre.location : 'Location not set'}"/></span>
+                                <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${loggedCentre.phoneNumber}"/></span>
+                                <span><i class="bi bi-star-fill text-warning"></i> 4.8 Rating</span>
+                                <c:choose>
+                                    <c:when test="${loggedCentre.approved}">
+                                        <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified Centre</span>
+                                    </c:when>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                        <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Admin Review</span>
+                                    </c:when>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
+                                        <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="pill-badge pill-pending">Verification Required</span>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-edit-profile">
+                            <i class="bi bi-pencil-square"></i> Edit Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Profile Completion Banner (When unapproved / incomplete) -->
+                <c:if test="${not loggedCentre.approved || (loggedCentre.profileCompletionPct != null && loggedCentre.profileCompletionPct < 100)}">
+                    <div class="completion-banner">
+                        <div class="completion-banner-left">
+                            <div class="completion-header">
+                                <span>Centre Profile Completion</span>
+                                <span style="color: var(--primary); font-weight: 800;">${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width: ${loggedCentre.profileCompletionPct != null ? loggedCentre.profileCompletionPct : 0}%;"></div>
+                            </div>
+                            <p style="font-size: 0.82rem; color: var(--text-gray); margin-bottom: 8px;">
+                                <c:choose>
+                                    <c:when test="${loggedCentre.centreProfileStatus == 'CHANGES_REQUESTED'}">
+                                        <strong style="color: var(--warning);">Admin Feedback:</strong> <c:out value="${not empty loggedCentre.changesRequestedNote ? loggedCentre.changesRequestedNote : loggedCentre.rejectionReason}"/>
+                                    </c:when>
+                                    <c:otherwise>
+                                        Complete these sections to improve discovery, student trust, and get verified:
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <c:if test="${empty loggedCentre.about}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Description</span></c:if>
+                                <c:if test="${empty loggedCentre.openTime or empty loggedCentre.closeTime}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Set Hours</span></c:if>
+                                <c:if test="${empty loggedCentre.profilePhoto}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Logo</span></c:if>
+                                <c:if test="${empty loggedCentre.galleryPhotos or loggedCentre.galleryPhotos.size() == 0}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Gallery</span></c:if>
+                                <c:if test="${empty loggedCentre.stylesTaught}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Select Styles</span></c:if>
+                                <c:if test="${empty loggedCentre.facilities}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Amenities</span></c:if>
+                            </div>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-quick-add" style="white-space: nowrap;">
+                            <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile &rarr;
+                        </a>
+                    </div>
+                </c:if>
+
+                <!-- Clean Quick Actions Toolbar matching Fitness -->
+                <div class="quick-actions-bar">
+                    <button type="button" class="btn-quick-pill primary" onclick="switchTab('batches'); openCreateBatchModal();">
+                        <i class="bi bi-plus-circle-fill"></i> Create Batch
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('attendance');">
+                        <i class="bi bi-qr-code-scan"></i> QR Attendance
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('students');">
+                        <i class="bi bi-people-fill"></i> Manage Students
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('grading');">
+                        <i class="bi bi-award-fill"></i> Belt Grading
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('instructors');">
+                        <i class="bi bi-person-plus-fill"></i> Add Instructor
+                    </button>
+                </div>
+
+                <!-- 4 Unified Stat Cards Grid Matching Fitness (No Rainbow Colors) -->
+                <div class="stat-cards-grid">
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Enrolled Students</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-people-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${enrolledUsersCount != null ? enrolledUsersCount : 0}</div>
+                            <div class="stat-card-footer"><i class="bi bi-check-circle-fill text-success me-1"></i> Active trainees</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Active Batches</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-layers-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${batches != null ? batches.size() : 0}</div>
+                            <div class="stat-card-footer"><i class="bi bi-activity text-danger me-1"></i> Ongoing programs</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Today's Classes</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-calendar-check-fill"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">${todayClassesCount != null ? todayClassesCount : (batches != null && batches.size() > 0 ? 1 : 0)}</div>
+                            <div class="stat-card-footer"><i class="bi bi-clock-history me-1"></i> Scheduled today</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card-unified">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="stat-card-label">Monthly Revenue</span>
+                            <div class="stat-card-icon-badge"><i class="bi bi-wallet2"></i></div>
+                        </div>
+                        <div>
+                            <div class="stat-card-value">₹${totalRevenue != null ? totalRevenue : '0'}</div>
+                            <div class="stat-card-footer"><i class="bi bi-arrow-up-right text-success me-1"></i> Current month</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule Content Panel -->
                 <div class="content-panel">
                     <div class="panel-header">
                         <div class="panel-title"><i class="bi bi-calendar-event text-danger"></i> Today's Schedule & Programs</div>
@@ -1123,20 +1577,21 @@
                     </div>
 
                     <!-- Disciplines / Programs Overview Bar -->
-                    <div class="programs-bar">
+                    <div class="programs-bar" id="disciplineFilterBar">
                         <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase;">Centre Disciplines:</span>
-                        <c:choose>
-                            <c:when test="${not empty loggedCentre.stylesTaught}">
-                                <c:forEach var="style" items="${fn:split(loggedCentre.stylesTaught, ',')}">
-                                    <div class="discipline-chip" onclick="filterBatchesByStyle('${fn:trim(style)}')">
-                                        <i class="bi bi-shield-shaded text-danger"></i> ${fn:trim(style)}
-                                    </div>
-                                </c:forEach>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="discipline-chip active"><i class="bi bi-check2"></i> All Martial Arts Styles</div>
-                            </c:otherwise>
-                        </c:choose>
+                        <div class="discipline-chip active" data-style="" onclick="filterBatchesByStyle('', this)">
+                            <i class="bi bi-check2"></i> All
+                        </div>
+                        <c:if test="${not empty loggedCentre.stylesTaught}">
+                            <c:forEach var="style" items="${fn:split(loggedCentre.stylesTaught, ',')}">
+                                <div class="discipline-chip" data-style="${fn:trim(style)}" onclick="filterBatchesByStyle('${fn:trim(style)}', this)">
+                                    <i class="bi bi-shield-shaded text-danger"></i> ${fn:trim(style)}
+                                </div>
+                            </c:forEach>
+                        </c:if>
+                    </div>
+                    <div id="disciplineEmptyMsg" style="display:none; text-align:center; padding:24px; color:var(--text-gray);">
+                        No programs or batches available for this discipline.
                     </div>
 
                     <!-- Batch Cards Grid View -->
@@ -1144,7 +1599,7 @@
                         <c:when test="${not empty batches}">
                             <div class="batch-grid" id="batchCardsContainer">
                                 <c:forEach var="batch" items="${batches}">
-                                    <div class="batch-card" data-style="${batch.style}">
+                                    <div class="batch-card" data-style="${batch.style != null ? batch.style : ''}">
                                         <div>
                                             <div class="batch-card-header">
                                                 <div>
@@ -1234,38 +1689,298 @@
             <!-- Tab 3: Students -->
             <div id="tab-students" class="tab-section">
                 <div class="content-panel">
+                    <div id="studentsListShell" class="students-list-shell">
                     <div class="panel-header">
-                        <div class="panel-title"><i class="bi bi-people-fill text-danger"></i> Enrolled Trainees & Members</div>
+                        <div class="panel-title"><i class="bi bi-people-fill text-danger"></i> Students / Trainees</div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mb-3" id="studentStatusTabs">
+                        <button type="button" class="btn btn-sm rounded-pill active" data-student-filter="PENDING" onclick="filterStudentRows('PENDING', this)" style="background:#FFF1F2;color:#F43F5E;border:1px solid #FECDD3;">Pending Applications</button>
+                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="ACTIVE" onclick="filterStudentRows('ACTIVE', this)" style="background:#fff;border:1px solid #E2E8F0;">Active Students</button>
+                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="REJECTED" onclick="filterStudentRows('REJECTED', this)" style="background:#fff;border:1px solid #E2E8F0;">Rejected</button>
+                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="ALL" onclick="filterStudentRows('ALL', this)" style="background:#fff;border:1px solid #E2E8F0;">All</button>
                     </div>
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Student Name</th>
-                                <th>Contact</th>
-                                <th>Enrolled Batch</th>
-                                <th>Payment Status</th>
-                                <th>Progress</th>
+                                <th>Student</th>
+                                <th>Batch</th>
+                                <th>Application Status</th>
+                                <th>Payment</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <c:forEach var="enroll" items="${enrollments}">
-                                <tr>
-                                    <td><strong><c:out value="${enroll.user.fullName != null ? enroll.user.fullName : enroll.user.name}"/></strong></td>
-                                    <td><c:out value="${enroll.user.email}"/></td>
-                                    <td><c:out value="${enroll.batch != null ? enroll.batch.name : 'General Enrollment'}"/></td>
-                                    <td><span class="badge-status badge-active"><c:out value="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PAID'}"/></span></td>
-                                    <td><span class="badge-status badge-active"><c:out value="${enroll.status != null ? enroll.status : 'In Training'}"/></span></td>
+                                <c:set var="appFee" value="${enroll.batch != null && enroll.batch.fee != null ? enroll.batch.fee : 0}"/>
+                                <c:set var="admFee" value="${enroll.batch != null && enroll.batch.admissionFee != null ? enroll.batch.admissionFee : 0}"/>
+                                <tr class="student-row"
+                                    data-status="${enroll.status != null ? enroll.status : 'PENDING'}"
+                                    data-payment="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"
+                                    data-enroll-id="${enroll.id}"
+                                    id="student-row-${enroll.id}">
+                                    <td>
+                                        <strong><c:out value="${enroll.fullName != null ? enroll.fullName : (enroll.user.fullName != null ? enroll.user.fullName : enroll.user.name)}"/></strong>
+                                        <div class="small text-muted"><c:out value="${enroll.email != null ? enroll.email : enroll.user.email}"/></div>
+                                        <div class="small text-muted"><c:out value="${enroll.phoneNumber != null ? enroll.phoneNumber : ''}"/></div>
+                                    </td>
+                                    <td>
+                                        <c:out value="${enroll.batch != null ? enroll.batch.name : 'General Enrollment'}"/>
+                                        <div class="small text-muted"><c:out value="${enroll.batch != null ? enroll.batch.style : ''}"/></div>
+                                    </td>
+                                    <td><span class="badge-status"><c:out value="${enroll.status != null ? enroll.status : 'PENDING'}"/></span></td>
+                                    <td><span class="badge-status"><c:out value="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"/></span></td>
+                                    <td style="white-space:nowrap;">
+                                        <button type="button" class="btn-card-action" onclick="openEnrollmentReview(${enroll.id})">
+                                            <i class="bi bi-eye"></i> View / Review
+                                        </button>
+                                        <c:if test="${enroll.status == 'PENDING'}">
+                                            <button type="button" class="btn-card-action primary" onclick="updateEnrollmentStatus(${enroll.id}, 'APPROVED')">Approve</button>
+                                            <button type="button" class="btn-card-action danger" onclick="updateEnrollmentStatus(${enroll.id}, 'REJECTED')">Reject</button>
+                                        </c:if>
+                                    </td>
                                 </tr>
                             </c:forEach>
                             <c:if test="${empty enrollments}">
                                 <tr>
                                     <td colspan="5" style="text-align:center;padding:24px;color:var(--text-gray);">
-                                        No trainees enrolled yet. Trainees who enroll from the user app will appear here.
+                                        No pending applications.
                                     </td>
                                 </tr>
                             </c:if>
                         </tbody>
                     </table>
+                    </div><!-- /studentsListShell -->
+
+                    <!-- Structured Review Application (inline, matches Centre Hub reference) -->
+                    <div id="enrollmentReviewShell" class="review-app-shell">
+                        <div id="enrollmentReviewBody"></div>
+                        <div id="enrollmentReviewActions" class="review-actions" style="display:none;">
+                            <button type="button" class="btn-review-close" onclick="closeEnrollmentReview()">Close</button>
+                            <button type="button" id="reviewRejectBtn" class="btn-review-reject" onclick="rejectFromReview()">Reject Application</button>
+                            <button type="button" id="reviewApproveBtn" class="btn-review-approve" onclick="approveFromReview()">Approve Application</button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden structured review sources (real enrollment data) -->
+                    <c:forEach var="enroll" items="${enrollments}">
+                        <c:set var="appFee" value="${enroll.batch != null && enroll.batch.fee != null ? enroll.batch.fee : 0}"/>
+                        <c:set var="admFee" value="${enroll.batch != null && enroll.batch.admissionFee != null ? enroll.batch.admissionFee : 0}"/>
+                        <c:set var="totalFee" value="${appFee + admFee}"/>
+                        <c:set var="displayName" value="${enroll.fullName != null ? enroll.fullName : (enroll.user.fullName != null ? enroll.user.fullName : enroll.user.name)}"/>
+                        <c:set var="displayEmail" value="${enroll.email != null ? enroll.email : enroll.user.email}"/>
+                        <c:set var="appStatus" value="${enroll.status != null ? enroll.status : 'PENDING'}"/>
+                        <c:set var="payStatus" value="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"/>
+                        <c:set var="batchCap" value="${enroll.batch != null ? enroll.batch.capacity : null}"/>
+                        <c:set var="occupiedSeats" value="0"/>
+                        <c:if test="${enroll.batch != null && batchCap != null}">
+                            <c:forEach var="e2" items="${enrollments}">
+                                <c:if test="${e2.batch != null && e2.batch.id == enroll.batch.id && e2.status != 'REJECTED'}">
+                                    <c:set var="occupiedSeats" value="${occupiedSeats + 1}"/>
+                                </c:if>
+                            </c:forEach>
+                        </c:if>
+                        <c:set var="seatsLeft" value="${batchCap != null ? (batchCap - occupiedSeats) : null}"/>
+                        <c:set var="appIdLabel" value="APP-${enroll.id}"/>
+
+                        <div id="enrollment-review-${enroll.id}" class="enrollment-review-source" style="display:none;"
+                             data-status="${appStatus}"
+                             data-app-id="${appIdLabel}">
+                            <div class="review-app-top">
+                                <div>
+                                    <button type="button" class="review-back-link" onclick="closeEnrollmentReview()">
+                                        <i class="bi bi-arrow-left"></i> Back to Students / Trainees
+                                    </button>
+                                    <h2 class="review-app-title">Review Application</h2>
+                                    <p class="review-app-sub">Carefully review the student's application before approving or rejecting.</p>
+                                </div>
+                                <span class="review-app-id">Application ID: <c:out value="${appIdLabel}"/></span>
+                            </div>
+
+                            <!-- 1. Student Information -->
+                            <div class="review-card">
+                                <h3 class="review-card-title"><span class="ri"><i class="bi bi-person"></i></span> 1. Student Information</h3>
+                                <div class="review-student-layout">
+                                    <c:choose>
+                                        <c:when test="${enroll.user != null && not empty enroll.user.profilePhoto}">
+                                            <img class="review-photo" src="${pageContext.request.contextPath}${enroll.user.profilePhoto}" alt="Profile photo">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="review-photo-fallback" aria-hidden="true"><i class="bi bi-person"></i></div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    <div class="review-field-grid">
+                                        <div class="review-field">
+                                            <label>Full Name</label>
+                                            <div class="val"><c:out value="${displayName}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Email</label>
+                                            <div class="val"><c:out value="${not empty displayEmail ? displayEmail : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Phone</label>
+                                            <div class="val"><c:out value="${not empty enroll.phoneNumber ? enroll.phoneNumber : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Date of Birth</label>
+                                            <div class="val">
+                                                <c:choose>
+                                                    <c:when test="${enroll.dob != null}">
+                                                        <c:out value="${enroll.dob}"/>
+                                                        <c:if test="${enroll.age != null}"> (<c:out value="${enroll.age}"/> Yrs)</c:if>
+                                                    </c:when>
+                                                    <c:otherwise>—</c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Gender</label>
+                                            <div class="val"><c:out value="${not empty enroll.gender ? enroll.gender : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Emergency Contact</label>
+                                            <div class="val"><c:out value="${not empty enroll.emergencyContactName ? enroll.emergencyContactName : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Address</label>
+                                            <div class="val"><c:out value="${not empty enroll.residentialAddress ? enroll.residentialAddress : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Registration Date</label>
+                                            <div class="val"><c:out value="${enroll.enrolledAt != null ? enroll.enrolledAt : '—'}"/></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2 + 3. Enrollment + Fees -->
+                            <div class="review-two-col">
+                                <div class="review-card">
+                                    <h3 class="review-card-title"><span class="ri"><i class="bi bi-journal-text"></i></span> 2. Enrollment Details</h3>
+                                    <div class="review-field-grid cols-2">
+                                        <div class="review-field">
+                                            <label>Centre</label>
+                                            <div class="val"><c:out value="${enroll.center != null ? enroll.center.name : loggedCentre.name}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Discipline</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.style ? enroll.batch.style : (enroll.martialArtsType != null ? enroll.martialArtsType.name : '—')}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Batch</label>
+                                            <div class="val"><c:out value="${enroll.batch != null ? enroll.batch.name : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Level</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.skillLevel ? enroll.batch.skillLevel : (not empty enroll.skillLevel ? enroll.skillLevel : '—')}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Coach / Instructor</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.instructor ? enroll.batch.instructor : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Days</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.availableDays ? enroll.batch.availableDays : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Time</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.timeSlot ? enroll.batch.timeSlot : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Mode</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.batchType ? enroll.batch.batchType : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Age Group</label>
+                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.ageGroup ? enroll.batch.ageGroup : '—'}"/></div>
+                                        </div>
+                                        <c:if test="${batchCap != null}">
+                                            <div class="review-field">
+                                                <label>Seats Remaining</label>
+                                                <div class="val"><c:out value="${seatsLeft}"/> / <c:out value="${batchCap}"/></div>
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                </div>
+
+                                <div class="review-card">
+                                    <h3 class="review-card-title"><span class="ri"><i class="bi bi-cash-stack"></i></span> 3. Fee Details</h3>
+                                    <div class="review-fee-row">
+                                        <span>Monthly Tuition</span>
+                                        <span>₹ <fmt:formatNumber value="${appFee}" minFractionDigits="0" maxFractionDigits="2"/></span>
+                                    </div>
+                                    <div class="review-fee-row">
+                                        <span>Admission Fee</span>
+                                        <span>₹ <fmt:formatNumber value="${admFee}" minFractionDigits="0" maxFractionDigits="2"/></span>
+                                    </div>
+                                    <div class="review-fee-total">
+                                        <span>Total Applicable Fee</span>
+                                        <span>₹ <fmt:formatNumber value="${totalFee}" minFractionDigits="0" maxFractionDigits="2"/></span>
+                                    </div>
+                                    <div class="review-fee-note">Note: Payment will be collected only after approval.</div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Goals -->
+                            <div class="review-card">
+                                <h3 class="review-card-title"><span class="ri"><i class="bi bi-bullseye"></i></span> 4. Applicant's Goals</h3>
+                                <c:choose>
+                                    <c:when test="${not empty enroll.trainingGoal || not empty enroll.motivation || not empty enroll.skillLevel}">
+                                        <c:if test="${not empty enroll.skillLevel}">
+                                            <div class="review-field" style="margin-bottom:12px;">
+                                                <label>Experience / Level</label>
+                                                <div class="val"><c:out value="${enroll.skillLevel}"/></div>
+                                            </div>
+                                        </c:if>
+                                        <c:if test="${not empty enroll.trainingGoal}">
+                                            <p class="review-goals-text"><c:out value="${enroll.trainingGoal}"/></p>
+                                        </c:if>
+                                        <c:if test="${not empty enroll.motivation}">
+                                            <p class="review-goals-text" style="${not empty enroll.trainingGoal ? 'margin-top:10px;' : ''}"><c:out value="${enroll.motivation}"/></p>
+                                        </c:if>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="review-goals-empty">No goals or additional information provided.</p>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+
+                            <!-- 5. Payment Status -->
+                            <div class="review-card">
+                                <h3 class="review-card-title"><span class="ri"><i class="bi bi-credit-card"></i></span> 5. Payment Status</h3>
+                                <div class="review-pay-grid">
+                                    <div class="review-field">
+                                        <label>Application Status</label>
+                                        <div class="val">
+                                            <span class="review-status-pill ${fn:toLowerCase(appStatus)}"><c:out value="${appStatus}"/></span>
+                                        </div>
+                                    </div>
+                                    <div class="review-field">
+                                        <label>Current Payment Status</label>
+                                        <div class="val">
+                                            <span class="review-status-pill ${fn:toLowerCase(payStatus)}"><c:out value="${payStatus}"/></span>
+                                        </div>
+                                    </div>
+                                    <div class="review-field">
+                                        <label>Payment Method</label>
+                                        <div class="val">
+                                            <c:choose>
+                                                <c:when test="${payStatus == 'PAID' && not empty enroll.razorpayPaymentId}">Razorpay</c:when>
+                                                <c:when test="${payStatus == 'PAID'}">Paid</c:when>
+                                                <c:otherwise>Not Applied</c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </div>
+                                    <c:if test="${enroll.amountPaid != null}">
+                                        <div class="review-field">
+                                            <label>Amount Paid</label>
+                                            <div class="val">₹ <fmt:formatNumber value="${enroll.amountPaid}" minFractionDigits="0" maxFractionDigits="2"/></div>
+                                        </div>
+                                    </c:if>
+                                </div>
+                            </div>
+                        </div>
+                    </c:forEach>
                 </div>
             </div>
 
@@ -1825,7 +2540,16 @@
 
             const target = document.getElementById('tab-' + tabId);
             if (target) target.classList.add('active');
-            if (btn) btn.classList.add('active');
+
+            if (btn && btn.classList.contains('nav-item')) {
+                btn.classList.add('active');
+            } else {
+                const matchingNav = Array.from(document.querySelectorAll('.sidebar-nav .nav-item')).find(el => {
+                    const oc = el.getAttribute('onclick');
+                    return oc && oc.includes("'" + tabId + "'");
+                });
+                if (matchingNav) matchingNav.classList.add('active');
+            }
 
             if (tabId === 'grading') {
                 loadGradingAssessments();
@@ -1838,6 +2562,131 @@
         // DYNAMIC QR ATTENDANCE
         // ==========================================
         let currentQrSessionId = null;
+
+        function normalizeStyleToken(value) {
+            return (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function filterBatchesByStyle(style, chipEl) {
+            document.querySelectorAll('#disciplineFilterBar .discipline-chip').forEach(c => c.classList.remove('active'));
+            if (chipEl) chipEl.classList.add('active');
+            else {
+                const match = Array.from(document.querySelectorAll('#disciplineFilterBar .discipline-chip'))
+                    .find(c => (c.getAttribute('data-style') || '') === (style || ''));
+                if (match) match.classList.add('active');
+            }
+            const selected = normalizeStyleToken(style);
+            const cards = document.querySelectorAll('#batchCardsContainer .batch-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const cardStyle = normalizeStyleToken(card.getAttribute('data-style'));
+                const show = !selected || (cardStyle.length > 0 && cardStyle === selected);
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            const emptyMsg = document.getElementById('disciplineEmptyMsg');
+            const grid = document.getElementById('batchCardsContainer');
+            if (emptyMsg) emptyMsg.style.display = (cards.length > 0 && visible === 0) ? 'block' : 'none';
+            if (grid) grid.style.display = (visible === 0 && selected) ? 'none' : '';
+        }
+
+        let currentReviewEnrollmentId = null;
+
+        function openEnrollmentReview(enrollmentId) {
+            currentReviewEnrollmentId = enrollmentId;
+            const source = document.getElementById('enrollment-review-' + enrollmentId);
+            const body = document.getElementById('enrollmentReviewBody');
+            const actions = document.getElementById('enrollmentReviewActions');
+            const listShell = document.getElementById('studentsListShell');
+            const reviewShell = document.getElementById('enrollmentReviewShell');
+            if (!source || !body || !reviewShell) {
+                alert('Application details not available.');
+                return;
+            }
+            body.innerHTML = source.innerHTML;
+            const status = (source.getAttribute('data-status') || '').toUpperCase();
+            if (actions) {
+                actions.style.display = 'flex';
+                const rejectBtn = document.getElementById('reviewRejectBtn');
+                const approveBtn = document.getElementById('reviewApproveBtn');
+                const showDecide = status === 'PENDING';
+                if (rejectBtn) rejectBtn.style.display = showDecide ? '' : 'none';
+                if (approveBtn) approveBtn.style.display = showDecide ? '' : 'none';
+            }
+            if (listShell) listShell.classList.add('is-hidden');
+            reviewShell.classList.add('is-open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeEnrollmentReview() {
+            const listShell = document.getElementById('studentsListShell');
+            const reviewShell = document.getElementById('enrollmentReviewShell');
+            const body = document.getElementById('enrollmentReviewBody');
+            const actions = document.getElementById('enrollmentReviewActions');
+            if (reviewShell) reviewShell.classList.remove('is-open');
+            if (listShell) listShell.classList.remove('is-hidden');
+            if (body) body.innerHTML = '';
+            if (actions) actions.style.display = 'none';
+            currentReviewEnrollmentId = null;
+        }
+
+        function approveFromReview() {
+            if (currentReviewEnrollmentId == null) return;
+            updateEnrollmentStatus(currentReviewEnrollmentId, 'APPROVED');
+        }
+
+        function rejectFromReview() {
+            if (currentReviewEnrollmentId == null) return;
+            updateEnrollmentStatus(currentReviewEnrollmentId, 'REJECTED');
+        }
+
+        function filterStudentRows(filter, btn) {
+            document.querySelectorAll('#studentStatusTabs .btn').forEach(b => {
+                b.style.background = '#fff';
+                b.style.color = '#0F172A';
+                b.style.border = '1px solid #E2E8F0';
+                b.classList.remove('active');
+            });
+            if (btn) {
+                btn.style.background = '#FFF1F2';
+                btn.style.color = '#F43F5E';
+                btn.style.border = '1px solid #FECDD3';
+                btn.classList.add('active');
+            }
+            document.querySelectorAll('.student-row').forEach(row => {
+                const st = (row.getAttribute('data-status') || '').toUpperCase();
+                const pay = (row.getAttribute('data-payment') || '').toUpperCase();
+                let show = true;
+                if (filter === 'PENDING') show = st === 'PENDING';
+                else if (filter === 'REJECTED') show = st === 'REJECTED';
+                else if (filter === 'ACTIVE') show = (st === 'APPROVED' || st === 'IN_PROGRESS') && (pay === 'PAID' || st === 'IN_PROGRESS');
+                else if (filter === 'ALL') show = true;
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        async function updateEnrollmentStatus(enrollmentId, status) {
+            if (!confirm(status === 'APPROVED' ? 'Approve this application?' : 'Reject this application?')) return;
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/enrollment/api/' + enrollmentId + '/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status })
+                });
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    alert(data.error || 'Could not update status');
+                    return;
+                }
+                location.reload();
+            } catch (e) {
+                alert('Network error updating status');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            filterStudentRows('PENDING', document.querySelector('#studentStatusTabs .btn.active'));
+        });
 
         function generateQrSession() {
             const batchId = document.getElementById('qrBatchSelect').value;

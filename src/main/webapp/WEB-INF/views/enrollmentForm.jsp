@@ -39,15 +39,19 @@
         }
 
         .enrollment-header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--accent-purple) 100%);
-            padding: 60px 0;
-            color: white;
-            border-radius: 0 0 40px 40px;
-            margin-bottom: -40px;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 36px 0 28px;
+            color: #0F172A;
+            border-radius: 0;
+            margin-bottom: 24px;
         }
-        /* Issue 135: Enforce white text on the enrollment header */
+        /* Issue 135: Enforce dark text on the enrollment header */
         .enrollment-header h1, .enrollment-header p {
-            color: #ffffff !important;
+            color: #0F172A !important;
+        }
+        .enrollment-header p {
+            color: #64748B !important;
         }
 
         .form-section-card {
@@ -181,9 +185,9 @@
         }
 
         .btn-submit:hover {
-            background: #be185d;
+            background: #e11d48;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.3);
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.3);
             color: white;
         }
 
@@ -515,10 +519,13 @@
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="mb-5">
-                        <button type="submit" id="submitBtn" class="btn-submit">
-                            <i class="bi bi-send-fill"></i>
-                            Submit Enrollment
+                    <div class="mb-5 d-flex flex-wrap gap-2">
+                        <button type="button" id="reviewBtn" class="btn-submit" onclick="openEnrollmentPreview()">
+                            <i class="bi bi-eye-fill"></i>
+                            Review Application →
+                        </button>
+                        <button type="submit" id="submitBtn" class="btn-submit" style="display:none;">
+                            Confirm &amp; Submit
                         </button>
                     </div>
 
@@ -600,17 +607,33 @@
         </div>
     </main>
 
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content p-4" style="border-radius:16px;">
+                <h3 class="fw-bold mb-1" style="color:#0F172A;">Confirm Your Application</h3>
+                <p class="text-muted small mb-3">Review everything before sending it to the centre.</p>
+                <div id="previewBody" class="text-start mb-4" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;"></div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">← Edit Application</button>
+                    <button type="button" id="confirmSubmitBtn" class="btn rounded-pill px-4 fw-bold text-white" style="background:#F43F5E;" onclick="confirmEnrollmentSubmit()">Confirm &amp; Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-center p-4">
                 <div class="mb-3">
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <i class="bi bi-check-circle-fill" style="font-size: 4rem; color:#F43F5E;"></i>
                 </div>
-                <h3 class="fw-bold" id="successModalTitle">Enrollment Submitted!</h3>
-                <p class="text-muted" id="successModalBody">Your details have been saved. Proceed to payment to finalize your enrollment.</p>
-                <button id="proceedPaymentBtn" class="btn btn-danger w-100 py-3 rounded-pill fw-bold">Proceed to Payment</button>
-                <a id="goToDashboardBtn" href="${pageContext.request.contextPath}/users/dashboard" class="btn btn-success w-100 py-3 rounded-pill fw-bold mt-2" style="display:none;">Go to My Dashboard</a>
+                <h3 class="fw-bold" id="successModalTitle">Application Submitted</h3>
+                <p class="text-muted" id="successModalBody">Your application has been sent for centre review.</p>
+                <button id="proceedPaymentBtn" class="btn w-100 py-3 rounded-pill fw-bold text-white" style="background:#F43F5E;display:none;">Complete Payment</button>
+                <a id="goToDashboardBtn" href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="btn w-100 py-3 rounded-pill fw-bold text-white mt-2" style="background:#F43F5E;">View My Martial Arts</a>
+                <a href="${pageContext.request.contextPath}/users/dashboard" class="btn btn-outline-secondary w-100 py-3 rounded-pill fw-bold mt-2">Back to Dashboard</a>
             </div>
         </div>
     </div>
@@ -745,10 +768,45 @@
             document.getElementById('sDays').innerText = checkedDays.join(', ') || '--';
         }
 
+        // Preview → Confirm → Submit
+        function openEnrollmentPreview() {
+            const form = document.getElementById('complexEnrollmentForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const batchSel = document.getElementById('batchId');
+            const batchOpt = batchSel.options[batchSel.selectedIndex];
+            const days = Array.from(document.querySelectorAll('.day-check:checked')).map(c => c.parentElement.innerText.trim()).join(', ') || '—';
+            const feeVal = parseFloat(batchOpt?.dataset.fee || '0');
+            document.getElementById('previewBody').innerHTML =
+                '<div class="mb-3"><div class="text-uppercase small fw-bold text-muted">Student</div>' +
+                '<div class="fw-semibold">' + (document.getElementById('fullName').value || '—') + '</div>' +
+                '<div class="small text-muted">' + (document.getElementById('email').value || '') + ' · ' + (document.getElementById('phone').value || '') + '</div></div>' +
+                '<div class="mb-3"><div class="text-uppercase small fw-bold text-muted">Training</div>' +
+                '<div class="fw-semibold">' + (batchOpt?.dataset.style || '—') + ' — ' + (batchOpt?.text || '') + '</div>' +
+                '<div class="small text-muted"><c:out value="${center.name}"/></div>' +
+                '<div class="small text-muted">Coach: ' + (batchOpt?.dataset.instructor || '—') + '</div></div>' +
+                '<div class="mb-3"><div class="text-uppercase small fw-bold text-muted">Schedule</div>' +
+                '<div>' + days + '</div><div class="small text-muted">' + (batchOpt?.dataset.slot || '—') + '</div></div>' +
+                '<div class="mb-3"><div class="text-uppercase small fw-bold text-muted">Fee</div>' +
+                '<div class="fw-bold" style="color:#F43F5E;">' + (feeVal > 0 ? ('₹' + feeVal.toLocaleString() + ' / month') : 'FREE') + '</div></div>' +
+                '<div><div class="text-uppercase small fw-bold text-muted">Emergency Contact</div>' +
+                '<div>' + (document.getElementById('eName').value || '—') +
+                (document.getElementById('ePhone') ? (' · ' + document.getElementById('ePhone').value) : '') + '</div></div>';
+            new bootstrap.Modal(document.getElementById('previewModal')).show();
+        }
+
+        function confirmEnrollmentSubmit() {
+            const previewModal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+            if (previewModal) previewModal.hide();
+            document.getElementById('complexEnrollmentForm').requestSubmit();
+        }
+
         // Form Submit
         document.getElementById('complexEnrollmentForm').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
+            const btn = document.getElementById('confirmSubmitBtn');
 
             // Issue 138: Validate age group against selected batch
             const batchSel = document.getElementById('batchId');
@@ -806,34 +864,19 @@
                     // Batch is full
                     alert('⚠️ This batch is full! No more seats are available. Please choose another batch.');
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Enrollment';
+                    btn.innerHTML = 'Confirm &amp; Submit';
                     return;
                 }
 
                 if (res.ok) {
                     const data = await res.json();
-
-                    if (data.free === true) {
-                        // FREE BATCH: skip Razorpay, show success directly
-                        document.getElementById('successModalTitle').innerText = '🎉 Enrollment Confirmed!';
-                        document.getElementById('successModalBody').innerText = 'You have been enrolled for free! Your training starts soon. Check your dashboard for updates.';
-                        document.getElementById('proceedPaymentBtn').style.display = 'none';
-                        document.getElementById('goToDashboardBtn').style.display = 'block';
-                        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                        successModal.show();
-                    } else {
-                        // PAID BATCH: open Razorpay
-                        document.getElementById('successModalTitle').innerText = 'Enrollment Submitted!';
-                        document.getElementById('successModalBody').innerText = 'Your details have been saved. Proceed to payment to finalize your enrollment.';
-                        document.getElementById('proceedPaymentBtn').style.display = 'block';
-                        document.getElementById('goToDashboardBtn').style.display = 'none';
-                        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                        successModal.show();
-
-                        document.getElementById('proceedPaymentBtn').onclick = () => {
-                            initiateRazorpay(data.enrollmentId, payload.monthlyFee);
-                        };
-                    }
+                    document.getElementById('successModalTitle').innerText = 'Application Submitted';
+                    document.getElementById('successModalBody').innerText =
+                        'Your application has been sent to the centre for review. We will notify you when they approve or request changes. Payment is only available after centre approval.';
+                    document.getElementById('proceedPaymentBtn').style.display = 'none';
+                    document.getElementById('goToDashboardBtn').style.display = 'block';
+                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    successModal.show();
                 } else {
                     const err = await res.text();
                     alert("Error: " + err);
@@ -842,7 +885,7 @@
                 alert("Network error: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Enrollment';
+                btn.innerHTML = 'Confirm &amp; Submit';
             }
         };
 

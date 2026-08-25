@@ -77,7 +77,13 @@ public class FinancialLiteracyCatalogService {
         m.put("id", String.valueOf(v.getId()));
         m.put("numericId", v.getId());
         m.put("title", v.getTitle());
-        m.put("category", v.getCategory());
+        String cat = v.getCategory();
+        if ("Others".equalsIgnoreCase(cat) && v.getCustomCategory() != null && !v.getCustomCategory().isBlank()) {
+            cat = v.getCustomCategory().trim();
+        }
+        m.put("category", cat);
+        m.put("rawCategory", v.getCategory());
+        m.put("customCategory", v.getCustomCategory());
         m.put("description", v.getDescription());
         m.put("videoUrl", v.getVideoUrl());
         m.put("duration", v.getDuration());
@@ -99,16 +105,105 @@ public class FinancialLiteracyCatalogService {
         m.put("host", s.getSpeaker());
         m.put("date", s.getDate());
         m.put("time", s.getTime());
-        m.put("meetingUrl", s.getMeetingUrl());
-        m.put("seats", s.getSeats());
-        m.put("seatsLeft", seatsLeftLive(s));
+        String meetingUrlVal = s.getMeetingUrl();
+        if (meetingUrlVal != null) {
+            meetingUrlVal = meetingUrlVal.trim();
+            if (meetingUrlVal.contains("/admin") || meetingUrlVal.equalsIgnoreCase("admin")) {
+                meetingUrlVal = "";
+            } else if (!meetingUrlVal.isBlank() && !meetingUrlVal.startsWith("http://") && !meetingUrlVal.startsWith("https://")) {
+                meetingUrlVal = "https://" + meetingUrlVal;
+            }
+        }
+        m.put("meetingUrl", meetingUrlVal);
+        int totalSeats = s.getSeats() == null ? 0 : s.getSeats();
+        long takenSeats = enrollmentRepo.countByLiveSession_IdAndStatusIn(s.getId(), ACTIVE);
+        int availableSeats = Math.max(0, totalSeats - (int) takenSeats);
+
+        m.put("seats", totalSeats);
+        m.put("registeredSeats", (int) takenSeats);
+        m.put("seatsLeft", availableSeats);
+        m.put("formattedDate", formatDateUserFriendly(s.getDate()));
+        m.put("formattedTime", formatTimeUserFriendly(s.getTime()));
+        m.put("sessionStatus", computeLiveSessionStatus(s));
         m.put("fee", s.getFee());
-        m.put("category", s.getCategory());
+        String rawCat = s.getCategory();
+        String displayCat = ("Others".equalsIgnoreCase(rawCat) && !blank(s.getCustomCategory())) ? s.getCustomCategory() : rawCat;
+        m.put("category", displayCat);
+        m.put("rawCategory", rawCat);
+        m.put("customCategory", s.getCustomCategory());
         m.put("city", s.getEducator() == null ? null : s.getEducator().getCity());
         m.put("rating", s.getEducator() == null ? 0 : s.getEducator().getRating());
         m.put("cancelPolicy", FinancialLiteracyCareService.CANCEL_POLICY);
         m.put("description", s.getDescription());
         return m;
+    }
+
+    public static String formatDateUserFriendly(String dateStr) {
+        if (blank(dateStr)) return "";
+        try {
+            java.time.LocalDate d = java.time.LocalDate.parse(dateStr.trim());
+            return d.format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH));
+        } catch (Exception e) {
+            return dateStr;
+        }
+    }
+
+    public static String formatTimeUserFriendly(String timeStr) {
+        if (blank(timeStr)) return "";
+        try {
+            if (timeStr.contains("-")) {
+                String[] parts = timeStr.split("-");
+                String start = formatSingleTime12Hour(parts[0].trim());
+                String end = parts.length > 1 ? formatSingleTime12Hour(parts[1].trim()) : "";
+                return end.isBlank() ? start : (start + " – " + end);
+            }
+            return formatSingleTime12Hour(timeStr.trim());
+        } catch (Exception e) {
+            return timeStr;
+        }
+    }
+
+    private static String formatSingleTime12Hour(String t) {
+        if (blank(t)) return "";
+        try {
+            java.time.LocalTime lt = java.time.LocalTime.parse(t.length() == 5 ? t : (t + ":00"));
+            return lt.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.ENGLISH));
+        } catch (Exception e) {
+            return t;
+        }
+    }
+
+    public String computeLiveSessionStatus(FinancialLiveSession s) {
+        if (s == null || !s.isPublished()) return "CANCELLED";
+        if (blank(s.getDate())) return "UPCOMING";
+        try {
+            java.time.LocalDate date = java.time.LocalDate.parse(s.getDate().trim());
+            String startTimeStr = "00:00";
+            String endTimeStr = "23:59";
+            if (!blank(s.getTime())) {
+                String[] parts = s.getTime().split("-");
+                startTimeStr = parts[0].trim();
+                if (parts.length > 1 && !parts[1].isBlank()) {
+                    endTimeStr = parts[1].trim();
+                } else {
+                    java.time.LocalTime st = java.time.LocalTime.parse(startTimeStr.length() == 5 ? startTimeStr : (startTimeStr + ":00"));
+                    endTimeStr = st.plusHours(1).toString();
+                }
+            }
+            java.time.LocalDateTime start = java.time.LocalDateTime.of(date, java.time.LocalTime.parse(startTimeStr.length() == 5 ? startTimeStr : (startTimeStr + ":00")));
+            java.time.LocalDateTime end = java.time.LocalDateTime.of(date, java.time.LocalTime.parse(endTimeStr.length() == 5 ? endTimeStr : (endTimeStr + ":00")));
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+            if (now.isBefore(start.minusMinutes(15))) {
+                return "UPCOMING";
+            } else if (!now.isBefore(start.minusMinutes(15)) && !now.isAfter(end)) {
+                return "LIVE NOW";
+            } else {
+                return "COMPLETED";
+            }
+        } catch (Exception e) {
+            return "UPCOMING";
+        }
     }
 
     public Map<String, Object> workshopMap(FinancialWorkshop w) {
@@ -119,11 +214,17 @@ public class FinancialLiteracyCatalogService {
         m.put("venue", w.getVenue());
         m.put("date", w.getDate());
         m.put("time", w.getTime());
+        m.put("formattedDate", formatDateUserFriendly(w.getDate()));
+        m.put("formattedTime", formatTimeUserFriendly(w.getTime()));
         m.put("city", w.getCity());
         m.put("seats", w.getSeats());
         m.put("seatsLeft", seatsLeftWorkshop(w));
         m.put("fee", w.getFee());
-        m.put("category", w.getCategory());
+        String rawCat = w.getCategory();
+        String displayCat = ("Others".equalsIgnoreCase(rawCat) && !blank(w.getCustomCategory())) ? w.getCustomCategory() : rawCat;
+        m.put("category", displayCat);
+        m.put("rawCategory", rawCat);
+        m.put("customCategory", w.getCustomCategory());
         m.put("rating", w.getEducator() == null ? 0 : w.getEducator().getRating());
         m.put("cancelPolicy", FinancialLiteracyCareService.CANCEL_POLICY);
         m.put("description", w.getDescription());
@@ -180,56 +281,183 @@ public class FinancialLiteracyCatalogService {
     }
 
     @Transactional
-    public FinancialVideo addVideo(String title, String category, String description, String videoUrl, FinancialEducator educator) {
+    public FinancialVideo addVideo(String title, String category, String customCategory, String description, String videoUrl, FinancialEducator educator) {
         if (blank(title)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video Title cannot be empty.");
         }
+        if (blank(description)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description cannot be empty.");
+        }
+        if (blank(category)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category cannot be empty.");
+        }
+        if ("Others".equalsIgnoreCase(category.trim()) && blank(customCategory)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Custom category cannot be empty when 'Others' is selected.");
+        }
+        if (blank(videoUrl)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL / uploaded video cannot be empty.");
+        }
+
         FinancialVideo v = new FinancialVideo();
         v.setTitle(title.trim());
-        v.setCategory(blank(category) ? "saving" : category.trim());
-        v.setDescription(description);
-        v.setVideoUrl(videoUrl != null ? videoUrl.trim() : null);
-        v.setDuration("15 mins");
-        v.setLevel("Beginner");
+        v.setCategory(category.trim());
+        if ("Others".equalsIgnoreCase(category.trim()) && !blank(customCategory)) {
+            v.setCustomCategory(customCategory.trim());
+        } else {
+            v.setCustomCategory(null);
+        }
+        v.setDescription(description.trim());
+        v.setVideoUrl(videoUrl.trim());
+        v.setDuration(null);
+        v.setLevel(null);
         v.setPublished(true);
         v.setEducator(educator);
         return videoRepo.save(v);
     }
 
     @Transactional
+    public FinancialVideo addVideo(String title, String category, String description, String videoUrl, FinancialEducator educator) {
+        return addVideo(title, category, null, description, videoUrl, educator);
+    }
+
+    @Transactional
+    public FinancialVideo updateVideo(Long id, String title, String category, String customCategory, String description, String videoUrl) {
+        if (id == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid video ID");
+        }
+        FinancialVideo v = videoRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Video not found"));
+        
+        if (blank(title)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video Title cannot be empty.");
+        }
+        if (blank(description)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description cannot be empty.");
+        }
+        if (blank(category)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category cannot be empty.");
+        }
+        if ("Others".equalsIgnoreCase(category.trim()) && blank(customCategory)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Custom category cannot be empty when 'Others' is selected.");
+        }
+        if (blank(videoUrl)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Video URL / uploaded video cannot be empty.");
+        }
+
+        v.setTitle(title.trim());
+        v.setCategory(category.trim());
+        if ("Others".equalsIgnoreCase(category.trim()) && !blank(customCategory)) {
+            v.setCustomCategory(customCategory.trim());
+        } else {
+            v.setCustomCategory(null);
+        }
+        v.setDescription(description.trim());
+        v.setVideoUrl(videoUrl.trim());
+        v.setDuration(null);
+        v.setLevel(null);
+        return videoRepo.save(v);
+    }
+
+    @Transactional
+    public boolean deleteVideo(Long id) {
+        if (id != null && videoRepo.existsById(id)) {
+            videoRepo.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
     public FinancialLiveSession addLive(String title, String speaker, String date, String time,
                                         String meetingUrl, Integer seats, String description, FinancialEducator educator) {
-        return addLive(title, speaker, date, time, meetingUrl, seats, description, educator, null, null);
+        return addLive(title, speaker, date, time, meetingUrl, seats, description, educator, null, "Saving", null);
     }
 
     public FinancialLiveSession addLive(String title, String speaker, String date, String time,
                                         String meetingUrl, Integer seats, String description, FinancialEducator educator,
                                         Double fee, String category) {
+        return addLive(title, speaker, date, time, meetingUrl, seats, description, educator, fee, category, null);
+    }
+
+    public FinancialLiveSession addLive(String title, String speaker, String date, String time,
+                                        String meetingUrl, Integer seats, String description, FinancialEducator educator,
+                                        Double fee, String category, String customCategory) {
         if (blank(title)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         FinancialLiveSession s = new FinancialLiveSession();
         s.setTitle(title.trim());
         s.setSpeaker(speaker);
         s.setDate(date);
         s.setTime(time);
-        s.setMeetingUrl(meetingUrl);
+        String formattedUrl = meetingUrl == null ? "" : meetingUrl.trim();
+        if (!formattedUrl.isBlank() && !formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+            formattedUrl = "https://" + formattedUrl;
+        }
+        s.setMeetingUrl(formattedUrl);
         s.setSeats(seats == null ? 20 : seats);
         s.setDescription(description);
         s.setFee(fee == null ? 0d : Math.max(0, fee));
-        s.setCategory(blank(category) ? (educator == null ? "Saving" : educator.getExpertise()) : category);
+        s.setCategory(blank(category) ? (educator == null ? "Saving" : educator.getExpertise()) : category.trim());
+        if ("Others".equalsIgnoreCase(s.getCategory()) && !blank(customCategory)) {
+            s.setCustomCategory(customCategory.trim());
+        } else {
+            s.setCustomCategory(null);
+        }
         s.setPublished(true);
         s.setEducator(educator);
         return liveRepo.save(s);
     }
 
     @Transactional
+    public FinancialLiveSession updateLive(Long id, String title, String speaker, String date, String time,
+                                           String meetingUrl, Integer seats, String description, String category, String customCategory) {
+        if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid live session ID");
+        FinancialLiveSession s = liveRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Live session not found"));
+        if (blank(title)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
+        s.setTitle(title.trim());
+        s.setSpeaker(speaker);
+        s.setDate(date);
+        s.setTime(time);
+        String formattedUrl = meetingUrl == null ? "" : meetingUrl.trim();
+        if (!formattedUrl.isBlank() && !formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+            formattedUrl = "https://" + formattedUrl;
+        }
+        s.setMeetingUrl(formattedUrl);
+        s.setSeats(seats == null ? 20 : seats);
+        s.setDescription(description);
+        s.setCategory(blank(category) ? "Saving" : category.trim());
+        if ("Others".equalsIgnoreCase(s.getCategory()) && !blank(customCategory)) {
+            s.setCustomCategory(customCategory.trim());
+        } else {
+            s.setCustomCategory(null);
+        }
+        return liveRepo.save(s);
+    }
+
+    @Transactional
+    public boolean deleteLive(Long id) {
+        if (id != null && liveRepo.existsById(id)) {
+            liveRepo.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    @Transactional
     public FinancialWorkshop addWorkshop(String title, String venue, String date, String time,
                                          String city, Integer seats, String description, FinancialEducator educator) {
-        return addWorkshop(title, venue, date, time, city, seats, description, educator, null, null);
+        return addWorkshop(title, venue, date, time, city, seats, description, educator, null, null, null);
     }
 
     public FinancialWorkshop addWorkshop(String title, String venue, String date, String time,
                                          String city, Integer seats, String description, FinancialEducator educator,
                                          Double fee, String category) {
+        return addWorkshop(title, venue, date, time, city, seats, description, educator, fee, category, null);
+    }
+
+    public FinancialWorkshop addWorkshop(String title, String venue, String date, String time,
+                                         String city, Integer seats, String description, FinancialEducator educator,
+                                         Double fee, String category, String customCategory) {
         if (blank(title)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
         FinancialWorkshop w = new FinancialWorkshop();
         w.setTitle(title.trim());
@@ -240,10 +468,47 @@ public class FinancialLiteracyCatalogService {
         w.setSeats(seats == null ? 20 : seats);
         w.setDescription(description);
         w.setFee(fee == null ? 0d : Math.max(0, fee));
-        w.setCategory(blank(category) ? (educator == null ? "Saving" : educator.getExpertise()) : category);
+        w.setCategory(blank(category) ? (educator == null ? "Saving" : educator.getExpertise()) : category.trim());
+        if ("Others".equalsIgnoreCase(w.getCategory()) && !blank(customCategory)) {
+            w.setCustomCategory(customCategory.trim());
+        } else {
+            w.setCustomCategory(null);
+        }
         w.setPublished(true);
         w.setEducator(educator);
         return workshopRepo.save(w);
+    }
+
+    @Transactional
+    public FinancialWorkshop updateWorkshop(Long id, String title, String venue, String date, String time,
+                                            String city, Integer seats, String description, String category, String customCategory) {
+        if (id == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid workshop ID");
+        FinancialWorkshop w = workshopRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workshop not found"));
+        if (blank(title)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title is required");
+        w.setTitle(title.trim());
+        w.setVenue(venue);
+        w.setDate(date);
+        w.setTime(time);
+        w.setCity(city);
+        w.setSeats(seats == null ? 20 : seats);
+        w.setDescription(description);
+        w.setCategory(blank(category) ? "Saving" : category.trim());
+        if ("Others".equalsIgnoreCase(w.getCategory()) && !blank(customCategory)) {
+            w.setCustomCategory(customCategory.trim());
+        } else {
+            w.setCustomCategory(null);
+        }
+        return workshopRepo.save(w);
+    }
+
+    @Transactional
+    public boolean deleteWorkshop(Long id) {
+        if (id != null && workshopRepo.existsById(id)) {
+            workshopRepo.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     @Transactional

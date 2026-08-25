@@ -243,4 +243,10 @@ public class WomenProductSeller {
     public void setGalleryPhotos(String galleryPhotos) { this.galleryPhotos = galleryPhotos; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    /** Catalog visibility: approved partner profile, or legacy verified sellers. */
+    public boolean isApprovedForCatalog() {
+        if (partnerProfileStatus == PartnerProfileStatus.APPROVED) return true;
+        return partnerProfileStatus == null && verificationStatus == VerificationStatus.VERIFIED;
+    }
 }

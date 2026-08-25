@@ -1,6 +1,5 @@
 package in.sp.main.Controller;
 
-import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.WomenCartItem;
 import in.sp.main.Entities.WomenProduct;
@@ -12,6 +11,8 @@ import in.sp.main.Repository.WomenProductOrderRepository;
 import in.sp.main.Repository.WomenProductRepository;
 import in.sp.main.Repository.WomenWishlistItemRepository;
 import in.sp.main.Service.ProductDeliveryTrackingService;
+import in.sp.main.Service.WomenProductDeliveryService;
+import in.sp.main.Service.WomenProductOrderLifecycleService;
 import in.sp.main.Service.WomenProductsCareService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,10 @@ public class MobileWomenProductController {
     private ProductDeliveryTrackingService trackingService;
     @Autowired
     private WomenProductsCareService productsCareService;
+    @Autowired
+    private WomenProductOrderLifecycleService orderLifecycle;
+    @Autowired
+    private WomenProductDeliveryService deliveryService;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
@@ -67,15 +72,14 @@ public class MobileWomenProductController {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
-        String cat = ProductCategories.normalize(category);
         String cityQ = city == null ? "" : city.trim().toLowerCase();
         List<WomenProduct> products = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
         List<Map<String, Object>> items = new ArrayList<>();
         for (WomenProduct p : products) {
-            if (p.getSeller() == null || p.getSeller().getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            if (!ProductCategories.matchesFilter(p.getCategory(), category)) continue;
+            if (p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) {
                 continue;
             }
-            if (cat != null && !cat.isBlank() && !cat.equals(ProductCategories.normalize(p.getCategory()))) continue;
             String sellerCity = p.getSeller().getCity() == null ? "" : p.getSeller().getCity().toLowerCase();
             if (!cityQ.isBlank() && !sellerCity.contains(cityQ)) continue;
             double price = p.getPrice() == null ? 0 : p.getPrice();
@@ -117,7 +121,7 @@ public class MobileWomenProductController {
         if (user == null) return unauthorized();
 
         WomenProduct p = productRepo.findById(id).orElse(null);
-        if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted()) {
+        if (p == null || !p.isListedForShop()) {
             return badRequest("Product not found.");
         }
 
@@ -285,35 +289,49 @@ public class MobileWomenProductController {
         List<WomenCartItem> items = cartRepo.findByUser(user);
         if (items.isEmpty()) return badRequest("Cart is empty.");
 
-        List<Long> orderIds = new ArrayList<>();
-        double total = 0;
         for (WomenCartItem ci : items) {
             WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
-            if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())) continue;
-            if (p.getSeller() == null || p.getSeller().getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) continue;
+            if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())
+                    || p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) {
+                return badRequest("A product in your cart is unavailable.");
+            }
             int stock = p.getStock() == null ? 0 : p.getStock();
-            if (stock <= 0) continue;
-            int qty = Math.min(ci.getQuantity(), stock);
-            if (qty <= 0) continue;
+            int qty = ci.getQuantity() == null ? 0 : ci.getQuantity();
+            if (qty < 1) return badRequest("Invalid quantity.");
+            if (stock <= 0) return badRequest("Product '" + p.getName() + "' is out of stock.");
+            if (qty > stock) return badRequest("Only " + stock + " unit(s) available for '" + p.getName() + "'.");
+        }
 
-            WomenProductOrder o = new WomenProductOrder();
-            o.setUser(user);
-            o.setProduct(p);
-            o.setSeller(p.getSeller());
-            o.setQuantity(qty);
-            double line = (p.getPrice() == null ? 0 : p.getPrice()) * qty;
-            o.setTotalPrice(line);
-            o.setPaymentMethod(paymentMethod);
-            o.setPaymentStatus("COD".equals(paymentMethod) ? "COD" : "PENDING");
-            o.setShippingAddress(shippingAddress);
-            o.setStatus("PLACED");
-            orderRepo.save(o);
-            trackingService.ensureGeocoded(o);
-            orderIds.add(o.getId());
-            total += line;
-
-            p.setStock(Math.max(0, stock - qty));
-            productRepo.save(p);
+        List<Long> orderIds = new ArrayList<>();
+        double total = 0;
+        try {
+            for (WomenCartItem ci : items) {
+                WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
+                int qty = ci.getQuantity();
+                WomenProductOrder o = new WomenProductOrder();
+                o.setUser(user);
+                o.setProduct(p);
+                o.setSeller(p.getSeller());
+                o.setQuantity(qty);
+                double line = (p.getPrice() == null ? 0 : p.getPrice()) * qty;
+                o.setTotalPrice(line);
+                o.setPaymentMethod(paymentMethod);
+                o.setPaymentStatus("COD".equals(paymentMethod) ? "COD" : "PENDING");
+                o.setShippingAddress(shippingAddress);
+                o.setStatus("PLACED");
+                java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
+                o.setOrderTime(placedAt);
+                o.setExpectedDeliveryDate(deliveryService
+                        .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, qty)
+                        .atStartOfDay());
+                orderRepo.save(o);
+                trackingService.ensureGeocoded(o);
+                orderIds.add(o.getId());
+                total += line;
+                orderLifecycle.decrementStock(p, qty);
+            }
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
         }
         cartRepo.deleteByUser(user);
 
@@ -342,7 +360,9 @@ public class MobileWomenProductController {
             row.put("quantity", o.getQuantity());
             row.put("totalPrice", o.getTotalPrice());
             row.put("paymentMethod", o.getPaymentMethod());
-            row.put("status", normStatus(o.getStatus()));
+            row.put("status", WomenProductOrderLifecycleService.canonical(o.getStatus()));
+            row.put("statusLabel", WomenProductOrderLifecycleService.displayLabel(o.getStatus()));
+            row.put("trackingSteps", WomenProductOrderLifecycleService.trackingSteps(o.getStatus()));
             row.put("shippingAddress", o.getShippingAddress());
             row.put("orderTime", o.getOrderTime() == null ? null : o.getOrderTime().toString());
             row.put("rating", o.getRating());
@@ -444,7 +464,7 @@ public class MobileWomenProductController {
         dto.put("benefits", p.getBenefits());
         dto.put("usageInstructions", p.getUsageInstructions());
         dto.put("tags", p.getTags());
-        dto.put("imagePath", p.getImagePath());
+        dto.put("imagePath", p.getPublicImagePath());
         dto.put("additionalImagePaths", p.getAdditionalImagePaths());
         dto.put("featured", p.getFeatured());
         dto.put("sellerName", p.getSeller() != null ? p.getSeller().getBusinessName() : null);
@@ -497,9 +517,6 @@ public class MobileWomenProductController {
     }
 
     private static String normStatus(String status) {
-        if (status == null) return "PLACED";
-        String s = status.trim().toUpperCase();
-        if ("SHIPPED".equals(s) || "PICKED_UP".equals(s)) return "OUT_FOR_DELIVERY";
-        return s;
+        return in.sp.main.Service.WomenProductOrderLifecycleService.canonical(status);
     }
 }

@@ -21,6 +21,9 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
     List<Booking1> findBySalon(Salon salon);
 
+    /** Prefer ID-based lookup - session Salon entities are detached. */
+    List<Booking1> findBySalon_IdOrderByIdDesc(Long salonId);
+
     // Find bookings for a salon on a specific date
     List<Booking1> findBySalonAndBookingDate(Salon salon, LocalDate date);
 
@@ -60,4 +63,6 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
     List<Booking1> findByBookingDateBetweenAndStatusInIgnoreCase(
             LocalDate from, LocalDate to, Collection<String> statuses);
+
+    boolean existsByUser_IdAndSalon_IdAndStatusIgnoreCase(Long userId, Long salonId, String status);
 }

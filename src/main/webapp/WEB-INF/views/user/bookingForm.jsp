@@ -199,8 +199,8 @@
     <div class="booking-card-white">
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">
-            <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : 'Special Deal & Offer')}</span>
-            <h1 class="item-title">${type == 'SERVICE' ? item.name : (type == 'TREATMENT' ? item.serviceName : item.title)}</h1>
+            <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : (type == 'PACKAGE' ? 'Salon Package' : (type == 'MEMBERSHIP' ? 'Premium Membership' : 'Special Deal & Offer')))}</span>
+            <h1 class="item-title">${type == 'SERVICE' ? item.name : (type == 'TREATMENT' ? item.serviceName : (type == 'PACKAGE' ? item.packageName : (type == 'MEMBERSHIP' ? item.membershipName : item.title)))}</h1>
             
             <div class="salon-tag">
                 <i class="bi bi-geo-alt-fill"></i>
@@ -212,6 +212,9 @@
                     <c:when test="${not empty item.description}">
                         ${item.description}
                     </c:when>
+                    <c:when test="${type == 'MEMBERSHIP' && not empty item.benefits}">
+                        ${item.benefits}
+                    </c:when>
                     <c:otherwise>
                         A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.
                     </c:otherwise>
@@ -222,7 +225,7 @@
                 <div class="price-chip">
                     <span>₹${type == 'OFFER' ? (item.discountedPrice > 0 ? item.discountedPrice : item.originalPrice) : item.price}</span>
                     <small>|</small>
-                    <small>${type == 'SERVICE' ? item.durationMinutes : (type == 'TREATMENT' ? item.duration : 'DEAL')} MIN</small>
+                    <small>${type == 'SERVICE' ? item.durationMinutes : (type == 'TREATMENT' ? item.duration : (type == 'PACKAGE' ? 'PACKAGE' : (type == 'MEMBERSHIP' ? item.durationInMonths.toString().concat(' MONTH(S)') : 'DEAL')))} ${type == 'PACKAGE' || type == 'MEMBERSHIP' || type == 'OFFER' ? '' : 'MIN'}</small>
                 </div>
             </div>
         </div>
@@ -246,6 +249,12 @@
                     </c:when>
                     <c:when test="${type == 'TREATMENT'}">
                         <input type="hidden" name="treatmentId" value="${item.id}" />
+                    </c:when>
+                    <c:when test="${type == 'PACKAGE'}">
+                        <input type="hidden" name="packageId" value="${item.id}" />
+                    </c:when>
+                    <c:when test="${type == 'MEMBERSHIP'}">
+                        <input type="hidden" name="membershipId" value="${item.id}" />
                     </c:when>
                     <c:otherwise>
                         <input type="hidden" name="offerId" value="${item.id}" />

@@ -16,6 +16,8 @@
     
     <!-- Theme CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
     <style>
         :root {
@@ -196,14 +198,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-
-            /* Confine Bootstrap stretched-link hit areas to each card (not the whole page). */
-            position: relative;
-            z-index: 1;
-
             margin-bottom: 30px;
             gap: 20px;
-
         }
 
         .header-title-box h2 {
@@ -980,6 +976,81 @@
         .btn-resume:hover { background: #20c997; color: white; }
         .btn-archive { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
         .btn-archive:hover { background: #dc3545; color: white; }
+    
+        
+        /* Profile Summary Card */
+        .salon-card {
+            background: white;
+            border: 1px solid var(--fdf-border);
+            border-radius: 18px;
+            padding: 22px 26px;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .salon-card-left { display: flex; align-items: center; gap: 18px; }
+        .salon-avatar {
+            width: 76px; height: 76px; border-radius: 16px;
+            background: var(--fdf-pink-light); color: var(--fdf-pink);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.9rem; font-weight: 800; overflow: hidden;
+        }
+        .salon-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .salon-info h2 { font-size: 1.28rem; font-weight: 800; color: var(--fdf-text-dark); margin-bottom: 4px; letter-spacing: -0.2px; }
+        .salon-meta { display: flex; align-items: center; gap: 12px; font-size: 0.84rem; color: var(--fdf-text-muted); flex-wrap: wrap; }
+        .pill-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.74rem; font-weight: 700; }
+        .pill-verified { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+        .pill-pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+        .pill-changes { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+        .btn-edit-profile {
+            padding: 8px 16px; border: 1px solid var(--fdf-border); background: white; color: var(--fdf-text-dark);
+            border-radius: 10px; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 6px; transition: all 0.2s ease;
+        }
+        .btn-edit-profile:hover { border-color: var(--fdf-pink); color: var(--fdf-pink); background: var(--fdf-pink-light); }
+
+        /* Profile Completion Warning Card */
+        .completion-banner {
+            background: white;
+            border: 1px solid #FECDD3;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.04);
+        }
+        .completion-banner-left {
+            flex: 1;
+            min-width: 260px;
+        }
+        .completion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: #E2E8F0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F43F5E, #FB7185);
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -993,131 +1064,14 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <div class="sidebar-brand-wrapper">
-            <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand">
-                <i class="bi bi-gender-female"></i>
-                <span>${empty salon.name ? 'Priya Beauty & Wellness' : salon.name}</span>
-            </a>
-            <div class="subtitle">Women's Salon • Beauty • Wellness • Hair Styling</div>
-        </div>
-
-        <div class="nav-container">
-            <nav class="nav flex-column">
-                <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salons/dashboard">
-                    <i class="bi bi-grid-1x2"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
-                    <i class="bi bi-shop"></i>
-                    <span>Salon Profile</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>Appointments</span>
-                </a>
-                <a class="nav-link-custom" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal">
-                    <i class="bi bi-calendar3"></i>
-                    <span>Calendar</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
-                    <i class="bi bi-magic"></i>
-                    <span>Services</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists">
-                    <i class="bi bi-people"></i>
-                    <span>Staff / Stylists</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Clients</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages">
-                    <i class="bi bi-box-seam"></i>
-                    <span>Packages & Memberships</span>
-                </a>
-                
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salon.id}">
-                    <i class="bi bi-percent"></i>
-                    <span>Offers & Discounts</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing">
-                    <i class="bi bi-receipt"></i>
-                    <span>Billing & Invoices</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments">
-                    <i class="bi bi-credit-card-2-front"></i>
-                    <span>Payments & Payouts</span>
-                </a>
-                
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory">
-                    <i class="bi bi-box"></i>
-                    <span>Inventory</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
-                    <i class="bi bi-star-half"></i>
-                    <span>Reviews & Feedback</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics">
-                    <i class="bi bi-bar-chart-line"></i>
-                    <span>Reports & Analytics</span>
-                </a>
-
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/settings">
-                    <i class="bi bi-sliders"></i>
-                    <span>Settings</span>
-                </a>
-                <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/support">
-                    <i class="bi bi-question-circle"></i>
-                    <span>Help & Support</span>
-                </a>
-                <a class="nav-link-custom text-danger mt-3" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Sign Out</span>
-                </a>
-            </nav>
-        </div>
-
-
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="dashboard"/>
+</jsp:include>
 
     <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid p-0">
             
-
-            <div class="welcome-banner">
-                <h2>Hello, <c:out value="${salon.name}"/>!</h2>
-                <p>Welcome back to your partner dashboard. Here's what's happening today.</p>
-            </div>
-
-            <div class="row g-4 mb-5 position-relative" style="z-index: 2;">
-                <!-- Bookings -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-purple">
-                                <i class="bi bi-calendar2-week"></i>
-                            </div>
-                            <h5 class="card-title-custom">Bookings</h5>
-                            <p class="card-desc">Review and manage your incoming customer appointments.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/booking/list" class="btn btn-purple btn-action">View All Bookings</a>
-                    </div>
-                </div>
-
-                <!-- Services -->
-                <div class="col-xl-3 col-md-6">
-                    <div class="stat-card">
-                        <div>
-                            <div class="icon-box bg-glass-pink">
-                                <i class="bi bi-flower1"></i>
-                            </div>
-                            <h5 class="card-title-custom">Services</h5>
-                            <p class="card-desc">Update your service menu, pricing, and specialized treatments.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/salon/viewServices" class="btn btn-purple btn-action position-relative" style="z-index:3;">Manage Services</a>
-
             <!-- Dashboard Header -->
             <div class="dashboard-header">
                 <div class="header-title-box">
@@ -1160,41 +1114,85 @@
                             <h6>${empty salon.name ? 'Owner' : salon.name}</h6>
                             <span>Owner</span>
                         </div>
-
-                        <a href="${pageContext.request.contextPath}/salons/profile" class="btn btn-purple btn-action position-relative" style="z-index:3;">Edit Profile</a>
-
                     </div>
                 </div>
             </div>
 
+                          <!-- Subheader Details Row -->
+              
+              
+              <!-- Salon Profile Summary Card -->
+              <div class="salon-card mt-3">
+                  <div class="salon-card-left">
+                      <div class="salon-avatar">
+                          <c:choose>
+                              <c:when test="${not empty salon.profileImageUrl}">
+                                  <img src="${pageContext.request.contextPath}${salon.profileImageUrl}" alt="Logo">
+                              </c:when>
+                              <c:otherwise>
+                                  ${empty salon.name ? 'S' : salon.name.substring(0,1).toUpperCase()}
+                              </c:otherwise>
+                          </c:choose>
+                      </div>
+                      <div class="salon-info">
+                          <h2><c:out value="${empty salon.name ? 'My Salon' : salon.name}"/></h2>
+                          <div class="salon-meta">
+                              <span><i class="bi bi-geo-alt-fill text-danger"></i> <c:out value="${not empty salon.city ? salon.city : 'Location not set'}"/></span>
+                              <span><i class="bi bi-telephone-fill text-success"></i> <c:out value="${salon.phone}"/></span>
+                              <span><i class="bi bi-star-fill text-warning"></i> ${avgRating} Rating</span>
+                              <c:choose>
+                                  <c:when test="${salon.partnerProfileStatus == 'APPROVED'}">
+                                      <span class="pill-badge pill-verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                                  </c:when>
+                                  <c:when test="${salon.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                      <span class="pill-badge pill-pending"><i class="bi bi-clock-history"></i> Under Review</span>
+                                  </c:when>
+                                  <c:when test="${salon.partnerProfileStatus == 'CHANGES_REQUESTED'}">
+                                      <span class="pill-badge pill-changes"><i class="bi bi-exclamation-triangle-fill"></i> Action Required</span>
+                                  </c:when>
+                                  <c:otherwise>
+                                      <span class="pill-badge pill-pending">Verification Required</span>
+                                  </c:otherwise>
+                              </c:choose>
+                          </div>
+                      </div>
+                  </div>
+                  <div>
+                      <a href="${pageContext.request.contextPath}/salons/profile" class="btn-edit-profile">
+                          <i class="bi bi-pencil-square"></i> Edit Profile
+                      </a>
+                  </div>
+              </div>
 
-            <h4 class="fw-bold mb-4">Quick Actions</h4>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/addService" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-purple mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-plus-lg"></i>
-                        </div>
-                        <span>Add New Service</span>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-gold mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-tag"></i>
-                        </div>
-                        <span>Create New Offer</span>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="${pageContext.request.contextPath}/salon/treatments/add" class="stat-card p-3 flex-row align-items-center gap-3 text-decoration-none text-dark fw-semibold">
-                        <div class="icon-box bg-glass-pink mb-0" style="width: 45px; height: 45px; font-size: 1.1rem;">
-                            <i class="bi bi-droplet"></i>
-                        </div>
-                        <span>Add Treatment</span>
-                    </a>
+              <!-- Profile Completion Banner -->
+              <c:if test="${completionPercentage < 100}">
+                  <div class="completion-banner">
+                      <div class="completion-banner-left">
+                          <div class="completion-header">
+                              <span>Salon Profile Completion</span>
+                              <span style="color: var(--fdf-pink); font-weight: 800;">${completionPercentage}%</span>
+                          </div>
+                          <div class="progress-bar-bg">
+                              <div class="progress-bar-fill" style="width: ${completionPercentage}%;"></div>
+                          </div>
+                          <p style="font-size: 0.82rem; color: var(--fdf-text-muted); margin-bottom: 8px;">
+                              Complete these sections to improve discovery, customer trust, and get verified:
+                          </p>
+                          <div class="d-flex flex-wrap gap-1 mt-1">
+                              <c:if test="${empty salon.salonCategory}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Category</span></c:if>
+                              <c:if test="${empty salon.profileImageUrl}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Photos</span></c:if>
+                              <c:if test="${empty salon.businessRegistrationUrl}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Upload Documents</span></c:if>
+                              <c:if test="${empty salon.socialMediaJson}"><span class="badge" style="background:#FFE4E6;color:#E11D48;border:1px solid #FECDD3;font-size:0.75rem;padding:4px 8px;border-radius:6px;">&bull; Add Social Media</span></c:if>
+                          </div>
+                      </div>
+                      <div>
+                          <a href="${pageContext.request.contextPath}/salons/profile" style="color: var(--fdf-burgundy); text-decoration: none; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                              <i class="bi bi-arrow-right-circle-fill"></i> Complete Profile
+                          </a>
+                      </div>
+                  </div>
+              </c:if>
 
-            <!-- Subheader Details Row -->
             <div class="subheader-row">
                 <div class="date-picker-custom">
                     <i class="bi bi-calendar-event"></i>
@@ -1269,7 +1267,6 @@
                             <i class="bi bi-star"></i>
                         </div>
                     </div>
-
                 </div>
             </div>
 

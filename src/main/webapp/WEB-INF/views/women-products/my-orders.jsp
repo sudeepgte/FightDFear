@@ -456,8 +456,8 @@
         <!-- Order Body -->
         <div class="order-card-body">
           <c:choose>
-            <c:when test="${not empty o.product.imagePath}">
-              <img src="${pageContext.request.contextPath}${o.product.imagePath}" class="order-img" alt="${o.product.name}">
+            <c:when test="${not empty o.product.publicImagePath}">
+              <img src="<c:choose><c:when test="${o.product.remoteImage}">${o.product.publicImagePath}</c:when><c:otherwise>${pageContext.request.contextPath}${o.product.publicImagePath}</c:otherwise></c:choose>" class="order-img" alt="<c:out value='${o.product.name}'/>">
             </c:when>
             <c:otherwise>
               <div class="placeholder-icon"><i class="bi bi-gift"></i></div>
@@ -496,6 +496,13 @@
                 <div class="tracking-toggle-btn" onclick="toggleTracking(this)">
                   <i class="bi bi-geo-alt-fill"></i> Order Tracking <i class="bi bi-chevron-down"></i>
                 </div>
+                <c:if test="${canCancel[o.id]}">
+                  <form action="${pageContext.request.contextPath}/women-products/orders/${o.id}/cancel" method="post" style="margin:0;" onsubmit="return confirm('Cancel this order? Stock will be restored if the order is still eligible.');">
+                    <button type="submit" class="action-btn" style="background:#fef2f2;color:#b91c1c;border:0;cursor:pointer;font-weight:800;">
+                      <i class="bi bi-x-circle"></i> Cancel Order
+                    </button>
+                  </form>
+                </c:if>
                 
                 <c:if test="${o.status == 'DELIVERED' && empty o.returnRequest}">
                   <c:if test="${empty o.rating}">
@@ -535,15 +542,15 @@
               
               <div class="tracking-container" style="display: none;">
                 <div class="tracking-wrapper">
-                  <c:set var="placedState" value="${o.status == 'PLACED' ? 'active' : 'completed'}" />
-                  <c:set var="confirmedState" value="${o.status == 'CONFIRMED' ? 'active' : (o.status == 'SHIPPED' || o.status == 'DELIVERED' ? 'completed' : '')}" />
-                  <c:set var="shippedState" value="${o.status == 'SHIPPED' ? 'active' : (o.status == 'DELIVERED' ? 'completed' : '')}" />
-                  <c:set var="deliveredState" value="${o.status == 'DELIVERED' ? 'completed' : ''}" />
-                  
-                  <div class="track-step ${placedState}"><div class="track-icon"><i class="bi bi-receipt"></i></div><div class="track-label">Placed</div></div>
-                  <div class="track-step ${confirmedState}"><div class="track-icon"><i class="bi bi-box-seam"></i></div><div class="track-label">Confirmed</div></div>
-                  <div class="track-step ${shippedState}"><div class="track-icon"><i class="bi bi-truck"></i></div><div class="track-label">Shipped</div></div>
-                  <div class="track-step ${deliveredState}"><div class="track-icon"><i class="bi bi-house-door"></i></div><div class="track-label">Delivered</div></div>
+                  <c:forEach var="step" items="${orderTracking[o.id]}">
+                    <div class="track-step ${step.state}">
+                      <div class="track-icon"><i class="bi bi-check2"></i></div>
+                      <div class="track-label">${step.label}</div>
+                    </div>
+                  </c:forEach>
+                  <c:if test="${empty orderTracking[o.id]}">
+                    <div class="track-step"><div class="track-label">Cancelled</div></div>
+                  </c:if>
                 </div>
               </div>
             </c:if>
@@ -552,6 +559,8 @@
           <div class="order-right">
             <div class="price-tag">&#8377;${o.totalPrice}</div>
             <div class="qty-display">Quantity: ${o.quantity}</div>
+            <div class="qty-display">Payment: ${empty o.paymentStatus ? o.paymentMethod : o.paymentStatus}</div>
+            <div class="qty-display">Status: ${o.status}</div>
           </div>
         </div>
       </div>

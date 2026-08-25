@@ -2753,9 +2753,13 @@ public class AdminController {
         if (trainer == null) {
             return "redirect:/admin/pending-trainers";
         }
+        String statusKey = trainer.getPartnerProfileStatus() != null ? trainer.getPartnerProfileStatus().name() :
+                (trainer.getVerificationStatus() == VerificationStatus.VERIFIED ? "APPROVED" : "PENDING");
         model.addAttribute("trainer", trainer);
+        model.addAttribute("statusKey", statusKey);
         return "adminFitnessTrainerProfile";
     }
+
 
     @PostMapping("/centres/{id}/approve")
     @Transactional

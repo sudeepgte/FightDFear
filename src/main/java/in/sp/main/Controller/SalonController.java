@@ -199,7 +199,7 @@ public class SalonController {
                 cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
                 response.addCookie(cookie);
                 
-                return "redirect:/salons/dashboard";
+                return "redirect:/salons/profile";
             } else {
                 model.addAttribute("error", "Invalid password");
                 return "salon/salon-login";
@@ -434,6 +434,19 @@ public class SalonController {
         // Today's date display
         String todayDisplay = today.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, EEEE"));
         model.addAttribute("todayDate", todayDisplay);
+        
+        // Calculate profile completion percentage
+        int completionPercentage = 10;
+        if(loggedSalon.getName() != null && !loggedSalon.getName().isEmpty() && loggedSalon.getPhone() != null && !loggedSalon.getPhone().isEmpty()) completionPercentage += 5;
+        if(loggedSalon.getSalonCategory() != null && !loggedSalon.getSalonCategory().isEmpty()) completionPercentage += 15;
+        completionPercentage += 10; // services done
+        if(loggedSalon.getProfileImageUrl() != null && !loggedSalon.getProfileImageUrl().isEmpty()) completionPercentage += 15;
+        if(loggedSalon.getHasAc() != null && (loggedSalon.getHasAc() || loggedSalon.getHasWifi() || loggedSalon.getHasParking())) completionPercentage += 15;
+        if(loggedSalon.getBusinessRegistrationUrl() != null && !loggedSalon.getBusinessRegistrationUrl().isEmpty()) completionPercentage += 10;
+        if(loggedSalon.getSocialMediaJson() != null && !loggedSalon.getSocialMediaJson().isEmpty() && !loggedSalon.getSocialMediaJson().contains("\"instagram\":\"\"")) completionPercentage += 10;
+        if(loggedSalon.getPreferencesJson() != null && !loggedSalon.getPreferencesJson().isEmpty()) completionPercentage += 10;
+        if(completionPercentage > 100) completionPercentage = 100;
+        model.addAttribute("completionPercentage", completionPercentage);
         
         model.addAttribute("salon", loggedSalon);
         return "salon/salon-dashboard";

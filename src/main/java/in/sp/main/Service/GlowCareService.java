@@ -256,6 +256,10 @@ public class GlowCareService {
         if (user == null || salon == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Login required");
         }
+        if (!canReviewSalon(user, salon)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Complete a Glow Space booking at this salon before leaving a review.");
+        }
         if (rating < 1 || rating > 5) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be 1–5");
         }
@@ -308,5 +312,67 @@ public class GlowCareService {
         String item = b.getService() == null ? "appointment" : b.getService().getName();
         String time = b.getPreferredTime() == null ? "" : b.getPreferredTime().toString();
         return item + " at " + salon + (time.isBlank() ? "" : " at " + time);
+    }
+
+    public static String normBookingStatus(String status) {
+        if (status == null || status.isBlank()) return "PENDING";
+        return status.trim().toUpperCase(Locale.ROOT);
+    }
+
+    public boolean isPaymentPending(Booking1 b) {
+        if (b == null) return false;
+        String st = normBookingStatus(b.getStatus());
+        return "PENDING".equals(st) && b.getPrice() > 0;
+    }
+
+    public boolean canReschedule(Booking1 b) {
+        if (b == null) return false;
+        String st = normBookingStatus(b.getStatus());
+        return "PENDING".equals(st) || "CONFIRMED".equals(st) || "PAID".equals(st);
+    }
+
+    public boolean hasCompletedBookingForSalon(Long userId, Long salonId) {
+        if (userId == null || salonId == null) return false;
+        return bookingRepository.existsByUser_IdAndSalon_IdAndStatusIgnoreCase(userId, salonId, "COMPLETED");
+    }
+
+    public boolean hasUserReviewedSalon(Long userId, Long salonId) {
+        if (userId == null || salonId == null) return false;
+        return reviewRepository.existsByUserIdAndSalon_Id(userId, salonId);
+    }
+
+    public boolean canReviewSalon(User user, Salon salon) {
+        if (user == null || salon == null || salon.getId() == null) return false;
+        return hasCompletedBookingForSalon(user.getId(), salon.getId())
+                && !hasUserReviewedSalon(user.getId(), salon.getId());
+    }
+
+    public boolean canReviewBooking(User user, Booking1 booking) {
+        if (user == null || booking == null || booking.getUser() == null || booking.getSalon() == null) {
+            return false;
+        }
+        if (!booking.getUser().getId().equals(user.getId())) return false;
+        if (!"COMPLETED".equals(normBookingStatus(booking.getStatus()))) return false;
+        return !hasUserReviewedSalon(user.getId(), booking.getSalon().getId());
+    }
+
+    public boolean salonMatchesSearch(Salon salon, List<Service1> services, String needle) {
+        if (needle == null || needle.isBlank()) return true;
+        if (salon == null) return false;
+        String q = needle.trim().toLowerCase(Locale.ROOT);
+        if (containsIgnoreCase(salon.getName(), q)) return true;
+        if (containsIgnoreCase(salon.getCity(), q)) return true;
+        if (containsIgnoreCase(salon.getBio(), q)) return true;
+        if (services != null) {
+            for (Service1 s : services) {
+                if (containsIgnoreCase(s.getName(), q)) return true;
+                if (s.getCategory() != null && containsIgnoreCase(s.getCategory().displayLabel(), q)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsIgnoreCase(String value, String needle) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(needle);
     }
 }

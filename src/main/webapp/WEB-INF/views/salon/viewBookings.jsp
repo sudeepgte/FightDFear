@@ -16,60 +16,181 @@
     
     <!-- Theme CSS -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
     <style>
         :root {
             --sidebar-width: 280px;
-            --dashboard-bg: #f8f5ff;
+            --dashboard-bg: #f8f9fc;
+            --fdf-burgundy: #2d0b20;
+            --fdf-burgundy-dark: #1f0615;
+            --fdf-pink: #db2777;
+            --fdf-pink-light: #fbcfe8;
+            --fdf-rose: #f43f5e;
+            --fdf-lavender: #f3e8ff;
+            --fdf-text-dark: #1e1b4b;
+            --fdf-text-muted: #64748b;
+            --fdf-border: #f1e9f0;
+            --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--dashboard-bg);
-            color: var(--brand-purple-darker);
+            color: var(--fdf-text-dark);
             margin: 0;
             overflow-x: hidden;
         }
 
-        /* Modern Sidebar */
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(30, 27, 75, 0.1); border-radius: 10px; }
+
+        /* Unified Premium Sidebar */
         .sidebar {
-            background: var(--gradient-dark);
+            background: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%);
             color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-brand-wrapper {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
         }
 
         .sidebar-brand {
             font-family: 'Montserrat', sans-serif;
-            font-weight: 900;
-            font-size: 1.5rem;
-            margin-bottom: 40px;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: white;
+            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 12px;
-            color: white;
-            text-decoration: none;
+        }
+        
+        .sidebar-brand i {
+            color: var(--fdf-pink);
+            font-size: 1.5rem;
+        }
+
+        .sidebar-brand-wrapper .subtitle {
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-container {
+            flex: 1;
+            padding: 0 16px;
+            overflow-y: auto;
         }
 
         .nav-link-custom {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 12px 20px;
-            color: rgba(255,255,255,0.7);
+            gap: 14px;
+            padding: 11px 16px;
+            color: rgba(255,255,255,0.65);
             text-decoration: none;
             border-radius: 12px;
-            margin-bottom: 8px;
-            transition: all 0.3s ease;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
             font-weight: 500;
+            font-size: 0.88rem;
         }
 
-        .nav-link-custom:hover, .nav-link-custom.active {
-            background: rgba(255,255,255,0.1);
+        .nav-link-custom:hover {
+            background: rgba(255,255,255,0.05);
             color: white;
-            transform: translateX(5px);
+            transform: translateX(4px);
+        }
+
+        .nav-link-custom.active {
+            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.25);
+            font-weight: 600;
         }
 
         .nav-link-custom i {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
+        }
+
+        /* Upgrade card in sidebar */
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 20px 16px;
+            font-size: 0.8rem;
+        }
+        .upgrade-card h6 {
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .upgrade-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 12px 0;
+            color: rgba(255,255,255,0.5);
+        }
+        .upgrade-card ul li {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upgrade-card ul li::before {
+            content: "•";
+            color: var(--fdf-pink);
+            font-weight: bold;
+        }
+        .btn-upgrade {
+            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
+            color: white;
+            border: none;
+            padding: 8px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-upgrade:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 24px 32px;
+            min-height: 100vh;
+        }
+
+        @media (min-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                z-index: 1000;
+                box-shadow: 10px 0 35px rgba(0,0,0,0.05);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
         }
 
         /* Main Content */
@@ -230,54 +351,9 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <div class="offcanvas-header d-lg-none border-bottom border-secondary mb-3 pb-3">
-            <h5 class="offcanvas-title text-white fw-bold"><i class="bi bi-stars"></i> Fight D Fear</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu"></button>
-        </div>
-
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
-            <i class="bi bi-stars"></i>
-            <span>Fight D Fear</span>
-        </a>
-
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile">
-                <i class="bi bi-person-circle"></i>
-                <span>Salon Profile</span>
-            </a>
-            <a class="nav-link-custom active" href="${pageContext.request.contextPath}/booking/list">
-                <i class="bi bi-calendar-check"></i>
-                <span>Manage Bookings</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewServices">
-                <i class="bi bi-magic"></i>
-                <span>Service Menu</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/treatments/view">
-                <i class="bi bi-droplet-half"></i>
-                <span>Specialized Treatments</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sessionScope.loggedSalon.id}">
-                <i class="bi bi-percent"></i>
-                <span>Offers & Promotions</span>
-            </a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/reviews/list">
-                <i class="bi bi-star-half"></i>
-                <span>Customer Reviews</span>
-            </a>
-            <div class="mt-5">
-                <a class="nav-link-custom text-danger" href="${pageContext.request.contextPath}/salons/logout">
-                    <i class="bi bi-box-arrow-left"></i>
-                    <span>Sign Out</span>
-                </a>
-            </div>
-        </nav>
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="appointments"/>
+</jsp:include>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -558,6 +634,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
 
 
 

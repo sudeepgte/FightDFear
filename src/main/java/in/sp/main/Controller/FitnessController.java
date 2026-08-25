@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,6 +64,9 @@ public class FitnessController {
 
     @Autowired
     private in.sp.main.Repository.FitnessProgressLogRepository fitnessProgressLogRepository;
+
+    @Autowired
+    private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
 
 
 
@@ -204,6 +208,87 @@ public class FitnessController {
         return "fitnessTrainerProfile";
     }
 
+    // GET AVAILABLE SLOTS FOR A TRAINER ON A GIVEN DATE
+    @GetMapping("/api/trainer/{id}/available-slots")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> getTrainerAvailableSlots(
+            @PathVariable Long id,
+            @RequestParam String date) {
+        try {
+            FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
+            if (trainer == null || trainer.isSuspended()) {
+                return org.springframework.http.ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Trainer not found or inactive"));
+            }
+
+            LocalDate targetDate = LocalDate.parse(date);
+            if (targetDate.isBefore(LocalDate.now())) {
+                return org.springframework.http.ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "trainerId", id,
+                        "date", date,
+                        "slots", List.of(),
+                        "message", "Cannot select past dates"
+                ));
+            }
+
+            List<String> defaultSlots = List.of(
+                    "06:00 AM - 07:00 AM",
+                    "07:00 AM - 08:00 AM",
+                    "08:00 AM - 09:00 AM",
+                    "09:00 AM - 10:00 AM",
+                    "10:00 AM - 11:00 AM",
+                    "11:00 AM - 12:00 PM",
+                    "04:00 PM - 05:00 PM",
+                    "05:00 PM - 06:00 PM",
+                    "06:00 PM - 07:00 PM",
+                    "07:00 PM - 08:00 PM",
+                    "08:00 PM - 09:00 PM"
+            );
+
+            List<FitnessBooking> bookedList = fitnessBookingRepository.findByTrainer_IdAndBookingDate(id, targetDate);
+            Set<String> bookedTimes = bookedList.stream()
+                    .filter(b -> !"CANCELLED".equalsIgnoreCase(b.getStatus()) && !"REJECTED".equalsIgnoreCase(b.getStatus()))
+                    .map(b -> b.getBookingTime() != null ? b.getBookingTime().trim() : "")
+                    .collect(Collectors.toSet());
+
+            List<Map<String, Object>> resultSlots = new ArrayList<>();
+            LocalTime nowTime = LocalTime.now();
+            boolean isToday = targetDate.equals(LocalDate.now());
+
+            for (String slot : defaultSlots) {
+                boolean isBooked = bookedTimes.contains(slot);
+                boolean isPast = false;
+                if (isToday) {
+                    try {
+                        String startTimeStr = slot.split(" - ")[0].trim();
+                        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+                        LocalTime slotStart = LocalTime.parse(startTimeStr, dtf);
+                        if (slotStart.isBefore(nowTime)) {
+                            isPast = true;
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                boolean available = !isBooked && !isPast;
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("time", slot);
+                item.put("available", available);
+                item.put("reason", isBooked ? "Booked" : (isPast ? "Time Passed" : "Available"));
+                resultSlots.add(item);
+            }
+
+            return org.springframework.http.ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "trainerId", id,
+                    "date", date,
+                    "slots", resultSlots
+            ));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", "Invalid date format or request: " + e.getMessage()));
+        }
+    }
 
     // BOOK SESSION REQUEST
     @PostMapping("/book")
@@ -227,6 +312,27 @@ public class FitnessController {
             return "redirect:/fitness";
         }
 
+        if (bookingTime == null || bookingTime.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Please select an available timing slot.");
+            return "redirect:/fitness/trainer/" + trainerId;
+        }
+
+        LocalDate startDate = LocalDate.parse(bookingDate);
+        if (startDate.isBefore(LocalDate.now())) {
+            redirectAttributes.addFlashAttribute("error", "Booking date cannot be in the past.");
+            return "redirect:/fitness/trainer/" + trainerId;
+        }
+
+        boolean alreadyBooked = fitnessBookingRepository.findByTrainer_IdAndBookingDate(trainer.getId(), startDate)
+                .stream()
+                .anyMatch(b -> !"CANCELLED".equalsIgnoreCase(b.getStatus()) 
+                            && !"REJECTED".equalsIgnoreCase(b.getStatus()) 
+                            && bookingTime.trim().equalsIgnoreCase(b.getBookingTime() != null ? b.getBookingTime().trim() : ""));
+        if (alreadyBooked) {
+            redirectAttributes.addFlashAttribute("error", "The timing slot " + bookingTime + " is already booked for " + startDate + ". Please select another slot.");
+            return "redirect:/fitness/trainer/" + trainerId;
+        }
+
         Double baseFees = trainer.getSessionFees();
         if (baseFees == null) {
             baseFees = 0.0;
@@ -235,7 +341,6 @@ public class FitnessController {
         Double fees = baseFees;
         int totalSessions = 1;
         
-        LocalDate startDate = LocalDate.parse(bookingDate);
         LocalDate endDate = startDate;
         
         if (duration == null) {
@@ -661,12 +766,9 @@ public class FitnessController {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
 
-        trainerProfileService.refreshCompletion(trainer);
-        boolean needsCompletion = in.sp.main.Service.PartnerLifecycleSupport.needsProfileCompletion(trainer.getPartnerProfileStatus())
-                && !trainerProfileService.isReadyForVerification(trainer);
-        if (needsCompletion) {
-            return "redirect:/fitness/trainer/profile-completion";
-        }
+        trainer = trainerProfileService.refreshCompletion(trainer);
+        model.addAttribute("missingItems", trainerProfileService.missingItems(trainer));
+
 
 
         // Bookings
@@ -1183,6 +1285,126 @@ public class FitnessController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/fitness/trainer/dashboard";
+    }
+
+    // ==========================================
+    // DYNAMIC QR ATTENDANCE (WEB AJAX & API)
+    // ==========================================
+
+    @PostMapping("/trainer/api/qr-session")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> createTrainerQrSession(
+            @RequestBody(required = false) Map<String, Object> payload,
+            HttpSession session) {
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "Trainer authentication required"));
+        }
+
+        try {
+            Long classId = null;
+            int duration = 15;
+            Double lat = null;
+            Double lng = null;
+
+            if (payload != null) {
+                if (payload.get("classId") != null && !payload.get("classId").toString().isEmpty()) {
+                    classId = Long.valueOf(payload.get("classId").toString());
+                }
+                if (payload.get("duration") != null && !payload.get("duration").toString().isEmpty()) {
+                    duration = Integer.parseInt(payload.get("duration").toString());
+                }
+                if (payload.get("latitude") != null) {
+                    lat = Double.parseDouble(payload.get("latitude").toString());
+                }
+                if (payload.get("longitude") != null) {
+                    lng = Double.parseDouble(payload.get("longitude").toString());
+                }
+            }
+
+            in.sp.main.Entities.FitnessQrAttendanceSession qrSession = fitnessQrAttendanceService.createOrRefreshSession(
+                    trainer, classId, LocalDate.now(), duration, lat, lng);
+
+            Map<String, Object> res = new HashMap<>();
+            res.put("success", true);
+            res.put("sessionId", qrSession.getId());
+            res.put("token", qrSession.getToken());
+            res.put("qrPayload", qrSession.getToken());
+            res.put("trainerName", trainer.getFullName());
+            res.put("sessionDate", qrSession.getSessionDate().toString());
+            res.put("expiresAt", qrSession.getExpiresAt().toString());
+            res.put("durationMinutes", duration);
+
+            return org.springframework.http.ResponseEntity.ok(res);
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/trainer/api/qr-session/{id}/close")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> closeTrainerQrSession(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "Trainer authentication required"));
+        }
+
+        try {
+            fitnessQrAttendanceService.closeSession(id, trainer);
+            return org.springframework.http.ResponseEntity.ok(Map.of("success", true, "message", "QR Session closed"));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/trainer/api/qr-session/{id}/attendees")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> getTrainerQrSessionAttendees(
+            @PathVariable Long id, HttpSession session) {
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "Trainer authentication required"));
+        }
+
+        try {
+            List<Map<String, Object>> attendees = fitnessQrAttendanceService.getSessionAttendees(trainer, id);
+            return org.springframework.http.ResponseEntity.ok(Map.of("success", true, "attendees", attendees));
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/trainer/api/qr-session/active")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> getActiveTrainerQrSession(HttpSession session) {
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "Trainer authentication required"));
+        }
+
+        Optional<in.sp.main.Entities.FitnessQrAttendanceSession> active = fitnessQrAttendanceService.getActiveSession(trainer, LocalDate.now());
+        if (active.isPresent()) {
+            in.sp.main.Entities.FitnessQrAttendanceSession s = active.get();
+            Map<String, Object> res = new HashMap<>();
+            res.put("success", true);
+            res.put("active", true);
+            res.put("sessionId", s.getId());
+            res.put("token", s.getToken());
+            res.put("qrPayload", s.getToken());
+            res.put("trainerName", trainer.getFullName());
+            res.put("sessionDate", s.getSessionDate().toString());
+            res.put("expiresAt", s.getExpiresAt().toString());
+            return org.springframework.http.ResponseEntity.ok(res);
+        }
+        return org.springframework.http.ResponseEntity.ok(Map.of("success", true, "active", false));
     }
 
     // ==========================================
