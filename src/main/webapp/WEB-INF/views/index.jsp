@@ -1800,6 +1800,7 @@
                     <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty & Wellness</a>
+					<a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
                     <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
                     <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
