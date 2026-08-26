@@ -10,8 +10,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
-    body { font-family: Poppins, sans-serif; background: #fffcfd; margin: 0; color: var(--fdf-text); }
+    body { font-family: Inter, Poppins, sans-serif; background: #F8FAFC; margin: 0; color: var(--fdf-text); }
     .wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 60px; }
     .card { background: #fff; border: 1px solid var(--fdf-border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
     h1 { font-family: Montserrat, sans-serif; font-size: 1.6rem; color: var(--brand-purple-darker); }
@@ -24,7 +25,7 @@
     @media (max-width: 600px) { .wrap { padding: 20px 12px 48px; } h1 { font-size: 1.3rem; } }
   </style>
 </head>
-<body>
+<body class="wp-shop">
   <div class="wrap">
     <p class="ok"><i class="bi bi-check-circle-fill"></i> Order placed</p>
     <h1>Thank you — your order is confirmed</h1>
@@ -63,5 +64,6 @@
       <a class="btn btn-sec" href="${pageContext.request.contextPath}/women-products">Continue shopping</a>
     </div>
   </div>
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>

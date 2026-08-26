@@ -162,7 +162,7 @@
         }
     </style>
 </head>
-<body>
+<body class="wp-auth">
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/women-products">
             <i class="bi bi-bag-heart-fill"></i> Women Products

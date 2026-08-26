@@ -14,7 +14,7 @@ import in.sp.main.Service.WomenProductSellerProfileService;
 import in.sp.main.Service.WomenProductSellerRegistrationService;
 import in.sp.main.Service.WomenProductsCareService;
 import in.sp.main.Util.MobileValidation;
-import in.sp.main.Util.ProductCategories;
+import in.sp.main.Util.WomenProductValidation;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -453,36 +453,39 @@ public class MobileWomenProductsSellerAuthController {
         String name = trim(Objects.toString(body.get("name"), ""));
         String brand = trim(Objects.toString(body.get("brand"), ""));
         String description = trim(Objects.toString(body.get("description"), ""));
-        String category = ProductCategories.normalize(trim(Objects.toString(body.get("category"), "")));
-        double price = parseDouble(body.get("price"), -1);
+        String fullDescription = body.get("fullDescription") == null ? null
+                : trim(Objects.toString(body.get("fullDescription"), ""));
+        String category = trim(Objects.toString(body.get("category"), ""));
+        Double price = parseDoubleOrNull(body.get("price"));
+        Double originalPrice = body.containsKey("originalPrice") ? parseDoubleOrNull(body.get("originalPrice")) : null;
+        String offerBadge = body.get("offerBadge") == null ? null : trim(Objects.toString(body.get("offerBadge"), ""));
+        Integer stock = body.get("stock") == null ? 0 : parseInt(body.get("stock"), Integer.MIN_VALUE);
+        if (stock == Integer.MIN_VALUE) return badRequest("Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".");
+        Integer lowStockAlertLevel = body.get("lowStockAlertLevel") == null ? 5
+                : parseInt(body.get("lowStockAlertLevel"), Integer.MIN_VALUE);
+        if (lowStockAlertLevel == Integer.MIN_VALUE) {
+            return badRequest("Alert Level must be a non-negative number (0 or greater). Negative values are not allowed.");
+        }
+        String sku = body.get("sku") == null ? null : trim(Objects.toString(body.get("sku"), ""));
+        String weightSize = body.get("weightSize") == null ? null : trim(Objects.toString(body.get("weightSize"), ""));
+        String manufacturer = body.get("manufacturer") == null ? null : trim(Objects.toString(body.get("manufacturer"), ""));
+        String ingredients = body.get("ingredients") == null ? null : trim(Objects.toString(body.get("ingredients"), ""));
+        String benefits = body.get("benefits") == null ? null : trim(Objects.toString(body.get("benefits"), ""));
+        String usageInstructions = body.get("usageInstructions") == null ? null
+                : trim(Objects.toString(body.get("usageInstructions"), ""));
+        String tags = body.get("tags") == null ? null : trim(Objects.toString(body.get("tags"), ""));
 
-        if (name.isBlank() || brand.isBlank() || category == null || category.isBlank()) {
-            return badRequest("name, brand and category are required");
-        }
-        if (!ProductCategories.isKnown(category)) {
-            return badRequest("Pick a product category from the catalog.");
-        }
-        if (price <= 0) return badRequest("price must be positive");
+        // Images are uploaded via a separate endpoint after create — do not require on JSON create.
+        String validationError = WomenProductValidation.validateProductInput(
+                name, brand, description, fullDescription, price, originalPrice, offerBadge, stock,
+                lowStockAlertLevel, sku, category, weightSize, manufacturer, ingredients, benefits,
+                usageInstructions, tags, false, null);
+        if (validationError != null) return badRequest(validationError);
 
         WomenProduct p = new WomenProduct();
-
-        p.setName(name);
-        p.setBrand(brand);
-        p.setDescription(description.isBlank() ? null : description);
-        p.setPrice(price);
-        p.setOriginalPrice(parseDouble(body.get("originalPrice"), price));
-        p.setStock(Math.max(parseInt(body.get("stock"), 0), 0));
-        String normalizedCategory = in.sp.main.Entities.WomenProduct.normalizeCategory(category);
-        if (normalizedCategory == null) {
-            return badRequest("Invalid category. Use: SKINCARE, HAIRCARE, HYGIENE, CLOTHING, ACCESSORIES, WELLNESS, OTHER");
-        }
-        p.setCategory(normalizedCategory);
-        p.setSku(trim(Objects.toString(body.get("sku"), "")));
-        p.setWeightSize(trim(Objects.toString(body.get("weightSize"), "")));
-        p.setOfferBadge(trim(Objects.toString(body.get("offerBadge"), "")));
-
-        applyProductFields(p, name, brand, description, category, price, body);
-
+        applyValidatedProductFields(p, name, brand, description, fullDescription, price, originalPrice,
+                offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
+                ingredients, benefits, usageInstructions, tags);
         p.setActive(true);
         p.setFeatured(false);
         p.setTrackInventory(true);
@@ -512,22 +515,56 @@ public class MobileWomenProductsSellerAuthController {
         if (p == null || p.getDeleted() || p.getSeller() == null || !p.getSeller().getId().equals(s.getId())) {
             return badRequest("Product not found");
         }
-        String name = trim(Objects.toString(body.get("name"), p.getName()));
-        String brand = trim(Objects.toString(body.get("brand"), p.getBrand()));
+        String name = body.get("name") == null ? p.getName() : trim(Objects.toString(body.get("name"), ""));
+        String brand = body.get("brand") == null ? p.getBrand() : trim(Objects.toString(body.get("brand"), ""));
         String description = body.get("description") == null
-                ? p.getDescription()
+                ? (p.getDescription() == null ? "" : p.getDescription())
                 : trim(Objects.toString(body.get("description"), ""));
-        String category = ProductCategories.normalize(trim(Objects.toString(
-                body.get("category"), p.getCategory() == null ? "" : p.getCategory())));
-        double price = parseDouble(body.get("price"), p.getPrice() == null ? -1 : p.getPrice());
-        if (name.isBlank() || brand.isBlank() || category == null || category.isBlank()) {
-            return badRequest("name, brand and category are required");
+        String fullDescription = body.get("fullDescription") == null
+                ? p.getFullDescription()
+                : trim(Objects.toString(body.get("fullDescription"), ""));
+        String category = body.get("category") == null
+                ? (p.getCategory() == null ? "" : p.getCategory())
+                : trim(Objects.toString(body.get("category"), ""));
+        Double price = body.get("price") == null ? p.getPrice() : parseDoubleOrNull(body.get("price"));
+        Double originalPrice = body.containsKey("originalPrice")
+                ? parseDoubleOrNull(body.get("originalPrice"))
+                : p.getOriginalPrice();
+        String offerBadge = body.get("offerBadge") == null ? p.getOfferBadge()
+                : trim(Objects.toString(body.get("offerBadge"), ""));
+        Integer stock = body.get("stock") == null ? (p.getStock() == null ? 0 : p.getStock())
+                : parseInt(body.get("stock"), Integer.MIN_VALUE);
+        if (stock != null && stock == Integer.MIN_VALUE) {
+            return badRequest("Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".");
         }
-        if (!ProductCategories.isKnown(category)) {
-            return badRequest("Pick a product category from the catalog.");
+        Integer lowStockAlertLevel = body.get("lowStockAlertLevel") == null
+                ? (p.getLowStockAlertLevel() == null ? 5 : p.getLowStockAlertLevel())
+                : parseInt(body.get("lowStockAlertLevel"), Integer.MIN_VALUE);
+        if (lowStockAlertLevel != null && lowStockAlertLevel == Integer.MIN_VALUE) {
+            return badRequest("Alert Level must be a non-negative number (0 or greater). Negative values are not allowed.");
         }
-        if (price <= 0) return badRequest("price must be positive");
-        applyProductFields(p, name, brand, description, category, price, body);
+        String sku = body.get("sku") == null ? p.getSku() : trim(Objects.toString(body.get("sku"), ""));
+        String weightSize = body.get("weightSize") == null ? p.getWeightSize()
+                : trim(Objects.toString(body.get("weightSize"), ""));
+        String manufacturer = body.get("manufacturer") == null ? p.getManufacturer()
+                : trim(Objects.toString(body.get("manufacturer"), ""));
+        String ingredients = body.get("ingredients") == null ? p.getIngredients()
+                : trim(Objects.toString(body.get("ingredients"), ""));
+        String benefits = body.get("benefits") == null ? p.getBenefits()
+                : trim(Objects.toString(body.get("benefits"), ""));
+        String usageInstructions = body.get("usageInstructions") == null ? p.getUsageInstructions()
+                : trim(Objects.toString(body.get("usageInstructions"), ""));
+        String tags = body.get("tags") == null ? p.getTags() : trim(Objects.toString(body.get("tags"), ""));
+
+        String validationError = WomenProductValidation.validateProductInput(
+                name, brand, description, fullDescription, price, originalPrice, offerBadge, stock,
+                lowStockAlertLevel, sku, category, weightSize, manufacturer, ingredients, benefits,
+                usageInstructions, tags, false, null);
+        if (validationError != null) return badRequest(validationError);
+
+        applyValidatedProductFields(p, name, brand, description, fullDescription, price, originalPrice,
+                offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
+                ingredients, benefits, usageInstructions, tags);
         if (body.get("active") != null) {
             p.setActive(Boolean.parseBoolean(String.valueOf(body.get("active"))));
         }
@@ -571,6 +608,8 @@ public class MobileWomenProductsSellerAuthController {
             return badRequest("Product not found");
         }
         if (image == null || image.isEmpty()) return badRequest("Image is required");
+        String imgErr = WomenProductValidation.validateProductImageFile(image);
+        if (imgErr != null) return badRequest(imgErr);
         try {
             String path = fileUploadService.saveFile(image);
             p.setImagePath(path);
@@ -661,6 +700,54 @@ public class MobileWomenProductsSellerAuthController {
         return sellerRepo.findById(s.getId()).orElse(s);
     }
 
+    private void applyValidatedProductFields(
+            WomenProduct p,
+            String name,
+            String brand,
+            String description,
+            String fullDescription,
+            Double price,
+            Double originalPrice,
+            String offerBadge,
+            Integer stock,
+            Integer lowStockAlertLevel,
+            String sku,
+            String category,
+            String weightSize,
+            String manufacturer,
+            String ingredients,
+            String benefits,
+            String usageInstructions,
+            String tags) {
+        p.setName(name.trim());
+        p.setBrand(brand.trim());
+        p.setDescription(description.trim());
+        String fd = fullDescription == null ? null : fullDescription.trim();
+        p.setFullDescription(fd == null || fd.isEmpty() ? null : fd);
+        p.setPrice(price);
+        p.setOriginalPrice(originalPrice != null ? originalPrice : price);
+        String ob = offerBadge == null ? null : offerBadge.trim();
+        p.setOfferBadge(ob == null || ob.isEmpty() ? null : ob);
+        p.setStock(stock);
+        p.setLowStockAlertLevel(lowStockAlertLevel != null ? lowStockAlertLevel : 5);
+        String cleanedSku = sku == null ? null : sku.trim();
+        p.setSku(cleanedSku == null || cleanedSku.isEmpty() ? null : cleanedSku);
+        String normalizedCategory = WomenProduct.normalizeCategory(category);
+        p.setCategory(normalizedCategory != null ? normalizedCategory : category.trim().toUpperCase());
+        String ws = weightSize == null ? null : weightSize.trim();
+        p.setWeightSize(ws == null || ws.isEmpty() ? null : ws);
+        String mfr = manufacturer == null ? null : manufacturer.trim();
+        p.setManufacturer(mfr == null || mfr.isEmpty() ? null : mfr);
+        String ing = ingredients == null ? null : ingredients.trim();
+        p.setIngredients(ing == null || ing.isEmpty() ? null : ing);
+        String ben = benefits == null ? null : benefits.trim();
+        p.setBenefits(ben == null || ben.isEmpty() ? null : ben);
+        String usage = usageInstructions == null ? null : usageInstructions.trim();
+        p.setUsageInstructions(usage == null || usage.isEmpty() ? null : usage);
+        String tg = tags == null ? null : tags.trim();
+        p.setTags(tg == null || tg.isEmpty() ? null : tg);
+    }
+
     private void applyProductFields(
             WomenProduct p,
             String name,
@@ -669,20 +756,32 @@ public class MobileWomenProductsSellerAuthController {
             String category,
             double price,
             Map<String, Object> body) {
-        p.setName(name);
-        p.setBrand(brand);
-        p.setDescription(description == null || description.isBlank() ? null : description);
-        p.setPrice(price);
-        p.setOriginalPrice(parseDouble(body.get("originalPrice"), price));
-        if (body.get("stock") != null) {
-            p.setStock(Math.max(parseInt(body.get("stock"), 0), 0));
-        } else if (p.getStock() == null) {
-            p.setStock(0);
+        // Kept for any legacy call sites; prefer applyValidatedProductFields.
+        applyValidatedProductFields(
+                p, name, brand, description,
+                body.get("fullDescription") == null ? null : trim(Objects.toString(body.get("fullDescription"), "")),
+                price,
+                body.containsKey("originalPrice") ? parseDoubleOrNull(body.get("originalPrice")) : null,
+                body.get("offerBadge") == null ? null : trim(Objects.toString(body.get("offerBadge"), "")),
+                body.get("stock") == null ? (p.getStock() == null ? 0 : p.getStock()) : Math.max(parseInt(body.get("stock"), 0), 0),
+                body.get("lowStockAlertLevel") == null ? 5 : parseInt(body.get("lowStockAlertLevel"), 5),
+                body.get("sku") == null ? null : trim(Objects.toString(body.get("sku"), "")),
+                category,
+                body.get("weightSize") == null ? null : trim(Objects.toString(body.get("weightSize"), "")),
+                body.get("manufacturer") == null ? null : trim(Objects.toString(body.get("manufacturer"), "")),
+                body.get("ingredients") == null ? null : trim(Objects.toString(body.get("ingredients"), "")),
+                body.get("benefits") == null ? null : trim(Objects.toString(body.get("benefits"), "")),
+                body.get("usageInstructions") == null ? null : trim(Objects.toString(body.get("usageInstructions"), "")),
+                body.get("tags") == null ? null : trim(Objects.toString(body.get("tags"), "")));
+    }
+
+    private static Double parseDoubleOrNull(Object value) {
+        if (value == null) return null;
+        try {
+            return Double.parseDouble(value.toString().trim());
+        } catch (Exception e) {
+            return null;
         }
-        p.setCategory(category);
-        if (body.get("sku") != null) p.setSku(trim(Objects.toString(body.get("sku"), "")));
-        if (body.get("weightSize") != null) p.setWeightSize(trim(Objects.toString(body.get("weightSize"), "")));
-        if (body.get("offerBadge") != null) p.setOfferBadge(trim(Objects.toString(body.get("offerBadge"), "")));
     }
 
     private void restoreStock(WomenProductOrder order) {

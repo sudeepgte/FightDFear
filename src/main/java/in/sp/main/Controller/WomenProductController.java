@@ -4,6 +4,7 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Util.ProductCategories;
+import in.sp.main.Util.WomenProductValidation;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -284,23 +285,24 @@ public class WomenProductController {
         }
 
         Map<Long, List<String>> nextSellerStatuses = new HashMap<>();
-        Map<Long, Boolean> canAssign = new HashMap<>();
         for (WomenProductOrder o : visibleOrders) {
             nextSellerStatuses.put(o.getId(),
                     in.sp.main.Service.WomenProductOrderLifecycleService.sellerNextStatuses(o.getStatus()));
-            canAssign.put(o.getId(),
-                    in.sp.main.Service.WomenProductOrderLifecycleService.canAssign(o));
         }
 
         List<WomenReturnRequest> returns = returnRepo.findBySellerOrderByRequestTimeDesc(s);
 
+        // Rated orders for Customer Reviews (always from this seller's full order list, not status-filtered).
+        List<WomenProductOrder> customerReviews = orders.stream()
+                .filter(o -> o.getRating() != null)
+                .toList();
+
         model.addAttribute("seller", s);
         model.addAttribute("products", products);
         model.addAttribute("orders", visibleOrders);
+        model.addAttribute("customerReviews", customerReviews);
         model.addAttribute("orderStatusFilter", filter);
         model.addAttribute("nextSellerStatuses", nextSellerStatuses);
-        model.addAttribute("canAssign", canAssign);
-        model.addAttribute("deliveryPartners", orderLifecycle.listAssignablePartners());
         model.addAttribute("returns", returns);
         model.addAttribute("section", section);
         model.addAttribute("totalEarnings", totalEarnings);
@@ -356,8 +358,8 @@ public class WomenProductController {
                     return "redirect:/women-products/seller/dashboard?section=profile";
                 }
                 String cleanedPhone = phone == null ? "" : phone.trim();
-                if (!cleanedPhone.matches(WomenProductSeller.PHONE_PATTERN)) {
-                    ra.addFlashAttribute("error", "Phone number must be exactly 10 digits.");
+                if (!cleanedPhone.matches("^[6-9]\\d{9}$")) {
+                    ra.addFlashAttribute("error", "Enter a valid 10-digit Indian mobile number.");
                     return "redirect:/women-products/seller/dashboard?section=profile";
                 }
                 String cleanedAddress = address == null ? "" : address.trim();
@@ -552,116 +554,14 @@ public class WomenProductController {
                                                String manufacturer, String ingredients, String benefits,
                                                String usageInstructions, String tags,
                                                boolean requireImages, java.util.List<MultipartFile> images) {
-        String cleanedName = name == null ? "" : name.trim();
-        if (cleanedName.length() < WomenProduct.NAME_MIN_LENGTH
-                || cleanedName.length() > WomenProduct.NAME_MAX_LENGTH) {
-            return "Product Name must be between " + WomenProduct.NAME_MIN_LENGTH
-                    + " and " + WomenProduct.NAME_MAX_LENGTH + " characters.";
-        }
-
-        String cleanedBrand = brand == null ? "" : brand.trim();
-        if (cleanedBrand.isEmpty() || cleanedBrand.length() > WomenProduct.BRAND_MAX_LENGTH) {
-            return "Brand is required (max " + WomenProduct.BRAND_MAX_LENGTH + " characters).";
-        }
-
-        if (category == null || category.trim().isEmpty() || !WomenProduct.isAllowedCategory(category)) {
-            return "Please select a valid product category.";
-        }
-
-        String cleanedDescription = description == null ? "" : description.trim();
-        if (cleanedDescription.isEmpty()) {
-            return "Short Description is required.";
-        }
-        if (cleanedDescription.length() > WomenProduct.SHORT_DESCRIPTION_MAX_LENGTH) {
-            return "Short Description must be at most "
-                    + WomenProduct.SHORT_DESCRIPTION_MAX_LENGTH + " characters.";
-        }
-
-        if (fullDescription != null && fullDescription.trim().length() > WomenProduct.FULL_DESCRIPTION_MAX_LENGTH) {
-            return "Full Description must be at most "
-                    + WomenProduct.FULL_DESCRIPTION_MAX_LENGTH + " characters.";
-        }
-
-        if (price == null || price <= 0 || price > WomenProduct.PRICE_MAX) {
-            return "Selling price must be greater than 0 and at most " + (long) WomenProduct.PRICE_MAX + ".";
-        }
-        if (originalPrice != null) {
-            if (originalPrice <= 0 || originalPrice > WomenProduct.PRICE_MAX) {
-                return "MRP must be greater than 0 when provided.";
-            }
-            if (originalPrice < price) {
-                return "MRP cannot be less than the selling price.";
-            }
-        }
-
-        if (offerBadge != null && offerBadge.trim().length() > WomenProduct.OFFER_BADGE_MAX_LENGTH) {
-            return "Offer Badge must be at most " + WomenProduct.OFFER_BADGE_MAX_LENGTH + " characters.";
-        }
-
-        if (stock == null || stock < 0 || stock > WomenProduct.STOCK_MAX) {
-            return "Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".";
-        }
-        if (lowStockAlertLevel == null
-                || lowStockAlertLevel < WomenProduct.ALERT_LEVEL_MIN
-                || lowStockAlertLevel > WomenProduct.ALERT_LEVEL_MAX) {
-            return "Alert Level must be a non-negative number (0 or greater). Negative values are not allowed.";
-        }
-
-        if (sku != null && !sku.trim().isEmpty()) {
-            String cleanedSku = sku.trim();
-            if (cleanedSku.length() > WomenProduct.SKU_MAX_LENGTH || !cleanedSku.matches("^[A-Za-z0-9_-]+$")) {
-                return "SKU must be at most " + WomenProduct.SKU_MAX_LENGTH
-                        + " characters and use only letters, numbers, hyphens, or underscores.";
-            }
-        }
-
-        if (weightSize != null && weightSize.trim().length() > WomenProduct.WEIGHT_SIZE_MAX_LENGTH) {
-            return "Weight/Size must be at most " + WomenProduct.WEIGHT_SIZE_MAX_LENGTH + " characters.";
-        }
-        if (manufacturer != null && manufacturer.trim().length() > WomenProduct.MANUFACTURER_MAX_LENGTH) {
-            return "Manufacturer must be at most " + WomenProduct.MANUFACTURER_MAX_LENGTH + " characters.";
-        }
-        if (ingredients != null && ingredients.trim().length() > WomenProduct.INGREDIENTS_MAX_LENGTH) {
-            return "Ingredients must be at most " + WomenProduct.INGREDIENTS_MAX_LENGTH + " characters.";
-        }
-        if (benefits != null && benefits.trim().length() > WomenProduct.BENEFITS_MAX_LENGTH) {
-            return "Benefits must be at most " + WomenProduct.BENEFITS_MAX_LENGTH + " characters.";
-        }
-        if (usageInstructions != null && usageInstructions.trim().length() > WomenProduct.USAGE_MAX_LENGTH) {
-            return "Usage Instructions must be at most " + WomenProduct.USAGE_MAX_LENGTH + " characters.";
-        }
-        if (tags != null && tags.trim().length() > WomenProduct.TAGS_MAX_LENGTH) {
-            return "Tags must be at most " + WomenProduct.TAGS_MAX_LENGTH + " characters.";
-        }
-
-        java.util.List<MultipartFile> uploaded = nonEmptyImages(images);
-        if (requireImages && uploaded.isEmpty()) {
-            return "At least one product image is required.";
-        }
-        if (uploaded.size() > WomenProduct.MAX_PRODUCT_IMAGES) {
-            return "You can upload at most " + WomenProduct.MAX_PRODUCT_IMAGES + " images per product.";
-        }
-        for (MultipartFile img : uploaded) {
-            String contentType = img.getContentType();
-            if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
-                return "Only image files (JPG/PNG) are allowed for product photos.";
-            }
-            if (img.getSize() > 5L * 1024 * 1024) {
-                return "Each product image must be 5MB or smaller.";
-            }
-        }
-        return null;
+        return WomenProductValidation.validateProductInput(
+                name, brand, description, fullDescription, price, originalPrice, offerBadge, stock,
+                lowStockAlertLevel, sku, category, weightSize, manufacturer, ingredients, benefits,
+                usageInstructions, tags, requireImages, images);
     }
 
     private static java.util.List<MultipartFile> nonEmptyImages(java.util.List<MultipartFile> images) {
-        java.util.List<MultipartFile> uploaded = new ArrayList<>();
-        if (images == null) return uploaded;
-        for (MultipartFile img : images) {
-            if (img != null && !img.isEmpty()) {
-                uploaded.add(img);
-            }
-        }
-        return uploaded;
+        return WomenProductValidation.nonEmptyImages(images);
     }
 
     private static void applyProductFields(WomenProduct p, String name, String brand, String description,
@@ -790,6 +690,7 @@ public class WomenProductController {
             resp.put("newStatus", updated.getStatus());
             resp.put("orderId", updated.getId());
             resp.put("label", in.sp.main.Service.WomenProductOrderLifecycleService.displayLabel(updated.getStatus()));
+            resp.put("nextStatuses", in.sp.main.Service.WomenProductOrderLifecycleService.sellerNextStatuses(updated.getStatus()));
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             resp.put("status", "ERROR");
             resp.put("message", ex.getReason() != null ? ex.getReason() : "Could not update order status.");
@@ -839,7 +740,12 @@ public class WomenProductController {
         if (s == null) return "redirect:/women-products/seller/login";
         WomenReturnRequest r = returnRepo.findById(id).orElse(null);
         if (r != null && r.getSeller().getId().equals(s.getId())) {
-            r.setStatus(status);
+            String statusErr = WomenProductValidation.validateReturnStatus(status);
+            if (statusErr != null) {
+                ra.addFlashAttribute("error", statusErr);
+                return "redirect:/women-products/seller/dashboard?section=" + section;
+            }
+            r.setStatus(WomenProductValidation.normalizeReturnStatus(status));
             returnRepo.save(r);
             ra.addFlashAttribute("message", "Return/Exchange status updated.");
         }
@@ -1130,9 +1036,14 @@ public class WomenProductController {
             return "redirect:/women-products/view/" + productId;
         }
 
-        int requestedQty = (quantity != null && quantity > 0) ? quantity : 1;
+        if (quantity == null || quantity < 1) {
+            ra.addFlashAttribute("error", "Quantity must be a positive integer.");
+            return "redirect:/women-products/view/" + productId;
+        }
+        int requestedQty = quantity;
         if (requestedQty > availableStock) {
-            requestedQty = availableStock;
+            ra.addFlashAttribute("error", "Only " + availableStock + " unit(s) available for '" + p.getName() + "'.");
+            return "redirect:/women-products/view/" + productId;
         }
 
         Optional<WomenCartItem> existing = cartRepo.findByUserAndProduct_Id(u, productId);
@@ -1147,13 +1058,13 @@ public class WomenProductController {
             WomenCartItem c = existing.get();
             int newTotalQty = c.getQuantity() + requestedQty;
             if (newTotalQty > availableStock) {
-                newTotalQty = availableStock;
-                ra.addFlashAttribute("message", "Quantity adjusted to max available stock (" + availableStock + ").");
-            } else {
-                ra.addFlashAttribute("message", "Cart updated!");
+                ra.addFlashAttribute("error", "Only " + availableStock + " unit(s) available for '" + p.getName()
+                        + "'. You already have " + c.getQuantity() + " in your cart.");
+                return "redirect:/women-products/cart";
             }
             c.setQuantity(newTotalQty);
             cartRepo.save(c);
+            ra.addFlashAttribute("message", "Cart updated!");
         }
         return "redirect:/women-products/cart";
     }
@@ -1174,28 +1085,39 @@ public class WomenProductController {
             ra.addFlashAttribute("error", "'" + p.getName() + "' is Out of Stock.");
             return "redirect:/women-products/view/" + productId;
         }
-        int reqQty = (quantity != null && quantity > 0) ? quantity : 1;
-        if (reqQty > availableStock) reqQty = availableStock;
+        if (quantity == null || quantity < 1) {
+            ra.addFlashAttribute("error", "Quantity must be a positive integer.");
+            return "redirect:/women-products/view/" + productId;
+        }
+        if (quantity > availableStock) {
+            ra.addFlashAttribute("error", "Only " + availableStock + " unit(s) available for '" + p.getName() + "'.");
+            return "redirect:/women-products/view/" + productId;
+        }
 
         session.setAttribute(BUY_NOW_PRODUCT_ID, productId);
-        session.setAttribute(BUY_NOW_QTY, reqQty);
+        session.setAttribute(BUY_NOW_QTY, quantity);
         return "redirect:/women-products/checkout?buyNow=1";
     }
 
     @PostMapping("/cart/{id}/update")
-    public String updateCartQty(@PathVariable Long id, @RequestParam int quantity, HttpSession session) {
+    public String updateCartQty(@PathVariable Long id, @RequestParam int quantity,
+                                HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         WomenCartItem c = cartRepo.findById(id).orElse(null);
         if (c != null && c.getUser().getId().equals(u.getId())) {
-            int currentStock = (c.getProduct() != null && c.getProduct().getStock() != null) ? c.getProduct().getStock() : 0;
-            if (quantity <= 0) {
-                cartRepo.delete(c);
-            } else {
-                if (quantity > currentStock) quantity = currentStock;
-                c.setQuantity(quantity);
-                cartRepo.save(c);
+            if (quantity < 1) {
+                ra.addFlashAttribute("error", "Quantity must be a positive integer. Use Remove to delete an item.");
+                return "redirect:/women-products/cart";
             }
+            int currentStock = (c.getProduct() != null && c.getProduct().getStock() != null) ? c.getProduct().getStock() : 0;
+            if (quantity > currentStock) {
+                ra.addFlashAttribute("error", "Only " + currentStock + " unit(s) available"
+                        + (c.getProduct() != null ? " for '" + c.getProduct().getName() + "'" : "") + ".");
+                return "redirect:/women-products/cart";
+            }
+            c.setQuantity(quantity);
+            cartRepo.save(c);
         }
         return "redirect:/women-products/cart";
     }
@@ -1274,8 +1196,9 @@ public class WomenProductController {
             return checkoutRedirect(session);
         }
         String address = shippingAddress == null ? "" : shippingAddress.trim();
-        if (address.length() < 8) {
-            ra.addFlashAttribute("error", "Please enter a complete delivery address.");
+        String addressErr = WomenProductValidation.validateShippingAddress(address);
+        if (addressErr != null) {
+            ra.addFlashAttribute("error", addressErr);
             return checkoutRedirect(session);
         }
 
@@ -1324,9 +1247,10 @@ public class WomenProductController {
             return response;
         }
         String address = shippingAddress == null ? "" : shippingAddress.trim();
-        if (address.length() < 8) {
+        String addressErr = WomenProductValidation.validateShippingAddress(address);
+        if (addressErr != null) {
             response.put("status", "ERROR");
-            response.put("message", "Please enter a complete delivery address.");
+            response.put("message", addressErr);
             return response;
         }
 
@@ -1465,9 +1389,10 @@ public class WomenProductController {
                 return response;
             }
             String cleanedReview = review == null ? "" : review.trim();
-            if (cleanedReview.length() > 2000) {
+            String reviewErr = WomenProductValidation.validateReviewText(cleanedReview);
+            if (reviewErr != null) {
                 response.put("status", "ERROR");
-                response.put("message", "Review must be at most 2000 characters.");
+                response.put("message", reviewErr);
                 return response;
             }
             order.setRating(rating);
