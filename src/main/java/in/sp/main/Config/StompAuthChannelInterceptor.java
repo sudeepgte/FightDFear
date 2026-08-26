@@ -108,7 +108,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
         destUserId = extractTrailingId(destination, "/topic/calls/");
         if (destUserId != null) {
-            return userId != null && userId.equals(destUserId) && "USER".equals(role);
+            return userId != null && userId.equals(destUserId);
         }
 
         destUserId = extractTrailingId(destination, "/topic/sos-updates/user-");

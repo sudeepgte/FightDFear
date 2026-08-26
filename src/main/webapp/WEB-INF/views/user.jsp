@@ -160,7 +160,14 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        .otp-row input { flex: 1; min-width: 120px; }
+        .otp-input {
+            flex: 1 1 11ch;
+            min-width: 11ch;
+            max-width: 100%;
+            letter-spacing: 2px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
         .btn-secondary {
             background: var(--rose-soft);
             color: var(--primary-hover);
@@ -219,6 +226,20 @@
             display: none;
         }
         .otp-badge.show { display: inline; }
+        .otp-status {
+            font-size: 0.75rem;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+        .otp-status.ok { color: var(--success); }
+        .otp-status.err { color: var(--error); }
+        .otp-status.info { color: var(--text-gray); }
+        .submit-hint {
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            text-align: center;
+            margin-top: 10px;
+        }
         @media (max-width: 600px) {
             .row-2 { grid-template-columns: 1fr; }
             .form-card { padding: 22px 16px; }
@@ -243,86 +264,70 @@
 
         <div class="form-card">
             <c:if test="${not empty error}">
-                <div class="alert alert-error"><i class="bi bi-exclamation-circle me-1"></i> ${error}</div>
+                <div class="alert alert-error" id="serverError"><i class="bi bi-exclamation-circle me-1"></i> ${error}</div>
             </c:if>
+            <div class="alert alert-error" id="formError" style="display:none;"></div>
 
-            <form action="${pageContext.request.contextPath}/users/register" method="post" enctype="multipart/form-data" id="userRegisterForm">
-                <div class="form-group">
-                    <label>Profile photo <span style="color:var(--text-gray);font-weight:500;">(optional)</span></label>
-                    <input type="file" name="image" class="form-input" accept="image/*">
-                </div>
-
+            <form action="${pageContext.request.contextPath}/users/register" method="post" id="userRegisterForm">
                 <div class="form-group">
                     <label>Full name *</label>
                     <input type="text" name="fullName" id="fullName" class="form-input" required autocomplete="name">
                 </div>
 
                 <div class="form-group">
-                    <label>Email *</label>
+                    <label>Email Address *</label>
                     <input type="email" name="email" id="email" class="form-input" required autocomplete="email">
                     <div class="otp-row">
                         <button type="button" class="btn-secondary" id="btnSendEmailOtp">Send email OTP</button>
-                        <input type="text" id="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric">
+                    </div>
+                    <div class="otp-row">
+                        <input type="text" id="emailOtp" class="form-input otp-input" placeholder="6-digit OTP" maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" aria-label="6-digit email OTP">
                         <button type="button" class="btn-secondary" id="btnVerifyEmailOtp">Verify</button>
                         <span class="otp-badge" id="emailOtpOk"><i class="bi bi-check-circle-fill"></i> Verified</span>
                     </div>
-                    <div class="hint">We send a code to your inbox. Resend after cooldown if needed.</div>
+                    <div class="otp-status info" id="emailOtpStatus"></div>
+                    <div class="hint"><i class="bi bi-info-circle me-1"></i> Private login key used to authenticate account, verify identity, and send critical emergency alerts.</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number (10 digits) *</label>
+                    <input type="tel" name="phoneNumber" id="phoneNumber" class="form-input" required maxlength="10" pattern="\d{10}" inputmode="numeric">
+                    <div id="phoneOtpSection">
+                    <div class="otp-row">
+                        <button type="button" class="btn-secondary" id="btnSendPhoneOtp">Send phone OTP</button>
+                    </div>
+                    <div class="otp-row">
+                        <input type="text" id="phoneOtp" class="form-input otp-input" placeholder="6-digit OTP" maxlength="6" minlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code" aria-label="6-digit phone OTP">
+                        <button type="button" class="btn-secondary" id="btnVerifyPhoneOtp">Verify</button>
+                        <span class="otp-badge" id="phoneOtpOk"><i class="bi bi-check-circle-fill"></i> Verified</span>
+                    </div>
+                    <div class="otp-status info" id="phoneOtpStatus"></div>
+                    </div>
+                    <div class="hint" id="phoneOtpHint"><i class="bi bi-info-circle me-1"></i> Enter your 10-digit mobile number — a real OTP will be sent by SMS when SMS is enabled on the server.</div>
                 </div>
 
                 <div class="row-2">
                     <div class="form-group">
-                        <label>Phone (10 digits) *</label>
-                        <input type="tel" name="phoneNumber" id="phoneNumber" class="form-input" required maxlength="10" pattern="\d{10}" inputmode="numeric">
-                        <div class="otp-row">
-                            <button type="button" class="btn-secondary" id="btnSendPhoneOtp">Send phone OTP</button>
-                            <input type="text" id="phoneOtp" class="form-input" placeholder="OTP" maxlength="6" inputmode="numeric">
-                            <button type="button" class="btn-secondary" id="btnVerifyPhoneOtp">Verify</button>
-                            <span class="otp-badge" id="phoneOtpOk"><i class="bi bi-check-circle-fill"></i> OK</span>
-                        </div>
-                        <div class="hint">Demo phone OTP: 123456 (same as mobile)</div>
-                    </div>
-                    <div class="form-group">
-                        <label>Emergency contact *</label>
-                        <input type="tel" name="emergencyContact" id="emergencyContact" class="form-input" required maxlength="10" pattern="\d{10}" inputmode="numeric">
-                        <div class="hint">Must differ from your phone</div>
-                    </div>
-                </div>
-
-                <div class="row-2">
-                    <div class="form-group">
-                        <label>Date of birth *</label>
-                        <input type="date" name="dob" id="dob" class="form-input" required
-                               max="<%= java.time.LocalDate.now() %>">
+                        <label>City / Location *</label>
+                        <input type="text" name="city" id="city" class="form-input" required placeholder="e.g. Mumbai, New Delhi">
+                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Helps identify proximity self-defense centers & zone map overlays.</div>
                     </div>
                     <div class="form-group">
                         <label>Gender (optional)</label>
                         <select name="gender" id="gender" class="form-select">
                             <option value="">Prefer not to say</option>
                             <option value="FEMALE">Female</option>
-                            <option value="MALE">Male</option>
                             <option value="OTHER">Other</option>
                         </select>
+                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Helps customize buddy matching companion preferences.</div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Preferred language *</label>
-                    <select name="preferredLanguage" id="preferredLanguage" class="form-select" required>
-                        <option>English</option>
-                        <option>Hindi</option>
-                        <option>Marathi</option>
-                        <option>Tamil</option>
-                        <option>Telugu</option>
-                        <option>Kannada</option>
-                        <option>Bengali</option>
-                        <option>Gujarati</option>
-                        <option>Other</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Current location / address *</label>
-                    <textarea name="homeAddress" id="homeAddress" class="form-input" rows="2" required placeholder="Address or Google Maps link"></textarea>
+                    <label>Date of birth (optional)</label>
+                    <input type="date" name="dob" id="dob" class="form-input"
+                           max="<%= java.time.LocalDate.now() %>">
+                    <div class="hint"><i class="bi bi-info-circle me-1"></i> Used optionally to verify safety cohorts.</div>
                 </div>
 
                 <div class="row-2">
@@ -355,6 +360,7 @@
                 </label>
 
                 <button type="submit" class="btn-primary" id="btnSubmit" disabled>Create account</button>
+                <p class="submit-hint" id="submitHint">Verify your email OTP to enable account creation.</p>
             </form>
 
             <p class="footer-link">Already have an account? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
@@ -365,26 +371,164 @@
 (function () {
     var ctx = '${pageContext.request.contextPath}';
     var emailVerified = false;
-    var phoneVerified = false;
+    var phoneVerified = true;
+    var phoneOtpRequired = false;
+    var phoneOtpSending = false;
+    var phoneAutoSendTimer = null;
+    var lastAutoSentPhone = '';
+    var fetchOpts = { credentials: 'same-origin' };
+
+    function markEmailVerified(email) {
+        emailVerified = true;
+        document.getElementById('emailOtpOk').classList.add('show');
+        setStatus('emailOtpStatus', 'Email verified', 'ok');
+        try {
+            sessionStorage.setItem('regEmailVerified', email.toLowerCase());
+        } catch (e) { /* ignore */ }
+        refreshSubmit();
+    }
+
+    function restoreEmailVerified() {
+        try {
+            var saved = sessionStorage.getItem('regEmailVerified');
+            var current = document.getElementById('email').value.trim().toLowerCase();
+            if (saved && current && saved === current) {
+                markEmailVerified(current);
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function setStatus(id, text, kind) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text || '';
+        el.className = 'otp-status' + (kind ? ' ' + kind : '');
+    }
 
     function refreshSubmit() {
-        document.getElementById('btnSubmit').disabled = !(emailVerified && phoneVerified && document.getElementById('acceptedTerms').checked);
+        var ready = emailVerified && document.getElementById('acceptedTerms').checked;
+        if (phoneOtpRequired) {
+            ready = ready && phoneVerified;
+        }
+        document.getElementById('btnSubmit').disabled = !ready;
+
+        var hint = document.getElementById('submitHint');
+        if (ready) {
+            hint.textContent = 'All set — click Create account to finish registration.';
+        } else if (!emailVerified) {
+            hint.textContent = 'Verify your email OTP to enable account creation.';
+        } else if (phoneOtpRequired && !phoneVerified) {
+            hint.textContent = 'Verify your phone OTP to enable account creation.';
+        } else if (!document.getElementById('acceptedTerms').checked) {
+            hint.textContent = 'Accept the Terms & Conditions to continue.';
+        } else {
+            hint.textContent = 'Complete verification steps above.';
+        }
     }
+
+    function bindOtpInput(id) {
+        var el = document.getElementById(id);
+        el.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 6);
+        });
+    }
+
+    function isValidOtp(value) {
+        return /^\d{6}$/.test(value);
+    }
+
+    async function loadPhoneOtpStatus() {
+        try {
+            var res = await fetch(ctx + '/api/auth/otp/phone-status', Object.assign({}, fetchOpts, {
+                headers: { 'Accept': 'application/json' }
+            }));
+            var data = await res.json();
+            phoneOtpRequired = data.available === true;
+            var phoneSection = document.getElementById('phoneOtpSection');
+            var hint = document.getElementById('phoneOtpHint');
+            if (phoneOtpRequired) {
+                phoneSection.style.display = '';
+                hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> A 6-digit OTP is sent automatically by SMS when you enter a valid 10-digit number.';
+                phoneVerified = false;
+            } else {
+                phoneSection.style.display = 'none';
+                hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> Phone number is saved for alerts. SMS verification is optional when SMS is not configured on the server.';
+                phoneVerified = true;
+                setStatus('phoneOtpStatus', '', '');
+            }
+            refreshSubmit();
+        } catch (e) {
+            phoneOtpRequired = false;
+            phoneVerified = true;
+            refreshSubmit();
+        }
+    }
+
+    async function sendPhoneOtp(autoTriggered) {
+        var phone = document.getElementById('phoneNumber').value.trim();
+        if (!/^\d{10}$/.test(phone)) {
+            if (!autoTriggered) alert('Enter a valid 10-digit phone first');
+            return;
+        }
+        if (phoneOtpSending) return;
+        if (autoTriggered && phone === lastAutoSentPhone) return;
+
+        phoneOtpSending = true;
+        var btn = document.getElementById('btnSendPhoneOtp');
+        btn.disabled = true;
+        setStatus('phoneOtpStatus', autoTriggered ? 'Sending OTP to your phone…' : 'Sending OTP…', 'info');
+
+        try {
+            var res = await fetch(ctx + '/api/auth/otp/send-phone', Object.assign({}, fetchOpts, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ phoneNumber: phone })
+            }));
+            var data = await res.json();
+            if (data.success) {
+                lastAutoSentPhone = phone;
+                setStatus('phoneOtpStatus', data.message || 'OTP sent to +' + phone, 'ok');
+                document.getElementById('phoneOtp').focus();
+            } else {
+                setStatus('phoneOtpStatus', data.error || 'Failed to send OTP', 'err');
+                if (!autoTriggered) alert(data.error || 'Failed to send OTP');
+            }
+        } catch (e) {
+            setStatus('phoneOtpStatus', 'Network error sending OTP', 'err');
+            if (!autoTriggered) alert('Network error sending OTP');
+        } finally {
+            phoneOtpSending = false;
+            btn.disabled = false;
+        }
+    }
+
+    bindOtpInput('emailOtp');
+    bindOtpInput('phoneOtp');
+    loadPhoneOtpStatus();
+    restoreEmailVerified();
 
     document.getElementById('acceptedTerms').addEventListener('change', refreshSubmit);
     document.getElementById('email').addEventListener('input', function () {
         emailVerified = false;
         document.getElementById('emailOtpOk').classList.remove('show');
+        setStatus('emailOtpStatus', '', '');
+        try { sessionStorage.removeItem('regEmailVerified'); } catch (e) { /* ignore */ }
         refreshSubmit();
     });
     document.getElementById('phoneNumber').addEventListener('input', function () {
         this.value = this.value.replace(/\D/g, '').slice(0, 10);
         phoneVerified = false;
         document.getElementById('phoneOtpOk').classList.remove('show');
+        setStatus('phoneOtpStatus', '', '');
+        lastAutoSentPhone = '';
         refreshSubmit();
-    });
-    document.getElementById('emergencyContact').addEventListener('input', function () {
-        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+
+        if (phoneOtpRequired && /^\d{10}$/.test(this.value.trim())) {
+            clearTimeout(phoneAutoSendTimer);
+            phoneAutoSendTimer = setTimeout(function () {
+                sendPhoneOtp(true);
+            }, 400);
+        }
     });
 
     document.getElementById('btnSendEmailOtp').addEventListener('click', async function () {
@@ -394,19 +538,23 @@
             return;
         }
         this.disabled = true;
+        setStatus('emailOtpStatus', 'Sending OTP…', 'info');
         try {
-            var res = await fetch(ctx + '/api/auth/otp/send-email', {
+            var res = await fetch(ctx + '/api/auth/otp/send-email', Object.assign({}, fetchOpts, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ email: email })
-            });
+            }));
             var data = await res.json();
             if (data.success) {
-                alert(data.message || 'OTP sent to your email');
+                setStatus('emailOtpStatus', data.message || 'OTP sent to your email', 'ok');
+                document.getElementById('emailOtp').focus();
             } else {
+                setStatus('emailOtpStatus', data.error || 'Failed to send OTP', 'err');
                 alert(data.error || 'Failed to send OTP');
             }
         } catch (e) {
+            setStatus('emailOtpStatus', 'Network error sending OTP', 'err');
             alert('Network error sending OTP');
         } finally {
             this.disabled = false;
@@ -416,75 +564,143 @@
     document.getElementById('btnVerifyEmailOtp').addEventListener('click', async function () {
         var email = document.getElementById('email').value.trim().toLowerCase();
         var otp = document.getElementById('emailOtp').value.trim();
-        if (!otp) { alert('Enter the OTP code'); return; }
+        if (!isValidOtp(otp)) {
+            alert('Please enter the 6-digit OTP code.');
+            return;
+        }
+        this.disabled = true;
         try {
-            var res = await fetch(ctx + '/api/auth/otp/verify-email', {
+            var res = await fetch(ctx + '/api/auth/otp/verify-email', Object.assign({}, fetchOpts, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify({ email: email, otp: otp })
-            });
+            }));
             var data = await res.json();
             if (data.success) {
-                emailVerified = true;
-                document.getElementById('emailOtpOk').classList.add('show');
-                refreshSubmit();
+                markEmailVerified(email);
             } else {
+                setStatus('emailOtpStatus', data.error || 'Invalid or expired OTP', 'err');
                 alert(data.error || 'Invalid or expired OTP');
             }
         } catch (e) {
+            setStatus('emailOtpStatus', 'Network error verifying OTP', 'err');
             alert('Network error verifying OTP');
+        } finally {
+            this.disabled = false;
         }
     });
 
     document.getElementById('btnSendPhoneOtp').addEventListener('click', function () {
+        sendPhoneOtp(false);
+    });
+
+    document.getElementById('btnVerifyPhoneOtp').addEventListener('click', async function () {
         var phone = document.getElementById('phoneNumber').value.trim();
+        var otp = document.getElementById('phoneOtp').value.trim();
         if (!/^\d{10}$/.test(phone)) {
             alert('Enter a valid 10-digit phone first');
             return;
         }
-        alert('Demo OTP sent for Phone. Use 123456.');
-    });
-
-    document.getElementById('btnVerifyPhoneOtp').addEventListener('click', function () {
-        var otp = document.getElementById('phoneOtp').value.trim();
-        if (otp === '123456') {
-            phoneVerified = true;
-            document.getElementById('phoneOtpOk').classList.add('show');
-            refreshSubmit();
-        } else {
-            alert('Invalid OTP. Demo code is 123456.');
+        if (!isValidOtp(otp)) {
+            alert('Please enter the 6-digit OTP code.');
+            return;
+        }
+        this.disabled = true;
+        try {
+            var res = await fetch(ctx + '/api/auth/otp/verify-phone', Object.assign({}, fetchOpts, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ phoneNumber: phone, otp: otp })
+            }));
+            var data = await res.json();
+            if (data.success) {
+                phoneVerified = true;
+                document.getElementById('phoneOtpOk').classList.add('show');
+                setStatus('phoneOtpStatus', 'Phone verified', 'ok');
+                refreshSubmit();
+            } else {
+                setStatus('phoneOtpStatus', data.error || 'Invalid or expired OTP', 'err');
+                alert(data.error || 'Invalid or expired OTP');
+            }
+        } catch (e) {
+            setStatus('phoneOtpStatus', 'Network error verifying OTP', 'err');
+            alert('Network error verifying OTP');
+        } finally {
+            this.disabled = false;
         }
     });
 
-    document.getElementById('userRegisterForm').addEventListener('submit', function (e) {
+    function showFormError(msg) {
+        var el = document.getElementById('formError');
+        if (!el) return;
+        el.style.display = msg ? 'block' : 'none';
+        el.innerHTML = msg ? '<i class="bi bi-exclamation-circle me-1"></i> ' + msg : '';
+        if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    document.getElementById('userRegisterForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        showFormError('');
+
         var pass = document.getElementById('password').value;
         var confirm = document.getElementById('confirmPassword').value;
-        var phone = document.getElementById('phoneNumber').value.trim();
-        var emergency = document.getElementById('emergencyContact').value.trim();
         var re = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
         if (!emailVerified) {
-            e.preventDefault();
             alert('Please verify your email OTP first.');
             return;
         }
-        if (!phoneVerified) {
-            e.preventDefault();
+        if (!phoneVerified && phoneOtpRequired) {
             alert('Please verify your phone OTP first.');
             return;
         }
         if (!re.test(pass)) {
-            e.preventDefault();
             alert('Password must be at least 6 characters and include a number and special character (!@#$%^&*).');
             return;
         }
         if (pass !== confirm) {
-            e.preventDefault();
             alert('Passwords do not match.');
             return;
         }
-        if (phone === emergency) {
-            e.preventDefault();
-            alert('Emergency contact should differ from your phone.');
+        if (!document.getElementById('acceptedTerms').checked) {
+            alert('Please accept the Terms & Conditions.');
+            return;
+        }
+
+        var btn = document.getElementById('btnSubmit');
+        btn.disabled = true;
+        btn.textContent = 'Creating account…';
+
+        var payload = {
+            fullName: document.getElementById('fullName').value.trim(),
+            email: document.getElementById('email').value.trim().toLowerCase(),
+            phoneNumber: document.getElementById('phoneNumber').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            dob: document.getElementById('dob').value.trim(),
+            gender: document.getElementById('gender').value.trim(),
+            password: pass,
+            confirmPassword: confirm,
+            acceptedTerms: 'true',
+            emailOtp: document.getElementById('emailOtp').value.trim()
+        };
+
+        try {
+            var res = await fetch(ctx + '/api/auth/register-web', Object.assign({}, fetchOpts, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            }));
+            var data = await res.json();
+            if (data.success && data.redirectUrl) {
+                try { sessionStorage.removeItem('regEmailVerified'); } catch (err) { /* ignore */ }
+                window.location.href = data.redirectUrl;
+                return;
+            }
+            showFormError(data.error || 'Registration failed. Please try again.');
+        } catch (err) {
+            showFormError('Network error. Could not complete registration.');
+        } finally {
+            btn.textContent = 'Create account';
+            refreshSubmit();
         }
     });
 

@@ -7,22 +7,18 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import in.sp.main.Entities.ChatMessage;
+import in.sp.main.Entities.User;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.ChatService;
 import in.sp.main.Service.ContactMessageService;
 import jakarta.servlet.http.HttpServletRequest;
-
-import java.time.LocalDateTime;
 
 @Controller
 public class ContactController {
@@ -34,9 +30,6 @@ public class ContactController {
     private UserRepository userRepo;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
     private JavaMailSender mailSender;
 
     @Autowired
@@ -46,7 +39,7 @@ public class ContactController {
     private String adminEmail;
 
     @GetMapping("/contact")
-    public String showContactPage(Model model) {
+    public String showContactPage(org.springframework.ui.Model model) {
         model.addAttribute("pageTitle", "Contact Us");
         return "index/contact";
     }
@@ -139,44 +132,36 @@ public class ContactController {
     @MessageMapping("/chat.send")
     public void send(@Payload ChatMessage chatMessage,
                      org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor) {
-        if (accessor.getUser() == null) {
-            return;
-        }
-        String email = accessor.getUser().getName();
-        in.sp.main.Entities.User sender = userRepo.findByEmail(email).orElse(null);
+        User sender = resolveStompUser(accessor);
         if (sender == null || chatMessage.getReceiver() == null || chatMessage.getReceiver().getId() == null) {
             return;
         }
-        in.sp.main.Entities.User receiver = userRepo.findById(chatMessage.getReceiver().getId()).orElse(null);
+        User receiver = userRepo.findById(chatMessage.getReceiver().getId()).orElse(null);
         if (receiver == null) {
             return;
         }
+        chatService.deliverUserMessage(sender, receiver, chatMessage.getMessage());
+    }
 
-        chatMessage.setSender(sender);
-        chatMessage.setReceiver(receiver);
-        chatMessage.setTimestamp(LocalDateTime.now());
-        chatMessage.setReadStatus(false);
-
-        chatService.save(chatMessage);
-
-        java.util.Map<String, Object> payload = new java.util.HashMap<>();
-        payload.put("id", chatMessage.getId());
-        payload.put("message", chatMessage.getMessage());
-        payload.put("videoUrl", chatMessage.getVideoUrl());
-        payload.put("timestamp", chatMessage.getTimestamp().toString());
-
-        java.util.Map<String, Object> senderMap = new java.util.HashMap<>();
-        senderMap.put("id", sender.getId());
-        senderMap.put("fullName", sender.getFullName());
-        payload.put("sender", senderMap);
-
-        java.util.Map<String, Object> receiverMap = new java.util.HashMap<>();
-        receiverMap.put("id", receiver.getId());
-        receiverMap.put("fullName", receiver.getFullName());
-        payload.put("receiver", receiverMap);
-
-        messagingTemplate.convertAndSend("/topic/messages/" + receiver.getId(), payload);
-        messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), payload);
+    private User resolveStompUser(org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor) {
+        if (accessor == null) {
+            return null;
+        }
+        java.util.Map<String, Object> attrs = accessor.getSessionAttributes();
+        if (attrs != null) {
+            Object userIdObj = attrs.get("authUserId");
+            if (userIdObj instanceof Number n) {
+                User byId = userRepo.findById(n.longValue()).orElse(null);
+                if (byId != null) {
+                    return byId;
+                }
+            }
+        }
+        if (accessor.getUser() == null) {
+            return null;
+        }
+        String email = accessor.getUser().getName();
+        return userRepo.findByEmail(email).orElse(null);
     }
 }
 

@@ -2,6 +2,7 @@ package in.sp.main.Entities;
 
 public enum OtpPurpose {
     USER_REGISTER,
+    USER_PHONE_REGISTER,
     DOCTOR_REGISTER,
     CENTRE_REGISTER,
     FITNESS_REGISTER,

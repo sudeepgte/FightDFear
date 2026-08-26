@@ -249,10 +249,29 @@
         }
 
         .btn-submit:disabled {
-            background: #CBD5E1;
+            background: var(--rose-soft);
+            color: var(--primary);
+            opacity: 0.65;
             cursor: not-allowed;
             box-shadow: none;
-            color: #64748B;
+        }
+
+        .form-input.is-invalid, .form-select.is-invalid {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .form-input.is-valid, .form-select.is-valid {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12) !important;
+        }
+
+        .error-feedback {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: 500;
+            display: none;
         }
 
         .login-footer {
@@ -318,14 +337,16 @@
                 
                 <div class="form-group">
                     <label for="fullName">Full Name *</label>
-                    <input type="text" id="fullName" name="fullName" class="form-input" placeholder="e.g. Anjali Sharma" required minlength="2">
+                    <input type="text" id="fullName" name="fullName" class="form-input" placeholder="e.g. Anjali Sharma" required minlength="2" oninput="validateFullName()" onblur="validateFullName()">
+                    <div class="error-feedback" id="error-fullName"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email Address *</label>
                     <div class="input-wrapper">
-                        <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required oninput="validateEmail()" onblur="validateEmail()">
                     </div>
+                    <div class="error-feedback" id="error-email"></div>
                 </div>
 
                 <div class="form-group">
@@ -339,11 +360,12 @@
                 <div id="otpSection" class="form-group" style="display: none;">
                     <label for="emailOtp">6-Digit Email OTP *</label>
                     <div class="otp-row">
-                        <input type="text" id="emailOtp" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" pattern="^\d{6}$">
+                        <input type="text" id="emailOtp" class="form-input" placeholder="Enter 6-digit OTP" maxlength="6" pattern="^\d{6}$" oninput="validateOtp()" onblur="validateOtp()">
                         <button type="button" id="btnVerifyOtp" class="btn-otp" style="background: var(--primary);" onclick="verifyOtp()">
                             Verify OTP
                         </button>
                     </div>
+                    <div class="error-feedback" id="error-emailOtp"></div>
                 </div>
 
                 <div id="verifiedBadge" class="verified-badge" style="display: none;">
@@ -352,33 +374,37 @@
 
                 <div class="form-group" style="margin-top: 14px;">
                     <label for="phone">Phone Number (10 Digits) *</label>
-                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="10-digit mobile number" required pattern="^\d{10}$" maxlength="10">
+                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="10-digit mobile number" required pattern="^\d{10}$" maxlength="10" oninput="validatePhone()" onblur="validatePhone()">
+                    <div class="error-feedback" id="error-phone"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password (Min 6 Characters) *</label>
                     <div class="input-wrapper password-field">
-                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required minlength="6">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required minlength="6" oninput="validatePassword(); validateConfirmPassword();" onblur="validatePassword()">
                         <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div class="error-feedback" id="error-password"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="confirmPassword">Confirm Password *</label>
                     <div class="input-wrapper password-field">
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="••••••••" required minlength="6">
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="••••••••" required minlength="6" oninput="validateConfirmPassword()" onblur="validateConfirmPassword()">
                         <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('confirmPassword', this)" aria-label="Toggle confirm password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div class="error-feedback" id="error-confirmPassword"></div>
                 </div>
 
                 <label class="terms-row">
-                    <input type="checkbox" id="acceptedTerms" required>
+                    <input type="checkbox" id="acceptedTerms" required onchange="validateTerms()">
                     <span>I accept the <strong>Terms & Safety Policies</strong> *</span>
                 </label>
+                <div class="error-feedback" id="error-acceptedTerms" style="margin-top: -12px; margin-bottom: 12px;"></div>
 
                 <button type="submit" id="btnSubmitAccount" class="btn-submit" disabled>
                     <i class="bi bi-person-plus-fill"></i> Create Host Account
@@ -394,6 +420,133 @@
     <script>
         let isEmailVerified = false;
         const contextPath = '${pageContext.request.contextPath}';
+
+        function validateFullName() {
+            const el = document.getElementById('fullName');
+            const err = document.getElementById('error-fullName');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'Full Name is required.');
+                return false;
+            }
+            if (val.length < 2) {
+                showFieldInvalid(el, err, 'Full Name must be at least 2 characters.');
+                return false;
+            }
+            if (!/^[a-zA-Z\s]+$/.test(val)) {
+                showFieldInvalid(el, err, 'Full Name must contain only letters and spaces.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validateEmail() {
+            const el = document.getElementById('email');
+            const err = document.getElementById('error-email');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'Email Address is required.');
+                return false;
+            }
+            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!regex.test(val)) {
+                showFieldInvalid(el, err, 'Please enter a valid email address.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validateOtp() {
+            const el = document.getElementById('emailOtp');
+            const err = document.getElementById('error-emailOtp');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'OTP code is required.');
+                return false;
+            }
+            if (!/^\d{6}$/.test(val)) {
+                showFieldInvalid(el, err, 'OTP must be a 6-digit number.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validatePhone() {
+            const el = document.getElementById('phone');
+            const err = document.getElementById('error-phone');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'Phone Number is required.');
+                return false;
+            }
+            if (!/^\d{10}$/.test(val)) {
+                showFieldInvalid(el, err, 'Phone Number must be exactly 10 digits.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validatePassword() {
+            const el = document.getElementById('password');
+            const err = document.getElementById('error-password');
+            const val = el.value;
+            if (!val) {
+                showFieldInvalid(el, err, 'Password is required.');
+                return false;
+            }
+            if (val.length < 6) {
+                showFieldInvalid(el, err, 'Password must be at least 6 characters.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validateConfirmPassword() {
+            const el = document.getElementById('confirmPassword');
+            const err = document.getElementById('error-confirmPassword');
+            const val = el.value;
+            const pass = document.getElementById('password').value;
+            if (!val) {
+                showFieldInvalid(el, err, 'Please confirm your password.');
+                return false;
+            }
+            if (val !== pass) {
+                showFieldInvalid(el, err, 'Passwords do not match.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validateTerms() {
+            const el = document.getElementById('acceptedTerms');
+            const err = document.getElementById('error-acceptedTerms');
+            if (!el.checked) {
+                showFieldInvalid(el, err, 'You must accept the Terms & Safety Policies.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function showFieldInvalid(el, err, msg) {
+            el.classList.add('is-invalid');
+            el.classList.remove('is-valid');
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        function showFieldValid(el, err) {
+            el.classList.remove('is-invalid');
+            el.classList.add('is-valid');
+            err.innerText = '';
+            err.style.display = 'none';
+        }
 
         function showAlert(msg, isSuccess = false) {
             const box = document.getElementById('statusAlert');
@@ -422,11 +575,11 @@
 
         async function sendOtp() {
             hideAlert();
-            const email = document.getElementById('email').value.trim();
-            if (!email || !email.includes('@')) {
+            if (!validateEmail()) {
                 showAlert('Please enter a valid email address first.');
                 return;
             }
+            const email = document.getElementById('email').value.trim();
 
             const btn = document.getElementById('btnSendOtp');
             btn.disabled = true;
@@ -458,12 +611,11 @@
         async function verifyOtp() {
             hideAlert();
             const email = document.getElementById('email').value.trim();
-            const otp = document.getElementById('emailOtp').value.trim();
-
-            if (!otp || otp.length !== 6) {
+            if (!validateOtp()) {
                 showAlert('Please enter the 6-digit OTP code.');
                 return;
             }
+            const otp = document.getElementById('emailOtp').value.trim();
 
             const btn = document.getElementById('btnVerifyOtp');
             btn.disabled = true;
@@ -500,6 +652,20 @@
             e.preventDefault();
             hideAlert();
 
+            const isNameElValid = validateFullName();
+            const isEmailElValid = validateEmail();
+            const isPhoneElValid = validatePhone();
+            const isPassElValid = validatePassword();
+            const isConfirmElValid = validateConfirmPassword();
+            const isTermsElValid = validateTerms();
+
+            if (!isNameElValid || !isEmailElValid || !isPhoneElValid || !isPassElValid || !isConfirmElValid || !isTermsElValid) {
+                const firstInvalid = document.querySelector('.form-input.is-invalid, input[type="checkbox"].is-invalid');
+                if (firstInvalid) firstInvalid.focus();
+                showAlert('Please resolve the errors below before submitting.');
+                return;
+            }
+
             if (!isEmailVerified) {
                 showAlert('Please verify your email via OTP before submitting.');
                 return;
@@ -512,16 +678,6 @@
             const confirmPassword = document.getElementById('confirmPassword').value;
             const otp = document.getElementById('emailOtp').value.trim();
             const acceptedTerms = document.getElementById('acceptedTerms').checked;
-
-            if (!/^\d{10}$/.test(phone)) {
-                showAlert('Phone number must be exactly 10 digits.');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showAlert('Passwords do not match.');
-                return;
-            }
 
             const btnSubmit = document.getElementById('btnSubmitAccount');
             btnSubmit.disabled = true;

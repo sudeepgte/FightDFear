@@ -206,6 +206,24 @@
             border: 1px solid #BBF7D0;
             color: var(--success);
         }
+
+        .form-input.is-invalid {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .form-input.is-valid {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12) !important;
+        }
+
+        .error-feedback {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: 500;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -239,21 +257,32 @@
                     <i class="bi bi-check-circle-fill"></i> Account created! Please log in to complete your host profile.
                 </div>
             </c:if>
+            <c:if test="${not empty success}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ${success}
+                </div>
+            </c:if>
 
-            <form action="${pageContext.request.contextPath}/women-events/host/login" method="post">
+            <form id="loginForm" action="${pageContext.request.contextPath}/women-events/host/login" method="post" onsubmit="return handleLogin(event)">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus oninput="validateEmail()" onblur="validateEmail()">
+                    <div class="error-feedback" id="error-email"></div>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrapper password-field">
-                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required oninput="validatePassword()" onblur="validatePassword()">
                         <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div class="error-feedback" id="error-password"></div>
+                </div>
+
+                <div class="form-group" style="text-align: right; margin-top: -8px; margin-bottom: 14px;">
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password" style="color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn-submit">
@@ -278,6 +307,66 @@
                 input.type = 'password';
                 icon.className = 'bi bi-eye';
             }
+        }
+
+        function validateEmail() {
+            const el = document.getElementById('email');
+            const err = document.getElementById('error-email');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'Email Address is required.');
+                return false;
+            }
+            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!regex.test(val)) {
+                showFieldInvalid(el, err, 'Please enter a valid email address.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validatePassword() {
+            const el = document.getElementById('password');
+            const err = document.getElementById('error-password');
+            const val = el.value;
+            if (!val) {
+                showFieldInvalid(el, err, 'Password is required.');
+                return false;
+            }
+            if (val.length < 6) {
+                showFieldInvalid(el, err, 'Password must be at least 6 characters.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function showFieldInvalid(el, err, msg) {
+            el.classList.add('is-invalid');
+            el.classList.remove('is-valid');
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        function showFieldValid(el, err) {
+            el.classList.remove('is-invalid');
+            el.classList.add('is-valid');
+            err.innerText = '';
+            err.style.display = 'none';
+        }
+
+        function handleLogin(e) {
+            const isEmailValid = validateEmail();
+            const isPasswordValid = validatePassword();
+
+            if (!isEmailValid || !isPasswordValid) {
+                e.preventDefault();
+                const firstInvalid = document.querySelector('.form-input.is-invalid');
+                if (firstInvalid) firstInvalid.focus();
+                return false;
+            }
+            return true;
         }
     </script>
 </body>
