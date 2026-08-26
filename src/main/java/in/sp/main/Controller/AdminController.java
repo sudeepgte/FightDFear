@@ -1805,10 +1805,15 @@ public class AdminController {
                                @RequestParam(value = "reason", required = false) String reason,
                                HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        String reasonErr = in.sp.main.Util.WomenProductValidation.validateRejectionReason(reason);
+        if (reasonErr != null) {
+            ra.addFlashAttribute("error", reasonErr);
+            return "redirect:/admin/pending-sellers";
+        }
         WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
         if (s != null) {
             womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.REJECTED);
-            s.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+            s.setRejectionReason(reason.trim());
             womenSellerRepo.save(s);
         }
         ra.addFlashAttribute("message", "Seller rejected.");

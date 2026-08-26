@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
   <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
   <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+  <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
     <!DOCTYPE html>
     <html lang="en">
 
@@ -1621,6 +1622,109 @@
             </div>
           </c:if>
 
+        <%-- ══════ REVIEWS (must stay OUTSIDE profileEditModal — that modal is display:none) ══════ --%>
+          <c:if test="${section == 'reviews'}">
+            <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
+              <div>
+                <h1 style="margin:0; font-weight:800;">Customer Feedback</h1>
+                <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">View rating history, customer comments, and product impact reviews.</p>
+              </div>
+              <div
+                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);">
+                <span style="font-weight: 800; color: var(--brand-purple-dark);">Aggregate Rating:</span>
+                <span style="color: #ffca08; font-size: 1.1rem; font-weight: 900;">
+                  <i class="bi bi-star-fill"></i>
+                  <c:choose>
+                    <c:when test="${seller.rating != null}">${seller.rating}</c:when>
+                    <c:otherwise>0.0</c:otherwise>
+                  </c:choose>
+                  / 5.0
+                </span>
+              </div>
+            </div>
+
+            <div class="fdf-section">
+              <div class="fdf-section-header">
+                <h2><i class="bi bi-chat-square-text-fill"></i> All Reviews</h2>
+              </div>
+              <div class="fdf-section-body">
+                <c:choose>
+                  <c:when test="${empty customerReviews}">
+                    <div style="text-align: center; padding: 100px 40px; color: var(--fdf-muted);">
+                      <i class="bi bi-chat-square-dots"
+                        style="font-size: 64px; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
+                      <h3 style="font-weight: 800; color: var(--brand-purple-dark);">No customer reviews yet.</h3>
+                      <p style="font-size: 0.95rem;">Encourage your customers to leave feedback after their purchase!</p>
+                    </div>
+                  </c:when>
+                  <c:otherwise>
+                    <c:forEach var="o" items="${customerReviews}">
+                      <c:set var="reviewerName" value="${not empty o.user and not empty o.user.fullName ? o.user.fullName : 'Customer'}" />
+                      <c:set var="productName" value="${not empty o.product and not empty o.product.name ? o.product.name : 'Product'}" />
+                      <c:set var="stars" value="${o.rating}" />
+                      <div
+                        style="padding: 24px; border-radius: 20px; background: #fafafa; margin-bottom: 20px; border: 1px solid #eee;">
+                        <div
+                          style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; gap: 12px; flex-wrap: wrap;">
+                          <div style="display: flex; align-items: center; gap: 14px;">
+                            <div
+                              style="width: 48px; height: 48px; border-radius: 16px; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                              ${fn:substring(reviewerName, 0, 1)}
+                            </div>
+                            <div>
+                              <div style="font-weight: 800; font-size: 1rem; color: var(--brand-purple-darker);">
+                                <c:out value="${reviewerName}" /></div>
+                              <div style="font-size: 0.8rem; color: var(--fdf-muted); font-weight: 500;">
+                                Order #${o.id}
+                                <c:if test="${not empty o.orderTime}"> • ${o.orderTime}</c:if>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style="background: #fff; padding: 6px 12px; border-radius: 10px; border: 1px solid #eee; color: #ffca08; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                            <span aria-hidden="true">
+                              <c:forEach begin="1" end="5" var="i">
+                                <c:choose>
+                                  <c:when test="${i <= stars}">★</c:when>
+                                  <c:otherwise>☆</c:otherwise>
+                                </c:choose>
+                              </c:forEach>
+                            </span>
+                            <span style="color: var(--brand-purple-dark);">${stars}/5</span>
+                          </div>
+                        </div>
+
+                        <div
+                          style="background: #fff; padding: 20px; border-radius: 14px; border-left: 4px solid var(--brand-pink); font-size: 0.95rem; color: var(--fdf-text); line-height: 1.6; margin-bottom: 15px; word-break: break-word;">
+                          <c:choose>
+                            <c:when test="${not empty o.review}">
+                              <span style="font-style: italic;">"<c:out value="${o.review}" />"</span>
+                            </c:when>
+                            <c:otherwise>
+                              <span style="color: var(--fdf-muted); font-style: italic;">No written comment.</span>
+                            </c:otherwise>
+                          </c:choose>
+                        </div>
+
+                        <div
+                          style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0; flex-wrap: wrap;">
+                          <div
+                            style="font-size: 0.8rem; font-weight: 700; color: var(--fdf-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                            Product:</div>
+                          <div style="font-size: 0.9rem; font-weight: 700; color: var(--brand-pink);">
+                            <c:out value="${productName}" /></div>
+                          <span style="margin-left:auto; font-size:0.75rem; font-weight:700; color:#059669; background:#ecfdf5; padding:4px 10px; border-radius:999px;">
+                            Verified purchase
+                          </span>
+                        </div>
+                      </div>
+                    </c:forEach>
+                  </c:otherwise>
+                </c:choose>
+              </div>
+            </div>
+          </c:if>
+
       <%-- Edit Profile Modal --%>
         <div id="profileEditModal" class="fdf-modal">
           <div class="fdf-modal-content" style="max-width: 750px; max-height: 90vh; overflow-y: auto;">
@@ -1674,8 +1778,8 @@
                 <div>
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
                   <input type="tel" name="phone" id="profilePhone" class="form-ctrl" value="${seller.phone}"
-                         required minlength="10" maxlength="10" pattern="[0-9]{10}"
-                         title="Exactly 10 digits"
+                         required minlength="10" maxlength="10" pattern="[6-9][0-9]{9}"
+                         title="Valid 10-digit Indian mobile number"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 
@@ -1854,83 +1958,6 @@
           }
         </script>
 
-        <%-- ══════ REVIEWS ══════ --%>
-          <c:if test="${section == 'reviews'}">
-            <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
-              <div>
-                <h1 style="margin:0; font-weight:800;">Customer Feedback</h1>
-                <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">View rating history, customer comments, and product impact reviews.</p>
-              </div>
-              <div
-                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);">
-                <span style="font-weight: 800; color: var(--brand-purple-dark);">Aggregate Rating:</span>
-                <span style="color: #ffca08; font-size: 1.1rem; font-weight: 900;">
-                  <i class="bi bi-star-fill"></i> ${seller.rating} / 5.0
-                </span>
-              </div>
-            </div>
-
-            <div class="fdf-section">
-              <div class="fdf-section-header">
-                <h2><i class="bi bi-chat-square-text-fill"></i> All Reviews</h2>
-              </div>
-              <div class="fdf-section-body">
-                <c:set var="hasReviews" value="false" />
-                <c:forEach var="o" items="${orders}">
-                  <c:if test="${not empty o.rating}">
-                    <c:set var="hasReviews" value="true" />
-                    <div
-                      style="padding: 24px; border-radius: 20px; background: #fafafa; margin-bottom: 20px; border: 1px solid #eee; transition: 0.3s;"
-                      onmouseover="this.style.background='#fff'; this.style.boxShadow='var(--shadow-md)';"
-                      onmouseout="this.style.background='#fafafa'; this.style.boxShadow='none';">
-                      <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                          <div
-                            style="width: 48px; height: 48px; border-radius: 16px; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
-                            ${not empty o.user.fullName ? o.user.fullName.substring(0,1) : 'U'}
-                          </div>
-                          <div>
-                            <div style="font-weight: 800; font-size: 1rem; color: var(--brand-purple-darker);">
-                              ${o.user.fullName}</div>
-                            <div style="font-size: 0.8rem; color: var(--fdf-muted); font-weight: 500;">Order #${o.id} •
-                              ${o.orderTime}</div>
-                          </div>
-                        </div>
-                        <div
-                          style="background: #fff; padding: 6px 12px; border-radius: 10px; border: 1px solid #eee; color: #ffca08; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 5px;">
-                          <i class="bi bi-star-fill"></i> ${o.rating}.0
-                        </div>
-                      </div>
-
-                      <div
-                        style="background: #fff; padding: 20px; border-radius: 14px; border-left: 4px solid var(--brand-pink); font-size: 0.95rem; color: var(--fdf-text); line-height: 1.6; margin-bottom: 15px; font-style: italic;">
-                        "${o.review}"
-                      </div>
-
-                      <div
-                        style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0;">
-                        <div
-                          style="font-size: 0.8rem; font-weight: 700; color: var(--fdf-muted); text-transform: uppercase; letter-spacing: 0.5px;">
-                          Product Impact:</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--brand-pink);">${o.product.name}
-                        </div>
-                      </div>
-                    </div>
-                  </c:if>
-                </c:forEach>
-
-                <c:if test="${!hasReviews}">
-                  <div style="text-align: center; padding: 100px 40px; color: var(--fdf-muted);">
-                    <i class="bi bi-chat-square-dots"
-                      style="font-size: 64px; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
-                    <h3 style="font-weight: 800; color: var(--brand-purple-dark);">No Reviews Yet</h3>
-                    <p style="font-size: 0.95rem;">Encourage your customers to leave feedback after their purchase!</p>
-                  </div>
-                </c:if>
-              </div>
-            </div>
-          </c:if>
           </div>
 
           <script>
@@ -2176,8 +2203,8 @@
                 alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
                 return false;
               }
-              if (!/^\d{10}$/.test(phone)) {
-                alert('Phone number must be exactly 10 digits.');
+              if (!/^[6-9]\d{9}$/.test(phone)) {
+                alert('Enter a valid 10-digit Indian mobile number.');
                 return false;
               }
               if (address.length < 10 || address.length > 1000) {

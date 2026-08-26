@@ -213,6 +213,9 @@
       <c:if test="${not empty message}">
           <div class="alert alert-success mb-4" style="border-radius:10px;"><i class="fas fa-check-circle me-1"></i> ${message}</div>
       </c:if>
+      <c:if test="${not empty error}">
+          <div class="alert alert-danger mb-4" style="border-radius:10px;"><i class="fas fa-exclamation-circle me-1"></i> ${error}</div>
+      </c:if>
 
       <!-- Pending Sellers Table -->
       <div class="card-table">
@@ -271,7 +274,9 @@
                                     <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/verify" method="post" class="m-0 p-0">
                                         <button class="btn-approve" type="submit" title="Verify"><i class="fas fa-check"></i></button>
                                     </form>
-                                    <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/reject" method="post" class="m-0 p-0">
+                                    <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/reject" method="post" class="m-0 p-0"
+                                          onsubmit="var r=prompt('Enter rejection reason (required):'); if(!r||!r.trim()){alert('Rejection reason is required.'); return false;} this.querySelector('[name=reason]').value=r.trim();">
+                                        <input type="hidden" name="reason" value="">
                                         <button class="btn-reject" type="submit" title="Reject"><i class="fas fa-times"></i></button>
                                     </form>
                                   </div>

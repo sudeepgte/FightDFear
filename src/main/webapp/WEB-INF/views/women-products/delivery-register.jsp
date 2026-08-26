@@ -48,17 +48,54 @@
         <div class="form-card">
             <c:if test="${not empty error}"><div class="alert err">${error}</div></c:if>
             <c:if test="${not empty success}"><div class="alert ok">${success}</div></c:if>
-            <form action="${pageContext.request.contextPath}/women-products/delivery/register" method="post">
-                <div class="form-group"><label>Full name</label><input name="fullName" required minlength="2"></div>
-                <div class="form-group"><label>Mobile number</label><input name="phone" required pattern="\d{10}" maxlength="10"></div>
+            <form action="${pageContext.request.contextPath}/women-products/delivery/register" method="post" id="deliveryRegisterForm" novalidate>
+                <div class="form-group"><label>Full name</label>
+                    <input name="fullName" required minlength="2" maxlength="80"
+                           pattern="[A-Za-z][A-Za-z .'-]{1,79}" title="Letters only; spaces, apostrophes, periods, hyphens allowed">
+                </div>
+                <div class="form-group"><label>Mobile number</label>
+                    <input name="phone" type="tel" required maxlength="10" inputmode="numeric"
+                           pattern="[6-9][0-9]{9}" title="Valid 10-digit Indian mobile number"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
                 <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
-                <div class="form-group"><label>Password</label><input type="password" name="password" required minlength="6"></div>
-                <div class="form-group"><label>City</label><input name="city"></div>
-                <div class="form-group"><label>Address</label><textarea name="address" rows="3"></textarea></div>
+                <div class="form-group"><label>Password</label>
+                    <input type="password" name="password" required minlength="6"
+                           title="At least 6 characters, with a number and a special character">
+                </div>
+                <div class="form-group"><label>City</label><input name="city" maxlength="80"></div>
+                <div class="form-group"><label>Address</label><textarea name="address" rows="3" maxlength="1000"></textarea></div>
                 <button class="btn" type="submit">Submit registration</button>
             </form>
             <p class="footer">Already registered? <a href="${pageContext.request.contextPath}/women-products/delivery/login">Sign in</a></p>
         </div>
     </main>
+    <script>
+      document.getElementById('deliveryRegisterForm').addEventListener('submit', function (e) {
+        var name = (this.fullName.value || '').trim();
+        var phone = (this.phone.value || '').trim();
+        var email = (this.email.value || '').trim();
+        var pass = this.password.value || '';
+        if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(name)) {
+          e.preventDefault();
+          alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).');
+          return;
+        }
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+          e.preventDefault();
+          alert('Enter a valid 10-digit Indian mobile number.');
+          return;
+        }
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+          e.preventDefault();
+          alert('Enter a valid email address.');
+          return;
+        }
+        if (!/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/.test(pass)) {
+          e.preventDefault();
+          alert('Password must be at least 6 characters and include a number and special character.');
+        }
+      });
+    </script>
 </body>
 </html>

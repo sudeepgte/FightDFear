@@ -8,11 +8,46 @@ import in.sp.main.Entities.WomenProductSeller;
 import in.sp.main.Service.WomenProductOrderLifecycleService;
 import in.sp.main.Service.WomenProductsCareService;
 import in.sp.main.Util.ProductCategories;
+import in.sp.main.Util.WomenProductValidation;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class WomenProductsModuleTest {
+
+    @Test
+    void returnStatusWhitelistRejectsUnknown() {
+        assertNull(WomenProductValidation.validateReturnStatus("APPROVED"));
+        assertNotNull(WomenProductValidation.validateReturnStatus("HACKED"));
+        assertNotNull(WomenProductValidation.validateReturnStatus(" "));
+        assertEquals("APPROVED", WomenProductValidation.normalizeReturnStatus("approved"));
+    }
+
+    @Test
+    void shippingAddressAndReviewMatchWebRules() {
+        assertNotNull(WomenProductValidation.validateShippingAddress("1234567"));
+        assertNotNull(WomenProductValidation.validateShippingAddress("12345678"));
+        assertNull(WomenProductValidation.validateShippingAddress(
+                "Flat: 101, Address: Indiranagar, Landmark: Park, Pincode: 560001"));
+        assertNotNull(WomenProductValidation.validateShippingAddress(
+                "Flat: 101, Address: Indiranagar, Landmark: Park, Pincode: 111111"));
+        assertNull(WomenProductValidation.validateReviewText(""));
+        assertNotNull(WomenProductValidation.validateReviewText("x".repeat(2001)));
+    }
+
+    @Test
+    void productValidationRequiresDescriptionAndPositivePrice() {
+        String err = WomenProductValidation.validateProductInput(
+                "A", "Brand", "Short desc", null, 10d, null, null, 1, 5,
+                null, "SKINCARE", null, null, null, null, null, null, false, null);
+        assertNotNull(err); // name too short
+        assertNull(WomenProductValidation.validateProductInput(
+                "Serum", "Brand", "Short desc", null, 10d, 12d, null, 1, 5,
+                "SKU-1", "SKINCARE", null, null, null, null, null, null, false, null));
+        assertNotNull(WomenProductValidation.validateProductInput(
+                "Serum", "Brand", "", null, 10d, null, null, 1, 5,
+                null, "SKINCARE", null, null, null, null, null, null, false, null));
+    }
 
     @Test
     void canonicalCategoriesMatchWebShop() {

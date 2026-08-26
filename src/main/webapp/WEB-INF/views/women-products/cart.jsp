@@ -379,6 +379,16 @@
             <c:otherwise>${cartItems.size()} item<c:if test="${cartItems.size() != 1}">s</c:if> in your cart</c:otherwise>
           </c:choose>
         </p>
+        <c:if test="${not empty error}">
+          <div class="alert alert-danger" style="margin-top:12px;border-radius:10px;padding:12px 14px;font-weight:600;">
+            <i class="bi bi-exclamation-circle-fill"></i> ${error}
+          </div>
+        </c:if>
+        <c:if test="${not empty message}">
+          <div class="alert alert-success" style="margin-top:12px;border-radius:10px;padding:12px 14px;font-weight:600;">
+            <i class="bi bi-check-circle-fill"></i> ${message}
+          </div>
+        </c:if>
         <div class="wp-subnav" style="justify-content:flex-start;margin-top:14px;">
           <a href="${pageContext.request.contextPath}/women-products">Shop</a>
           <a href="${pageContext.request.contextPath}/women-products/wishlist">Wishlist</a>
