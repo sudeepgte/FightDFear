@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
   <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
   <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+  <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
     <!DOCTYPE html>
     <html lang="en">
 
@@ -11,9 +12,10 @@
       <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
       <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap"
         rel="stylesheet">
       <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+      <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
       <style>
         * {
           margin: 0;
@@ -23,13 +25,12 @@
 
         html,
         body {
-          overflow-x: hidden;
           width: 100%;
         }
 
         body {
-          font-family: 'Poppins', sans-serif;
-          background: #fdf2f8;
+          font-family: 'Inter', 'Poppins', sans-serif;
+          background: #f8fafc;
           color: var(--fdf-text);
           min-height: 100vh;
           display: flex;
@@ -327,8 +328,8 @@
         }
 
         .badge-CONFIRMED {
-          background: #dbeafe;
-          color: #1e40af;
+          background: #ffe4e6;
+          color: #9f1239;
         }
 
         .badge-SHIPPED {
@@ -381,12 +382,15 @@
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(15, 10, 30, 0.6);
+          background: rgba(15, 23, 42, 0.55);
           backdrop-filter: blur(8px);
-          z-index: 9999;
+          z-index: 10050;
           align-items: center;
           justify-content: center;
           padding: 20px;
+        }
+        .fdf-modal.is-open {
+          display: flex !important;
         }
 
         .fdf-modal-content {
@@ -511,7 +515,7 @@
       </style>
     </head>
 
-    <body>
+    <body class="wp-portal">
       <div class="mobile-topbar">
         <div style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.1rem;">Seller Portal</div>
         <i class="bi bi-list" style="font-size:1.8rem; cursor:pointer;" onclick="toggleMobileSidebar()"></i>
@@ -563,7 +567,7 @@
           <a href="${pageContext.request.contextPath}/women-products/seller/shop-preview" class="nav-link" target="_blank">
             <i class="bi bi-eye"></i> Preview Shop
           </a>
-          <a href="${pageContext.request.contextPath}/logout" class="nav-link" style="color: #ef4444; opacity: 1;">
+          <a href="${pageContext.request.contextPath}/women-products/seller/logout" class="nav-link" style="color: #ef4444; opacity: 1;">
             <i class="bi bi-box-arrow-left"></i> Logout
           </a>
         </div>
@@ -590,9 +594,10 @@
                 <h1>Overview</h1>
                 <div style="font-weight: 600; color: var(--fdf-muted); margin-top: 5px;">Welcome back, ${seller.fullName}!</div>
               </div>
-              <div style="display:flex; gap:12px; align-items:center;">
+              <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=products" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-plus-lg"></i> Deploy New Item</a>
                 <a href="${pageContext.request.contextPath}/index.html" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-house-door-fill"></i> Back to Home</a>
-                <a href="${pageContext.request.contextPath}/logout" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; background: #ef4444; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-left"></i> Logout</a>
+                <a href="${pageContext.request.contextPath}/women-products/seller/logout" class="btn-fdf-action" style="padding: 10px 18px; font-size: 0.9rem; background: #ef4444; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;"><i class="bi bi-box-arrow-left"></i> Logout</a>
               </div>
             </div>
 
@@ -737,7 +742,7 @@
             <c:if test="${section == 'products'}">
               <div class="header-info">
                 <h1>Catalog Manager</h1>
-                <button type="button" class="btn-fdf-action" onclick="openAddModal()">
+                <button type="button" class="btn-fdf-action" id="deployNewItemBtn" onclick="openAddModal(event)">
                   <i class="bi bi-plus-lg"></i> Deploy New Item
                 </button>
               </div>
@@ -748,7 +753,11 @@
                     <div style="padding: 80px; text-align: center; color: var(--fdf-muted); font-weight: 500;"><i
                         class="bi bi-box-seam"
                         style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i> Your catalog is
-                      currently offline.</div>
+                      currently offline.
+                      <div style="margin-top:20px;">
+                        <button type="button" class="btn-fdf-action" onclick="openAddModal(event)">Add your first product</button>
+                      </div>
+                    </div>
                   </c:if>
                   <c:if test="${not empty products}">
                     <table class="premium-table">
@@ -827,7 +836,7 @@
                                         data-active="${p.active}"
                                         data-featured="${p.featured}"
                                         data-trackInventory="${p.trackInventory}"
-                                        style="background: #dbeafe; color: #1e40af; border: none; width: 36px; height: 36px;
+                                        style="background: #ffe4e6; color: #9f1239; border: none; width: 36px; height: 36px;
                                         border-radius: 10px; cursor: pointer;">
                                   <i class="bi bi-pencil-square"></i>
                                 </button>
@@ -847,14 +856,15 @@
                   </c:if>
                 </div>
               </div>
+            </c:if>
 
-              <div id="productModal" class="fdf-modal">
+              <div id="productModal" class="fdf-modal" aria-hidden="true">
                 <div class="fdf-modal-content" style="max-width: 800px;">
                   <div
                     style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; position:sticky; top:0; background:#fff; z-index:10; padding-bottom:15px; border-bottom:1px solid #eee;">
                     <h2 id="modalTitle" style="font-family:'Montserrat',sans-serif; font-weight:900;"><i
                         class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Catalog Deployment</h2>
-                    <button onclick="document.getElementById('productModal').style.display='none'"
+                    <button type="button" onclick="closeProductModal()"
                       style="background:none; border:none; font-size:24px; opacity:0.3; cursor:pointer;"><i
                         class="bi bi-x-circle"></i></button>
                   </div>
@@ -1004,7 +1014,6 @@
                   </form>
                 </div>
               </div>
-            </c:if>
 
             <%-- ══════ ORDERS ══════ --%>
               <c:if test="${section == 'orders'}">
@@ -1027,8 +1036,7 @@
                     <option value="CONFIRMED" ${orderStatusFilter=='CONFIRMED' ? 'selected' : ''}>Confirmed</option>
                     <option value="PROCESSING" ${orderStatusFilter=='PROCESSING' ? 'selected' : ''}>Processing</option>
                     <option value="PACKED" ${orderStatusFilter=='PACKED' ? 'selected' : ''}>Packed</option>
-                    <option value="READY_FOR_PICKUP" ${orderStatusFilter=='READY_FOR_PICKUP' ? 'selected' : ''}>Ready for pickup</option>
-                    <option value="ASSIGNED" ${orderStatusFilter=='ASSIGNED' ? 'selected' : ''}>Assigned</option>
+                    <option value="SHIPPED" ${orderStatusFilter=='SHIPPED' ? 'selected' : ''}>Shipped</option>
                     <option value="OUT_FOR_DELIVERY" ${orderStatusFilter=='OUT_FOR_DELIVERY' ? 'selected' : ''}>Out for delivery</option>
                     <option value="DELIVERED" ${orderStatusFilter=='DELIVERED' ? 'selected' : ''}>Delivered</option>
                     <option value="CANCELLED" ${orderStatusFilter=='CANCELLED' ? 'selected' : ''}>Cancelled</option>
@@ -1114,7 +1122,7 @@
                                     </span>
                                   </c:when>
                                   <c:when test="${o.status == 'CONFIRMED'}">
-                                    <span style="background:#e0f2fe; color:#0369a1; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
+                                    <span style="background:#ffe4e6; color:#9f1239; padding:6px 14px; border-radius:20px; font-weight:800; font-size:0.75rem; display:inline-flex; align-items:center; gap:4px;">
                                       <i class="bi bi-clipboard-check-fill"></i> Confirmed
                                     </span>
                                   </c:when>
@@ -1134,29 +1142,15 @@
                                 <c:set var="curr" value="${o.status}" />
                                 <c:set var="opts" value="${nextSellerStatuses[o.id]}" />
                                 <div style="font-size:0.75rem; color:#64748b; margin-bottom:6px;">Pay: ${o.paymentStatus}</div>
-                                <c:if test="${not empty o.deliveryPartner}">
-                                  <div style="font-size:0.75rem; font-weight:700;">Rider: ${o.deliveryPartner.fullName}</div>
-                                </c:if>
                                 <c:if test="${not empty opts}">
                                   <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
-                                    method="post" class="seller-order-form" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:6px;">
-                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; width:160px; border-radius:10px;">
+                                    method="post" class="seller-order-form wp-order-update" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+                                    <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; min-width:170px; border-radius:10px;">
                                       <c:forEach var="st" items="${opts}">
                                         <option value="${st}">${st}</option>
                                       </c:forEach>
                                     </select>
                                     <button type="submit" style="background:var(--gradient-primary); color:#fff; border:none; padding:6px 12px; border-radius:10px; font-weight:700; font-size:0.8rem; cursor:pointer;">Update</button>
-                                  </form>
-                                </c:if>
-                                <c:if test="${canAssign[o.id]}">
-                                  <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/assign" method="post" style="margin-top:8px;">
-                                    <select name="partnerId" required style="padding:6px; border-radius:8px; max-width:160px;">
-                                      <option value="">Assign partner</option>
-                                      <c:forEach var="dp" items="${deliveryPartners}">
-                                        <option value="${dp.id}">${dp.fullName}</option>
-                                      </c:forEach>
-                                    </select>
-                                    <button type="submit" style="background:#1e1b4b; color:#fff; border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:0.75rem;">Assign</button>
                                   </form>
                                 </c:if>
                               </td>
@@ -1392,7 +1386,7 @@
                                       </td>
                                       <td>
                                         <div
-                                          style="font-size:0.75rem; background:#f0f9ff; padding:10px; border-radius:12px; border:1px solid #e0f2fe; color:#0369a1;">
+                                          style="font-size:0.75rem; background:#fff1f2; padding:10px; border-radius:12px; border:1px solid #fecdd3; color:#9f1239;">
                                           <strong>Details:</strong><br>${r.bankDetails}
                                         </div>
                                       </td>
@@ -1468,7 +1462,7 @@
 
             <fmt:formatNumber value="${completedCount * 100 / 13}" maxFractionDigits="0" var="profilePercent" />
 
-            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #0F172A 0%, #F43F5E 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div>
                   <h3 style="margin:0; font-weight:800; font-size:1.2rem; color:#fff;"><i class="bi bi-speedometer2" style="color:var(--brand-pink);"></i> Profile Completion</h3>
@@ -1628,6 +1622,109 @@
             </div>
           </c:if>
 
+        <%-- ══════ REVIEWS (must stay OUTSIDE profileEditModal — that modal is display:none) ══════ --%>
+          <c:if test="${section == 'reviews'}">
+            <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
+              <div>
+                <h1 style="margin:0; font-weight:800;">Customer Feedback</h1>
+                <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">View rating history, customer comments, and product impact reviews.</p>
+              </div>
+              <div
+                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);">
+                <span style="font-weight: 800; color: var(--brand-purple-dark);">Aggregate Rating:</span>
+                <span style="color: #ffca08; font-size: 1.1rem; font-weight: 900;">
+                  <i class="bi bi-star-fill"></i>
+                  <c:choose>
+                    <c:when test="${seller.rating != null}">${seller.rating}</c:when>
+                    <c:otherwise>0.0</c:otherwise>
+                  </c:choose>
+                  / 5.0
+                </span>
+              </div>
+            </div>
+
+            <div class="fdf-section">
+              <div class="fdf-section-header">
+                <h2><i class="bi bi-chat-square-text-fill"></i> All Reviews</h2>
+              </div>
+              <div class="fdf-section-body">
+                <c:choose>
+                  <c:when test="${empty customerReviews}">
+                    <div style="text-align: center; padding: 100px 40px; color: var(--fdf-muted);">
+                      <i class="bi bi-chat-square-dots"
+                        style="font-size: 64px; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
+                      <h3 style="font-weight: 800; color: var(--brand-purple-dark);">No customer reviews yet.</h3>
+                      <p style="font-size: 0.95rem;">Encourage your customers to leave feedback after their purchase!</p>
+                    </div>
+                  </c:when>
+                  <c:otherwise>
+                    <c:forEach var="o" items="${customerReviews}">
+                      <c:set var="reviewerName" value="${not empty o.user and not empty o.user.fullName ? o.user.fullName : 'Customer'}" />
+                      <c:set var="productName" value="${not empty o.product and not empty o.product.name ? o.product.name : 'Product'}" />
+                      <c:set var="stars" value="${o.rating}" />
+                      <div
+                        style="padding: 24px; border-radius: 20px; background: #fafafa; margin-bottom: 20px; border: 1px solid #eee;">
+                        <div
+                          style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; gap: 12px; flex-wrap: wrap;">
+                          <div style="display: flex; align-items: center; gap: 14px;">
+                            <div
+                              style="width: 48px; height: 48px; border-radius: 16px; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
+                              ${fn:substring(reviewerName, 0, 1)}
+                            </div>
+                            <div>
+                              <div style="font-weight: 800; font-size: 1rem; color: var(--brand-purple-darker);">
+                                <c:out value="${reviewerName}" /></div>
+                              <div style="font-size: 0.8rem; color: var(--fdf-muted); font-weight: 500;">
+                                Order #${o.id}
+                                <c:if test="${not empty o.orderTime}"> • ${o.orderTime}</c:if>
+                              </div>
+                            </div>
+                          </div>
+                          <div
+                            style="background: #fff; padding: 6px 12px; border-radius: 10px; border: 1px solid #eee; color: #ffca08; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                            <span aria-hidden="true">
+                              <c:forEach begin="1" end="5" var="i">
+                                <c:choose>
+                                  <c:when test="${i <= stars}">★</c:when>
+                                  <c:otherwise>☆</c:otherwise>
+                                </c:choose>
+                              </c:forEach>
+                            </span>
+                            <span style="color: var(--brand-purple-dark);">${stars}/5</span>
+                          </div>
+                        </div>
+
+                        <div
+                          style="background: #fff; padding: 20px; border-radius: 14px; border-left: 4px solid var(--brand-pink); font-size: 0.95rem; color: var(--fdf-text); line-height: 1.6; margin-bottom: 15px; word-break: break-word;">
+                          <c:choose>
+                            <c:when test="${not empty o.review}">
+                              <span style="font-style: italic;">"<c:out value="${o.review}" />"</span>
+                            </c:when>
+                            <c:otherwise>
+                              <span style="color: var(--fdf-muted); font-style: italic;">No written comment.</span>
+                            </c:otherwise>
+                          </c:choose>
+                        </div>
+
+                        <div
+                          style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0; flex-wrap: wrap;">
+                          <div
+                            style="font-size: 0.8rem; font-weight: 700; color: var(--fdf-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                            Product:</div>
+                          <div style="font-size: 0.9rem; font-weight: 700; color: var(--brand-pink);">
+                            <c:out value="${productName}" /></div>
+                          <span style="margin-left:auto; font-size:0.75rem; font-weight:700; color:#059669; background:#ecfdf5; padding:4px 10px; border-radius:999px;">
+                            Verified purchase
+                          </span>
+                        </div>
+                      </div>
+                    </c:forEach>
+                  </c:otherwise>
+                </c:choose>
+              </div>
+            </div>
+          </c:if>
+
       <%-- Edit Profile Modal --%>
         <div id="profileEditModal" class="fdf-modal">
           <div class="fdf-modal-content" style="max-width: 750px; max-height: 90vh; overflow-y: auto;">
@@ -1681,8 +1778,8 @@
                 <div>
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
                   <input type="tel" name="phone" id="profilePhone" class="form-ctrl" value="${seller.phone}"
-                         required minlength="10" maxlength="10" pattern="[0-9]{10}"
-                         title="Exactly 10 digits"
+                         required minlength="10" maxlength="10" pattern="[6-9][0-9]{9}"
+                         title="Valid 10-digit Indian mobile number"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 
@@ -1861,83 +1958,6 @@
           }
         </script>
 
-        <%-- ══════ REVIEWS ══════ --%>
-          <c:if test="${section == 'reviews'}">
-            <div class="header-info" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; margin-bottom:24px; width:100%;">
-              <div>
-                <h1 style="margin:0; font-weight:800;">Customer Feedback</h1>
-                <p style="margin:4px 0 0 0; color:var(--fdf-muted); font-size:0.9rem;">View rating history, customer comments, and product impact reviews.</p>
-              </div>
-              <div
-                style="background: #fff; padding: 10px 20px; border-radius: 14px; border: 1px solid var(--fdf-border); display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-sm);">
-                <span style="font-weight: 800; color: var(--brand-purple-dark);">Aggregate Rating:</span>
-                <span style="color: #ffca08; font-size: 1.1rem; font-weight: 900;">
-                  <i class="bi bi-star-fill"></i> ${seller.rating} / 5.0
-                </span>
-              </div>
-            </div>
-
-            <div class="fdf-section">
-              <div class="fdf-section-header">
-                <h2><i class="bi bi-chat-square-text-fill"></i> All Reviews</h2>
-              </div>
-              <div class="fdf-section-body">
-                <c:set var="hasReviews" value="false" />
-                <c:forEach var="o" items="${orders}">
-                  <c:if test="${not empty o.rating}">
-                    <c:set var="hasReviews" value="true" />
-                    <div
-                      style="padding: 24px; border-radius: 20px; background: #fafafa; margin-bottom: 20px; border: 1px solid #eee; transition: 0.3s;"
-                      onmouseover="this.style.background='#fff'; this.style.boxShadow='var(--shadow-md)';"
-                      onmouseout="this.style.background='#fafafa'; this.style.boxShadow='none';">
-                      <div
-                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                        <div style="display: flex; align-items: center; gap: 14px;">
-                          <div
-                            style="width: 48px; height: 48px; border-radius: 16px; background: var(--gradient-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px;">
-                            ${not empty o.user.fullName ? o.user.fullName.substring(0,1) : 'U'}
-                          </div>
-                          <div>
-                            <div style="font-weight: 800; font-size: 1rem; color: var(--brand-purple-darker);">
-                              ${o.user.fullName}</div>
-                            <div style="font-size: 0.8rem; color: var(--fdf-muted); font-weight: 500;">Order #${o.id} •
-                              ${o.orderTime}</div>
-                          </div>
-                        </div>
-                        <div
-                          style="background: #fff; padding: 6px 12px; border-radius: 10px; border: 1px solid #eee; color: #ffca08; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; gap: 5px;">
-                          <i class="bi bi-star-fill"></i> ${o.rating}.0
-                        </div>
-                      </div>
-
-                      <div
-                        style="background: #fff; padding: 20px; border-radius: 14px; border-left: 4px solid var(--brand-pink); font-size: 0.95rem; color: var(--fdf-text); line-height: 1.6; margin-bottom: 15px; font-style: italic;">
-                        "${o.review}"
-                      </div>
-
-                      <div
-                        style="display: flex; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid #f0f0f0;">
-                        <div
-                          style="font-size: 0.8rem; font-weight: 700; color: var(--fdf-muted); text-transform: uppercase; letter-spacing: 0.5px;">
-                          Product Impact:</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--brand-pink);">${o.product.name}
-                        </div>
-                      </div>
-                    </div>
-                  </c:if>
-                </c:forEach>
-
-                <c:if test="${!hasReviews}">
-                  <div style="text-align: center; padding: 100px 40px; color: var(--fdf-muted);">
-                    <i class="bi bi-chat-square-dots"
-                      style="font-size: 64px; display: block; margin-bottom: 20px; opacity: 0.2;"></i>
-                    <h3 style="font-weight: 800; color: var(--brand-purple-dark);">No Reviews Yet</h3>
-                    <p style="font-size: 0.95rem;">Encourage your customers to leave feedback after their purchase!</p>
-                  </div>
-                </c:if>
-              </div>
-            </div>
-          </c:if>
           </div>
 
           <script>
@@ -2048,26 +2068,50 @@
               return true;
             }
 
-            function openAddModal() {
+            function closeProductModal() {
+              const modal = document.getElementById('productModal');
+              if (!modal) return;
+              modal.style.display = 'none';
+              modal.classList.remove('is-open');
+              modal.setAttribute('aria-hidden', 'true');
+            }
+
+            function openAddModal(ev) {
+              if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+              }
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
               const title = document.getElementById('modalTitle');
-
-              title.innerHTML = '<i class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Catalog Deployment';
+              if (!modal || !form) {
+                window.location.href = '${pageContext.request.contextPath}/women-products/seller/dashboard?section=products';
+                return false;
+              }
+              if (title) {
+                title.innerHTML = '<i class="bi bi-rocket-takeoff-fill" style="color:var(--brand-pink)"></i> Add product';
+              }
               form.action = '${pageContext.request.contextPath}/women-products/seller/products/add';
-              form.reset();
+              try { form.reset(); } catch (e) {}
 
               const idInput = document.getElementById('editProductId');
               if (idInput) idInput.value = '';
 
-              // Set defaults
-              form.querySelector('[name="active"]').checked = true;
-              form.querySelector('[name="trackInventory"]').checked = true;
-              form.querySelector('[name="featured"]').checked = false;
-              form.querySelector('[name="images"]').setAttribute('required', 'required');
+              const active = form.querySelector('[name="active"]');
+              const track = form.querySelector('[name="trackInventory"]');
+              const featured = form.querySelector('[name="featured"]');
+              const images = form.querySelector('[name="images"]');
+              if (active) active.checked = true;
+              if (track) track.checked = true;
+              if (featured) featured.checked = false;
+              if (images) images.setAttribute('required', 'required');
               updateShortDescCounter();
 
+              document.body.appendChild(modal);
               modal.style.display = 'flex';
+              modal.classList.add('is-open');
+              modal.setAttribute('aria-hidden', 'false');
+              return false;
             }
 
             function openEditModal(p) {
@@ -2078,15 +2122,18 @@
               const modal = document.getElementById('productModal');
               const form = document.getElementById('productForm');
               const title = document.getElementById('modalTitle');
+              if (!modal || !form) return;
 
-              title.innerHTML = '<i class="bi bi-pencil-square" style="color:var(--brand-pink)"></i> Update Product Trace';
+              if (title) {
+                title.innerHTML = '<i class="bi bi-pencil-square" style="color:var(--brand-pink)"></i> Update Product';
+              }
               form.action = '${pageContext.request.contextPath}/women-products/seller/products/' + p.id + '/edit';
-              form.querySelector('[name="images"]').removeAttribute('required');
+              const images = form.querySelector('[name="images"]');
+              if (images) images.removeAttribute('required');
 
               const idInput = document.getElementById('editProductId');
               if (idInput) idInput.value = p.id;
 
-              // Fill fields
               form.querySelector('[name="name"]').value = p.name || '';
               form.querySelector('[name="brand"]').value = p.brand || '';
               form.querySelector('[name="description"]').value = (p.description || '').substring(0, SHORT_DESC_MAX);
@@ -2105,12 +2152,17 @@
               form.querySelector('[name="usageInstructions"]').value = p.usageInstructions || '';
               form.querySelector('[name="tags"]').value = p.tags || '';
 
-              form.querySelector('[name="active"]').checked = p.active;
-              form.querySelector('[name="featured"]').checked = p.featured;
-              form.querySelector('[name="trackInventory"]').checked = p.trackInventory;
+              const active = form.querySelector('[name="active"]');
+              const featured = form.querySelector('[name="featured"]');
+              const track = form.querySelector('[name="trackInventory"]');
+              if (active) active.checked = p.active;
+              if (featured) featured.checked = p.featured;
+              if (track) track.checked = p.trackInventory;
               updateShortDescCounter();
 
+              document.body.appendChild(modal);
               modal.style.display = 'flex';
+              modal.classList.add('is-open');
             }
 
             function openProfileEditModal() {
@@ -2121,11 +2173,12 @@
             window.onclick = function (event) {
               const pModal = document.getElementById('productModal');
               const sModal = document.getElementById('profileEditModal');
-              if (event.target == pModal) {
-                pModal.style.display = "none";
+              if (pModal && event.target == pModal) {
+                closeProductModal();
               }
-              if (event.target == sModal) {
+              if (sModal && event.target == sModal) {
                 sModal.style.display = "none";
+                sModal.classList.remove('is-open');
               }
             }
 
@@ -2150,8 +2203,8 @@
                 alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
                 return false;
               }
-              if (!/^\d{10}$/.test(phone)) {
-                alert('Phone number must be exactly 10 digits.');
+              if (!/^[6-9]\d{9}$/.test(phone)) {
+                alert('Enter a valid 10-digit Indian mobile number.');
                 return false;
               }
               if (address.length < 10 || address.length > 1000) {
@@ -2171,6 +2224,11 @@
             }
 
             document.addEventListener("DOMContentLoaded", function() {
+              try {
+                if (new URLSearchParams(window.location.search).get('openAdd') === '1') {
+                  openAddModal();
+                }
+              } catch (e) {}
               const sellerProfileForm = document.getElementById('sellerProfileForm');
               if (sellerProfileForm) {
                 sellerProfileForm.addEventListener('submit', function(e) {
@@ -2309,7 +2367,6 @@
                   .then(data => {
                     if (btn) btn.disabled = false;
                     if (data.status === 'SUCCESS') {
-                      // Dynamically update status badge cell in table
                       const row = form.closest('tr');
                       if (row) {
                         const badgeSpan = row.querySelector('.fdf-badge');
@@ -2318,12 +2375,17 @@
                           badgeSpan.textContent = data.newStatus;
                         }
                       }
-                      if (data.newStatus === 'DELIVERED' || data.newStatus === 'CANCELLED') {
-                        const cell = document.getElementById('orderStatusCell_' + orderId);
+                      const cell = document.getElementById('orderStatusCell_' + orderId);
+                      const next = data.nextStatuses || [];
+                      if (data.newStatus === 'DELIVERED' || data.newStatus === 'CANCELLED' || next.length === 0) {
                         if (cell) {
-                          const text = data.newStatus === 'DELIVERED' ? 'Fulfilled' : 'Terminated';
-                          cell.innerHTML = '<div style="display:flex; align-items:center; gap:8px; padding-left:12px;"><span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">' + text + '</span><i class="bi bi-lock-fill" style="opacity:0.3;"></i></div>';
+                          const text = data.newStatus === 'DELIVERED' ? 'Fulfilled' : (data.newStatus === 'CANCELLED' ? 'Terminated' : 'Updated');
+                          cell.innerHTML = '<div style="display:flex; align-items:center; gap:8px; justify-content:center;"><span style="font-size:0.85rem; font-weight:700; color:var(--fdf-muted);">' + text + '</span></div>';
                         }
+                      } else if (selectEl) {
+                        selectEl.innerHTML = next.map(function(st) {
+                          return '<option value="' + st + '">' + st + '</option>';
+                        }).join('');
                       }
                     } else {
                       alert('Failed to update status: ' + (data.message || 'Error'));

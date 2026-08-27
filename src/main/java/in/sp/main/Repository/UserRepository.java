@@ -1,7 +1,5 @@
 package in.sp.main.Repository;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +14,9 @@ import in.sp.main.Entities.User;
 import in.sp.main.Entities.VerificationStatus;
 
 public interface UserRepository extends JpaRepository<User, Long> {
-    // Add method to find user by email (used for login)
+    @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.emergencyContacts LEFT JOIN FETCH u.medicalDetails WHERE u.id = :id")
+    Optional<User> findByIdWithProfileDetails(@Param("id") Long id);
+
     Optional<User> findByEmail(String email);
     Optional<User> findByPhoneNumber(String phoneNumber);
 
@@ -27,9 +27,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByVerificationStatusIsNull();
 
     @Query("SELECT u FROM User u WHERE LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-  	       "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-  	       "OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-  	List<User> searchUsers(@Param("keyword") String keyword);
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(u.phoneNumber) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<User> searchUsers(@Param("keyword") String keyword);
 
     List<User> findByBanned(boolean banned);
 

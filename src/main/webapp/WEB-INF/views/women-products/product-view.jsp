@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
     :root {
       --pv-bg: #fffcfd;
@@ -568,7 +569,7 @@
     }
   </style>
 </head>
-<body>
+<body class="wp-shop">
   <header class="pv-hero">
     <div class="pv-hero-inner">
       <a href="${pageContext.request.contextPath}/women-products" class="back-link">
@@ -576,6 +577,12 @@
       </a>
       <h1 class="pv-page-title"><i class="bi bi-bag-heart-fill"></i> Product Details</h1>
       <p class="pv-page-subtitle">Review product information, pricing, and availability before you buy.</p>
+      <div class="wp-subnav" style="justify-content:flex-start;margin-top:14px;">
+        <a href="${pageContext.request.contextPath}/women-products">Shop</a>
+        <a href="${pageContext.request.contextPath}/women-products/wishlist">Wishlist</a>
+        <a href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
+        <a href="${pageContext.request.contextPath}/women-products/my-orders">My Orders</a>
+      </div>
     </div>
   </header>
 
@@ -979,8 +986,6 @@
     });
   </script>
 
-  <footer class="pv-footer">
-    <p>Safeher Shop — Empowering women through a secure and verified marketplace.</p>
-  </footer>
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>

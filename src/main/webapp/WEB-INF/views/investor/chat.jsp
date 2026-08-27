@@ -11,11 +11,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --navy-dark: #0f172a;
-            --navy-light: #1e1b4b;
-            --primary: #312e81;
+            --navy-dark: #0f172a; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519;
+            --navy-light: #4c0519;
+            --primary: #f43f5e;
             --coral: #f43f5e;
-            --bg-light: #f8fafc;
+            --bg-light: #f8fafc; --rose-bg-light: #ffe4e6; --rose-bg-light: #ffe4e6;
         }
 
         body {
@@ -32,7 +32,7 @@
         #sidebar-wrapper {
             min-width: 260px;
             max-width: 260px;
-            background: var(--navy-dark);
+            background: #ffffff;
             color: white;
             min-height: 100vh;
             border-top-right-radius: 40px;
@@ -47,12 +47,12 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid #ffe4e6;
         }
 
         .sidebar-link {
             background: transparent;
-            color: rgba(255,255,255,0.7);
+            color: #64748b;
             padding: 14px 25px;
             font-size: 0.95rem;
             font-weight: 500;
@@ -66,8 +66,8 @@
 
         .sidebar-link:hover, .sidebar-link.active {
             color: white;
-            background: rgba(255,255,255,0.05);
-            border-left-color: var(--coral);
+            background: #fff1f2;
+            border-left-color: #f43f5e;
         }
 
         #page-content-wrapper {
@@ -93,7 +93,7 @@
         }
 
         .chat-header {
-            background: var(--navy-dark);
+            background: #ffffff;
             color: white;
             padding: 20px;
             display: flex;
@@ -121,7 +121,7 @@
         }
 
         .message.sent {
-            background-color: var(--primary);
+            background-color: #f43f5e;
             color: white;
             align-self: flex-end;
             border-bottom-right-radius: 2px;
@@ -147,7 +147,11 @@
             background: white;
             border-top: 1px solid #e2e8f0;
         }
-    </style>
+    
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 
@@ -189,7 +193,7 @@
                         <span class="small text-white-50">${proposal.title}</span>
                     </div>
                 </div>
-                <span class="badge bg-success rounded-pill px-3">Direct Channel</span>
+                <span class="badge bg-rose rounded-pill px-3">Direct Channel</span>
             </div>
 
             <!-- Messages Area -->
@@ -214,7 +218,7 @@
                     <input type="hidden" name="proposalId" value="${proposal.id}">
                     <div class="input-group">
                         <input type="text" name="message" class="form-control rounded-pill-start py-3 px-4 border-end-0" placeholder="Type a message..." required autocomplete="off">
-                        <button class="btn btn-primary rounded-pill-end px-4" type="submit" style="background-color: var(--primary); border: none;">
+                        <button class="btn btn-primary rounded-pill-end px-4" type="submit" style="background-color: #f43f5e; border: none;">
                             <i class="bi bi-send-fill"></i>
                         </button>
                     </div>

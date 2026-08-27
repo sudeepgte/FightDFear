@@ -49,10 +49,29 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         }
         HttpServletRequest httpRequest = servletRequest.getServletRequest();
         String token = readJwtCookie(httpRequest);
-        if (token == null || !jwtUtil.validateToken(token)) {
-            return false; // reject unauthenticated socket handshake
+        if (token != null && jwtUtil.validateToken(token)) {
+            return authenticateFromJwt(token, attributes);
         }
 
+        /* Session fallback for web users logged in without JWT cookie */
+        jakarta.servlet.http.HttpSession session = httpRequest.getSession(false);
+        if (session != null) {
+            Object sessionUser = session.getAttribute("user");
+            if (sessionUser instanceof in.sp.main.Entities.User user) {
+                String email = user.getEmail();
+                if (email == null || email.isBlank()) {
+                    email = "user-" + user.getId() + "@session.fightdfear";
+                }
+                attributes.put("authEmail", email);
+                attributes.put("authRole", "USER");
+                attributes.put("authUserId", user.getId());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean authenticateFromJwt(String token, Map<String, Object> attributes) {
         String email = jwtUtil.extractUsername(token);
         String role = jwtUtil.extractRole(token);
         if (email == null || role == null) {
@@ -73,7 +92,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                     .ifPresent(p -> attributes.put("authUserId", p.getId()));
             case "SALON" -> {
                 in.sp.main.Entities.Salon s = salonRepository.findByUsername(email).orElse(null);
-                if (s == null) s = salonRepository.findByEmail(email); // Fallback just in case
+                if (s == null) s = salonRepository.findByEmail(email);
                 if (s != null) attributes.put("authUserId", s.getId());
             }
             default -> {

@@ -20,6 +20,7 @@ import in.sp.main.Entities.DeliveryPartner;
 import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Entities.WomenProductOrder;
+import in.sp.main.Entities.WomenProductSeller;
 import in.sp.main.Repository.DeliveryPartnerRepository;
 import in.sp.main.Repository.WomenProductOrderRepository;
 import in.sp.main.Service.PasswordService;
@@ -59,20 +60,25 @@ public class WomenProductDeliveryPartnerController {
         String cleanedEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         String cleanedName = fullName == null ? "" : fullName.trim();
         String cleanedPhone = phone == null ? "" : phone.trim();
-        if (cleanedName.length() < 2) {
-            model.addAttribute("error", "Name is required.");
+        if (cleanedName.length() < WomenProductSeller.FULL_NAME_MIN_LENGTH
+                || cleanedName.length() > WomenProductSeller.FULL_NAME_MAX_LENGTH
+                || !cleanedName.matches(WomenProductSeller.FULL_NAME_PATTERN)) {
+            model.addAttribute("error",
+                    "Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).");
             return "women-products/delivery-register";
         }
-        if (cleanedEmail.isBlank() || !cleanedEmail.contains("@")) {
-            model.addAttribute("error", "A valid email is required.");
+        String emailErr = in.sp.main.Util.MobileValidation.requireEmail(cleanedEmail);
+        if (emailErr != null) {
+            model.addAttribute("error", emailErr.endsWith(".") ? emailErr : emailErr + ".");
             return "women-products/delivery-register";
         }
-        if (!cleanedPhone.matches("^\\d{10}$")) {
-            model.addAttribute("error", "Phone number must be exactly 10 digits.");
+        if (!cleanedPhone.matches("^[6-9]\\d{9}$")) {
+            model.addAttribute("error", "Enter a valid 10-digit Indian mobile number.");
             return "women-products/delivery-register";
         }
-        if (password == null || password.length() < 6) {
-            model.addAttribute("error", "Password must be at least 6 characters.");
+        String passErr = in.sp.main.Util.MobileValidation.requirePassword(password);
+        if (passErr != null) {
+            model.addAttribute("error", passErr.endsWith(".") ? passErr : passErr + ".");
             return "women-products/delivery-register";
         }
         if (deliveryRepo.findByEmail(cleanedEmail).isPresent()) {

@@ -35,6 +35,10 @@ public class User {
     // New fields
     private Integer age;  // Age field
     private String identityDocument; // Identity document field (e.g., passport or ID card number)
+    
+    private String city;
+    private String workCollegeAddress;
+    private String safetyPreferences;
 
     // Purpose: admin-controlled verification gate (used by Buddy Matching to show only verified users).
     @Enumerated(EnumType.STRING)
@@ -508,6 +512,15 @@ public class User {
     public void setCreatorRating(Double creatorRating) { this.creatorRating = creatorRating; }
     public Integer getCreatorReviewCount() { return creatorReviewCount == null ? 0 : creatorReviewCount; }
     public void setCreatorReviewCount(Integer creatorReviewCount) { this.creatorReviewCount = creatorReviewCount; }
+
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+
+    public String getWorkCollegeAddress() { return workCollegeAddress; }
+    public void setWorkCollegeAddress(String workCollegeAddress) { this.workCollegeAddress = workCollegeAddress; }
+
+    public String getSafetyPreferences() { return safetyPreferences; }
+    public void setSafetyPreferences(String safetyPreferences) { this.safetyPreferences = safetyPreferences; }
 
     @Override
     public boolean equals(Object o) {

@@ -320,21 +320,24 @@
                                         </c:choose>
                                     </td>
                                     <td>
-                                        <c:choose>
-                                            <c:when test="${p.status == 'PENDING'}">
-                                                <div class="d-flex gap-2">
-                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/approve" method="post">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <a href="${pageContext.request.contextPath}/entrepreneurs/about/${p.entrepreneur.id}" class="btn btn-outline-primary btn-sm rounded-pill">
+                                                <i class="bi bi-person-badge"></i> Profile
+                                            </a>
+                                            <c:choose>
+                                                <c:when test="${p.status == 'PENDING'}">
+                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/approve" method="post" class="m-0">
                                                         <button type="submit" class="btn btn-approve btn-sm">Approve</button>
                                                     </form>
-                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/reject" method="post">
+                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/reject" method="post" class="m-0">
                                                         <button type="submit" class="btn btn-reject btn-sm">Reject</button>
                                                     </form>
-                                                </div>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="text-muted small">Processed</span>
-                                            </c:otherwise>
-                                        </c:choose>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-muted small">Processed</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -407,6 +410,9 @@
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column gap-2">
+                                            <a href="${pageContext.request.contextPath}/entrepreneurs/about/${e.id}" class="btn btn-outline-primary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;">
+                                                <i class="bi bi-person-badge"></i> View Profile
+                                            </a>
                                             <c:if test="${e.verificationStatus == 'PENDING'}">
                                                 <div class="d-flex gap-1">
                                                     <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${e.id}/approve" method="post" class="d-inline">
@@ -417,7 +423,7 @@
                                                     </form>
                                                 </div>
                                             </c:if>
-                                            <button class="btn btn-outline-primary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;" data-bs-toggle="modal" data-bs-target="#activityModalEnt-${e.id}">
+                                            <button class="btn btn-outline-secondary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;" data-bs-toggle="modal" data-bs-target="#activityModalEnt-${e.id}">
                                                 <i class="bi bi-activity"></i> View Activity
                                             </button>
                                         </div>

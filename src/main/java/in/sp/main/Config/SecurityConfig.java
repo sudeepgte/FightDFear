@@ -212,7 +212,10 @@ public class SecurityConfig {
             )
             .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
                 String path = request.getRequestURI();
-                boolean wantsJson = path != null && (path.startsWith("/api/") || path.startsWith("/payment/"));
+                boolean wantsJson = path != null && (path.startsWith("/api/")
+                        || path.startsWith("/payment/")
+                        || path.startsWith("/chat/send-message")
+                        || path.startsWith("/chat/messages-since"));
                 if (wantsJson) {
                     response.setStatus(401);
                     response.setContentType("application/json");

@@ -172,7 +172,7 @@
         }
     </style>
 </head>
-<body>
+<body class="wp-auth">
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/women-products">
             <i class="bi bi-bag-heart-fill"></i> Women Products
@@ -211,7 +211,8 @@
                     </div>
                     <div class="form-group">
                         <label for="businessName">Shop / business name *</label>
-                        <input class="form-input" type="text" name="businessName" id="businessName" maxlength="100" required placeholder="Shop name">
+                        <input class="form-input" type="text" name="businessName" id="businessName" maxlength="100" required
+                               pattern="[A-Za-z0-9][A-Za-z0-9 &amp;.,'()\-]{1,99}" placeholder="Shop name">
                     </div>
                 </div>
                 <div class="row-2">
@@ -281,18 +282,72 @@
             });
         });
         document.getElementById('sellerForm').addEventListener('submit', function (e) {
+            var fullName = document.getElementById('fullName').value.trim();
+            var businessName = document.getElementById('businessName').value.trim();
+            var email = document.getElementById('email').value.trim();
             var phone = document.getElementById('phone').value.trim();
             var pass = document.getElementById('password').value;
             var confirm = document.getElementById('confirmPassword').value;
+            var address = document.getElementById('address').value.trim();
+            var photo = document.getElementById('profilePhoto');
+            var identity = document.getElementById('identityDoc');
+            var terms = this.querySelector('[name="acceptedTerms"]');
+
+            if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(fullName)) {
+                e.preventDefault();
+                alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).');
+                return;
+            }
+            if (!/^[A-Za-z0-9][A-Za-z0-9 &.,'()\-]{1,99}$/.test(businessName) || businessName.length < 2) {
+                e.preventDefault();
+                alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
+                return;
+            }
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                e.preventDefault();
+                alert('Enter a valid email address.');
+                return;
+            }
             if (!/^[6-9]\d{9}$/.test(phone)) {
                 e.preventDefault();
                 alert('Enter a valid 10-digit Indian mobile number.');
                 return;
             }
+            if (!/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/.test(pass)) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters and include a number and special character.');
+                return;
+            }
             if (pass !== confirm) {
                 e.preventDefault();
                 alert('Passwords do not match.');
+                return;
             }
+            if (address.length < 10 || address.length > 1000) {
+                e.preventDefault();
+                alert('Please enter a complete address (at least 10 characters).');
+                return;
+            }
+            if (!photo.files || !photo.files.length) {
+                e.preventDefault();
+                alert('Profile photo is required.');
+                return;
+            }
+            if (!identity.files || !identity.files.length) {
+                e.preventDefault();
+                alert('ID / document is required.');
+                return;
+            }
+            if (!terms || !terms.checked) {
+                e.preventDefault();
+                alert('Please accept the Terms and Privacy Policy.');
+                return;
+            }
+            document.getElementById('fullName').value = fullName;
+            document.getElementById('businessName').value = businessName;
+            document.getElementById('email').value = email;
+            document.getElementById('phone').value = phone;
+            document.getElementById('address').value = address;
         });
     </script>
 </body>

@@ -78,7 +78,7 @@ public class AuthController {
             } else if (type == in.sp.main.Entities.UserType.INVESTOR) {
                 loginView = "investorLogin";
             } else if (type == in.sp.main.Entities.UserType.EVENT_HOST) {
-                loginView = "eventHostLogin";
+                loginView = "women-events/host-login";
             }
         }
         

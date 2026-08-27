@@ -216,6 +216,10 @@
             cursor: pointer;
         }
 
+        .mobile-only-item {
+            display: none;
+        }
+
         /* ---------------- PREMIUM SPLIT HERO ---------------- */
         .split-hero-section {
             background: linear-gradient(135deg, #FFFBFC 0%, #FFF5F7 100%);
@@ -242,7 +246,7 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: none;
-            max-height: 400px;
+            max-height: 950px;
             aspect-ratio: 4/3;
         }
 
@@ -440,13 +444,90 @@
 
         @media (max-width: 900px) {
             .navbar {
-                padding: 0 2rem;
+                padding: 0 1.5rem;
             }
-            .nav-links, .nav-actions .nav-login, .nav-actions .nav-events {
+            .nav-links {
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                top: var(--nav-height);
+                left: 0;
+                right: 0;
+                background: rgba(255, 244, 246, 0.98);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                padding: 1.5rem 2rem 2.5rem;
+                height: calc(100vh - var(--nav-height));
+                overflow-y: auto;
+                gap: 1rem;
+                align-items: flex-start;
+                box-shadow: 0 20px 40px rgba(45, 20, 44, 0.12);
+                border-top: 1px solid rgba(248, 200, 212, 0.6);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.3s ease;
+                z-index: 999;
+            }
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            .nav-links .nav-item {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+                height: auto;
+                padding: 0.5rem 0;
+                font-size: 1.05rem;
+                font-weight: 600;
+                border-bottom: 1px solid rgba(248, 200, 212, 0.3);
+            }
+            .nav-links .dropdown-menu {
+                position: static;
+                transform: none !important;
+                opacity: 1;
+                visibility: visible;
+                box-shadow: none;
+                background: rgba(248, 200, 212, 0.2);
+                padding: 0.5rem 1rem;
+                border-radius: 12px;
+                margin-top: 0.5rem;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+            .nav-links .dropdown-item {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.9rem;
+                color: var(--text-plum);
+                border-radius: 6px;
+            }
+            .mobile-only-item {
+                display: flex;
+            }
+            .nav-actions .nav-login, .nav-actions .nav-events {
                 display: none;
             }
             .mobile-menu-btn {
-                display: block;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: rgba(243, 63, 94, 0.08);
+                border: 1px solid rgba(243, 63, 94, 0.2);
+                color: var(--text-plum);
+                font-size: 1.3rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .mobile-menu-btn:hover {
+                background: var(--brand-plum);
+                color: var(--white);
             }
             
             .carousel-slide {
@@ -1786,6 +1867,21 @@
                     <a href="/users/register" class="dropdown-item">Women's Community</a>
                 </div>
             </li>
+            <li class="nav-item mobile-only-item">
+                Login Portals ⌄
+                <div class="dropdown-menu">
+                    <a href="/login" class="dropdown-item">Join as Member</a>
+                    <a href="/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="/centres/login" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="/salons/login" class="dropdown-item">Beauty & Wellness</a>
+                    <a href="/seller/login" class="dropdown-item">Service Partner</a>
+                    <a href="/provider/login" class="dropdown-item">Marketplace Seller</a>
+                    <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
+                    <a href="/investor/login" class="dropdown-item">Investor</a>
+                    <a href="/host/login" class="dropdown-item">Event Host</a>
+                    <a href="/trainer/login" class="dropdown-item">Fitness Trainer</a>
+                </div>
+            </li>
         </ul>
 
         <div class="nav-actions">
@@ -1800,6 +1896,7 @@
                     <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty & Wellness</a>
+					<a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
                     <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
                     <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
@@ -1861,12 +1958,30 @@
 
             <!-- Right Side: Image Column -->
             <div class="hero-img-col">
-                <div class="floating-badge badge-top-right">
-                    <div class="badge-icon">🛡️</div>
-                    <span>Protected & Connected</span>
-                </div>
+              
                 <!-- Using the Indian women empowerment hero image -->
                 <img src="${pageContext.request.contextPath}/images/hero_split_img.png" alt="Empowering Women" class="hero-split-image">
+            </div>
+        </div>
+    </section>
+  <!-- OPTIONAL STATISTICS STRIP -->
+    <section class="stats-section reveal">
+        <div class="stats-grid">
+            <div>
+                <div class="stat-number">10K+</div>
+                <div class="stat-label">Women Connected</div>
+            </div>
+            <div>
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Services</div>
+            </div>
+            <div>
+                <div class="stat-number">100+</div>
+                <div class="stat-label">Events</div>
+            </div>
+            <div>
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Resources</div>
             </div>
         </div>
     </section>
@@ -1877,24 +1992,9 @@
             
             <!-- ROW 1: SAFETY WITHIN REACH -->
             <div class="safety-block-row">
-                <!-- Left Image with Floating Badges -->
+                <!-- Left Image (Clean image without floating badges overlay) -->
                 <div class="safety-img-wrapper">
-                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1000&q=80" alt="Your Safety Always Within Reach" class="safety-img">
-                    
-                    <div class="safety-badge-overlay badge-top-left">
-                        <div class="badge-icon-pink">🛡️</div>
-                        <span>Safety Protected</span>
-                    </div>
-                    
-                    <div class="safety-badge-overlay badge-middle-right">
-                        <div class="badge-icon-pink">📍</div>
-                        <span>Live Location</span>
-                    </div>
-                    
-                    <div class="safety-badge-overlay badge-bottom-left">
-                        <div class="badge-icon-pink">💖</div>
-                        <span>Trusted Support</span>
-                    </div>
+                    <img src="${pageContext.request.contextPath}/images/safety_emergency_illustration.png" alt="Your Safety Always Within Reach" class="safety-img">
                 </div>
 
                 <!-- Right Content Column -->
@@ -2269,27 +2369,7 @@
         </div>
     </section>
 
-    <!-- OPTIONAL STATISTICS STRIP -->
-    <section class="stats-section reveal">
-        <div class="stats-grid">
-            <div>
-                <div class="stat-number">10K+</div>
-                <div class="stat-label">Women Connected</div>
-            </div>
-            <div>
-                <div class="stat-number">500+</div>
-                <div class="stat-label">Services</div>
-            </div>
-            <div>
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Events</div>
-            </div>
-            <div>
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Resources</div>
-            </div>
-        </div>
-    </section>
+   
 
     <!-- SECTION 5: WOMEN'S AWARENESS HUB -->
     <section class="awareness-section section-padding reveal">
@@ -2397,6 +2477,7 @@
     <section class="marketplace-section reveal">
         <div class="marketplace-header">
             <h2 style="background-color: #3A60D0; color: white; display: inline-block; padding: 5px 15px; font-size: 2.8rem; font-family: var(--font-serif); margin-bottom: 10px;">Support Her. Shop Her. Grow Together.</h2>
+      
             <br>
             <p style="background-color: #3A60D0; color: white; display: inline-block; padding: 4px 12px; font-size: 0.95rem; margin-bottom: 5px;">Discover products, services and businesses created by women and</p><br>
             <p style="background-color: #3A60D0; color: white; display: inline-block; padding: 4px 12px; font-size: 0.95rem; margin: 0;">support the people behind them</p>
@@ -2618,9 +2699,32 @@
 
             // Mobile menu toggle
             const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (mobileBtn) {
-                mobileBtn.addEventListener('click', () => {
-                    alert('Mobile menu toggled! Integration ready.');
+            const navLinks = document.querySelector('.nav-links');
+            if (mobileBtn && navLinks) {
+                mobileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navLinks.classList.toggle('active');
+                    const isOpen = navLinks.classList.contains('active');
+                    mobileBtn.innerHTML = isOpen ? '✕' : '☰';
+                    mobileBtn.setAttribute('aria-expanded', isOpen);
+                });
+
+                // Close mobile menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !mobileBtn.contains(e.target)) {
+                        navLinks.classList.remove('active');
+                        mobileBtn.innerHTML = '☰';
+                        mobileBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                // Close mobile menu when clicking any link inside
+                navLinks.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        navLinks.classList.remove('active');
+                        mobileBtn.innerHTML = '☰';
+                        mobileBtn.setAttribute('aria-expanded', 'false');
+                    });
                 });
             }
 

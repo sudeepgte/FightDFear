@@ -1,20 +1,17 @@
 package in.sp.main.Service.Otp;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import in.sp.main.Entities.OtpChannel;
 import in.sp.main.Service.EmailService;
+import org.springframework.stereotype.Component;
 
 @Component
 public class EmailOtpDeliveryChannel implements OtpDeliveryChannel {
 
-    @Autowired
-    private EmailService emailService;
+    private final EmailService emailService;
 
-    @Value("${otp.email.from-name:Fight D Fear}")
-    private String fromName;
+    public EmailOtpDeliveryChannel(EmailService emailService) {
+        this.emailService = emailService;
+    }
 
     @Override
     public OtpChannel channel() {
@@ -22,7 +19,7 @@ public class EmailOtpDeliveryChannel implements OtpDeliveryChannel {
     }
 
     @Override
-    public void send(String destination, String subject, String messageBody) {
-        emailService.sendEmail(destination, subject, messageBody);
+    public void send(String destination, String subject, String body) {
+        emailService.sendEmail(destination, subject, body);
     }
 }
