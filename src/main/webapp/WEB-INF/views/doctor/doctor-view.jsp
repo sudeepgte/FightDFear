@@ -449,18 +449,14 @@
               <input type="tel" id="patientPhone" class="form-control rounded-3 py-2" value="${user.phoneNumber}" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
             </div>
 
-            <div class="mb-4">
-              <label class="small fw-800 text-muted mb-2 d-block">SELECT DATE</label>
-              <div class="d-flex gap-2 overflow-x-auto pb-2" id="dateScroll">
-                <!-- Dates dynamically generated -->
-              </div>
+                        <div class="mb-4">
+              <label class="small fw-800 text-muted mb-2 d-block">SELECT DATE *</label>
+              <input type="date" id="selectDate" class="form-control rounded-3 py-2" required>
             </div>
-
+            
             <div class="mb-4">
-              <label class="small fw-800 text-muted mb-2 d-block">CHOOSE TIME SLOT</label>
-              <div id="sessionSlots" class="d-flex flex-wrap gap-1">
-                <p class="text-muted small py-3 w-100 text-center">Please select a date first</p>
-              </div>
+              <label class="small fw-800 text-muted mb-2 d-block">CHOOSE TIME SLOT *</label>
+              <input type="time" id="selectTime" class="form-control rounded-3 py-2" required>
             </div>
 
             <div class="mb-4">
@@ -477,15 +473,12 @@
             <div class="mb-4">
 
               <label class="small fw-800 text-muted mb-2 d-block" for="appointmentReason">REASON FOR VISIT</label>
-              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500"
+              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500" onkeyup="document.getElementById('reasonCount').innerText = this.value.length;"
                         placeholder="Briefly describe your symptoms or reason for consultation (optional)"></textarea>
               <div class="d-flex justify-content-between mt-1">
                 <span class="small text-muted">Shown to your doctor after booking</span>
                 <span class="small text-muted"><span id="reasonCount">0</span>/500</span>
               </div>
-
-              <label class="small fw-800 text-muted mb-2 d-block">REASON FOR VISIT</label>
-              <textarea id="reason" class="form-control rounded-3 py-2" rows="2" placeholder="Briefly describe your symptoms or reason for visit (optional)"></textarea>
 
             </div>
 
@@ -559,8 +552,8 @@
     var doctorAvailableDaysStr = "${doctor.availableDays}";
     var doctorStartTime = "${doctor.startTime}";
     var doctorEndTime = "${doctor.endTime}";
-    var daysMap = { "sunday":0, "monday":1, "tuesday":2, "wednesday":3, "thursday":4, "friday":5, "saturday":6 };
-    var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase()).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
+    var daysMap = { "sun":0, "mon":1, "tue":2, "wed":3, "thu":4, "fri":5, "sat":6 };
+    var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase().substring(0,3)).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
 
     function currentFee() {
       var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
@@ -572,20 +565,17 @@
       return isNaN(clinic) ? 0 : clinic;
     }
 
-    function syncFeeUi() {
+            function syncFeeUi() {
       var fee = currentFee();
       document.getElementById('amount').value = fee;
       var btn = document.getElementById('payBtn');
-      var hint = document.getElementById('payHint');
       var header = document.getElementById('headerFeeDisplay');
-      if (header) header.innerText = '₹' + fee;
-      if (fee > 0) {
-        btn.innerText = 'Book Appointment & Pay ₹' + fee;
-        if (hint) hint.innerHTML = '<i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay';
-      } else {
-        btn.innerText = 'Request Free Booking';
-        if (hint) hint.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> No payment required for this mode';
-      }
+      if (header) header.innerText = '?' + fee;
+      
+      // Kept button simple as requested
+      btn.innerText = 'Book Appointment';
+      btn.disabled = false;
+      btn.style.opacity = '1';
     }
 
     function localDateISO(d) {
@@ -595,75 +585,7 @@
       return y + '-' + m + '-' + day;
     }
 
-    function renderDates() {
-      var dateScroll = document.getElementById('dateScroll');
-      if(!availableDays.length) {
-        dateScroll.innerHTML = '<p class="text-danger small fw-700 p-2">This doctor has not set their schedule yet.</p>';
-        document.getElementById('payBtn').innerText = 'Schedule Unavailable';
-        return;
-      }
-      
-      var html = '';
-      var d = new Date();
-      var count = 0;
-      while(count < 14) {
-        if(availableDays.includes(d.getDay())) {
-          var dateISO = localDateISO(d);
-          var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
-          html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
-                    <div class="small fw-700 opacity-50">\${dayName}</div>
-                    <div class="fs-5 fw-900">\${d.getDate()}</div>
-                   </div>`;
-          count++;
-        }
-        d.setDate(d.getDate() + 1);
-      }
-      if(html === '') {
-         dateScroll.innerHTML = '<p class="text-danger small fw-700 p-2">No available dates found.</p>';
-      } else {
-         dateScroll.innerHTML = html;
-      }
-      syncFeeUi();
-    }
-
-    var selectedDateObj = null;
-    function selectDate(el, dateISO) {
-      document.querySelectorAll('.day-selector-item').forEach(i => i.classList.remove('active'));
-      el.classList.add('active');
-      selectedDateObj = new Date(dateISO + 'T00:00:00');
-      renderTimeSlots();
-    }
-
-    function renderTimeSlots() {
-      var sessionSlots = document.getElementById('sessionSlots');
-      if(!doctorStartTime || !doctorEndTime) return;
-
-      var html = '';
-      var start = parseInt(doctorStartTime.split(':')[0]) * 60 + parseInt(doctorStartTime.split(':')[1] || 0);
-      var end = parseInt(doctorEndTime.split(':')[0]) * 60 + parseInt(doctorEndTime.split(':')[1] || 0);
-      
-      for(var m = start; m < end; m += 30) {
-        var h = Math.floor(m/60);
-        var mm = m%60;
-        var ampm = h >= 12 ? 'PM' : 'AM';
-        var t12 = (h%12 || 12) + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
-        var t24 = (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm + ':00';
-        html += `<div class="time-slot-pill" onclick="selectTime(this, '\${t24}', '\${t12}')">\${t12}</div>`;
-      }
-      sessionSlots.innerHTML = html;
-    }
-
-    function selectTime(el, t24, t12) {
-      document.querySelectorAll('.time-slot-pill').forEach(i => i.classList.remove('selected'));
-      el.classList.add('selected');
-      var fullTime = localDateISO(selectedDateObj) + ' ' + t24;
-      document.getElementById('appointmentTime').value = fullTime;
-      document.getElementById('summaryText').innerText = selectedDateObj.toDateString() + ' at ' + t12;
-      document.getElementById('selectedSummary').classList.remove('d-none');
-      document.getElementById('payBtn').disabled = false;
-      document.getElementById('payBtn').style.opacity = '1';
-      syncFeeUi();
-    }
+    
 
     async function bookFree(doctorId, time, type) {
       const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
@@ -672,7 +594,7 @@
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+        window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
       } else {
         alert(data.error || 'Unable to book appointment');
       }
@@ -682,12 +604,16 @@
       syncFeeUi();
       const amount = document.getElementById('amount').value;
       const doctorId = document.getElementById('doctorId').value;
-      const time = document.getElementById('appointmentTime').value;
-      const type = document.querySelector('input[name="consultationType"]:checked').value;
+              const dateVal = document.getElementById('selectDate').value;
+        const timeVal = document.getElementById('selectTime').value;
+        let time = '';
+        if (dateVal && timeVal) {
+            time = dateVal + ' ' + (timeVal.length === 5 ? timeVal + ':00' : timeVal);
+            document.getElementById('appointmentTime').value = time;
+        }
+        const type = document.querySelector('input[name="consultationType"]:checked').value;
 
       const reason = (document.getElementById('appointmentReason').value || '').trim();
-
-      const reason = document.getElementById('reason').value;
       const fee = parseFloat(amount || '0');
 
       if (!time) {
@@ -728,7 +654,7 @@
               appointmentTime: time, consultationType: type
             })
           });
-          if (verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+          if (verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
           else alert('Verification failed');
           return;
         }
@@ -744,16 +670,12 @@
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
 
-                type: 'DOCTOR', targetId: doctorId, amount,
-                appointmentTime: time, consultationType: type,
-                reason: reason
-
                 type: 'DOCTOR', targetId: doctorId, amount, reason: reason,
                 appointmentTime: time, consultationType: type
 
               })
             });
-            if(verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+            if(verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
           }
         };
         new Razorpay(options).open();
@@ -761,7 +683,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      renderDates();
+      
 
 
       var reasonBox = document.getElementById('appointmentReason');
@@ -813,4 +735,17 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
 

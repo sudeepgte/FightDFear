@@ -24,15 +24,15 @@
        ORIGINAL STYLES (kept exactly as is)
        ============================================ */
     :root {
-        --primary-purple: #1e1b4b;
-        --primary-purple-light: #312e81;
+        --primary-purple: #F8FAFC;
+        --primary-purple-light: #F43F5E;
         --primary-coral: #f43f5e;
         --primary-coral-dark: #1e1b4b;
         --primary-teal: #20c997;
         --primary-gold: #ffd700;
         --dark-bg: #0f0f1a;
         --light-bg: #fffcfd;
-        --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
+        --gradient-primary: #FFFFFF;
         --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
         --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
         --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
@@ -105,7 +105,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(123, 44, 191, 0.35);
+        background: rgba(244, 63, 94, 0.05);
         z-index: 1;
     }
 
@@ -486,28 +486,28 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
 
-<section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: transparent;">
+<section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: #F8FAFC;">
 					     <div class="container-fluid p-0">
-					       <div class="row no-gutters align-items-stretch">
-					       <div class="col-md-6 user-bg-left d-flex flex-column align-items-center p-4">
+					       <div class="row no-gutters align-items-stretch" style="background: #FFFFFF; border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.04); margin: 30px auto; max-width: 1200px; overflow: hidden; border: 1px solid #E2E8F0;">
+					       <div class="col-md-5 user-bg-left d-flex flex-column align-items-center p-5" style="background: #FFFFFF; border-right: 1px solid #E2E8F0;">
     <img src="${pageContext.request.contextPath}${user.profilePhoto}"
          onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
          alt="User Profile Picture"
-         style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #f43f5e;box-shadow:0 4px 14px rgba(219,39,119,0.35);" class="mb-4">
+         style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #F43F5E;box-shadow:0 4px 20px rgba(244,63,94,0.25);" class="mb-4">
 
     <!-- 📊 Account Summary Integrated Here -->
-    <div class="text-center text-white px-3">
-        <div class="coin-box d-inline-block mb-3 shadow-sm" style="background: rgba(255, 215, 0, 0.2); border: 1px solid var(--primary-gold); color: #fff;">
+    <div class="text-center px-3" style="color: #0F172A;">
+        <div class="coin-box d-inline-block mb-3 shadow-sm" style="background: #FFF7ED; border: 1px solid #C2410C; color: #C2410C;">
             🪙 <span style="font-size: 20px;"><strong>${user.rewardPoints != null ? user.rewardPoints : 0}</strong></span> Coins Earned
         </div>
-        <h4 class="text-white mb-2" style="font-weight: 700;">Account Overview</h4>
-        <p class="small mb-3" style="opacity: 0.8;">Manage your safety profile and contacts below.</p>
+        <h4 class="mb-2" style="color: #0F172A; font-weight:800;">Account Overview</h4>
+        <p class="small mb-3" style="color: #64748B;">Manage your safety profile and contacts below.</p>
         
         <div class="d-flex flex-column gap-2 w-100" style="max-width: 300px;">
-            <a href="${pageContext.request.contextPath}/index/contact" class="btn btn-light btn-sm py-2 px-4 rounded-pill" style="color:var(--primary-purple);font-weight:700;">
+            <a href="${pageContext.request.contextPath}/index/contact" class="btn btn-sm py-2 px-4 rounded-pill" style="background:#F43F5E; color:#FFF; font-weight:700;">
                 <i class="fas fa-comment-alt me-2"></i> Get in Touch
             </a>
-            <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn btn-outline-light btn-sm py-2 px-4 rounded-pill" style="font-weight: 700;">
+            <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn btn-outline-danger btn-sm py-2 px-4 rounded-pill" style="color:#F43F5E; border-color:#F43F5E; font-weight: 700;">
                 <i class="fas fa-phone-alt me-2"></i> Emergency Contacts
             </a>
         </div>
@@ -516,7 +516,7 @@
 </div>
 					          
 					         <!-- 📋 Right Side: User Details -->
-					         <div class="col-md-6 user-details-side d-flex align-items-start">
+					         <div class="col-md-7 user-details-side d-flex align-items-start" style="background: #FFFFFF;">
 					           <div class="user-details p-3 p-lg-5 pt-lg-3">
 					             
 					             <!-- Header -->
@@ -544,18 +544,18 @@
 
 					             <!-- Details List -->
 					             <ul class="list-unstyled ftco-animate">
-					               <li class="mb-3"><i class="fas fa-envelope text-primary me-2"></i> <strong>Email:</strong> ${user.email}</li>
-					               <li class="mb-3"><i class="fas fa-phone text-primary me-2"></i> <strong>Phone:</strong> ${user.phoneNumber}</li>
-					               <li class="mb-3"><i class="fas fa-home text-primary me-2"></i> <strong>Address:</strong> ${user.homeAddress}</li>
-					               <li class="mb-3"><i class="fas fa-id-badge text-primary me-2"></i> <strong>User ID:</strong> ${user.id}</li>
+					               <li class="mb-3"><i class="fas fa-envelope me-2" style="color: #F43F5E;"></i> <strong>Email:</strong> ${user.email}</li>
+					               <li class="mb-3"><i class="fas fa-phone me-2" style="color: #F43F5E;"></i> <strong>Phone:</strong> ${user.phoneNumber}</li>
+					               <li class="mb-3"><i class="fas fa-home me-2" style="color: #F43F5E;"></i> <strong>Address:</strong> ${user.homeAddress}</li>
+					               <li class="mb-3"><i class="fas fa-id-badge me-2" style="color: #F43F5E;"></i> <strong>User ID:</strong> ${user.id}</li>
 					               <li class="mb-3">
-    <i class="fas fa-calendar-alt text-primary me-2"></i>
+    <i class="fas fa-calendar-alt me-2" style="color: #F43F5E;"></i>
     <strong>Date of Birth:</strong> ${user.dob}
 </li>
 					               
-					               <li class="mb-3"><i class="fas fa-calendar-alt text-primary me-2"></i> <strong>Age:</strong> ${user.age}</li>
-					               <li class="mb-3"><i class="fas fa-venus-mars text-primary me-2"></i> <strong>Gender:</strong> ${user.gender}</li>
-					               <li class="mb-3"><i class="fas fa-file text-primary me-2"></i> 
+					               <li class="mb-3"><i class="fas fa-calendar-alt me-2" style="color: #F43F5E;"></i> <strong>Age:</strong> ${user.age}</li>
+					               <li class="mb-3"><i class="fas fa-venus-mars me-2" style="color: #F43F5E;"></i> <strong>Gender:</strong> ${user.gender}</li>
+					               <li class="mb-3"><i class="fas fa-file me-2" style="color: #F43F5E;"></i> 
 					                 <strong>ID Document:</strong> 
 					                 <a href="${pageContext.request.contextPath}${user.identityDocument}" target="_blank" class="text-decoration-none">View</a>
 					               </li>
@@ -564,7 +564,7 @@
 					             <!-- 📊 Profile Completion -->
 					             <div class="progress-container mt-4">
 					               <div class="progress" style="height: 12px; border-radius: 10px;">
-					                 <div class="progress-bar bg-primary" role="progressbar"
+					                 <div class="progress-bar" style="background-color: #F43F5E;" role="progressbar"
 					                      style="width: ${completionPercentage}%;"
 					                      aria-valuenow="${completionPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
 					               </div>
@@ -575,10 +575,10 @@
 
 					             <!-- 🔘 Action Buttons -->
 					             <div class="mt-4 d-flex flex-wrap gap-3">
-					               <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn btn-primary px-4 py-2 text-white">
+					               <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn px-4 py-2 text-white" style="background:#F43F5E; border-color:#F43F5E;">
 					                 <i class="fas fa-user-edit me-2"></i> Edit
 					               </a>
-					               <a href="${pageContext.request.contextPath}/users/delete/${user.id}" class="btn btn-outline-danger px-4 py-2">
+					               <a href="${pageContext.request.contextPath}/users/delete/${user.id}" class="btn btn-outline-danger px-4 py-2" style="color: #DC2626; border-color: #DC2626;">
 					                 <i class="fas fa-trash-alt me-2"></i> Delete
 					               </a>
 					             </div>
@@ -617,4 +617,8 @@
 </div>
 </body>
 					  </html>
+
+
+
+
 

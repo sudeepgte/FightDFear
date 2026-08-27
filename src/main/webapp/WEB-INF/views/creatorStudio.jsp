@@ -21,16 +21,22 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
-            --accent-pink: #f43f5e;
-            --accent-purple: #8b5cf6;
+            --glow-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --accent-pink: #F43F5E;
+            --accent-purple: #64748B;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
         }
         
         body {
             font-family: 'Poppins', sans-serif;
             background: var(--glow-bg);
-            color: var(--fdf-text);
+            color: #0F172A;
             overflow-x: hidden;
         }
 
@@ -62,8 +68,8 @@
         .glow-header {
             padding: 60px 20px 40px;
             text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--fdf-border);
+            background: var(--card-bg);
+            border-bottom: 1px solid #E2E8F0;
             position: relative;
             margin-bottom: 40px;
         }
@@ -71,13 +77,11 @@
             font-family: 'Montserrat', sans-serif;
             font-size: 38px;
             font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-pink);
             margin-bottom: 10px;
         }
         .glow-header p {
-            color: var(--fdf-muted);
+            color: var(--accent-purple);
             font-size: 15px;
             max-width: 650px;
             margin: 0 auto;
@@ -101,19 +105,19 @@
             padding: 10px 20px;
             border-radius: 999px;
             background: #fff;
-            border: 1px solid var(--fdf-border);
+            border: 1px solid #E2E8F0;
             color: var(--accent-purple);
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
             transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
         .top-btn:hover {
             background: var(--accent-purple);
             color: #fff;
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         /* Studio Container */
@@ -124,19 +128,19 @@
         }
         .glass-card {
             background: var(--card-bg);
-            border: 1px solid var(--fdf-border);
+            border: 1px solid #E2E8F0;
             border-radius: 24px;
             padding: 25px;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             margin-bottom: 30px;
         }
         .metric-card {
-            background: #ffffff;
-            border: 1px solid var(--fdf-border);
+            background: var(--card-bg);
+            border: 1px solid #E2E8F0;
             border-radius: 20px;
             padding: 20px;
             text-align: center;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .metric-value {
             font-size: 28px;
@@ -144,7 +148,7 @@
         }
         .metric-label {
             font-size: 12px;
-            color: var(--fdf-muted);
+            color: var(--accent-purple);
             font-weight: 600;
             text-transform: uppercase;
             display: block;
@@ -156,9 +160,9 @@
             margin-bottom: 30px;
         }
         .nav-pills .nav-link {
-            background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--fdf-muted);
+            background: var(--card-bg);
+            border: 1px solid #E2E8F0;
+            color: var(--accent-purple);
             border-radius: 30px;
             padding: 10px 22px;
             font-weight: 600;
@@ -166,7 +170,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
         .nav-pills .nav-link.active {
-            background: var(--gradient-primary) !important;
+            background: var(--accent-pink) !important;
             color: #fff !important;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
@@ -181,17 +185,17 @@
         }
 
         .table {
-            color: var(--fdf-text);
+            color: #0F172A;
         }
         .table th {
-            color: var(--fdf-muted);
+            color: var(--accent-purple);
             font-weight: 700;
             border-bottom-width: 2px;
         }
         .table td {
             vertical-align: middle;
             font-size: 14px;
-            color: #444;
+            color: #334155;
         }
         .draft-thumb {
             width: 80px;
@@ -199,11 +203,11 @@
             object-fit: cover;
             border-radius: 8px;
             background: #000;
-            border: 1px solid var(--fdf-border);
+            border: 1px solid #E2E8F0;
         }
 
         .form-control, .form-select {
-            border: 1px solid var(--fdf-border);
+            border: 1px solid #E2E8F0;
             border-radius: 12px;
             padding: 10px 15px;
             font-size: 14px;
@@ -212,28 +216,32 @@
         .form-label {
             font-size: 12px;
             font-weight: 700;
-            color: var(--brand-purple);
+            color: var(--accent-purple);
             text-transform: uppercase;
         }
+        
+        .badge-success { background: var(--success-bg) !important; color: var(--success-text) !important; }
+        .badge-warning { background: var(--warning-bg) !important; color: var(--warning-text) !important; }
+        .badge-danger { background: var(--error-bg) !important; color: var(--error-text) !important; }
 
         /* Modal Overrides */
         .modal-content {
             border-radius: 24px;
             border: none;
             overflow: hidden;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         .modal-header {
-            background: #f9fafb;
+            background: var(--glow-bg);
             border-bottom: none;
             padding: 20px 24px;
         }
         .modal-body {
             padding: 24px;
-            background: #fff;
+            background: var(--card-bg);
         }
         .modal-footer {
-            background: #f9fafb;
+            background: var(--glow-bg);
             border-top: none;
             padding: 16px 24px;
         }
@@ -267,15 +275,25 @@
 </head>
 <body>
 
-<!-- Header -->
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<header class="header d-flex align-items-center fixed-top" style="background: #ffffff; border-bottom: 1px solid #E2E8F0; height: 60px; padding: 0 20px; z-index: 1050; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);">
+  <div class="container-fluid container-xl d-flex align-items-center justify-content-between p-0">
+    <a href="${pageContext.request.contextPath}/" style="text-decoration: none; font-weight:700; font-size:20px; color:#F43F5E !important; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-fire"></i> Fight D Fear
+    </a>
+    <nav class="navmenu d-flex gap-4 align-items-center">
+        <a href="${pageContext.request.contextPath}/" style="color: #0F172A; text-decoration: none; font-size: 18px;" title="Home">
+            <i class="fa-solid fa-house"></i>
+        </a>
+        <a href="${pageContext.request.contextPath}/users/profile/${user.id}" style="text-decoration: none;" title="Profile">
+            <img src="${not empty user.profilePhoto ? user.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+        </a>
+    </nav>
+  </div>
+</header>
 
-<div id="wrapper">
-    <!-- Sidebar -->
-    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    
+<div id="wrapper" style="margin-top: 75px;">
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; width: 100%;">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -297,10 +315,10 @@
 
         <div class="studio-container">
             <c:if test="${not empty success}">
-                <div class="alert alert-success rounded-4 border-0 shadow-sm mb-4">${success}</div>
+                <div class="alert alert-success rounded-4 border-0 shadow-sm mb-4" style="background: var(--success-bg); color: var(--success-text);">${success}</div>
             </c:if>
             <c:if test="${not empty error}">
-                <div class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">${error}</div>
+                <div class="alert alert-danger rounded-4 border-0 shadow-sm mb-4" style="background: var(--error-bg); color: var(--error-text);">${error}</div>
             </c:if>
 
             <!-- ANALYTICS METRICS BAR -->
@@ -343,7 +361,7 @@
                     <button class="nav-link" id="studioTabCollabs" data-bs-toggle="tab" data-bs-target="#tabCollabs" type="button"><i class="fa-solid fa-handshake-angle me-2"></i>Sponsorships</button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link" id="studioTabSafety" data-bs-toggle="tab" data-bs-target="#tabSafety" type="button"><i class="fa-solid fa-shield-cat me-2"></i>Safety &amp; Blocks</button>
+                    <button class="nav-link" id="studioTabSettings" data-bs-toggle="tab" data-bs-target="#tabSettings" type="button"><i class="fa-solid fa-gear me-2"></i>Settings</button>
                 </li>
             </ul>
 
@@ -392,7 +410,7 @@
                                                         </td>
                                                         <td>
                                                             <span class="d-block fw-bold text-dark">${post.title}</span>
-                                                            <span class="text-muted text-xs">${post.uploadTime}</span>
+                                                            <span class="text-muted text-xs" style="color: var(--accent-purple) !important;">${post.uploadTime}</span>
                                                         </td>
                                                         <td>${post.category}</td>
                                                         <td>${post.viewCount}</td>
@@ -400,13 +418,13 @@
                                                         <td>
                                                             <c:choose>
                                                                 <c:when test="${post.status eq 'APPROVED'}">
-                                                                    <span class="badge bg-success">Approved</span>
+                                                                    <span class="badge badge-success">Approved</span>
                                                                 </c:when>
                                                                 <c:when test="${post.status eq 'PENDING_MODERATION'}">
-                                                                    <span class="badge bg-warning text-dark">Under Review</span>
+                                                                    <span class="badge badge-warning">Under Review</span>
                                                                 </c:when>
                                                                 <c:otherwise>
-                                                                    <span class="badge bg-danger">Blocked</span>
+                                                                    <span class="badge badge-danger">Blocked</span>
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </td>
@@ -466,8 +484,8 @@
                                                         </td>
                                                         <td>${draft.category}</td>
                                                         <td>
-                                                            <c:if test="${draft.subscriberOnly}"><span class="badge bg-primary me-1">Sub Only</span></c:if>
-                                                            <c:if test="${draft.paidContent}"><span class="badge bg-warning text-dark">Course (Rs.${draft.price})</span></c:if>
+                                                            <c:if test="${draft.subscriberOnly}"><span class="badge badge-success me-1">Sub Only</span></c:if>
+                                                            <c:if test="${draft.paidContent}"><span class="badge badge-warning">Course (Rs.${draft.price})</span></c:if>
                                                         </td>
                                                         <td>
                                                             <div class="d-flex gap-2">
@@ -499,29 +517,29 @@
                         <div class="col-md-6 mb-4">
                             <div class="glass-card h-100">
                                 <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-rectangle-ad text-danger me-2"></i>Ad Revenue Sharing</h4>
-                                <p class="text-muted text-xs">Claim accumulated ad share based on your overall video views (Rs. 0.05 per view).</p>
+                                <p class="text-muted text-xs" style="color: var(--accent-purple) !important;">Claim accumulated ad share based on your overall video views (Rs. 0.05 per view).</p>
                                 
-                                <div class="p-3 rounded-4 mb-4" style="background: #fafafb; border: 1px solid var(--fdf-border);">
+                                <div class="p-3 rounded-4 mb-4" style="background: var(--glow-bg); border: 1px solid #E2E8F0;">
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Total Views:</span>
+                                        <span class="text-muted" style="color: var(--accent-purple) !important;">Total Views:</span>
                                         <span class="fw-bold text-dark">${totalViews}</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Views Claimed:</span>
+                                        <span class="text-muted" style="color: var(--accent-purple) !important;">Views Claimed:</span>
                                         <span class="fw-bold text-dark">${user.adViewsClaimed}</span>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span class="text-muted">Unclaimed Views:</span>
+                                        <span class="text-muted" style="color: var(--accent-purple) !important;">Unclaimed Views:</span>
                                         <span class="fw-bold text-primary">${unclaimedViews}</span>
                                     </div>
                                     <hr class="my-2">
                                     <div class="d-flex justify-content-between">
-                                        <span class="text-muted">Claimable Revenue:</span>
-                                        <span class="fw-bold text-success" style="font-size: 18px;">Rs. ${estAdRevenue}</span>
+                                        <span class="text-muted" style="color: var(--accent-purple) !important;">Claimable Revenue:</span>
+                                        <span class="fw-bold" style="color: var(--success-text); font-size: 18px;">Rs. ${estAdRevenue}</span>
                                     </div>
                                 </div>
                                 
-                                <button class="btn btn-danger w-100 rounded-pill py-2 font-weight-bold" id="claimAdBtn" onclick="claimAdRevenue()">
+                                <button class="btn w-100 rounded-pill py-2 font-weight-bold" style="background: var(--accent-pink); color: white;" id="claimAdBtn" onclick="claimAdRevenue()">
                                     Claim Ad Share to Wallet
                                 </button>
                             </div>
@@ -531,12 +549,12 @@
                         <div class="col-md-6 mb-4">
                             <div class="glass-card h-100">
                                 <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-gift text-warning me-2"></i>Creator Rewards Program</h4>
-                                <p class="text-muted text-xs">Convert reward points earned from user likes and views into Safety Wallet cash (100 points = Rs. 10).</p>
+                                <p class="text-muted text-xs" style="color: var(--accent-purple) !important;">Convert reward points earned from user likes and views into Safety Wallet cash (100 points = Rs. 10).</p>
                                 
-                                <div class="p-3 rounded-4 mb-3" style="background: #fafafb; border: 1px solid var(--fdf-border);">
+                                <div class="p-3 rounded-4 mb-3" style="background: var(--glow-bg); border: 1px solid #E2E8F0;">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted">My Points:</span>
-                                        <span class="badge bg-warning text-dark fw-bold py-2 px-3" style="font-size: 14px;">${user.rewardPoints} Points</span>
+                                        <span class="text-muted" style="color: var(--accent-purple) !important;">My Points:</span>
+                                        <span class="badge badge-warning fw-bold py-2 px-3" style="font-size: 14px;">${user.rewardPoints} Points</span>
                                     </div>
                                 </div>
 
@@ -555,35 +573,10 @@
                                     <div style="max-height: 150px; overflow-y: auto;">
                                         <c:forEach var="c" items="${cashouts}">
                                             <div class="d-flex justify-content-between py-2 border-bottom text-xs">
-                                                <span class="text-muted">${c.points} pts &rarr; Rs. ${c.amount}</span>
-                                                <span class="badge ${c.status eq 'APPROVED' ? 'bg-success' : (c.status eq 'PENDING' ? 'bg-warning text-dark' : 'bg-danger')}">${c.status}</span>
+                                                <span class="text-muted" style="color: var(--accent-purple) !important;">${c.points} pts &rarr; Rs. ${c.amount}</span>
+                                                <span class="badge ${c.status eq 'APPROVED' ? 'badge-success' : (c.status eq 'PENDING' ? 'badge-warning' : 'badge-danger')}">${c.status}</span>
                                             </div>
                                         </c:forEach>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Creator Profile Custom Settings -->
-                        <div class="col-12">
-                            <div class="glass-card">
-                                <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-sliders text-info me-2"></i>Creator Profile Tier Config</h4>
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Custom Monthly Subscription Price (Rs.)</label>
-                                        <div class="input-group">
-                                            <input type="number" id="subPriceInput" class="form-control" placeholder="e.g. 99" value="${user.creatorSubscriptionPrice}">
-                                            <button class="btn btn-outline-danger" onclick="saveSubscriptionPrice()">Save</button>
-                                        </div>
-                                        <small class="text-muted small">Setting a price above Rs. 0 enables monthly subscriber posts locking.</small>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Creator Affiliate Referral Code</label>
-                                        <div class="input-group">
-                                            <input type="text" id="affiliateCodeInput" class="form-control" placeholder="e.g. WOMENPOWER" value="${user.creatorAffiliateCode}">
-                                            <button class="btn btn-outline-danger" onclick="saveAffiliateCode()">Save</button>
-                                        </div>
-                                        <small class="text-muted small">Used to generate affiliate product tags inside captions.</small>
                                     </div>
                                 </div>
                             </div>
@@ -596,19 +589,19 @@
                     <div class="glass-card">
                         <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-circle-check text-info me-2"></i>Active Brand Sponsor Listings</h4>
                         <c:if test="${empty brandCampaigns}">
-                            <div class="text-muted text-center py-4">No active brand campaigns listed right now. Check back soon!</div>
+                            <div class="text-muted text-center py-4" style="color: var(--accent-purple) !important;">No active brand campaigns listed right now. Check back soon!</div>
                         </c:if>
                         <c:if test="${not empty brandCampaigns}">
                             <div class="row">
                                 <c:forEach var="bc" items="${brandCampaigns}">
                                     <div class="col-md-6 mb-3">
-                                        <div class="p-3 rounded-4 h-100" style="background: #fafafb; border: 1px solid var(--fdf-border);">
+                                        <div class="p-3 rounded-4 h-100" style="background: var(--glow-bg); border: 1px solid #E2E8F0;">
                                             <div class="d-flex justify-content-between mb-2">
-                                                <span class="badge bg-danger">${bc.brandName}</span>
-                                                <span class="text-success font-weight-bold">Rs. ${bc.payRate} / Post</span>
+                                                <span class="badge badge-danger">${bc.brandName}</span>
+                                                <span class="font-weight-bold" style="color: var(--success-text);">Rs. ${bc.payRate} / Post</span>
                                             </div>
                                             <h5 class="fw-bold text-dark">${bc.campaignTitle}</h5>
-                                            <p class="text-muted text-xs mb-3">${bc.description}</p>
+                                            <p class="text-muted text-xs mb-3" style="color: var(--accent-purple) !important;">${bc.description}</p>
                                             
                                             <!-- Check if applied -->
                                             <c:set var="applied" value="false" />
@@ -626,7 +619,7 @@
                                                     </button>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <button class="btn btn-danger btn-sm w-100 rounded-pill" onclick="openApplyCollabModal(${bc.id}, this.dataset.title)" data-title="${fn:escapeXml(bc.campaignTitle)}">
+                                                    <button class="btn btn-sm w-100 rounded-pill" style="background: var(--accent-pink); color: white;" onclick="openApplyCollabModal(${bc.id}, this.dataset.title)" data-title="${fn:escapeXml(bc.campaignTitle)}">
                                                         Apply Sponsorship
                                                     </button>
                                                 </c:otherwise>
@@ -639,53 +632,139 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: SAFETY SETTINGS -->
-                <div class="tab-pane fade" id="tabSafety">
+                <!-- TAB 4: SETTINGS -->
+                <div class="tab-pane fade" id="tabSettings">
                     <div class="row">
-                        <!-- Account privacy setting -->
+                        
+                        <!-- 1. Monetization & Payout -->
                         <div class="col-md-6 mb-4">
                             <div class="glass-card h-100">
-                                <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-lock text-danger me-2"></i>Creator Safety Mode</h4>
-                                <p class="text-muted text-xs">Switching to Private mode hides your profile details from non-followers.</p>
+                                <h4 class="fw-bold text-dark mb-3" style="font-size:16px;"><i class="fa-solid fa-coins text-warning me-2"></i>Monetization & Payout</h4>
                                 
-                                <div class="form-check form-switch p-0 mt-4 d-flex align-items-center justify-content-between">
-                                    <label class="form-check-label fw-bold text-dark" for="privateToggle">Private Profile Mode</label>
-                                    <input class="form-check-input ms-0" type="checkbox" id="privateToggle" onchange="toggleProfilePrivacy()" <c:if test="${isPrivateProfile}">checked</c:if> style="width: 50px; height: 26px;">
+                                <div class="mb-3">
+                                    <label class="form-label">Monthly Subscription Price (Rs.)</label>
+                                    <div class="input-group">
+                                        <input type="number" id="subPriceInput" class="form-control" placeholder="e.g. 99" value="${user.creatorSubscriptionPrice}">
+                                        <button class="btn" style="border-color: var(--accent-pink); color: var(--accent-pink); font-weight:600;" onclick="saveSubscriptionPrice()">Save</button>
+                                    </div>
+                                    <small style="color: var(--accent-purple); font-size:11px;">Set above Rs. 0 to enable exclusive locked posts.</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Affiliate Referral Code</label>
+                                    <div class="input-group">
+                                        <input type="text" id="affiliateCodeInput" class="form-control" placeholder="e.g. WOMENPOWER" value="${user.creatorAffiliateCode}">
+                                        <button class="btn" style="border-color: var(--accent-pink); color: var(--accent-pink); font-weight:600;" onclick="saveAffiliateCode()">Save</button>
+                                    </div>
+                                    <small style="color: var(--accent-purple); font-size:11px;">Generate product affiliate tags in captions.</small>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label">Payout UPI ID</label>
+                                    <div class="input-group">
+                                        <input type="text" id="payoutUpiInput" class="form-control" placeholder="yourname@upi" value="">
+                                        <button class="btn" style="border-color: var(--accent-pink); color: var(--accent-pink); font-weight:600;" onclick="alert('Payout details saved!')">Save</button>
+                                    </div>
+                                    <small style="color: var(--accent-purple); font-size:11px;">Where your Ad Revenue & Tips are sent.</small>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Blocking list -->
+                        <!-- 2. Privacy & Safety -->
                         <div class="col-md-6 mb-4">
                             <div class="glass-card h-100">
-                                <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-user-slash text-warning me-2"></i>Block List</h4>
-                                <p class="text-muted text-xs">Blocked users cannot follow you or comment on your creations.</p>
+                                <h4 class="fw-bold text-dark mb-4" style="font-size:16px;"><i class="fa-solid fa-shield-halved text-success me-2"></i>Privacy & Safety</h4>
                                 
-                                <div class="mt-4" style="max-height: 180px; overflow-y: auto;">
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:14px;">Private Profile Mode</div>
+                                        <div style="font-size:11px; color:var(--accent-purple);">Hide your profile from non-followers.</div>
+                                    </div>
+                                    <div class="form-check form-switch p-0 m-0">
+                                        <input class="form-check-input ms-0" type="checkbox" id="privateToggle" onchange="toggleProfilePrivacy()" <c:if test="${isPrivateProfile}">checked</c:if> style="width: 44px; height: 22px;">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:14px;">Filter Offensive Comments</div>
+                                        <div style="font-size:11px; color:var(--accent-purple);">Automatically hide toxic comments.</div>
+                                    </div>
+                                    <div class="form-check form-switch p-0 m-0">
+                                        <input class="form-check-input ms-0" type="checkbox" style="width: 44px; height: 22px;" checked>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:14px;">Show Subscriber Count</div>
+                                        <div style="font-size:11px; color:var(--accent-purple);">Display your sub count publicly.</div>
+                                    </div>
+                                    <div class="form-check form-switch p-0 m-0">
+                                        <input class="form-check-input ms-0" type="checkbox" style="width: 44px; height: 22px;" checked>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 3. Notifications -->
+                        <div class="col-md-6 mb-4">
+                            <div class="glass-card h-100">
+                                <h4 class="fw-bold text-dark mb-4" style="font-size:16px;"><i class="fa-solid fa-bell" style="color:var(--accent-pink);"></i> Notifications</h4>
+                                
+                                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:14px;">New Subscriber Alerts</div>
+                                        <div style="font-size:11px; color:var(--accent-purple);">Email me when someone subscribes.</div>
+                                    </div>
+                                    <div class="form-check form-switch p-0 m-0">
+                                        <input class="form-check-input ms-0" type="checkbox" style="width: 44px; height: 22px;" checked>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size:14px;">Brand Collaboration Alerts</div>
+                                        <div style="font-size:11px; color:var(--accent-purple);">Email me when a brand responds.</div>
+                                    </div>
+                                    <div class="form-check form-switch p-0 m-0">
+                                        <input class="form-check-input ms-0" type="checkbox" style="width: 44px; height: 22px;" checked>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. Block List -->
+                        <div class="col-md-6 mb-4">
+                            <div class="glass-card h-100">
+                                <h4 class="fw-bold text-dark mb-2" style="font-size:16px;"><i class="fa-solid fa-user-slash" style="color:var(--accent-purple);"></i> Blocked Users</h4>
+                                <div style="font-size:11px; color:var(--accent-purple); margin-bottom:15px;">Blocked users cannot follow you or comment on your creations.</div>
+                                
+                                <div style="max-height: 140px; overflow-y: auto;">
                                     <c:forEach var="block" items="${blockedUsers}">
                                         <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                                            <span class="fw-bold text-dark text-xs">${block.blockedUser.fullName}</span>
-                                            <button class="btn btn-outline-danger btn-xs py-1 px-3 rounded-pill" onclick="unblockUser(${block.blockedUser.id})">
+                                            <span class="fw-bold text-dark" style="font-size:13px;">${block.blockedUser.fullName}</span>
+                                            <button class="btn btn-sm" style="border:1px solid #E2E8F0; color:var(--accent-pink); font-size:12px; font-weight:600; border-radius:12px;" onclick="unblockUser(${block.blockedUser.id})">
                                                 Unblock
                                             </button>
                                         </div>
                                     </c:forEach>
                                     <c:if test="${empty blockedUsers}">
-                                        <div class="text-muted text-center py-3">Block list is empty.</div>
+                                        <div class="text-center py-4" style="color: var(--accent-purple); font-size:13px; font-weight:500;">
+                                            <i class="fa-solid fa-check-circle fs-4 mb-2 d-block" style="color:var(--success-text);"></i>
+                                            Your block list is empty.
+                                        </div>
                                     </c:if>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
             </div>
 
         </div>
-
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->
 
