@@ -6,8 +6,6 @@ import java.util.List;
 public class EnrollmentRequest {
     private Long centerId;
     private Long batchId;
-    
-    // Personal Details
     private String fullName;
     private LocalDate dob;
     private Integer age;
@@ -15,33 +13,24 @@ public class EnrollmentRequest {
     private String phoneNumber;
     private String email;
     private String address;
-
-    // Emergency Contact
     private String emergencyName;
-
-    // Training Preference
     private String style;
     private String skillLevel;
     private List<String> preferredDays;
     private String goal;
     private String motivation;
-
-    // Health Info
     private String medicalConditions;
     private String allergies;
     private String fitnessNotes;
-
-    // Enrollment Details
     private LocalDate startDate;
     private String trainerPreference;
     private Double monthlyFee;
-
-    // Consent
     private boolean consentAccuracy;
     private boolean consentRules;
     private boolean consentPolicy;
 
-    // Getters and Setters
+    public EnrollmentRequest() {}
+
     public Long getCenterId() { return centerId; }
     public void setCenterId(Long centerId) { this.centerId = centerId; }
 

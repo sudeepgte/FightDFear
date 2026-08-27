@@ -6,6 +6,7 @@ import in.sp.main.Entities.WomenProduct;
 import in.sp.main.Entities.WomenProductOrder;
 import in.sp.main.Entities.WomenWishlistItem;
 import in.sp.main.Util.ProductCategories;
+import in.sp.main.Util.WomenProductValidation;
 import in.sp.main.Repository.WomenCartItemRepository;
 import in.sp.main.Repository.WomenProductOrderRepository;
 import in.sp.main.Repository.WomenProductRepository;
@@ -196,8 +197,12 @@ public class MobileWomenProductController {
             item.setProduct(p);
             item.setQuantity(0);
         }
-        int maxQty = p.getStock() == null ? 9999 : Math.max(1, p.getStock());
-        item.setQuantity(Math.min(maxQty, item.getQuantity() + quantity));
+        int stock = p.getStock() == null ? 0 : p.getStock();
+        int newQty = item.getQuantity() + quantity;
+        if (newQty > stock) {
+            return badRequest("Only " + stock + " unit(s) available for '" + p.getName() + "'.");
+        }
+        item.setQuantity(newQty);
         cartRepo.save(item);
         return ResponseEntity.ok(ok(Map.of("message", "Added to cart.")));
     }
@@ -220,8 +225,12 @@ public class MobileWomenProductController {
             return ResponseEntity.ok(ok(Map.of("message", "Removed from cart.")));
         }
         WomenProduct p = item.getProduct();
-        int maxQty = (p != null && p.getStock() != null) ? Math.max(1, p.getStock()) : 9999;
-        item.setQuantity(Math.min(quantity, maxQty));
+        int stock = (p != null && p.getStock() != null) ? p.getStock() : 0;
+        if (quantity > stock) {
+            return badRequest("Only " + stock + " unit(s) available"
+                    + (p != null ? " for '" + p.getName() + "'" : "") + ".");
+        }
+        item.setQuantity(quantity);
         cartRepo.save(item);
         return ResponseEntity.ok(ok(Map.of("message", "Cart updated.")));
     }
@@ -279,8 +288,9 @@ public class MobileWomenProductController {
 
         String shippingAddress = str(body.get("shippingAddress"));
         String paymentMethod = str(body.get("paymentMethod")).toUpperCase();
-        if (shippingAddress.isBlank() || shippingAddress.length() < 8) {
-            return badRequest("Enter a complete delivery address.");
+        String addressErr = WomenProductValidation.validateShippingAddress(shippingAddress);
+        if (addressErr != null) {
+            return badRequest(addressErr);
         }
         if (!"COD".equals(paymentMethod) && !"ONLINE".equals(paymentMethod)) {
             return badRequest("Use COD or ONLINE.");
@@ -440,8 +450,11 @@ public class MobileWomenProductController {
         }
         int rating = asInt(body.get("rating"), 0);
         if (rating < 1 || rating > 5) return badRequest("rating must be between 1 and 5.");
+        String cleanedReview = str(body.get("review"));
+        String reviewErr = WomenProductValidation.validateReviewText(cleanedReview);
+        if (reviewErr != null) return badRequest(reviewErr);
         o.setRating(rating);
-        o.setReview(str(body.get("review")));
+        o.setReview(cleanedReview.isEmpty() ? null : cleanedReview);
         orderRepo.save(o);
         return ResponseEntity.ok(ok(Map.of("message", "Thanks for your review.")));
     }

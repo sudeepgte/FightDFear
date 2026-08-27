@@ -315,7 +315,7 @@
                     </a>
                 </li>
                 
-                <li><a href="${pageContext.request.contextPath}/users/profile/${user.id}">${user.fullName}</a></li>
+                <li><a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}">${not empty user ? user.fullName : sessionScope.user.fullName}</a></li>
             </c:otherwise>
         </c:choose>
       </ul>
@@ -338,10 +338,13 @@
             </a>
         </c:when>
         <c:otherwise>
-            <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="ms-3">
+            <a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}" class="ms-3">
                 <c:choose>
                     <c:when test="${not empty user.profilePhoto}">
                         <img src="${pageContext.request.contextPath}${user.profilePhoto}" alt="Profile" class="header-profile-img">
+                    </c:when>
+                    <c:when test="${not empty sessionScope.user.profilePhoto}">
+                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:otherwise>
                         <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">

@@ -11,11 +11,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --navy-dark: #0f172a;
-            --navy-light: #1e1b4b;
-            --primary: #312e81;
+            --navy-dark: #0f172a; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519;
+            --navy-light: #4c0519;
+            --primary: #f43f5e;
             --coral: #f43f5e;
-            --bg-light: #f8fafc;
+            --bg-light: #f8fafc; --rose-bg-light: #ffe4e6; --rose-bg-light: #ffe4e6;
         }
 
         body {
@@ -33,8 +33,8 @@
             width: 210px;
             min-width: 210px;
             max-width: 210px;
-            background: var(--navy-dark);
-            color: white;
+            background: #ffffff;
+            color: #0f172a;
             height: 100vh;
             position: fixed;
             top: 0;
@@ -43,7 +43,7 @@
             padding: 20px 0;
             margin: 0;
             z-index: 1000;
-            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+            box-shadow: 2px 0 16px rgba(244,63,94,0.08); border-right: 1px solid #ffe4e6;
         }
 
         .sidebar-heading {
@@ -53,12 +53,13 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid #ffe4e6;
+            color: #4c0519;
         }
 
         .sidebar-link {
             background: transparent;
-            color: rgba(255,255,255,0.7);
+            color: #64748b;
             padding: 10px 20px;
             margin-bottom: 8px;
             font-size: 0.9rem;
@@ -72,9 +73,9 @@
         }
 
         .sidebar-link:hover, .sidebar-link.active {
-            color: white;
-            background: rgba(255,255,255,0.05);
-            border-left-color: var(--coral);
+            color: #f43f5e;
+            background: #fff1f2;
+            border-left-color: #f43f5e;
         }
 
         #page-content-wrapper {
@@ -169,21 +170,44 @@
                 padding: 8px 15px !important;
                 border-radius: 20px !important;
                 border-left: none !important;
-                background: rgba(255, 255, 255, 0.05) !important;
+                background: #fff1f2 !important;
                 display: inline-flex !important;
                 white-space: nowrap !important;
                 margin-bottom: 0 !important;
             }
             .sidebar-link:hover, .sidebar-link.active {
                 border-left-color: transparent !important;
-                background: var(--coral) !important;
+                background: #f43f5e !important;
             }
             #page-content-wrapper {
                 margin-left: 0 !important;
                 padding: 20px 15px !important;
             }
         }
-    </style>
+    
+        .btn-rose {
+            background-color: #f43f5e;
+            color: white;
+            border: none;
+        }
+        .btn-rose:hover {
+            background-color: #e11d48;
+            color: white;
+        }
+        .btn-outline-rose {
+            color: #f43f5e;
+            border-color: #f43f5e;
+            background-color: transparent;
+        }
+        .btn-outline-rose:hover {
+            background-color: #f43f5e;
+            color: white;
+        }
+
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 
@@ -207,13 +231,13 @@
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link active">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/dashboard#bookings-section" class="sidebar-link">
                 <i class="bi bi-calendar2-check"></i> My Bookings
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/dashboard#portfolio-section" class="sidebar-link">
                 <i class="bi bi-wallet2"></i> Wallet
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/complete-profile" class="sidebar-link">
                 <i class="bi bi-person"></i> Profile
             </a>
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
@@ -230,7 +254,7 @@
         <div class="container-fluid">
             
             <div class="text-center mb-4 position-relative">
-                <h5 class="fw-bold m-0" style="color: var(--navy-dark);"><i class="bi bi-shop"></i> Investor Marketplace</h5>
+                <h5 class="fw-bold m-0" style="color: #0f172a;"><i class="bi bi-shop"></i> Investor Marketplace</h5>
                 <p class="text-muted small m-0 mt-1">Invest in women entrepreneurs and track real-time funding progress.</p>
             </div>
 
@@ -259,7 +283,7 @@
                             <input type="text" name="location" class="form-control" placeholder="e.g. city or state" value="${selectedLocation}">
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100 rounded-pill py-2" style="background-color: var(--primary); border: none;">
+                            <button type="submit" class="btn btn-rose w-100 rounded-pill py-2" style="background-color: #f43f5e; border: none;">
                                 <i class="bi bi-filter"></i> Apply
                             </button>
                         </div>
@@ -284,7 +308,7 @@
                                     </c:if>
                                 </div>
 
-                                <h6 class="fw-bold mb-1 text-navy-emphasis text-truncate">${p.title}</h6>
+                                <h6 class="fw-bold mb-1 text-dark-emphasis text-truncate">${p.title}</h6>
                                 <p class="desc-text">
                                     ${p.description.length() > 100 ? p.description.substring(0, 100).concat("...") : p.description}
                                 </p>
@@ -297,17 +321,17 @@
 
                                 <div class="border-top pt-2">
                                     <div class="d-flex justify-content-between text-muted mb-1" style="font-size:0.75rem;">
-                                        <span><strong class="text-success">₹${p.amountRaised}</strong> raised</span>
+                                        <span><strong class="text-rose">₹${p.amountRaised}</strong> raised</span>
                                         <span>₹${p.fundingNeeded} target</span>
                                     </div>
                                     <div class="progress">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: ${(p.amountRaised/p.fundingNeeded)*100}%;"></div>
+                                        <div class="progress-bar bg-rose" role="progressbar" style="width: ${(p.amountRaised/p.fundingNeeded)*100}%;"></div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="p-3 border-top bg-white">
-                                <a href="${pageContext.request.contextPath}/investor/proposal/${p.id}" class="btn btn-sm w-100 rounded-pill py-1 text-white fw-semibold" style="background-color: var(--navy-light); border: none; font-size:0.8rem;">
+                                <a href="${pageContext.request.contextPath}/investor/proposal/${p.id}" class="btn btn-sm w-100 rounded-pill py-1 text-white fw-semibold" style="background-color: #f43f5e; border: none; font-size:0.8rem;">
                                     View Details <i class="bi bi-arrow-right-short"></i>
                                 </a>
                             </div>

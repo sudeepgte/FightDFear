@@ -40,4 +40,7 @@ public interface WomenEventRegistrationRepository extends JpaRepository<WomenEve
     @Query("SELECT r FROM WomenEventRegistration r WHERE r.event = :event AND r.user = :user "
             + "AND (r.status IS NULL OR UPPER(r.status) <> 'CANCELLED')")
     Optional<WomenEventRegistration> findActiveByEventAndUser(@Param("event") WomenEvent event, @Param("user") User user);
+
+    @Query("SELECT DISTINCT r FROM WomenEventRegistration r JOIN FETCH r.user JOIN FETCH r.event WHERE r.event IN :events")
+    List<WomenEventRegistration> findByEventsWithUserAndEvent(@Param("events") List<WomenEvent> events);
 }

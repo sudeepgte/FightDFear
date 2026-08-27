@@ -18,13 +18,11 @@
             color: #0F172A;
             overflow-x: hidden;
         }
-
         .update-page {
             max-width: 720px;
             margin: 0 auto;
             padding: 16px 12px 40px;
         }
-
         .update-back-btn {
             display: inline-flex;
             align-items: center;
@@ -44,7 +42,6 @@
             border-color: #F43F5E;
             color: #64748B !important;
         }
-
         .update-card {
             background: #FFFFFF;
             border: 1px solid #E2E8F0;
@@ -52,7 +49,6 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             padding: 28px 24px;
         }
-
         .update-title {
             font-family: 'Montserrat', sans-serif;
             font-size: 1.75rem;
@@ -63,13 +59,11 @@
             background-clip: text;
             margin-bottom: 6px;
         }
-
         .update-subtitle {
             color: #64748B;
             font-size: 0.92rem;
             margin-bottom: 24px;
         }
-
         .form-label {
             font-size: 0.78rem;
             font-weight: 700;
@@ -79,28 +73,35 @@
             margin-bottom: 6px;
         }
 
+
         .form-control,
         .form-select {
             border: 1px solid #E2E8F0;
+
+        .form-control, .form-select {
+            border: 1px solid var(--fdf-border);
+
             border-radius: 12px;
             padding: 11px 14px;
             font-size: 0.95rem;
             color: #0F172A;
             background: #FFFFFF;
         }
+
         .form-control:focus,
         .form-select:focus {
             border-color: #F43F5E;
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-pink);
+
             box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
         .form-control[readonly] {
             background: #f8f9fc;
             color: #64748B;
         }
-
-        input[type="file"].form-control {
-            padding: 8px 12px;
-        }
+        input[type="file"].form-control { padding: 8px 12px; }
         input[type="file"]::file-selector-button {
             background: #0F172A;
             border: none;
@@ -112,12 +113,12 @@
             cursor: pointer;
             margin-right: 10px;
         }
-
         .section-divider {
             border: none;
             border-top: 1px dashed var(--fdf-border);
             margin: 22px 0;
         }
+
 
         .form-check {
             display: flex;
@@ -141,26 +142,26 @@
             line-height: 1.45;
         }
 
+
+        .field-group { margin-bottom: 16px; }
+
         .btn-save {
             width: 100%;
-            padding: 13px;
             border: none;
+
             border-radius: 14px;
             background: #0F172A;
-            color: #fff;
-            font-weight: 700;
-            font-size: 1rem;
-            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.25);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .btn-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 24px rgba(244, 63, 94, 0.35);
-            color: #fff;
-        }
 
+            border-radius: 50px;
+            padding: 14px 24px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+
+            color: #fff;
+        }
         .btn-cancel {
             display: block;
+
             width: 100%;
             padding: 12px;
             margin-top: 10px;
@@ -169,10 +170,15 @@
             background: #FFFFFF;
             color: #64748B;
             font-weight: 600;
+
+
             text-align: center;
+            margin-top: 14px;
+            color: var(--fdf-muted);
             text-decoration: none;
-            transition: all 0.2s;
+            font-weight: 600;
         }
+
         .btn-cancel:hover {
             border-color: #64748B;
             background: rgba(30, 27, 75, 0.04);
@@ -183,41 +189,16 @@
             margin-bottom: 16px;
         }
 
-        @media (max-width: 768px) {
-            #wrapper {
-                flex-direction: column !important;
-                margin-top: 68px !important;
-            }
-            #page-content-wrapper {
-                margin-left: 0 !important;
-                padding: 12px 10px !important;
-                width: 100% !important;
-            }
-            .update-page {
-                padding: 8px 4px 32px;
-            }
-            .update-card {
-                padding: 22px 16px;
-                border-radius: 16px;
-            }
-            .update-title {
-                font-size: 1.4rem;
-            }
-            .update-back-btn {
-                width: 100%;
-                justify-content: center;
-                margin-bottom: 16px;
-            }
-        }
 
+
+        @media (max-width: 768px) {
+            .update-card { padding: 22px 16px; border-radius: 16px; }
+            .update-title { font-size: 1.4rem; }
+            .update-back-btn { width: 100%; justify-content: center; margin-bottom: 16px; }
+        }
         @media (max-width: 430px) {
-            .update-title {
-                font-size: 1.25rem;
-            }
-            .form-control,
-            .form-select {
-                font-size: 16px;
-            }
+            .update-title { font-size: 1.25rem; }
+            .form-control, .form-select { font-size: 16px; }
         }
     </style>
 </head>
@@ -231,8 +212,7 @@
     <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
         <div class="update-page">
             <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="update-back-btn">
-                <i class="bi bi-arrow-left"></i>
-                Back to Profile
+                <i class="bi bi-arrow-left"></i> Back to Profile
             </a>
 
             <div class="update-card">
@@ -265,106 +245,177 @@
                 <form action="${pageContext.request.contextPath}/users/update/${user.id}" method="post" enctype="multipart/form-data" id="profileUpdateForm">
                     <input type="hidden" name="confirmSave" id="confirmSave" value="false">
 
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Personal Details</h5>
+
                     <div class="field-group">
                         <label class="form-label" for="name">Full Name</label>
-                        <input type="text" name="name" id="name" class="form-control"
-                               value="${user.fullName}" placeholder="Enter your full name" required
-                               oninput="syncPreview()">
+                        <input type="text" name="name" id="name" class="form-control" value="${user.fullName}" required oninput="syncPreview()">
                     </div>
-
                     <div class="field-group">
                         <label class="form-label" for="email">Email Address</label>
-                        <input type="email" name="email" id="email" class="form-control"
-                               value="${user.email}" readonly>
-                        <div class="small text-muted mt-1">Email changes require OTP verification (not available in this step).</div>
+                        <input type="email" name="email" id="email" class="form-control" value="${user.email}" readonly>
                     </div>
-
                     <div class="field-group">
                         <label class="form-label" for="phone">Phone Number</label>
-                        <input type="tel" name="phone" id="phone" class="form-control"
-                               value="${user.phoneNumber}" placeholder="10-digit phone number"
-                               pattern="[0-9]{10}" maxlength="10" minlength="10"
-                               oninput="this.value=this.value.replace(/[^0-9]/g,''); syncPreview();" required>
+                        <input type="tel" name="phone" id="phone" class="form-control" value="${user.phoneNumber}"
+                               pattern="[0-9]{10}" maxlength="10" minlength="10" required
+                               oninput="this.value=this.value.replace(/[^0-9]/g,''); syncPreview();">
                     </div>
-
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <div class="field-group mb-0">
-                                <label class="form-label" for="dob">Date of Birth</label>
-                                <input type="date" id="dob" name="dob" class="form-control"
-                                       value="${user.dob}" required onchange="syncPreview()">
-                            </div>
+                            <label class="form-label" for="dob">Date of Birth</label>
+                            <input type="date" id="dob" name="dob" class="form-control" value="${user.dob}" onchange="syncPreview()">
                         </div>
                         <div class="col-12 col-md-6">
-                            <div class="field-group mb-0">
-                                <label class="form-label" for="ageDisplay">Age</label>
-                                <input type="number" id="ageDisplay" class="form-control"
-                                       value="${user.age}" placeholder="Auto from DOB"
-                                       min="0" max="120" readonly tabindex="-1">
-                            </div>
+                            <label class="form-label" for="ageDisplay">Age</label>
+                            <input type="number" id="ageDisplay" class="form-control" value="${user.age}" readonly tabindex="-1">
                         </div>
                     </div>
-
                     <div class="field-group mt-3">
                         <label class="form-label" for="gender">Gender</label>
                         <select name="gender" id="gender" class="form-select" onchange="syncPreview()">
                             <option value="">Prefer not to say</option>
-                            <option value="MALE"   ${user.gender eq 'MALE'   ? 'selected' : ''}>Male</option>
                             <option value="FEMALE" ${user.gender eq 'FEMALE' ? 'selected' : ''}>Female</option>
                             <option value="OTHER"  ${user.gender eq 'OTHER'  ? 'selected' : ''}>Other</option>
                         </select>
                     </div>
-
                     <div class="field-group">
-                        <label class="form-label" for="address">Home Address</label>
-                        <input type="text" name="address" id="address" class="form-control"
-                               value="${user.homeAddress}" placeholder="Enter your address" required
-                               oninput="syncPreview()">
+                        <label class="form-label" for="city">City / Location</label>
+                        <input type="text" name="city" id="city" class="form-control" value="${user.city}" oninput="syncPreview()">
+                    </div>
+                    <div class="field-group">
+                        <label class="form-label" for="preferredLanguage">Preferred Language</label>
+                        <select name="preferredLanguage" id="preferredLanguage" class="form-select" onchange="syncPreview()">
+                            <option value="English" ${preferredLanguage eq 'English' ? 'selected' : ''}>English</option>
+                            <option value="Hindi"   ${preferredLanguage eq 'Hindi'   ? 'selected' : ''}>Hindi</option>
+                            <option value="Marathi" ${preferredLanguage eq 'Marathi' ? 'selected' : ''}>Marathi</option>
+                            <option value="Tamil"   ${preferredLanguage eq 'Tamil'   ? 'selected' : ''}>Tamil</option>
+                            <option value="Telugu"  ${preferredLanguage eq 'Telugu'  ? 'selected' : ''}>Telugu</option>
+                            <option value="Kannada" ${preferredLanguage eq 'Kannada' ? 'selected' : ''}>Kannada</option>
+                            <option value="Bengali" ${preferredLanguage eq 'Bengali' ? 'selected' : ''}>Bengali</option>
+                            <option value="Gujarati"${preferredLanguage eq 'Gujarati'? 'selected' : ''}>Gujarati</option>
+                            <option value="Other"   ${preferredLanguage eq 'Other'   ? 'selected' : ''}>Other</option>
+                        </select>
                     </div>
 
                     <hr class="section-divider">
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Address Details</h5>
+                    <div class="field-group">
+                        <label class="form-label" for="address">Home Address</label>
+                        <input type="text" name="address" id="address" class="form-control" value="${user.homeAddress}" oninput="syncPreview()">
+                    </div>
+                    <div class="field-group">
+                        <label class="form-label" for="workCollegeAddress">Work / College Address</label>
+                        <input type="text" name="workCollegeAddress" id="workCollegeAddress" class="form-control" value="${user.workCollegeAddress}" oninput="syncPreview()">
+                    </div>
 
+                    <hr class="section-divider">
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Primary Emergency Contact</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="emergencyContactName">Contact Name</label>
+                            <input type="text" name="emergencyContactName" id="emergencyContactName" class="form-control"
+                                   value="${not empty user.emergencyContacts ? user.emergencyContacts[0].name : ''}" oninput="syncPreview()">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="emergencyContactPhone">Contact Phone</label>
+                            <input type="tel" name="emergencyContactPhone" id="emergencyContactPhone" class="form-control"
+                                   value="${not empty user.emergencyContacts ? user.emergencyContacts[0].phone : ''}"
+                                   pattern="[0-9]{10}" maxlength="10" minlength="10"
+                                   oninput="this.value=this.value.replace(/[^0-9]/g,''); syncPreview();">
+                        </div>
+                    </div>
+                    <div class="field-group mt-3">
+                        <label class="form-label" for="emergencyContactRelation">Relationship</label>
+                        <select name="emergencyContactRelation" id="emergencyContactRelation" class="form-select" onchange="syncPreview()">
+                            <option value="Mother" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Mother' ? 'selected' : ''}>Mother</option>
+                            <option value="Father" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Father' ? 'selected' : ''}>Father</option>
+                            <option value="Spouse" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Spouse' ? 'selected' : ''}>Spouse</option>
+                            <option value="Friend" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Friend' ? 'selected' : ''}>Friend</option>
+                            <option value="Other"  ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Other'  ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
+
+                    <hr class="section-divider">
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Medical Information (optional)</h5>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="bloodGroup">Blood Group</label>
+                            <select name="bloodGroup" id="bloodGroup" class="form-select" onchange="syncPreview()">
+                                <option value="" ${empty user.medicalDetails || empty user.medicalDetails.bloodGroup ? 'selected' : ''}>Select Blood Group</option>
+                                <option value="A+"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'A+'  ? 'selected' : ''}>A+</option>
+                                <option value="A-"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'A-'  ? 'selected' : ''}>A-</option>
+                                <option value="B+"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'B+'  ? 'selected' : ''}>B+</option>
+                                <option value="B-"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'B-'  ? 'selected' : ''}>B-</option>
+                                <option value="AB+" ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'AB+' ? 'selected' : ''}>AB+</option>
+                                <option value="AB-" ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'AB-' ? 'selected' : ''}>AB-</option>
+                                <option value="O+"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'O+'  ? 'selected' : ''}>O+</option>
+                                <option value="O-"  ${not empty user.medicalDetails && user.medicalDetails.bloodGroup eq 'O-'  ? 'selected' : ''}>O-</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="allergies">Allergies</label>
+                            <input type="text" name="allergies" id="allergies" class="form-control"
+                                   value="${not empty user.medicalDetails ? user.medicalDetails.allergies : ''}" oninput="syncPreview()">
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="form-label" for="medicalHistory">Medical History / Conditions</label>
+                        <input type="text" name="medicalHistory" id="medicalHistory" class="form-control"
+                               value="${not empty user.medicalDetails ? user.medicalDetails.medicalHistory : ''}" oninput="syncPreview()">
+                    </div>
+                    <div class="field-group">
+                        <label class="form-label" for="medications">Active Medications</label>
+                        <input type="text" name="medications" id="medications" class="form-control"
+                               value="${not empty user.medicalDetails ? user.medicalDetails.medications : ''}" oninput="syncPreview()">
+                    </div>
+
+                    <hr class="section-divider">
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Identity Docs &amp; Photo</h5>
                     <div class="field-group">
                         <label class="form-label" for="identityFile">Identity Document (optional)</label>
                         <input type="file" name="identityFile" id="identityFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
                     </div>
-
                     <div class="field-group">
                         <label class="form-label" for="image">Profile Photo</label>
                         <input type="file" name="image" id="image" class="form-control" accept="image/*" onchange="previewPhoto(this)">
                     </div>
 
                     <hr class="section-divider">
-
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Safety Preferences &amp; Account Settings</h5>
+                    <div class="field-group">
+                        <label class="form-label" for="safetyPreferences">Notification &amp; Sharing Preferences</label>
+                        <select name="safetyPreferences" id="safetyPreferences" class="form-select">
+                            <option value="ALERTS_AND_LOCATION" ${user.safetyPreferences eq 'ALERTS_AND_LOCATION' ? 'selected' : ''}>Enable real-time location sharing with emergency contacts and receive danger zone alerts</option>
+                            <option value="ALERTS_ONLY" ${user.safetyPreferences eq 'ALERTS_ONLY' ? 'selected' : ''}>Danger zone alerting only</option>
+                            <option value="NONE" ${user.safetyPreferences eq 'NONE' ? 'selected' : ''}>Disable safety notifications</option>
+                        </select>
+                    </div>
                     <div class="field-group mb-0">
                         <div class="form-check">
                             <input type="checkbox" name="isPrivate" class="form-check-input" id="isPrivate"
-                                   ${user['private'] ? 'checked' : ''}>
-                            <label class="form-check-label" for="isPrivate">
-                                Private Account — only followers can see my reels
-                            </label>
+                                   <c:if test="${user.isPrivate()}">checked</c:if>>
+                            <label class="form-check-label" for="isPrivate">Private Account — only followers can see my reels</label>
                         </div>
                     </div>
 
-                    <!-- Preview card -->
                     <div id="profilePreviewCard" class="mt-4 p-4 rounded-4" style="background:#F8FAFC; border:1px solid #E2E8F0; display:none;">
-                        <div class="fw-bold mb-3" style="color:#0F172A;"><i class="bi bi-eye me-1" style="color:#F43F5E;"></i> Profile Preview</div>
+                        <div class="fw-bold mb-3"><i class="bi bi-eye me-1" style="color:#F43F5E;"></i> Profile Preview</div>
                         <div class="d-flex gap-3 align-items-center mb-3">
                             <img id="previewAvatar" src="${not empty user.profilePhoto ? user.profilePhoto : ''}" alt=""
                                  style="width:64px;height:64px;border-radius:50%;object-fit:cover;background:#FFE4E6; ${empty user.profilePhoto ? 'display:none;' : ''}">
-                            <div id="previewAvatarFallback" style="width:64px;height:64px;border-radius:50%;background:#FFE4E6;color:#F43F5E;display:${empty user.profilePhoto ? 'flex' : 'none'};align-items:center;justify-content:center;font-weight:800;">
-                                <i class="bi bi-person"></i>
-                            </div>
                             <div>
-                                <div class="fw-bold" id="previewName" style="color:#0F172A;">${user.fullName}</div>
+                                <div class="fw-bold" id="previewName">${user.fullName}</div>
                                 <div class="small text-muted" id="previewEmail">${user.email}</div>
                             </div>
                         </div>
-                        <div class="small mb-1"><strong>Phone:</strong> <span id="previewPhone">${user.phoneNumber}</span></div>
-                        <div class="small mb-1"><strong>DOB:</strong> <span id="previewDob">${user.dob}</span></div>
-                        <div class="small mb-1"><strong>Gender:</strong> <span id="previewGender">${user.gender}</span></div>
-                        <div class="small mb-3"><strong>Address:</strong> <span id="previewAddress">${user.homeAddress}</span></div>
-                        <div class="d-flex gap-2 flex-wrap">
+                        <div class="row g-2 mb-3 small">
+                            <div class="col-6"><strong>Phone:</strong> <span id="previewPhone">${user.phoneNumber}</span></div>
+                            <div class="col-6"><strong>DOB:</strong> <span id="previewDob">${user.dob}</span></div>
+                            <div class="col-6"><strong>Gender:</strong> <span id="previewGender">${user.gender}</span></div>
+                            <div class="col-6"><strong>City:</strong> <span id="previewCity">${user.city}</span></div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap mt-3">
                             <button type="button" class="btn btn-light rounded-pill px-3" onclick="hidePreview()">Edit</button>
                             <button type="button" class="btn rounded-pill px-4 fw-bold" style="background:#F43F5E;color:#fff;" onclick="confirmAndSave()">Confirm &amp; Save</button>
                         </div>
@@ -387,14 +438,12 @@ function syncPreview() {
     el = document.getElementById('previewPhone'); if (el) el.textContent = document.getElementById('phone').value || '—';
     el = document.getElementById('previewDob'); if (el) el.textContent = document.getElementById('dob').value || '—';
     el = document.getElementById('previewGender'); if (el) el.textContent = document.getElementById('gender').value || '—';
-    el = document.getElementById('previewAddress'); if (el) el.textContent = document.getElementById('address').value || '—';
+    el = document.getElementById('previewCity'); if (el) el.textContent = document.getElementById('city').value || '—';
 }
 function showPreview() {
-    if (!document.getElementById('profileUpdateForm').reportValidity()) return;
     syncPreview();
     document.getElementById('profilePreviewCard').style.display = 'block';
     document.getElementById('btn-preview').style.display = 'none';
-    document.getElementById('profilePreviewCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 function hidePreview() {
     document.getElementById('profilePreviewCard').style.display = 'none';
@@ -405,42 +454,17 @@ function confirmAndSave() {
     document.getElementById('profileUpdateForm').submit();
 }
 function previewPhoto(input) {
-    if (!input.files || !input.files[0]) return;
-    var url = URL.createObjectURL(input.files[0]);
-    var img = document.getElementById('previewAvatar');
-    var fb = document.getElementById('previewAvatarFallback');
-    img.src = url;
-    img.style.display = 'block';
-    fb.style.display = 'none';
-}
-document.addEventListener('DOMContentLoaded', function() {
-    var dob = document.getElementById('dob');
-    var ageDisplay = document.getElementById('ageDisplay');
-    if (!dob || !ageDisplay) return;
-
-    var today = new Date();
-    var maxDob = today;
-    var minDob = new Date(today.getFullYear() - 100, today.getMonth(), today.getDate());
-    var fmt = function(d) { return d.toISOString().split('T')[0]; };
-    dob.setAttribute('max', fmt(maxDob));
-    dob.setAttribute('min', fmt(minDob));
-
-    function syncAge() {
-        if (!dob.value) return;
-        var birthDate = new Date(dob.value + 'T00:00:00');
-        var now = new Date();
-        var computedAge = now.getFullYear() - birthDate.getFullYear();
-        var m = now.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) computedAge--;
-        ageDisplay.value = computedAge;
-        syncPreview();
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = document.getElementById('previewAvatar');
+            if (img) { img.src = e.target.result; img.style.display = 'block'; }
+        };
+        reader.readAsDataURL(input.files[0]);
     }
-
-    dob.addEventListener('change', syncAge);
-    syncAge();
-});
+}
+document.addEventListener('DOMContentLoaded', syncPreview);
 </script>
-
 </body>
 </html>
 

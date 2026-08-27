@@ -14,9 +14,10 @@ public class FightthefireApplication extends SpringBootServletInitializer {
     }
 
     public static void main(String[] args) {
+        // Must run before any SMTP sockets open (see MailNetworkConfig).
+        in.sp.main.Config.MailNetworkConfig.preferIpv6ForSmtpIfUnset();
         SpringApplication.run(FightthefireApplication.class, args);
         System.out.println("Women safety");
-        
     }
 }
 

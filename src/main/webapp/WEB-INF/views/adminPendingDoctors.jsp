@@ -11,26 +11,42 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --maroon:        #1e1b4b;
-    --maroon-light:  #312e81;
-    --maroon-dark:   #0b0920;
-    --maroon-pale:   #f8fafc;
-    --maroon-border: rgba(30, 27, 75, 0.12);
-    --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
+    --primary: #F43F5E;
+    --rose-soft: #FFF1F2;
+    --bg: #F8FAFC;
+    --navy: #0F172A;
+    --navy-mid: #1E293B;
+    --border: #E2E8F0;
+    --text-muted: #64748B;
+    --shadow-sm: 0 6px 20px rgba(15, 23, 42, 0.08);
     --sidebar-w: 272px;
   }
   * { box-sizing: border-box; }
-  body { font-family:'Poppins',sans-serif; margin:0; background:var(--maroon-pale); color:#1a1a2e; }
+  body { font-family:'Poppins',sans-serif; margin:0; background:var(--bg); color:var(--navy-mid); }
 
   /* ── TOPBAR ── */
   .topbar {
-    background: var(--maroon); color:#fff;
+    background: var(--navy); color:#fff;
     padding: 0 20px; height: 58px;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 1000;
-    box-shadow: 0 3px 16px rgba(125,42,90,0.28);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .topbar .brand { font-size:1.1rem; font-weight:700; }
+  .topbar .brand {
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+  .topbar .brand img {
+    height: 32px;
+    width: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
   .topbar .btn-logout {
     background:rgba(255,255,255,0.15); color:#fff;
     border:1px solid rgba(255,255,255,0.3); border-radius:7px;
@@ -44,20 +60,20 @@
   /* ── SIDEBAR ── */
   .sidebar {
     width: var(--sidebar-w); background:#fff;
-    border-right:1px solid var(--maroon-border);
+    border-right:1px solid var(--border);
     position:sticky; top:58px; height:calc(100vh - 58px);
     padding:14px 12px; overflow-y:auto; flex-shrink:0;
     transition: all 0.3s ease;
   }
-  .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
+  .brand { font-size: 0.9rem; font-weight: 700; color: var(--navy); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
   .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
   .navlink {
     display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
     color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
   }
-  .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
-  .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-  .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+  .navlink i { width: 20px; text-align: center; color: var(--primary); font-size: 1rem; }
+  .navlink:hover { background: var(--rose-soft); color: var(--navy); padding-left: 20px; }
+  .navlink.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(244,63,94,0.2); }
   .navlink.active i { color: #fff; }
 
   /* ── MAIN ── */
@@ -67,9 +83,9 @@
 
   /* ── PAGE HEADER ── */
   .pg-header {
-    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, #c04b7a 100%);
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 62%, #334155 100%);
     border-radius:16px; padding:22px 28px; margin-bottom:28px;
-    box-shadow:0 8px 28px rgba(125,42,90,0.22);
+    box-shadow:0 8px 26px rgba(15,23,42,0.22);
     display:flex; align-items:center; justify-content:space-between;
   }
   .pg-header h4 { color:#fff; font-weight:700; font-size:1.2rem; margin:0; }
@@ -95,11 +111,11 @@
       transition: border-color 0.2s, box-shadow 0.2s;
   }
   .search-input:focus {
-      border-color: var(--maroon-light);
-      box-shadow: 0 0 0 3px rgba(125,42,90,0.15);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(244,63,94,0.18);
   }
   .btn-search {
-      background: var(--maroon);
+      background: var(--primary);
       color: #fff;
       border: none;
       border-radius: 30px;
@@ -109,30 +125,30 @@
       cursor: pointer;
       transition: all 0.2s;
   }
-  .btn-search:hover { background: var(--maroon-light); transform: translateY(-1px); color: #fff; }
+  .btn-search:hover { background: #e11d48; transform: translateY(-1px); color: #fff; }
   
   .btn-clear {
-      color: var(--maroon);
+      color: var(--primary);
       font-size: 0.85rem;
       font-weight: 600;
       text-decoration: none;
       padding: 9px 16px;
       border-radius: 20px;
-      border: 2px solid var(--maroon);
+      border: 2px solid var(--primary);
       transition: all 0.2s;
       align-self: center;
   }
-  .btn-clear:hover { background: var(--maroon); color: #fff; }
+  .btn-clear:hover { background: var(--primary); color: #fff; }
 
   /* ── SEARCH RESULT BANNER ── */
   .result-banner {
       background: #fff;
-      border-left: 4px solid var(--maroon-light);
+      border-left: 4px solid var(--primary);
       border-radius: 10px;
       padding: 12px 18px;
       margin-bottom: 18px;
       font-size: 0.9rem;
-      color: var(--maroon-dark);
+      color: var(--navy-mid);
       font-weight: 600;
       box-shadow: var(--shadow-sm);
   }
@@ -140,15 +156,15 @@
   /* ── TABLE CARDS ── */
   .card-table {
     background:#fff; border-radius:16px; overflow:hidden;
-    border:1px solid var(--maroon-border); box-shadow:var(--shadow-sm);
+    border:1px solid var(--border); box-shadow:var(--shadow-sm);
     margin-bottom: 28px;
   }
   .card-table-header {
-    background: var(--maroon-pale);
+    background: var(--rose-soft);
     padding: 16px 20px;
-    border-bottom: 1px solid var(--maroon-border);
+    border-bottom: 1px solid var(--border);
     font-weight: 700;
-    color: var(--maroon-dark);
+    color: var(--navy);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -156,25 +172,28 @@
   
   .table { margin-bottom:0; }
   .table thead th {
-    background: rgba(125,42,90,0.03); color:var(--maroon-dark);
+    background: #F8FAFC; color:var(--navy);
     font-size:0.75rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.05em; padding:16px; border:none; border-bottom:1px solid var(--maroon-border); text-align:center;
+    letter-spacing:0.05em; padding:16px; border:none; border-bottom:1px solid var(--border); text-align:center;
   }
   .table tbody td {
-    padding:16px; vertical-align:middle; border-bottom:1px solid var(--maroon-border);
+    padding:16px; vertical-align:middle; border-bottom:1px solid var(--border);
     font-size:0.9rem; text-align:center;
   }
   .table tbody tr:last-child td { border-bottom: none; }
-  .table tbody tr:hover { background:rgba(125,42,90,0.02); }
+  .table tbody tr:hover { background:rgba(244,63,94,0.04); }
 
   /* ── BADGES & BUTTONS ── */
   .badge-status {
     padding:6px 12px; border-radius:999px; font-size:0.75rem; font-weight:700;
     display:inline-block; border:1px solid transparent;
   }
-  .status-VERIFIED { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-  .status-PENDING { background:#fef9c3; color:#854d0e; border-color:#fef08a; }
-  .status-REJECTED { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+  .status-APPROVED, .status-VERIFIED { background:#d1fae5; color:#065f46; border-color:#a7f3d0; }
+  .status-PENDING_ADMIN_APPROVAL, .status-PENDING { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+  .status-READY_FOR_VERIFICATION, .status-REVERIFICATION { background:#e0f2fe; color:#075985; border-color:#bae6fd; }
+  .status-CHANGES_REQUESTED { background:#ffedd5; color:#9a3412; border-color:#fed7aa; }
+  .status-PROFILE_INCOMPLETE, .status-REGISTERED { background:#f1f5f9; color:#475569; border-color:#cbd5e1; }
+  .status-REJECTED, .status-SUSPENDED { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
   
   .btn-approve {
     background-color: #059669;
@@ -205,9 +224,9 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    background: var(--maroon-pale); 
-    color: var(--maroon); 
-    border: 1px solid var(--maroon-border);
+    background: #fff;
+    color: var(--primary); 
+    border: 1px solid #fecdd3;
     padding: 6px 14px; 
     border-radius: 8px; 
     font-size: 0.82rem; 
@@ -218,22 +237,125 @@
     margin-right: 4px;
   }
   .btn-profile:hover { 
-    background: var(--maroon); 
+    background: var(--primary); 
     color: #fff; 
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(125,42,90,0.15);
+    box-shadow: 0 4px 12px rgba(244,63,94,0.2);
+  }
+
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .table-responsive .table {
+    min-width: 760px;
+  }
+
+  .quick-filter .btn {
+    border-radius: 999px;
+    font-weight: 600;
+  }
+  .quick-filter .btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .quick-filter .btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  .quick-filter .btn-outline-primary:hover {
+    background: var(--primary);
+    border-color: var(--primary);
   }
 
   @media(max-width:992px){
     .layout{flex-direction:column;}
-    .sidebar{width:100%;position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--maroon-border);}
+    .sidebar{width:100%;position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--border);}
+  }
+
+  @media (max-width: 768px) {
+    .topbar { padding: 0 12px; }
+    .topbar .brand span { font-size: 0.95rem; }
+    .main { padding: 16px 12px 34px; }
+    .pg-header { padding: 18px 16px; margin-bottom: 18px; }
+    .search-wrap { margin-bottom: 18px; }
+    .search-input { min-width: 100%; }
+    .search-wrap .form-select, .search-wrap .btn-search, .search-wrap .btn-clear {
+      width: 100%;
+    }
+    .table-responsive .table {
+      min-width: 100%;
+    }
+    .table-responsive.responsive-card-table table,
+    .table-responsive.responsive-card-table thead,
+    .table-responsive.responsive-card-table tbody,
+    .table-responsive.responsive-card-table th,
+    .table-responsive.responsive-card-table td,
+    .table-responsive.responsive-card-table tr {
+      display: block;
+      width: 100%;
+    }
+    .table-responsive.responsive-card-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .table-responsive.responsive-card-table tbody tr {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 12px;
+      padding: 8px 10px;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.05);
+    }
+    .table-responsive.responsive-card-table tbody td {
+      border: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 2px;
+      text-align: left;
+      font-size: 0.86rem;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .table-responsive.responsive-card-table tbody td:last-child {
+      border-bottom: 0;
+      padding-bottom: 4px;
+    }
+    .table-responsive.responsive-card-table tbody td::before {
+      content: attr(data-label);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex: 0 0 42%;
+      max-width: 42%;
+    }
+    .table-responsive.responsive-card-table tbody td > * {
+      max-width: 58%;
+    }
+    .table-responsive.responsive-card-table .d-flex {
+      justify-content: flex-end !important;
+      width: 100%;
+    }
   }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
+  <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="brand">
+    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
+    <span>Fight D Fear Admin</span>
+  </a>
   <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
     <i class="fas fa-sign-out-alt"></i> Logout
   </a>
@@ -274,7 +396,7 @@
           </c:if>
       </form>
 
-      <div class="d-flex flex-wrap gap-2 mb-4">
+      <div class="d-flex flex-wrap gap-2 mb-4 quick-filter">
           <a class="btn btn-sm ${filter == 'pending' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=pending">Pending (${pendingCount})</a>
           <a class="btn btn-sm ${filter == 'reverification' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=reverification">Re-verification (${reverificationCount})</a>
           <a class="btn btn-sm ${filter == 'changes_requested' ? 'btn-primary' : 'btn-outline-primary'}" href="?filter=changes_requested">Changes Requested (${changesRequestedCount})</a>
@@ -296,7 +418,7 @@
             <div class="card-table-header">
               <i class="fas fa-search text-primary"></i> Search Results
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -319,9 +441,7 @@
                                   <td>${not empty d.phone ? d.phone : '—'}</td>
                                   <td>${not empty d.specialization ? d.specialization : '—'}</td>
                                   <td>${not empty d.locationText ? d.locationText : '—'}</td>
-                                  <td>
-                                      <span class="badge-status status-PENDING">${d.doctorProfileStatus}</span>
-                                  </td>
+                                  <td><span class="badge-status status-${d.doctorProfileStatus}">${not empty d.doctorProfileStatusLabel ? d.doctorProfileStatusLabel : d.doctorProfileStatus}</span></td>
                                   <td>
                                       <div class="d-flex justify-content-center align-items-center flex-wrap">
                                         <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
@@ -350,7 +470,7 @@
             <div class="card-table-header">
               <i class="fas fa-clock text-warning"></i> Pending Doctors
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -407,7 +527,7 @@
             <div class="card-table-header">
               <i class="fas fa-edit text-warning"></i> Changes Requested
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -449,7 +569,7 @@
             <div class="card-table-header">
               <i class="fas fa-sync text-info"></i> Pending Re-verification
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -468,7 +588,7 @@
                                   <td class="fw-bold">${d.fullName}</td>
                                   <td>${d.email}</td>
                                   <td>${d.specialization}</td>
-                                  <td><span class="badge-status status-PENDING">Pending review</span></td>
+                                  <td><span class="badge-status status-${d.doctorProfileStatus}">${not empty d.doctorProfileStatusLabel ? d.doctorProfileStatusLabel : d.doctorProfileStatus}</span></td>
                                   <td>
                                       <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Review</a>
                                   </td>
@@ -491,7 +611,7 @@
             <div class="card-table-header">
               <i class="fas fa-user-md text-success"></i> Approved Doctors
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -510,7 +630,7 @@
                                   <td class="fw-bold">${d.fullName}</td>
                                   <td>${d.email}</td>
                                   <td>${d.specialization}</td>
-                                  <td><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> Approved</span></td>
+                                  <td><span class="badge-status status-${d.doctorProfileStatus}">${not empty d.doctorProfileStatusLabel ? d.doctorProfileStatusLabel : d.doctorProfileStatus}</span></td>
                                   <td>
                                       <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
                                   </td>
@@ -533,7 +653,7 @@
             <div class="card-table-header">
               <i class="fas fa-user-times text-danger"></i> Rejected Doctors
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive responsive-card-table">
               <table class="table align-middle">
                   <thead>
                       <tr>
@@ -552,7 +672,7 @@
                                   <td class="fw-bold">${d.fullName}</td>
                                   <td>${d.email}</td>
                                   <td>${d.specialization}</td>
-                                  <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> Rejected</span></td>
+                                  <td><span class="badge-status status-${d.doctorProfileStatus}">${not empty d.doctorProfileStatusLabel ? d.doctorProfileStatusLabel : d.doctorProfileStatus}</span></td>
                                   <td>
                                       <a href="${pageContext.request.contextPath}/admin/doctors/${d.id}/profile" class="btn-profile"><i class="fas fa-user"></i> Profile</a>
                                   </td>
@@ -575,6 +695,23 @@
     </div>
   </main>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.responsive-card-table table').forEach(function (table) {
+      var headers = Array.from(table.querySelectorAll('thead th')).map(function (th) {
+        return th.textContent.trim();
+      });
+      table.querySelectorAll('tbody tr').forEach(function (row) {
+        row.querySelectorAll('td').forEach(function (cell, index) {
+          if (!cell.hasAttribute('data-label')) {
+            cell.setAttribute('data-label', headers[index] || '');
+          }
+        });
+      });
+    });
+  });
+</script>
 
 </body>
 </html>

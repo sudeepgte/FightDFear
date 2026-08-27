@@ -12,11 +12,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root{
-      --ma-purple:#1e1b4b;--ma-purple-l:#312e81;--ma-coral:#f43f5e;
-      --ma-teal:#20c997;--ma-gold:#ffd700;--ma-bg:#f8fafc;--ma-card:#fff;
-      --ma-text:#1a1a2e;--ma-muted:#6b7280;--ma-border:rgba(30, 27, 75, 0.08);
-      --ma-gradient:linear-gradient(135deg,#1e1b4b,#312e81,#f43f5e);
-      --ma-shadow:0 4px 24px rgba(30, 27, 75, 0.08);--ma-radius:16px;
+      --primary:#F43F5E;--rose-soft:#FFF1F2;--bg-page:#F8FAFC;--navy:#0F172A;--navy-soft:#1E293B;--border:#E2E8F0;
+      --ma-coral:#f43f5e;--ma-teal:#16a34a;--ma-gold:#eab308;--ma-bg:var(--bg-page);--ma-card:#fff;
+      --ma-text:var(--navy);--ma-muted:#64748b;--ma-border:var(--border);
+      --ma-gradient:linear-gradient(135deg,var(--navy),var(--navy-soft),var(--primary));
+      --ma-shadow:0 4px 24px rgba(15, 23, 42, 0.08);--ma-radius:16px;
       --sidebar-w:240px
     }
     *{box-sizing:border-box;margin:0;padding:0}
@@ -34,8 +34,8 @@
     .ma-header-info h1{font-size:22px;font-weight:800;margin:0}
     .ma-header-info p{font-size:13px;color:var(--ma-muted);margin:2px 0 0}
     .ma-header-stats{margin-left:auto;display:flex;gap:16px;flex-shrink:0}
-    .ma-stat{text-align:center;padding:8px 16px;border-radius:12px;background:rgba(123,44,191,0.05);min-width:70px}
-    .ma-stat .num{font-size:22px;font-weight:800;color:var(--ma-purple-l)}
+    .ma-stat{text-align:center;padding:8px 16px;border-radius:12px;background:var(--rose-soft);min-width:70px}
+    .ma-stat .num{font-size:22px;font-weight:800;color:var(--primary)}
     .ma-stat .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ma-muted)}
 
     /* Main Layout */
@@ -49,11 +49,11 @@
     .ma-sidebar-btn{display:flex;align-items:center;gap:12px;padding:14px 18px;border:none;background:transparent;font-size:14px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--ma-muted);cursor:pointer;border-radius:12px;transition:all 0.25s;text-align:left;margin-bottom:2px;text-decoration:none}
     .ma-sidebar-btn i{font-size:18px;width:22px;text-align:center}
     .ma-sidebar-btn:hover{background:rgba(123,44,191,0.04);color:var(--ma-text)}
-    .ma-sidebar-btn.active{background:linear-gradient(135deg,rgba(123,44,191,0.1),rgba(74,14,120,0.06));color:var(--ma-purple-l);box-shadow:inset 3px 0 0 var(--ma-purple-l)}
-    .ma-sidebar-btn.active i{color:var(--ma-purple-l)}
+    .ma-sidebar-btn.active{background:var(--rose-soft);color:var(--primary);box-shadow:inset 3px 0 0 var(--primary)}
+    .ma-sidebar-btn.active i{color:var(--primary)}
     .ma-sidebar-footer{padding:16px 18px;border-top:1px solid var(--ma-border);font-size:11px;color:var(--ma-muted)}
-    .ma-sidebar-footer a{color:var(--ma-purple-l);text-decoration:none;font-weight:600;transition:all 0.25s ease;display:inline-block}
-    .ma-sidebar-footer a:hover{color:var(--ma-purple);text-shadow:0 0 2px rgba(124,45,94,0.15);transform:translateX(3px)}
+    .ma-sidebar-footer a{color:var(--primary);text-decoration:none;font-weight:600;transition:all 0.25s ease;display:inline-block}
+    .ma-sidebar-footer a:hover{color:#e11d48;text-shadow:0 0 2px rgba(244,63,94,0.2);transform:translateX(3px)}
 
     /* Content */
     .ma-content{min-width:0;display:flex;flex-direction:column}
@@ -69,27 +69,27 @@
     .ma-appt-card{background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);padding:20px 24px;display:flex;align-items:center;gap:20px;transition:all 0.25s}
     .ma-appt-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(30, 27, 75, 0.12)}
 
-    .ma-doc-avatar{width:56px;height:56px;border-radius:50%;background:var(--ma-gradient);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
+    .ma-doc-avatar{width:56px;height:56px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
     .ma-doc-avatar img{width:56px;height:56px;border-radius:50%;object-fit:cover}
 
     .ma-appt-info{flex:1;min-width:0}
     .ma-appt-info .doc-name{font-size:15px;font-weight:700;margin:0}
-    .ma-appt-info .doc-spec{font-size:12px;color:var(--ma-purple-l);font-weight:600}
+    .ma-appt-info .doc-spec{font-size:12px;color:var(--primary);font-weight:600}
     .ma-appt-info .appt-meta{display:flex;gap:16px;margin-top:6px;flex-wrap:wrap}
     .ma-appt-info .appt-meta span{font-size:12px;color:var(--ma-muted);display:flex;align-items:center;gap:4px}
-    .ma-appt-info .appt-meta span i{font-size:14px;color:var(--ma-purple-l)}
+    .ma-appt-info .appt-meta span i{font-size:14px;color:var(--primary)}
 
     .ma-appt-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
     .ma-status{padding:5px 14px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
     .ma-status.pending{background:rgba(255,193,7,0.12);color:#d4a017}
     .ma-status.confirmed{background:rgba(32,201,151,0.12);color:#0d9668}
-    .ma-status.completed{background:rgba(74,144,217,0.12);color:#4a90d9}
+    .ma-status.completed{background:rgba(15,23,42,0.08);color:var(--navy-soft)}
     .ma-status.cancelled{background:rgba(255,107,107,0.12);color:var(--ma-coral)}
     .ma-status.rejected{background:rgba(255,107,107,0.12);color:var(--ma-coral)}
 
     .ma-type-badge{padding:4px 12px;border-radius:8px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
     .ma-type-badge.clinic{background:rgba(32,201,151,0.08);color:#0d9668}
-    .ma-type-badge.video{background:rgba(74,144,217,0.08);color:#4a90d9}
+    .ma-type-badge.video{background:rgba(15,23,42,0.08);color:var(--navy-soft)}
 
     .ma-join-btn{padding:6px 16px;border:none;border-radius:999px;background:var(--ma-teal);color:#fff;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s}
     .ma-join-btn:hover{filter:brightness(1.1);transform:scale(1.05);color:#fff}
@@ -98,7 +98,7 @@
     .ma-empty{text-align:center;padding:60px 20px;color:var(--ma-muted);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border)}
     .ma-empty i{font-size:56px;opacity:0.2;margin-bottom:12px}
     .ma-empty p{font-size:14px;margin:4px 0 0}
-    .ma-empty a{margin-top:16px;padding:10px 28px;border-radius:999px;background:var(--ma-gradient);color:#fff;text-decoration:none;font-size:13px;font-weight:700}
+    .ma-empty a{margin-top:16px;padding:10px 28px;border-radius:999px;background:var(--primary);color:#fff;text-decoration:none;font-size:13px;font-weight:700}
 
     /* Responsive */
     @media(max-width:800px){
@@ -106,7 +106,7 @@
       .ma-sidebar{position:static}
       .ma-sidebar-nav{flex-direction:row;overflow-x:auto;gap:4px;padding:6px}
       .ma-sidebar-btn{padding:10px 14px;font-size:12px;gap:8px;white-space:nowrap;border-radius:10px;margin-bottom:0}
-      .ma-sidebar-btn.active{box-shadow:none;background:var(--ma-purple-l);color:#fff}
+      .ma-sidebar-btn.active{box-shadow:none;background:var(--primary);color:#fff}
       .ma-sidebar-btn.active i{color:#fff}
       .ma-sidebar-footer{display:none}
       .ma-header-card{flex-direction:column;text-align:center}
@@ -115,6 +115,9 @@
       .ma-appt-right{align-items:center}
       .ma-appt-info .appt-meta{justify-content:center}
     }
+    .ma-brand{display:inline-flex;align-items:center;gap:10px;position:absolute;top:16px;left:70px;color:#fff;font-weight:700;font-size:14px}
+    .ma-brand img{width:32px;height:32px;border-radius:8px;object-fit:cover}
+    @media(max-width:800px){.ma-brand{left:50%;transform:translateX(-50%)}}
   </style>
 </head>
 <body>
@@ -122,6 +125,10 @@
 <!-- Hero -->
 <div class="ma-hero">
   <a href="${pageContext.request.contextPath}/doctors/list" class="ma-back"><i class="bi bi-arrow-left"></i></a>
+  <div class="ma-brand">
+    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
+    <span>Fight D Fear</span>
+  </div>
 </div>
 
 <!-- Header Card -->

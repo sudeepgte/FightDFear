@@ -289,7 +289,7 @@
                             
                             // Fetch Users
                             try (java.sql.PreparedStatement ps = conn.prepareStatement(
-                                "SELECT DISTINCT u.* FROM user u INNER JOIN chat_messages m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
+                                "SELECT DISTINCT u.* FROM user u INNER JOIN chat_message m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
                                 ps.setLong(1, currentUser.getId());
                                 ps.setLong(2, currentUser.getId());
                                 ps.setLong(3, currentUser.getId());

@@ -34,9 +34,10 @@ public class ChatMessage {
     @JoinColumn(name = "receiver_id")
     private User receiver;
 
+    @Column(columnDefinition = "TEXT")
     private String message;
-    
-    private boolean readStatus = false;   // ✅ NEW
+
+    private boolean readStatus = false;
 
     private String messageType; // TEXT / REEL
     

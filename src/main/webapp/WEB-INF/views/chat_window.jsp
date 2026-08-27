@@ -1,809 +1,904 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
-    <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Chat with ${not empty receiver.fullName ? receiver.fullName : receiver.email} — Fight D Fear</title>
 
-        <!DOCTYPE html>
-        <html>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
 
-        <head>
-            <title>Chat with ${receiver.fullName}</title>
+    <style>
+        :root {
+            --fdf-rose: #F43F5E;
+            --fdf-rose-dark: #E11D48;
+            --fdf-rose-soft: #FFF1F2;
+            --fdf-rose-light: #FFE4E6;
+            --fdf-navy: #0F172A;
+            --fdf-muted: #64748B;
+            --fdf-border: #E2E8F0;
+            --fdf-bg: #F8FAFC;
+            --fdf-white: #FFFFFF;
+        }
 
-            <!-- Bootstrap -->
-            <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap"
-                rel="stylesheet">
-            <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap"
-                rel="stylesheet">
-
-            <!-- Icons & CSS -->
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-            <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"
-                rel="stylesheet">
-            <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
-            <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-            <link href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css" rel="stylesheet">
-
-            <style>
-                /* ============================================
-       ORIGINAL STYLES (kept exactly as is)
-       ============================================ */
-                body {
-                    background: #f5f5f5;
-                }
-
-                .chat-container {
-                    max-width: 800px;
-                    margin: 30px auto;
-                    background: white;
-                    border-radius: 10px;
-                    padding: 15px;
-                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                }
-
-                .chat-header {
-                    border-bottom: 1px solid #ddd;
-                    padding-bottom: 10px;
-                    margin-bottom: 10px;
-                }
-
-                .chat-box {
-                    height: 400px;
-                    overflow-y: auto;
-                    padding: 10px;
-                    background: #fafafa;
-                }
-
-                .message-sent {
-                    background: #0d6efd;
-                    color: white;
-                    padding: 8px 12px;
-                    border-radius: 10px;
-                    max-width: 70%;
-                }
-
-                .message-received {
-                    background: #e4e6eb;
-                    color: black;
-                    padding: 8px 12px;
-                    border-radius: 10px;
-                    max-width: 70%;
-                }
-
-                video {
-                    max-width: 250px;
-                    border-radius: 10px;
-                    margin-top: 5px;
-                    display: block;
-                }
-
-                .chat-input {
-                    display: flex;
-                    gap: 10px;
-                    margin-top: 10px;
-                }
-
-                /* ============================================
-       🚀 ADDITIONAL ENHANCEMENTS (no existing rules changed)
-       ============================================ */
-
-                /* 1. Root variables for brand colors (optional, not used in original styles) */
-                :root {
-                    --primary-purple: #1e1b4b;
-                    --primary-purple-light: #312e81;
-                    --primary-coral: #f43f5e;
-                    --primary-coral-dark: #1e1b4b;
-                    --primary-teal: #20c997;
-                    --primary-gold: #ffd700;
-                    --dark-bg: #0f0f1a;
-                    --light-bg: #fffcfd;
-                    --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
-                    --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
-                    --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
-                }
-
-                /* 2. Smooth fade-in animation for the chat container */
-                .chat-container {
-                    animation: fadeSlideUp 0.4s ease-out forwards;
-                }
-
-                @keyframes fadeSlideUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(15px);
-                    }
-
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                /* 3. Chat box custom scrollbar (matches brand purple) */
-                .chat-box::-webkit-scrollbar {
-                    width: 6px;
-                }
-
-                .chat-box::-webkit-scrollbar-track {
-                    background: #e0e0e0;
-                    border-radius: 10px;
-                }
-
-                .chat-box::-webkit-scrollbar-thumb {
-                    background: #312e81;
-                    border-radius: 10px;
-                }
-
-                .chat-box::-webkit-scrollbar-thumb:hover {
-                    background: #1e1b4b;
-                }
-
-                /* 4. Message hover effect (subtle scale) */
-                .message-sent,
-                .message-received {
-                    transition: transform 0.2s ease;
-                }
-
-                .msg-time {
-                    display: block;
-                    font-size: 10px;
-                    opacity: 0.75;
-                    margin-top: 4px;
-                    text-align: right;
-                }
-
-                .message-received .msg-time {
-                    text-align: left;
-                }
-
-                .emoji-picker {
-                    position: absolute;
-                    bottom: 60px;
-                    left: 10px;
-                    background: #fff;
-                    border: 1px solid #ddd;
-                    border-radius: 12px;
-                    padding: 10px;
-                    display: none;
-                    flex-wrap: wrap;
-                    gap: 4px;
-                    max-width: 280px;
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-                    z-index: 1003;
-                }
-
-                .emoji-picker.show { display: flex; }
-
-                .emoji-btn {
-                    background: none;
-                    border: none;
-                    font-size: 22px;
-                    cursor: pointer;
-                    padding: 2px 4px;
-                    border-radius: 6px;
-                }
-
-                .emoji-btn:hover { background: #f0f0f0; }
-
-                .chat-input-wrap {
-                    position: relative;
-                    flex: 1;
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                }
-
-                .message-sent:hover,
-                .message-received:hover {
-                    transform: scale(1.02);
-                }
-
-                /* 5. Video thumbnail hover effect */
-                video {
-                    transition: transform 0.2s, box-shadow 0.2s;
-                    cursor: pointer;
-                }
-
-                video:hover {
-                    transform: scale(1.02);
-                    box-shadow: var(--shadow-sm);
-                }
-
-                /* 6. Focus outline for accessibility (if inputs added later) */
-                .chat-input input:focus-visible,
-                .chat-input button:focus-visible {
-                    outline: 3px solid var(--primary-gold, #ffd700);
-                    outline-offset: 2px;
-                    border-radius: 8px;
-                }
-
-                /* 7. Responsive improvements for mobile */
-    /* 7. Responsive improvements for mobile */
-    @media (max-width: 1200px) {
         html, body {
-            margin: 0 !important;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            background: var(--fdf-bg);
+            color: var(--fdf-navy);
+        }
+
+        /* Dashboard sidebar + full-height chat pane */
+        #page-content-wrapper.chat-page {
             padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            overflow-x: hidden !important;
-            position: relative !important;
+            margin-left: 260px;
+            height: calc(100vh - 80px);
+            min-height: calc(100vh - 80px);
+            overflow: hidden;
+            background: var(--fdf-bg) !important;
         }
-        .header {
-            border-radius: 0 !important;
-            margin: 0 !important;
-            border: none !important;
-            padding: 8px 0 !important;
-            position: fixed !important;
-            top: 0;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            z-index: 1001 !important;
-            height: 60px !important;
-            overflow: hidden !important;
+
+        .chat-shell {
+            height: 100%;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            background: var(--fdf-white);
         }
-        .chat-container {
-            position: fixed !important;
-            top: 60px !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            z-index: 1000 !important;
-            background: #fff !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-        }
-        .chat-header {
-            padding: 15px 18px !important;
-            margin: 0 !important;
-            font-size: 18px !important;
-            font-weight: 700 !important;
-            background: #fdfdfd;
-            border-bottom: 1px solid #eee !important;
+
+        .chat-topbar {
             flex-shrink: 0;
-            color: var(--brand-purple-dark) !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 20px;
+            background: var(--fdf-rose-soft);
+            border-bottom: 1px solid var(--fdf-rose-light);
         }
-        .chat-box {
-            padding: 20px 12px !important;
-            background: #fff !important;
-            flex: 1 !important;
-            overflow-y: auto !important;
-            margin-bottom: 0 !important;
+
+        .chat-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
         }
-        .chat-input {
-            position: sticky !important;
-            bottom: 0 !important;
-            width: 100% !important;
-            background: #fcfcfc !important;
-            padding: 12px 15px 30px !important; 
-            border-top: 1px solid #ddd !important;
-            z-index: 1002 !important;
-            display: flex !important;
-            gap: 10px !important;
-            flex-shrink: 0;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.05) !important;
-        }
-        .chat-input input {
-            font-size: 17px !important; 
-            padding: 14px 20px !important;
-            border-radius: 25px !important;
-            background: #fff !important;
-            border: 1px solid #ccc !important;
-            flex: 1;
-            color: #333 !important;
-        }
-        .chat-input button {
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 50% !important;
-            display: flex !important;
+
+        .chat-back {
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0 !important;
-            background: var(--gradient-primary, #1e1b4b) !important;
-            border: none !important;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--fdf-white);
+            border: 1px solid var(--fdf-border);
+            color: var(--fdf-navy);
+            text-decoration: none;
+            flex-shrink: 0;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .chat-back:hover {
+            border-color: var(--fdf-rose);
+            color: var(--fdf-rose);
+        }
+
+        .chat-peer-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--fdf-rose-light);
+            flex-shrink: 0;
+        }
+
+        .chat-peer-info h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--fdf-navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-peer-info span {
+            font-size: 0.78rem;
+            color: var(--fdf-muted);
+        }
+
+        .call-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-call {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--fdf-white);
+            border: 1px solid var(--fdf-rose-light);
+            color: var(--fdf-rose);
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .btn-call:hover {
+            background: var(--fdf-rose);
+            border-color: var(--fdf-rose);
+            color: #fff;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            background: var(--fdf-bg);
+        }
+
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .chat-box::-webkit-scrollbar-track { background: transparent; }
+        .chat-box::-webkit-scrollbar-thumb {
+            background: var(--fdf-rose-light);
+            border-radius: 10px;
+        }
+        .chat-box::-webkit-scrollbar-thumb:hover { background: var(--fdf-rose); }
+
+        .chat-shell .message-sent,
+        .chat-shell .message-received {
+            font-family: 'Poppins', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+            word-break: break-word;
+        }
+
+        .chat-shell .message-sent {
+            background: var(--fdf-rose) !important;
             color: #fff !important;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+            padding: 10px 14px;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 72%;
+            font-size: 0.95rem;
+            line-height: 1.45;
+            box-shadow: 0 2px 8px rgba(244, 63, 94, 0.15);
+            border: none !important;
         }
-        .message-sent, .message-received {
-            max-width: 85% !important;
-            margin-bottom: 15px !important;
-            border-radius: 20px !important;
-            padding: 12px 18px !important;
-            font-size: 17px !important; 
-            line-height: 1.4 !important;
+
+        .chat-shell .message-received {
+            background: var(--fdf-white) !important;
+            color: var(--fdf-navy) !important;
+            padding: 10px 14px;
+            border-radius: 18px 18px 18px 4px;
+            max-width: 72%;
+            font-size: 0.95rem;
+            line-height: 1.45;
+            border: 1px solid var(--fdf-rose-light) !important;
         }
-        .footer {
-            display: none !important;
+
+        .chat-shell .msg-time {
+            display: block;
+            font-size: 0.68rem;
+            opacity: 0.75;
+            margin-top: 4px;
         }
-    }    /* 8. Loading skeleton ready (optional – does nothing by default) */
-                @keyframes shimmer {
-                    0% {
-                        background-position: -200% 0;
-                    }
 
-                    100% {
-                        background-position: 200% 0;
-                    }
-                }
+        .chat-shell .message-sent .msg-time {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        .chat-shell .message-received .msg-time {
+            text-align: left;
+            color: var(--fdf-muted) !important;
+        }
 
-                .chat-container.skeleton {
-                    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-                    background-size: 200% 100%;
-                    animation: shimmer 1.5s infinite;
-                    pointer-events: none;
-                }
-            </style>
-        </head>
+        .chat-shell .tick {
+            font-size: 0.7rem;
+            opacity: 0.85;
+            margin-left: 4px;
+            color: rgba(255, 255, 255, 0.95) !important;
+        }
+        .chat-shell .tick.read { opacity: 1; }
 
-        <body>
+        video {
+            max-width: 240px;
+            border-radius: 12px;
+            margin-top: 6px;
+            display: block;
+        }
 
-            <header id="header" class="header d-flex align-items-center sticky-top">
-                <div class="container-fluid container-xl d-flex align-items-center">
-                    <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto">
-                        <h1>Fight D Fear</h1>
-                    </a>
-                    <nav id="navmenu" class="navmenu">
-                        <ul>
-                            <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
-                            <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-                            <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-                            <li><a href="${pageContext.request.contextPath}/users/dashboard" class="btn-dashboard"><i
-                                        class="fas fa-th-large"></i> Back to Dashboard</a></li>
-                            <li class="nav-profile">
-                                <a href="${pageContext.request.contextPath}/users/profile/${user.id}"
-                                    class="d-flex align-items-center">
-                                    <img src="${pageContext.request.contextPath}${not empty user.profilePhoto ? user.profilePhoto : '/images/default-profile.png'}"
-                                        alt="Profile" class="rounded-circle"
-                                        style="width: 35px; height: 35px; object-fit: cover; border: 2px solid var(--brand-pink);">
-                                    <span class="ms-2 d-none d-lg-inline text-white">${user.fullName}</span>
-                                </a>
-                            </li>
-                        </ul>
-                        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-                    </nav>
-                    <a class="btn-getstarted" href="${pageContext.request.contextPath}/logout">Logout</a>
+        .chat-input-bar {
+            flex-shrink: 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 14px 16px 18px;
+            background: var(--fdf-white);
+            border-top: 1px solid var(--fdf-border);
+            position: relative;
+            z-index: 50;
+            overflow: visible;
+        }
+
+        .chat-input-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            overflow: visible;
+        }
+
+        .btn-emoji {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--fdf-rose-soft);
+            border: 1px solid var(--fdf-rose-light);
+            color: var(--fdf-muted);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .btn-emoji:hover { color: var(--fdf-rose); border-color: var(--fdf-rose); }
+
+        .chat-input-bar input[type="text"] {
+            flex: 1;
+            border: 1px solid var(--fdf-border);
+            border-radius: 999px;
+            padding: 12px 18px;
+            font-size: 1.05rem;
+            background: var(--fdf-bg);
+            color: var(--fdf-navy);
+            font-family: 'Poppins', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+        }
+        .chat-input-bar input[type="text"]:focus {
+            outline: none;
+            border-color: var(--fdf-rose);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+            background: var(--fdf-white);
+        }
+
+        .btn-send {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--fdf-rose);
+            border: none;
+            color: #fff;
+            flex-shrink: 0;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-send:hover {
+            background: var(--fdf-rose-dark);
+            transform: scale(1.04);
+        }
+
+        /* Fixed picker — escapes overflow:hidden on page wrapper */
+        .emoji-picker {
+            position: fixed;
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-width: 300px;
+            padding: 12px;
+            background: var(--fdf-white);
+            border: 1px solid var(--fdf-border);
+            border-radius: 14px;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+            z-index: 5000;
+        }
+        .emoji-picker.show { display: flex; }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 8px;
+            font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+        }
+        .emoji-btn:hover { background: var(--fdf-rose-soft); }
+
+        .chat-toast {
+            position: fixed;
+            top: 88px;
+            right: 16px;
+            z-index: 9999;
+            min-width: 280px;
+            background: var(--fdf-white);
+            border: 1px solid var(--fdf-rose-light);
+            border-left: 4px solid var(--fdf-rose);
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+            display: none;
+        }
+        .chat-toast a {
+            color: var(--fdf-rose);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .empty-chat-hint {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--fdf-muted);
+        }
+        .empty-chat-hint i {
+            font-size: 2.5rem;
+            color: var(--fdf-rose-light);
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            #page-content-wrapper.chat-page {
+                margin-left: 0 !important;
+                height: auto;
+                min-height: calc(100vh - 72px);
+            }
+            .chat-shell { min-height: calc(100vh - 72px); }
+            .chat-topbar { padding: 12px 14px; }
+            .chat-shell .message-sent,
+            .chat-shell .message-received { max-width: 85%; }
+        }
+    </style>
+</head>
+<body>
+
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+<div id="wrapper">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+
+    <div id="page-content-wrapper" class="chat-page" data-skip-global-back="true">
+
+<div class="chat-shell">
+
+    <div class="chat-topbar">
+        <div class="chat-topbar-left">
+            <a href="${pageContext.request.contextPath}/chat/users" class="chat-back" title="Back to chats">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <img src="${pageContext.request.contextPath}${not empty receiver.profilePhoto ? receiver.profilePhoto : '/assets/img/default-profile.png'}"
+                 alt="" class="chat-peer-avatar">
+            <div class="chat-peer-info">
+                <h4>
+                    <i class="bi bi-shield-check me-1" style="color:var(--fdf-rose);"></i>
+                    ${not empty receiver.fullName ? receiver.fullName : receiver.email}
+                </h4>
+                <span>Secure chat</span>
+            </div>
+        </div>
+        <div class="call-actions">
+            <a href="${pageContext.request.contextPath}/chat/call/${receiver.id}?notify=true"
+               class="btn-call" title="Voice call" target="_blank">
+                <i class="bi bi-telephone-fill"></i>
+            </a>
+            <a href="${pageContext.request.contextPath}/chat/video-call/${receiver.id}?notify=true"
+               class="btn-call" title="Video call" target="_blank">
+                <i class="bi bi-camera-video-fill"></i>
+            </a>
+        </div>
+    </div>
+
+    <div id="chatBox" class="chat-box">
+        <c:choose>
+            <c:when test="${empty messages}">
+                <div class="empty-chat-hint">
+                    <i class="bi bi-chat-heart"></i>
+                    <p class="mb-0">Say hello to start the conversation.</p>
                 </div>
-            </header>
-            <div class="chat-container fdf-card-soft">
-
-                <div class="chat-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">
-                        <i class="bi bi-shield-check"></i>
-                        Chat with ${not empty receiver.fullName ? receiver.fullName : receiver.email}
-                    </h4>
-                    <div class="call-actions d-flex gap-2">
-                        <a href="${pageContext.request.contextPath}/chat/call/${receiver.id}?notify=true" class="btn btn-outline-success btn-sm rounded-circle" title="Voice Call" target="_blank">
-                            <i class="bi bi-telephone-fill"></i>
-                        </a>
-                        <a href="${pageContext.request.contextPath}/chat/video-call/${receiver.id}?notify=true" class="btn btn-outline-primary btn-sm rounded-circle" title="Video Call" target="_blank">
-                            <i class="bi bi-camera-video-fill"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- CHAT HISTORY -->
-                <div id="chatBox" class="chat-box">
-
-                    <c:forEach var="msg" items="${messages}">
-                        <c:choose>
-
-
-                            <c:when test="${msg.sender.id == sessionScope.user.id}">
-                                <div class="d-flex justify-content-end mb-2">
-                                    <div class="message-sent">
-
-                                        <c:if test="${not empty msg.message}">
-                                            ${msg.message}
-                                        </c:if>
-
-                                        <c:if test="${not empty msg.videoUrl}">
-                                            <video controls>
-                                                <source src="${pageContext.request.contextPath}${msg.videoUrl}"
-                                                    type="video/mp4">
-                                            </video>
-                                        </c:if>
-
-                                        <c:if test="${not empty msg.timestamp}">
-                                            <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
-                                        </c:if>
-
-                                        <span class="tick ${msg.readStatus ? 'read' : ''}">
-                                            ✔✔
-                                        </span>
-                                    </div>
+            </c:when>
+            <c:otherwise>
+                <c:forEach var="msg" items="${messages}">
+                    <c:choose>
+                        <c:when test="${msg.sender.id == sessionScope.user.id}">
+                            <div class="d-flex justify-content-end mb-3">
+                                <div class="message-sent">
+                                    <c:if test="${not empty msg.message}"><c:out value="${msg.message}"/></c:if>
+                                    <c:if test="${not empty msg.videoUrl}">
+                                        <video controls>
+                                            <source src="${pageContext.request.contextPath}${msg.videoUrl}" type="video/mp4">
+                                        </video>
+                                    </c:if>
+                                    <c:if test="${not empty msg.timestamp}">
+                                        <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
+                                    </c:if>
+                                    <span class="tick ${msg.readStatus ? 'read' : ''}">✔✔</span>
                                 </div>
-                            </c:when>
-
-                            <c:otherwise>
-                                <div class="d-flex justify-content-start mb-2">
-                                    <div class="message-received">
-
-                                        <c:if test="${not empty msg.message}">
-                                            ${msg.message}
-                                        </c:if>
-
-                                        <c:if test="${not empty msg.videoUrl}">
-                                            <video controls>
-                                                <source src="${pageContext.request.contextPath}${msg.videoUrl}"
-                                                    type="video/mp4">
-                                            </video>
-                                        </c:if>
-
-                                        <c:if test="${not empty msg.timestamp}">
-                                            <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
-                                        </c:if>
-
-
-                                    </div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="d-flex justify-content-start mb-3">
+                                <div class="message-received">
+                                    <c:if test="${not empty msg.message}"><c:out value="${msg.message}"/></c:if>
+                                    <c:if test="${not empty msg.videoUrl}">
+                                        <video controls>
+                                            <source src="${pageContext.request.contextPath}${msg.videoUrl}" type="video/mp4">
+                                        </video>
+                                    </c:if>
+                                    <c:if test="${not empty msg.timestamp}">
+                                        <span class="msg-time">${msg.timestamp.toString().replace('T', ' ').substring(0,16)}</span>
+                                    </c:if>
                                 </div>
-                            </c:otherwise>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
+    </div>
 
-                        </c:choose>
-                    </c:forEach>
+    <form id="chatForm" class="chat-input-bar">
+        <input type="hidden" id="receiverId" value="${receiver.id}">
+        <div class="chat-input-wrap">
+            <button type="button" class="btn-emoji" id="emojiToggleBtn" title="Add emoji" aria-expanded="false" aria-controls="emojiPicker">
+                <i class="bi bi-emoji-smile"></i>
+            </button>
+            <input type="text" id="message" placeholder="Type a message..." autocomplete="off">
+        </div>
+        <button class="btn-send" type="submit" title="Send">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </form>
+</div>
 
+    </div><!-- /#page-content-wrapper -->
+</div><!-- /#wrapper -->
+
+<!-- Emoji picker (fixed, outside overflow containers) -->
+<div id="emojiPicker" class="emoji-picker" role="listbox" aria-label="Emoji picker"></div>
+
+<div id="chatToast" class="chat-toast" role="alert">
+    <div class="fw-semibold mb-1" style="color:var(--fdf-navy);">
+        <i class="bi bi-chat-dots-fill me-1" style="color:var(--fdf-rose);"></i> New message
+    </div>
+    <div id="chatToastBody" class="small mb-2" style="color:var(--fdf-muted);"></div>
+    <a id="chatToastLink" href="#">Open chat →</a>
+</div>
+
+<div class="modal fade" id="incomingCallModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0" style="border-radius:18px;">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i id="callIcon" class="bi bi-telephone-inbound-fill" style="font-size:3rem;color:var(--fdf-rose);"></i>
                 </div>
-
-                <!-- INPUT -->
-                <form id="chatForm" class="chat-input">
-                    <input type="hidden" id="receiverId" value="${receiver.id}">
-                    <div class="chat-input-wrap">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="emojiToggleBtn" title="Add emoji">
-                            <i class="bi bi-emoji-smile"></i>
-                        </button>
-                        <div id="emojiPicker" class="emoji-picker"></div>
-                        <input type="text" id="message" class="form-control" placeholder="Type a message..." required>
-                    </div>
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-send"></i>
+                <h4 id="callerName" class="fw-bold" style="color:var(--fdf-navy);">Incoming call…</h4>
+                <p id="callTypeLabel" class="text-muted">Voice call</p>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="button" class="btn btn-success btn-lg rounded-pill px-4" id="acceptCallBtn">
+                        <i class="bi bi-telephone-fill me-2"></i> Accept
                     </button>
-                </form>
-
-            </div>
-
-            <!-- Toast Notification for other chats -->
-            <div id="chatToast" class="chat-toast" role="alert" style="position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 280px; background: #fff; border: 1px solid #ddd; border-left: 4px solid var(--primary-coral, #f43f5e); border-radius: 12px; padding: 14px 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: none;">
-                <div class="fw-bold mb-1"><i class="bi bi-chat-dots-fill text-primary me-1"></i> New Message</div>
-                <div id="chatToastBody" class="small text-muted mb-2"></div>
-                <a id="chatToastLink" href="#" style="color: var(--primary-purple, #1e1b4b); font-weight: 700; text-decoration: none;">Open Chat →</a>
-            </div>
-
-            <!-- Incoming Call Modal -->
-            <div class="modal fade" id="incomingCallModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content text-center p-4">
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <i id="callIcon" class="bi bi-telephone-inbound-fill text-primary" style="font-size: 3rem;"></i>
-                            </div>
-                            <h4 id="callerName">Incoming Call...</h4>
-                            <p id="callTypeLabel">Voice Call</p>
-                            <div class="d-flex justify-content-center gap-3 mt-4">
-                                <button type="button" class="btn btn-success btn-lg rounded-pill px-4" id="acceptCallBtn">
-                                    <i class="bi bi-telephone-fill me-2"></i> Accept
-                                </button>
-                                <button type="button" class="btn btn-danger btn-lg rounded-pill px-4" id="declineCallBtn">
-                                    <i class="bi bi-telephone-x-fill me-2"></i> Decline
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <button type="button" class="btn btn-danger btn-lg rounded-pill px-4" id="declineCallBtn">
+                        <i class="bi bi-telephone-x-fill me-2"></i> Decline
+                    </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Ringtone Audio -->
-            <audio id="ringtoneAudio" loop>
-                <source src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" type="audio/mpeg">
-            </audio>
+<audio id="ringtoneAudio" loop preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" type="audio/mpeg">
+</audio>
 
-            <!-- SOCKET LIBRARIES -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-            <script>
-                let stompClient = null;
-                const userId = ${ sessionScope.user.id };
-                let currentCallInfo = null;
-                const ringtone = document.getElementById('ringtoneAudio');
+<script>
+    const chatCtx = '${pageContext.request.contextPath}';
+    let stompClient = null;
+    const userId = ${sessionScope.user.id};
+    let currentCallInfo = null;
+    const ringtone = document.getElementById('ringtoneAudio');
+    let lastPollSince = new Date().toISOString().slice(0, 19);
 
-                function connect() {
-                    const socket = new SockJS('${pageContext.request.contextPath}/ws-chat');
-                    stompClient = Stomp.over(socket);
+    function connect() {
+        const socket = new SockJS(chatCtx + '/ws-chat');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
 
-                    stompClient.connect({}, function () {
-                        // Subscribe to messages
-                        stompClient.subscribe("/topic/messages/" + userId, function (response) {
-                            const msg = JSON.parse(response.body);
-                            displayMessage(msg);
-                        });
+        stompClient.connect({}, function () {
+            stompClient.subscribe("/topic/messages/" + userId, function (response) {
+                try {
+                    displayMessage(JSON.parse(response.body));
+                } catch (e) { /* ignore malformed frame */ }
+            });
 
-                        // 🔴 Subscribe to calls
-                        stompClient.subscribe("/topic/calls/" + userId, function (response) {
-                            const callInfo = JSON.parse(response.body);
-                            if (callInfo.type === 'INCOMING_CALL') {
-                                handleIncomingCall(callInfo);
-                            } else if (callInfo.type === 'HANGUP' || callInfo.type === 'DECLINED') {
-                                stopRingtone();
-                                const modalElement = document.getElementById('incomingCallModal');
-                                const modal = bootstrap.Modal.getInstance(modalElement);
-                                if (modal) modal.hide();
-                            }
-                        });
-                    });
+            stompClient.subscribe("/topic/calls/" + userId, function (response) {
+                const callInfo = JSON.parse(response.body);
+                if (callInfo.type === 'INCOMING_CALL') {
+                    handleIncomingCall(callInfo);
+                } else if (callInfo.type === 'HANGUP' || callInfo.type === 'DECLINED') {
+                    stopRingtone();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('incomingCallModal'));
+                    if (modal) modal.hide();
                 }
+            });
+        }, function () {
+            setTimeout(connect, 5000);
+        });
+    }
 
-                function handleIncomingCall(callInfo) {
-                    currentCallInfo = callInfo;
-                    document.getElementById('callerName').innerText = callInfo.fromName + " is calling...";
-                    document.getElementById('callTypeLabel').innerText = callInfo.audioOnly ? "Voice Call" : "Video Call";
-                    
-                    const icon = document.getElementById('callIcon');
-                    icon.className = callInfo.audioOnly ? "bi bi-telephone-inbound-fill text-success" : "bi bi-camera-video-fill text-primary";
-                    
-                    playRingtone();
-                    
-                    const modal = new bootstrap.Modal(document.getElementById('incomingCallModal'));
-                    modal.show();
-                }
-
-                function playRingtone() {
-                    ringtone.currentTime = 0;
-                    ringtone.play().catch(e => console.log("Audio play failed:", e));
-                }
-
-                function stopRingtone() {
-                    ringtone.pause();
-                    ringtone.currentTime = 0;
-                }
-
-                document.getElementById('acceptCallBtn').addEventListener('click', function() {
-                    if (currentCallInfo) {
-                        stopRingtone();
-                        const callUrl = currentCallInfo.audioOnly ? 
-                            '${pageContext.request.contextPath}/chat/call/' + currentCallInfo.fromId :
-                            '${pageContext.request.contextPath}/chat/video-call/' + currentCallInfo.fromId;
-                        
-                        // Open call in new window
-                        window.open(callUrl, '_blank', 'width=1000,height=700');
-                        
-                        // Hide modal
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('incomingCallModal'));
-                        modal.hide();
+    function pollMessages() {
+        const receiverId = document.getElementById("receiverId").value;
+        fetch(chatCtx + '/chat/messages-since/' + receiverId + '?since=' + encodeURIComponent(lastPollSince), {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json; charset=UTF-8' }
+        })
+            .then(function (r) {
+                if (!r.ok) return null;
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data || !data.success || !data.messages) return;
+                data.messages.forEach(function (m) {
+                    displayMessage(m);
+                    if (m.timestamp && m.timestamp > lastPollSince) {
+                        lastPollSince = m.timestamp.length > 19 ? m.timestamp.slice(0, 19) : m.timestamp;
                     }
                 });
+            })
+            .catch(function () {});
+    }
 
-                document.getElementById('declineCallBtn').addEventListener('click', function() {
-                    if (currentCallInfo && stompClient) {
-                        stopRingtone();
-                        // Send decline signal to caller
-                        stompClient.send("/app/webrtc.signal", {}, JSON.stringify({
-                            type: 'DECLINED',
-                            senderId: userId,
-                            receiverId: currentCallInfo.fromId
-                        }));
-                        
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('incomingCallModal'));
-                        modal.hide();
-                    }
+    function sendViaWebSocket(receiverId, text) {
+        if (stompClient && stompClient.connected) {
+            stompClient.send("/app/chat.send", {}, JSON.stringify({
+                sender: { id: userId },
+                receiver: { id: receiverId },
+                message: text
+            }));
+            return true;
+        }
+        return false;
+    }
+
+    function handleIncomingCall(callInfo) {
+        currentCallInfo = callInfo;
+        document.getElementById('callerName').innerText = callInfo.fromName + " is calling…";
+        document.getElementById('callTypeLabel').innerText = callInfo.audioOnly ? "Voice call" : "Video call";
+
+        const icon = document.getElementById('callIcon');
+        icon.className = callInfo.audioOnly
+            ? "bi bi-telephone-inbound-fill"
+            : "bi bi-camera-video-fill";
+        icon.style.color = "var(--fdf-rose)";
+
+        playRingtone();
+        new bootstrap.Modal(document.getElementById('incomingCallModal')).show();
+    }
+
+    function playRingtone() {
+        ringtone.currentTime = 0;
+        ringtone.play().catch(function () {});
+    }
+
+    function stopRingtone() {
+        ringtone.pause();
+        ringtone.currentTime = 0;
+    }
+
+    document.getElementById('acceptCallBtn').addEventListener('click', function () {
+        if (!currentCallInfo) return;
+        stopRingtone();
+        const callUrl = currentCallInfo.audioOnly
+            ? '${pageContext.request.contextPath}/chat/call/' + currentCallInfo.fromId
+            : '${pageContext.request.contextPath}/chat/video-call/' + currentCallInfo.fromId;
+        window.open(callUrl, '_blank', 'width=1000,height=700');
+        bootstrap.Modal.getInstance(document.getElementById('incomingCallModal')).hide();
+    });
+
+    document.getElementById('declineCallBtn').addEventListener('click', function () {
+        if (!currentCallInfo || !stompClient) return;
+        stopRingtone();
+        stompClient.send("/app/webrtc.signal", {}, JSON.stringify({
+            type: 'DECLINED',
+            senderId: userId,
+            receiverId: currentCallInfo.fromId
+        }));
+        bootstrap.Modal.getInstance(document.getElementById('incomingCallModal')).hide();
+    });
+
+    function sendMessage() {
+        const messageInput = document.getElementById("message");
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        const receiverId = document.getElementById("receiverId").value;
+        const clientKey = "pending-" + Date.now();
+
+        displayMessage({
+            clientKey: clientKey,
+            sender: { id: userId },
+            receiver: { id: receiverId },
+            message: text,
+            timestamp: new Date().toISOString(),
+            readStatus: false
+        });
+
+        messageInput.value = "";
+        closeEmojiPicker();
+
+        fetch(chatCtx + '/chat/send-message', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Accept': 'application/json; charset=UTF-8'
+            },
+            body: JSON.stringify({ receiverId: Number(receiverId), message: text })
+        })
+            .then(function (r) {
+                return r.json().then(function (data) {
+                    return { ok: r.ok, status: r.status, data: data };
+                }).catch(function () {
+                    return { ok: false, status: r.status, data: { error: 'Server error (' + r.status + ')' } };
                 });
-
-                function sendMessage() {
-                    const messageInput = document.getElementById("message");
-                    const text = messageInput.value.trim();
-                    if (!text) return;
-
-                    const chatMessage = {
-                        sender: { id: userId },
-                        receiver: { id: document.getElementById("receiverId").value },
-                        message: text
-                    };
-
-                    stompClient.send("/app/chat.send", {}, JSON.stringify(chatMessage));
-                    messageInput.value = "";
-                }
-
-                function formatMsgTime(ts) {
-                    if (!ts) return '';
-                    
-                    let d;
-                    if (Array.isArray(ts)) {
-                        d = new Date(ts[0], ts[1] - 1, ts[2], ts[3], ts[4], ts.length > 5 ? ts[5] : 0);
-                    } else if (typeof ts === 'string') {
-                        d = new Date(ts);
-                    } else {
-                        d = new Date(ts);
+            })
+            .then(function (result) {
+                if (result.ok && result.data && result.data.success && result.data.message) {
+                    displayMessage(result.data.message);
+                    if (result.data.message.timestamp) {
+                        lastPollSince = result.data.message.timestamp.length > 19
+                            ? result.data.message.timestamp.slice(0, 19)
+                            : result.data.message.timestamp;
                     }
-                    
-                    if (!isNaN(d.getTime())) {
-                        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    }
-                    return ts;
+                    return;
                 }
-
-                let toastTimer = null;
-                function showChatToast(msg) {
-                    const toast = document.getElementById('chatToast');
-                    const senderName = msg.sender && msg.sender.fullName ? msg.sender.fullName : 'Someone';
-                    const preview = msg.message ? msg.message.substring(0, 80) : 'Sent you a message';
-                    document.getElementById('chatToastBody').textContent = senderName + ': ' + preview;
-                    document.getElementById('chatToastLink').href = '${pageContext.request.contextPath}/chat/window/' + msg.sender.id;
-                    toast.style.display = 'block';
-                    clearTimeout(toastTimer);
-                    toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 8000);
-                }
-
-                function displayMessage(msg) {
-                    const currentReceiverId = Number(document.getElementById("receiverId").value);
-                    const isSender = Number(msg.sender?.id) === Number(userId) || Number(msg.sender) === Number(userId);
-                    
-                    // If the message is NOT from me and NOT from the current receiver, it belongs to another chat.
-                    // Show a toast notification instead of appending it to the wrong chat box.
-                    if (!isSender && Number(msg.sender?.id) !== currentReceiverId) {
-                        showChatToast(msg);
+                /* Fallback: deliver over WebSocket if HTTP route unavailable */
+                if (result.status === 404 || result.status === 405 || result.status === 502) {
+                    if (sendViaWebSocket(receiverId, text)) {
                         return;
                     }
-
-                    const chatBox = document.getElementById("chatBox");
-
-                    const wrapper = document.createElement("div");
-                    wrapper.classList.add("mb-2", "d-flex");
-
-                    const bubble = document.createElement("div");
-
-                    if (isSender) {
-                        wrapper.classList.add("justify-content-end");
-                        bubble.classList.add("message-sent");
-                    } else {
-                        wrapper.classList.add("justify-content-start");
-                        bubble.classList.add("message-received");
-                    }
-
-                    if (msg.message) {
-                        bubble.appendChild(document.createTextNode(msg.message));
-                    }
-
-                    if (msg.videoUrl) {
-                        const video = document.createElement("video");
-                        video.src = "${pageContext.request.contextPath}" + msg.videoUrl;
-                        video.controls = true;
-                        bubble.appendChild(video);
-                    }
-
-                    if (msg.timestamp) {
-                        const timeEl = document.createElement("span");
-                        timeEl.className = "msg-time";
-                        timeEl.textContent = formatMsgTime(msg.timestamp);
-                        bubble.appendChild(timeEl);
-                    }
-
-                    if (isSender) {
-                        const tickEl = document.createElement("span");
-                        tickEl.className = "tick" + (msg.readStatus ? " read" : "");
-                        tickEl.textContent = " ✔✔";
-                        bubble.appendChild(tickEl);
-                    }
-
-                    wrapper.appendChild(bubble);
-                    chatBox.appendChild(wrapper);
-                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
-
-                const EMOJIS = ['😀','😂','😍','🥰','😊','😢','😡','👍','👎','🙏','💪','❤️','🔥','✨','🎉','😎','🤔','👋','💯','🌸'];
-                const emojiPicker = document.getElementById('emojiPicker');
-                EMOJIS.forEach(e => {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'emoji-btn';
-                    btn.textContent = e;
-                    btn.addEventListener('click', () => {
-                        const input = document.getElementById('message');
-                        input.value += e;
-                        input.focus();
-                        emojiPicker.classList.remove('show');
-                    });
-                    emojiPicker.appendChild(btn);
-                });
-
-                document.getElementById('emojiToggleBtn').addEventListener('click', () => {
-                    emojiPicker.classList.toggle('show');
-                });
-
-                document.addEventListener('click', (e) => {
-                    if (!e.target.closest('#emojiPicker') && !e.target.closest('#emojiToggleBtn')) {
-                        emojiPicker.classList.remove('show');
+                const err = (result.data && (result.data.error || result.data.message))
+                    || ('Could not send message (HTTP ' + result.status + '). Restart the app and try again.');
+                if (String(err).toLowerCase() !== 'not found') {
+                    alert(err);
+                } else {
+                    if (!sendViaWebSocket(receiverId, text)) {
+                        alert('Chat send failed. Please restart the application and try again.');
                     }
-                });
+                }
+            })
+            .catch(function () {
+                if (!sendViaWebSocket(receiverId, text)) {
+                    alert('Could not send message. Check your connection and try again.');
+                }
+            });
+    }
 
-                document.getElementById("chatForm").addEventListener("submit", function (e) {
-                    e.preventDefault();
-                    sendMessage();
-                });
+    function formatMsgTime(ts) {
+        if (!ts) return '';
+        let d;
+        if (Array.isArray(ts)) {
+            d = new Date(ts[0], ts[1] - 1, ts[2], ts[3], ts[4], ts.length > 5 ? ts[5] : 0);
+        } else {
+            d = new Date(ts);
+        }
+        return !isNaN(d.getTime())
+            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : ts;
+    }
 
-                connect();
-            </script>
+    let toastTimer = null;
+    function showChatToast(msg) {
+        const toast = document.getElementById('chatToast');
+        const senderName = msg.sender && msg.sender.fullName ? msg.sender.fullName : 'Someone';
+        const preview = msg.message ? msg.message.substring(0, 80) : 'Sent you a message';
+        document.getElementById('chatToastBody').textContent = senderName + ': ' + preview;
+        document.getElementById('chatToastLink').href = '${pageContext.request.contextPath}/chat/window/' + msg.sender.id;
+        toast.style.display = 'block';
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.style.display = 'none'; }, 8000);
+    }
 
-            <footer id="footer" class="footer position-relative">
+    function displayMessage(msg) {
+        const currentReceiverId = Number(document.getElementById("receiverId").value);
+        const isSender = Number(msg.sender && msg.sender.id) === Number(userId) || Number(msg.sender) === Number(userId);
 
+        if (!isSender && Number(msg.sender && msg.sender.id) !== currentReceiverId) {
+            showChatToast(msg);
+            return;
+        }
 
+        const chatBox = document.getElementById("chatBox");
 
-                <div class="container footer-top">
-                    <div class="row gy-4">
-                        <div class="col-lg-4 col-md-6 footer-about">
-                            <a href="index.html" class="d-flex align-items-center">
-                                <span class="sitename">Fight D Fear</span>
-                            </a>
+        /* Skip duplicate when WebSocket echoes a message we already showed */
+        if (msg.id && chatBox.querySelector('[data-msg-id="' + msg.id + '"]')) {
+            return;
+        }
+        /* Merge WebSocket echo into the optimistic bubble we already showed */
+        if (isSender && msg.id) {
+            const pending = chatBox.querySelector('.message-sent[data-client-key]');
+            if (pending) {
+                pending.setAttribute('data-msg-id', msg.id);
+                pending.removeAttribute('data-client-key');
+                return;
+            }
+        }
 
-                            <div class="pt-3">
-                                <p class="fw-semibold">Our Values</p>
-                                <p>Awareness • Safety • Equality • Empowerment</p>
-                                <p class="mt-2">Building a safer tomorrow, together.</p>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 footer-links">
-                            <h4>Useful Links</h4>
-                            <ul>
-                                <li><i class="bi bi-chevron-right"></i> <a href="index.html#hero">Home</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a href="index.html#about">About us</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a href="index.html#services">Services</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a
-                                        href="${pageContext.request.contextPath}/terms">Terms</a></li>
-                            </ul>
+        const hint = chatBox.querySelector('.empty-chat-hint');
+        if (hint) hint.remove();
 
-                            </a>
-                        </div>
+        const wrapper = document.createElement("div");
+        wrapper.classList.add("mb-3", "d-flex", isSender ? "justify-content-end" : "justify-content-start");
 
-                        <div class="col-lg-2 col-md-3 footer-links">
-                            <h4>Our Services</h4>
-                            <ul>
-                                <li><i class="bi bi-chevron-right"></i> <a href="#">Emergency Assistance</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a href="#">Safety Education</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a href="#">Self-defense Training</a></li>
-                                <li><i class="bi bi-chevron-right"></i> <a href="#">Community Support</a></li>
-                            </ul>
-                        </div>
+        const bubble = document.createElement("div");
+        bubble.classList.add(isSender ? "message-sent" : "message-received");
+        if (msg.id) bubble.setAttribute('data-msg-id', msg.id);
+        if (isSender && msg.clientKey) {
+            bubble.setAttribute('data-client-key', msg.clientKey);
+        }
 
-                        <div class="col-lg-4 col-md-12">
-                            <h4>Follow Us</h4>
-                            <p>Stay connected with us for safety updates, resources, and tips. Empower yourself and
-                                others!</p>
-                            <div class="social-links d-flex">
-                                <a href=""><i class="bi bi-twitter"></i></a>
-                                <a href=""><i class="bi bi-facebook"></i></a>
-                                <a href=""><i class="bi bi-instagram"></i></a>
-                                <a href=""><i class="bi bi-linkedin"></i></a>
-                            </div>
-                        </div>
+        if (msg.message) {
+            const textSpan = document.createElement('span');
+            textSpan.className = 'msg-text';
+            textSpan.textContent = msg.message;
+            bubble.appendChild(textSpan);
+        }
 
+        if (msg.videoUrl) {
+            const video = document.createElement("video");
+            video.src = "${pageContext.request.contextPath}" + msg.videoUrl;
+            video.controls = true;
+            bubble.appendChild(video);
+        }
 
-                    </div>
-                </div>
+        if (msg.timestamp) {
+            const timeEl = document.createElement("span");
+            timeEl.className = "msg-time";
+            timeEl.textContent = formatMsgTime(msg.timestamp);
+            bubble.appendChild(timeEl);
+        }
 
-                <div class="container copyright text-center mt-4">
-                    <p>© Copyright <strong class="px-1 sitename">Fight D Fear</strong> All Rights Reserved</p>
-                    <div class="credits">
-                        <!-- All the links in the footer should remain intact. -->
-                        <!-- You can delete the links only if you've purchased the pro version. -->
-                        <!-- Licensing information: https://bootstrapmade.com/license/ -->
-                        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-                        <!--  Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> -->
-                    </div>
-                </div>
+        if (isSender) {
+            const tickEl = document.createElement("span");
+            tickEl.className = "tick" + (msg.readStatus ? " read" : "");
+            tickEl.textContent = " ✔✔";
+            bubble.appendChild(tickEl);
+        }
 
-            </footer>
+        wrapper.appendChild(bubble);
+        chatBox.appendChild(wrapper);
+        chatBox.scrollTop = chatBox.scrollHeight;
 
+        if (msg.timestamp) {
+            const ts = String(msg.timestamp).length > 19
+                ? String(msg.timestamp).slice(0, 19)
+                : String(msg.timestamp);
+            if (ts > lastPollSince) {
+                lastPollSince = ts;
+            }
+        }
+    }
 
-            <script
-                src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-            <script src="${pageContext.request.contextPath}/assets/vendor/aos/aos.js"></script>
-            <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
+    const EMOJIS = ['😀','😂','😍','🥰','😊','😢','😡','👍','👎','🙏','💪','❤️','🔥','✨','🎉','😎','🤔','👋','💯','🌸','😘','🤗','😭','🥺','💕','🌹','⭐','✅','❌','🙌'];
+    const emojiPicker = document.getElementById('emojiPicker');
+    const emojiToggleBtn = document.getElementById('emojiToggleBtn');
+    const messageInput = document.getElementById('message');
 
+    function positionEmojiPicker() {
+        if (!emojiToggleBtn || !emojiPicker) return;
+        const rect = emojiToggleBtn.getBoundingClientRect();
+        const pickerWidth = 300;
+        let left = rect.left;
+        if (left + pickerWidth > window.innerWidth - 12) {
+            left = window.innerWidth - pickerWidth - 12;
+        }
+        emojiPicker.style.left = Math.max(12, left) + 'px';
+        emojiPicker.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+    }
 
-        </body>
+    function closeEmojiPicker() {
+        if (!emojiPicker) return;
+        emojiPicker.classList.remove('show');
+        if (emojiToggleBtn) emojiToggleBtn.setAttribute('aria-expanded', 'false');
+    }
 
-        </html>
+    function openEmojiPicker() {
+        if (!emojiPicker) return;
+        positionEmojiPicker();
+        emojiPicker.classList.add('show');
+        if (emojiToggleBtn) emojiToggleBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function insertEmoji(emoji) {
+        if (!messageInput) return;
+        const start = messageInput.selectionStart != null ? messageInput.selectionStart : messageInput.value.length;
+        const end = messageInput.selectionEnd != null ? messageInput.selectionEnd : messageInput.value.length;
+        const before = messageInput.value.substring(0, start);
+        const after = messageInput.value.substring(end);
+        messageInput.value = before + emoji + after;
+        const cursor = start + emoji.length;
+        messageInput.focus();
+        if (messageInput.setSelectionRange) {
+            messageInput.setSelectionRange(cursor, cursor);
+        }
+        closeEmojiPicker();
+    }
+
+    if (emojiPicker) {
+        EMOJIS.forEach(function (emoji) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'emoji-btn';
+            btn.setAttribute('role', 'option');
+            btn.setAttribute('aria-label', 'Insert emoji');
+            btn.textContent = emoji;
+            btn.addEventListener('mousedown', function (e) {
+                e.preventDefault(); /* keep focus on input */
+            });
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                insertEmoji(emoji);
+            });
+            emojiPicker.appendChild(btn);
+        });
+    }
+
+    if (emojiToggleBtn) {
+        emojiToggleBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (emojiPicker && emojiPicker.classList.contains('show')) {
+                closeEmojiPicker();
+            } else {
+                openEmojiPicker();
+            }
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#emojiPicker') && !e.target.closest('#emojiToggleBtn')) {
+            closeEmojiPicker();
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        if (emojiPicker && emojiPicker.classList.contains('show')) {
+            positionEmojiPicker();
+        }
+    });
+
+    document.getElementById("chatForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (!messageInput || !messageInput.value.trim()) {
+            return;
+        }
+        sendMessage();
+    });
+
+    connect();
+    pollMessages();
+    setInterval(pollMessages, 3000);
+
+    (function scrollToBottom() {
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    })();
+</script>
+
+</body>
+</html>

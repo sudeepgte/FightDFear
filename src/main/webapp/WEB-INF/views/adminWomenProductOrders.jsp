@@ -10,11 +10,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
 <style>
   :root {
-    --maroon:        #1e1b4b;
-    --maroon-light:  #312e81;
-    --maroon-dark:   #0b0920;
+    --maroon:        #0F172A;
+    --maroon-light:  #F43F5E;
+    --maroon-dark:   #0F172A;
     --maroon-pale:   #f8fafc;
     --maroon-border: rgba(30, 27, 75, 0.12);
     --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
@@ -172,7 +173,7 @@
   }
 </style>
 </head>
-<body>
+<body class="wp-admin-wp">
 
 <div class="topbar">
   <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>

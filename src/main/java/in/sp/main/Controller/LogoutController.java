@@ -24,6 +24,6 @@ public class LogoutController {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
         
-        return "redirect:/login?logout=true"; // Redirect to login page after logout
+        return "redirect:/entrepreneur/login?logout=true"; // Redirect to entrepreneur login page after logout
     }
 }

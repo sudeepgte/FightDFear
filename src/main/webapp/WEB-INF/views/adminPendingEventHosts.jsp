@@ -52,6 +52,12 @@
   .badge-rejected { background:#ffe4e6; color:#9f1239; }
   .btn-approve { background:#dcfce7; color:#166534; border:1.5px solid #166534; border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:700; }
   .btn-reject { background:#ffe4e6; color:#9f1239; border:1.5px solid #9f1239; border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:700; }
+  .btn-profile {
+    background: #ede9fe; color: #5b21b6; border: 1.5px solid #7c3aed;
+    border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 700;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-profile:hover { background: #ddd6fe; color: #4c1d95; }
   .bio-clip { max-width:240px; white-space:normal; word-break:break-word; font-size:0.82rem; color:#555; }
 </style>
 </head>
@@ -116,16 +122,11 @@
                       <td class="small">${empty h.eventCategories ? '—' : h.eventCategories}</td>
                       <td>${empty h.hostContact ? h.phone : h.hostContact}</td>
                       <td><div class="bio-clip">${h.hostBio}</div></td>
-                      <td><span class="badge badge-pending">${h.verificationStatus}</span></td>
+                      <td><span class="badge badge-pending">${h.partnerProfileStatus != null ? h.partnerProfileStatus : h.verificationStatus}</span></td>
                       <td>
-                        <div class="d-flex gap-1 flex-wrap">
-                          <form action="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/approve" method="post">
-                            <button type="submit" class="btn-approve">Approve</button>
-                          </form>
-                          <form action="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/reject" method="post">
-                            <button type="submit" class="btn-reject">Reject</button>
-                          </form>
-                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
+                          <i class="fas fa-user"></i> Review
+                        </a>
                       </td>
                     </tr>
                   </c:forEach>
@@ -206,6 +207,7 @@
                 <th>Type</th>
                 <th>Location</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -219,11 +221,16 @@
                       <td>${h.organizerType}</td>
                       <td>${empty h.city ? '—' : h.city}</td>
                       <td><span class="badge badge-verified">${h.verificationStatus}</span></td>
+                      <td>
+                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
+                          <i class="fas fa-user"></i> Profile
+                        </a>
+                      </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="6" class="text-center text-muted py-4">No verified organizers yet.</td></tr>
+                  <tr><td colspan="7" class="text-center text-muted py-4">No verified organizers yet.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
@@ -243,6 +250,7 @@
                 <th>Organization</th>
                 <th>Email</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -254,11 +262,16 @@
                       <td>${h.organizerName}</td>
                       <td>${h.email}</td>
                       <td><span class="badge badge-rejected">${h.verificationStatus}</span></td>
+                      <td>
+                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
+                          <i class="fas fa-user"></i> Profile
+                        </a>
+                      </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="4" class="text-center text-muted py-4">No rejected applications.</td></tr>
+                  <tr><td colspan="5" class="text-center text-muted py-4">No rejected applications.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
