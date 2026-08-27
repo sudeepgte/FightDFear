@@ -8,6 +8,85 @@
   <title>Doctor Dashboard — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-dashboard.css">
+  <style>
+    :root {
+      --primary: #F43F5E;
+      --rose-soft: #FFF1F2;
+      --bg-page: #F8FAFC;
+      --navy: #0F172A;
+      --navy-soft: #1E293B;
+      --border: #E2E8F0;
+    }
+    body.dd-page, .dd-page { background: var(--bg-page) !important; color: var(--navy) !important; }
+    .dd-sidebar {
+      background: linear-gradient(180deg, var(--navy) 0%, var(--navy-soft) 100%) !important;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+    }
+    .dd-sidebar-brand { border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+    .dd-sidebar-nav { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+    .dd-sidebar-footer { margin-top: auto; }
+    .dd-main { background: var(--bg-page) !important; }
+    .dd-topbar {
+      background:
+        radial-gradient(circle at top right, rgba(244, 63, 94, 0.12), transparent 45%),
+        linear-gradient(120deg, #ffffff 0%, var(--rose-soft) 100%) !important;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      margin-bottom: 18px;
+    }
+    .dd-section, .dd-stat-card, .dd-chat-sidebar, .dd-chat-main, .dd-pay-method-card, .dd-profile-item {
+      background: #fff !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06) !important;
+      color: var(--navy);
+    }
+    .dd-section-header, .dd-section-body, .dd-table thead th, .dd-table tbody td { color: var(--navy) !important; }
+    .dd-nav-item.active {
+      background: rgba(244, 63, 94, 0.14) !important;
+      color: #fff !important;
+      border-left: 3px solid #fff;
+    }
+    .dd-nav-item:hover { background: rgba(244, 63, 94, 0.2) !important; }
+    .badge-count, .notif-count, .dd-notif-count-label { background: var(--primary) !important; color: #fff !important; }
+    .dd-btn-save, .dd-video-btn, .dd-status-form button, .dd-btn-edit {
+      background: var(--primary) !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 8px 18px rgba(244, 63, 94, 0.24) !important;
+    }
+    .dd-btn-cancel { border: 1px solid var(--border) !important; }
+    .dd-badge.pending { background: rgba(244, 63, 94, 0.12) !important; color: #9f1239 !important; }
+    .dd-badge.confirmed, .dd-badge.completed { background: rgba(15, 23, 42, 0.08) !important; color: var(--navy) !important; }
+    .dd-badge.cancelled { background: rgba(148, 163, 184, 0.2) !important; color: #475569 !important; }
+    .dd-stat-icon.purple, .dd-stat-icon.gold, .dd-stat-icon.teal, .dd-stat-icon.coral {
+      background: rgba(244, 63, 94, 0.12) !important;
+      color: var(--primary) !important;
+    }
+    .dd-notif-panel, #notifDropdown {
+      background: #fff !important;
+      border: 1px solid var(--border) !important;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.14) !important;
+      color: var(--navy) !important;
+    }
+    .dd-empty { color: #64748b !important; }
+    .user-avatar, .avatar-placeholder {
+      background: linear-gradient(135deg, #fb7185, var(--primary)) !important;
+      color: #fff !important;
+    }
+    .dd-chat-wrapper { height: calc(100vh - 220px) !important; min-height: 560px !important; }
+    @media (max-width: 991px) {
+      .dd-sidebar { max-height: none; }
+      .dd-chat-wrapper { flex-direction: column; height: auto !important; min-height: 0 !important; }
+      .dd-chat-sidebar { width: 100% !important; }
+      .dd-chat-main { min-height: 480px; }
+    }
+  </style>
 </head>
 <body class="dd-page">
 <div class="dd-overlay" id="overlay" onclick="toggleSidebar()"></div>
@@ -15,7 +94,7 @@
 <%-- ═══ SIDEBAR ═══ --%>
 <aside class="dd-sidebar" id="sidebar">
   <div class="dd-sidebar-brand">
-    <div class="brand-icon"><i class="bi bi-heart-pulse"></i></div>
+    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="width:32px;height:32px;border-radius:8px;object-fit:cover;display:block;">
     <div class="brand-text">Fight D Fear<small>Doctor Portal</small></div>
   </div>
   <div class="dd-sidebar-profile">
@@ -62,7 +141,7 @@
     </a>
   </nav>
   <div class="dd-sidebar-footer">
-    <a href="${pageContext.request.contextPath}/logout" class="dd-nav-item" style="color:rgba(255,107,107,0.8)">
+    <a href="${pageContext.request.contextPath}/logout" class="dd-nav-item" style="color:rgba(255,241,242,0.92)">
       <i class="bi bi-box-arrow-left"></i> Logout
     </a>
   </div>
@@ -195,7 +274,7 @@
                 <td>
                   <div style="display:flex;gap:8px;align-items:center;">
                     <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form"><select name="status"><option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option><option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option><option value="COMPLETED" ${a.status=='COMPLETED'?'selected':''}>Completed</option><option value="CANCELLED" ${a.status=='CANCELLED'?'selected':''}>Cancelled</option></select><button type="submit"><i class="bi bi-check2"></i></button></form>
-                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#20c997"><i class="bi bi-chat-dots-fill"></i></a>
+                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#F43F5E"><i class="bi bi-chat-dots-fill"></i></a>
                   </div>
                 </td></tr>
               </c:forEach>
@@ -224,12 +303,12 @@
                 <tr><td><div class="dd-user-cell"><div class="user-avatar">${a.user.fullName.charAt(0)}</div><span>${a.user.fullName}</span></div></td>
                 <td>${a.appointmentTime}</td>
                 <td>${a.reason != null ? a.reason : '—'}</td>
-                <td><c:choose><c:when test="${a.consultationType=='VIDEO'}"><span style="color:#4a90d9"><i class="bi bi-camera-video"></i> Video</span></c:when><c:when test="${a.consultationType=='CLINIC'}"><span style="color:#312e81"><i class="bi bi-hospital"></i> Clinic</span></c:when><c:otherwise><span style="color:#6b7280"><i class="bi bi-chat-dots"></i> General</span></c:otherwise></c:choose></td>
+                <td><c:choose><c:when test="${a.consultationType=='VIDEO'}"><span style="color:#be123c"><i class="bi bi-camera-video"></i> Video</span></c:when><c:when test="${a.consultationType=='CLINIC'}"><span style="color:#1e293b"><i class="bi bi-hospital"></i> Clinic</span></c:when><c:otherwise><span style="color:#64748b"><i class="bi bi-chat-dots"></i> General</span></c:otherwise></c:choose></td>
                 <td><c:choose><c:when test="${a.status=='PENDING'}"><span class="dd-badge pending"><span class="dot"></span> Pending</span></c:when><c:when test="${a.status=='CONFIRMED'}"><span class="dd-badge confirmed"><span class="dot"></span> Confirmed</span></c:when><c:when test="${a.status=='COMPLETED'}"><span class="dd-badge completed"><span class="dot"></span> Completed</span></c:when><c:otherwise><span class="dd-badge cancelled"><span class="dot"></span> Cancelled</span></c:otherwise></c:choose></td>
                 <td>
                   <div style="display:flex;gap:8px;align-items:center;">
                     <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form"><select name="status"><option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option><option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option><option value="COMPLETED" ${a.status=='COMPLETED'?'selected':''}>Completed</option><option value="CANCELLED" ${a.status=='CANCELLED'?'selected':''}>Cancelled</option></select><button type="submit"><i class="bi bi-check2"></i></button></form>
-                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#20c997"><i class="bi bi-chat-dots-fill"></i></a>
+                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#F43F5E"><i class="bi bi-chat-dots-fill"></i></a>
                     <c:if test="${a.consultationType=='VIDEO' && a.status=='CONFIRMED'}"><a href="${pageContext.request.contextPath}/consultation/video/${a.id}" target="_blank" class="dd-video-btn"><i class="bi bi-camera-video-fill"></i> Join</a></c:if>
                   </div>
                 </td></tr>
@@ -264,14 +343,14 @@
               
               <c:forEach var="u" items="${chatUsers}">
                 <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats&userId=${u.id}" 
-                   style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(123,44,191,0.1)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(123,44,191,0.2)' : 'transparent'};">
-                  <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: var(--dd-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
+                   style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(244,63,94,0.12)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(244,63,94,0.32)' : 'transparent'};">
+                  <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#fb7185,#F43F5E); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
                   <div style="flex: 1; overflow: hidden;">
-                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? 'var(--dd-purple)' : '#333'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
+                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? '#9f1239' : '#0F172A'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
                     <div style="font-size: 12px; color: var(--dd-muted);">Patient</div>
                   </div>
                   <c:if test="${targetUserId == u.id}">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--dd-purple);"></div>
+                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #F43F5E;"></div>
                   </c:if>
                 </a>
               </c:forEach>
@@ -286,7 +365,7 @@
                 <!-- Chat Header -->
                 <div style="padding: 16px 24px; border-bottom: 1px solid var(--dd-border); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02);">
                   <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: var(--dd-gradient); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff;">${targetUserName != null ? targetUserName.charAt(0) : 'U'}</div>
+                    <div class="user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg,#fb7185,#F43F5E); display: flex; align-items: center; justify-content: center; font-weight: 600; color: #fff;">${targetUserName != null ? targetUserName.charAt(0) : 'U'}</div>
                     <div>
                       <h3 style="margin: 0; font-size: 16px; font-weight: 700;">${targetUserName}</h3>
                       <p style="margin: 2px 0 0; font-size: 12px; color: #20c997; display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: #20c997; display: inline-block;"></span> Online</p>
@@ -294,7 +373,7 @@
                   </div>
                   <div style="display: flex; gap: 10px;">
                     <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(32,201,151,0.1); color: #20c997; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-telephone-fill"></i></a>
-                    <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(74,144,217,0.1); color: #4a90d9; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-camera-video-fill"></i></a>
+                    <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(244,63,94,0.12); color: #be123c; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-camera-video-fill"></i></a>
                   </div>
                 </div>
                 
@@ -307,7 +386,7 @@
                     </div>
                   </c:if>
                   <c:forEach var="m" items="${chatHistory}">
-                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #f1f3f5; color: #333; border-bottom-left-radius: 4px;'}">
+                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: linear-gradient(135deg,#fb7185,#F43F5E); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #f1f5f9; color: #0F172A; border-bottom-left-radius: 4px;'}">
                       ${m.message}
                       <span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">${m.timestamp}</span>
                     </div>
@@ -317,7 +396,7 @@
                 <!-- Chat Input -->
                 <div style="padding: 16px 24px; border-top: 1px solid var(--dd-border); display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,0.02);">
                   <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: #fff; color: #333; font-family: 'Poppins', sans-serif; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
-                  <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--dd-gradient); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(123,44,191,0.3); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
+                  <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: linear-gradient(135deg,#fb7185,#F43F5E); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(244,63,94,0.35); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
                 </div>
                 
                 <!-- WebSocket Script -->
@@ -366,7 +445,7 @@
                     const div = document.createElement('div');
                     let styles = "max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ";
                     if(type === 'DOCTOR') {
-                        styles += "align-self: flex-end; background: var(--dd-gradient); color: #fff; border-bottom-right-radius: 4px;";
+                        styles += "align-self: flex-end; background: linear-gradient(135deg,#fb7185,#F43F5E); color: #fff; border-bottom-right-radius: 4px;";
                     } else {
                         styles += "align-self: flex-start; background: #f1f3f5; color: #333; border-bottom-left-radius: 4px;";
                     }
@@ -383,7 +462,7 @@
               <c:otherwise>
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--dd-muted);">
                   <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-                    <i class="bi bi-chat-square-dots" style="font-size: 32px; color: var(--dd-purple-l); filter: drop-shadow(0 0 10px rgba(123,44,191,0.4));"></i>
+                    <i class="bi bi-chat-square-dots" style="font-size: 32px; color: #F43F5E; filter: drop-shadow(0 0 10px rgba(244,63,94,0.35));"></i>
                   </div>
                   <h3 style="font-size: 18px; font-weight: 600; color: #fff; margin: 0 0 8px;">Select a Patient</h3>
                   <p style="font-size: 14px; text-align: center; max-width: 300px;">Choose a patient from the sidebar to view your conversation or start a new message.</p>
@@ -403,13 +482,16 @@
       <div class="dd-section" id="profileView">
         <div class="dd-section-header">
           <h2><i class="bi bi-person"></i> Comprehensive Profile</h2>
-          <button onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit Complete Profile</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-btn-edit" style="text-decoration:none;"><i class="bi bi-pencil-square"></i> Complete / Update Profile</a>
+            <button type="button" onclick="document.getElementById('profileView').style.display='none';document.getElementById('profileEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-sliders"></i> Quick Edit</button>
+          </div>
         </div>
         <div class="dd-section-body padded">
           
           <!-- Profile Completion & Verification Status Card -->
-          <div class="dd-profile-completion-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--dd-border); border-radius: 10px; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px;">
-            <div class="completion-circle" style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(var(--dd-purple-l) ${profileCompletion}%, rgba(255,255,255,0.1) 0); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div class="dd-profile-completion-card" style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 20px;">
+            <div class="completion-circle" style="width: 80px; height: 80px; border-radius: 50%; background: conic-gradient(#F43F5E ${profileCompletion}%, #e2e8f0 0); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               <div style="width: 65px; height: 65px; border-radius: 50%; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff;">
                 ${profileCompletion}%
               </div>
@@ -479,7 +561,7 @@
           <form action="${pageContext.request.contextPath}/doctors/update-full-profile" method="post" enctype="multipart/form-data">
             
             <!-- STEP 1: Basic Details -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 10px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">1. Basic Details</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 10px; margin-bottom: 20px; color: #be123c; font-size: 16px;">1. Basic Details</h3>
             <div class="dd-edit-grid">
               <div class="dd-edit-field"><label>Full Name</label><input type="text" name="fullName" value="${doctor.fullName}" required minlength="3"></div>
               <div class="dd-edit-field"><label>Email (read-only)</label><input type="email" value="${doctor.email}" disabled style="opacity:0.6"></div>
@@ -499,7 +581,7 @@
             </div>
 
             <!-- STEP 2: Professional Details -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">2. Professional Details</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: #be123c; font-size: 16px;">2. Professional Details</h3>
             <div class="dd-edit-grid">
               <div class="dd-edit-field"><label>Medical Reg No.</label><input type="text" name="medicalRegNumber" value="${doctor.medicalRegNumber != null ? doctor.medicalRegNumber : ''}" required></div>
               <div class="dd-edit-field"><label>Specialization</label><input type="text" name="specialization" value="${doctor.specialization != null ? doctor.specialization : ''}" required></div>
@@ -517,7 +599,7 @@
             </div>
 
             <!-- STEP 3: Location -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">3. Location</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: #be123c; font-size: 16px;">3. Location</h3>
             <div class="dd-edit-grid">
               <div class="dd-edit-field full"><label>Clinic Address</label><textarea name="clinicAddress" rows="2" style="width: 100%; border-radius: 8px; border: 1px solid var(--dd-border); padding: 12px; font-family: inherit; color: #333; background: #fff;">${doctor.clinicAddress != null ? doctor.clinicAddress : ''}</textarea></div>
               <div class="dd-edit-field"><label>City</label><input type="text" name="city" value="${doctor.city != null ? doctor.city : ''}"></div>
@@ -527,7 +609,7 @@
             </div>
 
             <!-- STEP 4: Availability -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">4. Availability</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: #be123c; font-size: 16px;">4. Availability</h3>
             <div class="dd-edit-grid">
               <div class="dd-edit-field full">
                 <label>Available Days</label>
@@ -550,7 +632,7 @@
             </div>
 
             <!-- STEP 5: Verification Documents -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 10px; color: var(--dd-purple-l); font-size: 16px;">5. Verification Documents</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 10px; color: #be123c; font-size: 16px;">5. Verification Documents</h3>
             <p style="font-size: 13px; color: var(--dd-muted); margin-bottom: 20px;">Upload documents if needed. Existing files are kept if you don't upload new ones.</p>
             <div class="dd-edit-grid">
               <div class="dd-edit-field"><label>Medical License</label><input type="file" name="medicalLicense" accept=".pdf, image/*" style="padding: 10px; border-radius: 8px; width: 100%; border: 1px solid var(--dd-border);"></div>
@@ -559,7 +641,7 @@
             </div>
 
             <!-- STEP 6: Payment Details -->
-            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: var(--dd-purple-l); font-size: 16px;">6. Payment Details</h3>
+            <h3 style="border-bottom: 1px solid var(--dd-border); padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; color: #be123c; font-size: 16px;">6. Payment Details</h3>
             <div class="dd-edit-grid">
               <div class="dd-edit-field"><label>Consultation Fee (₹)</label><input type="number" name="consultationFee" value="${doctor.consultationFee != null ? doctor.consultationFee : '0'}" min="0"></div>
               <div class="dd-edit-field"><label>Video Fee (₹)</label><input type="number" name="videoFee" value="${doctor.videoFee != null ? doctor.videoFee : '0'}" min="0"></div>
@@ -798,8 +880,8 @@
                   <td>${a.reason != null ? a.reason : '—'}</td>
                   <td>
                     <c:choose>
-                      <c:when test="${a.consultationType == 'VIDEO'}"><span style="color:#4a90d9"><i class="bi bi-camera-video"></i> Video</span></c:when>
-                      <c:when test="${a.consultationType == 'CLINIC'}"><span style="color:#312e81"><i class="bi bi-hospital"></i> Clinic</span></c:when>
+                      <c:when test="${a.consultationType == 'VIDEO'}"><span style="color:#be123c"><i class="bi bi-camera-video"></i> Video</span></c:when>
+                      <c:when test="${a.consultationType == 'CLINIC'}"><span style="color:#1e293b"><i class="bi bi-hospital"></i> Clinic</span></c:when>
                       <c:otherwise><span style="color:#6b7280"><i class="bi bi-chat-dots"></i> General</span></c:otherwise>
                     </c:choose>
                   </td>
@@ -906,7 +988,7 @@
       <div id="prescriptionModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:16px;width:100%;max-width:500px;padding:24px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h3 style="margin:0;font-size:18px;font-weight:700;"><i class="bi bi-file-earmark-medical" style="color:var(--dd-purple-l)"></i> Write Prescription</h3>
+            <h3 style="margin:0;font-size:18px;font-weight:700;"><i class="bi bi-file-earmark-medical" style="color:#F43F5E"></i> Write Prescription</h3>
             <button type="button" onclick="closePrescriptionModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--dd-muted)"><i class="bi bi-x-lg"></i></button>
           </div>
           <form id="prescriptionForm" method="post" action="">
@@ -934,7 +1016,7 @@
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
               <button type="button" onclick="closePrescriptionModal()" style="padding:10px 20px;border:none;border-radius:999px;background:rgba(107,114,128,0.1);color:var(--dd-muted);font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
-              <button type="submit" id="prescSaveBtn" style="padding:10px 20px;border:none;border-radius:999px;background:var(--dd-gradient);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(123,44,191,0.2);">Save Prescription</button>
+              <button type="submit" id="prescSaveBtn" style="padding:10px 20px;border:none;border-radius:999px;background:linear-gradient(135deg,#fb7185,#F43F5E);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(244,63,94,0.25);">Save Prescription</button>
             </div>
           </form>
         </div>
@@ -1107,12 +1189,12 @@ document.addEventListener('DOMContentLoaded', function() {
               datasets: [{
                   label: 'Patients Seen',
                   data: dataValues,
-                  borderColor: '#7b2cbf',
-                  backgroundColor: 'rgba(123, 44, 191, 0.1)',
+                  borderColor: '#F43F5E',
+                  backgroundColor: 'rgba(244, 63, 94, 0.16)',
                   borderWidth: 2,
                   fill: true,
                   tension: 0.3,
-                  pointBackgroundColor: '#7b2cbf',
+                  pointBackgroundColor: '#F43F5E',
                   pointRadius: 4
               }]
           },

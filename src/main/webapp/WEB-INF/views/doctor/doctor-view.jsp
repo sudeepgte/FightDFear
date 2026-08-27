@@ -21,19 +21,23 @@
 
   <style>
     :root {
-      --medical-blue: #0ea5e9;
-      --medical-blue-dark: #0369a1;
-      --brand-soft-bg: #f8fafc;
+      --primary: #F43F5E;
+      --rose-soft: #FFF1F2;
+      --bg-page: #F8FAFC;
+      --navy: #0F172A;
+      --navy-soft: #1E293B;
+      --border: #E2E8F0;
+      --brand-soft-bg: var(--bg-page);
     }
 
     body {
       background-color: var(--brand-soft-bg);
       font-family: 'Poppins', sans-serif;
-      color: #1e293b;
+      color: var(--navy-soft);
     }
 
     .doctor-hero-bg {
-      background: linear-gradient(135deg, var(--brand-purple-darker) 0%, var(--brand-purple) 100%);
+      background: linear-gradient(135deg, #7f1d1d 0%, var(--primary) 100%);
       height: 280px;
       width: 100%;
       position: absolute;
@@ -48,7 +52,7 @@
       padding: 40px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.05);
       margin-top: 100px;
-      border: 1px solid rgba(255,255,255,0.8);
+      border: 1px solid var(--border);
       position: relative;
     }
 
@@ -60,7 +64,7 @@
       border: 8px solid white;
       box-shadow: 0 15px 35px rgba(0,0,0,0.1);
       margin-top: -120px;
-      background: var(--gradient-primary);
+      background: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -73,23 +77,23 @@
       border-radius: 12px;
       padding: 12px 25px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: var(--navy-soft);
       transition: all 0.3s ease;
       border: 1px solid transparent;
       margin-right: 10px;
     }
 
     .nav-pills-custom .nav-link.active {
-      background: var(--brand-soft-pink) !important;
-      color: var(--brand-pink) !important;
-      border-color: var(--brand-pink-light);
+      background: var(--rose-soft) !important;
+      color: var(--primary) !important;
+      border-color: #fecdd3;
     }
 
     .info-grid-item {
       padding: 25px;
       background: #f8fafc;
       border-radius: 24px;
-      border: 1px solid #f1f3f5;
+      border: 1px solid var(--border);
       height: 100%;
     }
 
@@ -99,7 +103,7 @@
       background: white;
       border-radius: 28px;
       padding: 30px;
-      border: 1px solid #f1f3f5;
+      border: 1px solid var(--border);
       box-shadow: 0 15px 40px rgba(0,0,0,0.03);
     }
 
@@ -109,22 +113,22 @@
       padding: 15px 10px;
       background: #f8fafc;
       border-radius: 16px;
-      border: 2px solid #f1f3f5;
+      border: 2px solid var(--border);
       cursor: pointer;
       transition: 0.3s;
     }
 
     .day-selector-item.active {
-      background: var(--brand-purple-darker);
+      background: var(--primary);
       color: white;
-      border-color: var(--brand-purple);
+      border-color: var(--primary);
     }
 
     .time-slot-pill {
       display: inline-block;
       padding: 10px 20px;
       background: white;
-      border: 2px solid #f1f3f5;
+      border: 2px solid var(--border);
       border-radius: 12px;
       margin: 5px;
       cursor: pointer;
@@ -134,14 +138,14 @@
     }
 
     .time-slot-pill:hover, .time-slot-pill.selected {
-      background: var(--brand-pink);
+      background: var(--primary);
       color: white;
-      border-color: var(--brand-pink);
+      border-color: var(--primary);
     }
 
     .review-item {
       padding: 25px;
-      border-bottom: 1px solid #f1f3f5;
+      border-bottom: 1px solid var(--border);
     }
 
     .review-item:last-child { border-bottom: none; }
@@ -191,14 +195,73 @@
     }
 
     .btn-book-primary {
-      background: var(--gradient-primary);
+      background: var(--primary);
       color: white;
       border: none;
       border-radius: 18px;
       padding: 18px;
       font-weight: 800;
       width: 100%;
-      box-shadow: 0 10px 25px rgba(219, 39, 119, 0.2);
+      box-shadow: 0 10px 25px rgba(244, 63, 94, 0.24);
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--navy);
+    }
+    .logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .logo h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+    }
+    .navmenu ul li a {
+      color: var(--navy-soft);
+      font-weight: 600;
+    }
+    .navmenu ul li a:hover {
+      color: var(--primary);
+    }
+    .btn-getstarted {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+    }
+    .btn-getstarted:hover {
+      filter: brightness(1.06);
+      color: #fff;
+    }
+    .bg-soft-pink {
+      background: var(--rose-soft) !important;
+    }
+    .text-pink {
+      color: var(--primary) !important;
+    }
+    .text-purple {
+      color: var(--navy) !important;
+    }
+    .btn-outline-purple {
+      border-color: var(--border);
+      color: var(--navy-soft);
+      background: #fff;
+    }
+    .btn-check:checked + .btn-outline-purple {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
     }
     
     .rating-stars {
@@ -231,7 +294,10 @@
 </head>
   <header id="header" class="header d-flex align-items-center sticky-top">
     <div class="container-fluid container-xl d-flex align-items-center">
-      <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto"><h1>Fight D Fear</h1></a>
+      <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto">
+        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
+        <h1>Fight D Fear</h1>
+      </a>
       <nav id="navmenu" class="navmenu">
         <ul>
           <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>

@@ -20,14 +20,20 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
+            --primary: #F43F5E;
+            --rose-soft: #FFF1F2;
+            --bg-page: #F8FAFC;
+            --navy: #0F172A;
+            --navy-soft: #1E293B;
+            --border: #E2E8F0;
+            --glow-bg: var(--bg-page);
             --card-bg: #ffffff;
         }
         
         body {
             font-family: 'Poppins', sans-serif;
             background: var(--glow-bg);
-            color: var(--fdf-text);
+            color: var(--navy-soft);
             overflow-x: hidden;
         }
 
@@ -47,8 +53,8 @@
             opacity: 0.12;
             animation: floatBlob 20s infinite alternate;
         }
-        .blob-1 { top: -100px; right: -100px; background: var(--brand-purple); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--brand-pink); animation-delay: -5s; }
+        .blob-1 { top: -100px; right: -100px; background: var(--primary); }
+        .blob-2 { bottom: -150px; left: -150px; background: var(--primary); animation-delay: -5s; }
         
         @keyframes floatBlob {
             0% { transform: translate(0, 0) scale(1); }
@@ -60,20 +66,39 @@
             padding: 60px 20px 40px;
             text-align: center;
             background: white;
-            border-bottom: 1px solid var(--fdf-border);
+            border-bottom: 1px solid var(--border);
             position: relative;
+        }
+        .brand-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--rose-soft);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+        }
+        .brand-row img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .brand-row span {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 14px;
         }
         .glow-header h1 {
             font-family: 'Montserrat', sans-serif;
             font-size: 38px;
             font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--navy);
             margin-bottom: 10px;
         }
         .glow-header p {
-            color: var(--fdf-muted);
+            color: var(--navy-soft);
             font-size: 15px;
             max-width: 650px;
             margin: 0 auto;
@@ -97,8 +122,8 @@
             padding: 10px 20px;
             border-radius: 999px;
             background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--brand-purple);
+            border: 1px solid var(--border);
+            color: var(--navy-soft);
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
@@ -106,7 +131,7 @@
             box-shadow: var(--shadow-sm);
         }
         .top-btn:hover {
-            background: var(--brand-purple);
+            background: var(--primary);
             color: #fff;
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
@@ -122,13 +147,13 @@
             display: flex;
             align-items: center;
             background: #fff;
-            border: 1px solid var(--fdf-border);
+            border: 1px solid var(--border);
             border-radius: 50px;
             padding: 6px 15px 6px 20px;
             box-shadow: var(--shadow-sm);
         }
         .search-box i {
-            color: var(--brand-pink);
+            color: var(--primary);
             margin-right: 10px;
         }
         .search-box input {
@@ -136,7 +161,7 @@
             outline: none;
             width: 100%;
             font-size: 14px;
-            color: var(--fdf-text);
+            color: var(--navy-soft);
         }
 
         /* Category Scroll Bar */
@@ -157,8 +182,8 @@
             padding: 8px 20px;
             border-radius: 999px;
             background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--fdf-muted);
+            border: 1px solid var(--border);
+            color: var(--navy-soft);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
@@ -168,7 +193,7 @@
             gap: 6px;
         }
         .btn-cat-pill:hover, .btn-cat-pill.active {
-            background: var(--gradient-primary);
+            background: var(--primary);
             color: #fff;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
@@ -185,7 +210,7 @@
         }
         .doctor-card {
             background: var(--card-bg);
-            border: 1px solid var(--fdf-border);
+            border: 1px solid var(--border);
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.3s ease;
@@ -196,13 +221,13 @@
         .doctor-card:hover {
             transform: translateY(-6px);
             box-shadow: var(--shadow-lg);
-            border-color: var(--brand-pink-light);
+            border-color: #fecdd3;
         }
         .doctor-card-top {
             padding: 24px;
             display: flex;
             gap: 16px;
-            border-bottom: 1px dashed var(--fdf-border);
+            border-bottom: 1px dashed var(--border);
         }
         .doctor-avatar {
             width: 70px;
@@ -215,9 +240,9 @@
             background: #fff5f7;
             font-size: 28px;
             font-weight: 800;
-            color: var(--brand-pink);
+            color: var(--primary);
             flex-shrink: 0;
-            border: 2px solid var(--brand-pink-light);
+            border: 2px solid #fecdd3;
         }
         .doctor-avatar img {
             width: 100%;
@@ -230,7 +255,7 @@
         .doctor-spec {
             font-size: 11px;
             font-weight: 800;
-            color: var(--brand-pink);
+            color: var(--primary);
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 4px;
@@ -238,18 +263,18 @@
         .doctor-name {
             font-size: 17px;
             font-weight: 800;
-            color: var(--brand-purple);
+            color: var(--navy);
             margin: 2px 0 6px;
         }
         .doctor-loc {
             font-size: 12px;
-            color: var(--fdf-muted);
+            color: var(--navy-soft);
             display: flex;
             align-items: center;
             gap: 4px;
         }
         .doctor-loc i {
-            color: var(--brand-pink);
+            color: var(--primary);
         }
         .doctor-tags {
             padding: 16px 24px;
@@ -274,8 +299,8 @@
             color: #d97706;
         }
         .doctor-tag.exp {
-            background: #e0e7ff;
-            color: #4f46e5;
+            background: #f1f5f9;
+            color: var(--navy-soft);
         }
         .doctor-tag.online {
             background: #dcfce7;
@@ -296,10 +321,10 @@
             border-radius: 10px;
             font-size: 13px;
             font-weight: 700;
-            border: 1px solid var(--fdf-border);
+            border: 1px solid var(--border);
             text-align: center;
             text-decoration: none;
-            color: var(--brand-purple);
+            color: var(--navy-soft);
             background: #fff;
             transition: all 0.2s;
             display: flex;
@@ -308,7 +333,7 @@
             gap: 6px;
         }
         .btn-doc-media:hover {
-            background: var(--brand-purple);
+            background: var(--primary);
             color: #fff;
             border-color: transparent;
         }
@@ -322,7 +347,7 @@
             text-align: center;
             text-decoration: none;
             color: #fff;
-            background: var(--gradient-primary);
+            background: var(--primary);
             transition: all 0.2s;
         }
         .btn-doc-book:hover {
@@ -416,6 +441,10 @@
 
             </div>
             
+            <div class="brand-row">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
+                <span>Fight D Fear</span>
+            </div>
             <h1>Find Your Doctor</h1>
             <p>Connect securely with verified, expert female doctors, gynecologists, and psychologists dedicated to women's physical and mental healthcare.</p>
             
