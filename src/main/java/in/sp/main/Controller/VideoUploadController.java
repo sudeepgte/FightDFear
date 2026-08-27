@@ -21,9 +21,10 @@ import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.UserFollowService;
 import jakarta.servlet.http.HttpSession;
 
-import jakarta.transaction.Transactional;
- 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -38,6 +39,7 @@ import org.springframework.http.ResponseEntity;
  
 import java.io.IOException;
 
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +51,8 @@ import java.util.Optional;
 @RequestMapping("/video")
 
 public class VideoUploadController {
+
+    private static final Logger log = LoggerFactory.getLogger(VideoUploadController.class);
 	
 	@Autowired
 	private VideoViewRepository videoViewRepository;
@@ -292,61 +296,80 @@ public class VideoUploadController {
  
  
     // 🎞 Reels Feed
-    @Transactional
+    @Transactional(readOnly = true)
     @GetMapping("/reels")
     public String viewReels(HttpSession session, Model model) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null) return "redirect:/login";
 
-        User currentUser = userRepository.findById(sessionUser.getId()).orElse(null);
-        if (currentUser == null) return "redirect:/login";
+        try {
+            User currentUser = userRepository.findById(sessionUser.getId()).orElse(null);
+            if (currentUser == null) return "redirect:/login";
 
-        // Fetch only reels
-        List<Videoupload> allReels = videoRepository.findByIsReel(true);
-        
-        // Filter reels based on privacy settings and blocking: 
-        // If a user is private, only accepted followers (or the user themselves) can see their reels.
-        List<Videoupload> videos = allReels.stream()
-            .filter(v -> !v.isBlocked())
-            .filter(v -> {
-                User uploader = v.getUser();
-                if (uploader == null) return false;
-                if (!uploader.isPrivate()) return true; // Public account: anyone can see
-                if (uploader.getId().equals(currentUser.getId())) return true; // Own reels
-                
-                // Private account: check if current user is an accepted follower
-                return userService.isAcceptedFollower(currentUser.getId(), uploader.getId());
-            })
-            .collect(java.util.stream.Collectors.toList());
+            List<Videoupload> allReels = videoRepository.findFeedReels();
 
-        Map<Long, Boolean> likedMap = new HashMap<>();
-        Map<Long, String> followStatusMap = new HashMap<>(); // "FOLLOW", "REQUESTED", "FOLLOWING"
+            List<Videoupload> videos = allReels.stream()
+                .filter(v -> isReelVisibleInFeed(v, currentUser))
+                .collect(java.util.stream.Collectors.toList());
 
-        for (Videoupload v : videos) {
-            boolean liked = videoLikeRepository.existsByVideoAndUser(v, currentUser);
-            v.setLikedByCurrentUser(liked);
-            
-            User uploader = v.getUser();
-            if (uploader != null && !uploader.getId().equals(currentUser.getId())) {
-                if (userService.isAcceptedFollower(currentUser.getId(), uploader.getId())) {
-                    followStatusMap.put(uploader.getId(), "FOLLOWING");
-                } else if (userService.isPendingRequest(currentUser.getId(), uploader.getId())) {
-                    followStatusMap.put(uploader.getId(), "REQUESTED");
-                } else {
-                    followStatusMap.put(uploader.getId(), "FOLLOW");
+            log.info("Reels feed for user {}: {} visible of {} total",
+                    currentUser.getId(), videos.size(), allReels.size());
+
+            Map<Long, Boolean> likedMap = new HashMap<>();
+            Map<Long, String> followStatusMap = new HashMap<>();
+            Map<Long, List<VideoComment>> commentsByVideoId = new HashMap<>();
+            Map<Long, List<VideoComment>> repliesByCommentId = new HashMap<>();
+
+            for (Videoupload v : videos) {
+                try {
+                    boolean liked = videoLikeRepository.existsByVideoAndUser(v, currentUser);
+                    v.setLikedByCurrentUser(liked);
+
+                    List<VideoComment> topLevelComments = new ArrayList<>();
+                    for (VideoComment comment : videocommentRepository.findTopLevelWithUserByVideoId(v.getId())) {
+                        topLevelComments.add(comment);
+                        repliesByCommentId.put(
+                                comment.getId(),
+                                videocommentRepository.findRepliesWithUserByParentId(comment.getId()));
+                    }
+                    commentsByVideoId.put(v.getId(), topLevelComments);
+
+                    User uploader = v.getUser();
+                    if (uploader != null && !uploader.getId().equals(currentUser.getId())) {
+                        if (userService.isAcceptedFollower(currentUser.getId(), uploader.getId())) {
+                            followStatusMap.put(uploader.getId(), "FOLLOWING");
+                        } else if (userService.isPendingRequest(currentUser.getId(), uploader.getId())) {
+                            followStatusMap.put(uploader.getId(), "REQUESTED");
+                        } else {
+                            followStatusMap.put(uploader.getId(), "FOLLOW");
+                        }
+                    }
+                } catch (Exception perVideoEx) {
+                    log.warn("Skipping metadata for reel {}: {}", v.getId(), perVideoEx.getMessage());
+                    commentsByVideoId.putIfAbsent(v.getId(), java.util.Collections.emptyList());
                 }
             }
-        }
 
-        model.addAttribute("videos", videos);
-        model.addAttribute("currentUser", currentUser);
-        model.addAttribute("user", currentUser);
-        model.addAttribute("likedMap", likedMap);
-        model.addAttribute("followStatusMap", followStatusMap);
-        
-        if (currentUser != null) {
-            List<User> friends = userService.getFriends(currentUser.getId());
-            model.addAttribute("friends", friends);
+            model.addAttribute("videos", videos);
+            model.addAttribute("currentUser", currentUser);
+            model.addAttribute("user", currentUser);
+            model.addAttribute("likedMap", likedMap);
+            model.addAttribute("followStatusMap", followStatusMap);
+            model.addAttribute("commentsByVideoId", commentsByVideoId);
+            model.addAttribute("repliesByCommentId", repliesByCommentId);
+            model.addAttribute("friends", userService.getFriends(currentUser.getId()));
+            model.addAttribute("unreadBroadcastCount", 0L);
+        } catch (Exception ex) {
+            log.error("Failed to load reels feed", ex);
+            model.addAttribute("videos", java.util.Collections.emptyList());
+            model.addAttribute("currentUser", sessionUser);
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("likedMap", java.util.Collections.emptyMap());
+            model.addAttribute("followStatusMap", java.util.Collections.emptyMap());
+            model.addAttribute("commentsByVideoId", java.util.Collections.emptyMap());
+            model.addAttribute("repliesByCommentId", java.util.Collections.emptyMap());
+            model.addAttribute("friends", java.util.Collections.emptyList());
+            model.addAttribute("unreadBroadcastCount", 0L);
         }
         return "reels";
     }
@@ -753,6 +776,25 @@ public class VideoUploadController {
         System.out.println("Reported Video ID: " + video.getId() + " by " + user.getFullName());
 
         return "SUCCESS";
+    }
+
+    /** Public reels feed — show every non-blocked reel unless marked private (owner always sees theirs). */
+    private boolean isReelVisibleInFeed(Videoupload reel, User viewer) {
+        if (reel == null || viewer == null) {
+            return false;
+        }
+        User uploader = reel.getUser();
+        if (uploader == null) {
+            return false;
+        }
+        boolean isOwner = uploader.getId().equals(viewer.getId());
+        if (isOwner) {
+            return true;
+        }
+        if (reel.isDraft() || reel.isPrivate()) {
+            return false;
+        }
+        return true;
     }
 
 }

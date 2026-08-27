@@ -1,0 +1,54 @@
+/**
+ * Reminders page — extra rose/pink light background layer
+ * /reminders
+ */
+body.fdf-page-reminders {
+    background: linear-gradient(155deg, #FFE4E6 0%, #FFF1F2 30%, #FDF2F8 55%, #FFF1F2 100%) !important;
+}
+
+body.fdf-page-reminders #page-content-wrapper {
+    background: linear-gradient(180deg, #FFE4E6 0%, #FFF1F2 25%, #F8FAFC 50%, #FFF1F2 100%) !important;
+}
+
+body.fdf-page-reminders .fdf-page-main {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 241, 242, 0.85) 100%);
+    border: 1px solid #FDA4AF;
+    box-shadow: 0 12px 40px rgba(244, 63, 94, 0.10);
+}
+
+body.fdf-page-reminders .fdf-page-header {
+    background: linear-gradient(90deg, #FFE4E6 0%, #FFF1F2 60%, #FFFFFF 100%);
+    border-color: #FDA4AF;
+}
+
+body.fdf-page-reminders .fdf-card {
+    background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 55%, #FFE4E6 100%);
+}
+
+body.fdf-page-reminders .fdf-card--rose {
+    background: linear-gradient(160deg, #FFE4E6 0%, #FFF1F2 50%, #FFFFFF 100%);
+    border-color: #F43F5E;
+    box-shadow: 0 8px 28px rgba(244, 63, 94, 0.12);
+}
+
+body.fdf-page-reminders .fdf-table-wrap {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFF1F2 100%);
+    border-color: #FDA4AF;
+}
+
+body.fdf-page-reminders .fdf-table-wrap thead th {
+    background: #FFE4E6;
+    color: #E11D48;
+}
+
+body.fdf-page-reminders .form-control,
+body.fdf-page-reminders .form-select {
+    background: #FFFFFF !important;
+    border-color: #FDA4AF !important;
+}
+
+body.fdf-page-reminders .form-control:focus,
+body.fdf-page-reminders .form-select:focus {
+    background: #FFF1F2 !important;
+    border-color: #F43F5E !important;
+}

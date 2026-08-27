@@ -1,0 +1,209 @@
+/**
+ * Reels page — 60 / 30 / 10 theme overlay (UI colors only)
+ * 60% #FFFFFF / #F8FAFC | 30% soft rose + #E2E8F0 | 10% #F43F5E accent
+ */
+body.reels-page-shell {
+    background: #F8FAFC;
+    color: #0F172A;
+}
+
+body.reels-page-shell #page-content-wrapper {
+    background: #F8FAFC !important;
+}
+
+body.reels-page-shell .reels-wrapper {
+    background: #F8FAFC;
+}
+
+body.reels-page-shell h3,
+body.reels-page-shell .reels-wrapper p {
+    color: #0F172A !important;
+}
+
+body.reels-page-shell .reels-scroll-hint {
+    background: #FFFFFF;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
+}
+
+/* Coins — light surface, rose accent on hover */
+body.reels-page-shell .coin-wallet-link {
+    background: #FFFFFF;
+    color: #0F172A;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+body.reels-page-shell .coin-wallet-link:hover {
+    background: #FFF1F2;
+    color: #0F172A;
+    border-color: #F43F5E;
+}
+
+body.reels-page-shell .coin-icon-gold {
+    color: #CA8A04;
+}
+
+/* Create Reel — accent CTA */
+body.reels-page-shell .create-reel-link {
+    background: #F43F5E;
+    color: #FFFFFF;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+}
+
+body.reels-page-shell .create-reel-link:hover {
+    background: #E11D48;
+    color: #FFFFFF;
+}
+
+/* Profile ring & follow */
+body.reels-page-shell .profile-bar img {
+    border-color: #F43F5E;
+}
+
+body.reels-page-shell .profile-bar .btn-danger {
+    background: #F43F5E;
+    border-color: #F43F5E;
+}
+
+/* Action buttons — rose hover, not purple/gold */
+body.reels-page-shell .side-actions button:hover {
+    background: rgba(244, 63, 94, 0.35);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+}
+
+body.reels-page-shell .side-actions button:focus-visible,
+body.reels-page-shell .coin-wallet-link:focus-visible,
+body.reels-page-shell .create-reel-link:focus-visible {
+    outline-color: #F43F5E;
+}
+
+/* Like heart animation */
+body.reels-page-shell .like-heart {
+    color: #F43F5E;
+}
+
+/* Comments panel — white / soft rose (30%) */
+body.reels-page-shell .comment-box {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #0F172A;
+}
+
+body.reels-page-shell .comment-box h5 {
+    color: #0F172A;
+}
+
+body.reels-page-shell .comment-box .btn-close-white {
+    filter: none;
+    opacity: 0.55;
+}
+
+body.reels-page-shell .comment {
+    background: #FFF1F2;
+    border: 1px solid #E2E8F0;
+    color: #0F172A;
+}
+
+body.reels-page-shell .comment:hover {
+    background: #FFE4E6;
+}
+
+body.reels-page-shell .comment-box .btn-danger {
+    background: #F43F5E;
+    border-color: #F43F5E;
+}
+
+body.reels-page-shell .comment-box .btn-outline-light {
+    color: #F43F5E;
+    border-color: #E2E8F0;
+    background: #FFFFFF;
+}
+
+body.reels-page-shell .comment-box .form-control {
+    border-color: #E2E8F0;
+    color: #0F172A;
+}
+
+body.reels-page-shell .comment-box .form-control:focus {
+    border-color: #F43F5E;
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+}
+
+/* Scrollbars — neutral / soft rose */
+body.reels-page-shell .reels-wrapper::-webkit-scrollbar-thumb {
+    background: #E2E8F0;
+}
+
+body.reels-page-shell .reels-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #FDA4AF;
+}
+
+body.reels-page-shell .comment-box::-webkit-scrollbar-thumb {
+    background: #FDA4AF;
+}
+
+/* Reel studio & report modals */
+body.reels-page-shell #reelStudioModal .modal-header {
+    background: #F43F5E;
+    color: #FFFFFF;
+}
+
+body.reels-page-shell .modal-content {
+    border: 1px solid #E2E8F0;
+}
+
+body.reels-page-shell .modal-content .form-check-label {
+    color: #0F172A;
+}
+
+body.reels-page-shell .modal-footer .btn-danger {
+    background: #F43F5E;
+    border-color: #F43F5E;
+}
+
+/* Empty state (inline styles overridden gently) */
+body.reels-page-shell .reels-empty-theme {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06) !important;
+}
+
+body.reels-page-shell .reels-empty-theme h3 {
+    color: #0F172A !important;
+}
+
+body.reels-page-shell .reels-empty-theme p {
+    color: #64748B !important;
+}
+
+body.reels-page-shell .reels-empty-theme .btn-shoot {
+    background: #F43F5E !important;
+    border: none !important;
+    color: #FFFFFF !important;
+}
+
+body.reels-page-shell .reels-empty-theme .btn-back {
+    border: 1px solid #F43F5E !important;
+    color: #F43F5E !important;
+    background: #FFFFFF !important;
+}
+
+/* Reel caption on video — keep readable on dark media */
+body.reels-page-shell .reel-caption strong {
+    color: #FFFFFF;
+}
+
+body.reels-page-shell .reel-caption span {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+/* Remove purple/gold reel hover glow */
+body.reels-page-shell .reel::after {
+    background: linear-gradient(145deg, rgba(244, 63, 94, 0.2), transparent);
+}
+
+body.reels-page-shell .reel:hover::after {
+    opacity: 1;
+}
