@@ -348,6 +348,12 @@ public class UserController {
                 return "user";
             }
 
+            String genderErr = in.sp.main.Util.MobileValidation.requireWomenMemberGender(genderRaw);
+            if (genderErr != null) {
+                model.addAttribute("error", genderErr);
+                return "user";
+            }
+
             if (!dob.isEmpty()) {
                 try {
                     LocalDate birthDate = LocalDate.parse(dob);
@@ -393,20 +399,7 @@ public class UserController {
             user.setPassword(passwordService.encode(password));
             user.setVerificationStatus(VerificationStatus.VERIFIED);
             user.setIdentityDocument("web-member|lang:English");
-
-            if (!genderRaw.isEmpty()) {
-                try {
-                    Gender g = Gender.valueOf(genderRaw.toUpperCase());
-                    if (g == Gender.MALE) {
-                        model.addAttribute("error", "Registration is restricted to Female / Other.");
-                        return "user";
-                    }
-                    user.setGender(g);
-                } catch (IllegalArgumentException e) {
-                    model.addAttribute("error", "Gender must be FEMALE or OTHER.");
-                    return "user";
-                }
-            }
+            user.setGender(in.sp.main.Util.MobileValidation.parseWomenMemberGender(genderRaw));
 
             userService.createUser(user);
 

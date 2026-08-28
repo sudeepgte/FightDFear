@@ -19,7 +19,10 @@ import in.sp.main.Entities.Salon;
 import in.sp.main.Entities.Service1;
 import in.sp.main.Entities.ServiceCategory;
 import in.sp.main.Entities.Stylist;
+import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.SalonRegistrationService;
+import in.sp.main.Service.SalonProfileService;
 import in.sp.main.Service.SalonService;
 import in.sp.main.Repository.SalonRepository;
 import in.sp.main.Repository.ServiceRepository;
@@ -51,6 +54,12 @@ public class SalonController {
 
     @Autowired
     private SalonService salonservice;
+
+    @Autowired
+    private SalonRegistrationService salonRegistrationService;
+
+    @Autowired
+    private SalonProfileService salonProfileService;
     
     @Autowired
     private in.sp.main.Config.JwtUtil jwtUtil;
@@ -85,7 +94,7 @@ public class SalonController {
             @RequestParam("phone") String phone,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword,
-            @RequestParam("hygieneCertificate") MultipartFile hygieneCertificate,
+            @RequestParam(value = "hygieneCertificate", required = false) MultipartFile hygieneCertificate,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
             Model model) {
@@ -113,6 +122,10 @@ public class SalonController {
             model.addAttribute("error", "Username is already taken. Please choose another.");
             return "salon/salon-register";
         }
+        if (salonRepository.existsByEmail(cleanedEmail)) {
+            model.addAttribute("error", "Email already registered. Please sign in instead.");
+            return "salon/salon-register";
+        }
         if (cleanedEmail.isEmpty() || cleanedEmail.length() > Salon.EMAIL_MAX_LENGTH
                 || !cleanedEmail.matches(Salon.EMAIL_PATTERN)) {
             model.addAttribute("error", "Please enter a valid email address.");
@@ -128,8 +141,16 @@ public class SalonController {
             return "salon/salon-register";
         }
 
+        if (!salonRegistrationService.consumeRegistrationVerification(cleanedEmail)) {
+            model.addAttribute("error", "Email not verified. Please verify the OTP sent to your email before registering.");
+            return "salon/salon-register";
+        }
+
         try {
-            String hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
+            String hygieneCertificateUrl = null;
+            if (hygieneCertificate != null && !hygieneCertificate.isEmpty()) {
+                hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
+            }
 
             Salon salon = new Salon();
             salon.setName(cleanedName);
@@ -140,8 +161,12 @@ public class SalonController {
             salon.setHygieneCertificateUrl(hygieneCertificateUrl);
             salon.setBio(bio);
             salon.setAvailabilityHours(availabilityHours);
+            salon.setApproved(false);
 
-            salonRepository.save(salon);
+            salonProfileService.setLifecycleStatus(salon, PartnerProfileStatus.REGISTERED);
+            salon = salonRepository.save(salon);
+            salonProfileService.setLifecycleStatus(salon, PartnerProfileStatus.PROFILE_INCOMPLETE);
+            salonProfileService.refreshCompletion(salon);
 
             return "redirect:/salons/login"; // redirect to login page
 

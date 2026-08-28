@@ -188,6 +188,112 @@
             color: var(--brand-rose);
         }
 
+        /* Login / Register auth dropdowns */
+        .nav-auth-wrap {
+            height: auto;
+        }
+
+        .nav-auth-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.6rem 1.3rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        .nav-auth-btn--login {
+            background-color: #F43F5E;
+            color: #FFFFFF;
+        }
+
+        .nav-auth-btn--login:hover {
+            background-color: #E4234C;
+            box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35);
+        }
+
+        .nav-auth-btn--register {
+            background-color: #FFF1F2;
+            color: #F43F5E;
+            border-color: #F43F5E;
+        }
+
+        .nav-auth-btn--register:hover {
+            background-color: #F43F5E;
+            color: #FFFFFF;
+        }
+
+        .nav-actions .nav-auth-wrap .dropdown-menu.nav-auth-dropdown {
+            left: auto;
+            right: 0;
+            transform: translateX(0) translateY(10px);
+            width: 185px;
+            min-width: 185px;
+            max-width: 185px;
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            margin-top: 12px;
+            padding: 0.45rem 0;
+            border: 1px solid rgba(248, 200, 212, 0.7);
+            scrollbar-width: thin;
+            scrollbar-color: #F43F5E #FFF1F2;
+        }
+
+        .nav-auth-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .nav-auth-dropdown::-webkit-scrollbar-track {
+            background: #FFF1F2;
+            border-radius: 4px;
+        }
+
+        .nav-auth-dropdown::-webkit-scrollbar-thumb {
+            background: #F43F5E;
+            border-radius: 4px;
+        }
+
+        .nav-auth-dropdown::-webkit-scrollbar-thumb:hover {
+            background: #E4234C;
+        }
+
+        .nav-actions .nav-auth-wrap:hover .dropdown-menu.nav-auth-dropdown {
+            transform: translateX(0) translateY(0);
+        }
+
+        .nav-auth-dropdown .dropdown-divider {
+            height: 1px;
+            background: rgba(248, 200, 212, 0.6);
+            margin: 0.4rem 1rem;
+        }
+
+        .nav-auth-dropdown .dropdown-label {
+            padding: 0.45rem 1rem 0.2rem;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #F43F5E;
+        }
+
+        .nav-auth-dropdown .dropdown-item {
+            padding: 0.55rem 1rem;
+            font-size: 0.82rem;
+            white-space: normal;
+            line-height: 1.3;
+        }
+
+        .nav-auth-dropdown .dropdown-item:hover {
+            background: #FFF1F2;
+            color: #F43F5E;
+        }
+
         .btn-sos-nav {
             background-color: var(--sos-red);
             color: var(--white);
@@ -508,7 +614,8 @@
             .mobile-only-item {
                 display: flex;
             }
-            .nav-actions .nav-login, .nav-actions .nav-events {
+            .nav-actions .nav-login, .nav-actions .nav-events,
+            .nav-actions .nav-auth-wrap {
                 display: none;
             }
             .mobile-menu-btn {
@@ -1851,13 +1958,12 @@
                     <a href="/salons/register" class="dropdown-item">Beauty & Wellness</a>
                 </div>
             </li>
-            <li class="nav-item"><a href="/salons/register" style="text-decoration:none;">Services</a></li>
-            <li class="nav-item"><a href="/marketplace/provider/register" style="text-decoration:none;">Marketplace</a></li>
             <li class="nav-item">
                 Business ⌄
                 <div class="dropdown-menu">
                     <a href="/entrepreneur/register" class="dropdown-item">Entrepreneurs</a>
                     <a href="/investor/register" class="dropdown-item">Women Investors</a>
+                    <a href="/financial-literacy" class="dropdown-item">Financial Literacy</a>
                 </div>
             </li>
             <li class="nav-item">
@@ -1874,29 +1980,49 @@
                     <a href="/doctors/login" class="dropdown-item">Women Doctor</a>
                     <a href="/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="/salons/login" class="dropdown-item">Beauty & Wellness</a>
-                    <a href="/seller/login" class="dropdown-item">Service Partner</a>
-                    <a href="/provider/login" class="dropdown-item">Marketplace Seller</a>
+                    <a href="/lawyer/login" class="dropdown-item">Women Lawyer</a>
+                    <a href="/women-jobs/login" class="dropdown-item">Women Jobs</a>
+                    <a href="/women-products/seller/login" class="dropdown-item">Product Seller</a>
+                    <a href="/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
                     <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="/investor/login" class="dropdown-item">Investor</a>
                     <a href="/host/login" class="dropdown-item">Event Host</a>
-                    <a href="/trainer/login" class="dropdown-item">Fitness Trainer</a>
+                    <a href="/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
+                </div>
+            </li>
+            <li class="nav-item mobile-only-item">
+                Register Portals ⌄
+                <div class="dropdown-menu">
+                    <a href="/users/register" class="dropdown-item">Join as Member</a>
+                    <a href="/doctors/register" class="dropdown-item">Women Doctor</a>
+                    <a href="/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="/salons/register" class="dropdown-item">Beauty & Wellness</a>
+                    <a href="/lawyer/register" class="dropdown-item">Women Lawyer</a>
+                    <a href="/women-jobs/register" class="dropdown-item">Women Jobs</a>
+                    <a href="/women-products/seller/register" class="dropdown-item">Product Seller</a>
+                    <a href="/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
+                    <a href="/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
+                    <a href="/investor/register" class="dropdown-item">Investor</a>
+                    <a href="/women-events/host/register" class="dropdown-item">Event Host</a>
+                    <a href="/fitness/trainer/register" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </li>
         </ul>
 
         <div class="nav-actions">
             <a href="/women-events/host/register" class="nav-events" style="text-decoration:none;">Events</a>
-            <div class="nav-item">
-                <span class="nav-login" style="display:inline-flex; align-items:center; gap:6px; background-color: var(--brand-rose); color: var(--white); padding: 0.6rem 1.4rem; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
-                    <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> 
-                    login ▾
+            <div class="nav-item nav-auth-wrap">
+                <span class="nav-auth-btn nav-auth-btn--login">
+                    <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    Login ▾
                 </span>
-                <div class="dropdown-menu" style="right: 0; left: auto; top: 100%; margin-top: 15px; width: 230px;">
+                <div class="dropdown-menu nav-auth-dropdown">
+                    <span class="dropdown-label">Sign in</span>
                     <a href="${pageContext.request.contextPath}/login" class="dropdown-item">Join as Member</a>
                     <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
-                    <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty & Wellness</a>
-					<a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
+                    <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
+                    <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
                     <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
                     <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
@@ -1905,7 +2031,27 @@
                     <a href="${pageContext.request.contextPath}/host/login" class="dropdown-item">Event Host</a>
                     <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
-
+            </div>
+            <div class="nav-item nav-auth-wrap">
+                <span class="nav-auth-btn nav-auth-btn--register">
+                    <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    Register ▾
+                </span>
+                <div class="dropdown-menu nav-auth-dropdown">
+                    <span class="dropdown-label">Create account</span>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item">Join as Member</a>
+                    <a href="${pageContext.request.contextPath}/doctors/register" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="${pageContext.request.contextPath}/salons/register" class="dropdown-item">Beauty &amp; Wellness</a>
+                    <a href="${pageContext.request.contextPath}/lawyer/register" class="dropdown-item">Women Lawyer</a>
+                    <a href="${pageContext.request.contextPath}/women-jobs/register" class="dropdown-item">Women Jobs</a>
+                    <a href="${pageContext.request.contextPath}/women-products/seller/register" class="dropdown-item">Product Seller</a>
+                    <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
+                    <a href="${pageContext.request.contextPath}/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
+                    <a href="${pageContext.request.contextPath}/investor/register" class="dropdown-item">Investor</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/register" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/fitness/trainer/register" class="dropdown-item">Fitness Trainer</a>
+                </div>
             </div>
             <a href="/users/register" class="btn-sos-nav">🆘 Emergency SOS</a>
             <button class="mobile-menu-btn">☰</button>

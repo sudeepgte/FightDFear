@@ -3,6 +3,8 @@ package in.sp.main.Util;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import in.sp.main.Entities.Gender;
+
 /**
  * Shared validation helpers for mobile JSON auth/register endpoints.
  */
@@ -60,5 +62,34 @@ public final class MobileValidation {
         if (confirm == null || confirm.isBlank()) return "Confirm password is required";
         if (!password.equals(confirm)) return "Passwords do not match";
         return null;
+    }
+
+    /**
+     * Member registration on Fight D Fear — women-only; gender is required (Female or Other).
+     */
+    public static String requireWomenMemberGender(String genderRaw) {
+        if (genderRaw == null || genderRaw.isBlank()) {
+            return "Gender is required. Fight D Fear is a women-only platform.";
+        }
+        try {
+            Gender g = Gender.valueOf(genderRaw.trim().toUpperCase(Locale.ROOT));
+            if (g == Gender.MALE) {
+                return "This platform is for women only.";
+            }
+            if (g != Gender.FEMALE && g != Gender.OTHER) {
+                return "Please select Female.";
+            }
+            return null;
+        } catch (IllegalArgumentException e) {
+            return "Please select a valid gender.";
+        }
+    }
+
+    public static Gender parseWomenMemberGender(String genderRaw) {
+        String err = requireWomenMemberGender(genderRaw);
+        if (err != null) {
+            throw new IllegalArgumentException(err);
+        }
+        return Gender.valueOf(genderRaw.trim().toUpperCase(Locale.ROOT));
     }
 }
