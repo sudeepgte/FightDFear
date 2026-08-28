@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<<<<<<< HEAD
+
    <meta charset="utf-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 			<title>User Profile</title>
@@ -52,7 +52,7 @@
             font-weight: 700 !important;
             box-shadow: none !important;
             letter-spacing: 0.3px;
-=======
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>My Profile | Fight D Fear</title>
@@ -72,10 +72,10 @@
             --text-secondary: #64748B;
             --accent-rose: #F43F5E;
             --accent-rose-hover: #E11D48;
->>>>>>> 16cf85ce996ab1a16542e394dc5bd4bcae6a13f5
+
         }
 
-<<<<<<< HEAD
+
 
     #ftco-navbar {
         background-color: var(--primary-purple) !important;
@@ -388,12 +388,12 @@
     /* Profile page mobile: sidebar + content layout */
     @media (max-width: 768px) {
         body {
-=======
+
         body.profile-page {
             font-family: 'Poppins', sans-serif;
             background: var(--surface-page);
             color: var(--text-primary);
->>>>>>> 16cf85ce996ab1a16542e394dc5bd4bcae6a13f5
+
             overflow-x: hidden;
         }
 
@@ -742,7 +742,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" class="profile-full" data-skip-global-back="true">
 
-<<<<<<< HEAD
+
 <section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: #F8FAFC;">
 					     <div class="container-fluid p-0">
 					       <div class="row no-gutters align-items-stretch" style="background: #FFFFFF; border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.04); margin: 30px auto; max-width: 1200px; overflow: hidden; border: 1px solid #E2E8F0;">
@@ -767,7 +767,7 @@
             <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn btn-outline-danger btn-sm py-2 px-4 rounded-pill" style="color:#F43F5E; border-color:#F43F5E; font-weight: 700;">
                 <i class="fas fa-phone-alt me-2"></i> Emergency Contacts
             </a>
-=======
+
         <div class="profile-fullscreen">
             <!-- 30% full-height side -->
             <aside class="profile-side">
@@ -884,12 +884,12 @@
                     </div>
                 </div>
             </main>
->>>>>>> 16cf85ce996ab1a16542e394dc5bd4bcae6a13f5
+
         </div>
 
     </div>
 </div>
-<<<<<<< HEAD
+
 					          
 					         <!-- 📋 Right Side: User Details -->
 					         <div class="col-md-7 user-details-side d-flex align-items-start" style="background: #FFFFFF;">
@@ -998,9 +998,9 @@
 
 
 
-=======
+
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
->>>>>>> 16cf85ce996ab1a16542e394dc5bd4bcae6a13f5
+
