@@ -179,6 +179,22 @@
         }
         .confirm-card h2 { font-size: 1.25rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
         .confirm-card p { font-size: 0.9rem; color: var(--text-gray); line-height: 1.55; margin-bottom: 8px; }
+        .confirm-list {
+            text-align: left;
+            list-style: none;
+            margin: 16px 0 8px;
+            padding: 0;
+        }
+        .confirm-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--navy);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .confirm-list li i { color: var(--success); margin-top: 2px; }
         .confirm-next {
             background: var(--rose-soft);
             border-radius: 12px;
@@ -221,15 +237,17 @@
         <c:if test="${not empty success}">
             <div class="confirm-card" id="registrationConfirm">
                 <div class="confirm-icon"><i class="bi bi-check-lg"></i></div>
-                <h2>Registration successful</h2>
-                <p>Your account and worker application were created successfully.</p>
-                <p>${success}</p>
-                <div class="confirm-next">Next step: sign in with the email you registered. After admin verification you can manage bookings from your dashboard. Complete your profile from the worker portal.</div>
-                <a href="#workerLoginCard" class="btn-confirm">Continue to login <i class="bi bi-arrow-down"></i></a>
+                <h2>Registration Successful</h2>
+                <ul class="confirm-list">
+                    <li><i class="bi bi-check-circle-fill"></i> Account and application created successfully</li>
+                    <li><i class="bi bi-check-circle-fill"></i> ${success}</li>
+                </ul>
+                <div class="confirm-next">Sign in with the email you registered. After admin verification you can complete your profile and manage bookings from your worker portal.</div>
+                <a href="#workerLoginCard" class="btn-confirm" id="btnContinueLogin">Continue to Login <i class="bi bi-arrow-right"></i></a>
             </div>
         </c:if>
 
-        <div class="form-card" id="workerLoginCard">
+        <div class="form-card" id="workerLoginCard"<c:if test="${not empty success and empty error}"> style="display:none;"</c:if>>
             <div class="card-header">
                 <h2>Women Jobs Sign In</h2>
                 <p>Enter your credentials to access your worker portal</p>
@@ -280,6 +298,16 @@
                 toggleBtn.classList.remove("bi-eye-slash");
                 toggleBtn.classList.add("bi-eye");
             }
+        }
+
+        var continueBtn = document.getElementById('btnContinueLogin');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var card = document.getElementById('workerLoginCard');
+                card.style.display = 'block';
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         }
 
         document.getElementById('workerLoginForm').addEventListener('submit', function(event) {

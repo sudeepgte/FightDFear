@@ -16,82 +16,76 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
-        <style>
-        :root {
-            --primary: #F43F5E;
-            --primary-hover: #E11D48;
-            --secondary: #64748B;
-            --bg: #F8FAFC;
-            --card-bg: #FFFFFF;
-            --success-bg: #F0FDF4;
-            --success-text: #16A34A;
-            --warning-bg: #FFF7ED;
-            --warning-text: #C2410C;
-            --error-bg: #FEF2F2;
-            --error-text: #DC2626;
-            --text-main: #0F172A;
-            --border: #E2E8F0;
+    <style>
+        /* Marketplace list only — Martial Arts 60/30/10, does not restyle sidebar/header globally */
+        body.mp-list-page {
+            --m-navy: #1E1B4B;
+            --m-navy-mid: #312E81;
+            --m-rose: #F43F5E;
+            --m-rose-mid: #C04B7A;
+            --m-bg: #F8FAFC;
+            --m-ink: #1a1a2e;
+            --m-border: rgba(30, 27, 75, 0.12);
         }
-
-        body {
+        body.mp-list-page #page-content-wrapper {
             font-family: 'Poppins', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
+            background: var(--m-bg);
+            color: var(--m-ink);
             min-height: 100vh;
         }
-
-        .list-header {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--border);
-            padding: 40px 0;
+        body.mp-list-page .list-header {
+            background: linear-gradient(135deg, var(--m-navy) 0%, var(--m-navy-mid) 48%, var(--m-rose-mid) 100%);
+            padding: 50px 0;
+            color: #fff;
             margin-bottom: 40px;
+            box-shadow: 0 8px 28px rgba(125, 42, 90, 0.18);
         }
-        
-        .list-header h1 {
-            color: var(--text-main);
+        body.mp-list-page .list-header h1 { color: #fff; }
+        body.mp-list-page .list-header p { color: rgba(255,255,255,0.78); }
+        body.mp-list-page .list-header .btn-outline-dark,
+        body.mp-list-page .list-header .btn-outline-light {
+            border-color: rgba(255,255,255,0.45);
+            color: #fff;
         }
-        
-        .list-header p {
-            color: var(--secondary);
+        body.mp-list-page .list-header .btn-outline-dark:hover,
+        body.mp-list-page .list-header .btn-outline-light:hover {
+            background: var(--m-rose);
+            border-color: var(--m-rose);
+            color: #fff;
         }
-
-        .provider-card {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 24px;
+        body.mp-list-page .provider-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 25px;
             transition: 0.3s;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border: 1px solid var(--m-border);
+            box-shadow: 0 6px 20px rgba(125, 42, 90, 0.08);
             height: 100%;
             display: flex;
             flex-direction: column;
             text-decoration: none;
         }
-
-        .provider-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--primary);
-            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.08);
-            text-decoration: none;
+        body.mp-list-page .provider-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 32px rgba(125, 42, 90, 0.12);
+            border-color: var(--m-rose);
         }
-
-        .provider-avatar {
+        body.mp-list-page .provider-avatar {
             width: 60px;
             height: 60px;
             background: #FFE4E6;
-            border-radius: 14px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
+            color: var(--m-rose);
             font-size: 1.5rem;
             font-weight: 800;
             margin-bottom: 20px;
         }
-
-        .rating-badge {
-            background: var(--warning-bg);
-            color: var(--warning-text);
+        body.mp-list-page .rating-badge {
+            background: #FFF7ED;
+            color: #C2410C;
             padding: 4px 12px;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -100,38 +94,34 @@
             align-items: center;
             gap: 5px;
         }
-
-        .location-tag {
-            font-size: 0.85rem;
-            color: var(--secondary);
+        body.mp-list-page .location-tag {
+            font-size: 0.8rem;
+            color: #64748B;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 5px;
         }
-
-        .provider-name {
+        body.mp-list-page .provider-name {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
             font-size: 1.25rem;
-            color: var(--text-main);
+            color: var(--m-navy);
             margin-bottom: 5px;
         }
-
-        .provider-desc {
+        body.mp-list-page .provider-desc {
             font-size: 0.9rem;
-            color: var(--secondary);
+            color: #64748B;
             margin-bottom: 20px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        .btn-view {
+        body.mp-list-page .btn-view {
             margin-top: auto;
-            background: var(--primary);
-            color: white;
+            background: var(--m-navy);
+            color: #fff;
             border: none;
             padding: 10px;
             border-radius: 12px;
@@ -141,26 +131,27 @@
             display: block;
             text-decoration: none;
         }
-
-        .btn-view:hover {
-            background: var(--primary-hover);
-            color: white;
-            text-decoration: none;
+        body.mp-list-page .btn-view:hover {
+            background: var(--m-rose);
+            color: #fff;
+            transform: scale(1.02);
         }
-        
-        /* Override for header button */
-        .btn-outline-dark {
-            border-color: var(--border);
-            color: var(--text-main);
+        body.mp-list-page .btn-primary {
+            background: var(--m-rose);
+            border-color: var(--m-rose);
+            color: #fff;
         }
-        .btn-outline-dark:hover {
-            background: var(--bg);
-            color: var(--primary);
-            border-color: var(--primary);
+        body.mp-list-page .btn-primary:hover {
+            background: #E11D48;
+            border-color: #E11D48;
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            body.mp-list-page .list-header { padding: 28px 0; }
         }
     </style>
 </head>
-<body>
+<body class="mp-list-page">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -222,5 +213,3 @@
 </div>
 </body>
 </html>
-
-

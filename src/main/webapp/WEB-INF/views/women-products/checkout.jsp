@@ -55,10 +55,14 @@
     }
 
     .checkout-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
+    .details-column, .summary-column { display: contents; }
+    .wp-addr { order: 1; }
+    .wp-sum { order: 2; }
+    .wp-pay { order: 3; }
 
     .checkout-card {
       background: #fff;
@@ -299,8 +303,19 @@
     }
     .modal-title { font-size: 18px; font-weight: 800; color: var(--brand-purple); }
     .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-    .form-row { display: flex; gap: 16px; }
-    .form-row .fdf-form-group { flex: 1; }
+    .checkout-wrapper { max-width: 1100px; }
+    .page-title { color: #1E1B4B; }
+    .back-link { color: #1E1B4B; }
+    .back-link:hover { background: #F43F5E; color: #fff; }
+    .checkout-grid { grid-template-columns: 1fr; }
+    .card-title { color: #1E1B4B; }
+    .pay-option i, .pay-option span { color: #1E1B4B; }
+    .summary-item .name { color: #1E1B4B; }
+    @media (max-width: 768px) {
+      body { padding: 20px 12px; }
+      .checkout-card { padding: 18px 16px; }
+      .payment-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body class="wp-shop">
@@ -309,7 +324,7 @@
       <i class="bi bi-arrow-left"></i> My Collection
     </a>
     
-    <div class="page-title">Shopping Checkout</div>
+    <div class="page-title">Checkout</div>
     <div class="wp-subnav" style="justify-content:flex-start;margin:0 0 24px;">
       <a href="${pageContext.request.contextPath}/women-products">Shop</a>
       <a href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
@@ -322,9 +337,9 @@
       <div class="checkout-grid">
         <!-- Left Column: Details -->
         <div class="details-column">
-          <div class="checkout-card">
+          <div class="checkout-card wp-addr">
             <div class="card-title" style="display:flex; justify-content:space-between; width:100%;">
-              <div><i class="bi bi-geo-alt-fill"></i> Delivery Destination</div>
+              <div><i class="bi bi-geo-alt-fill"></i> Delivery Address</div>
               <button type="button" class="btn-add-new" onclick="openAddressModal()"><i class="bi bi-plus-lg"></i> Add New</button>
             </div>
             
@@ -334,8 +349,8 @@
             <input type="hidden" name="shippingAddress" id="finalShippingAddress" required>
           </div>
 
-          <div class="checkout-card">
-            <div class="card-title"><i class="bi bi-shield-check"></i> Secure Payment</div>
+          <div class="checkout-card wp-pay">
+            <div class="card-title"><i class="bi bi-wallet2"></i> Payment Method</div>
             <div class="payment-grid">
               <div class="pay-option selected" onclick="selectPayment(this, 'COD')">
                 <i class="bi bi-truck-flatbed"></i>
@@ -360,8 +375,7 @@
 
         <!-- Right Column: Summary -->
         <div class="summary-column">
-          <div class="checkout-card">
-            <div class="card-title"><i class="bi bi-bag-check-fill"></i> Collection Summary</div>
+          <div class="checkout-card wp-sum">
             <div class="summary-list">
               <c:forEach var="ci" items="${cartItems}">
                 <div class="summary-item">
@@ -396,7 +410,7 @@
             </div>
 
             <button type="submit" class="btn-place-order">
-              Complete Order <i class="bi bi-arrow-right-circle-fill"></i>
+              Place Order <i class="bi bi-arrow-right-circle-fill"></i>
             </button>
           </div>
           
