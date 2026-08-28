@@ -54,7 +54,8 @@
         .btn-submit-admin { width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 30px; }
         .btn-submit-admin:hover { background: var(--primary-hover); }
 
-        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-top: 30px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .section-title:first-of-type { margin-top: 0; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
@@ -63,6 +64,7 @@
         .form-input { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; transition: 0.3s; }
         .form-input:focus { outline: none; border-color: var(--primary); }
         .form-select { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; background: white; cursor: pointer; }
+        .form-file { padding: 8px; border: 1px dashed var(--border); border-radius: 8px; background: #f8fafc; cursor: pointer; font-size: 0.85rem;}
 
         /* Right Side: Preview */
         .preview-section { position: sticky; top: 90px; }
@@ -96,7 +98,7 @@
 </head>
 <body>
 
-    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save" method="post">
+    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save" method="post" enctype="multipart/form-data">
         <!-- Top Bar -->
         <header class="topbar">
             <a href="${pageContext.request.contextPath}/" class="brand">
@@ -113,95 +115,142 @@
             <div class="form-section">
                 <div class="progress-box">
                     <div class="progress-header">
-                        <h2>Profile Completion: ${lawyer.profileCompletionPct != null ? lawyer.profileCompletionPct : 0}%</h2>
+                        <h2 id="progress-text-h2">Profile Completion: 0%</h2>
                         <span class="status-badge">${lawyer.partnerProfileStatus != null ? lawyer.partnerProfileStatus : 'REGISTERED'}</span>
                     </div>
                     <div class="progress-bar-bg">
-                        <div class="progress-bar-fill"></div>
+                        <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%;"></div>
                     </div>
-                    <p class="progress-text">Complete all required sections below to submit your profile for Admin verification.</p>
-                    
-                    <div class="steps">
-                        <span class="step-badge"><i class="bi bi-exclamation-circle"></i> Add Specialization</span>
-                        <span class="step-badge"><i class="bi bi-exclamation-circle"></i> Set Hours</span>
-                        <span class="step-badge"><i class="bi bi-exclamation-circle"></i> Upload Bar Council ID</span>
-                        <span class="step-badge"><i class="bi bi-exclamation-circle"></i> Add Experience</span>
-                    </div>
+                    <p class="progress-text" id="progress-desc-text">Complete all required sections below to submit your profile for Admin verification.</p>
                 </div>
 
-                <button type="submit" class="btn-submit-admin" onclick="return confirm('Save and submit for verification?');">
-                    <i class="bi bi-send-fill"></i> Submit for Admin Verification
-                </button>
+                <c:if test="${lawyer.partnerProfileStatus == 'REGISTERED' || empty lawyer.partnerProfileStatus}">
+                    <button type="submit" name="submitForVerification" value="true" class="btn-submit-admin" id="btnSubmitAdmin" onclick="return confirm('Save and submit for verification?');" style="display:none;">
+                        <i class="bi bi-send-fill"></i> Submit for Admin Verification
+                    </button>
+                </c:if>
 
                 <h3 class="section-title">1. Lawyer Identity</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">1.1 Full name *</label>
+                        <label class="form-label">Full name *</label>
                         <input type="text" name="fullName" class="form-input" value="${lawyer.fullName}" required oninput="updatePreview('prevName', this.value)">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">1.2 Designation</label>
+                        <label class="form-label">Designation</label>
                         <input type="text" name="designation" class="form-input" value="${lawyer.designation != null ? lawyer.designation : 'Advocate'}" oninput="updatePreview('prevRole', this.value)">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">1.3 Official phone *</label>
+                        <label class="form-label">Official phone *</label>
                         <input type="tel" name="phone" class="form-input" value="${lawyer.phone}" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">1.4 Bar Council ID *</label>
-                        <input type="text" name="barCouncilId" class="form-input" value="${lawyer.barCouncilId}" placeholder="e.g. MAH/1234/2020" required>
+                        <label class="form-label">WhatsApp Number</label>
+                        <input type="tel" name="whatsappNumber" class="form-input" value="${lawyer.whatsappNumber}" placeholder="WhatsApp No.">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">1.5 Years of Experience</label>
+                        <label class="form-label">Years of Experience</label>
                         <input type="number" name="experienceYears" class="form-input" value="${lawyer.experienceYears}" placeholder="e.g. 8">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">1.6 Languages Spoken</label>
+                        <label class="form-label">Bar Council ID *</label>
+                        <input type="text" name="barCouncilId" class="form-input" value="${lawyer.barCouncilId}" placeholder="e.g. MAH/1234/2020" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Languages Spoken</label>
                         <input type="text" name="languages" class="form-input" value="${lawyer.languages}" placeholder="English, Hindi, Marathi">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Profile Photo</label>
+                        <input type="file" name="profilePhoto" class="form-file" accept="image/*">
                     </div>
                 </div>
 
                 <h3 class="section-title">2. Professional Details</h3>
                 <div class="form-grid">
                     <div class="form-group full">
-                        <label class="form-label">2.1 Practice Areas / Specialization</label>
+                        <label class="form-label">Practice Areas / Specialization</label>
                         <input type="text" name="practiceAreas" class="form-input" value="${lawyer.practiceAreas}" placeholder="e.g. Family Law, Domestic Violence, Property Law" oninput="updateTagsPreview('prevPractice', this.value)">
                     </div>
                     <div class="form-group full">
-                        <label class="form-label">2.2 Bio / About</label>
+                        <label class="form-label">Bio / About</label>
                         <textarea name="bio" class="form-input" rows="4" placeholder="Brief professional background..." oninput="updatePreview('prevBio', this.value)">${lawyer.bio}</textarea>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">2.3 City</label>
-                        <input type="text" name="city" class="form-input" value="${lawyer.city}" oninput="updatePreview('prevCity', this.value)">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">2.4 State</label>
-                        <input type="text" name="state" class="form-input" value="${lawyer.state}">
+                    <div class="form-group full">
+                        <label class="form-label">Who they serve</label>
+                        <input type="text" name="audience" class="form-input" value="${lawyer.audience}" placeholder="e.g. Women, Children, Organizations">
                     </div>
                 </div>
 
-                <h3 class="section-title">3. Availability & Service</h3>
+                <h3 class="section-title">3. Chamber Details & Location</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Chamber Address</label>
+                        <textarea name="address" class="form-input" rows="2" placeholder="Full address of your chamber/office">${lawyer.address}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" name="city" class="form-input" value="${lawyer.city}" oninput="updatePreview('prevCity', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        <input type="text" name="state" class="form-input" value="${lawyer.state}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" name="pincode" class="form-input" value="${lawyer.pincode}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Chamber Photo</label>
+                        <input type="file" name="chamberPhoto" class="form-file" accept="image/*">
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Chamber Facilities</label>
+                        <input type="text" name="facilities" class="form-input" value="${lawyer.facilities}" placeholder="e.g. Waiting Room, Washroom, Wheelchair Access">
+                    </div>
+                </div>
+
+                <h3 class="section-title">4. Availability & Service</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">3.1 Operating Days</label>
+                        <label class="form-label">Operating Days</label>
                         <input type="text" name="openDays" class="form-input" value="${lawyer.openDays}" placeholder="e.g. Mon-Sat">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">3.2 Service Mode</label>
+                        <label class="form-label">Service Mode</label>
                         <select name="serviceMode" class="form-select">
-                            <option value="Online">Online / Video Call</option>
-                            <option value="Offline">Offline / In Person</option>
-                            <option value="Both">Both (Online & Offline)</option>
+                            <option value="Online" ${lawyer.serviceMode == 'Online' ? 'selected' : ''}>Online / Video Call</option>
+                            <option value="Offline" ${lawyer.serviceMode == 'Offline' ? 'selected' : ''}>Offline / In Person</option>
+                            <option value="Both" ${lawyer.serviceMode == 'Both' ? 'selected' : ''}>Both (Online & Offline)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">3.3 Open Time</label>
+                        <label class="form-label">Consultation Mode</label>
+                        <input type="text" name="consultationMode" class="form-input" value="${lawyer.consultationMode}" placeholder="e.g. Chat, Video, Audio">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Open Time</label>
                         <input type="time" name="openTime" class="form-input" value="${lawyer.openTime}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">3.4 Close Time</label>
+                        <label class="form-label">Close Time</label>
                         <input type="time" name="closeTime" class="form-input" value="${lawyer.closeTime}">
+                    </div>
+                </div>
+
+                <h3 class="section-title">5. Fees & Payment</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Consultation Fee (₹)</label>
+                        <input type="number" name="consultationFee" class="form-input" value="${lawyer.consultationFee}" placeholder="Amount per session">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">UPI ID</label>
+                        <input type="text" name="upiId" class="form-input" value="${lawyer.upiId}" placeholder="yourname@upi">
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Bank Details</label>
+                        <textarea name="bankDetails" class="form-input" rows="2" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
                     </div>
                 </div>
             </div>
@@ -255,6 +304,43 @@
     </form>
 
     <script>
+        function calculateCompletion() {
+            const fields = document.querySelectorAll('#profileForm .form-input, #profileForm .form-select');
+            let filled = 0;
+            let total = fields.length;
+            fields.forEach(f => {
+                if(f.value && f.value.trim() !== '') filled++;
+            });
+            let pct = Math.round((filled / total) * 100);
+            document.getElementById('progress-text-h2').textContent = 'Profile Completion: ' + pct + '%';
+            document.getElementById('progress-bar-fill').style.width = pct + '%';
+
+            const submitBtn = document.getElementById('btnSubmitAdmin');
+            const descText = document.getElementById('progress-desc-text');
+            const badge = document.querySelector('.status-badge');
+            
+            if(pct >= 100) {
+                descText.textContent = "Profile 100% complete. You can now submit it for admin verification.";
+                if(submitBtn) submitBtn.style.display = 'flex';
+                // Only change badge if it's not already submitted/approved
+                if(badge.textContent.trim() === 'INCOMPLETE' || badge.textContent.trim() === 'REGISTERED') {
+                    badge.textContent = 'READY TO SUBMIT';
+                }
+            } else {
+                descText.textContent = "Update your profile to 100% to submit for verification.";
+                if(submitBtn) submitBtn.style.display = 'none';
+                badge.textContent = 'INCOMPLETE';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('#profileForm input, #profileForm textarea, #profileForm select').forEach(f => {
+                f.addEventListener('input', calculateCompletion);
+                f.addEventListener('change', calculateCompletion);
+            });
+            calculateCompletion();
+        });
+
         function updatePreview(id, value) {
             document.getElementById(id).textContent = value || (id === 'prevName' ? 'Advocate Name' : (id === 'prevRole' ? 'Advocate' : (id === 'prevCity' ? 'City' : '')));
             if(id === 'prevName' && value.length > 0) {

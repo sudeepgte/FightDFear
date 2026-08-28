@@ -79,7 +79,7 @@
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
         /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; }
         .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
         .stat-icon { width: 56px; height: 56px; border-radius: 50%; background: #FFF1F2; color: var(--primary); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; flex-shrink: 0; }
@@ -145,6 +145,30 @@
         .table td { color: var(--navy); font-weight: 500; }
         .table tr:last-child td { border-bottom: none; }
 
+        /* Profile Grid */
+        .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 24px; }
+        .profile-card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); border: 1px solid var(--border); }
+        .profile-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .profile-card-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+        .profile-card-header h3 i { color: var(--primary); }
+        .btn-edit-link { color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none; }
+        .btn-edit-link:hover { text-decoration: underline; }
+        .profile-field { margin-bottom: 16px; }
+        .profile-field:last-child { margin-bottom: 0; }
+        .profile-field label { display: block; font-size: 0.75rem; color: var(--secondary); font-weight: 600; margin-bottom: 6px; }
+        .profile-field div { font-size: 0.95rem; font-weight: 500; color: var(--navy); }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .tag { padding: 6px 12px; background: rgba(244, 63, 94, 0.05); color: var(--primary); border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(244, 63, 94, 0.1); }
+        
+        .profile-header-card { display: flex; align-items: center; gap: 24px; background: var(--card-bg); padding: 30px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 24px; }
+        .profile-header-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; background: #FFE4E6; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: var(--primary); font-weight: 700; }
+        .profile-header-info h2 { font-size: 1.5rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+        .profile-header-info p { color: var(--secondary); font-size: 0.95rem; margin-bottom: 12px; }
+        .profile-header-stats { display: flex; gap: 24px; }
+        .profile-header-stat { display: flex; flex-direction: column; }
+        .profile-header-stat span { font-size: 0.75rem; color: var(--secondary); font-weight: 600; }
+        .profile-header-stat strong { font-size: 0.95rem; color: var(--navy); }
+
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -190,23 +214,46 @@
                 <span>Legal Support</span>
             </div>
         </div>
-        <div class="nav-items">
-            <div class="nav-item active" onclick="switchTab('dashboard', this)">
-                <i class="bi bi-house"></i> Dashboard
+        <div class="nav-items" style="overflow-y: auto; overflow-x: hidden;">
+            <div class="nav-item" onclick="switchTab('dashboard', this)">
+                <i class="bi bi-grid"></i> Dashboard
             </div>
-            <div class="nav-item" onclick="switchTab('cases', this)">
-                <i class="bi bi-briefcase"></i> My Cases
+            <div class="nav-item active" onclick="switchTab('profile', this)">
+                <i class="bi bi-person"></i> My Profile
             </div>
             <div class="nav-item" onclick="switchTab('appointments', this)">
                 <i class="bi bi-calendar-event"></i> Appointments
             </div>
             <div class="nav-item" onclick="switchTab('consultations', this)">
-                <i class="bi bi-chat-left-dots"></i> Consultations
+                <i class="bi bi-chat-dots"></i> Consultations
+            </div>
+            <div class="nav-item" onclick="switchTab('clients', this)">
+                <i class="bi bi-people"></i> My Clients
             </div>
             <div class="nav-item" onclick="switchTab('earnings', this)">
                 <i class="bi bi-wallet2"></i> Earnings
             </div>
+            <div class="nav-item" onclick="switchTab('reviews', this)">
+                <i class="bi bi-star"></i> Reviews
+            </div>
+            <div class="nav-item" onclick="switchTab('documents', this)">
+                <i class="bi bi-file-earmark-text"></i> Documents
+            </div>
+            <div class="nav-item" onclick="switchTab('availability', this)">
+                <i class="bi bi-clock"></i> Availability
+            </div>
+            <div class="nav-item" onclick="switchTab('gallery', this)">
+                <i class="bi bi-images"></i> Gallery
+            </div>
+            <div class="nav-item" onclick="switchTab('bank', this)">
+                <i class="bi bi-bank"></i> Bank & Payments
+            </div>
+            <div class="nav-item" onclick="switchTab('settings', this)">
+                <i class="bi bi-gear"></i> Settings
+            </div>
         </div>
+
+        
         <a href="${pageContext.request.contextPath}/logout" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>
@@ -220,7 +267,7 @@
             <div class="header-right">
                 <div class="notify-btn">
                     <i class="bi bi-bell"></i>
-                    <div class="notify-dot"></div>
+                    <span style="position: absolute; top: -5px; right: -8px; background: var(--primary); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 10px; font-weight: 700;">3</span>
                 </div>
                 <div class="user-profile">
                     <c:choose>
@@ -261,7 +308,7 @@
             </c:if>
 
             <!-- Dashboard Tab -->
-            <div id="dashboard-tab" class="tab-section active">
+            <div id="dashboard-tab" class="tab-section">
                 
                 <div class="welcome-bar">
                     <div class="welcome-text">
@@ -273,118 +320,372 @@
                     </button>
                 </div>
 
-                <c:if test="${lawyer.profileCompletionPct == null || lawyer.profileCompletionPct < 100}">
-                    <div class="action-banner" style="margin-bottom: 30px;">
-                        <div class="action-icon"><i class="bi bi-person-lines-fill"></i></div>
-                        <div class="action-content">
-                            <h3>Complete Your Profile</h3>
-                            <p>Your profile is incomplete. Add your practice areas, experience, and details to get verified faster.</p>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none;">Complete Profile</a>
-                    </div>
-                </c:if>
-
-                <div class="stats-grid">
-                    <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
-                        <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
-                        <div class="stat-info">
-                            <h2>${activeCasesCount}</h2>
-                            <p>Active Cases</p>
-                            <span>Ongoing legal matters</span>
-                        </div>
-                    </div>
-                    <div class="stat-card" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">
-                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-calendar-check"></i></div>
-                        <div class="stat-info">
-                            <h2>${upcomingAptCount}</h2>
-                            <p>Upcoming Appointments</p>
-                            <span>Next 7 days</span>
-                        </div>
-                    </div>
-                    <div class="stat-card" onclick="switchTab('consultations', document.querySelectorAll('.nav-item')[3])">
-                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-chat-dots"></i></div>
-                        <div class="stat-info">
-                            <h2>${consultsCount}</h2>
-                            <p>Consultations</p>
-                            <span>This month</span>
-                        </div>
-                    </div>
-                    <div class="stat-card" onclick="switchTab('earnings', document.querySelectorAll('.nav-item')[4])">
-                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-cash-stack"></i></div>
-                        <div class="stat-info">
-                            <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
-                            <p>Earnings</p>
-                            <span>This month</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="bi bi-calendar4-week"></i> Upcoming Appointments</h3>
-                        <a href="javascript:void(0)" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">View All <i class="bi bi-chevron-right"></i></a>
-                    </div>
-                    <div class="apt-list">
-                        <c:set var="hasUpcoming" value="false" />
-                        <c:forEach var="b" items="${bookings}" end="3">
-                            <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
-                                <c:set var="hasUpcoming" value="true" />
-                                <div class="apt-item">
-                                    <div class="apt-date">
-                                        <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
-                                        <span class="day"><fmt:formatDate pattern="dd" value="${parsedDate}" /></span>
-                                        <span class="month"><fmt:formatDate pattern="MMM" value="${parsedDate}" /></span>
-                                    </div>
-                                    <div class="apt-info">
-                                        <h4>${not empty b.user ? b.user.fullName : 'Client Consultation'} <span style="font-size:0.8rem; color:var(--secondary);">#${b.id}</span></h4>
-                                        <p>
-                                            <span><fmt:formatDate pattern="hh:mm a" value="${parsedDate}" /></span>
-                                            <span><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</span>
-                                        </p>
-                                    </div>
-                                    <div class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : 'badge-upcoming'}">
-                                        ${b.status == 'PENDING' ? 'Upcoming' : 'Confirmed'}
-                                    </div>
-                                </div>
-                            </c:if>
-                        </c:forEach>
-                        <c:if test="${not hasUpcoming}">
-                            <p style="color: var(--secondary); font-size: 0.9rem; text-align:center; padding: 20px;">No upcoming appointments.</p>
-                        </c:if>
-                    </div>
-                </div>
-
                 <c:choose>
-                    <c:when test="${not isVerified}">
-                        <div class="action-banner">
-                            <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
+                    <c:when test="${lawyer.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                        <div class="action-banner" style="margin-bottom: 30px; background: #FFFBEB; border: 1px solid #FDE68A;">
+                            <div class="action-icon" style="background: #FEF3C7; color: #D97706;"><i class="bi bi-hourglass-split"></i></div>
                             <div class="action-content">
-                                <h3>Action Required</h3>
-                                <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
+                                <h3 style="color: #92400E;">Profile Under Admin Review</h3>
+                                <p style="color: #B45309;">Your profile is currently being reviewed by our admin team. Please wait for approval.</p>
                             </div>
-                            <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc" method="post" enctype="multipart/form-data" style="display:none;">
-                                <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
-                            </form>
-                            <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
+                        </div>
+                    </c:when>
+                    <c:when test="${lawyer.partnerProfileStatus == 'APPROVED'}">
+                        <div class="action-banner" style="margin-bottom: 30px; background: #F0FDF4; border: 1px solid #BBF7D0;">
+                            <div class="action-icon" style="background: #DCFCE7; color: #16A34A;"><i class="bi bi-patch-check-fill"></i></div>
+                            <div class="action-content">
+                                <h3 style="color: #166534;">Profile Approved</h3>
+                                <p style="color: #15803D;">Your profile has been approved!</p>
+                            </div>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="action-banner success">
-                            <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                        <div class="action-banner" style="margin-bottom: 30px;">
+                            <div class="action-icon"><i class="bi bi-person-lines-fill"></i></div>
                             <div class="action-content">
-                                <h3>Verification Complete</h3>
-                                <p>Your profile is fully verified. You can now accept client consultations.</p>
+                                <h3>Complete Your Profile</h3>
+                                <p>Your profile is incomplete. Please fill it to 100% and submit it for admin verification.</p>
                             </div>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none;">Update Profile</a>
                         </div>
                     </c:otherwise>
                 </c:choose>
+
+                <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
+                    <div class="stats-grid">
+                        <div class="stat-card" onclick="window.location.href='${pageContext.request.contextPath}/lawyer/profile-completion'">
+                            <div class="stat-icon" style="background:<c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>#DCFCE7</c:when><c:otherwise>#FFE4E6</c:otherwise></c:choose>; color:<c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>#16A34A</c:when><c:otherwise>#DC2626</c:otherwise></c:choose>;">
+                                <i class="bi <c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>bi-person-check-fill</c:when><c:otherwise>bi-person-exclamation</c:otherwise></c:choose>"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h2 style="font-size: 1.25rem;"><c:choose><c:when test="${lawyer.profileCompletionPct >= 100}">Completed</c:when><c:otherwise>Incomplete</c:otherwise></c:choose></h2>
+                                <p>Profile Status</p>
+                                <span><c:choose><c:when test="${lawyer.profileCompletionPct >= 100}">All details added</c:when><c:otherwise>Update Profile</c:otherwise></c:choose></span>
+                            </div>
+                        </div>
+                        <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
+                            <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+                            <div class="stat-info">
+                                <h2>${activeCasesCount}</h2>
+                                <p>Active Cases</p>
+                                <span>Ongoing legal matters</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">
+                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-calendar-check"></i></div>
+                            <div class="stat-info">
+                                <h2>${upcomingAptCount}</h2>
+                                <p>Upcoming Appointments</p>
+                                <span>Next 7 days</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" onclick="switchTab('consultations', document.querySelectorAll('.nav-item')[3])">
+                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-chat-dots"></i></div>
+                            <div class="stat-info">
+                                <h2>${consultsCount}</h2>
+                                <p>Consultations</p>
+                                <span>This month</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" onclick="switchTab('earnings', document.querySelectorAll('.nav-item')[4])">
+                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-cash-stack"></i></div>
+                            <div class="stat-info">
+                                <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
+                                <p>Earnings</p>
+                                <span>This month</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="bi bi-calendar4-week"></i> Upcoming Appointments</h3>
+                            <a href="javascript:void(0)" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">View All <i class="bi bi-chevron-right"></i></a>
+                        </div>
+                        <div class="apt-list">
+                            <c:set var="hasUpcoming" value="false" />
+                            <c:forEach var="b" items="${bookings}" end="3">
+                                <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
+                                    <c:set var="hasUpcoming" value="true" />
+                                    <div class="apt-item">
+                                        <div class="apt-date">
+                                            <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
+                                            <span class="day"><fmt:formatDate pattern="dd" value="${parsedDate}" /></span>
+                                            <span class="month"><fmt:formatDate pattern="MMM" value="${parsedDate}" /></span>
+                                        </div>
+                                        <div class="apt-info">
+                                            <h4>${not empty b.user ? b.user.fullName : 'Client Consultation'} <span style="font-size:0.8rem; color:var(--secondary);">#${b.id}</span></h4>
+                                            <p>
+                                                <span><fmt:formatDate pattern="hh:mm a" value="${parsedDate}" /></span>
+                                                <span><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</span>
+                                            </p>
+                                        </div>
+                                        <div class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : 'badge-upcoming'}">
+                                            ${b.status == 'PENDING' ? 'Upcoming' : 'Confirmed'}
+                                        </div>
+                                    </div>
+                                </c:if>
+                            </c:forEach>
+                            <c:if test="${not hasUpcoming}">
+                                <p style="color: var(--secondary); font-size: 0.9rem; text-align:center; padding: 20px;">No upcoming appointments.</p>
+                            </c:if>
+                        </div>
+                    </div>
+
+                    <c:choose>
+                        <c:when test="${not isVerified}">
+                            <div class="action-banner">
+                                <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
+                                <div class="action-content">
+                                    <h3>Action Required</h3>
+                                    <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
+                                </div>
+                                <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc" method="post" enctype="multipart/form-data" style="display:none;">
+                                    <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
+                                </form>
+                                <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="action-banner success">
+                                <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                                <div class="action-content">
+                                    <h3>Verification Complete</h3>
+                                    <p>Your profile is fully verified. You can now accept client consultations.</p>
+                                </div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                </c:if>
             </div>
 
-            <!-- Cases Tab -->
-            <div id="cases-tab" class="tab-section">
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="tab-section active">
+                <div class="profile-header-card">
+                    <c:choose>
+                        <c:when test="${not empty lawyer.profilePhoto}">
+                            <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" class="profile-header-avatar" alt="Avatar">
+                        </c:when>
+                        <c:otherwise>
+                            <div class="profile-header-avatar">
+                                ${fn:substring(lawyer.fullName, 0, 1)}
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+                    <div class="profile-header-info">
+                        <h2>${empty lawyer.fullName ? 'Advocate Name' : lawyer.fullName} <c:if test="${isVerified}"><i class="bi bi-patch-check-fill" style="color:var(--success-text);"></i></c:if></h2>
+                        <p>${empty lawyer.designation ? 'Advocate' : lawyer.designation}</p>
+                        <div class="profile-header-stats">
+                            <div class="profile-header-stat">
+                                <span><i class="bi bi-telephone"></i> Official</span>
+                                <strong>${empty lawyer.phone ? 'Not added' : lawyer.phone}</strong>
+                            </div>
+                            <div class="profile-header-stat">
+                                <span><i class="bi bi-whatsapp"></i> WhatsApp</span>
+                                <strong>${empty lawyer.whatsappNumber ? 'Not added' : lawyer.whatsappNumber}</strong>
+                            </div>
+                            <div class="profile-header-stat">
+                                <span><i class="bi bi-briefcase"></i> Experience</span>
+                                <strong>${empty lawyer.experienceYears ? '0' : lawyer.experienceYears} Years</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-grid">
+                    <!-- Professional Info -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-person-vcard"></i> Professional Information</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field"><label>Bar Council ID</label><div>${empty lawyer.barCouncilId ? 'Not added' : lawyer.barCouncilId}</div></div>
+                        <div class="profile-field"><label>Chamber Address</label><div>${empty lawyer.address ? 'Not added' : lawyer.address}</div></div>
+                        <div class="profile-field"><label>City / State</label><div>${empty lawyer.city ? 'City' : lawyer.city}, ${empty lawyer.state ? 'State' : lawyer.state}</div></div>
+                        <div class="profile-field"><label>Pincode</label><div>${empty lawyer.pincode ? 'Not added' : lawyer.pincode}</div></div>
+                    </div>
+
+                    <!-- Practice Areas -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-briefcase"></i> Practice Areas</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field">
+                            <label>Specializations</label>
+                            <div class="tags-container">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.practiceAreas}">
+                                        <c:forEach var="area" items="${fn:split(lawyer.practiceAreas, ',')}">
+                                            <span class="tag">${area.trim()}</span>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>Not added</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                        <div class="profile-field">
+                            <label>Who They Serve</label>
+                            <div class="tags-container">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.audience}">
+                                        <c:forEach var="aud" items="${fn:split(lawyer.audience, ',')}">
+                                            <span class="tag">${aud.trim()}</span>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>Not added</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Languages & Facilities -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-translate"></i> Languages & Facilities</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field">
+                            <label>Languages Known</label>
+                            <div class="tags-container">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.languages}">
+                                        <c:forEach var="lang" items="${fn:split(lawyer.languages, ',')}">
+                                            <span class="tag">${lang.trim()}</span>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>Not added</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                        <div class="profile-field" style="margin-top:16px;">
+                            <label>Chamber Facilities</label>
+                            <div class="tags-container" style="gap: 12px;">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.facilities}">
+                                        <c:forEach var="fac" items="${fn:split(lawyer.facilities, ',')}">
+                                            <div style="font-size:0.85rem; color:var(--success-text); display:flex; align-items:center; gap:4px;">
+                                                <i class="bi bi-check-circle"></i> ${fac.trim()}
+                                            </div>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>Not added</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Working Hours -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-clock"></i> Working Hours</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field"><label>Operating Days</label><div>${empty lawyer.openDays ? 'Not added' : lawyer.openDays}</div></div>
+                        <div class="profile-field"><label>Working Time</label><div>${empty lawyer.openTime ? 'HH:MM' : lawyer.openTime} — ${empty lawyer.closeTime ? 'HH:MM' : lawyer.closeTime}</div></div>
+                    </div>
+                    
+                    <!-- Consultation Details -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-chat-dots"></i> Consultation Details</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field"><label>Consultation Fee</label><div>₹ ${empty lawyer.consultationFee ? '0' : lawyer.consultationFee}</div></div>
+                        <div class="profile-field"><label>Service Mode</label><div>${empty lawyer.serviceMode ? 'Not added' : lawyer.serviceMode}</div></div>
+                        <div class="profile-field">
+                            <label>Consultation Mode</label>
+                            <div class="tags-container">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.consultationMode}">
+                                        <c:forEach var="mode" items="${fn:split(lawyer.consultationMode, ',')}">
+                                            <span class="tag">${mode.trim()}</span>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>Not added</c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-cash-stack"></i> Payment Information</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field"><label>UPI ID</label><div>${empty lawyer.upiId ? 'Not added' : lawyer.upiId}</div></div>
+                        <div class="profile-field"><label>Bank Details</label><div style="white-space: pre-wrap;">${empty lawyer.bankDetails ? 'Not added' : lawyer.bankDetails}</div></div>
+                    </div>
+
+                    <!-- About -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-person-lines-fill"></i> About</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div class="profile-field" style="line-height: 1.6;">${empty lawyer.bio ? 'Not added yet' : lawyer.bio}</div>
+                    </div>
+                    
+                    <!-- Gallery -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-images"></i> Gallery</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div style="display:flex; gap:16px;">
+                            <div style="flex:1;">
+                                <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Profile Photo</label>
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.profilePhoto}">
+                                        <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Profile Photo">
+                                    </c:when>
+                                    <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
+                                </c:choose>
+                            </div>
+                            <div style="flex:1;">
+                                <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Chamber Photo</label>
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.identityDocumentPath}">
+                                        <img src="${pageContext.request.contextPath}/uploads/${lawyer.identityDocumentPath}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Chamber Photo">
+                                    </c:when>
+                                    <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Status -->
+                    <div class="profile-card">
+                        <div class="profile-card-header">
+                            <h3><i class="bi bi-shield-check"></i> Profile Status</h3>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-edit-link">Edit</a>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem; color:var(--navy);"><i class="bi bi-check-circle" style="color:var(--success-text);"></i> Profile Completion</div>
+                            <strong style="color:var(--primary); font-size:0.9rem;">${empty lawyer.profileCompletionPct ? 0 : lawyer.profileCompletionPct}%</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem; color:var(--navy);"><i class="bi bi-check-circle" style="color:var(--success-text);"></i> Email Verified</div>
+                            <strong style="color:var(--success-text); font-size:0.8rem;">Verified</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border);">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem; color:var(--navy);"><i class="bi bi-check-circle" style="color:var(--success-text);"></i> Phone Verified</div>
+                            <strong style="color:var(--success-text); font-size:0.8rem;">Verified</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.9rem; color:var(--navy);"><c:choose><c:when test="${isVerified}"><i class="bi bi-check-circle" style="color:var(--success-text);"></i></c:when><c:otherwise><i class="bi bi-x-circle" style="color:var(--warning-text);"></i></c:otherwise></c:choose> ID Verified</div>
+                            <strong style="${isVerified ? 'color:var(--success-text);' : 'color:var(--warning-text);'} font-size:0.8rem;">${isVerified ? 'Verified' : 'Pending'}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clients Tab -->
+            <div id="clients-tab" class="tab-section">
                 <div class="card">
                     <div class="card-header">
-                        <h3>My Cases</h3>
+                        <h3>My Clients</h3>
                     </div>
                     <table class="table">
                         <thead>
@@ -516,6 +817,69 @@
                         <h3>Earnings History</h3>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Details of completed consultations and generated revenue.</p>
+                </div>
+            </div>
+
+            <!-- Reviews Tab -->
+            <div id="reviews-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Reviews</h3>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">You do not have any reviews yet.</p>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div id="documents-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Documents</h3>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Upload and manage your case documents here.</p>
+                </div>
+            </div>
+
+            <!-- Availability Tab -->
+            <div id="availability-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Availability</h3>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Manage Availability</a>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Configure your working hours, break times, and unavailable dates.</p>
+                </div>
+            </div>
+
+            <!-- Gallery Tab -->
+            <div id="gallery-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Gallery</h3>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Upload Photos</a>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Manage your profile and chamber photos.</p>
+                </div>
+            </div>
+
+            <!-- Bank & Payments Tab -->
+            <div id="bank-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Bank & Payments</h3>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Update Bank Info</a>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Manage your payout preferences, UPI ID, and Bank Account details.</p>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Account Settings</h3>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Manage your account preferences, password, and notifications.</p>
                 </div>
             </div>
             
