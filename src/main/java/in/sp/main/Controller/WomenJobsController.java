@@ -101,8 +101,7 @@ public class WomenJobsController {
                 .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(user.getId(), VerificationStatus.VERIFIED);
         
         if (appOpt.isPresent()) {
-            // Worker is verified, redirect to dashboard bookings page
-            return "redirect:/women-jobs/dashboard";
+            return "redirect:/women-jobs/profile";
         }
 
         // Check if there is a pending application
@@ -212,6 +211,7 @@ public class WomenJobsController {
             jobAppRepo.save(application);
 
             ra.addFlashAttribute("success", "Registration and application successful! Please await admin verification.");
+            ra.addFlashAttribute("registeredEmail", normalizedEmail);
             return "redirect:/women-jobs/login";
 
         } catch (Exception e) {
@@ -454,7 +454,7 @@ public class WomenJobsController {
 
         jobAppRepo.save(app);
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
-        return "redirect:/women-jobs/profile";
+        return "redirect:/women-jobs/dashboard";
     }
 
     @GetMapping("/earnings")

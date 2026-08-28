@@ -17,42 +17,69 @@
     <!-- Global Dashboard Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
     <style>
+        :root { 
+            --sidebar-width: 280px; 
+            --dashboard-bg: #F8FAFC;
+            --primary-accent: #F43F5E;
+            --secondary-subtext: #64748B;
+            --card-bg: #FFFFFF;
+            
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            
+            --border-color: #E2E8F0;
+            --text-main: #0F172A;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--light-bg, #f8f9fa);
+            background-color: var(--dashboard-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+            margin: 0;
         }
+        
         .support-card {
-            background: white;
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             margin-bottom: 25px;
             overflow: hidden;
             height: 100%;
         }
         .support-card-header {
-            background: linear-gradient(135deg, var(--primary-color, #ff4d4d) 0%, var(--secondary-color, #ff1a1a) 100%);
-            color: white;
-            padding: 20px 25px;
-            border-bottom: none;
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 24px 25px;
+            border-bottom: 1px solid var(--border-color);
         }
         .support-card-header h5 {
             margin: 0;
-            font-weight: 600;
+            font-weight: 700;
+        }
+        .support-card-header h5 i {
+            color: var(--primary-accent);
         }
         .support-card-body {
             padding: 30px;
         }
         .form-label {
-            font-weight: 500;
-            color: #495057;
+            font-weight: 600;
+            color: var(--secondary-subtext);
         }
         .form-control:focus {
-            border-color: var(--primary-color, #ff4d4d);
-            box-shadow: 0 0 0 0.25rem rgba(255, 77, 77, 0.25);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 0.25rem rgba(244, 63, 94, 0.25);
         }
         .btn-submit {
-            background: linear-gradient(135deg, var(--primary-color, #ff4d4d) 0%, var(--secondary-color, #ff1a1a) 100%);
+            background-color: var(--primary-accent);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -62,13 +89,14 @@
         }
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
             color: white;
+            background-color: #E11D48;
         }
         
         .accordion-button:not(.collapsed) {
-            color: var(--primary-color, #ff4d4d);
-            background-color: rgba(255, 77, 77, 0.1);
+            color: var(--primary-accent);
+            background-color: rgba(244, 63, 94, 0.1);
             box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
         }
         .accordion-button:focus {
@@ -80,39 +108,55 @@
             display: flex;
             align-items: center;
             padding: 15px;
-            border: 1px solid #eee;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             margin-bottom: 15px;
             transition: all 0.3s ease;
         }
         .contact-method:hover {
-            border-color: var(--primary-color, #ff4d4d);
-            box-shadow: 0 4px 10px rgba(255, 77, 77, 0.1);
+            border-color: var(--primary-accent);
+            box-shadow: 0 4px 10px rgba(244, 63, 94, 0.1);
         }
         .contact-icon {
             font-size: 2rem;
-            color: var(--primary-color, #ff4d4d);
+            color: var(--primary-accent);
             margin-right: 20px;
         }
         
         /* Sidebar layout adjustment */
-        :root { --sidebar-width: 280px; }
-        .sidebar { background: var(--gradient-dark); color: white; width: var(--sidebar-width); height: 100vh; position: fixed; left: 0; top: 0; padding: 30px 20px; z-index: 1000; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        @media (min-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                padding: 30px 20px;
+                z-index: 1000;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.04);
+                background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+        }
+        
         .sidebar-brand { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; color: white; text-decoration: none; }
         .nav-link-custom { display: flex; align-items: center; gap: 15px; padding: 12px 20px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease; font-weight: 500; }
-        .nav-link-custom:hover, .nav-link-custom.active { background: rgba(255,255,255,0.1); color: white; transform: translateX(5px); }
+        .nav-link-custom:hover, .nav-link-custom.active { background: var(--primary-accent); color: white; transform: translateX(5px); }
         
         .main-content {
-            padding: 25px;
-            margin-left: var(--sidebar-width);
+            padding: 40px;
+            background-color: var(--dashboard-bg);
+            min-height: 100vh;
         }
     </style>
 </head>
 <body>
 
     <jsp:include page="../fragments/salon-sidebar.jsp">
-    <jsp:param name="activeNav" value="support"/>
-</jsp:include>
+        <jsp:param name="activeNav" value="support"/>
+    </jsp:include>
 
     <div class="main-content">
         
@@ -167,7 +211,7 @@
             <div class="col-lg-5">
                 <!-- Direct Contact info -->
                 <div class="support-card mb-4" style="height: auto;">
-                    <div class="support-card-header" style="background: linear-gradient(135deg, #111 0%, #333 100%);">
+                    <div class="support-card-header">
                         <h5><i class="bi bi-headset me-2"></i> Instant Support</h5>
                     </div>
                     <div class="support-card-body">
@@ -252,4 +296,3 @@
     </script>
 </body>
 </html>
-

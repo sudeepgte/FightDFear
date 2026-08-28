@@ -19,3 +19,4 @@ jobs:
           # and deploy/authorized_keys.example), so this script body is only
           # a placeholder — the server ignores it and always runs deploy.sh.
           script: /opt/fightdfire/deploy.sh
+          timeout: 120s

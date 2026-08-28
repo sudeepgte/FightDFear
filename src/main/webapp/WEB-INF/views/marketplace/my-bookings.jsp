@@ -20,38 +20,49 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
-    <style>
+        <style>
         :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #fffcfd;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --secondary: #64748B;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            --text-main: #0F172A;
+            --border: #E2E8F0;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--m-bg);
-            color: #333;
+            background: var(--bg);
+            color: var(--text-main);
             min-height: 100vh;
         }
 
         .header-bg {
-            background: linear-gradient(135deg, var(--m-purple) 0%, #4a1e38 100%);
+            background: var(--card-bg);
             padding: 50px 0;
-            color: white;
+            color: var(--text-main);
             margin-bottom: 40px;
+            border-bottom: 1px solid var(--border);
         }
 
         .booking-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(124, 45, 94, 0.05);
-            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border: 1px solid var(--border);
         }
 
         .table thead th {
-            background: #fdf2f8;
-            color: var(--m-purple);
+            background: #FFE4E6;
+            color: var(--primary);
             font-weight: 700;
             text-transform: uppercase;
             font-size: 0.75rem;
@@ -66,25 +77,21 @@
             font-weight: 800;
         }
 
-        .status-PENDING { background: #fff9db; color: #f59f00; }
-        .status-CONFIRMED { background: #ebfbee; color: #37b24d; }
-        .status-COMPLETED { background: #e7f5ff; color: #228be6; }
-        .status-CANCELLED { background: #fff5f5; color: #fa5252; }
-        .status-ACCEPTED { background: #e0f2fe; color: #0284c7; }
-        .status-PAID { background: #fef9c3; color: #ca8a04; }
-        .status-REJECTED { background: #fee2e2; color: #ef4444; }
+        .status-PENDING { background: var(--warning-bg); color: var(--warning-text); }
+        .status-CONFIRMED, .status-COMPLETED, .status-ACCEPTED, .status-PAID { background: var(--success-bg); color: var(--success-text); }
+        .status-CANCELLED, .status-REJECTED { background: var(--error-bg); color: var(--error-text); }
 
         .nav-tabs-custom {
             display: flex;
             gap: 20px;
             margin-bottom: 30px;
-            border-bottom: 2px solid #eee;
+            border-bottom: 2px solid var(--border);
             padding-bottom: 10px;
         }
 
         .nav-tabs-custom a {
             text-decoration: none;
-            color: #888;
+            color: var(--secondary);
             font-weight: 700;
             padding: 10px 20px;
             border-radius: 12px;
@@ -92,8 +99,9 @@
         }
 
         .nav-tabs-custom a.active {
-            color: var(--m-purple);
-            background: #fdf2f8;
+            color: var(--primary);
+            background: #FFE4E6;
+            border: 1px solid #FFE4E6;
         }
 
         /* Communication Modals */
@@ -102,8 +110,8 @@
             backdrop-filter: blur(10px);
         }
         .comm-content {
-            background: #fff !important;
-            border: 1px solid rgba(0,0,0,0.1) !important;
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border) !important;
             border-radius: 24px !important;
             overflow: hidden;
         }
@@ -114,7 +122,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: #f8f9fa;
+            background: var(--bg);
         }
         .chat-msg {
             max-width: 80%;
@@ -124,14 +132,14 @@
         }
         .chat-msg.sent {
             align-self: flex-end;
-            background: var(--m-purple);
+            background: var(--primary);
             color: white;
             border-bottom-right-radius: 4px;
         }
         .chat-msg.received {
             align-self: flex-start;
             background: #e9ecef;
-            color: #333;
+            color: var(--text-main);
             border-bottom-left-radius: 4px;
         }
         .video-container {
@@ -149,16 +157,51 @@
         }
         #localVideo {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 30%;
-            aspect-ratio: 16/9;
-            background: #222;
-            border: 2px solid var(--m-pink);
+            bottom: 15px;
+            right: 15px;
+            width: 120px;
+            height: 160px;
+            background: #333;
             border-radius: 8px;
-            z-index: 10;
+            border: 2px solid white;
             object-fit: cover;
         }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            background: #222;
+        }
+        .btn-control {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: #444;
+            color: white;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-control:hover { background: #555; }
+        .btn-control.end-call { background: var(--error-bg); color: var(--error-text); }
+        .btn-control.end-call:hover { background: #fecaca; }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .text-purple { color: var(--text-main); }
+        .fw-800 { font-weight: 800; }
     </style>
 </head>
 <body>
@@ -171,7 +214,7 @@
     <div class="header-bg">
         <div class="container d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="fw-900 m-0">My Marketplace</h1>
+                <h1 class="fw-900 m-0" style="color: var(--primary);">My Marketplace</h1>
                 <p class="m-0 opacity-75">Track your personal sessions and class enrollments.</p>
             </div>
         </div>
@@ -250,7 +293,7 @@
             </c:if>
         </div>
 
-        <h4 class="fw-bold mt-5 mb-3" style="color: var(--m-purple);"><i class="fas fa-briefcase"></i> Booked Workers</h4>
+        <h4 class="fw-bold mt-5 mb-3" style="color: var(--primary);"><i class="fas fa-briefcase"></i> Booked Workers</h4>
         <div class="booking-card">
             <c:if test="${empty workerBookings}">
                 <div class="text-center py-4">
@@ -330,7 +373,7 @@
                     <div class="p-4 pt-0">
                         <div class="input-group">
                             <input type="text" id="chatInput" class="form-control" placeholder="Type a message..." style="border-radius: 12px 0 0 12px; border: 1px solid #ddd;">
-                            <button class="btn btn-primary px-4" onclick="sendMessage()" style="border-radius: 0 12px 12px 0; background: var(--m-purple); border: none;">
+                            <button class="btn btn-primary px-4" onclick="sendMessage()" style="border-radius: 0 12px 12px 0; background: var(--text-main); border: none;">
                                 <i class="bi bi-send-fill"></i>
                             </button>
                         </div>
@@ -716,4 +759,9 @@
 </div>
 </body>
 </html>
+
+
+
+
+
 

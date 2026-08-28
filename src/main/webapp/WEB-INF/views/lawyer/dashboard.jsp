@@ -8,399 +8,554 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Women Lawyer Dashboard | Fight D Fear</title>
+    <title>Women Safety | Lawyer Dashboard</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #f43f5e;
-            --navy: #1e1b4b;
-            --muted: #64748b;
-            --softBg: #f7f8fa;
-            --success-bg: #dcfce7;
-            --success-text: #166534;
-            --warning-bg: #fef3c7;
-            --warning-text: #b45309;
-            --info-bg: #e0e7ff;
-            --info-text: #3730a3;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --secondary: #64748B;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            --navy: #0F172A;
+            --border: #E2E8F0;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--softBg); color: var(--navy); display: flex; min-height: 100vh; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--navy); display: flex; min-height: 100vh; overflow-x: hidden; }
 
         /* Sidebar */
-        .sidebar { width: 260px; background: var(--navy); border-right: none; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: transform 0.3s ease; box-shadow: 10px 0 20px rgba(0,0,0,0.05); }
-        .brand { padding: 24px; font-size: 1.25rem; font-weight: 800; color: white; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .brand i { color: var(--primary); font-size: 1.5rem; }
+        .sidebar { width: 250px; background: var(--card-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+        .brand { padding: 24px; font-size: 1.25rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+        .brand span { color: var(--navy); display: block; font-size: 0.8rem; font-weight: 500; }
         
-        .nav-items { flex: 1; padding: 20px 10px; display: flex; flex-direction: column; gap: 8px; }
-        .nav-item { padding: 12px 16px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.7); transition: all 0.2s ease; border-left: 4px solid transparent; }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-        .nav-item.active { background: rgba(244, 63, 94, 0.15); color: white; border-left-color: var(--primary); border-radius: 0 12px 12px 0; }
-        .nav-item i { font-size: 1.25rem; }
+        .nav-items { flex: 1; padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+        .nav-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; color: var(--secondary); transition: all 0.2s ease; }
+        .nav-item:hover { background: var(--bg); color: var(--navy); }
+        .nav-item.active { background: rgba(244, 63, 94, 0.1); color: var(--primary); }
+        .nav-item i { font-size: 1.2rem; }
 
-        .logout-btn { margin: 20px; padding: 12px 16px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; color: var(--primary); border-top: 1px solid rgba(255,255,255,0.1); transition: 0.2s; text-decoration: none;}
-        .logout-btn:hover { background: var(--primary); color: white; border-color: transparent;}
+        .logout-btn { margin: 20px 14px; padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; color: var(--secondary); text-decoration: none; transition: 0.2s; }
+        .logout-btn:hover { background: var(--error-bg); color: var(--error-text); }
 
         /* Main Content */
-        .main-content { margin-left: 260px; flex: 1; padding: 30px 40px; display: flex; flex-direction: column; }
+        .main-content { margin-left: 250px; flex: 1; display: flex; flex-direction: column; }
+        
+        /* Header */
+        .top-header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 50; }
+        .menu-toggle { display: none; font-size: 1.5rem; color: var(--secondary); cursor: pointer; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .notify-btn { font-size: 1.25rem; color: var(--secondary); position: relative; cursor: pointer; }
+        .notify-dot { position: absolute; top: 0; right: 0; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+        .user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--bg); }
+        .user-info h4 { font-size: 0.9rem; font-weight: 700; color: var(--navy); }
+        .user-info span { font-size: 0.75rem; color: var(--secondary); }
+
+        .content-area { padding: 30px; }
+        
+        /* Tabs */
         .tab-section { display: none; animation: fadeIn 0.3s ease forwards; }
         .tab-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Typography */
-        h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 4px; color: var(--navy); }
-        .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; }
+        /* Welcome Bar */
+        .welcome-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .welcome-text h1 { font-size: 1.75rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .welcome-text h1 span.name { color: var(--primary); }
+        .welcome-text h1 i { color: var(--success-text); font-size: 1.25rem; }
+        .welcome-text p { color: var(--secondary); font-size: 0.95rem; }
         
-        /* Hero Card */
-        .hero-card { background: white; border-radius: 20px; padding: 24px; display: flex; align-items: center; gap: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); margin-bottom: 24px; position: relative; overflow: hidden; }
-        .hero-avatar { width: 70px; height: 70px; border-radius: 50%; background: #ffe4e6; display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: 800; color: var(--primary); }
-        .hero-info h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 6px; }
-        .hero-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; }
-        .badge-approved { background: var(--success-bg); color: var(--success-text); }
-        .badge-pending { background: var(--warning-bg); color: var(--warning-text); }
+        .btn-primary { background: var(--primary); color: white; padding: 12px 24px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; text-decoration: none;}
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
 
         /* Stats Grid */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px; }
-        .stat-card { background: white; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: flex-start; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .stat-val { font-size: 1.75rem; font-weight: 800; color: var(--navy); margin-bottom: 4px; padding: 4px 12px; border-radius: 10px; }
-        .stat-label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; }
+        .stat-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .stat-icon { width: 56px; height: 56px; border-radius: 50%; background: #FFF1F2; color: var(--primary); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; flex-shrink: 0; }
+        .stat-info h2 { font-size: 1.75rem; font-weight: 800; color: var(--navy); margin-bottom: 2px; }
+        .stat-info p { font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+        .stat-info span { font-size: 0.75rem; color: var(--secondary); }
+        
+        .card { background: var(--card-bg); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.02); margin-bottom: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-header h3 { font-size: 1.15rem; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 10px; }
+        .card-header h3 i { color: var(--primary); }
+        .card-header a { font-size: 0.85rem; font-weight: 600; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 4px; }
+        .card-header a:hover { text-decoration: underline; }
 
-        /* Generic Card */
-        .custom-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-bottom: 20px; }
-        .card-header-title { font-size: 1.15rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+        /* Appointment List */
+        .apt-list { display: flex; flex-direction: column; gap: 16px; }
+        .apt-item { display: flex; align-items: center; gap: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .apt-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .apt-date { display: flex; flex-direction: column; align-items: center; min-width: 60px; padding-right: 20px; border-right: 1px solid var(--border); }
+        .apt-date .day { font-size: 1.25rem; font-weight: 800; color: var(--navy); }
+        .apt-date .month { font-size: 0.8rem; font-weight: 600; color: var(--secondary); text-transform: uppercase; }
+        .apt-info { flex: 1; }
+        .apt-info h4 { font-size: 0.95rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+        .apt-info p { font-size: 0.8rem; color: var(--secondary); display: flex; align-items: center; gap: 14px; }
+        .apt-info p i { font-size: 0.9rem; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .badge-upcoming { background: var(--warning-bg); color: var(--warning-text); }
+        .badge-confirmed { background: var(--success-bg); color: var(--success-text); }
+        .badge-cancelled { background: var(--error-bg); color: var(--error-text); }
 
-        /* Bookings List */
-        .booking-item { padding: 16px; border: 1px solid #f1f5f9; border-radius: 12px; margin-bottom: 12px; transition: 0.2s; }
-        .booking-item:hover { border-color: #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .b-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .b-title { font-weight: 700; font-size: 1.05rem; }
-        .b-status { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 8px; }
-        .status-PENDING { background: var(--warning-bg); color: var(--warning-text); }
-        .status-CONFIRMED, .status-ACCEPTED { background: var(--success-bg); color: var(--success-text); }
-        .status-COMPLETED { background: var(--info-bg); color: var(--info-text); }
-        .b-meta { font-size: 0.85rem; color: var(--muted); display: flex; gap: 16px; margin-bottom: 12px;}
-        .b-meta i { margin-right: 4px; }
-        .b-actions { display: flex; gap: 8px; }
-        .btn-sm { padding: 6px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-accept { background: var(--navy); color: white; }
-        .btn-accept:hover { background: #312e81; }
-        .btn-complete { background: #10b981; color: white; }
-        .btn-complete:hover { background: #059669; }
+        /* Action Banner */
+        .action-banner { background: var(--warning-bg); border: 1px solid #fed7aa; border-radius: 16px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+        .action-banner.success { background: var(--success-bg); border-color: #bbf7d0; }
+        .action-banner.error { background: var(--error-bg); border-color: #fecdd3; }
+        .action-icon { width: 48px; height: 48px; border-radius: 50%; background: #ffedd5; color: var(--warning-text); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; flex-shrink: 0; }
+        .action-banner.success .action-icon { background: #dcfce7; color: var(--success-text); }
+        .action-banner.error .action-icon { background: #ffe4e6; color: var(--error-text); }
+        .action-content { flex: 1; margin-left: 16px; }
+        .action-content h3 { font-size: 1rem; font-weight: 700; color: var(--warning-text); margin-bottom: 4px; }
+        .action-banner.success .action-content h3 { color: var(--success-text); }
+        .action-banner.error .action-content h3 { color: var(--error-text); }
+        .action-content p { font-size: 0.85rem; color: var(--navy); }
+        .btn-upload { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none;}
+        .btn-upload:hover { background: var(--primary-hover); }
 
-        /* Forms */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 500px; border-radius: 16px; padding: 24px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 1.25rem; font-weight: 700; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--secondary); }
+        
         .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; text-transform: uppercase; }
-        .form-input { width: 100%; padding: 12px 16px; border: 2px solid #f1f5f9; border-radius: 10px; background: #f8fafc; font-weight: 500; font-family: 'Inter', sans-serif; transition: 0.3s; }
-        .form-input:focus { outline: none; border-color: var(--primary); background: white; }
-        .btn-primary { background: var(--primary); color: white; padding: 14px 24px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .form-label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+        .form-input:focus { outline: none; border-color: var(--primary); }
 
-        /* Alerts */
-        .alert { padding: 12px 16px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-        .alert-success { background: var(--success-bg); color: var(--success-text); border: 1px solid #bbf7d0; }
-        .alert-error { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
+        /* Simple Table for other tabs */
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .table th { font-weight: 600; color: var(--secondary); background: var(--bg); }
+        .table td { color: var(--navy); font-weight: 500; }
+        .table tr:last-child td { border-bottom: none; }
 
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; padding: 20px; }
-            .form-grid { grid-template-columns: 1fr; }
-            /* Add hamburger menu logic if needed, but keeping it simple for now */
+            .main-content { margin-left: 0; }
+            .menu-toggle { display: block; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .welcome-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .action-banner { flex-direction: column; text-align: center; gap: 16px; }
+            .action-content { margin-left: 0; }
         }
     </style>
 </head>
 <body>
 
-    <c:set var="firstName" value="${fn:split(lawyer.fullName, ' ')[0]}" />
-    <c:set var="isApproved" value="${lawyer.partnerProfileStatus == 'APPROVED'}" />
+    <c:set var="isVerified" value="${lawyer.verificationStatus == 'VERIFIED'}" />
     
-    <c:set var="pendingCount" value="0" />
-    <c:set var="confirmedCount" value="0" />
-    <c:set var="doneCount" value="0" />
+    <c:set var="activeCasesCount" value="0" />
+    <c:set var="upcomingAptCount" value="0" />
+    <c:set var="consultsCount" value="0" />
+    <c:set var="earnings" value="0.0" />
+    
     <c:forEach var="b" items="${bookings}">
-        <c:if test="${b.status == 'PENDING'}"><c:set var="pendingCount" value="${pendingCount + 1}" /></c:if>
-        <c:if test="${b.status == 'CONFIRMED' || b.status == 'ACCEPTED' || b.status == 'PAID'}"><c:set var="confirmedCount" value="${confirmedCount + 1}" /></c:if>
-        <c:if test="${b.status == 'COMPLETED'}"><c:set var="doneCount" value="${doneCount + 1}" /></c:if>
+        <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
+            <c:set var="activeCasesCount" value="${activeCasesCount + 1}" />
+        </c:if>
+        <c:if test="${b.status == 'CONFIRMED' || b.status == 'PAID'}">
+            <c:set var="upcomingAptCount" value="${upcomingAptCount + 1}" />
+        </c:if>
+        <c:if test="${b.status == 'COMPLETED'}">
+            <c:set var="consultsCount" value="${consultsCount + 1}" />
+            <c:set var="earnings" value="${earnings + b.totalAmount}" />
+        </c:if>
     </c:forEach>
 
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="brand">
-            <i class="bi bi-briefcase"></i> Fight D Fear
+            <i class="bi bi-shield-check"></i>
+            <div>
+                Women Safety
+                <span>Legal Support</span>
+            </div>
         </div>
         <div class="nav-items">
-            <div class="nav-item active" onclick="switchTab('home', this)">
-                <i class="bi bi-dashboard"></i> Home
+            <div class="nav-item active" onclick="switchTab('dashboard', this)">
+                <i class="bi bi-house"></i> Dashboard
             </div>
-            <div class="nav-item" onclick="switchTab('consults', this)">
-                <i class="bi bi-event-note"></i> Consults
+            <div class="nav-item" onclick="switchTab('cases', this)">
+                <i class="bi bi-briefcase"></i> My Cases
             </div>
-            <div class="nav-item" onclick="switchTab('finance', this)">
-                <i class="bi bi-wallet2"></i> Finance
+            <div class="nav-item" onclick="switchTab('appointments', this)">
+                <i class="bi bi-calendar-event"></i> Appointments
             </div>
-            <div class="nav-item" onclick="switchTab('profile', this)">
-                <i class="bi bi-person"></i> Profile
+            <div class="nav-item" onclick="switchTab('consultations', this)">
+                <i class="bi bi-chat-left-dots"></i> Consultations
+            </div>
+            <div class="nav-item" onclick="switchTab('earnings', this)">
+                <i class="bi bi-wallet2"></i> Earnings
             </div>
         </div>
-        <a href="${pageContext.request.contextPath}/logout" class="logout-btn">
+        <a href="${pageContext.request.contextPath}/logout" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-        
-        <c:if test="${not empty message}">
-            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> ${message}</div>
-        </c:if>
-        <c:if test="${not empty error}">
-            <div class="alert alert-error"><i class="bi bi-exclamation-triangle-fill"></i> ${error}</div>
-        </c:if>
-
-        <!-- HOME TAB -->
-        <div id="home-tab" class="tab-section active">
-            <h1>Good day, ${firstName}</h1>
-            <p class="subtitle">Manage consultations from your lawyer dashboard.</p>
-
-            <div class="hero-card">
-                <div class="hero-avatar">
-                    ${fn:substring(lawyer.fullName, 0, 1)}
+        <header class="top-header">
+            <i class="bi bi-list menu-toggle" onclick="toggleSidebar()"></i>
+            <div style="flex: 1"></div>
+            <div class="header-right">
+                <div class="notify-btn">
+                    <i class="bi bi-bell"></i>
+                    <div class="notify-dot"></div>
                 </div>
-                <div class="hero-info">
-                    <div style="font-size: 0.7rem; font-weight: 800; color: var(--primary); letter-spacing: 1px;">WOMEN LAWYER</div>
-                    <h2>${lawyer.fullName}</h2>
+                <div class="user-profile">
                     <c:choose>
-                        <c:when test="${isApproved}">
-                            <div class="hero-badge badge-approved">Approved</div>
+                        <c:when test="${not empty lawyer.profilePhoto}">
+                            <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" class="user-avatar" alt="Avatar">
                         </c:when>
                         <c:otherwise>
-                            <div class="hero-badge badge-pending">Pending Verification</div>
+                            <div class="user-avatar" style="display:flex; justify-content:center; align-items:center; background:#FFE4E6; color:var(--primary); font-weight:700;">
+                                ${fn:substring(lawyer.fullName, 0, 1)}
+                            </div>
                         </c:otherwise>
                     </c:choose>
-                    <div style="font-size: 0.85rem; color: var(--muted);">
-                        <i class="bi bi-geo-alt-fill"></i> ${empty lawyer.city ? 'Location not set' : lawyer.city} &nbsp; 
-                        <i class="bi bi-bookmark-fill"></i> ${empty lawyer.practiceAreas ? 'Practice areas not set' : lawyer.practiceAreas}
+                    <div class="user-info">
+                        <h4>${lawyer.fullName}</h4>
+                        <span>Women Lawyer <i class="bi bi-chevron-down"></i></span>
                     </div>
                 </div>
             </div>
+        </header>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-val" style="background: var(--warning-bg);">${pendingCount}</div>
-                    <div class="stat-label">New Requests</div>
+        <div class="content-area">
+            
+            <c:if test="${not empty message}">
+                <div class="action-banner success" style="margin-bottom: 20px; padding: 12px 20px;">
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <i class="bi bi-check-circle-fill" style="color:var(--success-text);"></i>
+                        <span style="color:var(--success-text); font-weight:600;">${message}</span>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-val" style="background: var(--success-bg);">${confirmedCount}</div>
-                    <div class="stat-label">Confirmed</div>
+            </c:if>
+            <c:if test="${not empty error}">
+                <div class="action-banner error" style="margin-bottom: 20px; padding: 12px 20px;">
+                    <div style="display:flex; align-items:center; gap: 10px;">
+                        <i class="bi bi-exclamation-triangle-fill" style="color:var(--error-text);"></i>
+                        <span style="color:var(--error-text); font-weight:600;">${error}</span>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-val" style="background: var(--info-bg);">${doneCount}</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-            </div>
+            </c:if>
 
-            <div class="custom-card">
-                <div class="card-header-title">Recent Incoming Consults</div>
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-section active">
+                
+                <div class="welcome-bar">
+                    <div class="welcome-text">
+                        <h1>Welcome back, <span class="name">${lawyer.fullName}</span> <c:if test="${isVerified}"><i class="bi bi-patch-check-fill"></i></c:if></h1>
+                        <p>Here's what's happening with your legal practice today.</p>
+                    </div>
+                    <button class="btn-primary" onclick="openAvailabilityModal()">
+                        <i class="bi bi-plus-lg"></i> Add Availability
+                    </button>
+                </div>
+
+                <c:if test="${lawyer.profileCompletionPct == null || lawyer.profileCompletionPct < 100}">
+                    <div class="action-banner" style="margin-bottom: 30px;">
+                        <div class="action-icon"><i class="bi bi-person-lines-fill"></i></div>
+                        <div class="action-content">
+                            <h3>Complete Your Profile</h3>
+                            <p>Your profile is incomplete. Add your practice areas, experience, and details to get verified faster.</p>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none;">Complete Profile</a>
+                    </div>
+                </c:if>
+
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
+                        <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+                        <div class="stat-info">
+                            <h2>${activeCasesCount}</h2>
+                            <p>Active Cases</p>
+                            <span>Ongoing legal matters</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <h2>${upcomingAptCount}</h2>
+                            <p>Upcoming Appointments</p>
+                            <span>Next 7 days</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="switchTab('consultations', document.querySelectorAll('.nav-item')[3])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-chat-dots"></i></div>
+                        <div class="stat-info">
+                            <h2>${consultsCount}</h2>
+                            <p>Consultations</p>
+                            <span>This month</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="switchTab('earnings', document.querySelectorAll('.nav-item')[4])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-info">
+                            <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
+                            <p>Earnings</p>
+                            <span>This month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-calendar4-week"></i> Upcoming Appointments</h3>
+                        <a href="javascript:void(0)" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">View All <i class="bi bi-chevron-right"></i></a>
+                    </div>
+                    <div class="apt-list">
+                        <c:set var="hasUpcoming" value="false" />
+                        <c:forEach var="b" items="${bookings}" end="3">
+                            <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
+                                <c:set var="hasUpcoming" value="true" />
+                                <div class="apt-item">
+                                    <div class="apt-date">
+                                        <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
+                                        <span class="day"><fmt:formatDate pattern="dd" value="${parsedDate}" /></span>
+                                        <span class="month"><fmt:formatDate pattern="MMM" value="${parsedDate}" /></span>
+                                    </div>
+                                    <div class="apt-info">
+                                        <h4>${not empty b.user ? b.user.fullName : 'Client Consultation'} <span style="font-size:0.8rem; color:var(--secondary);">#${b.id}</span></h4>
+                                        <p>
+                                            <span><fmt:formatDate pattern="hh:mm a" value="${parsedDate}" /></span>
+                                            <span><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</span>
+                                        </p>
+                                    </div>
+                                    <div class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : 'badge-upcoming'}">
+                                        ${b.status == 'PENDING' ? 'Upcoming' : 'Confirmed'}
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:forEach>
+                        <c:if test="${not hasUpcoming}">
+                            <p style="color: var(--secondary); font-size: 0.9rem; text-align:center; padding: 20px;">No upcoming appointments.</p>
+                        </c:if>
+                    </div>
+                </div>
+
                 <c:choose>
-                    <c:when test="${not isApproved}">
-                        <p style="color: var(--muted); font-size: 0.9rem;">Consult requests will appear here after admin approval.</p>
-                    </c:when>
-                    <c:when test="${empty bookings}">
-                        <p style="color: var(--muted); font-size: 0.9rem;">No consultation requests yet.</p>
+                    <c:when test="${not isVerified}">
+                        <div class="action-banner">
+                            <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <div class="action-content">
+                                <h3>Action Required</h3>
+                                <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
+                            </div>
+                            <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc" method="post" enctype="multipart/form-data" style="display:none;">
+                                <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
+                            </form>
+                            <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
+                        </div>
                     </c:when>
                     <c:otherwise>
-                        <c:forEach var="b" items="${bookings}" end="2">
-                            <div class="booking-item">
-                                <div class="b-header">
-                                    <div class="b-title">Booking #</div>
-                                    <div class="b-status status-${b.status}">${b.status}</div>
-                                </div>
-                                <div class="b-meta">
-                                    <span><i class="bi bi-calendar-event"></i> <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" /><fmt:formatDate pattern="MMM dd, yyyy h:mm a" value="${parsedDate}" /></span>
-                                    <span><i class="bi bi-currency-rupee"></i> ${b.totalAmount}</span>
-                                </div>
-                                <c:if test="${not empty b.note}">
-                                    <p style="font-size: 0.85rem; margin-bottom: 10px;"><strong>Client Note:</strong> ${b.note}</p>
-                                </c:if>
+                        <div class="action-banner success">
+                            <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                            <div class="action-content">
+                                <h3>Verification Complete</h3>
+                                <p>Your profile is fully verified. You can now accept client consultations.</p>
                             </div>
-                        </c:forEach>
-                        <a href="javascript:void(0)" onclick="switchTab('consults', document.querySelectorAll('.nav-item')[1])" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">View all consultations &rarr;</a>
+                        </div>
                     </c:otherwise>
                 </c:choose>
             </div>
-        </div>
 
-        <!-- CONSULTS TAB -->
-        <div id="consults-tab" class="tab-section">
-            <h1>Consultations</h1>
-            <p class="subtitle">Manage all your client bookings.</p>
-            
-            <div class="custom-card">
-                <c:choose>
-                    <c:when test="${not isApproved}">
-                        <p style="color: var(--muted); font-size: 0.9rem;">Available after admin verification.</p>
-                    </c:when>
-                    <c:when test="${empty bookings}">
-                        <p style="color: var(--muted); font-size: 0.9rem;">No consultations yet.</p>
-                    </c:when>
-                    <c:otherwise>
-                        <c:forEach var="b" items="${bookings}">
-                            <div class="booking-item">
-                                <div class="b-header">
-                                    <div class="b-title">Booking #</div>
-                                    <div class="b-status status-${b.status}">${b.status}</div>
-                                </div>
-                                <div class="b-meta">
-                                    <span><i class="bi bi-calendar-event"></i> <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" /><fmt:formatDate pattern="MMM dd, yyyy h:mm a" value="${parsedDate}" /></span>
-                                    <span><i class="bi bi-currency-rupee"></i> ${b.totalAmount}</span>
-                                </div>
-                                <c:if test="${not empty b.note}">
-                                    <p style="font-size: 0.85rem; margin-bottom: 12px; background: #f8fafc; padding: 10px; border-radius: 8px;"><strong>Client Note:</strong> ${b.note}</p>
-                                </c:if>
-                                
-                                <div class="b-actions">
-                                    <c:if test="${b.status == 'PENDING'}">
-                                        <button class="btn-sm btn-accept" onclick="updateStatus(, 'ACCEPTED')">Accept</button>
-                                        <button class="btn-sm" style="background: #e2e8f0;" onclick="updateStatus(, 'CANCELLED')">Reject</button>
-                                    </c:if>
-                                    <c:if test="${b.status == 'ACCEPTED' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
-                                        <button class="btn-sm btn-complete" onclick="updateStatus(, 'COMPLETED')">Mark Completed</button>
-                                    </c:if>
-                                </div>
-                            </div>
-                        </c:forEach>
-                    </c:otherwise>
-                </c:choose>
-            </div>
-        </div>
-
-        <!-- FINANCE TAB -->
-        <div id="finance-tab" class="tab-section">
-            <h1>Finance</h1>
-            <p class="subtitle">Track your earnings and payouts.</p>
-            
-            <div class="stats-grid">
-                <div class="custom-card" style="margin-bottom: 0;">
-                    <div style="display:flex; align-items: center; gap: 14px; margin-bottom: 10px;">
-                        <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(244, 63, 94, 0.1); display: flex; justify-content:center; align-items:center; font-size: 1.2rem; color: var(--primary);"><i class="bi bi-wallet2"></i></div>
-                        <div style="font-weight: 700; font-size: 1.1rem;">Payout Balance</div>
+            <!-- Cases Tab -->
+            <div id="cases-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>My Cases</h3>
                     </div>
-                    <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
-                        <c:choose><c:when test="${empty lawyer.upiId}">Add UPI in Profile to withdraw</c:when><c:otherwise>UPI: ${lawyer.upiId}</c:otherwise></c:choose>
-                    </p>
-                    <div style="font-size: 2rem; font-weight: 800; color: var(--navy);">?<fmt:formatNumber type="number" maxFractionDigits="2" value="${lawyer.payoutBalance != null ? lawyer.payoutBalance : 0}" /></div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client Name</th>
+                                <th>Case Type</th>
+                                <th>Date Requested</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="b" items="${bookings}">
+                                <tr>
+                                    <td>#${b.id}</td>
+                                    <td>${not empty b.user ? b.user.fullName : 'Client'}</td>
+                                    <td>Consultation</td>
+                                    <td>${fn:substring(b.requestedTime, 0, 10)}</td>
+                                    <td><span class="badge ${b.status == 'COMPLETED' ? 'badge-confirmed' : 'badge-upcoming'}">${b.status}</span></td>
+                                    <td>
+                                        <c:if test="${b.status != 'COMPLETED'}">
+                                            <button class="btn-upload" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateStatus(${b.id}, 'COMPLETED')">Close Case</button>
+                                        </c:if>
+                                        <c:if test="${b.status == 'COMPLETED'}">
+                                            <span style="color:var(--secondary); font-size:0.85rem;">Closed</span>
+                                        </c:if>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
 
-        <!-- PROFILE TAB -->
-        <div id="profile-tab" class="tab-section">
-            <h1>Profile Settings</h1>
-            <p class="subtitle">Keep your professional details up to date.</p>
-            
-            <div class="custom-card">
-                <form action="${pageContext.request.contextPath}/lawyer/profile/update" method="post" enctype="multipart/form-data">
-                    <div class="card-header-title">Account Details</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" name="fullName" class="form-input" value="${lawyer.fullName}" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Designation</label>
-                            <input type="text" name="designation" class="form-input" value="${lawyer.designation}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Phone Number</label>
-                            <input type="tel" name="phone" class="form-input" value="${lawyer.phone}" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Profile Picture (JPG/PNG)</label>
-                            <input type="file" name="profilePhoto" class="form-input" accept="image/*">
-                        </div>
+            <!-- Appointments Tab -->
+            <div id="appointments-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Appointments</h3>
                     </div>
-
-                    <div class="card-header-title mt-4">Professional Details</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Bar Council ID</label>
-                            <input type="text" name="barCouncilId" class="form-input" value="${lawyer.barCouncilId}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Practice Areas</label>
-                            <input type="text" name="practiceAreas" class="form-input" value="${lawyer.practiceAreas}" placeholder="e.g. Family Law, Criminal Defense">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Chamber Address</label>
-                        <input type="text" name="address" class="form-input" value="${lawyer.address}">
-                    </div>
-                    
-                    <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                        <div class="form-group">
-                            <label class="form-label">City</label>
-                            <input type="text" name="city" class="form-input" value="${lawyer.city}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">State</label>
-                            <input type="text" name="state" class="form-input" value="${lawyer.state}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Pincode</label>
-                            <input type="text" name="pincode" class="form-input" value="${lawyer.pincode}">
-                        </div>
-                    </div>
-                    
-                    <div class="card-header-title mt-4">Availability & Fees</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">Who I Serve</label>
-                            <input type="text" name="audience" class="form-input" value="${lawyer.audience}" placeholder="e.g. Women only, All">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Open Days</label>
-                            <input type="text" name="openDays" class="form-input" value="${lawyer.openDays}" placeholder="e.g. Mon-Fri">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Open Time</label>
-                            <input type="time" name="openTime" class="form-input" value="${lawyer.openTime}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Close Time</label>
-                            <input type="time" name="closeTime" class="form-input" value="${lawyer.closeTime}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Consultation Fee (?)</label>
-                            <input type="number" step="0.01" name="consultationFee" class="form-input" value="${lawyer.consultationFee}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Duration (Minutes)</label>
-                            <input type="number" name="durationMinutes" class="form-input" value="${lawyer.durationMinutes}">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Service Mode</label>
-                            <select name="serviceMode" class="form-input">
-                                <option value="Online" ${lawyer.serviceMode == 'Online' ? 'selected' : ''}>Online / Video Call</option>
-                                <option value="Offline" ${lawyer.serviceMode == 'Offline' ? 'selected' : ''}>Offline / In-person</option>
-                                <option value="Both" ${lawyer.serviceMode == 'Both' ? 'selected' : ''}>Both (Online & Offline)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">About / Bio</label>
-                        <textarea name="bio" class="form-input" rows="4">${lawyer.bio}</textarea>
-                    </div>
-
-                    <button type="submit" class="btn-primary" style="margin-top: 10px;">Save Profile Changes</button>
-                </form>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date & Time</th>
+                                <th>Client</th>
+                                <th>Mode</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="b" items="${bookings}">
+                                <tr>
+                                    <td>#${b.id}</td>
+                                    <td>${fn:replace(b.requestedTime, 'T', ' ')}</td>
+                                    <td>#${b.id}</td>
+                                    <td>${not empty b.user ? b.user.fullName : 'Client'}</td>
+                                    <td><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</td>
+                                    <td><span class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : (b.status == 'PENDING' ? 'badge-upcoming' : 'badge-cancelled')}">${b.status}</span></td>
+                                    <td style="display:flex; gap: 8px;">
+                                        <c:if test="${b.status == 'PENDING'}">
+                                            <button class="btn-upload" style="padding: 6px 12px; font-size: 0.8rem;" onclick="updateStatus(${b.id}, 'PAID')">Accept</button>
+                                            <button class="btn-upload" style="padding: 6px 12px; font-size: 0.8rem; background: var(--error-bg); color: var(--error-text);" onclick="updateStatus(${b.id}, 'CANCELLED')">Reject</button>
+                                        </c:if>
+                                        <c:if test="${b.status == 'PAID' || b.status == 'CONFIRMED'}">
+                                            <button class="btn-upload" style="padding: 6px 12px; font-size: 0.8rem; background: var(--success-bg); color: var(--success-text);" onclick="updateStatus(${b.id}, 'COMPLETED')">Mark Done</button>
+                                        </c:if>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
+            <!-- Consultations Tab -->
+            <div id="consultations-tab" class="tab-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Consultations History</h3>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Client Notes</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="b" items="${bookings}">
+                                <tr>
+                                    <td>${fn:substring(b.requestedTime, 0, 10)}</td>
+                                    <td>₹${b.totalAmount}</td>
+                                    <td>${not empty b.note ? b.note : '-'}</td>
+                                    <td><span class="badge ${b.status == 'COMPLETED' ? 'badge-confirmed' : 'badge-upcoming'}">${b.status}</span></td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Earnings Tab -->
+            <div id="earnings-tab" class="tab-section">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#dcfce7; color:var(--success-text);"><i class="bi bi-wallet2"></i></div>
+                        <div class="stat-info">
+                            <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
+                            <p>Total Earnings</p>
+                            <span>Lifetime</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fef3c7; color:var(--warning-text);"><i class="bi bi-clock-history"></i></div>
+                        <div class="stat-info">
+                            <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${lawyer.payoutBalance != null ? lawyer.payoutBalance : 0}" /></h2>
+                            <p>Pending Payout</p>
+                            <span>To be processed</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Earnings History</h3>
+                    </div>
+                    <p style="color:var(--secondary); font-size:0.9rem;">Details of completed consultations and generated revenue.</p>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Availability Modal -->
+    <div class="modal" id="availabilityModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Availability</h3>
+                <button class="close-modal" onclick="closeAvailabilityModal()"><i class="bi bi-x"></i></button>
+            </div>
+            <form action="${pageContext.request.contextPath}/lawyer/profile/update" method="post">
+                <input type="hidden" name="fullName" value="${lawyer.fullName}">
+                <input type="hidden" name="phone" value="${lawyer.phone}">
+                <div class="form-group">
+                    <label class="form-label">Available Days</label>
+                    <input type="text" name="openDays" class="form-input" placeholder="e.g. Mon - Fri" value="${lawyer.openDays}">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">From Time</label>
+                        <input type="time" name="openTime" class="form-input" value="${lawyer.openTime}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">To Time</label>
+                        <input type="time" name="closeTime" class="form-input" value="${lawyer.closeTime}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Consultation Type</label>
+                    <select name="serviceMode" class="form-input">
+                        <option value="Online" ${lawyer.serviceMode == 'Online' ? 'selected' : ''}>Video Call / Online</option>
+                        <option value="Offline" ${lawyer.serviceMode == 'Offline' ? 'selected' : ''}>In-person</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 10px;">Save Availability</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -409,7 +564,28 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
             document.getElementById(tabId + '-tab').classList.add('active');
-            el.classList.add('active');
+            if (el) el.classList.add('active');
+            
+            if(window.innerWidth <= 768) {
+                document.querySelector('.sidebar').style.transform = 'translateX(-100%)';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if(sidebar.style.transform === 'translateX(0px)') {
+                sidebar.style.transform = 'translateX(-100%)';
+            } else {
+                sidebar.style.transform = 'translateX(0px)';
+            }
+        }
+
+        function openAvailabilityModal() {
+            document.getElementById('availabilityModal').classList.add('active');
+        }
+
+        function closeAvailabilityModal() {
+            document.getElementById('availabilityModal').classList.remove('active');
         }
 
         function updateStatus(id, newStatus) {
@@ -432,3 +608,9 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+

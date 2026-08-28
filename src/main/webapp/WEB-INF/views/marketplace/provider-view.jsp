@@ -16,54 +16,68 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
-    <style>
+        <style>
         :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #f9f6f8;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --secondary: #64748B;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            --text-main: #0F172A;
+            --border: #E2E8F0;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--m-bg);
-            color: #333;
+            background: var(--bg);
+            color: var(--text-main);
             min-height: 100vh;
         }
 
         /* Profile Header */
         .profile-header {
-            background: white;
+            background: var(--card-bg);
             padding: 40px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             margin-bottom: 40px;
         }
 
         .profile-avatar-large {
             width: 100px;
             height: 100px;
-            background: var(--gradient-primary);
-            border-radius: 30px;
+            background: #FFE4E6;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: var(--primary);
             font-size: 2.5rem;
             font-weight: 900;
             margin-right: 25px;
-            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.3);
+            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.15);
         }
 
         .provider-info h1 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
-            color: var(--m-purple);
+            color: var(--primary);
             margin-bottom: 5px;
+        }
+        
+        .provider-info p {
+            color: var(--secondary);
         }
 
         .badge-verified {
-            background: #e7f5ff;
-            color: #228be6;
+            background: var(--success-bg);
+            color: var(--success-text);
             padding: 5px 15px;
             border-radius: 50px;
             font-size: 0.8rem;
@@ -73,10 +87,11 @@
 
         /* Booking Card */
         .booking-card {
-            background: white;
-            border-radius: 24px;
+            background: var(--card-bg);
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             position: sticky;
             top: 100px;
         }
@@ -84,7 +99,7 @@
         .form-label {
             font-weight: 700;
             font-size: 0.85rem;
-            color: var(--m-purple);
+            color: var(--text-main);
             text-transform: uppercase;
             margin-bottom: 8px;
         }
@@ -92,35 +107,36 @@
         .form-control {
             border-radius: 12px;
             padding: 12px;
-            border: 1px solid #eee;
-            background: #fdfdfd;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text-main);
         }
 
         .form-control:focus {
-            border-color: var(--m-pink);
-            box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
         }
 
         /* Class Card */
         .class-card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 25px;
             margin-bottom: 20px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             transition: 0.3s;
         }
 
         .class-card:hover {
-            transform: scale(1.01);
-            border-color: var(--m-pink);
-            box-shadow: 0 15px 30px rgba(124, 45, 94, 0.08);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.08);
         }
 
         .class-title {
             font-weight: 800;
-            color: var(--m-purple);
+            color: var(--text-main);
             font-size: 1.2rem;
             margin-bottom: 10px;
         }
@@ -132,12 +148,12 @@
             font-weight: 800;
         }
 
-        .mode-live { background: #fff5f5; color: #fa5252; }
+        .mode-live { background: #FFE4E6; color: var(--primary); }
         .mode-offline { background: #e7f5ff; color: #228be6; }
 
         .class-meta {
             font-size: 0.85rem;
-            color: #666;
+            color: var(--secondary);
             display: flex;
             align-items: center;
             gap: 20px;
@@ -145,45 +161,50 @@
             flex-wrap: wrap;
         }
 
-        .class-meta i { color: var(--m-pink); }
+        .class-meta i { color: var(--primary); }
 
         .btn-join {
-            background: var(--gradient-primary);
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 12px;
             border-radius: 12px;
-            font-weight: 800;
-            width: 100%;
+            font-weight: 700;
+            padding: 8px 20px;
             transition: 0.3s;
         }
 
         .btn-join:hover {
-            filter: brightness(1.1);
-            transform: translateY(-2px);
+            background: var(--primary-hover);
             color: white;
         }
-
-        /* Review Item */
-        .review-item {
-            padding: 20px;
-            background: #fff;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--m-pink);
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
         }
-
-        .back-link {
-            color: #888;
-            text-decoration: none;
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            color: white;
+        }
+        
+        .text-muted {
+            color: var(--secondary) !important;
+        }
+        
+        /* Nav tabs */
+        .nav-pills .nav-link {
+            color: var(--secondary);
             font-weight: 600;
-            margin-bottom: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            border-radius: 50px;
+            padding: 8px 24px;
+            margin-right: 10px;
         }
-
-        .back-link:hover { color: var(--m-pink); }
+        .nav-pills .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -194,9 +215,7 @@
 
     <div class="profile-header">
         <div class="container">
-            <a href="${pageContext.request.contextPath}/marketplace/list?category=${provider.category}" class="back-link">
-                <i class="bi bi-arrow-left"></i> Back to ${not empty categoryLabel ? categoryLabel : provider.category}s
-            </a>
+            
             <div class="d-flex align-items-center">
                 <c:choose>
                     <c:when test="${not empty provider.profilePhoto}">
@@ -251,12 +270,12 @@
             <!-- Left: Description & Classes -->
             <div class="col-lg-8">
                 <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
-                    <h4 class="fw-800 mb-3" style="color: var(--m-purple);">About ${provider.fullName}</h4>
+                    <h4 class="fw-800 mb-3" style="color: var(--text-main);">About ${provider.fullName}</h4>
                     <p class="text-muted" style="line-height: 1.8;">${provider.description}</p>
                 </div>
 
                 <div class="section-title mb-3 d-flex align-items-center justify-content-between">
-                    <h4 class="fw-800 m-0" style="color: var(--m-purple);">Available Classes</h4>
+                    <h4 class="fw-800 m-0" style="color: var(--text-main);">Available Classes</h4>
                     <span class="badge bg-light text-dark rounded-pill">${classes.size()} Sessions</span>
                 </div>
 
@@ -273,7 +292,7 @@
                             <span><i class="bi bi-calendar-check"></i> ${pc.dateTime}</span>
                             <span><i class="bi bi-clock"></i> ${pc.duration}</span>
                             <span><i class="bi bi-people-fill"></i> ${pc.availableSeats} seats left</span>
-                            <span class="ms-auto h5 m-0 fw-800" style="color: var(--m-purple);">₹${pc.price}</span>
+                            <span class="ms-auto h5 m-0 fw-800" style="color: var(--text-main);">₹${pc.price}</span>
                         </div>
                         <form action="${pageContext.request.contextPath}/marketplace/classes/enroll" method="post">
                             <input type="hidden" name="classId" value="${pc.id}">
@@ -293,7 +312,7 @@
 
                 <!-- Reviews Section -->
                 <div class="section-title mt-5 mb-3">
-                    <h4 class="fw-800" style="color: var(--m-purple);">Client Reviews</h4>
+                    <h4 class="fw-800" style="color: var(--text-main);">Client Reviews</h4>
                 </div>
                 <div class="bg-white p-4 rounded-4 shadow-sm">
                     <c:if test="${canReview}">
@@ -320,10 +339,10 @@
                     </c:if>
 
                     <c:forEach var="r" items="${reviews}">
-                        <div class="review-item" style="border-left: 4px solid var(--m-pink); background: rgba(219, 39, 119, 0.02); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);">
+                        <div class="review-item" style="border-left: 4px solid var(--primary); background: var(--bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div>
-                                    <h6 class="m-0 fw-800" style="color: var(--m-purple);">${not empty r.user.fullName ? r.user.fullName : 'Anonymous Client'}</h6>
+                                    <h6 class="m-0 fw-800" style="color: var(--text-main);">${not empty r.user.fullName ? r.user.fullName : 'Anonymous Client'}</h6>
                                     <small class="text-muted" style="font-size: 0.8rem;">${not empty r.user.email ? r.user.email : ''}</small>
                                 </div>
                                 <div class="text-warning" style="font-size: 1.1rem;">
@@ -354,7 +373,7 @@
             <!-- Right: Direct Booking -->
             <div class="col-lg-4">
                 <div class="booking-card">
-                    <h5 class="fw-800 mb-4" style="color: var(--m-purple);">One-on-One Session</h5>
+                    <h5 class="fw-800 mb-4" style="color: var(--text-main);">One-on-One Session</h5>
                     <p class="small text-muted mb-4">Can't join a class? Book a personalized private session at your convenience.</p>
                     
                     <form action="${pageContext.request.contextPath}/marketplace/book" method="post">
@@ -373,7 +392,7 @@
                     </form>
                     <hr class="my-4">
                     <div class="text-center">
-                        <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="text-decoration-none small fw-700" style="color: var(--m-pink);">
+                        <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="text-decoration-none small fw-700" style="color: var(--primary);">
                             <i class="bi bi-clock-history"></i> View My Booking Status
                         </a>
                     </div>
@@ -398,4 +417,8 @@
 </div>
 </body>
 </html>
+
+
+
+
 

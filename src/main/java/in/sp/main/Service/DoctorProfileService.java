@@ -296,26 +296,22 @@ public class DoctorProfileService {
         return map;
     }
 
-    public int calculateCompletionPct(Doctor doctor) {
+        public int calculateCompletionPct(Doctor doctor) {
         if (doctor == null) {
             return 0;
         }
         int filled = 0;
-        int total = 13;
+        int total = 9;
 
         if (notBlank(doctor.getFullName())) filled++;
+        if (notBlank(doctor.getPhone())) filled++;
+        if (doctor.getGender() != null) filled++;
         if (notBlank(doctor.getSpecialization())) filled++;
         if (notBlank(doctor.getQualification())) filled++;
         if (notBlank(doctor.getMedicalRegNumber())) filled++;
         if (doctor.getExperienceYears() != null && doctor.getExperienceYears() >= 0) filled++;
         if (doctor.getConsultationFee() != null && doctor.getConsultationFee() >= 0) filled++;
         if (notBlank(doctor.getHospitalName())) filled++;
-        if (notBlank(doctor.getClinicAddress()) && notBlank(doctor.getCity())) filled++;
-        if (notBlank(doctor.getState())) filled++;
-        if (isValidPincode(doctor.getPincode())) filled++;
-        if (notBlank(doctor.getAvailableDays()) && notBlank(doctor.getStartTime())) filled++;
-        if (notBlank(doctor.getConsultationModes()) || doctor.getConsultationType() != null) filled++;
-        if (notBlank(doctor.getLanguages())) filled++;
 
         return (int) Math.round(100.0 * filled / total);
     }
@@ -770,3 +766,5 @@ public class DoctorProfileService {
         return value == null || value.trim().isEmpty();
     }
 }
+
+
