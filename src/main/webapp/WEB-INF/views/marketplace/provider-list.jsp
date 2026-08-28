@@ -17,35 +17,43 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
-        /* Marketplace list only — Martial Arts 60/30/10, does not restyle sidebar/header globally */
+        /* Marketplace /list only — Martial Arts hub tokens, scoped (no sidebar/header global restyle) */
         body.mp-list-page {
-            --m-navy: #1E1B4B;
-            --m-navy-mid: #312E81;
+            --m-navy: #0F172A;
+            --m-navy-mid: #1E293B;
             --m-rose: #F43F5E;
-            --m-rose-mid: #C04B7A;
+            --m-rose-hover: #E11D48;
+            --m-rose-soft: #FFF1F2;
             --m-bg: #F8FAFC;
-            --m-ink: #1a1a2e;
-            --m-border: rgba(30, 27, 75, 0.12);
+            --m-muted: #64748B;
+            --m-border: #E2E8F0;
         }
         body.mp-list-page #page-content-wrapper {
             font-family: 'Poppins', sans-serif;
             background: var(--m-bg);
-            color: var(--m-ink);
+            color: var(--m-navy);
             min-height: 100vh;
         }
         body.mp-list-page .list-header {
-            background: linear-gradient(135deg, var(--m-navy) 0%, var(--m-navy-mid) 48%, var(--m-rose-mid) 100%);
-            padding: 50px 0;
-            color: #fff;
-            margin-bottom: 40px;
-            box-shadow: 0 8px 28px rgba(125, 42, 90, 0.18);
+            background: #FFFFFF;
+            padding: 28px 0 20px;
+            color: var(--m-navy);
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--m-border);
+            box-shadow: none;
         }
-        body.mp-list-page .list-header h1 { color: #fff; }
-        body.mp-list-page .list-header p { color: rgba(255,255,255,0.78); }
+        body.mp-list-page .list-header h1 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--m-navy);
+            letter-spacing: -0.5px;
+        }
+        body.mp-list-page .list-header p { color: var(--m-muted); }
         body.mp-list-page .list-header .btn-outline-dark,
         body.mp-list-page .list-header .btn-outline-light {
-            border-color: rgba(255,255,255,0.45);
-            color: #fff;
+            background: #FFFFFF;
+            border: 1px solid var(--m-border);
+            color: var(--m-navy);
+            min-height: 42px;
         }
         body.mp-list-page .list-header .btn-outline-dark:hover,
         body.mp-list-page .list-header .btn-outline-light:hover {
@@ -55,26 +63,27 @@
         }
         body.mp-list-page .provider-card {
             background: #fff;
-            border-radius: 20px;
-            padding: 25px;
-            transition: 0.3s;
+            border-radius: 18px;
+            padding: 24px;
+            transition: 0.25s ease;
             border: 1px solid var(--m-border);
-            box-shadow: 0 6px 20px rgba(125, 42, 90, 0.08);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             height: 100%;
             display: flex;
             flex-direction: column;
             text-decoration: none;
         }
         body.mp-list-page .provider-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 16px 32px rgba(125, 42, 90, 0.12);
-            border-color: var(--m-rose);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border-color: #CBD5E1;
         }
         body.mp-list-page .provider-avatar {
             width: 60px;
             height: 60px;
-            background: #FFE4E6;
-            border-radius: 15px;
+            background: var(--m-rose-soft);
+            border: 1px solid #FECDD3;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -84,8 +93,9 @@
             margin-bottom: 20px;
         }
         body.mp-list-page .rating-badge {
-            background: #FFF7ED;
-            color: #C2410C;
+            background: var(--m-rose-soft);
+            border: 1px solid #FECDD3;
+            color: #9F1239;
             padding: 4px 12px;
             border-radius: 50px;
             font-size: 0.85rem;
@@ -95,8 +105,8 @@
             gap: 5px;
         }
         body.mp-list-page .location-tag {
-            font-size: 0.8rem;
-            color: #64748B;
+            font-size: 0.85rem;
+            color: var(--m-muted);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -111,7 +121,7 @@
         }
         body.mp-list-page .provider-desc {
             font-size: 0.9rem;
-            color: #64748B;
+            color: var(--m-muted);
             margin-bottom: 20px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
@@ -120,34 +130,40 @@
         }
         body.mp-list-page .btn-view {
             margin-top: auto;
-            background: var(--m-navy);
+            background: var(--m-rose);
             color: #fff;
             border: none;
-            padding: 10px;
+            padding: 10px 16px;
+            min-height: 42px;
             border-radius: 12px;
             font-weight: 700;
-            transition: 0.3s;
+            transition: 0.25s ease;
             text-align: center;
             display: block;
             text-decoration: none;
         }
         body.mp-list-page .btn-view:hover {
-            background: var(--m-rose);
+            background: var(--m-rose-hover);
             color: #fff;
-            transform: scale(1.02);
         }
         body.mp-list-page .btn-primary {
             background: var(--m-rose);
             border-color: var(--m-rose);
             color: #fff;
+            min-height: 42px;
         }
         body.mp-list-page .btn-primary:hover {
-            background: #E11D48;
-            border-color: #E11D48;
+            background: var(--m-rose-hover);
+            border-color: var(--m-rose-hover);
             color: #fff;
         }
         @media (max-width: 768px) {
-            body.mp-list-page .list-header { padding: 28px 0; }
+            body.mp-list-page .list-header { padding: 20px 0 16px; }
+            body.mp-list-page .list-header .container {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 16px;
+            }
         }
     </style>
 </head>
