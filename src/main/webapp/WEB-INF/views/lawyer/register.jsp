@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -506,7 +506,7 @@
                 <!-- Centre / Trainer Name -->
                 <div class="form-group">
                     <label for="name">Lawyer name *</label>
-                    <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Advocate Priya Sharma" required>
+                    <input type="text" id="name" name="fullName" class="form-input" placeholder="e.g. Advocate Priya Sharma" required>
                 </div>
 
                 <!-- Contact Person -->
@@ -701,7 +701,7 @@
             document.getElementById('sendOtpText').textContent = 'Sending...';
 
             try {
-                const res = await fetch('${pageContext.request.contextPath}/api/lawyer/otp/send-email', {
+                const res = await fetch('${pageContext.request.contextPath}/lawyer/otp/send-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email })
@@ -760,7 +760,7 @@
             btn.textContent = 'Verifying...';
 
             try {
-                const res = await fetch('${pageContext.request.contextPath}/api/lawyer/otp/verify-email', {
+                const res = await fetch('${pageContext.request.contextPath}/lawyer/otp/verify-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, otp: otp })

@@ -4,27 +4,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>My Profile | Fight D Fear</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Icons & CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
 
-   <meta charset="utf-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-			<title>User Profile</title>
-			<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
-
-<!-- Icons & CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css" rel="stylesheet">
-
-			<!-- 🎨 Custom CSS -->
-			</head>
-			<style>
-    /* ============================================
-       ORIGINAL STYLES (kept exactly as is)
-       ============================================ */
+    <!-- 🎨 Custom CSS -->
+    <style>
     :root {
         --primary-purple: #F8FAFC;
         --primary-purple-light: #F43F5E;
@@ -38,6 +35,15 @@
         --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
         --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
         --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
+        --surface-primary: #FFFFFF;
+        --surface-page: #F8FAFC;
+        --surface-rose-soft: #FFF1F2;
+        --surface-rose-light: #FFE4E6;
+        --border-neutral: #E2E8F0;
+        --text-primary: #0F172A;
+        --text-secondary: #64748B;
+        --accent-rose: #F43F5E;
+        --accent-rose-hover: #E11D48;
     }
 
     /* ===== Nav Item Theme Color (desktop only) ===== */
@@ -52,31 +58,9 @@
             font-weight: 700 !important;
             box-shadow: none !important;
             letter-spacing: 0.3px;
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>My Profile | Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
-    <style>
-        :root {
-            --surface-primary: #FFFFFF;
-            --surface-page: #F8FAFC;
-            --surface-rose-soft: #FFF1F2;
-            --surface-rose-light: #FFE4E6;
-            --border-neutral: #E2E8F0;
-            --text-primary: #0F172A;
-            --text-secondary: #64748B;
-            --accent-rose: #F43F5E;
-            --accent-rose-hover: #E11D48;
-
         }
-
-
-
+    }
+    
     #ftco-navbar {
         background-color: var(--primary-purple) !important;
         box-shadow: var(--shadow-sm);
@@ -385,11 +369,8 @@
         display: none;
     }
 
-    /* Profile page mobile: sidebar + content layout */
-    @media (max-width: 768px) {
-        body {
-
-        body.profile-page {
+    /* Profile page layout */
+    body.profile-page {
             font-family: 'Poppins', sans-serif;
             background: var(--surface-page);
             color: var(--text-primary);
@@ -743,37 +724,26 @@
     <div id="page-content-wrapper" class="profile-full" data-skip-global-back="true">
 
 
-<section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: #F8FAFC;">
-					     <div class="container-fluid p-0">
-					       <div class="row no-gutters align-items-stretch" style="background: #FFFFFF; border-radius: 24px; box-shadow: 0 4px 24px rgba(0,0,0,0.04); margin: 30px auto; max-width: 1200px; overflow: hidden; border: 1px solid #E2E8F0;">
-					       <div class="col-md-5 user-bg-left d-flex flex-column align-items-center p-5" style="background: #FFFFFF; border-right: 1px solid #E2E8F0;">
-    <img src="${pageContext.request.contextPath}${user.profilePhoto}"
-         onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
-         alt="User Profile Picture"
-         style="width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #F43F5E;box-shadow:0 4px 20px rgba(244,63,94,0.25);" class="mb-4">
-
-    <!-- 📊 Account Summary Integrated Here -->
-    <div class="text-center px-3" style="color: #0F172A;">
-        <div class="coin-box d-inline-block mb-3 shadow-sm" style="background: #FFF7ED; border: 1px solid #C2410C; color: #C2410C;">
-            🪙 <span style="font-size: 20px;"><strong>${user.rewardPoints != null ? user.rewardPoints : 0}</strong></span> Coins Earned
-        </div>
-        <h4 class="mb-2" style="color: #0F172A; font-weight:800;">Account Overview</h4>
-        <p class="small mb-3" style="color: #64748B;">Manage your safety profile and contacts below.</p>
-        
-        <div class="d-flex flex-column gap-2 w-100" style="max-width: 300px;">
-            <a href="${pageContext.request.contextPath}/index/contact" class="btn btn-sm py-2 px-4 rounded-pill" style="background:#F43F5E; color:#FFF; font-weight:700;">
-                <i class="fas fa-comment-alt me-2"></i> Get in Touch
-            </a>
-            <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn btn-outline-danger btn-sm py-2 px-4 rounded-pill" style="color:#F43F5E; border-color:#F43F5E; font-weight: 700;">
-                <i class="fas fa-phone-alt me-2"></i> Emergency Contacts
-            </a>
-
         <div class="profile-fullscreen">
             <!-- 30% full-height side -->
             <aside class="profile-side">
-                <img src="${pageContext.request.contextPath}${user.profilePhoto}"
-                     onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';"
-                     alt="Profile" class="profile-avatar">
+                <c:set var="userPUrl" value="${user.profilePhoto}" />
+                <c:choose>
+                    <c:when test="${not empty userPUrl}">
+                        <c:if test="${not fn:startsWith(userPUrl, 'http') and not fn:startsWith(userPUrl, '/')}">
+                            <c:set var="userPUrl" value="/uploads/${userPUrl}" />
+                        </c:if>
+                        <c:if test="${not fn:startsWith(userPUrl, 'http')}">
+                            <c:set var="userPUrl" value="${pageContext.request.contextPath}${userPUrl}" />
+                        </c:if>
+                        <img src="${userPUrl}"
+                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';"
+                             alt="Profile" class="profile-avatar">
+                    </c:when>
+                    <c:otherwise>
+                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="profile-avatar">
+                    </c:otherwise>
+                </c:choose>
                 <div class="profile-side-name">${user.fullName}</div>
                 <div class="profile-side-role">Member profile</div>
 
@@ -890,85 +860,7 @@
     </div>
 </div>
 
-					          
-					         <!-- 📋 Right Side: User Details -->
-					         <div class="col-md-7 user-details-side d-flex align-items-start" style="background: #FFFFFF;">
-					           <div class="user-details p-3 p-lg-5 pt-lg-3">
-					             
-					             <!-- Header -->
-					             <div class="heading-section ftco-animate mb-4">
-					               <h2 class="mb-2">Hello, ${user.fullName} 👋</h2>
-					               
-					               <!-- 📊 Instagram-style Stats -->
-					               <div class="d-flex instagram-stats gap-4 my-3 py-2 border-top border-bottom">
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${postsCount != null ? postsCount : 0}</h5>
-					                       <small class="text-muted">Posts</small>
-					                   </div>
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${followersCount != null ? followersCount : 0}</h5>
-					                       <small class="text-muted">Followers</small>
-					                   </div>
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${followingCount != null ? followingCount : 0}</h5>
-					                       <small class="text-muted">Following</small>
-					                   </div>
-					               </div>
 
-					               <p class="text-muted">Here’s your complete profile overview</p>
-					             </div>
-
-					             <!-- Details List -->
-					             <ul class="list-unstyled ftco-animate">
-					               <li class="mb-3"><i class="fas fa-envelope me-2" style="color: #F43F5E;"></i> <strong>Email:</strong> ${user.email}</li>
-					               <li class="mb-3"><i class="fas fa-phone me-2" style="color: #F43F5E;"></i> <strong>Phone:</strong> ${user.phoneNumber}</li>
-					               <li class="mb-3"><i class="fas fa-home me-2" style="color: #F43F5E;"></i> <strong>Address:</strong> ${user.homeAddress}</li>
-					               <li class="mb-3"><i class="fas fa-id-badge me-2" style="color: #F43F5E;"></i> <strong>User ID:</strong> ${user.id}</li>
-					               <li class="mb-3">
-    <i class="fas fa-calendar-alt me-2" style="color: #F43F5E;"></i>
-    <strong>Date of Birth:</strong> ${user.dob}
-</li>
-					               
-					               <li class="mb-3"><i class="fas fa-calendar-alt me-2" style="color: #F43F5E;"></i> <strong>Age:</strong> ${user.age}</li>
-					               <li class="mb-3"><i class="fas fa-venus-mars me-2" style="color: #F43F5E;"></i> <strong>Gender:</strong> ${user.gender}</li>
-					               <li class="mb-3"><i class="fas fa-file me-2" style="color: #F43F5E;"></i> 
-					                 <strong>ID Document:</strong> 
-					                 <a href="${pageContext.request.contextPath}${user.identityDocument}" target="_blank" class="text-decoration-none">View</a>
-					               </li>
-					             </ul>
-
-					             <!-- 📊 Profile Completion -->
-					             <div class="progress-container mt-4">
-					               <div class="progress" style="height: 12px; border-radius: 10px;">
-					                 <div class="progress-bar" style="background-color: #F43F5E;" role="progressbar"
-					                      style="width: ${completionPercentage}%;"
-					                      aria-valuenow="${completionPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
-					               </div>
-					               <p class="mt-2 mb-0 text-muted">
-					                 Profile Completion: <strong>${completionPercentage}%</strong>
-					               </p>
-					             </div>
-
-					             <!-- 🔘 Action Buttons -->
-					             <div class="mt-4 d-flex flex-wrap gap-3">
-					               <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn px-4 py-2 text-white" style="background:#F43F5E; border-color:#F43F5E;">
-					                 <i class="fas fa-user-edit me-2"></i> Edit
-					               </a>
-					               <a href="${pageContext.request.contextPath}/users/delete/${user.id}" class="btn btn-outline-danger px-4 py-2" style="color: #DC2626; border-color: #DC2626;">
-					                 <i class="fas fa-trash-alt me-2"></i> Delete
-					               </a>
-					             </div>
-
-					           </div>
-					         </div>
-
-					       </div>
-					     </div>
-					   </section>
-
-
-
- <!-- 🌸 Footer -->
   
 
 <!-- Scripts -->
@@ -989,8 +881,6 @@
 					  	<script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
 					  	<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
 
-					      </div>
-</div>
 </body>
 					  </html>
 

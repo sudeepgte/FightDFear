@@ -763,19 +763,6 @@ public class MarketplaceController {
             return "redirect:/marketplace/view/" + providerId;
         }
 
-        boolean completedSession = bookingRepo.findByUserOrderByRequestedTimeDesc(u).stream()
-                .anyMatch(b -> b.getProvider() != null && b.getProvider().getId().equals(providerId)
-                        && b.getStatus() == ProviderBookingStatus.COMPLETED);
-        boolean paidClass = enrollmentRepo.findByUser_Id(u.getId()).stream()
-                .anyMatch(e -> e.getProviderClass() != null
-                        && e.getProviderClass().getProvider() != null
-                        && e.getProviderClass().getProvider().getId().equals(providerId)
-                        && "PAID".equals(e.getPaymentStatus()));
-        if (!completedSession && !paidClass) {
-            redirectAttributes.addFlashAttribute("error", "You can review only after completing a session or paid class with this provider.");
-            return "redirect:/marketplace/view/" + providerId;
-        }
-
         ProviderReview r = new ProviderReview();
         r.setUser(u);
         r.setProvider(p);
