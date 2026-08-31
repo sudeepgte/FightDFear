@@ -19,6 +19,7 @@
             --text-charcoal: #23202B;     /* Dark Text */
             --text-light: #6B5B68;        /* Secondary Text */
             --brand-plum: #F33F5E;        /* Primary Pink/Coral */
+            --brand-pink: #F43F5E;
             --brand-plum-hover: #D92545;  /* Primary Dark */
             --brand-rose: #F8C8D4;        /* Soft Pink Borders/Accents */
             --sos-red: #F33F5E;           /* SOS section */
@@ -329,7 +330,7 @@
         /* ---------------- PREMIUM SPLIT HERO ---------------- */
         .split-hero-section {
             background: linear-gradient(135deg, #FFFBFC 0%, #FFF5F7 100%);
-            padding: calc(var(--nav-height) + 0.8rem) 0 1.2rem;
+            padding: calc(var(--nav-height) + 1.2rem) 0 2rem;
             min-height: auto;
             display: flex;
             align-items: center;
@@ -339,70 +340,30 @@
             width: 100%;
             max-width: 95%;
             margin: 0 auto;
-            padding: 0 1rem;
+            padding: 0 1.5rem;
             display: grid;
-            grid-template-columns: 1fr 0.9fr;
-            gap: 2rem;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 2.2rem;
             align-items: center;
         }
 
-        /* Image Column - Clean, Unboxed Visual Flow */
         .hero-img-col {
             position: relative;
-            border-radius: 16px;
+            border-radius: 28px;
             overflow: hidden;
-            box-shadow: none;
-            max-height: 950px;
-            aspect-ratio: 4/3;
+            background: #fff;
+            box-shadow: 0 18px 40px rgba(243, 63, 94, 0.1);
+            aspect-ratio: 4 / 3;
         }
 
         .hero-split-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
             display: block;
         }
-        
-        .floating-badge {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 50px;
-            padding: 6px 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-plum);
-            border: 1px solid rgba(243, 63, 94, 0.15);
-            z-index: 5;
-        }
 
-        .badge-top-right {
-            top: 16px;
-            right: 16px;
-        }
-
-        .badge-bottom-left {
-            bottom: 16px;
-            left: 16px;
-        }
-
-        .badge-icon {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--brand-plum);
-            color: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-        }
-
-        /* Content Column */
         .hero-content {
             display: flex;
             flex-direction: column;
@@ -414,46 +375,46 @@
             align-items: center;
             background: rgba(243, 63, 94, 0.1);
             border-radius: 50px;
-            padding: 5px 14px;
-            margin-bottom: 0.8rem;
-            border: 1px solid rgba(243, 63, 94, 0.2);
+            padding: 6px 16px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(243, 63, 94, 0.18);
             align-self: flex-start;
         }
 
         .eyebrow-text {
             color: var(--brand-plum);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
         }
 
         .split-hero-section .hero-title {
             font-family: var(--font-serif);
-            font-size: 2.8rem;
+            font-size: clamp(2.3rem, 4vw, 3.2rem);
             color: var(--text-plum);
-            line-height: 1.15;
-            margin-bottom: 0.8rem;
+            line-height: 1.18;
+            margin-bottom: 0.85rem;
             font-weight: 700;
         }
 
         .split-hero-section .highlight-pink {
-            color: var(--brand-pink);
+            color: var(--text-plum);
         }
 
         .split-hero-section .hero-desc {
-            font-size: 0.98rem;
-            color: var(--text-charcoal);
-            line-height: 1.5;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
             max-width: 95%;
         }
 
         .static-hero-features {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 1.2rem;
+            gap: 10px 12px;
+            margin-bottom: 1.4rem;
         }
 
         .feature-box {
@@ -461,10 +422,10 @@
             align-items: center;
             gap: 10px;
             background: var(--white);
-            padding: 8px 14px;
-            border-radius: 12px;
+            padding: 10px 14px;
+            border-radius: 14px;
             border: 1px solid rgba(243, 63, 94, 0.1);
-            font-size: 0.88rem;
+            box-shadow: 0 4px 14px rgba(45, 20, 44, 0.04);
             transition: all 0.3s ease;
         }
 
@@ -475,37 +436,55 @@
         }
 
         .feature-box-icon {
-            font-size: 1.3rem;
-            background: rgba(243, 63, 94, 0.05);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
+
+        .feature-box-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .feature-icon-safety { background: #E8F1FF; }
+        .feature-icon-safety svg { fill: #3B82F6; }
+        .feature-icon-health { background: #FDE8ED; }
+        .feature-icon-health svg { fill: #F43F5E; }
+        .feature-icon-fitness { background: #FFF6D9; }
+        .feature-icon-fitness svg { fill: #EAB308; }
+        .feature-icon-finance { background: #E8F1FF; }
+        .feature-icon-finance svg { fill: #2563EB; }
+        .feature-icon-events { background: #FFF4D6; }
+        .feature-icon-events svg { fill: #D4A017; }
+        .feature-icon-business { background: #F3E8DD; }
+        .feature-icon-business svg { fill: #8B5E3C; }
 
         .feature-box-text {
             font-weight: 600;
             color: var(--text-plum);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         .hero-actions {
             display: flex;
-            gap: 20px;
+            gap: 14px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .btn-primary {
-            background-color: var(--brand-plum);
+            background-color: #F43F5E;
             color: var(--white);
-            padding: 0.95rem 2rem;
+            padding: 0.95rem 1.8rem;
             border-radius: 50px;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.95rem;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(243, 63, 94, 0.25);
+            box-shadow: 0 10px 24px rgba(244, 63, 94, 0.28);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -513,19 +492,19 @@
         }
 
         .btn-primary:hover {
-            background-color: #E4234C;
+            background-color: #E11D48;
             transform: translateY(-2px);
             box-shadow: 0 12px 30px rgba(243, 63, 94, 0.35);
             color: var(--white);
         }
 
         .btn-secondary-outline {
-            background-color: transparent;
-            color: var(--brand-plum);
-            border: 2px solid var(--brand-plum);
-            padding: 0.85rem 1.8rem;
+            background-color: #fff;
+            color: #F43F5E;
+            border: 2px solid #F43F5E;
+            padding: 0.85rem 1.6rem;
             border-radius: 50px;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 0.95rem;
             transition: all 0.3s ease;
             display: inline-flex;
@@ -535,14 +514,18 @@
         }
 
         .btn-secondary-outline:hover {
-            background-color: var(--brand-plum);
+            background-color: #F43F5E;
             color: var(--white);
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(243, 63, 94, 0.2);
         }
 
-        /* Responsive Design */
         @media (max-width: 1100px) {
+            .split-hero-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .hero-img-col { min-height: 0; }
             .carousel-slide .hero-title {
                 font-size: 3.2rem;
             }
@@ -579,6 +562,13 @@
                 transform: translateY(0);
                 opacity: 1;
                 visibility: visible;
+            }
+            .split-hero-section {
+                min-height: auto;
+                padding: calc(var(--nav-height) + 1rem) 0 2rem;
+            }
+            .split-hero-container {
+                padding: 0 1.2rem;
             }
             .nav-links .nav-item {
                 width: 100%;
@@ -1986,7 +1976,7 @@
                     <a href="/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
                     <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="/investor/login" class="dropdown-item">Investor</a>
-                    <a href="/host/login" class="dropdown-item">Event Host</a>
+                    <a href="/women-events/host/login" class="dropdown-item">Event Host</a>
                     <a href="/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </li>
@@ -2028,7 +2018,7 @@
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
                     <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
-                    <a href="${pageContext.request.contextPath}/host/login" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
                     <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </div>
@@ -2061,73 +2051,50 @@
     <!-- PREMIUM SPLIT HERO SECTION -->
     <section class="split-hero-section" id="heroStatic">
         <div class="split-hero-container">
-            <!-- Left Side: Content Column -->
             <div class="hero-content">
                 <div class="eyebrow-badge">
                     <span class="eyebrow-text">Fight D Fear • Empowering Women</span>
                 </div>
-                <h1 class="hero-title">Empowering Women.<br><span class="highlight-pink">Protecting Futures.</span></h1>
+                <h1 class="hero-title">Empowering Women.<br>Protecting Futures.</h1>
                 <p class="hero-desc">Safety, healthcare, wellness, financial growth, career opportunities, and meaningful connections — everything women need to live stronger, safer, and more empowered.</p>
-                
+
                 <div class="static-hero-features">
                     <div class="feature-box">
-                        <div class="feature-box-icon">🛡️</div>
-                        <span class="feature-box-text">Safety & Protection</span>
+                        <div class="feature-box-icon feature-icon-safety"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.25 3.4 10.15 8 11.4 4.6-1.25 8-6.15 8-11.4V5l-8-3z"/></svg></div>
+                        <span class="feature-box-text">Safety &amp; Protection</span>
                     </div>
                     <div class="feature-box">
-                        <div class="feature-box-icon">🏥</div>
-                        <span class="feature-box-text">Women’s Health</span>
+                        <div class="feature-box-icon feature-icon-health"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 14H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg></div>
+                        <span class="feature-box-text">Women's Health</span>
                     </div>
                     <div class="feature-box">
-                        <div class="feature-box-icon">🧘‍♀️</div>
-                        <span class="feature-box-text">Fitness & Wellness</span>
+                        <div class="feature-box-icon feature-icon-fitness"><svg viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9 7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/></svg></div>
+                        <span class="feature-box-text">Fitness &amp; Wellness</span>
                     </div>
                     <div class="feature-box">
-                        <div class="feature-box-icon">📈</div>
+                        <div class="feature-box-icon feature-icon-finance"><svg viewBox="0 0 24 24"><path d="M3 17.25 9.75 10.5l4 4L21 7.25V11h2V4h-7v2h3.75L13.75 12l-4-4L3 14.75V17.25z"/></svg></div>
                         <span class="feature-box-text">Financial Growth</span>
                     </div>
                     <div class="feature-box">
-                        <div class="feature-box-icon">🤝</div>
-                        <span class="feature-box-text">Events & Community</span>
+                        <div class="feature-box-icon feature-icon-events"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg></div>
+                        <span class="feature-box-text">Events &amp; Community</span>
                     </div>
                     <div class="feature-box">
-                        <div class="feature-box-icon">💼</div>
-                        <span class="feature-box-text">Business & Investment</span>
+                        <div class="feature-box-icon feature-icon-business"><svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg></div>
+                        <span class="feature-box-text">Business &amp; Investment</span>
                     </div>
                 </div>
 
                 <div class="hero-actions">
-                    <a href="/users/register" class="btn-primary">Explore Our Platform &rarr;</a>
-                    <a href="/users/register" class="btn-secondary-outline">Get Started</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="btn-primary">Explore Our Platform &rarr;</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="btn-secondary-outline">Get Started</a>
                 </div>
             </div>
 
-            <!-- Right Side: Image Column -->
             <div class="hero-img-col">
-              
-                <!-- Using the Indian women empowerment hero image -->
-                <img src="${pageContext.request.contextPath}/images/hero_split_img.png" alt="Empowering Women" class="hero-split-image">
-            </div>
-        </div>
-    </section>
-  <!-- OPTIONAL STATISTICS STRIP -->
-    <section class="stats-section reveal">
-        <div class="stats-grid">
-            <div>
-                <div class="stat-number">10K+</div>
-                <div class="stat-label">Women Connected</div>
-            </div>
-            <div>
-                <div class="stat-number">500+</div>
-                <div class="stat-label">Services</div>
-            </div>
-            <div>
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Events</div>
-            </div>
-            <div>
-                <div class="stat-number">50+</div>
-                <div class="stat-label">Resources</div>
+                <img src="${pageContext.request.contextPath}/images/hero_split_img.png"
+                     alt="Empowering women across safety, health, wellness, and careers"
+                     class="hero-split-image">
             </div>
         </div>
     </section>
