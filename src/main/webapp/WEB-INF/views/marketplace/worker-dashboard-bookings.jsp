@@ -38,6 +38,30 @@
     }
     .wj-cta p { margin: 0; font-size: 0.88rem; color: #1E1B4B; font-weight: 600; }
     .wj-cta span { display: block; font-size: 0.8rem; font-weight: 500; color: #64748B; margin-top: 4px; }
+    .wj-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 20px;
+        padding: 12px 14px;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .wj-filter-pill {
+        border: 1px solid #E2E8F0;
+        background: #FFFFFF;
+        color: #1E1B4B;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .wj-filter-pill:hover { border-color: #F43F5E; color: #F43F5E; }
+    .wj-filter-pill.active { background: #F43F5E; color: #fff; border-color: #F43F5E; }
   </style>
 </head>
 <body class="wj-page">
@@ -112,6 +136,18 @@
       <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
     </div>
 
+    <c:if test="${not empty incomingBookings}">
+    <div class="wj-filter-bar" id="bookingFilterBar">
+      <button type="button" class="wj-filter-pill active" data-filter="ALL">All</button>
+      <button type="button" class="wj-filter-pill" data-filter="PENDING">Pending</button>
+      <button type="button" class="wj-filter-pill" data-filter="ACCEPTED">Accepted</button>
+      <button type="button" class="wj-filter-pill" data-filter="PAID">Paid</button>
+      <button type="button" class="wj-filter-pill" data-filter="COMPLETED">Completed</button>
+      <button type="button" class="wj-filter-pill" data-filter="REJECTED">Rejected</button>
+      <button type="button" class="wj-filter-pill" data-filter="CANCELLED">Cancelled</button>
+    </div>
+    </c:if>
+
     <div class="wj-card">
       <div class="wj-card-h"><h2><i class="bi bi-calendar-check"></i> Recent Job Bookings</h2></div>
       <div class="wj-card-b">
@@ -133,7 +169,7 @@
               </thead>
               <tbody>
                 <c:forEach var="b" items="${incomingBookings}">
-                  <tr>
+                  <tr class="wj-booking-row" data-status="${b.status}">
                     <td>
                       <div class="wj-user-cell">
                         <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
@@ -393,6 +429,28 @@
                         }
                     }
                 }
+            });
+        }
+
+        var filterBar = document.getElementById('bookingFilterBar');
+        if (filterBar) {
+            filterBar.addEventListener('click', function(e) {
+                var btn = e.target.closest('.wj-filter-pill');
+                if (!btn) return;
+                filterBar.querySelectorAll('.wj-filter-pill').forEach(function(p) { p.classList.remove('active'); });
+                btn.classList.add('active');
+                var filter = (btn.getAttribute('data-filter') || 'ALL').toUpperCase();
+                document.querySelectorAll('.wj-booking-row').forEach(function(row) {
+                    var status = (row.getAttribute('data-status') || '').toUpperCase();
+                    var show = filter === 'ALL';
+                    if (filter === 'PENDING') show = status === 'PENDING';
+                    if (filter === 'ACCEPTED') show = status === 'ACCEPTED' || status === 'CONFIRMED';
+                    if (filter === 'PAID') show = status === 'PAID';
+                    if (filter === 'COMPLETED') show = status === 'COMPLETED';
+                    if (filter === 'REJECTED') show = status === 'REJECTED';
+                    if (filter === 'CANCELLED') show = status === 'CANCELLED';
+                    row.style.display = show ? '' : 'none';
+                });
             });
         }
     });

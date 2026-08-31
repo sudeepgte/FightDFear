@@ -63,18 +63,66 @@
             box-shadow: 0 10px 32px rgba(30, 27, 75, 0.06);
         }
         body.wj-profile-page .wj-card-b.padded { padding: 28px 32px 32px; }
-        body.wj-profile-page .wj-progress { display: flex; gap: 10px; margin-bottom: 18px; }
+        body.wj-profile-page .wj-progress { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
         body.wj-profile-page .wj-progress span {
-            flex: 1; height: 8px; border-radius: 99px; background: #E2E8F0;
+            flex: 1 1 calc(8.33% - 6px); min-width: 18px; height: 8px; border-radius: 99px; background: #E2E8F0;
         }
         body.wj-profile-page .wj-progress span.on { background: #F43F5E; }
         body.wj-profile-page .wj-step-title {
             font-size: 0.78rem;
             font-weight: 700;
             color: #1E1B4B;
-            margin-bottom: 22px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.06em;
+        }
+        body.wj-profile-page .wj-step-desc {
+            font-size: 0.88rem;
+            color: #64748B;
+            margin: 0 0 18px;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        body.wj-profile-page .wj-readonly {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            color: #1E1B4B;
+            margin-bottom: 12px;
+        }
+        body.wj-profile-page .wj-readonly span { display: block; font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+        body.wj-profile-page .wj-field-err {
+            display: none;
+            color: #DC2626;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+        body.wj-profile-page .wj-field-err.on { display: block; }
+        body.wj-profile-page .wj-hint {
+            font-size: 0.82rem;
+            color: #64748B;
+            background: #FFF1F2;
+            border: 1px solid #FFE4E6;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+        }
+        body.wj-profile-page .wj-mobile-tag {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #9F1239;
+            background: #FFE4E6;
+            border-radius: 6px;
+            padding: 2px 8px;
+            margin-left: 6px;
+            vertical-align: middle;
         }
         body.wj-profile-page .wj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; }
         body.wj-profile-page .wj-row .full { grid-column: 1 / -1; }
@@ -157,89 +205,180 @@
     <div class="wj-card">
         <div class="wj-card-b padded">
             <div class="wj-progress" id="profileProgress">
-                <span class="on"></span><span></span><span></span><span></span>
+                <span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
-            <p class="wj-step-title" id="stepLabel">Step 1 of 4 — Professional intro</p>
+            <p class="wj-step-title" id="stepLabel">Step 1 of 12 — Worker identity</p>
+            <p class="wj-step-desc" id="stepDesc">Your name, role, phone and experience.</p>
 
             <form action="${pageContext.request.contextPath}/women-jobs/profile" method="post" id="workerProfileForm">
 
                 <div class="wj-step" data-step="1">
                     <div class="wj-row">
                         <div class="wj-field">
-                            <label class="wj-label">Full Name (Read-Only)</label>
-                            <input type="text" class="wj-input" value="${workerApp.user.fullName}" readonly style="background:#F8FAFC;">
+                            <label class="wj-label">1.1 Full name <span class="wj-mobile-tag">Not editable on web</span></label>
+                            <div class="wj-readonly"><c:out value="${workerApp.user.fullName}"/></div>
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Email Address (Read-Only)</label>
-                            <input type="text" class="wj-input" value="${workerApp.user.email}" readonly style="background:#F8FAFC;">
+                            <label class="wj-label">Email <span class="wj-mobile-tag">Not editable on web</span></label>
+                            <div class="wj-readonly"><c:out value="${workerApp.user.email}"/></div>
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Designation / Title</label>
-                            <input type="text" name="designation" class="wj-input" placeholder="e.g. Senior Baby Care Specialist" value="${workerApp.designation}">
+                            <label class="wj-label">1.2 Role type / designation</label>
+                            <input type="text" name="designation" class="wj-input" maxlength="120" placeholder="e.g. Senior Baby Care Specialist" value="${workerApp.designation}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Years of Experience</label>
-                            <input type="number" name="yearsExperience" class="wj-input" min="0" max="50" placeholder="e.g. 5" value="${workerApp.yearsExperience}">
+                            <label class="wj-label">1.5 Official phone <span class="wj-mobile-tag">Not editable on web</span></label>
+                            <div class="wj-readonly"><c:out value="${workerApp.user.phoneNumber}"/></div>
                         </div>
-                        <div class="wj-field full">
-                            <label class="wj-label">Brief Professional Bio</label>
-                            <textarea name="bio" class="wj-textarea" rows="3" placeholder="Tell clients about your work style, background, or child-care philosophy...">${workerApp.bio}</textarea>
+                        <div class="wj-field">
+                            <label class="wj-label">1.6 WhatsApp</label>
+                            <input type="text" name="whatsappNumber" id="whatsappNumber" class="wj-input" maxlength="10" inputmode="numeric" placeholder="e.g. 9876543210" value="${workerApp.whatsappNumber}">
+                            <small class="wj-field-err" id="err-whatsappNumber"></small>
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">1.7 Years of experience</label>
+                            <input type="number" name="yearsExperience" id="yearsExperience" class="wj-input" min="0" max="50" placeholder="e.g. 5" value="${workerApp.yearsExperience}">
+                            <small class="wj-field-err" id="err-yearsExperience"></small>
                         </div>
                     </div>
                 </div>
 
                 <div class="wj-step" data-step="2" style="display:none;">
                     <div class="wj-row">
-                        <div class="wj-field">
-                            <label class="wj-label">WhatsApp Number</label>
-                            <input type="text" name="whatsappNumber" class="wj-input" placeholder="e.g. 9876543210" value="${workerApp.whatsappNumber}">
+                        <div class="wj-field full">
+                            <label class="wj-label">2.1 Landmark / address</label>
+                            <input type="text" name="address" class="wj-input" maxlength="255" placeholder="Flat, Street, Area info" value="${workerApp.address}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Hourly Rate (₹)</label>
-                            <input type="number" name="hourlyRate" class="wj-input" min="1" step="0.01" value="${workerApp.hourlyRate}">
+                            <label class="wj-label">2.3 City</label>
+                            <input type="text" name="city" class="wj-input" maxlength="80" placeholder="City" value="${workerApp.city}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Languages Spoken</label>
-                            <input type="text" name="languages" class="wj-input" placeholder="e.g. English, Hindi, Punjabi" value="${workerApp.languages}">
+                            <label class="wj-label">2.4 State</label>
+                            <input type="text" name="state" class="wj-input" maxlength="80" placeholder="State" value="${workerApp.state}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Skills / Services Offered</label>
-                            <input type="text" name="skills" class="wj-input" placeholder="e.g. CPR, Newborn Care, Cooking, Tutoring" value="${workerApp.skills}">
+                            <label class="wj-label">2.5 Pincode</label>
+                            <input type="text" name="pincode" id="pincode" class="wj-input" maxlength="6" inputmode="numeric" placeholder="6-digit Pincode" value="${workerApp.pincode}">
+                            <small class="wj-field-err" id="err-pincode"></small>
                         </div>
                     </div>
+                    <c:if test="${not empty workerApp.latitude and not empty workerApp.longitude}">
+                        <div class="wj-readonly"><span>2.6 / 2.7 Map pin <span class="wj-mobile-tag">Not editable on web</span></span>
+                            <c:out value="${workerApp.latitude}"/>, <c:out value="${workerApp.longitude}"/>
+                        </div>
+                    </c:if>
                 </div>
 
                 <div class="wj-step" data-step="3" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">Full Address / Street Location</label>
-                            <input type="text" name="address" class="wj-input" placeholder="Flat, Street, Area info" value="${workerApp.address}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">City</label>
-                            <input type="text" name="city" class="wj-input" placeholder="City" value="${workerApp.city}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">State</label>
-                            <input type="text" name="state" class="wj-input" placeholder="State" value="${workerApp.state}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">Pincode</label>
-                            <input type="text" name="pincode" class="wj-input" placeholder="6-digit Pincode" value="${workerApp.pincode}">
-                        </div>
+                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include work categories.</p>
+                    <div class="wj-readonly"><span>3.1 Categories / primary category</span>
+                        <c:out value="${not empty workerApp.categoriesOffered ? workerApp.categoriesOffered : workerApp.jobCategory}"/>
+                    </div>
+                    <div class="wj-readonly"><span>Role / sub category</span>
+                        <c:out value="${workerApp.jobSubCategory}"/>
                     </div>
                 </div>
 
                 <div class="wj-step" data-step="4" style="display:none;">
+                    <c:if test="${not empty workerApp.audience or workerApp.doorService != null}">
+                        <div class="wj-readonly"><span>4.1 Audience / 4.2 Door visits <span class="wj-mobile-tag">Not editable on web</span></span>
+                            <c:out value="${workerApp.audience}"/>
+                            <c:if test="${workerApp.doorService != null}"> · Door service: ${workerApp.doorService}</c:if>
+                        </div>
+                    </c:if>
                     <div class="wj-row">
                         <div class="wj-field">
-                            <label class="wj-label">UPI ID for Payouts</label>
+                            <label class="wj-label">4.3 Languages</label>
+                            <input type="text" name="languages" class="wj-input" maxlength="200" placeholder="e.g. English, Hindi, Punjabi" value="${workerApp.languages}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">4.4 Skills</label>
+                            <input type="text" name="skills" class="wj-input" maxlength="255" placeholder="e.g. CPR, Newborn Care, Cooking, Tutoring" value="${workerApp.skills}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="5" style="display:none;">
+                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include facilities.</p>
+                    <div class="wj-readonly"><span>5.1 Amenities / readiness</span>
+                        <c:out value="${not empty workerApp.facilities ? workerApp.facilities : 'Not set on this record yet.'}"/>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="6" style="display:none;">
+                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include hours or calendar.</p>
+                    <div class="wj-readonly"><span>6.1 Open days</span><c:out value="${not empty workerApp.openDays ? workerApp.openDays : 'Not set'}"/></div>
+                    <div class="wj-readonly"><span>6.2–6.5 Hours</span>
+                        Open: <c:out value="${workerApp.openTime}"/> · Close: <c:out value="${workerApp.closeTime}"/>
+                        · Break: <c:out value="${workerApp.breakStart}"/>–<c:out value="${workerApp.breakEnd}"/>
+                    </div>
+                    <div class="wj-readonly"><span>6.6 Blocked dates</span><c:out value="${not empty workerApp.blockedDates ? workerApp.blockedDates : 'None'}"/></div>
+                </div>
+
+                <div class="wj-step" data-step="7" style="display:none;">
+                    <div class="wj-row">
+                        <div class="wj-field full">
+                            <label class="wj-label">7.1 About</label>
+                            <textarea name="bio" class="wj-textarea" rows="4" maxlength="2000" placeholder="Tell clients about your work style, background, or child-care philosophy...">${workerApp.bio}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="8" style="display:none;">
+                    <div class="wj-readonly"><span>8.1 Primary category <span class="wj-mobile-tag">Not editable on web</span></span><c:out value="${workerApp.jobCategory}"/></div>
+                    <div class="wj-readonly"><span>8.2 Role / service <span class="wj-mobile-tag">Not editable on web</span></span><c:out value="${workerApp.jobSubCategory}"/></div>
+                    <div class="wj-row">
+                        <div class="wj-field">
+                            <label class="wj-label">8.5 Hourly rate (₹)</label>
+                            <input type="number" name="hourlyRate" id="hourlyRate" class="wj-input" min="1" step="0.01" value="${workerApp.hourlyRate}">
+                            <small class="wj-field-err" id="err-hourlyRate"></small>
+                        </div>
+                    </div>
+                    <div class="wj-readonly"><span>8.3 Duration / 8.4 Buffer / 8.6 Mode / 8.7 Work type <span class="wj-mobile-tag">Not editable on web</span></span>
+                        Duration: <c:out value="${workerApp.durationMinutes}"/> min · Buffer: <c:out value="${workerApp.bufferMinutes}"/> min
+                        · Mode: <c:out value="${workerApp.serviceMode}"/> · Work type: <c:out value="${workerApp.workType}"/>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="9" style="display:none;">
+                    <div class="wj-row">
+                        <div class="wj-field">
+                            <label class="wj-label">9.1 UPI ID</label>
                             <input type="text" name="upiId" class="wj-input" placeholder="e.g. upi-handle@bank" value="${workerApp.upiId}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Bank Account / IFSC Details (Alternative)</label>
+                            <label class="wj-label">9.2 Bank details</label>
                             <input type="text" name="bankDetails" class="wj-input" placeholder="Bank Name, A/C No, IFSC" value="${workerApp.bankDetails}">
                         </div>
+                    </div>
+                    <p class="wj-step-desc" style="margin-top:8px;">UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.</p>
+                </div>
+
+                <div class="wj-step" data-step="10" style="display:none;">
+                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not accept file uploads.</p>
+                    <div class="wj-readonly"><span>10.1 Profile photo / proof document</span>
+                        <c:choose>
+                            <c:when test="${not empty workerApp.profileImageUrl}"><c:out value="${workerApp.profileImageUrl}"/></c:when>
+                            <c:when test="${not empty workerApp.documentPath}">
+                                <a href="${pageContext.request.contextPath}${workerApp.documentPath}" target="_blank">View existing proof document</a>
+                            </c:when>
+                            <c:otherwise>No document on file yet.</c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="11" style="display:none;">
+                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not accept gallery uploads.</p>
+                    <div class="wj-readonly"><span>11.1 Gallery photos</span>
+                        <c:out value="${not empty workerApp.galleryPhotos ? workerApp.galleryPhotos : 'No work photos on file yet.'}"/>
+                    </div>
+                </div>
+
+                <div class="wj-step" data-step="12" style="display:none;">
+                    <p class="wj-hint">Review the details you can save on web, then use Save Profile. Existing OTP verification still applies.</p>
+                    <div class="wj-readonly"><span>Will be saved</span>
+                        Designation, WhatsApp, years of experience, address, city, state, pincode, languages, skills, about, hourly rate, UPI, and bank details.
                     </div>
                 </div>
 
@@ -417,12 +556,95 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var labels = [
-        'Step 1 of 4 — Professional intro',
-        'Step 2 of 4 — Service details',
-        'Step 3 of 4 — Location address',
-        'Step 4 of 4 — Payout info'
+        'Step 1 of 12 — Worker identity',
+        'Step 2 of 12 — Location',
+        'Step 3 of 12 — Work categories',
+        'Step 4 of 12 — Who I serve',
+        'Step 5 of 12 — Facilities & readiness',
+        'Step 6 of 12 — Hours & calendar',
+        'Step 7 of 12 — About you',
+        'Step 8 of 12 — First offering',
+        'Step 9 of 12 — Payout',
+        'Step 10 of 12 — Documents (optional)',
+        'Step 11 of 12 — Work photos (optional)',
+        'Step 12 of 12 — Review & save'
+    ];
+    var descs = [
+        'Your name, role, phone and experience.',
+        'Address clients will use to find you.',
+        'Categories stored on your application (mobile-managed).',
+        'Audience on file, plus languages and skills you can save here.',
+        'Amenities stored on your application (mobile-managed).',
+        'Hours stored on your application (mobile-managed).',
+        'Tell clients about your work.',
+        'Hourly rate you can save here; offering details otherwise on file.',
+        'How you receive payouts.',
+        'Optional documents already on file.',
+        'Optional work photos already on file.',
+        'Save using the existing profile OTP flow.'
     ];
     var step = 1;
+    var totalSteps = 12;
+    function fieldError(id, text) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text || '';
+        el.classList.toggle('on', !!text);
+    }
+    function clearFieldErrors() {
+        document.querySelectorAll('.wj-field-err').forEach(function(el) {
+            el.textContent = '';
+            el.classList.remove('on');
+        });
+    }
+    function showProfileError(text) {
+        var errBox = document.getElementById('js-profile-error');
+        var errMsg = document.getElementById('js-profile-error-msg');
+        errMsg.textContent = text;
+        errBox.style.display = 'flex';
+    }
+    function validateCurrentStep() {
+        var errBox = document.getElementById('js-profile-error');
+        errBox.style.display = 'none';
+        clearFieldErrors();
+        if (step === 1) {
+            var years = (profileForm.yearsExperience.value || '').trim();
+            if (years !== '') {
+                var y = parseInt(years, 10);
+                if (isNaN(y) || y < 0 || y > 50) {
+                    fieldError('err-yearsExperience', 'Years of Experience must be between 0 and 50.');
+                    showProfileError('Years of Experience must be between 0 and 50.');
+                    return false;
+                }
+            }
+            var wa = (profileForm.whatsappNumber.value || '').trim();
+            if (wa !== '' && !/^\d{10}$/.test(wa)) {
+                fieldError('err-whatsappNumber', 'WhatsApp number must be exactly 10 digits.');
+                showProfileError('WhatsApp number must be exactly 10 digits.');
+                return false;
+            }
+        }
+        if (step === 2) {
+            var pin = (profileForm.pincode.value || '').trim();
+            if (pin !== '' && !/^\d{6}$/.test(pin)) {
+                fieldError('err-pincode', 'Pincode must be exactly 6 digits.');
+                showProfileError('Pincode must be exactly 6 digits.');
+                return false;
+            }
+        }
+        if (step === 8) {
+            var rate = (profileForm.hourlyRate.value || '').trim();
+            if (rate !== '') {
+                var r = parseFloat(rate);
+                if (isNaN(r) || r <= 0) {
+                    fieldError('err-hourlyRate', 'Hourly rate must be greater than zero.');
+                    showProfileError('Hourly rate must be greater than zero.');
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     function renderStep() {
         document.querySelectorAll('.wj-step').forEach(function(el) {
             el.style.display = String(el.getAttribute('data-step')) === String(step) ? 'block' : 'none';
@@ -431,12 +653,14 @@ document.addEventListener('DOMContentLoaded', function() {
             el.classList.toggle('on', i < step);
         });
         document.getElementById('stepLabel').textContent = labels[step - 1];
+        document.getElementById('stepDesc').textContent = descs[step - 1];
         document.getElementById('btnProfileBack').style.display = step === 1 ? 'none' : 'inline-flex';
-        document.getElementById('btnProfileNext').style.display = step === 4 ? 'none' : 'inline-flex';
-        document.getElementById('btnProfileSave').style.display = step === 4 ? 'inline-flex' : 'none';
+        document.getElementById('btnProfileNext').style.display = step === totalSteps ? 'none' : 'inline-flex';
+        document.getElementById('btnProfileSave').style.display = step === totalSteps ? 'inline-flex' : 'none';
     }
     document.getElementById('btnProfileNext').addEventListener('click', function() {
-        if (step < 4) { step++; renderStep(); }
+        if (!validateCurrentStep()) return;
+        if (step < totalSteps) { step++; renderStep(); }
     });
     document.getElementById('btnProfileBack').addEventListener('click', function() {
         if (step > 1) { step--; renderStep(); }

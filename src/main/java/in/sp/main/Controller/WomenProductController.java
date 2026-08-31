@@ -224,7 +224,7 @@ public class WomenProductController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
         
-        return "redirect:/women-products/seller/dashboard";
+        return "redirect:/women-products/seller/profile";
     }
 
     @GetMapping("/seller/logout")
@@ -236,6 +236,15 @@ public class WomenProductController {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
         return "redirect:/women-products/seller/login";
+    }
+
+    @GetMapping("/seller/profile")
+    public String sellerProfilePage(HttpSession session, Model model) {
+        WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
+        if (s == null) return "redirect:/women-products/seller/login";
+        s = sellerRepo.findById(s.getId()).orElse(s);
+        model.addAttribute("seller", s);
+        return "women-products/seller-profile";
     }
 
     // ══════════════════════════════════════
@@ -349,18 +358,18 @@ public class WomenProductController {
                         || !cleanedFullName.matches(WomenProductSeller.FULL_NAME_PATTERN)) {
                     ra.addFlashAttribute("error",
                             "Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).");
-                    return "redirect:/women-products/seller/dashboard?section=profile";
+                    return "redirect:/women-products/seller/profile";
                 }
                 String cleanedBusinessName = businessName == null ? "" : businessName.trim();
                 String businessNameError = validateBusinessName(cleanedBusinessName);
                 if (businessNameError != null) {
                     ra.addFlashAttribute("error", businessNameError);
-                    return "redirect:/women-products/seller/dashboard?section=profile";
+                    return "redirect:/women-products/seller/profile";
                 }
                 String cleanedPhone = phone == null ? "" : phone.trim();
                 if (!cleanedPhone.matches("^[6-9]\\d{9}$")) {
                     ra.addFlashAttribute("error", "Enter a valid 10-digit Indian mobile number.");
-                    return "redirect:/women-products/seller/dashboard?section=profile";
+                    return "redirect:/women-products/seller/profile";
                 }
                 String cleanedAddress = address == null ? "" : address.trim();
                 if (cleanedAddress.length() < WomenProductSeller.ADDRESS_MIN_LENGTH
@@ -368,20 +377,20 @@ public class WomenProductController {
                     ra.addFlashAttribute("error",
                             "Business Address must be between " + WomenProductSeller.ADDRESS_MIN_LENGTH
                                     + " and " + WomenProductSeller.ADDRESS_MAX_LENGTH + " characters.");
-                    return "redirect:/women-products/seller/dashboard?section=profile";
+                    return "redirect:/women-products/seller/profile";
                 }
                 String cleanedDescription = description == null ? "" : description.trim();
                 if (cleanedDescription.length() > WomenProductSeller.DESCRIPTION_MAX_LENGTH) {
                     ra.addFlashAttribute("error",
                             "Business Description must be at most "
                                     + WomenProductSeller.DESCRIPTION_MAX_LENGTH + " characters.");
-                    return "redirect:/women-products/seller/dashboard?section=profile";
+                    return "redirect:/women-products/seller/profile";
                 }
                 if (profilePhoto != null && !profilePhoto.isEmpty()) {
                     String photoErr = fileUploadService.validatePngOrJpegImage(profilePhoto, 5L * 1024 * 1024);
                     if (photoErr != null) {
                         ra.addFlashAttribute("error", photoErr.replace("Profile photo", "Profile photo"));
-                        return "redirect:/women-products/seller/dashboard?section=profile";
+                        return "redirect:/women-products/seller/profile";
                     }
                 }
 
@@ -408,7 +417,7 @@ public class WomenProductController {
                             existing.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
                         } else {
                             ra.addFlashAttribute("error", "Invalid photo format. Please upload JPG, JPEG, PNG or WEBP.");
-                            return "redirect:/women-products/seller/dashboard?section=profile";
+                            return "redirect:/women-products/seller/profile";
                         }
                     }
                 }
@@ -419,8 +428,9 @@ public class WomenProductController {
             }
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Failed to update profile photo.");
+            return "redirect:/women-products/seller/profile";
         }
-        return "redirect:/women-products/seller/dashboard?section=profile";
+        return "redirect:/women-products/seller/dashboard";
     }
 
     @PostMapping("/seller/products/add")
