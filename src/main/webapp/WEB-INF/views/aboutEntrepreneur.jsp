@@ -350,26 +350,12 @@
 
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-<<<<<<< HEAD:src/main/webapp/WEB-INF/views/aboutEntrepreneur.jsp
                         <h1 class="h3 fw-bold mb-0 text-white"><c:out value="${entrepreneur.fullName}"/></h1>
                         <c:set var="statusKey" value="${entrepreneur.partnerProfileStatus != null ? entrepreneur.partnerProfileStatus : 'REGISTERED'}"/>
-=======
-                        <h1 class="h3 fw-bold mb-0 text-white">${trainer.fullName}</h1>
-                        <c:if test="${empty statusKey}">
-                            <c:set var="statusKey" value="${not empty trainer.partnerProfileStatus ? trainer.partnerProfileStatus.name() : (not empty trainer.verificationStatus ? (trainer.verificationStatus.name() == 'VERIFIED' ? 'APPROVED' : trainer.verificationStatus.name()) : 'PENDING')}"/>
-                        </c:if>
->>>>>>> 4ace1291bbe5bd57198372fc588fdaba95947dbd:bin/src/main/webapp/WEB-INF/views/adminFitnessTrainerProfile.jsp
                         <span class="badge-status-lg status-${statusKey}">
                             <i class="bi ${statusKey == 'APPROVED' ? 'bi-check-circle-fill' : 'bi-clock-history'}"></i>
                             ${statusKey}
                         </span>
-<<<<<<< HEAD:src/main/webapp/WEB-INF/views/aboutEntrepreneur.jsp
-=======
-
-                        <c:if test="${trainer.suspended}">
-                            <span class="badge bg-danger text-white px-3 py-1">SUSPENDED</span>
-                        </c:if>
->>>>>>> 4ace1291bbe5bd57198372fc588fdaba95947dbd:bin/src/main/webapp/WEB-INF/views/adminFitnessTrainerProfile.jsp
                     </div>
 
                     <div class="d-flex flex-wrap gap-4 text-white-50 small mb-3">

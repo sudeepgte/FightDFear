@@ -176,7 +176,7 @@
         .hero p {
             color: var(--secondary);
             font-size: 0.9rem;
-=======
+        }
         body.mp-list-page .location-tag {
             font-size: 0.85rem;
             color: var(--m-muted);
@@ -195,10 +195,17 @@
         body.mp-list-page .provider-desc {
             font-size: 0.9rem;
             color: var(--m-muted);
-
             margin-bottom: 20px;
         }
-
+        body.mp-list-page .btn-view {
+            margin-top: auto;
+            background: var(--m-rose);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            min-height: 42px;
+            border-radius: 12px;
+        }
 
         /* Search & Filters */
         .search-box {
@@ -239,15 +246,6 @@
             flex: 1;
             background: var(--card);
             border: 1px solid var(--border);
-=======
-        body.mp-list-page .btn-view {
-            margin-top: auto;
-            background: var(--m-rose);
-            color: #fff;
-            border: none;
-            padding: 10px 16px;
-            min-height: 42px;
->>>>>>> d79970295b58002ce10761a7b557d105101c3753
             border-radius: 12px;
             padding: 12px 15px;
             display: flex;
