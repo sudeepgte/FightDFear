@@ -7,413 +7,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${not empty doctor.fullName ? doctor.fullName : 'Doctor'} — Application Review | Fight D Fear Admin</title>
+  <title>${not empty doctor.fullName ? doctor.fullName : 'Doctor'} - Application Review | Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-  :root {
-    --primary: #F43F5E;
-    --rose-soft: #FFF1F2;
-    --bg: #F8FAFC;
-    --navy: #0F172A;
-    --navy-mid: #1E293B;
-    --border: #E2E8F0;
-    --text-muted: #64748B;
-    --sidebar-w: 272px;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    background: var(--bg);
-    color: var(--navy-mid);
-  }
-
-  .topbar {
-    background: var(--navy);
-    color: #fff;
-    padding: 0 20px;
-    height: 58px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-  }
-  .topbar .brand {
-    color: #fff;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    font-family: 'Outfit', sans-serif;
-  }
-  .topbar .brand img {
-    height: 32px;
-    width: 32px;
-    border-radius: 8px;
-    object-fit: cover;
-  }
-  .topbar .btn-logout {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.28);
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-  }
-  .mobile-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 6px;
-    margin-right: 8px;
-  }
-
-  .layout { display: flex; min-height: calc(100vh - 58px); }
-  .sidebar {
-    width: var(--sidebar-w);
-    background: #fff;
-    border-right: 1px solid var(--border);
-    position: sticky;
-    top: 58px;
-    height: calc(100vh - 58px);
-    padding: 14px 12px;
-    overflow-y: auto;
-    flex-shrink: 0;
-  }
-  .sidebar .brand {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--navy);
-    padding: 10px 15px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .sidebar .sectionTitle {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin: 20px 15px 8px;
-  }
-  .sidebar .navlink {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 15px;
-    border-radius: 12px;
-    color: #4b5563;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.9rem;
-    margin-bottom: 2px;
-  }
-  .sidebar .navlink i { width: 20px; text-align: center; color: var(--primary); }
-  .sidebar .navlink:hover { background: var(--rose-soft); color: var(--navy); }
-  .sidebar .navlink.active {
-    background: var(--primary);
-    color: #fff;
-    font-weight: 600;
-  }
-  .sidebar .navlink.active i { color: #fff; }
-
-  .main { flex: 1; min-width: 0; padding: 24px 20px 56px; }
-  .mainInner { max-width: 1100px; margin: 0 auto; }
+  body.ap-page { margin: 0; }
+  .topbar { display: none !important; }
+  .layout { display: flex; min-height: 100vh; }
+  .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+  .mainInner { max-width: 1100px; margin: 0 auto; padding: 22px 24px 48px; }
 
   .back-nav {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-decoration: none;
-    margin-bottom: 16px;
+    display: inline-flex; align-items: center; gap: 8px; color: var(--ap-muted);
+    text-decoration: none; font-weight: 600; font-size: 0.88rem; margin-bottom: 14px;
   }
-  .back-nav:hover { color: var(--primary); }
+  .back-nav:hover { color: var(--ap-accent); }
 
   .header-card {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
-    border-radius: 20px;
-    padding: 28px;
-    color: #fff;
-    margin-bottom: 22px;
-    position: relative;
-    overflow: hidden;
+    background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
+    padding: 22px; margin-bottom: 18px; box-shadow: var(--ap-shadow);
   }
-  .header-card::after {
-    content: '';
-    position: absolute;
-    right: -50px;
-    top: -50px;
-    width: 200px;
-    height: 200px;
-    background: rgba(244, 63, 94, 0.16);
-    border-radius: 50%;
-    pointer-events: none;
-  }
+  .header-card h1 { margin: 0; font-size: 1.45rem; font-weight: 800; color: var(--ap-text); font-family: Outfit, Poppins, sans-serif; }
+  .header-card .contact-line { color: var(--ap-muted); font-size: 0.88rem; }
+  .header-card .contact-line a { color: var(--ap-text); text-decoration: none; font-weight: 600; }
   .avatar-box {
-    width: 112px;
-    height: 112px;
-    border-radius: 20px;
-    border: 4px solid rgba(255,255,255,0.22);
-    overflow: hidden;
-    background: #fff;
-    flex-shrink: 0;
+    width: 96px; height: 96px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    border: 3px solid #FFE4E6; background: var(--ap-accent-soft);
   }
   .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-  .header-card h1 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.55rem;
-    font-weight: 800;
-    margin: 0;
-    color: #fff;
-  }
-  .progress-wrap {
-    background: rgba(255,255,255,0.16);
-    border-radius: 50px;
-    height: 10px;
-    overflow: hidden;
-    margin-top: 8px;
-  }
-  .progress-bar-fill {
-    background: linear-gradient(90deg, var(--primary), #fb7185);
-    height: 100%;
-    border-radius: 50px;
-  }
-
-  .badge-status-lg {
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    letter-spacing: 0.3px;
-  }
-  .status-APPROVED, .status-VERIFIED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-  .status-PENDING_ADMIN_APPROVAL, .status-PENDING { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-  .status-READY_FOR_VERIFICATION { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-  .status-CHANGES_REQUESTED { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-  .status-PROFILE_INCOMPLETE, .status-REGISTERED { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-  .status-REJECTED, .status-SUSPENDED { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .progress-wrap { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--ap-accent); border-radius: 999px; }
 
   .review-card {
-    background: #fff;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
-    padding: 22px 26px;
-    margin-bottom: 20px;
+    background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
+    padding: 22px; margin-bottom: 16px; box-shadow: var(--ap-shadow);
   }
   .section-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 18px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--ap-border);
   }
-  .section-header i { color: var(--primary); font-size: 1.2rem; }
-  .section-header h3 {
-    font-family: 'Outfit', sans-serif;
-    font-size: 1.08rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin: 0;
+  .section-header i {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--ap-accent-soft); color: var(--ap-accent);
+    display: inline-flex; align-items: center; justify-content: center;
   }
+  .section-header h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ap-text); }
 
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
-  }
-  .info-field { display: flex; flex-direction: column; gap: 4px; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 18px; }
   .info-field.span-all { grid-column: 1 / -1; }
   .info-field-label {
-    font-size: 0.74rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.55px;
-    color: var(--text-muted);
+    display: block; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
   }
-  .info-field-value {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--navy-mid);
-    word-break: break-word;
+  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  .empty-text { color: #94A3B8; font-size: 0.88rem; font-style: italic; }
+
+  .badge-status-lg {
+    display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em;
   }
-  .empty-text { color: var(--text-muted); font-style: italic; font-weight: 500; font-size: 0.9rem; }
-  .bio-box {
-    background: var(--rose-soft);
-    border: 1px solid #fecdd3;
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-size: 0.94rem;
-    line-height: 1.65;
-    color: var(--navy-mid);
-  }
+  .status-APPROVED, .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
+  .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  .status-CHANGES_REQUESTED { background: #FFEDD5; color: #C2410C; }
+  .status-PROFILE_INCOMPLETE, .status-PENDING, .status-PENDING_ADMIN_APPROVAL,
+  .status-READY_FOR_VERIFICATION, .status-REGISTERED { background: #FEF3C7; color: #B45309; }
+
   .tag-pill {
-    display: inline-block;
-    background: var(--rose-soft);
-    color: #9f1239;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin: 0 6px 6px 0;
-    border: 1px solid #fecdd3;
+    display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #F8FAFC;
+    border: 1px solid var(--ap-border); font-size: 0.78rem; font-weight: 600; margin: 0 6px 6px 0; color: #334155;
   }
   .fee-tile {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 16px;
+    border: 1px solid var(--ap-border); border-radius: 12px; padding: 12px; background: #FCFCFD; height: 100%;
   }
-  .fee-tile .amt { font-size: 1.2rem; font-weight: 800; color: var(--navy); font-family: 'Outfit', sans-serif; }
+  .fee-tile .amt { font-size: 1.1rem; font-weight: 800; color: var(--ap-text); }
 
   .doc-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: #fff;
-    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--ap-border);
+    border-radius: 12px; margin-bottom: 10px; background: #fff;
   }
   .doc-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 10px;
-    background: var(--rose-soft);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: 10px; background: var(--ap-accent-soft); color: var(--ap-accent);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .doc-link { color: var(--primary); font-weight: 700; text-decoration: none; }
+  .doc-link { color: var(--ap-accent); font-weight: 700; text-decoration: none; font-size: 0.86rem; }
   .doc-link:hover { text-decoration: underline; }
-  .warn-mobile {
-    color: #b45309;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-top: 4px;
-  }
+  .warn-mobile { color: #B45309; font-size: 0.82rem; font-weight: 600; }
 
-  .history-table { font-size: 0.88rem; }
-  .history-table th {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    font-weight: 700;
-  }
+  .history-table th { font-size: 0.72rem; color: var(--ap-muted); text-transform: uppercase; }
+  .history-table td { font-size: 0.84rem; vertical-align: top; }
 
+  .action-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn-verify, .btn-reject, .btn-changes {
+    border: 0; border-radius: 10px; padding: 12px 22px; font-weight: 700; font-size: 0.9rem;
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .btn-verify { background: var(--ap-success); color: #fff; }
+  .btn-changes { background: var(--ap-warn); color: #fff; }
+  .btn-reject { background: var(--ap-danger); color: #fff; }
   .reason-checks label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 0.82rem;
-    font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ap-border);
+    border-radius: 999px; padding: 6px 12px; font-size: 0.82rem; background: #fff; cursor: pointer;
   }
-  .reason-checks input { accent-color: var(--primary); }
 
-  .action-bar {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-wrap: wrap;
-    padding-top: 18px;
-    border-top: 1px solid var(--border);
-  }
-  .btn-verify {
-    background: #059669;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-verify:hover { background: #047857; color: #fff; }
-  .btn-reject {
-    background: #dc2626;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-reject:hover { background: #b91c1c; color: #fff; }
-
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    z-index: 1500;
-  }
-  .sidebar-overlay.active { display: block; }
-
-  @media (max-width: 992px) {
-    .mobile-toggle { display: block; }
-    .layout { flex-direction: column; }
-    .sidebar {
-      position: fixed;
-      left: -100%;
-      top: 0;
-      z-index: 2000;
-      width: 280px;
-      height: 100vh;
-      transition: left 0.3s ease;
-      box-shadow: 10px 0 30px rgba(0,0,0,0.18);
-    }
-    .sidebar.active { left: 0; }
-  }
   @media (max-width: 768px) {
-    .main { padding: 16px 12px 40px; }
-    .header-card { padding: 20px 16px; }
-    .review-card { padding: 18px 14px; }
+    .mainInner { padding: 16px 14px 40px; }
     .info-grid { grid-template-columns: 1fr; }
-    .doc-row { align-items: flex-start; }
-    .action-bar { justify-content: stretch; }
     .action-bar form, .action-bar button { width: 100%; }
-    .btn-verify, .btn-reject, .action-bar .btn { width: 100%; justify-content: center; }
-    .avatar-box { width: 88px; height: 88px; }
+    .btn-verify, .btn-reject, .btn-changes { width: 100%; justify-content: center; }
   }
 </style>
 </head>
-<body>
+<body class="ap-page">
 
 <c:set var="pp" value="${profilePayload}"/>
 <c:set var="displayName" value="${not empty doctor.fullName ? doctor.fullName : pp.fullName}"/>
@@ -428,31 +134,46 @@
 <c:set var="displayStatus" value="${not empty statusLabel ? statusLabel : pp.doctorProfileStatusLabel}"/>
 <c:if test="${empty displayStatus}"><c:set var="displayStatus" value="${statusKey}"/></c:if>
 
-<div class="topbar">
-  <div class="d-flex align-items-center">
-    <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu">
-      <i class="fas fa-bars"></i>
-    </button>
-    <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="brand">
-      <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-      <span>Fight D Fear Admin</span>
-    </a>
-  </div>
-  <div class="d-flex align-items-center gap-2">
-    <span class="badge bg-light text-dark fw-bold px-3 py-2 d-none d-sm-inline">Doctor Review</span>
-    <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
-      <i class="fas fa-sign-out-alt"></i> Logout
-    </a>
-  </div>
-</div>
 
 <div class="layout">
   <%@ include file="globalAdminMenu.jsp" %>
 
   <main class="main">
-    <div class="mainInner">
+    <div class="ap-topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:320px;">
+          <i class="fas fa-search"></i>
+          <input type="search" placeholder="Search anything..." aria-label="Search" readonly
+                 onclick="window.location.href='${pageContext.request.contextPath}/admin/pending-doctors'">
+          <span class="ap-kbd">Ctrl + K</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+        </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${admin.id}">
+          <span class="ap-avatar">${fn:substring(admin.name,0,1)}</span>
+          <span>
+            <div class="name"><c:out value="${admin.name}"/></div>
+            <div class="role">Super Admin</div>
+          </span>
+        </a>
+      </div>
+    </div>
 
-      <c:if test="${not empty message}">
+    <div class="mainInner">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <a href="${pageContext.request.contextPath}/admin/pending-doctors">Doctor Verification</a>
+        <span class="sep">&gt;</span>
+        <span>Review</span>
+      </nav>
+
+<c:if test="${not empty message}">
         <div class="alert alert-success alert-dismissible fade show mb-3 rounded-4" role="alert">
           <i class="bi bi-check-circle-fill me-2"></i>${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -489,24 +210,24 @@
               <h1>${not empty displayName ? displayName : 'Unnamed doctor'}</h1>
               <span class="badge-status-lg status-${statusKey}">${displayStatus}</span>
             </div>
-            <div class="d-flex flex-wrap gap-3 gap-md-4 text-white-50 small mb-3">
+            <div class="d-flex flex-wrap gap-3 gap-md-4 contact-line small mb-3">
               <div>
-                <i class="bi bi-envelope-fill text-white"></i>
+                <i class="bi bi-envelope-fill me-1" style="color:var(--ap-accent);"></i>
                 <c:choose>
-                  <c:when test="${not empty displayEmail}"><a href="mailto:${displayEmail}" class="text-white text-decoration-none">${displayEmail}</a></c:when>
+                  <c:when test="${not empty displayEmail}"><a href="mailto:${displayEmail}" class="text-decoration-none">${displayEmail}</a></c:when>
                   <c:otherwise>No email</c:otherwise>
                 </c:choose>
               </div>
               <div>
-                <i class="bi bi-telephone-fill text-white"></i>
+                <i class="bi bi-telephone-fill me-1" style="color:var(--ap-accent);"></i>
                 <c:choose>
-                  <c:when test="${not empty displayPhone}"><a href="tel:${displayPhone}" class="text-white text-decoration-none">${displayPhone}</a></c:when>
+                  <c:when test="${not empty displayPhone}"><a href="tel:${displayPhone}" class="text-decoration-none">${displayPhone}</a></c:when>
                   <c:otherwise>No phone</c:otherwise>
                 </c:choose>
               </div>
             </div>
             <div style="max-width:480px;">
-              <div class="d-flex justify-content-between small fw-bold text-white mb-1">
+              <div class="d-flex justify-content-between small fw-bold mb-1">
                 <span>Profile Completion</span>
                 <span>${pct}%</span>
               </div>
@@ -1066,8 +787,7 @@
           <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
             <input type="hidden" name="notes" id="changesNotes">
             <input type="hidden" name="reasons" id="changesReasons">
-            <button type="submit" class="btn btn-warning text-dark fw-semibold"
-                    style="border-radius:10px;padding:12px 28px;"
+            <button type="submit" class="btn-changes"
                     onclick="
                       document.getElementById('changesNotes').value=document.getElementById('decisionNotes').value;
                       document.getElementById('changesReasons').value=Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value).join(', ');

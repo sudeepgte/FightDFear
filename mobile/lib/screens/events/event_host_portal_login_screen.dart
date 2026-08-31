@@ -50,7 +50,7 @@ class EventHostPortalLoginScreen extends StatelessWidget {
       loginSubtitle: 'Sign in to manage women events, attendees and registrations',
       loginIcon: Icons.event_available_rounded,
       successMessage:
-          'Account created. Please login and complete your profile to submit for verification.',
+          'Account created. Sign in, complete your organizer profile, then submit for admin verification.',
       registerFields: const [
         RegFieldDef(key: 'fullName', label: 'Full name', required: true),
         RegFieldDef(key: 'phone', label: 'Phone', type: RegInputType.phone, required: true),
@@ -59,9 +59,9 @@ class EventHostPortalLoginScreen extends StatelessWidget {
       onVerifyEmailOtp: ({required email, required otp}) =>
           svc.verifyEmailOtp(email: email, otp: otp),
       onLoginSuccess: _openAfterLogin,
-      onSubmit: ({required register, required email, required password, required extra}) {
+      onSubmit: ({required register, required email, required password, required extra}) async {
         if (register) {
-          return svc.registerQuick({
+          final res = await svc.registerQuick({
             'fullName': extra['fullName'] ?? '',
             'email': email,
             'phone': extra['phone'] ?? '',
@@ -69,6 +69,17 @@ class EventHostPortalLoginScreen extends StatelessWidget {
             'confirmPassword': extra['confirmPassword'] ?? password,
             'acceptedTerms': extra['acceptedTerms'] == 'true',
           });
+          if (res['success'] == true) {
+            final name = (extra['fullName'] ?? '').toString().trim();
+            final phone = (extra['phone'] ?? '').toString().trim();
+            res['message'] =
+                'Account created.\n\n'
+                'Name: ${name.isEmpty ? '—' : name}\n'
+                'Email: $email\n'
+                'Phone: ${phone.isEmpty ? '—' : phone}\n\n'
+                'Next: sign in, complete your organizer profile, then submit for admin verification. You cannot create events until an admin approves your profile.';
+          }
+          return res;
         }
         return svc.login(email: email, password: password);
       },

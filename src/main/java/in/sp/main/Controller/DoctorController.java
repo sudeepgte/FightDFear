@@ -145,9 +145,8 @@ public class DoctorController {
                     null,
                     termsAccepted);
 
-            // Short-lived server-side credential handoff for login autofill (one-time consume on login GET).
+            // Short-lived email handoff for login autofill only (never store password in session).
             session.setAttribute(DOCTOR_PREFILL_EMAIL, d.getEmail());
-            session.setAttribute(DOCTOR_PREFILL_PASSWORD, password);
             session.setAttribute(DOCTOR_PREFILL_AT, System.currentTimeMillis());
             session.setAttribute(DOCTOR_REG_SUCCESS_NAME, d.getFullName());
 
@@ -264,6 +263,12 @@ public class DoctorController {
             @RequestParam(required = false) List<String> availableDays,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) Integer slotDurationMinutes,
+            @RequestParam(required = false) Integer bufferMinutes,
+            @RequestParam(required = false) String breakStart,
+            @RequestParam(required = false) String breakEnd,
+            @RequestParam(required = false) String blockedDates,
+            @RequestParam(required = false) String autoConfirm,
             @RequestParam(required = false) String emergencyAvailable,
             @RequestParam(required = false) String clinicAddress,
             @RequestParam(required = false) String city,
@@ -283,6 +288,7 @@ public class DoctorController {
             @RequestParam(required = false) MultipartFile medicalLicense,
             @RequestParam(required = false) MultipartFile idProof,
             @RequestParam(required = false) MultipartFile degreeCertificate,
+            @RequestParam(required = false) String intent,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
@@ -327,6 +333,12 @@ public class DoctorController {
             }
             if (startTime != null) body.put("startTime", startTime);
             if (endTime != null) body.put("endTime", endTime);
+            if (slotDurationMinutes != null) body.put("slotDurationMinutes", slotDurationMinutes);
+            if (bufferMinutes != null) body.put("bufferMinutes", bufferMinutes);
+            if (breakStart != null) body.put("breakStart", breakStart);
+            if (breakEnd != null) body.put("breakEnd", breakEnd);
+            if (blockedDates != null) body.put("blockedDates", blockedDates);
+            body.put("autoConfirm", "yes".equalsIgnoreCase(autoConfirm) || "true".equalsIgnoreCase(autoConfirm) || "on".equalsIgnoreCase(autoConfirm));
 
             doctorProfileService.updateProfile(d, body);
 
@@ -346,8 +358,23 @@ public class DoctorController {
             doctorProfileService.refreshCompletion(d);
             doctorRepo.save(d);
             session.setAttribute("loggedDoctor", d);
-            redirectAttributes.addFlashAttribute("message", "Profile updated successfully.");
-            return "redirect:/doctors/dashboard";
+
+            if ("submitVerification".equalsIgnoreCase(intent == null ? "" : intent.trim())) {
+                try {
+                    doctorRegistrationService.submitForVerification(d);
+                    session.setAttribute("loggedDoctor", d);
+                    redirectAttributes.addFlashAttribute("message",
+                            "Profile saved and submitted for verification. Admin review is in progress.");
+                    return "redirect:/doctors/dashboard?section=profile";
+                } catch (ResponseStatusException ex) {
+                    redirectAttributes.addFlashAttribute("error",
+                            ex.getReason() != null ? ex.getReason() : "Profile saved, but verification submit failed. Fix missing items and try again.");
+                    return "redirect:/doctors/profile-completion";
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("message", "Profile updated successfully. Review section 11 when you are ready to submit for verification.");
+            return "redirect:/doctors/profile-completion";
         } catch (ResponseStatusException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Unable to save profile.");
             return "redirect:/doctors/profile-completion";
@@ -366,6 +393,19 @@ public class DoctorController {
         // Skip does not mark fields complete and does not destroy unsaved form data (nothing posted).
         redirectAttributes.addFlashAttribute("message", "You can complete your profile anytime from My Profile.");
         return "redirect:/doctors/dashboard";
+    }
+
+    @GetMapping("/logout")
+    public String doctorLogout(HttpSession session, jakarta.servlet.http.HttpServletResponse response) {
+        if (session != null) {
+            session.invalidate();
+        }
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", null);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return "redirect:/doctors/login?logout=true";
     }
 
     private void uploadOptionalDoc(Doctor d, MultipartFile file, DoctorDocumentType type) {
@@ -390,7 +430,6 @@ public class DoctorController {
         }
         return status == DoctorProfileStatus.REGISTERED
                 || status == DoctorProfileStatus.PROFILE_INCOMPLETE
-                || status == DoctorProfileStatus.READY_FOR_VERIFICATION
                 || status == DoctorProfileStatus.CHANGES_REQUESTED
                 || status == DoctorProfileStatus.REJECTED;
     }
@@ -409,7 +448,6 @@ public class DoctorController {
         boolean expired = at <= 0L || (System.currentTimeMillis() - at) > DOCTOR_PREFILL_TTL_MS;
 
         Object email = session.getAttribute(DOCTOR_PREFILL_EMAIL);
-        Object password = session.getAttribute(DOCTOR_PREFILL_PASSWORD);
         // Always clear after consume attempt (one-time).
         clearDoctorLoginPrefill(session);
 
@@ -417,9 +455,6 @@ public class DoctorController {
             return;
         }
         model.addAttribute("prefillEmail", email.toString());
-        if (password != null) {
-            model.addAttribute("prefillPassword", password.toString());
-        }
         model.addAttribute("prefillFromRegistration", true);
     }
 
@@ -685,11 +720,12 @@ public class DoctorController {
             session.setAttribute("loggedDoctor", d);
             redirectAttributes.addFlashAttribute("message",
                     "Your profile has been submitted successfully. Your profile is currently being verified by the admin.");
+            return "redirect:/doctors/dashboard?section=profile";
         } catch (ResponseStatusException ex) {
             redirectAttributes.addFlashAttribute("error",
                     ex.getReason() != null ? ex.getReason() : "Unable to submit for verification.");
+            return "redirect:/doctors/profile-completion";
         }
-        return "redirect:/doctors/dashboard?section=profile";
     }
 
     @PostMapping("/update-fees")
@@ -715,11 +751,11 @@ public class DoctorController {
 
         d = doctorRepo.findById(d.getId()).orElse(d);
         if (consultationFee != null) d.setConsultationFee(consultationFee);
-        d.setChatFee(chatFee);
-        d.setCallFee(callFee);
-        d.setVideoFee(videoFee);
-        d.setUpiId(upiId != null ? upiId.trim() : null);
-        d.setBankDetails(bankDetails != null ? bankDetails.trim() : null);
+        if (chatFee != null) d.setChatFee(chatFee);
+        if (callFee != null) d.setCallFee(callFee);
+        if (videoFee != null) d.setVideoFee(videoFee);
+        if (upiId != null) d.setUpiId(upiId.trim().isEmpty() ? null : upiId.trim());
+        if (bankDetails != null) d.setBankDetails(bankDetails.trim().isEmpty() ? null : bankDetails.trim());
 
         doctorRepo.save(d);
         session.setAttribute("loggedDoctor", d);
@@ -848,9 +884,13 @@ public class DoctorController {
         }
 
         List<DoctorReview> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(id);
+        boolean completedVisit = appointmentRepo.findByUserOrderByAppointmentTimeDesc(u).stream()
+                .anyMatch(a -> a.getDoctor() != null
+                        && a.getDoctor().getId().equals(id)
+                        && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
         model.addAttribute("doctor", d);
         model.addAttribute("reviews", reviews);
-        model.addAttribute("canReview", !reviewRepo.existsByUserIdAndDoctorId(u.getId(), id));
+        model.addAttribute("canReview", completedVisit && !reviewRepo.existsByUserIdAndDoctorId(u.getId(), id));
         return "doctor/doctor-view";
     }
 
@@ -995,6 +1035,15 @@ public class DoctorController {
             return "redirect:/doctors/view/" + doctorId;
         }
 
+        boolean completedVisit = appointmentRepo.findByUserOrderByAppointmentTimeDesc(u).stream()
+                .anyMatch(a -> a.getDoctor() != null
+                        && a.getDoctor().getId().equals(doctorId)
+                        && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
+        if (!completedVisit) {
+            redirectAttributes.addFlashAttribute("error", "You can review a doctor only after a completed consultation.");
+            return "redirect:/doctors/view/" + doctorId;
+        }
+
         DoctorReview r = new DoctorReview();
         r.setUser(u);
         r.setDoctor(d);
@@ -1021,7 +1070,11 @@ public class DoctorController {
     // Real-time: Chat, Video, Call
     // ==============================
     @GetMapping("/chat/{doctorId}")
-    public String chatWithDoctor(@PathVariable Long doctorId, @RequestParam(required = false) Long userId, Model model, HttpSession session) {
+    public String chatWithDoctor(@PathVariable Long doctorId,
+                                 @RequestParam(required = false) Long userId,
+                                 Model model,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
@@ -1031,32 +1084,34 @@ public class DoctorController {
         boolean doctorOwner = d != null && d.getId().equals(doctorId);
 
         if (doctorOwner) {
+            if (userId == null) {
+                redirectAttributes.addFlashAttribute("message", "Select a patient conversation from your dashboard.");
+                return "redirect:/doctors/dashboard?section=chats";
+            }
+            User chatUser = userRepo.findById(userId).orElse(null);
+            if (chatUser == null || !doctorAppointmentService.hasActiveRelationship(target, chatUser)) {
+                redirectAttributes.addFlashAttribute("message", "Chat is available only with patients who have booked you.");
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("currentUser", "Dr. " + d.getFullName());
             model.addAttribute("currentId", d.getId());
             model.addAttribute("senderType", "DOCTOR");
-            if (userId != null) {
-                User chatUser = userRepo.findById(userId).orElse(null);
-                model.addAttribute("targetUserId", userId);
-                if (chatUser != null) {
-                    model.addAttribute("targetUserName", chatUser.getFullName());
-                    model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target));
-                    // Mark this patient's messages as read when doctor opens the chat
-                    java.util.List<in.sp.main.Entities.DoctorChatMessage> unread =
-                            doctorChatRepo.findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(target, chatUser, "USER");
-                    if (!unread.isEmpty()) {
-                        for (in.sp.main.Entities.DoctorChatMessage msg : unread) {
-                            msg.setReadByDoctor(true);
-                        }
-                        doctorChatRepo.saveAll(unread);
-                    }
-                } else {
-                    model.addAttribute("targetUserName", "Unknown Patient");
-                    model.addAttribute("chatHistory", java.util.Collections.emptyList());
+            model.addAttribute("targetUserId", userId);
+            model.addAttribute("targetUserName", chatUser.getFullName());
+            model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target));
+            java.util.List<in.sp.main.Entities.DoctorChatMessage> unread =
+                    doctorChatRepo.findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(target, chatUser, "USER");
+            if (!unread.isEmpty()) {
+                for (in.sp.main.Entities.DoctorChatMessage msg : unread) {
+                    msg.setReadByDoctor(true);
                 }
-            } else {
-                model.addAttribute("chatHistory", java.util.Collections.emptyList());
+                doctorChatRepo.saveAll(unread);
             }
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                redirectAttributes.addFlashAttribute("message", "Chat unlocks after you book this doctor.");
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("currentUser", u.getFullName());
             model.addAttribute("currentId", u.getId());
             model.addAttribute("senderType", "USER");
@@ -1089,6 +1144,9 @@ public class DoctorController {
         if ("USER".equals(senderType)) {
             User u = (User) session.getAttribute("user");
             if (u == null) return "NOT_LOGGED_IN";
+            if (!doctorAppointmentService.hasActiveRelationship(doc, u)) {
+                return "ACCESS_DENIED";
+            }
             msg.setUser(u);
             msg.setSenderType("USER");
             msg.setReadByDoctor(false);
@@ -1096,12 +1154,14 @@ public class DoctorController {
             Doctor d = (Doctor) session.getAttribute("loggedDoctor");
             if (d == null) return "NOT_LOGGED_IN";
             if (!d.getId().equals(doctorId)) return "ACCESS_DENIED";
+            if (userId == null) return "ACCESS_DENIED";
+            User targetUser = userRepo.findById(userId).orElse(null);
+            if (targetUser == null || !doctorAppointmentService.hasActiveRelationship(doc, targetUser)) {
+                return "ACCESS_DENIED";
+            }
             msg.setSenderType("DOCTOR");
             msg.setReadByDoctor(true);
-            if (userId != null) {
-                User targetUser = userRepo.findById(userId).orElse(null);
-                msg.setUser(targetUser);
-            }
+            msg.setUser(targetUser);
         }
 
         doctorChatRepo.save(msg);
@@ -1124,12 +1184,19 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-doc-" + doctorId + "-" + System.currentTimeMillis();
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         if (doctorOwner) {
+            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
+                    userRepo.findById(userId).orElse(null))) {
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-doc-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            roomName = "safeher-doc-" + doctorId + "-user-" + userId;
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-doc-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
@@ -1150,12 +1217,19 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-call-" + doctorId + "-" + System.currentTimeMillis();
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         if (doctorOwner) {
+            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
+                    userRepo.findById(userId).orElse(null))) {
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-call-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            roomName = "safeher-call-" + doctorId + "-user-" + userId;
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-call-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
@@ -1191,11 +1265,7 @@ public class DoctorController {
         }
 
         DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
-        if (prescriptionText != null && prescriptionText.length() > 500) {
-            redirectAttributes.addFlashAttribute("error", "Prescription cannot exceed 500 characters.");
-            return "redirect:/doctors/dashboard?section=prescriptions";
-        }
-        if (appt != null && appt.getDoctor().getId().equals(d.getId())) {
+        if (appt != null && appt.getDoctor() != null && appt.getDoctor().getId().equals(d.getId())) {
             appt.setPrescriptionText(text);
             appointmentRepo.save(appt);
             redirectAttributes.addFlashAttribute("message", "Prescription saved successfully!");

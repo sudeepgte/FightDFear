@@ -15,10 +15,10 @@
     .rx-wrap{max-width:720px;margin:0 auto}
     .rx-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-bottom:16px}
     .rx-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
-    .rx-btn.primary{background:#312e81;color:#fff}
-    .rx-btn.success{background:#0d9668;color:#fff}
-    .rx-btn.muted{background:#fff;color:#1e1b4b;border:1px solid #ddd}
-    .rx-card{background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(30,27,75,0.1);overflow:hidden}
+    .rx-btn.primary{background:#F43F5E;color:#fff}
+    .rx-btn.success{background:#16A34A;color:#fff}
+    .rx-btn.muted{background:#fff;color:#0F172A;border:1px solid #E2E8F0}
+    .rx-card{background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.08);overflow:hidden}
     #rxPrintArea{padding:40px;background:#fff;color:#333;font-family:'Times New Roman',Times,serif}
     @media print{
       body *{visibility:hidden}

@@ -1,24 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
    Doctor Registration – Multi-Step Wizard
-   Purple → Coral → Gold palette (Fight D Fear theme)
+   Navy → Coral design system (Doctor module)
    ═══════════════════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
-:root {
-  --dr-purple: #1e1b4b;
-  --dr-purple-light: #312e81;
-  --dr-coral: #f43f5e;
-  --dr-teal: #20c997;
-  --dr-gold: #ffd700;
-  --dr-bg: #f8fafc;
-  --dr-card: #ffffff;
-  --dr-text: #1a1a2e;
-  --dr-muted: #6b7280;
-  --dr-border: rgba(30, 27, 75, 0.12);
-  --dr-gradient: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
-  --dr-shadow: 0 20px 60px rgba(30, 27, 75, 0.12);
-  --dr-radius: 16px;
-}
+@import url('doctor-tokens.css');
 
 * { box-sizing: border-box; }
 
@@ -187,7 +172,7 @@ body.dr-page {
   font-size: 14px;
   font-family: 'Poppins', sans-serif;
   color: var(--dr-text);
-  background: #faf8fd;
+  background: #F8FAFC;
   transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
   outline: none;
   width: 100%;
@@ -220,7 +205,7 @@ body.dr-page {
   border-radius: 12px;
   padding: 20px;
   text-align: center;
-  background: #faf8fd;
+  background: #F8FAFC;
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
@@ -302,7 +287,7 @@ body.dr-page {
   transition: all 0.25s;
   font-size: 13px;
   font-weight: 500;
-  background: #faf8fd;
+  background: #F8FAFC;
 }
 .dr-gender-option input:checked + label {
   border-color: var(--dr-purple-light);
@@ -326,7 +311,7 @@ body.dr-page {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.25s;
-  background: #faf8fd;
+  background: #F8FAFC;
   color: var(--dr-muted);
 }
 .dr-day-toggle input:checked + label {
@@ -344,7 +329,7 @@ body.dr-page {
   padding: 14px 18px;
   border: 2px solid var(--dr-border);
   border-radius: 12px;
-  background: #faf8fd;
+  background: #F8FAFC;
 }
 .dr-toggle-row .info {
   display: flex;
@@ -410,7 +395,7 @@ body.dr-page {
   transition: all 0.25s;
   font-size: 13px;
   font-weight: 500;
-  background: #faf8fd;
+  background: #F8FAFC;
 }
 .dr-consult-option label i {
   font-size: 22px;

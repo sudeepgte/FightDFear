@@ -212,8 +212,9 @@ class _DoctorChatScreenState extends State<DoctorChatScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         decoration: BoxDecoration(
-          color: mine ? ModuleTheme.primary.withValues(alpha: 0.15) : Colors.grey.shade200,
+          color: mine ? ModuleTheme.primary : Colors.white,
           borderRadius: BorderRadius.circular(12),
+          border: mine ? null : Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,11 +234,14 @@ class _DoctorChatScreenState extends State<DoctorChatScreen> {
                 icon: const Icon(Icons.attach_file, size: 16),
                 label: const Text('Open attachment'),
               ),
-            Text(m['message']?.toString() ?? ''),
+            Text(
+              m['message']?.toString() ?? '',
+              style: TextStyle(color: mine ? Colors.white : const Color(0xFF0F172A)),
+            ),
             const SizedBox(height: 2),
             Text(
               m['timestamp']?.toString() ?? '',
-              style: const TextStyle(fontSize: 10, color: Colors.black54),
+              style: TextStyle(fontSize: 10, color: mine ? Colors.white70 : const Color(0xFF64748B)),
             ),
           ],
         ),
@@ -248,8 +252,11 @@ class _DoctorChatScreenState extends State<DoctorChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text(widget.title),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F172A),
         actions: [
           IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
         ],
@@ -261,6 +268,17 @@ class _DoctorChatScreenState extends State<DoctorChatScreen> {
                 ? ModuleTheme.loading()
                 : _error != null
                     ? ModuleTheme.errorView(_error!, _load)
+                    : _messages.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text(
+                                'No conversations yet.\nSend a message to start.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Color(0xFF64748B)),
+                              ),
+                            ),
+                          )
                     : ListView.builder(
                         controller: _scroll,
                         padding: const EdgeInsets.all(12),
@@ -310,9 +328,17 @@ class _DoctorChatScreenState extends State<DoctorChatScreen> {
   }
 }
 
-Future<void> openDoctorJitsi(BuildContext context, ApiClient api, int appointmentId, {bool audioOnly = false}) async {
+Future<void> openDoctorJitsi(
+  BuildContext context,
+  ApiClient api,
+  int appointmentId, {
+  bool audioOnly = false,
+  bool asDoctor = false,
+}) async {
   try {
-    final res = await DoctorService(api).joinAppointment(appointmentId, audioOnly: audioOnly);
+    final Map<String, dynamic> res = asDoctor
+        ? await DoctorAuthService(api).joinAppointment(appointmentId, audioOnly: audioOnly)
+        : await DoctorService(api).joinAppointment(appointmentId, audioOnly: audioOnly);
     if (res['success'] != true) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
@@ -140,7 +141,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       case 'CONFIRMED':
         return const Color(0xFF22C55E);
       case 'COMPLETED':
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF16A34A);
       case 'CANCELLED':
         return const Color(0xFFEF4444);
       default:
@@ -293,6 +294,96 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             }),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openAppointmentPreview(Map<String, dynamic> item) {
+    final status = item['status']?.toString() ?? 'PENDING';
+    final type = item['consultationType']?.toString() ?? '';
+    final when = _parseTime(item['appointmentTime']);
+    final reason = item['reason']?.toString() ?? '';
+    final payment = item['paymentStatus']?.toString() ?? '';
+    final amount = item['amountPaid'];
+    final notes = item['doctorNotes']?.toString() ?? '';
+    final id = item['id'] is num ? (item['id'] as num).toInt() : int.tryParse('${item['id']}');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item['clientName']?.toString() ?? 'Patient',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF0F172A))),
+              const SizedBox(height: 4),
+              Text('Appointment preview', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              const SizedBox(height: 16),
+              _previewRow('Age', item['patientAge']?.toString() ?? 'Not provided'),
+              _previewRow('Gender', item['patientGender']?.toString() ?? 'Not provided'),
+              _previewRow('Phone', item['clientPhone']?.toString() ?? 'Not provided'),
+              _previewRow('Patient ID', item['patientId']?.toString() ?? 'Not provided'),
+              const Divider(height: 24),
+              _previewRow('Date', when == null ? 'Not provided' : _formatDate(when)),
+              _previewRow('Time', when == null ? 'Not provided' : _formatTime(when)),
+              _previewRow('Consultation', _modeLabel(type)),
+              _previewRow('Status', _statusLabel(status)),
+              _previewRow('Reason', reason.isEmpty ? 'Not provided' : reason),
+              _previewRow('Payment', amount != null ? '${payment.isEmpty ? 'Paid' : payment} · ₹${_money(amount)}' : (payment.isEmpty ? 'Payment pending' : payment)),
+              _previewRow('Notes', notes.isEmpty ? 'No notes yet' : notes),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(backgroundColor: ModuleTheme.primary),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openChat(item);
+                    },
+                    icon: const Icon(Icons.chat_bubble_outline, size: 16),
+                    label: const Text('Chat'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _openPatientFile(item);
+                    },
+                    icon: const Icon(Icons.person_outline, size: 16),
+                    label: const Text('Patient file'),
+                  ),
+                  if (id != null)
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _savePrescription(id, item['prescriptionText']?.toString() ?? '');
+                      },
+                      icon: const Icon(Icons.description_outlined, size: 16),
+                      label: const Text('Prescription'),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _previewRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 110, child: Text(k, style: const TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600, fontSize: 13))),
+          Expanded(child: Text(v, style: const TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.w600, fontSize: 13))),
+        ],
       ),
     );
   }
@@ -560,7 +651,13 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     if (!mounted) return;
     final finalUrl = res['jitsiUrl']?.toString();
     if (res['success'] == true && finalUrl != null && finalUrl.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Join room ready: $finalUrl')));
+      final uri = Uri.tryParse(finalUrl);
+      if (uri != null) {
+        final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Open this link: $finalUrl')));
+        }
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res['error']?.toString() ?? 'Unable to start instant consult')),
@@ -683,7 +780,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E1B4B), Color(0xFF4C1D95)],
+          colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFFF43F5E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -740,7 +837,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                         ),
                         if (verified) ...[
                           const SizedBox(width: 6),
-                          const Icon(Icons.verified, color: Color(0xFF67E8F9), size: 18),
+                          const Icon(Icons.verified, color: Color(0xFF86EFAC), size: 18),
                         ],
                       ],
                     ),
@@ -784,7 +881,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               _pill(Icons.today_outlined, "Today's Appointments: $todayAppts", Colors.white),
               _pill(Icons.hourglass_bottom_rounded, 'Pending: $pending', const Color(0xFFFDE68A)),
               _pill(Icons.payments_outlined, "Today's Earnings: ₹$todayEarn", const Color(0xFF86EFAC)),
-              _pill(Icons.calendar_month_outlined, 'This Month: ₹$monthEarn', const Color(0xFFA5B4FC)),
+              _pill(Icons.calendar_month_outlined, 'This Month: ₹$monthEarn', const Color(0xFFFECDD3)),
             ],
           ),
         ],
@@ -886,7 +983,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           children: [
             Icon(icon, color: color, size: 20),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: ModuleTheme.navy)),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF0F172A))),
             const SizedBox(height: 2),
             Text(label, style: const TextStyle(fontSize: 11, color: ModuleTheme.textGray)),
           ],
@@ -947,7 +1044,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     final hasRx = (item['prescriptionText']?.toString() ?? '').trim().isNotEmpty;
     final reason = item['reason']?.toString() ?? '';
 
-    return Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openAppointmentPreview(item),
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -966,7 +1068,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               Expanded(
                 child: Text(
                   'Patient: ${item['clientName'] ?? 'Unknown'}',
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: ModuleTheme.navy),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A)),
                 ),
               ),
               _statusBadge(status),
@@ -1061,7 +1163,12 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
                     style: FilledButton.styleFrom(backgroundColor: ModuleTheme.primary),
                     onPressed: () {
                       _svc.pingWaiting(id);
-                      openDoctorJitsi(context, context.read<AuthState>().api, id);
+                      openDoctorJitsi(
+                        context,
+                        context.read<AuthState>().api,
+                        id,
+                        asDoctor: true,
+                      );
                     },
                     icon: const Icon(Icons.videocam, size: 18),
                     label: const Text('Join'),
@@ -1071,6 +1178,8 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
             ],
           ),
         ],
+      ),
+        ),
       ),
     );
   }
@@ -1111,7 +1220,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               const SizedBox(width: 8),
               _statCard('Pending', '${_num(_raw['pendingCount'])}', Icons.hourglass_empty, const Color(0xFFF59E0B)),
               const SizedBox(width: 8),
-              _statCard('Completed', '${_num(_raw['completedCount'])}', Icons.check_circle_outline, const Color(0xFF3B82F6)),
+              _statCard('Completed', '${_num(_raw['completedCount'])}', Icons.check_circle_outline, const Color(0xFF16A34A)),
               const SizedBox(width: 8),
               _statCard("Today's ₹", _money(_raw['todayEarnings']), Icons.payments_outlined, const Color(0xFF22C55E)),
             ],
@@ -1395,7 +1504,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       appBar: AppBar(
         title: const Text('Doctor Dashboard'),
         backgroundColor: Colors.white,
-        foregroundColor: ModuleTheme.navy,
+        foregroundColor: const Color(0xFF0F172A),
         actions: [
           IconButton(
             tooltip: 'Notifications',

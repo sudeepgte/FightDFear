@@ -1878,14 +1878,14 @@
                     <a href="/provider/login" class="dropdown-item">Marketplace Seller</a>
                     <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="/investor/login" class="dropdown-item">Investor</a>
-                    <a href="/host/login" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
                     <a href="/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </li>
         </ul>
 
         <div class="nav-actions">
-            <a href="/women-events/host/register" class="nav-events" style="text-decoration:none;">Events</a>
+            <a href="${pageContext.request.contextPath}/women-events" class="nav-events" style="text-decoration:none;">Events</a>
             <div class="nav-item">
                 <span class="nav-login" style="display:inline-flex; align-items:center; gap:6px; background-color: var(--brand-rose); color: var(--white); padding: 0.6rem 1.4rem; border-radius: 50px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;">
                     <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg> 
@@ -1902,7 +1902,7 @@
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
                     <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
-                    <a href="${pageContext.request.contextPath}/host/login" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
                     <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
 
@@ -2229,7 +2229,7 @@
                     <div style="font-size:2rem; margin-bottom:1rem;">👩‍⚕️</div>
                     <h3>Women Doctors</h3>
                     <p>Find healthcare professionals and trusted resources for women's health.</p>
-                    <a href="/doctors/register" class="btn-primary" style="align-self: flex-start; background: var(--white); color: var(--brand-plum);">Find a Doctor &rarr;</a>
+                    <a href="${pageContext.request.contextPath}/doctors/list" class="btn-primary" style="align-self: flex-start; background: var(--white); color: var(--brand-plum);">Find a Doctor &rarr;</a>
                 </div>
             </div>
             
@@ -2646,7 +2646,7 @@
                 <div class="footer-col">
                     <h4>Wellness</h4>
                     <ul>
-                        <li><a href="/doctors/register">Women Doctors</a></li>
+                        <li><a href="${pageContext.request.contextPath}/doctors/list">Women Doctors</a></li>
                         <li><a href="/fitness/trainer/register">Fitness</a></li>
                         <li><a href="/centres/registerCentre">Wellness Centres</a></li>
                         <li><a href="/salons/register">Beauty & Self Care</a></li>

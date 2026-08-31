@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +16,12 @@
     
     <!-- Custom Theme & Detail Stylesheets -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
+    <style>
+      .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+      .we-modal-overlay.open { display:flex; }
+    </style>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css"/>
 </head>
 <body>
@@ -50,7 +57,7 @@
                 </c:when>
                 <c:otherwise>
                     <!-- Fallback abstract premium background pattern if banner is missing -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #1e1b4b 0%, #3F1430 50%, #f43f5e 100%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #F43F5E 140%);"></div>
                 </c:otherwise>
             </c:choose>
             <div class="hero-overlay"></div>
@@ -93,148 +100,36 @@
                 <div class="card-block">
                     <div class="block-title"><i class="bi bi-info-circle-fill"></i> About The Event</div>
                     <p style="color: var(--text-primary); font-size: 1.05rem; line-height: 1.8; white-space: pre-line; margin-bottom: 0;">
-                        ${event.description}
+                        <c:choose>
+                            <c:when test="${not empty event.description}">${event.description}</c:when>
+                            <c:otherwise>Not provided</c:otherwise>
+                        </c:choose>
                     </p>
                 </div>
 
-                <!-- Feature Program Cards -->
                 <div class="card-block">
-                    <div class="block-title"><i class="bi bi-stars"></i> What You'll Experience</div>
-                    <div class="features-grid">
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-activity"></i></div>
-                            <h4>Mental Wellness</h4>
-                            <p>Interactive sessions focused on stress release, positive affirmation, and mindfulness techniques.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-egg-fried"></i></div>
-                            <h4>Nutrition &amp; Diet</h4>
-                            <p>Actionable coaching from dietitians for hormone balancing, nutrient-rich meal patterns, and energy.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-heart-pulse"></i></div>
-                            <h4>Self-Care Rut</h4>
-                            <p>Practical self-care journals, guided routines, and wellness checklists for home and workplace.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-fingerprint"></i></div>
-                            <h4>Confidence Building</h4>
-                            <p>Assertiveness drills, posture tuning, and public projection skills to build absolute self-assurance.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-shield-check"></i></div>
-                            <h4>Women's Health Info</h4>
-                            <p>Guidance on critical health checkups, preventive cycles, and daily physiological longevity.</p>
-                        </div>
-                        <div class="feature-card">
-                            <div class="feature-icon-wrapper"><i class="bi bi-people"></i></div>
-                            <h4>Safe Community</h4>
-                            <p>Connect with a compassionate local network of motivated organizers, speakers, and participants.</p>
-                        </div>
+                    <div class="block-title"><i class="bi bi-calendar-event"></i> Event details</div>
+                    <div class="we-fact-grid">
+                        <div class="we-fact"><div class="k">Date</div><div class="v">${not empty event.eventDate ? event.eventDate : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Time</div><div class="v">${not empty event.eventTime ? event.eventTime : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Venue</div><div class="v">${not empty event.venue ? event.venue : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">City</div><div class="v">${not empty event.city ? event.city : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Mode</div><div class="v">${event.virtual ? 'Online' : 'In person'}</div></div>
+                        <div class="we-fact"><div class="k">Capacity</div><div class="v">${event.maxParticipants != null ? event.maxParticipants : 'Not limited'}</div></div>
+                        <div class="we-fact"><div class="k">Entry</div><div class="v"><c:choose><c:when test="${event.free}">Free</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></div></div>
+                        <div class="we-fact"><div class="k">Registered</div><div class="v">${registrationCount}</div></div>
                     </div>
+                    <c:if test="${event.virtual && not empty event.streamLink}">
+                        <p class="mt-3 mb-0 small text-muted">Stream link is shared with registered attendees.</p>
+                    </c:if>
                 </div>
 
-                <!-- Schedule timeline -->
                 <div class="card-block">
-                    <div class="block-title"><i class="bi bi-clock-history"></i> Workshop Schedule</div>
-                    <div class="timeline-track">
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">09:30 AM – 10:00 AM</div>
-                            <div class="timeline-content">
-                                <h4>Reception &amp; Welcome Tea</h4>
-                                <p>Arrival registration, welcome kit allocation, ice breaker bonding, and morning wellness refreshments.</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">10:00 AM – 11:30 AM</div>
-                            <div class="timeline-content">
-                                <h4>Mindfulness &amp; Self-Discovery</h4>
-                                <p>Session led by Dr. Sarah Chen on stress control, digital boundary setup, and mental wellness pathways.</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">11:30 AM – 01:00 PM</div>
-                            <div class="timeline-content">
-                                <h4>Integrative Women's Nutrition</h4>
-                                <p>Interactive food-mapping guide, active meal logs, and dietary planning session for optimal vitality.</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">01:00 PM – 02:00 PM</div>
-                            <div class="timeline-content">
-                                <h4>Healthy Organic Lunch</h4>
-                                <p>Chef-cured superfoods lunch, networking conversation exchange, and safety partner community sharing.</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">02:00 PM – 03:30 PM</div>
-                            <div class="timeline-content">
-                                <h4>Confidence &amp; Boundless Self-Care</h4>
-                                <p>Interactive workshop from Meera Joshi showing self-love triggers, boundary setting, and positive posture.</p>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-badge">03:30 PM – 04:30 PM</div>
-                            <div class="timeline-content">
-                                <h4>Gynecology &amp; Lifecycle Wellness Q&amp;A</h4>
-                                <p>Open floor question-and-answer cycle on longevity, hormonal stages, clinical indicators, and physical health.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Facilitator profiles block -->
-                <div class="card-block">
-                    <div class="block-title"><i class="bi bi-people-fill"></i> Meet Your Facilitators</div>
-                    <div class="facilitator-item">
-                        <div class="facilitator-avatar"><i class="bi bi-person-hearts"></i></div>
-                        <div class="facilitator-info">
-                            <div class="facilitator-role">Keynote Speaker</div>
-                            <h4>Dr. Sarah Chen, PhD</h4>
-                            <p class="facilitator-desc">Renowned clinical psychologist and health advocate with 14 years supporting female stressors, digital burnouts, and mindfulness therapies internationally.</p>
-                        </div>
-                    </div>
-                    <div class="facilitator-item">
-                        <div class="facilitator-avatar"><i class="bi bi-person-fill-check"></i></div>
-                        <div class="facilitator-info">
-                            <div class="facilitator-role">Co-Host / Coach</div>
-                            <h4>Meera Joshi</h4>
-                            <p class="facilitator-desc">Distinguished corporate assertiveness coach and organizer of the local self-care movement, specialized in women's leadership workshops and barrier mapping.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- What to Expect checklist -->
-                <div class="card-block">
-                    <div class="block-title"><i class="bi bi-patch-check-fill"></i> Useful Preparation</div>
-                    <div class="expect-grid">
-                        <div class="expect-item">
-                            <i class="bi bi-journal-check"></i>
-                            <div>
-                                <h5>Comfortable Dress</h5>
-                                <p>Wear casual attire suitable for micro-stretches and seating.</p>
-                            </div>
-                        </div>
-                        <div class="expect-item">
-                            <i class="bi bi-pen-fill"></i>
-                            <div>
-                                <h5>Notebook Included</h5>
-                                <p>We provide wellness journals and session maps at entry.</p>
-                            </div>
-                        </div>
-                        <div class="expect-item">
-                            <i class="bi bi-brightness-high-fill"></i>
-                            <div>
-                                <h5>Arrival timing</h5>
-                                <p>Please arrive 15 minutes early for registrations.</p>
-                            </div>
-                        </div>
+                    <div class="block-title"><i class="bi bi-building"></i> Organizer</div>
+                    <div class="we-fact-grid">
+                        <div class="we-fact"><div class="k">Name</div><div class="v">${not empty event.organizerName ? event.organizerName : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Type</div><div class="v">${not empty event.organizerType ? event.organizerType : 'Not provided'}</div></div>
+                        <div class="we-fact" style="grid-column:1 / -1;"><div class="k">Contact</div><div class="v">${not empty event.contactInfo ? event.contactInfo : 'Not provided'}</div></div>
                     </div>
                 </div>
 
@@ -249,7 +144,7 @@
                             <div class="map-address-block">
                                 <div>
                                     <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${event.venue}</h5>
-                                    <p class="text-muted small mb-0">${event.city}, Safe Zone Mapping Enabled</p>
+                                    <p class="text-muted small mb-0">${not empty event.city ? event.city : 'Not provided'}</p>
                                 </div>
                                 <a href="https://maps.google.com/maps?q=${event.mapsLocation}" target="_blank" class="btn-map-guide">
                                     <i class="bi bi-box-arrow-up-right"></i> Get Directions
@@ -315,30 +210,12 @@
                     
                     <div class="reviews-summary-box">
                         <div>
-                            <div class="avg-rating-value">${avgRating > 0 ? avgRating : '0.0'}</div>
+                            <div class="avg-rating-value">${avgRating > 0 ? avgRating : '—'}</div>
                             <div class="avg-rating-stars">
                                 <c:forEach begin="1" end="${avgRating.intValue() > 0 ? avgRating.intValue() : 0}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
                                 <c:forEach begin="${(avgRating.intValue() > 0 ? avgRating.intValue() : 0) + 1}" end="5" var="s"><i class="bi bi-star star-empty"></i></c:forEach>
                             </div>
-                            <div class="text-muted text-center mt-2 small" style="font-weight: 600;">${reviews.size()} Total Reviews</div>
-                        </div>
-                        <div class="rating-bar-chart">
-                            <!-- Simulated distribution bar rates for clean dashboard feel -->
-                            <div class="rating-chart-row">
-                                <span>5 ★</span>
-                                <div class="rating-bar-track"><div class="rating-bar-fill" style="width: 80%;"></div></div>
-                                <span class="text-muted small">80%</span>
-                            </div>
-                            <div class="rating-chart-row">
-                                <span>4 ★</span>
-                                <div class="rating-bar-track"><div class="rating-bar-fill" style="width: 15%;"></div></div>
-                                <span class="text-muted small">15%</span>
-                            </div>
-                            <div class="rating-chart-row">
-                                <span>3 ★</span>
-                                <div class="rating-bar-track"><div class="rating-bar-fill" style="width: 5%;"></div></div>
-                                <span class="text-muted small">5%</span>
-                            </div>
+                            <div class="text-muted text-center mt-2 small" style="font-weight: 600;">${reviews.size()} review${reviews.size() != 1 ? 's' : ''}</div>
                         </div>
                     </div>
 
@@ -390,10 +267,10 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small text-muted font-weight-bold">Feedback Details</label>
-                                <textarea name="reviewText" rows="4" required class="form-control" placeholder="Tell us how the workshop impacted you, the host organization, and facilitators..."></textarea>
+                                <textarea name="reviewText" rows="4" required class="form-control" placeholder="Share how the event went for you..."></textarea>
                             </div>
                             <button type="submit" class="btn-premium-cta" style="max-width: 250px; padding: 12px 24px; font-size: 0.95rem;">
-                                <i class="bi bi-send-fill"></i> Submit Workshop Review
+                                <i class="bi bi-send-fill"></i> Submit review
                             </button>
                         </form>
                     </c:if>
@@ -405,43 +282,43 @@
                 <div class="register-sidebar">
                     
                     <div class="sidebar-card">
-                        <div class="sidebar-price">${event.free ? 'FREE' : '₹'.concat(event.entryFee.toString())}</div>
-                        <div class="sidebar-price-sub">${event.free ? 'Free wellness community event' : 'Entry fee - Payable at checkout'}</div>
+                        <div class="sidebar-price"><c:choose><c:when test="${event.free}">FREE</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></div>
+                        <div class="sidebar-price-sub">${event.free ? 'No entry fee' : 'Entry fee — paid at checkout'}</div>
 
                         <div class="sidebar-meta-list">
                             <div class="sidebar-meta-item">
                                 <i class="bi bi-people-fill"></i>
                                 <div>
-                                    <div class="meta-label">Total Registered</div>
-                                    <div class="meta-value">${registrationCount} <c:if test="${not empty event.maxParticipants}">/ ${event.maxParticipants}</c:if> Seats</div>
+                                    <div class="meta-label">Registered</div>
+                                    <div class="meta-value">${registrationCount}<c:if test="${not empty event.maxParticipants}"> / ${event.maxParticipants}</c:if></div>
                                 </div>
                             </div>
                             <div class="sidebar-meta-item">
                                 <i class="bi bi-calendar3"></i>
                                 <div>
-                                    <div class="meta-label">Scheduled Date</div>
-                                    <div class="meta-value">${event.eventDate}</div>
+                                    <div class="meta-label">Date</div>
+                                    <div class="meta-value">${not empty event.eventDate ? event.eventDate : 'Not provided'}</div>
                                 </div>
                             </div>
                             <div class="sidebar-meta-item">
                                 <i class="bi bi-clock-fill"></i>
                                 <div>
-                                    <div class="meta-label">Timing</div>
-                                    <div class="meta-value">${not empty event.eventTime ? event.eventTime : 'TBA'}</div>
+                                    <div class="meta-label">Time</div>
+                                    <div class="meta-value">${not empty event.eventTime ? event.eventTime : 'Not provided'}</div>
                                 </div>
                             </div>
                             <div class="sidebar-meta-item">
                                 <i class="bi bi-geo-alt-fill"></i>
                                 <div>
-                                    <div class="meta-label">Venue Location</div>
-                                    <div class="meta-value">${event.venue}, ${event.city}</div>
+                                    <div class="meta-label">Venue</div>
+                                    <div class="meta-value">${not empty event.venue ? event.venue : 'Not provided'}<c:if test="${not empty event.city}">, ${event.city}</c:if></div>
                                 </div>
                             </div>
                             <div class="sidebar-meta-item">
                                 <i class="bi bi-telephone-fill"></i>
                                 <div>
-                                    <div class="meta-label">Contact Hotline</div>
-                                    <div class="meta-value">${event.contactInfo}</div>
+                                    <div class="meta-label">Contact</div>
+                                    <div class="meta-value">${not empty event.contactInfo ? event.contactInfo : 'Not provided'}</div>
                                 </div>
                             </div>
                         </div>
@@ -459,39 +336,32 @@
                                         <i class="bi bi-check-circle-fill"></i>
                                         <h5>Registration Active</h5>
                                         <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn btn-sm btn-link text-success fw-bold text-decoration-none mt-1">
-                                            <i class="bi bi-ticket-perforated-fill"></i> View My Ticket code
+                                            <i class="bi bi-ticket-perforated-fill"></i> View my ticket
                                         </a>
                                     </div>
                                 </c:when>
                                 <c:when test="${eventPassed}">
                                     <button class="btn-premium-cta" disabled>
-                                        <i class="bi bi-x-circle-fill"></i> Event Has Passed
+                                        <i class="bi bi-x-circle-fill"></i> Event has passed
                                     </button>
                                 </c:when>
                                 <c:otherwise>
-                                    <c:choose>
-                                        <c:when test="${event.free}">
-                                            <form action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="width: 100%;">
-                                                <button type="submit" class="btn-premium-cta">
-                                                    <i class="bi bi-ticket-perforated-fill"></i> Claim Free Ticket
-                                                </button>
-                                            </form>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <button type="button" class="btn-premium-cta" onclick="openEventCheckoutModal()">
-                                                <i class="bi bi-ticket-perforated-fill"></i> Secure Claim — ₹${event.entryFee}
-                                            </button>
-                                            <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                                        <i class="bi bi-ticket-perforated-fill"></i>
+                                        <c:choose>
+                                            <c:when test="${event.free}">Review &amp; register</c:when>
+                                            <c:otherwise>Review &amp; pay ₹${event.entryFee}</c:otherwise>
+                                        </c:choose>
+                                    </button>
+                                    <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
                                 </c:otherwise>
                             </c:choose>
                         </div>
 
                         <hr style="margin: 24px 0; border-color: var(--border-neutral);"/>
                         <div class="sidebar-extra">
-                            <p class="mb-1"><i class="bi bi-shield-lock-fill text-success"></i> Highly secure identity protection system</p>
-                            <p class="mb-0"><i class="bi bi-ticket-detailed-fill text-danger"></i> Digital secure ticket code issued instantly</p>
+                            <p class="mb-1"><i class="bi bi-ticket-detailed-fill" style="color:var(--we-accent);"></i> A ticket code is issued after registration</p>
+                            <p class="mb-0"><i class="bi bi-shield-check" style="color:var(--we-success);"></i> Show your ticket at entry</p>
                         </div>
                     </div>
 
@@ -514,25 +384,25 @@
         <!-- Full-Width Bottom Registration CTA Banner -->
         <div class="container px-3 pb-5" style="max-width: 1200px; margin: 0 auto;">
             <div class="bottom-registration-cta">
-                <h3>Ready to Prioritize Your Wellness?</h3>
-                <p>Join us for a beautiful day of active listening, wellness connections, self-care journals, and stress recovery alongside leading practitioners.</p>
+                <h3>Register for ${event.name}</h3>
+                <p>Review your booking details, then confirm. A ticket code is issued after registration.</p>
                 <c:choose>
                     <c:when test="${empty loggedUser}">
                         <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
-                            <i class="bi bi-person-circle"></i> Login and Book Seat
+                            <i class="bi bi-person-circle"></i> Login and register
                         </a>
                     </c:when>
                     <c:when test="${alreadyRegistered}">
-                        <div class="d-inline-flex align-items-center gap-2 bg-success text-white py-3 px-5 rounded-pill fw-bold">
-                            <i class="bi bi-check-circle-fill"></i> Seat Reserved &amp; Confirmed
-                        </div>
+                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn-premium-cta">
+                            <i class="bi bi-ticket-perforated-fill"></i> View my ticket
+                        </a>
                     </c:when>
                     <c:when test="${eventPassed}">
-                        <button class="btn-premium-cta" disabled style="background:#555;">Event Complete</button>
+                        <button class="btn-premium-cta" disabled style="background:#555;">Event complete</button>
                     </c:when>
                     <c:otherwise>
-                        <button type="button" class="btn-premium-cta" onclick="openEventCheckoutModal()">
-                            <i class="bi bi-ticket-perforated-fill"></i> Reserve Your Spot Now
+                        <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                            <i class="bi bi-ticket-perforated-fill"></i> Review &amp; register
                         </button>
                     </c:otherwise>
                 </c:choose>
@@ -543,8 +413,8 @@
         <div class="mobile-sticky-action-bar">
             <div class="mobile-sticky-inner">
                 <div class="mobile-price-section">
-                    <span class="mobile-price-value">${event.free ? 'FREE' : '₹'.concat(event.entryFee.toString())}</span>
-                    <span class="mobile-price-lbl">Entry Fee</span>
+                    <span class="mobile-price-value"><c:choose><c:when test="${event.free}">FREE</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></span>
+                    <span class="mobile-price-lbl">Entry</span>
                 </div>
                 <c:choose>
                     <c:when test="${empty loggedUser}">
@@ -559,7 +429,7 @@
                         <button class="btn-premium-cta" disabled style="padding: 12px 24px; font-size: 0.9rem; width: auto;">Passed</button>
                     </c:when>
                     <c:otherwise>
-                        <button type="button" class="btn-premium-cta" onclick="openEventCheckoutModal()" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">
+                        <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">
                             <i class="bi bi-ticket-perforated-fill"></i> Register
                         </button>
                     </c:otherwise>
@@ -578,6 +448,38 @@
             </div>
         </div>
 
+        <!-- Booking review -->
+        <div id="weReviewOverlay" class="we-modal-overlay" onclick="if(event.target===this)closeEventReviewModal()">
+            <div class="we-modal" role="dialog" aria-labelledby="weReviewTitle">
+                <div class="we-modal-header">
+                    <div>
+                        <h3 id="weReviewTitle">Review registration</h3>
+                        <p>Confirm these details before submitting. Quantity is 1 attendee ticket.</p>
+                    </div>
+                    <button type="button" class="we-modal-close" onclick="closeEventReviewModal()" aria-label="Close">&times;</button>
+                </div>
+                <div class="we-modal-body">
+                    <div class="we-modal-row"><span class="k">Event</span><span class="v">${event.name}</span></div>
+                    <div class="we-modal-row"><span class="k">Organizer</span><span class="v">${not empty event.organizerName ? event.organizerName : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Date</span><span class="v">${not empty event.eventDate ? event.eventDate : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Time</span><span class="v">${not empty event.eventTime ? event.eventTime : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Venue</span><span class="v">${not empty event.venue ? event.venue : 'Not provided'}<c:if test="${not empty event.city}">, ${event.city}</c:if></span></div>
+                    <div class="we-modal-row"><span class="k">Attendee</span><span class="v">${not empty loggedUser.fullName ? loggedUser.fullName : 'Signed-in user'}</span></div>
+                    <div class="we-modal-row"><span class="k">Ticket</span><span class="v">1 × attendee</span></div>
+                    <div class="we-modal-row"><span class="k">Amount</span><span class="v"><c:choose><c:when test="${event.free}">Free</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></span></div>
+                </div>
+                <div class="we-modal-footer">
+                    <button type="button" class="we-modal-btn secondary" onclick="closeEventReviewModal()">Edit</button>
+                    <button type="button" class="we-modal-btn primary" id="weConfirmRegisterBtn" onclick="confirmEventRegistration()">
+                        <c:choose>
+                            <c:when test="${event.free}">Confirm registration</c:when>
+                            <c:otherwise>Continue to payment</c:otherwise>
+                        </c:choose>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Razorpay Sim Gateway Modal -->
         <div class="modal fade" id="eventCheckoutModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px);">
             <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
@@ -585,11 +487,11 @@
                     <!-- Modal Header -->
                     <div class="modal-header border-0 pb-0" style="padding: 24px 24px 0;">
                         <div class="d-flex align-items-center">
-                            <div style="background: #fdf2f8; color: #f43f5e; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid var(--border-secondary);">
+                            <div style="background: #fff1f2; color: #f43f5e; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid var(--we-border);">
                                 <i class="bi bi-wallet2"></i>
                             </div>
                             <div class="ms-3">
-                                <h5 class="modal-title fw-bold" style="color: #1e1b4b; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
+                                <h5 class="modal-title fw-bold" style="color: #0F172A; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
                                 <p class="text-muted small mb-0" style="font-size:0.75rem;">Simulated Test Transaction Mode</p>
                             </div>
                         </div>
@@ -599,17 +501,17 @@
                     <div class="modal-body py-4" style="padding: 24px;">
                         <div class="p-3 mb-4" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
                             <div class="d-flex justify-content-between mb-2 small text-muted">
-                                <span>Event Ticket entry fee</span>
+                                <span>Event ticket</span>
                                 <span class="fw-bold">₹${event.entryFee}</span>
                             </div>
                             <div class="d-flex justify-content-between mb-2 small text-muted">
-                                <span>Processing/Internet charge</span>
-                                <span class="text-success fw-bold">₹0.00</span>
+                                <span>Processing charge</span>
+                                <span class="fw-bold" style="color:#16A34A;">₹0.00</span>
                             </div>
                             <hr style="border-style: dashed; margin: 12px 0;">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold" style="color: #1e1b4b;">Total Payment</span>
-                                <span class="fs-5 fw-bold text-primary" style="font-family:'Outfit',sans-serif;">₹${event.entryFee}</span>
+                                <span class="fw-semibold" style="color: #0F172A;">Total</span>
+                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif; color:#0F172A;">₹${event.entryFee}</span>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -617,11 +519,11 @@
                             <div class="d-grid gap-2">
                                 <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="upi" checked class="me-3">
-                                    <i class="bi bi-qr-code text-primary me-2" style="font-size:1.15rem;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
+                                    <i class="bi bi-qr-code me-2" style="font-size:1.15rem; color:#F43F5E;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
                                 </div>
                                 <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="card" class="me-3">
-                                    <i class="bi bi-credit-card text-success me-2" style="font-size:1.15rem;"></i> Credit or Debit Card checkout
+                                    <i class="bi bi-credit-card me-2" style="font-size:1.15rem; color:#16A34A;"></i> Credit or Debit Card checkout
                                 </div>
                             </div>
                         </div>
@@ -634,7 +536,7 @@
                     <!-- Modal Footer -->
                     <div class="modal-footer border-0 pt-0" style="padding: 0 24px 24px;">
                         <button type="button" class="btn btn-outline-secondary w-100 mb-2 rounded-pill small" data-bs-dismiss="modal">Cancel Transaction</button>
-                        <button type="button" class="btn btn-primary w-100 rounded-pill fw-semibold py-2 btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: var(--color-accent); border: none; box-shadow: none;">
+                        <button type="button" class="btn w-100 rounded-pill fw-semibold py-2 btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: var(--we-accent); border: none; box-shadow: none;">
                             Proceed Payment of ₹${event.entryFee} Securely
                         </button>
                     </div>
@@ -644,6 +546,9 @@
 
         <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
         <script>
+            var weEventIsFree = ${event.free};
+            var weSubmitting = false;
+
             setTimeout(() => {
                 document.querySelectorAll('.flash-alert').forEach(el => {
                     el.style.transition='opacity 0.5s'; el.style.opacity='0';
@@ -651,6 +556,30 @@
                 });
             }, 4000);
 
+            function openEventReviewModal() {
+                document.getElementById('weReviewOverlay').classList.add('open');
+            }
+            function closeEventReviewModal() {
+                document.getElementById('weReviewOverlay').classList.remove('open');
+            }
+            function confirmEventRegistration() {
+                if (weSubmitting) return;
+                closeEventReviewModal();
+                if (weEventIsFree) {
+                    submitEventRegisterForm();
+                } else {
+                    openEventCheckoutModal();
+                }
+            }
+            function submitEventRegisterForm() {
+                if (weSubmitting) return;
+                var form = document.getElementById('eventRegisterForm');
+                if (!form) return;
+                weSubmitting = true;
+                var btn = document.getElementById('weConfirmRegisterBtn');
+                if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+                form.submit();
+            }
             function openEventCheckoutModal() {
                 var modal = new bootstrap.Modal(document.getElementById('eventCheckoutModal'));
                 modal.show();
@@ -666,7 +595,7 @@
                     var otp = document.getElementById('eventOtpInput').value;
                     if (otp === '123456') {
                         document.getElementById('eventOtpError').style.display = 'none';
-                        document.getElementById('eventRegisterForm').submit();
+                        submitEventRegisterForm();
                     } else {
                         document.getElementById('eventOtpError').style.display = 'block';
                     }

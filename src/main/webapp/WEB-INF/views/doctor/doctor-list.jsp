@@ -10,7 +10,7 @@
     <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Theme files -->
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -28,16 +28,20 @@
             --border: #E2E8F0;
             --glow-bg: var(--bg-page);
             --card-bg: #ffffff;
+            --shadow-sm: 0 4px 20px rgba(0,0,0,0.03);
+            --shadow-md: 0 8px 24px rgba(244, 63, 94, 0.08);
+            --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+            --text-gray: #64748B;
         }
         
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--glow-bg);
             color: var(--navy-soft);
             overflow-x: hidden;
         }
 
-        /* Floating background blobs */
+        /* Soft atmosphere (muted — 60% surface) */
         .glow-bg-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -47,14 +51,14 @@
         }
         .blob {
             position: absolute;
-            width: 500px; height: 500px;
+            width: 420px; height: 420px;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.12;
+            filter: blur(90px);
+            opacity: 0.07;
             animation: floatBlob 20s infinite alternate;
         }
         .blob-1 { top: -100px; right: -100px; background: var(--primary); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--primary); animation-delay: -5s; }
+        .blob-2 { bottom: -150px; left: -150px; background: #94a3b8; animation-delay: -5s; }
         
         @keyframes floatBlob {
             0% { transform: translate(0, 0) scale(1); }
@@ -74,7 +78,7 @@
             align-items: center;
             gap: 10px;
             background: var(--rose-soft);
-            border: 1px solid var(--border);
+            border: 1px solid #fecdd3;
             border-radius: 999px;
             padding: 8px 14px;
             margin-bottom: 12px;
@@ -91,15 +95,15 @@
             font-size: 14px;
         }
         .glow-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 38px;
-            font-weight: 900;
+            font-size: 2rem;
+            font-weight: 800;
             color: var(--navy);
             margin-bottom: 10px;
+            letter-spacing: -0.3px;
         }
         .glow-header p {
-            color: var(--navy-soft);
-            font-size: 15px;
+            color: var(--text-gray);
+            font-size: 0.95rem;
             max-width: 650px;
             margin: 0 auto;
             line-height: 1.6;
@@ -114,27 +118,27 @@
             position: absolute;
             top: 0; right: 0;
             width: 100%;
+            flex-wrap: wrap;
         }
         .top-btn {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
-            border-radius: 999px;
+            padding: 10px 18px;
+            border-radius: 10px;
             background: #fff;
             border: 1px solid var(--border);
             color: var(--navy-soft);
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
         }
         .top-btn:hover {
-            background: var(--primary);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            background: var(--rose-soft);
+            color: var(--primary);
+            border-color: #fecdd3;
         }
 
         /* Search wrapper */
@@ -142,14 +146,16 @@
             max-width: 500px;
             margin: 24px auto 0;
             position: relative;
+            width: 100%;
+            padding: 0 8px;
         }
         .search-box {
             display: flex;
             align-items: center;
             background: #fff;
             border: 1px solid var(--border);
-            border-radius: 50px;
-            padding: 6px 15px 6px 20px;
+            border-radius: 12px;
+            padding: 8px 15px 8px 16px;
             box-shadow: var(--shadow-sm);
         }
         .search-box i {
@@ -162,6 +168,7 @@
             width: 100%;
             font-size: 14px;
             color: var(--navy-soft);
+            font-family: inherit;
         }
 
         /* Category Scroll Bar */
@@ -174,36 +181,37 @@
             white-space: nowrap;
             padding-bottom: 8px;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
         .cat-scroll-container::-webkit-scrollbar {
             display: none;
         }
         .btn-cat-pill {
-            padding: 8px 20px;
-            border-radius: 999px;
+            padding: 8px 18px;
+            border-radius: 10px;
             background: #fff;
             border: 1px solid var(--border);
             color: var(--navy-soft);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            font-family: inherit;
         }
         .btn-cat-pill:hover, .btn-cat-pill.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+            background: var(--rose-soft);
+            color: var(--primary);
+            border-color: #fecdd3;
         }
 
         /* Doctors Grid */
         .doctors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
             padding: 40px 20px;
             max-width: 1200px;
             margin: 0 auto;
@@ -211,38 +219,39 @@
         .doctor-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 20px;
+            border-radius: 16px;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             box-shadow: var(--shadow-sm);
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
         .doctor-card:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
             border-color: #fecdd3;
         }
         .doctor-card-top {
-            padding: 24px;
+            padding: 20px;
             display: flex;
-            gap: 16px;
-            border-bottom: 1px dashed var(--border);
+            gap: 14px;
+            border-bottom: 1px solid var(--border);
         }
         .doctor-avatar {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff5f7;
-            font-size: 28px;
+            background: var(--rose-soft);
+            font-size: 24px;
             font-weight: 800;
             color: var(--primary);
             flex-shrink: 0;
-            border: 2px solid #fecdd3;
+            border: 1px solid #fecdd3;
         }
         .doctor-avatar img {
             width: 100%;
@@ -251,24 +260,26 @@
         }
         .doctor-info {
             flex-grow: 1;
+            min-width: 0;
         }
         .doctor-spec {
             font-size: 11px;
             font-weight: 800;
             color: var(--primary);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.6px;
             margin-bottom: 4px;
         }
         .doctor-name {
-            font-size: 17px;
+            font-size: 1.05rem;
             font-weight: 800;
             color: var(--navy);
             margin: 2px 0 6px;
+            word-break: break-word;
         }
         .doctor-loc {
             font-size: 12px;
-            color: var(--navy-soft);
+            color: var(--text-gray);
             display: flex;
             align-items: center;
             gap: 4px;
@@ -277,7 +288,7 @@
             color: var(--primary);
         }
         .doctor-tags {
-            padding: 16px 24px;
+            padding: 14px 20px;
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
@@ -287,9 +298,9 @@
             font-size: 11px;
             font-weight: 600;
             padding: 4px 10px;
-            border-radius: 6px;
-            background: #f3f4f6;
-            color: #4b5563;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #475569;
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -311,7 +322,7 @@
             color: #dc2626;
         }
         .doctor-actions {
-            padding: 20px 24px 24px;
+            padding: 16px 20px 20px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 8px;
@@ -432,21 +443,22 @@
                     </c:otherwise>
                 </c:choose>
 
-                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn" style="background: var(--brand-purple); color: white;">
-                    <i class="bi bi-file-earmark-medical"></i> My Prescriptions
-                </a>
-                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
-                    <i class="bi bi-calendar-event"></i> My Appointments
-                </a>
-
             </div>
             
             <div class="brand-row">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
                 <span>Fight D Fear</span>
             </div>
-            <h1>Find Your Doctor</h1>
-            <p>Connect securely with verified, expert female doctors, gynecologists, and psychologists dedicated to women's physical and mental healthcare.</p>
+            <c:choose>
+                <c:when test="${viewerIsDoctor}">
+                    <h1>Doctor Directory</h1>
+                    <p>Browse other verified doctors on Fight D Fear. This is a peer directory preview — patients see a similar listing when booking care.</p>
+                </c:when>
+                <c:otherwise>
+                    <h1>Find Your Doctor</h1>
+                    <p>Connect securely with verified, expert female doctors, gynecologists, and psychologists dedicated to women's physical and mental healthcare.</p>
+                </c:otherwise>
+            </c:choose>
             
             <!-- Search bar -->
             <div class="search-container">

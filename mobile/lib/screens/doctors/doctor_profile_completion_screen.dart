@@ -723,7 +723,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         children: [
           const Text(
             '1.3 Qualifications *',
-            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1E1B4B)),
+            style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -1386,6 +1386,48 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                         : _profile['clinicPhotos']?.toString(),
                     requiredDoc: false,
                     imagesOnly: true,
+                  ),
+                ]),
+                _section('11', 'Review & Submit', [
+                  Text(
+                    'Completion: ${(_profile['profileCompletionPct'] is num) ? (_profile['profileCompletionPct'] as num).round() : (int.tryParse('${_profile['profileCompletionPct']}') ?? 0)}%',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _profile['doctorProfileStatusLabel']?.toString() ??
+                        _profile['doctorProfileStatus']?.toString() ??
+                        'Incomplete',
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                  ),
+                  if ((_profile['nextStepGuidance']?.toString() ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _profile['nextStepGuidance'].toString(),
+                      style: const TextStyle(color: Color(0xFF334155), fontSize: 13, height: 1.4),
+                    ),
+                  ],
+                  if (_profile['missingItems'] is List && (_profile['missingItems'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    const Text('Still missing:', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 6),
+                    ...((_profile['missingItems'] as List).take(8).map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('• ', style: TextStyle(color: Color(0xFFF43F5E))),
+                                Expanded(child: Text('$item', style: const TextStyle(fontSize: 13))),
+                              ],
+                            ),
+                          ),
+                        )),
+                  ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Save your profile first. When all required sections are complete, submit for admin verification.',
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
                   ),
                 ]),
                 const SizedBox(height: 12),
