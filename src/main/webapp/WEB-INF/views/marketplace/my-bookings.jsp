@@ -223,7 +223,7 @@
     <div class="container mb-5">
         <div class="nav-tabs-custom">
             <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="active">Personal Sessions</a>
-            <a href="${pageContext.request.contextPath}/marketplace/my-classes">Joined Classes</a>
+
         </div>
 
         <div class="booking-card">
@@ -293,71 +293,6 @@
             </c:if>
         </div>
 
-        <h4 class="fw-bold mt-5 mb-3" style="color: var(--primary);"><i class="fas fa-briefcase"></i> Booked Workers</h4>
-        <div class="booking-card">
-            <c:if test="${empty workerBookings}">
-                <div class="text-center py-4">
-                    <p class="text-muted">You haven't booked any verified workers yet.</p>
-                </div>
-            </c:if>
-            <c:if test="${not empty workerBookings}">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Worker</th>
-                                <th>Category</th>
-                                <th>Scheduled Time</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="wb" items="${workerBookings}">
-                                <tr>
-                                    <td>
-                                        <div class="fw-800 color-m-purple">${wb.jobApplication.user.fullName}</div>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark">${wb.jobApplication.jobSubCategory}</span>
-                                    </td>
-                                    <td>
-                                        <div class="small fw-600 mb-1"><i class="far fa-calendar-alt text-muted"></i> ${wb.bookingDate}</div>
-                                        <div class="badge bg-light text-dark border">
-                                            <c:if test="${wb.hours != null}"><strong>Hours:</strong> ${wb.hours}</c:if>
-                                            <c:if test="${wb.hours == null}"><strong>Custom Offer</strong></c:if>
-                                        </div>
-                                        <div class="badge bg-success-subtle text-success border border-success-subtle mt-1">
-                                            <strong>Total:</strong> &#8377;${wb.totalAmount != null ? wb.totalAmount : 0.0}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="status-pill status-${wb.status}">${wb.status}</span>
-                                    </td>
-                                    <td>
-                                        <c:if test="${wb.status == 'ACCEPTED'}">
-                                            <div class="d-flex gap-2 align-items-center">
-                                                <a href="${pageContext.request.contextPath}/chat/window/${wb.jobApplication.user.id}" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-comment-dots"></i> Chat</a>
-                                                <button type="button" class="btn btn-sm btn-success rounded-pill px-3"
-                                                        onclick="payWorkerBooking(${wb.id}, ${wb.totalAmount != null ? wb.totalAmount : 0})">
-                                                    <i class="fas fa-credit-card"></i> Pay
-                                                </button>
-                                            </div>
-                                        </c:if>
-                                        <c:if test="${wb.status == 'PAID' || wb.status == 'COMPLETED'}">
-                                            <a href="${pageContext.request.contextPath}/chat/window/${wb.jobApplication.user.id}" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-comment-dots"></i> Chat</a>
-                                        </c:if>
-                                        <c:if test="${wb.status != 'ACCEPTED' && wb.status != 'PAID' && wb.status != 'COMPLETED'}">
-                                            <span class="text-muted small">-</span>
-                                        </c:if>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
-                </div>
-            </c:if>
-        </div>
     </div>
 
     <!-- Chat Modal -->
