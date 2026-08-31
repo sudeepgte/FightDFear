@@ -1,5 +1,6 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,33 +9,34 @@
 
 <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css" rel="stylesheet">
+<link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
+<link href="${pageContext.request.contextPath}/assets/css/reels-theme.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
 
 <style>
     /* ============================================
        ORIGINAL STYLES (kept exactly as is)
        ============================================ */
     :root {
-        --primary-purple: #1e1b4b;
-        --primary-purple-light: #312e81;
-        --primary-coral: #f43f5e;
-        --primary-coral-dark: #1e1b4b;
-        --primary-teal: #20c997;
-        --primary-gold: #ffd700;
-        --dark-bg: #0f0f1a;
-        --light-bg: #fffcfd;
-        --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
-        --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
-        --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
-        --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
+        --primary-purple: #0F172A;
+        --primary-purple-light: #64748B;
+        --primary-coral: #F43F5E;
+        --primary-coral-dark: #E11D48;
+        --primary-teal: #F43F5E;
+        --primary-gold: #F43F5E;
+        --dark-bg: #0F172A;
+        --light-bg: #F8FAFC;
+        --gradient-primary: linear-gradient(135deg, #F43F5E 0%, #FB7185 100%);
+        --shadow-sm: 0 4px 16px rgba(15, 23, 42, 0.06);
+        --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+        --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
     }
 
     body {
-        background: #ffffff;
-        color: #222;
+        background: #F8FAFC;
+        color: #0F172A;
         margin: 0;
         padding: 0;
         overflow-x: hidden;
@@ -81,12 +83,25 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        overflow-y: scroll;
-        height: calc(100vh - 200px);
-        min-height: 420px;
+        overflow-y: auto;
+        height: calc(100vh - 160px);
+        min-height: 480px;
         scroll-snap-type: y mandatory;
         scroll-behavior: smooth;
         flex: 1;
+        padding-bottom: 40px;
+    }
+    .reels-scroll-hint {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(248, 250, 252, 0.92);
+        padding: 8px 16px;
+        border-radius: 999px;
+        margin: 8px 0 4px;
+        width: fit-content;
+        align-self: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .reel-container {
         display: flex;
@@ -469,7 +484,7 @@
         to { opacity: 1; }
     }
 
-    /* 2. Custom scrollbar for reels wrapper (sleek & modern) */
+    /* 2. Custom scrollbar for reels wrapper (sleek and modern) */
     .reels-wrapper::-webkit-scrollbar {
         width: 5px;
     }
@@ -616,6 +631,7 @@
 
 <body class="reels-page-shell">
 
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -638,33 +654,34 @@
 
 <c:if test="${empty videos}">
   <div style="display:flex; justify-content:center; align-items:center; min-height:80vh;">
-    <div style="
-      background: #fff;
-      border: 2px solid #c2185b;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(194,24,91,0.15);
+    <div class="reels-empty-theme" style="
       padding: 50px 60px;
       text-align: center;
       max-width: 480px;
       width: 90%;
+      border-radius: 20px;
     ">
       <div style="font-size: 60px; margin-bottom: 16px;">🎬</div>
-      <h3 style="color:#1e1b4b; font-weight:800; margin-bottom:10px; font-size:1.6rem;">No reels yet</h3>
-      <p style="color:#312e81; margin-bottom:28px; font-size:1rem;">
+      <h3 style="font-weight:800; margin-bottom:10px; font-size:1.6rem;">No reels yet</h3>
+      <p style="margin-bottom:28px; font-size:1rem;">
         Upload a reel first, then come back to Reels.
       </p>
       <div style="display:flex; gap:12px; justify-content:center;">
-        <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#reelStudioModal"
-           style="background:linear-gradient(135deg,#1e1b4b,#f43f5e); color:white; border:none; padding:10px 28px; border-radius:30px; font-weight:700; font-size:0.95rem;">
+        <button type="button" class="btn btn-shoot" data-bs-toggle="modal" data-bs-target="#reelStudioModal"
+           style="padding:10px 28px; border-radius:30px; font-weight:700; font-size:0.95rem;">
           Shoot Reel
         </button>
-        <a href="${pageContext.request.contextPath}/users/dashboard"
-           style="border:2px solid #c2185b; color:#c2185b; padding:10px 28px; border-radius:30px; font-weight:700; text-decoration:none; font-size:0.95rem;">
+        <a href="${pageContext.request.contextPath}/users/dashboard" class="btn-back"
+           style="padding:10px 28px; border-radius:30px; font-weight:700; text-decoration:none; font-size:0.95rem;">
           Back
         </a>
       </div>
     </div>
   </div>
+</c:if>
+
+<c:if test="${not empty videos and fn:length(videos) > 1}">
+  <p class="reels-scroll-hint text-center text-muted small mb-2">Scroll down for more reels (${fn:length(videos)} total)</p>
 </c:if>
 
 <c:forEach var="video" items="${videos}">
@@ -675,20 +692,30 @@
 
       <!-- Profile -->
  <div class="profile-bar">
+  <c:choose>
+    <c:when test="${not empty video.user}">
   <a href="${pageContext.request.contextPath}/users/profile1/${video.user.id}"
      style="text-decoration:none; color:white; display:flex; align-items:center; gap:10px;">
      
-    <img src="${pageContext.request.contextPath}${video.user.profilePhoto}">
+    <c:choose>
+      <c:when test="${not empty video.user.profilePhoto}">
+        <img src="${pageContext.request.contextPath}${video.user.profilePhoto}" alt="">
+      </c:when>
+      <c:otherwise>
+        <img src="https://ui-avatars.com/api/?background=f43f5e&amp;color=fff&amp;name=User" alt="">
+      </c:otherwise>
+    </c:choose>
     <span>${video.user.fullName}</span>
   </a>
   
   <c:if test="${video.user.id != currentUser.id}">
       <c:set var="status" value="${followStatusMap[video.user.id]}" />
+      <c:if test="${empty status}"><c:set var="status" value="FOLLOW" /></c:if>
       <button id="follow-btn-${video.user.id}" 
               class="btn btn-sm ${status == 'FOLLOW' ? 'btn-danger' : 'btn-outline-light'}"
               style="border-radius:20px; font-weight:bold; margin-left:10px;"
               onclick="followCreator(${video.user.id})"
-              ${status != 'FOLLOW' ? 'disabled' : ''}>
+              <c:if test="${status != 'FOLLOW'}">disabled</c:if>>
           <c:choose>
               <c:when test="${status == 'FOLLOWING'}">Following</c:when>
               <c:when test="${status == 'REQUESTED'}">Requested</c:when>
@@ -696,12 +723,17 @@
           </c:choose>
       </button>
   </c:if>
+    </c:when>
+    <c:otherwise>
+      <span style="color:white;">Community Reel</span>
+    </c:otherwise>
+  </c:choose>
 </div>
 
 
 
    <c:choose>
- <c:when test="${fn:endsWith(fn:toLowerCase(video.videoPath), '.mp4') || fn:endsWith(fn:toLowerCase(video.videoPath), '.webm') || fn:endsWith(fn:toLowerCase(video.videoPath), '.mov') || video.fileType eq 'VIDEO'}">
+ <c:when test="${video.fileType eq 'VIDEO' || (not empty video.videoPath && (fn:endsWith(fn:toLowerCase(video.videoPath), '.mp4') || fn:endsWith(fn:toLowerCase(video.videoPath), '.webm') || fn:endsWith(fn:toLowerCase(video.videoPath), '.mov')))}">
     <video muted playsinline data-video-id="${video.id}">
         <source src="${pageContext.request.contextPath}${video.videoPath}">
     </video>
@@ -717,8 +749,8 @@
 
 
 <div class="reel-caption">
-    <strong>${video.user.fullName}</strong>
-    <span>${video.description}</span>
+    <strong><c:out value="${not empty video.user ? video.user.fullName : 'Community'}"/></strong>
+    <span><c:out value="${video.description}"/></span>
 </div>
 
       <!-- Heart -->
@@ -785,45 +817,32 @@
       </div>
 
       <div id="comments-${video.id}">
-  <c:forEach var="comment" items="${video.comments}">
-    <c:if test="${comment.parent == null}">
-      
-      <!-- Parent Comment -->
+  <c:forEach var="comment" items="${commentsByVideoId[video.id]}">
+      <c:set var="commentAuthor" value="${not empty comment.user ? comment.user.fullName : 'User'}" />
+      <c:set var="safeCommentAuthor"><c:out value="${commentAuthor}" escapeXml="true"/></c:set>
       <div class="comment" id="comment-${comment.id}">
-        <strong>${comment.user.fullName}:</strong> ${comment.text}
+        <strong><c:out value="${commentAuthor}"/>:</strong> <c:out value="${comment.text}"/>
 
-        <div>
-      
-
-
-
-        </div>
-
-        <!-- Replies -->
-<div id="replies-${comment.id}" style="margin-left:20px; margin-top:5px;">
-  <c:forEach var="reply" items="${comment.replies}">
+        <div id="replies-${comment.id}" style="margin-left:20px; margin-top:5px;">
+  <c:forEach var="reply" items="${repliesByCommentId[comment.id]}">
+      <c:set var="replyAuthor" value="${not empty reply.user ? reply.user.fullName : 'User'}" />
     <div class="comment" style="background:#333; margin-top:3px;">
-      <strong>${reply.user.fullName}:</strong> ${reply.text}
+      <strong><c:out value="${replyAuthor}"/>:</strong> <c:out value="${reply.text}"/>
     </div>
   </c:forEach>
 </div>
 
-<!-- Reply + Share buttons -->
 <div style="margin-top:5px;">
-  <!-- Reply Button -->
-  <button type="button" class="btn btn-sm btn-outline-light"
-          onclick="showReplyBox(${video.id}, ${comment.id}, '${comment.user.fullName}')">
+  <button type="button" class="btn btn-sm btn-outline-light btn-reply"
+          data-video-id="${video.id}"
+          data-comment-id="${comment.id}"
+          data-author="${safeCommentAuthor}">
       Reply
   </button>
-
-  <!-- Share to Friend button -->
-
 </div>
 
-
-<!-- Reply Input (hidden initially) -->
 <div id="reply-box-${comment.id}" style="display:none; margin-top:5px;">
-  <form onsubmit="postReply(event, ${video.id}, ${comment.id})" class="d-flex">
+  <form class="d-flex reel-reply-form" data-video-id="${video.id}" data-comment-id="${comment.id}">
     <input type="text"
            id="reply-input-${comment.id}"
            class="form-control me-2"
@@ -834,8 +853,6 @@
 </div>
 
       </div>
-
-    </c:if>
   </c:forEach>
 </div>
 
@@ -857,8 +874,33 @@ function toggleComments(id) {
   document.getElementById("comment-box-" + id).classList.toggle("active");
 }
 
+document.addEventListener('click', function (e) {
+  const replyBtn = e.target.closest('.btn-reply');
+  if (replyBtn) {
+    showReplyBox(
+      Number(replyBtn.getAttribute('data-video-id')),
+      Number(replyBtn.getAttribute('data-comment-id')),
+      replyBtn.getAttribute('data-author') || 'User'
+    );
+  }
+});
+
+document.addEventListener('submit', function (e) {
+  const form = e.target.closest('.reel-reply-form');
+  if (form) {
+    postReply(
+      e,
+      Number(form.getAttribute('data-video-id')),
+      Number(form.getAttribute('data-comment-id'))
+    );
+  }
+});
+
+function showChatToast() { /* noop for header compatibility */ }
+function markBroadcastsAsRead() { /* noop on reels until broadcast modal is added */ }
+
 function toggleMute(videoId, btn) {
-    const video = document.querySelector(`video[data-video-id='${videoId}']`);
+    const video = document.querySelector("video[data-video-id='" + videoId + "']");
     if (!video) return;
     
     // Toggle the specific video
@@ -992,7 +1034,7 @@ function showReplyBox(videoId, commentId, userName) {
 	  .then(res => res.json())
 	  .then(data => {
 		    // Determine user name correctly
-		    const userName = data.user || "${currentUser.fullName}" || "Unknown";
+		    const userName = data.user || '<c:out value="${currentUser.fullName}" escapeXml="true"/>' || "Unknown";
 
 		    // Append reply to the correct replies container
 		    const repliesContainer = document.getElementById("replies-" + parentId);
@@ -1000,7 +1042,7 @@ function showReplyBox(videoId, commentId, userName) {
 		    replyDiv.className = "comment";
             replyDiv.style.background = "#333";
             replyDiv.style.marginTop = "3px";
-		    replyDiv.innerHTML = `<strong>${userName}:</strong> ${data.text}`;
+		    replyDiv.innerHTML = '<strong>' + userName + ':</strong> ' + data.text;
 
 		    repliesContainer.appendChild(replyDiv);
 		    input.value = "";
@@ -1053,8 +1095,8 @@ function shareVideo(videoUrl, userName) {
     const fullVideoUrl = window.location.origin + videoUrl; // Full absolute URL
 
     const shareData = {
-        title: `Check out this video by ${userName}`,
-        text: `Watch this reel by ${userName}!`,
+        title: 'Check out this video by ' + userName,
+        text: 'Watch this reel by ' + userName + '!',
         url: fullVideoUrl
     };
 
@@ -1124,8 +1166,8 @@ function shareVideoToUser(videoId, receiverId) {
           const fullVideoUrl = window.location.origin + videoUrl;
 
           const shareData = {
-              title: `Check out this video by ${userName}`,
-              text: `Watch this reel by ${userName}!`,
+              title: 'Check out this video by ' + userName,
+              text: 'Watch this reel by ' + userName + '!',
               url: fullVideoUrl
           };
 
@@ -1175,7 +1217,7 @@ function shareVideoToUser(videoId, receiverId) {
       // Share to friend button
       function shareToFriend(videoId) {
           const currentUserId = ${currentUser.id};
-          window.location.href = `${window.location.origin}${'${pageContext.request.contextPath}'}/searchs/${currentUserId}?videoId=${videoId}`;
+          window.location.href = window.location.origin + '${pageContext.request.contextPath}/searchs/' + currentUserId + '?videoId=' + videoId;
       }
     </script>
   </c:when>
@@ -1297,35 +1339,25 @@ function postComment(e, videoId) {
     if (!text) return;
 
     // Use current logged-in user's name from JSP
-    const userName = "${currentUser.fullName}";
+    const userName = '<c:out value="${currentUser.fullName}" escapeXml="true"/>';
 
-    // Append the comment immediately to the DOM
     const commentContainer = document.getElementById("comments-" + videoId);
-
-    const commentId = 'c-' + Date.now(); // temporary ID for new comment
+    const commentId = 'c-' + Date.now();
     const commentDiv = document.createElement("div");
     commentDiv.className = "comment";
     commentDiv.id = "comment-" + commentId;
-    commentDiv.innerHTML = `
-        <strong>${userName}:</strong> ${text}
-        <div id="replies-${commentId}" style="margin-left:20px; margin-top:5px;"></div>
-        <div style="margin-top:5px;">
-            <button type="button" class="btn btn-sm btn-outline-light"
-                onclick="showReplyBox(${videoId}, '${commentId}', '${userName}')">
-                Reply
-            </button>
-        </div>
-        <div id="reply-box-${commentId}" style="display:none; margin-top:5px;">
-            <form onsubmit="postReply(event, ${videoId}, '${commentId}')" class="d-flex">
-                <input type="text"
-                    id="reply-input-${commentId}"
-                    class="form-control me-2"
-                    placeholder="Reply..."
-                    required>
-                <button type="submit" class="btn btn-danger btn-sm">Send</button>
-            </form>
-        </div>
-    `;
+    commentDiv.innerHTML =
+        '<strong>' + userName + ':</strong> ' + text +
+        '<div id="replies-' + commentId + '" style="margin-left:20px; margin-top:5px;"></div>' +
+        '<div style="margin-top:5px;">' +
+            '<button type="button" class="btn btn-sm btn-outline-light" onclick="showReplyBox(' + videoId + ', \'' + commentId + '\', \'' + userName.replace(/'/g, "\\'") + '\')">Reply</button>' +
+        '</div>' +
+        '<div id="reply-box-' + commentId + '" style="display:none; margin-top:5px;">' +
+            '<form onsubmit="postReply(event, ' + videoId + ', \'' + commentId + '\')" class="d-flex">' +
+                '<input type="text" id="reply-input-' + commentId + '" class="form-control me-2" placeholder="Reply..." required>' +
+                '<button type="submit" class="btn btn-danger btn-sm">Send</button>' +
+            '</form>' +
+        '</div>';
 
     commentContainer.appendChild(commentDiv);
 
@@ -1349,9 +1381,9 @@ function postComment(e, videoId) {
             const replyInput = commentDiv.querySelector('[id^="reply-input-"]');
             if (replyInput) replyInput.id = "reply-input-" + data.id;
             const replyBtn = commentDiv.querySelector('button[onclick^="showReplyBox"]');
-            if (replyBtn) replyBtn.setAttribute('onclick', `showReplyBox(${videoId}, '${data.id}', '${userName}')`);
+            if (replyBtn) replyBtn.setAttribute('onclick', 'showReplyBox(' + videoId + ', \'' + data.id + '\', \'' + userName.replace(/'/g, "\\'") + '\')');
             const replyForm = commentDiv.querySelector('form[onsubmit^="postReply"]');
-            if (replyForm) replyForm.setAttribute('onsubmit', `postReply(event, ${videoId}, '${data.id}')`);
+            if (replyForm) replyForm.setAttribute('onsubmit', 'postReply(event, ' + videoId + ', \'' + data.id + '\')');
         }
     })
     .catch(err => console.error(err));
@@ -1523,7 +1555,7 @@ function openReportModal(videoId) {
                   <option value="SELF_DEFENSE">Self Defense</option>
                   <option value="AWARENESS">Awareness</option>
                   <option value="COMMUNITY_STORIES">Community Stories</option>
-                  <option value="FITNESS">Fitness & Health</option>
+                  <option value="FITNESS">Fitness &amp; Health</option>
                 </select>
               </div>
               <div class="col-12">
@@ -1537,7 +1569,7 @@ function openReportModal(videoId) {
                   <option value="brightness(1.08) contrast(1.1) saturate(1.2)">Vivid</option>
                   <option value="sepia(0.35) saturate(1.3)">Warm</option>
                   <option value="hue-rotate(180deg) saturate(0.9)">Cool</option>
-                  <option value="grayscale(1) contrast(1.05)">Black & White</option>
+                  <option value="grayscale(1) contrast(1.05)">Black &amp; White</option>
                 </select>
               </div>
               <div class="col-md-6">

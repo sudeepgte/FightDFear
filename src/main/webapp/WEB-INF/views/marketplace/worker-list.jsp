@@ -13,29 +13,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <style>
-        :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #fffcfd;
-            --m-shadow: 0 15px 35px rgba(30, 27, 75, 0.1);
+        body.mp-list-page {
+            --m-navy: #1E1B4B;
+            --m-navy-mid: #312E81;
+            --m-rose: #F43F5E;
+            --m-rose-mid: #C04B7A;
+            --m-bg: #F8FAFC;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--m-bg); }
-        .hero-section {
-            background: linear-gradient(135deg, var(--m-purple) 0%, var(--m-pink) 100%);
-            padding: 60px 0; color: white; text-align: center;
+        body.mp-list-page #page-content-wrapper {
+            font-family: 'Poppins', sans-serif;
+            background: var(--m-bg);
         }
-        .worker-card {
-            background: white; border-radius: 20px; padding: 30px; text-align: center;
-            box-shadow: var(--m-shadow); border: 1px solid rgba(124,45,94,0.05); transition: 0.3s;
+        body.mp-list-page .hero-section {
+            background: linear-gradient(135deg, var(--m-navy) 0%, var(--m-navy-mid) 48%, var(--m-rose-mid) 100%);
+            padding: 60px 0; color: #fff; text-align: center;
+            box-shadow: 0 8px 28px rgba(125, 42, 90, 0.18);
         }
-        .worker-card:hover { transform: translateY(-10px); border-color: var(--m-pink); }
-        .worker-avatar {
+        body.mp-list-page .worker-card {
+            background: #fff; border-radius: 20px; padding: 30px; text-align: center;
+            box-shadow: 0 6px 20px rgba(125, 42, 90, 0.08);
+            border: 1px solid rgba(30, 27, 75, 0.12); transition: 0.3s;
+        }
+        body.mp-list-page .worker-card:hover { transform: translateY(-10px); border-color: var(--m-rose); }
+        body.mp-list-page .worker-avatar {
             width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
-            margin: 0 auto 20px; border: 4px solid var(--m-pink);
+            margin: 0 auto 20px; border: 4px solid var(--m-rose);
+        }
+        body.mp-list-page .btn-primary {
+            background: var(--m-navy) !important;
+            border: none !important;
+        }
+        body.mp-list-page .btn-primary:hover { background: var(--m-rose) !important; }
+        body.mp-list-page h4 { color: var(--m-navy); }
+        @media (max-width: 768px) {
+            body.mp-list-page .hero-section { padding: 36px 16px; }
         }
     </style>
 </head>
-<body>
+<body class="mp-list-page">
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -54,7 +69,7 @@
                                 <h4>${app.user.fullName}</h4>
                                 <p class="text-muted mb-2"><i class="fas fa-briefcase"></i> ${app.jobSubCategory}</p>
                                 <p class="text-muted mb-3"><i class="fas fa-map-marker-alt"></i> ${app.user.homeAddress}</p>
-                                <a href="${pageContext.request.contextPath}/marketplace/worker/${app.id}" class="btn btn-primary w-100 mb-2" style="background:var(--m-purple);border:none;">View Profile & Book</a>
+                                <a href="${pageContext.request.contextPath}/marketplace/worker/${app.id}" class="btn btn-primary w-100 mb-2">View Profile & Book</a>
                             </div>
                         </div>
                     </c:forEach>

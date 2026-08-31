@@ -13,90 +13,242 @@
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <style>
-    :root {
-        --primary-purple: #1e1b4b;
-        --primary-purple-light: #312e81;
-        --primary-coral: #f43f5e;
-        --primary-coral-dark: #1e1b4b;
-        --dark-bg: #0f0f1a;
-        --light-bg: #fffcfd;
+    /* Page-scoped Martial Arts 60/30/10 theme — this JSP only */
+    body.wj-admin-jobs {
         --maroon: #1e1b4b;
         --maroon-light: #312e81;
+        --maroon-dark: #0b0920;
         --maroon-pale: #f8fafc;
         --maroon-border: rgba(30, 27, 75, 0.12);
+        --rose: #f43f5e;
+        --rose-mid: #c04b7a;
+        --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
         --sidebar-w: 272px;
-    }
-
-    body {
-        font-family: 'Poppins', sans-serif;
+        font-family: 'Poppins', 'Inter', sans-serif;
         margin: 0;
-        background: linear-gradient(180deg, var(--light-bg) 0%, #f5f5f5 100%);
-        color: var(--dark-bg);
+        background: var(--maroon-pale);
+        color: #1a1a2e;
     }
 
-    .topbar {
-        background: var(--primary-purple);
-        color: white;
-        padding: 14px 18px;
+    body.wj-admin-jobs .topbar {
+        background: #F43F5E;
+        color: #fff;
+        padding: 0 20px;
+        height: 58px;
         font-weight: 600;
         position: sticky;
         top: 0;
         z-index: 1000;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 3px 16px rgba(125,42,90,0.28);
+        display: flex;
+        align-items: center;
     }
-
-    .topbar .wrap {
+    body.wj-admin-jobs .topbar .container-fluid { width: 100%; }
+    body.wj-admin-jobs .topbar .wrap {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        width: 100%;
+        min-height: 58px;
+    }
+    body.wj-admin-jobs .topbar .btn-light {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 7px;
+        font-weight: 600;
+    }
+    body.wj-admin-jobs .topbar .btn-light:hover {
+        background: rgba(255,255,255,0.25);
+        color: #fff;
     }
 
-    .layout {
+    body.wj-admin-jobs .layout {
         display: flex;
         min-height: calc(100vh - 58px);
     }
-
-    .sidebar {
-        width: var(--sidebar-w); background:#fff;
-        border-right:1px solid var(--maroon-border);
-        position:sticky; top:58px; height:calc(100vh - 58px);
-        padding:14px 12px; overflow-y:auto; flex-shrink:0;
+    body.wj-admin-jobs .sidebar {
+        width: var(--sidebar-w); background: #fff;
+        border-right: 1px solid var(--maroon-border);
+        position: sticky; top: 58px; height: calc(100vh - 58px);
+        padding: 14px 12px; overflow-y: auto; flex-shrink: 0;
     }
-    .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
-    .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
-    .navlink {
+    body.wj-admin-jobs .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
+    body.wj-admin-jobs .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
+    body.wj-admin-jobs .navlink {
         display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
         color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
     }
-    .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
-    .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-    .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
-    .navlink.active i { color: #fff; }
+    body.wj-admin-jobs .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
+    body.wj-admin-jobs .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
+    body.wj-admin-jobs .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+    body.wj-admin-jobs .navlink.active i { color: #fff; }
 
-    .main {
-        flex: 1;
-        min-width: 0;
+    body.wj-admin-jobs .main { flex: 1; min-width: 0; }
+    body.wj-admin-jobs .content { padding: 28px 20px 48px; }
+    body.wj-admin-jobs .mainInner { max-width: 1200px; margin: 0 auto; }
+
+    body.wj-admin-jobs .pg-header {
+        background: linear-gradient(135deg, #1e1b4b 0%, #581c87 38%, #c04b7a 78%, #f43f5e 100%);
+        border-radius: 16px;
+        padding: 22px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 28px rgba(125,42,90,0.22);
+    }
+    body.wj-admin-jobs .pg-header h2 { color: #fff; font-weight: 700; font-size: 1.2rem; margin: 0; }
+    body.wj-admin-jobs .pg-header p { color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 0.85rem; }
+
+    body.wj-admin-jobs .nav-tabs { border: none; gap: 8px; }
+    body.wj-admin-jobs .nav-tabs .nav-link {
+        border: 1px solid var(--maroon-border);
+        border-radius: 10px !important;
+        color: var(--maroon-dark);
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 10px 16px;
+        background: #fff;
+    }
+    body.wj-admin-jobs .nav-tabs .nav-link:hover {
+        border-color: var(--rose);
+        color: var(--rose);
+        background: #fff;
+    }
+    body.wj-admin-jobs .nav-tabs .nav-link.active {
+        background: var(--rose);
+        color: #fff;
+        border-color: var(--rose);
+        box-shadow: 0 4px 12px rgba(244,63,94,0.28);
     }
 
-    .content {
-        padding: 28px 16px 36px;
+    body.wj-admin-jobs .table-responsive {
+        background: #fff;
+        border-radius: 16px;
+        padding: 0;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--maroon-border);
+        overflow-x: auto;
+    }
+    body.wj-admin-jobs .table { margin-bottom: 0; }
+    body.wj-admin-jobs .table > thead.table-light > tr > th,
+    body.wj-admin-jobs .table thead th {
+        background: rgba(125,42,90,0.03);
+        color: var(--maroon-dark);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 16px;
+        border: none;
+        border-bottom: 1px solid var(--maroon-border);
+    }
+    body.wj-admin-jobs .table tbody td {
+        padding: 16px;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--maroon-border);
+        color: #1a1a2e;
+    }
+    body.wj-admin-jobs .table tbody tr:last-child td { border-bottom: none; }
+    body.wj-admin-jobs .table-hover > tbody > tr:hover > * {
+        background: rgba(125,42,90,0.02);
+        --bs-table-accent-bg: rgba(125,42,90,0.02);
     }
 
-    .mainInner {
-        max-width: 1100px;
-        margin: 0 auto;
+    body.wj-admin-jobs .badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
     }
+    body.wj-admin-jobs .badge-pending { background: #FFF7ED; color: #C2410C; border: 1px solid #FFEDD5; }
+    body.wj-admin-jobs .badge-approved { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+    body.wj-admin-jobs .badge-rejected { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
 
-    .table-responsive { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-    .badge-pending { background-color: #ffc107; color: #000; }
-    .badge-approved { background-color: #198754; color: #fff; }
-    .badge-rejected { background-color: #dc3545; color: #fff; }
+    body.wj-admin-jobs .btn-success {
+        background: #059669;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        color: #fff;
+    }
+    body.wj-admin-jobs .btn-success:hover { background: #047857; color: #fff; }
+    body.wj-admin-jobs .btn-danger {
+        background: #dc2626;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        color: #fff;
+    }
+    body.wj-admin-jobs .btn-danger:hover { background: #b91c1c; color: #fff; }
+    body.wj-admin-jobs .btn-info {
+        background: var(--maroon);
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+    }
+    body.wj-admin-jobs .btn-info:hover { background: #3b0764; color: #fff; }
+    body.wj-admin-jobs .wj-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        min-width: 138px;
+    }
+    body.wj-admin-jobs .wj-actions form {
+        display: block;
+        margin: 0;
+        width: 100%;
+    }
+    body.wj-admin-jobs .wj-actions .btn {
+        width: 100%;
+        height: 36px;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+    body.wj-admin-jobs .btn-outline-primary {
+        background: #fdf2f8;
+        color: var(--maroon);
+        border: 1px solid rgba(244,63,94,0.35);
+        border-radius: 8px;
+        font-weight: 700;
+    }
+    body.wj-admin-jobs .btn-outline-primary:hover {
+        background: var(--rose);
+        color: #fff;
+        border-color: var(--rose);
+    }
+    body.wj-admin-jobs .modal-header {
+        background: var(--maroon);
+        color: #fff;
+        border-bottom: none;
+    }
+    body.wj-admin-jobs .modal-header .btn-close { filter: invert(1); }
+    body.wj-admin-jobs .modal-title { color: #fff; font-weight: 700; }
+    body.wj-admin-jobs .empty-row td {
+        text-align: center;
+        color: #64748B;
+        padding: 40px 16px !important;
+        background: var(--maroon-pale);
+        font-weight: 500;
+    }
+    @media (max-width: 992px) {
+        body.wj-admin-jobs .layout { flex-direction: column; display: block; }
+        body.wj-admin-jobs .sidebar { display: none !important; }
+        body.wj-admin-jobs .content { padding: 20px 15px; }
+        body.wj-admin-jobs .pg-header { padding: 18px; }
+        body.wj-admin-jobs .topbar { padding: 0 15px; }
+    }
 </style>
 </head>
-<body>
+<body class="wj-admin-jobs">
 
     <!-- Topbar -->
     <div class="topbar">
@@ -122,8 +274,10 @@
             <div class="content">
                 <div class="container-fluid mainInner">
                     
-                    <h2 class="mb-4" style="font-weight: 700; color: var(--primary-purple);">Women Jobs — Worker Verification</h2>
-                    <p class="text-muted mb-4">Review worker profiles before they appear to clients on Women Jobs.</p>
+                    <div class="pg-header">
+                        <h2>Women Jobs — Worker Verification</h2>
+                        <p>Review worker profiles before they appear to clients on Women Jobs.</p>
+                    </div>
 
                     <c:if test="${not empty message}">
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -168,7 +322,7 @@
                                                 <td>${app.user.fullName}</td>
                                                 <td>${app.user.email}</td>
                                                 <td>${app.user.phoneNumber}</td>
-                                                <td><span class="badge bg-info text-dark">${app.jobCategory}</span></td>
+                                                <td><span class="badge badge-pending">${app.jobCategory}</span></td>
                                                 <td>${app.jobSubCategory}</td>
                                                 <td>Rs ${app.hourlyRate}</td>
                                                 <td>
@@ -185,15 +339,17 @@
                                                 </td>
                                                 <td>${app.appliedAt.toLocalDate()}</td>
                                                 <td>
+                                                    <div class="wj-actions">
                                                     <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#viewModal${app.id}">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
-                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST" style="display:inline;">
+                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
                                                         <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Approve</button>
                                                     </form>
-                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST" style="display:inline;">
+                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST">
                                                         <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
                                                     </form>
+                                                    </div>
 
                                                     <!-- View Modal -->
                                                     <div class="modal fade" id="viewModal${app.id}" tabindex="-1" aria-hidden="true">
@@ -237,7 +393,7 @@
                                             </tr>
                                         </c:forEach>
                                         <c:if test="${empty pendingApplications}">
-                                            <tr><td colspan="9" class="text-center">No pending applications found.</td></tr>
+                                            <tr class="empty-row"><td colspan="9">No pending applications found.</td></tr>
                                         </c:if>
                                     </tbody>
                                 </table>
@@ -267,12 +423,14 @@
                                                 <td>${app.jobSubCategory}</td>
                                                 <td><span class="badge badge-approved">Approved</span></td>
                                                 <td>
+                                                    <div class="wj-actions">
                                                     <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#viewModalApproved${app.id}">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
-                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST" style="display:inline;">
+                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST">
                                                         <button type="submit" class="btn btn-sm btn-danger">Revoke (Reject)</button>
                                                     </form>
+                                                    </div>
 
                                                     <!-- View Modal Approved -->
                                                     <div class="modal fade" id="viewModalApproved${app.id}" tabindex="-1" aria-hidden="true">
@@ -315,6 +473,9 @@
                                                 </td>
                                             </tr>
                                         </c:forEach>
+                                        <c:if test="${empty approvedApplications}">
+                                            <tr class="empty-row"><td colspan="6">No approved workers yet.</td></tr>
+                                        </c:if>
                                     </tbody>
                                 </table>
                             </div>
@@ -343,12 +504,17 @@
                                                 <td>${app.jobSubCategory}</td>
                                                 <td><span class="badge badge-rejected">Rejected</span></td>
                                                 <td>
-                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST" style="display:inline;">
+                                                    <div class="wj-actions">
+                                                    <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
                                                         <button type="submit" class="btn btn-sm btn-success">Approve</button>
                                                     </form>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         </c:forEach>
+                                        <c:if test="${empty rejectedApplications}">
+                                            <tr class="empty-row"><td colspan="6">No rejected applications.</td></tr>
+                                        </c:if>
                                     </tbody>
                                 </table>
                             </div>

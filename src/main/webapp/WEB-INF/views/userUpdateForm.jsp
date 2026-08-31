@@ -14,8 +14,8 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--light-bg);
-            color: var(--fdf-text);
+            background: #F8FAFC;
+            color: #0F172A;
             overflow-x: hidden;
         }
         .update-page {
@@ -27,9 +27,9 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: #fff;
-            color: var(--brand-purple) !important;
-            border: 2px solid var(--brand-purple);
+            background: #FFFFFF;
+            color: #64748B !important;
+            border: 2px solid #E2E8F0;
             padding: 10px 20px;
             border-radius: 50px;
             font-weight: 700;
@@ -39,28 +39,28 @@
         }
         .update-back-btn:hover {
             background: rgba(30, 27, 75, 0.06);
-            border-color: var(--brand-pink);
-            color: var(--brand-purple) !important;
+            border-color: #F43F5E;
+            color: #64748B !important;
         }
         .update-card {
-            background: #fff;
-            border: 1px solid var(--fdf-border);
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
             border-radius: 20px;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             padding: 28px 24px;
         }
         .update-title {
             font-family: 'Montserrat', sans-serif;
             font-size: 1.75rem;
             font-weight: 800;
-            background: var(--gradient-primary);
+            background: #0F172A;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 6px;
         }
         .update-subtitle {
-            color: var(--fdf-muted);
+            color: #64748B;
             font-size: 0.92rem;
             margin-bottom: 24px;
         }
@@ -69,28 +69,41 @@
             font-weight: 700;
             letter-spacing: 0.4px;
             text-transform: uppercase;
-            color: var(--brand-purple);
+            color: #64748B;
             margin-bottom: 6px;
         }
+
+
+        .form-control,
+        .form-select {
+            border: 1px solid #E2E8F0;
+
         .form-control, .form-select {
             border: 1px solid var(--fdf-border);
+
             border-radius: 12px;
             padding: 11px 14px;
             font-size: 0.95rem;
-            color: var(--fdf-text);
-            background: #fff;
+            color: #0F172A;
+            background: #FFFFFF;
         }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #F43F5E;
+
         .form-control:focus, .form-select:focus {
             border-color: var(--brand-pink);
+
             box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
         .form-control[readonly] {
             background: #f8f9fc;
-            color: var(--fdf-muted);
+            color: #64748B;
         }
         input[type="file"].form-control { padding: 8px 12px; }
         input[type="file"]::file-selector-button {
-            background: var(--gradient-primary);
+            background: #0F172A;
             border: none;
             border-radius: 8px;
             color: #fff;
@@ -105,24 +118,79 @@
             border-top: 1px dashed var(--fdf-border);
             margin: 22px 0;
         }
+
+
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #faf7fb;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+        }
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            flex-shrink: 0;
+            accent-color: var(--brand-pink);
+        }
+        .form-check-label {
+            font-size: 0.9rem;
+            color: #0F172A;
+            line-height: 1.45;
+        }
+
+
         .field-group { margin-bottom: 16px; }
+
         .btn-save {
             width: 100%;
             border: none;
+
+            border-radius: 14px;
+            background: #0F172A;
+
             border-radius: 50px;
             padding: 14px 24px;
             font-weight: 700;
             background: var(--gradient-primary);
+
             color: #fff;
         }
         .btn-cancel {
             display: block;
+
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: 2px solid var(--fdf-border);
+            border-radius: 14px;
+            background: #FFFFFF;
+            color: #64748B;
+            font-weight: 600;
+
+
             text-align: center;
             margin-top: 14px;
             color: var(--fdf-muted);
             text-decoration: none;
             font-weight: 600;
         }
+
+        .btn-cancel:hover {
+            border-color: #64748B;
+            background: rgba(30, 27, 75, 0.04);
+            color: #64748B;
+        }
+
+        .field-group {
+            margin-bottom: 16px;
+        }
+
+
+
         @media (max-width: 768px) {
             .update-card { padding: 22px 16px; border-radius: 16px; }
             .update-title { font-size: 1.4rem; }
@@ -164,7 +232,7 @@
                         <span class="fw-bold" style="color:#F43F5E;">${profileCompletionPct != null ? profileCompletionPct : 0}%</span>
                     </div>
                     <div class="progress" style="height:8px; border-radius:999px; background:#FFE4E6;">
-                        <div class="progress-bar" style="width:${profileCompletionPct != null ? profileCompletionPct : 0}%; background:#F43F5E;"></div>
+                        <div class="progress-bar" style="width:${profileCompletionPct != null ? profileCompletionPct : 0}%; background:#F43F5E !important;"></div>
                     </div>
                     <c:if test="${not empty profileMissingItems}">
                         <div class="small mt-2" style="color:#64748B;">
@@ -399,3 +467,6 @@ document.addEventListener('DOMContentLoaded', syncPreview);
 </script>
 </body>
 </html>
+
+
+

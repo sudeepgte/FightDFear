@@ -23,6 +23,7 @@ import in.sp.main.Entities.ProviderCategory;
 import in.sp.main.Entities.ServiceProvider;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.ProviderBookingRepository;
+import in.sp.main.Repository.ProviderReviewRepository;
 import in.sp.main.Service.OtpVerificationService;
 import in.sp.main.Entities.OtpPurpose;
 import in.sp.main.Entities.OtpChannel;
@@ -47,6 +48,9 @@ public class LawyerController {
 
     @Autowired
     private ProviderBookingRepository bookingRepo;
+
+    @Autowired
+    private ProviderReviewRepository reviewRepo;
 
     @Autowired
     private FileUploadService fileUploadService;
@@ -214,6 +218,9 @@ public class LawyerController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
         
+        if (p.getPartnerProfileStatus() == in.sp.main.Entities.PartnerProfileStatus.REGISTERED || p.getProfileCompletionPct() == null || p.getProfileCompletionPct() < 100) {
+            return "redirect:/lawyer/profile-completion";
+        }
         return "redirect:/lawyer/dashboard";
     }
 
@@ -225,6 +232,7 @@ public class LawyerController {
         p = providerRepo.findById(p.getId()).orElse(p);
         model.addAttribute("lawyer", p);
         model.addAttribute("bookings", bookingRepo.findByProviderOrderByRequestedTimeDesc(p));
+        model.addAttribute("reviews", reviewRepo.findByProviderIdOrderByCreatedAtDesc(p.getId()));
         
         return "lawyer/dashboard";
     }
@@ -337,4 +345,68 @@ public class LawyerController {
         }
         return response;
     }
+
+    @GetMapping("/profile-completion")
+    public String lawyerProfileCompletion(HttpSession session, Model model) {
+        ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
+        if (p == null) return "redirect:/lawyer/login";
+        p = providerRepo.findById(p.getId()).orElse(p);
+        model.addAttribute("lawyer", p);
+        return "lawyer/profileCompletion";
+    }
+
+    @PostMapping("/profile-completion/save")
+    public String saveProfileCompletion(@RequestParam String fullName,
+                                      @RequestParam String phone,
+                                      @RequestParam(required = false) String designation,
+                                      @RequestParam(required = false) String barCouncilId,
+                                      @RequestParam(required = false) String city,
+                                      @RequestParam(required = false) String state,
+                                      @RequestParam(required = false) String practiceAreas,
+                                      @RequestParam(required = false) String openDays,
+                                      @RequestParam(required = false) String openTime,
+                                      @RequestParam(required = false) String closeTime,
+                                      @RequestParam(required = false) String bio,
+                                      @RequestParam(required = false) String serviceMode,
+                                      @RequestParam(required = false) Integer experienceYears,
+                                      @RequestParam(required = false) String languages,
+                                      HttpSession session, RedirectAttributes ra) {
+        ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
+        if (p == null) return "redirect:/lawyer/login";
+        
+        ServiceProvider existing = providerRepo.findById(p.getId()).orElse(null);
+        if (existing != null) {
+            existing.setFullName(fullName != null ? fullName.trim() : "");
+            existing.setPhone(phone != null ? phone.trim() : "");
+            existing.setDesignation(designation != null ? designation.trim() : "");
+            existing.setBarCouncilId(barCouncilId != null ? barCouncilId.trim() : "");
+            existing.setCity(city != null ? city.trim() : "");
+            existing.setState(state != null ? state.trim() : "");
+            existing.setPracticeAreas(practiceAreas != null ? practiceAreas.trim() : "");
+            existing.setOpenDays(openDays != null ? openDays.trim() : "");
+            
+            java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+            if (openTime != null && !openTime.isEmpty()) {
+                existing.setOpenTime(java.time.LocalTime.parse(openTime, fmt));
+            }
+            if (closeTime != null && !closeTime.isEmpty()) {
+                existing.setCloseTime(java.time.LocalTime.parse(closeTime, fmt));
+            }
+            
+            existing.setBio(bio != null ? bio.trim() : "");
+            existing.setServiceMode(serviceMode != null ? serviceMode.trim() : "");
+            if (experienceYears != null) existing.setExperienceYears(experienceYears);
+            existing.setLanguages(languages != null ? languages.trim() : "");
+            
+            existing.setLocationText(city != null ? city.trim() : "");
+            existing.setProfileCompletionPct(100);
+            existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            
+            providerRepo.save(existing);
+            session.setAttribute("loggedLawyer", existing);
+            ra.addFlashAttribute("message", "Profile saved successfully!");
+        }
+        return "redirect:/lawyer/dashboard";
+    }
 }
+

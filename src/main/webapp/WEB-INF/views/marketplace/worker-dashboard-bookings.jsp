@@ -6,12 +6,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Worker Dashboard — Fight D Fear</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-dashboard.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-jobs-portal.css">
   <style>
-    /* Status pill compatibility overrides */
     .status-pill {
         padding: 5px 12px;
         border-radius: 20px;
@@ -24,91 +24,139 @@
     .status-PAID { background: #fef9c3; color: #ca8a04; }
     .status-COMPLETED { background: #dcfce7; color: #16a34a; }
     .status-REJECTED, .status-CANCELLED { background: #fee2e2; color: #ef4444; }
+    .wj-cta {
+        background: #FFE4E6;
+        border: 1px solid #FECDD3;
+        border-radius: 16px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .wj-cta p { margin: 0; font-size: 0.88rem; color: #1E1B4B; font-weight: 600; }
+    .wj-cta span { display: block; font-size: 0.8rem; font-weight: 500; color: #64748B; margin-top: 4px; }
+    .wj-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 20px;
+        padding: 12px 14px;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .wj-filter-pill {
+        border: 1px solid #E2E8F0;
+        background: #FFFFFF;
+        color: #1E1B4B;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .wj-filter-pill:hover { border-color: #F43F5E; color: #F43F5E; }
+    .wj-filter-pill.active { background: #F43F5E; color: #fff; border-color: #F43F5E; }
   </style>
 </head>
-<body class="dd-page">
-<div class="dd-overlay" id="overlay" onclick="toggleSidebar()"></div>
+<body class="wj-page">
+<div class="wj-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-<%-- ═══ SIDEBAR ═══ --%>
-<aside class="dd-sidebar" id="sidebar">
-  <div class="dd-sidebar-brand">
-    <div class="brand-icon"><i class="bi bi-briefcase"></i></div>
-    <div class="brand-text">Fight D Fear<small>Worker Portal</small></div>
-  </div>
-  <div class="dd-sidebar-profile">
-    <div class="avatar-placeholder">${user.fullName.charAt(0)}</div>
-    <div class="profile-info">
+<aside class="wj-sidebar" id="sidebar">
+  <a class="wj-sidebar-brand" href="${pageContext.request.contextPath}/women-jobs/dashboard">
+    <i class="bi bi-briefcase-fill"></i>
+    <span>Fight D Fear<small>Worker Portal</small></span>
+  </a>
+  <div class="wj-sidebar-profile">
+    <div class="wj-avatar">${user.fullName.charAt(0)}</div>
+    <div>
       <div class="name">${user.fullName}</div>
       <div class="spec">${not empty workerApp.designation ? workerApp.designation : workerApp.jobCategory}</div>
     </div>
-    <div class="status-dot"></div>
   </div>
-  <nav class="dd-sidebar-nav">
-    <div class="dd-nav-label">Main</div>
-    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="dd-nav-item active">
+  <nav class="wj-sidebar-nav">
+    <div class="wj-nav-label">Main</div>
+    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="wj-nav-item active">
       <i class="bi bi-grid-1x2"></i> Dashboard
     </a>
-    <div class="dd-nav-label">Management</div>
-    <a href="${pageContext.request.contextPath}/women-jobs/profile" class="dd-nav-item">
+    <div class="wj-nav-label">Management</div>
+    <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-nav-item">
       <i class="bi bi-person"></i> My Profile
     </a>
-    <a href="${pageContext.request.contextPath}/women-jobs/earnings" class="dd-nav-item">
+    <a href="${pageContext.request.contextPath}/women-jobs/earnings" class="wj-nav-item">
       <i class="bi bi-wallet2"></i> Earnings
     </a>
   </nav>
-  <div class="dd-sidebar-footer">
-    <a href="${pageContext.request.contextPath}/logout" class="dd-nav-item" style="color:rgba(255,107,107,0.8)">
+  <div class="wj-sidebar-footer">
+    <a href="${pageContext.request.contextPath}/logout" class="wj-logout">
       <i class="bi bi-box-arrow-left"></i> Logout
     </a>
   </div>
 </aside>
 
-<%-- ═══ MAIN ═══ --%>
-<main class="dd-main">
-  <header class="dd-topbar">
-    <div class="dd-topbar-left">
-      <button class="dd-hamburger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+<main class="wj-main">
+  <header class="wj-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button type="button" class="wj-hamburger" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
       <div>
         <h1>Dashboard</h1>
-        <div class="breadcrumb-text">Welcome back, ${user.fullName}!</div>
+        <p>Welcome back, ${user.fullName}</p>
       </div>
     </div>
-    <div class="dd-topbar-right">
-      <div class="notif-btn" id="bellIcon" style="cursor: pointer; position: relative;">
-        <i class="bi bi-bell"></i>
-      </div>
+    <div class="notif-btn" id="bellIcon" style="cursor: pointer; position: relative; color:#64748B; font-size:1.2rem;">
+      <i class="bi bi-bell"></i>
     </div>
   </header>
 
-  <div class="dd-content">
+  <div class="wj-content">
     <c:if test="${not empty success}">
-      <div style="padding:14px 20px;border-radius:12px;background:rgba(32,201,151,0.1);border:1px solid rgba(32,201,151,0.2);color:#0d9668;font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-        <i class="bi bi-check-circle"></i> ${success}
-      </div>
+      <div class="wj-alert wj-alert-ok"><i class="bi bi-check-circle"></i> ${success}</div>
     </c:if>
     <c:if test="${not empty error}">
-      <div style="padding:14px 20px;border-radius:12px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.2);color:#be123c;font-size:13px;font-weight:500;margin-bottom:20px;display:flex;align-items:center;gap:8px">
-        <i class="bi bi-exclamation-circle"></i> ${error}
-      </div>
+      <div class="wj-alert wj-alert-err"><i class="bi bi-exclamation-circle"></i> ${error}</div>
     </c:if>
 
-    <%-- ══════ OVERVIEW SECTION ══════ --%>
-    <div class="dd-stats">
-      <div class="dd-stat-card"><div class="dd-stat-icon purple"><i class="bi bi-briefcase"></i></div><div class="dd-stat-info"><h3>${totalBookings}</h3><p>Total Bookings</p></div></div>
-      <div class="dd-stat-card"><div class="dd-stat-icon gold"><i class="bi bi-hourglass-split"></i></div><div class="dd-stat-info"><h3>${pendingBookings}</h3><p>Pending Requests</p></div></div>
-      <div class="dd-stat-card"><div class="dd-stat-icon teal"><i class="bi bi-check-circle"></i></div><div class="dd-stat-info"><h3>${completedBookings}</h3><p>Completed Jobs</p></div></div>
-      <div class="dd-stat-card"><div class="dd-stat-icon coral"><i class="bi bi-currency-rupee"></i></div><div class="dd-stat-info"><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
+    <div class="wj-cta">
+      <div>
+        <p>Keep your worker profile complete</p>
+        <span>Update skills, location and payout details so clients can find and book you.</span>
+      </div>
+      <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-btn wj-btn-rose">Update profile</a>
     </div>
 
-    <div class="dd-section">
-      <div class="dd-section-header"><h2><i class="bi bi-calendar-check"></i> Recent Job Bookings</h2></div>
-      <div class="dd-section-body">
+    <div class="wj-stats">
+      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-briefcase"></i></div><div><h3>${totalBookings}</h3><p>Total Bookings</p></div></div>
+      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><h3>${pendingBookings}</h3><p>Pending Requests</p></div></div>
+      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-check-circle"></i></div><div><h3>${completedBookings}</h3><p>Completed Jobs</p></div></div>
+      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
+    </div>
+
+    <c:if test="${not empty incomingBookings}">
+    <div class="wj-filter-bar" id="bookingFilterBar">
+      <button type="button" class="wj-filter-pill active" data-filter="ALL">All</button>
+      <button type="button" class="wj-filter-pill" data-filter="PENDING">Pending</button>
+      <button type="button" class="wj-filter-pill" data-filter="ACCEPTED">Accepted</button>
+      <button type="button" class="wj-filter-pill" data-filter="PAID">Paid</button>
+      <button type="button" class="wj-filter-pill" data-filter="COMPLETED">Completed</button>
+      <button type="button" class="wj-filter-pill" data-filter="REJECTED">Rejected</button>
+      <button type="button" class="wj-filter-pill" data-filter="CANCELLED">Cancelled</button>
+    </div>
+    </c:if>
+
+    <div class="wj-card">
+      <div class="wj-card-h"><h2><i class="bi bi-calendar-check"></i> Recent Job Bookings</h2></div>
+      <div class="wj-card-b">
         <c:if test="${empty incomingBookings}">
-          <div class="dd-empty"><i class="bi bi-calendar-x"></i><p>No incoming job requests yet.</p></div>
+          <div class="wj-empty"><i class="bi bi-calendar-x"></i><p>No incoming job requests yet.</p></div>
         </c:if>
         <c:if test="${not empty incomingBookings}">
           <div style="overflow-x:auto">
-            <table class="dd-table">
+            <table class="wj-table">
               <thead>
                 <tr>
                   <th>Client</th>
@@ -121,10 +169,10 @@
               </thead>
               <tbody>
                 <c:forEach var="b" items="${incomingBookings}">
-                  <tr>
+                  <tr class="wj-booking-row" data-status="${b.status}">
                     <td>
-                      <div class="dd-user-cell">
-                        <div class="user-avatar">${b.client.fullName.charAt(0)}</div>
+                      <div class="wj-user-cell">
+                        <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
                         <span>${b.client.fullName}</span>
                       </div>
                     </td>
@@ -133,17 +181,17 @@
                     <td>${b.bookingDate}</td>
                     <td>
                       <c:choose>
-                        <c:when test="${b.status=='PENDING'}"><span class="dd-badge pending"><span class="dot"></span> Pending</span></c:when>
-                        <c:when test="${b.status=='CONFIRMED' || b.status=='ACCEPTED'}"><span class="dd-badge confirmed"><span class="dot"></span> Confirmed</span></c:when>
-                        <c:when test="${b.status=='COMPLETED'}"><span class="dd-badge completed"><span class="dot"></span> Completed</span></c:when>
-                        <c:when test="${b.status=='PAID'}"><span class="dd-badge completed" style="background: rgba(32, 201, 151, 0.12); color: #0d9668;"><span class="dot" style="background: #0d9668;"></span> Paid</span></c:when>
-                        <c:otherwise><span class="dd-badge cancelled"><span class="dot"></span> Cancelled</span></c:otherwise>
+                        <c:when test="${b.status=='PENDING'}"><span class="wj-badge wj-badge-pending"><span class="dot"></span> Pending</span></c:when>
+                        <c:when test="${b.status=='CONFIRMED' || b.status=='ACCEPTED'}"><span class="wj-badge wj-badge-accepted"><span class="dot"></span> Confirmed</span></c:when>
+                        <c:when test="${b.status=='COMPLETED'}"><span class="wj-badge wj-badge-done"><span class="dot"></span> Completed</span></c:when>
+                        <c:when test="${b.status=='PAID'}"><span class="wj-badge wj-badge-paid"><span class="dot"></span> Paid</span></c:when>
+                        <c:otherwise><span class="wj-badge wj-badge-bad"><span class="dot"></span> Cancelled</span></c:otherwise>
                       </c:choose>
                     </td>
                     <td>
-                      <div style="display:flex;gap:8px;align-items:center;">
-                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" 
-                                data-bs-toggle="modal" 
+                      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <button type="button" class="wj-btn wj-btn-ghost"
+                                data-bs-toggle="modal"
                                 data-bs-target="#bookingDetailsModal"
                                 data-client-name="${b.client.fullName}"
                                 data-client-phone="${b.client.phoneNumber}"
@@ -155,22 +203,22 @@
                                 data-note="${b.note}">
                             Details
                         </button>
-                        
+
                         <c:if test="${b.status == 'PENDING'}">
                           <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
                               <input type="hidden" name="status" value="ACCEPTED">
-                              <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Accept</button>
+                              <button type="submit" class="wj-btn wj-btn-ok">Accept</button>
                           </form>
                           <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
                               <input type="hidden" name="status" value="REJECTED">
-                              <button type="submit" class="btn btn-sm btn-danger rounded-pill px-3">Reject</button>
+                              <button type="submit" class="wj-btn wj-btn-danger">Reject</button>
                           </form>
                         </c:if>
-                        
+
                         <c:if test="${b.status == 'ACCEPTED' || b.status == 'PAID'}">
                           <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
                               <input type="hidden" name="status" value="COMPLETED">
-                              <button type="submit" class="btn btn-sm btn-success rounded-pill px-3">Complete</button>
+                              <button type="submit" class="wj-btn wj-btn-ok">Complete</button>
                           </form>
                         </c:if>
                       </div>
@@ -184,10 +232,9 @@
       </div>
     </div>
 
-    <!-- Bookings Traffic Graph Section -->
-    <div class="dd-section">
-      <div class="dd-section-header"><h2><i class="bi bi-graph-up"></i> Bookings Traffic Graph</h2></div>
-      <div class="dd-section-body padded">
+    <div class="wj-card">
+      <div class="wj-card-h"><h2><i class="bi bi-graph-up"></i> Bookings Traffic Graph</h2></div>
+      <div class="wj-card-b padded">
         <canvas id="bookingsChart" height="100"></canvas>
       </div>
     </div>
@@ -195,12 +242,11 @@
   </div>
 </main>
 
-<!-- Booking Details Modal -->
 <div class="modal fade" id="bookingDetailsModal" tabindex="-1" aria-labelledby="bookingDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-3">
             <div class="modal-header bg-light border-bottom-0">
-                <h5 class="modal-title fw-bold" id="bookingDetailsModalLabel" style="color: var(--dd-purple, #1e1b4b);"><i class="fas fa-file-invoice"></i> Booking Details</h5>
+                <h5 class="modal-title fw-bold" id="bookingDetailsModalLabel" style="color: #1e1b4b;"><i class="fas fa-file-invoice"></i> Booking Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -259,7 +305,6 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        // Modal Details Populate logic
         const bookingDetailsModal = document.getElementById('bookingDetailsModal');
         if (bookingDetailsModal) {
             bookingDetailsModal.addEventListener('show.bs.modal', function (event) {
@@ -285,10 +330,9 @@
             });
         }
 
-        // WebSocket live updates handler
         const socket = new SockJS('${pageContext.request.contextPath}/ws-chat');
         const stompClient = Stomp.over(socket);
-        stompClient.debug = null; // Disable debug log
+        stompClient.debug = null;
 
         stompClient.connect({}, function (frame) {
             stompClient.subscribe('/topic/worker-bookings/${user.id}', function (message) {
@@ -316,7 +360,6 @@
             document.body.insertAdjacentHTML('beforeend', toastHTML);
         }
 
-        // Graph Logic
         var ctx = document.getElementById('bookingsChart');
         if (ctx) {
             if (typeof Chart === 'undefined') {
@@ -347,14 +390,14 @@
                     else if (hour >= 12 && hour < 16) bucket = "12:00";
                     else if (hour >= 16 && hour < 20) bucket = "16:00";
                     else if (hour >= 20) bucket = "20:00";
-                    
+
                     buckets[bucket]++;
                 }
             });
 
             var labels = Object.keys(buckets);
             var dataValues = Object.values(buckets);
-            
+
             var maxVal = Math.max(...dataValues);
             if (maxVal < 5) maxVal = 5;
 
@@ -365,12 +408,12 @@
                     datasets: [{
                         label: 'Bookings Served',
                         data: dataValues,
-                        borderColor: '#7b2cbf',
-                        backgroundColor: 'rgba(123, 44, 191, 0.1)',
+                        borderColor: '#F43F5E',
+                        backgroundColor: 'rgba(244, 63, 94, 0.1)',
                         borderWidth: 2,
                         fill: true,
                         tension: 0.3,
-                        pointBackgroundColor: '#7b2cbf',
+                        pointBackgroundColor: '#F43F5E',
                         pointRadius: 4
                     }]
                 },
@@ -378,14 +421,36 @@
                     responsive: true,
                     scales: {
                         x: { title: { display: true, text: 'Time (4 Hours Format)' } },
-                        y: { 
-                            min: 0, 
-                            max: maxVal + 1, 
-                            title: { display: true, text: 'Number of Bookings' }, 
-                            ticks: { stepSize: 1 } 
+                        y: {
+                            min: 0,
+                            max: maxVal + 1,
+                            title: { display: true, text: 'Number of Bookings' },
+                            ticks: { stepSize: 1 }
                         }
                     }
                 }
+            });
+        }
+
+        var filterBar = document.getElementById('bookingFilterBar');
+        if (filterBar) {
+            filterBar.addEventListener('click', function(e) {
+                var btn = e.target.closest('.wj-filter-pill');
+                if (!btn) return;
+                filterBar.querySelectorAll('.wj-filter-pill').forEach(function(p) { p.classList.remove('active'); });
+                btn.classList.add('active');
+                var filter = (btn.getAttribute('data-filter') || 'ALL').toUpperCase();
+                document.querySelectorAll('.wj-booking-row').forEach(function(row) {
+                    var status = (row.getAttribute('data-status') || '').toUpperCase();
+                    var show = filter === 'ALL';
+                    if (filter === 'PENDING') show = status === 'PENDING';
+                    if (filter === 'ACCEPTED') show = status === 'ACCEPTED' || status === 'CONFIRMED';
+                    if (filter === 'PAID') show = status === 'PAID';
+                    if (filter === 'COMPLETED') show = status === 'COMPLETED';
+                    if (filter === 'REJECTED') show = status === 'REJECTED';
+                    if (filter === 'CANCELLED') show = status === 'CANCELLED';
+                    row.style.display = show ? '' : 'none';
+                });
             });
         }
     });

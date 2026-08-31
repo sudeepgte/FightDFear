@@ -9,108 +9,269 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; background: #fffcfd; }
-        .left-panel { flex: 1; background: linear-gradient(135deg, #1e1b4b 0%, #1e1b4b 40%, #f43f5e 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 40px; position: relative; overflow: hidden; }
-        .left-panel::before { content: ''; position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-        .left-panel::after { content: ''; position: absolute; bottom: -150px; left: -80px; width: 500px; height: 500px; border-radius: 50%; background: rgba(255,255,255,0.04); }
-        .left-panel .brand { position: relative; z-index: 2; text-align: center; color: white; }
-        .brand-logo { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
-        .brand-logo i { font-size: 2.2rem; margin-right: 8px; }
-        .brand-tagline { font-size: 1.1rem; font-weight: 300; opacity: 0.9; max-width: 360px; line-height: 1.7; margin-bottom: 40px; }
-        .right-panel { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px; }
-        .login-card { width: 100%; max-width: 420px; }
-        .login-card h2 { font-size: 1.85rem; font-weight: 800; color: #3F1430; margin-bottom: 6px; }
-        .login-card .subtitle { color: #6b7280; font-size: 0.95rem; margin-bottom: 32px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #3F1430; margin-bottom: 8px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
+            display: flex;
+            flex-direction: column;
+        }
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
+        .header-brand i { color: var(--primary); font-size: 1.3rem; }
+        .header-links a {
+            color: var(--text-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .header-links a:hover { color: var(--primary); }
+        .main-container {
+            flex: 1;
+            max-width: 440px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 16px 40px;
+        }
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .card-header { margin-bottom: 24px; text-align: center; }
+        .card-header h2 { font-size: 1.4rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+        .card-header p { font-size: 0.9rem; color: var(--text-gray); }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
         .input-wrapper { position: relative; }
-        .input-wrapper i.prefix-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 1rem; }
-        .form-input { width: 100%; padding: 14px 16px 14px 46px; border: 2px solid #f3e8ef; border-radius: 12px; font-size: 0.95rem; transition: all 0.3s ease; }
-        .form-input:focus { outline: none; border-color: #1e1b4b; box-shadow: 0 0 0 4px rgba(30, 27, 75, 0.1); }
-        .password-toggle-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #9ca3af; cursor: pointer; padding: 4px; font-size: 1.1rem; z-index: 2; }
-        .input-wrapper.password-field .form-input { padding-right: 46px; }
-        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #1e1b4b, #1e1b4b); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(124, 45, 94, 0.3); }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(124, 45, 94, 0.4); }
-        .register-link { text-align: center; margin-top: 24px; font-size: 0.9rem; color: #6b7280; }
-        .register-link a { color: #1e1b4b; text-decoration: none; font-weight: 700; }
-        .error-alert { background: #fff1f8; border: 1px solid #ffc2df; color: #1e1b4b; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .success-alert { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 12px 16px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .back-home { display: inline-flex; align-items: center; gap: 6px; color: #6b7280; text-decoration: none; font-size: 0.85rem; font-weight: 500; margin-bottom: 28px; }
-        .feature-list { list-style: none; display: flex; flex-direction: column; gap: 16px; text-align: left; margin-top: 20px; }
-        .feature-list li { display: flex; align-items: center; gap: 14px; color: rgba(255,255,255,0.9); font-size: 0.95rem; font-weight: 400; }
-        .feature-list li .feat-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center; font-size: 1.1rem; flex-shrink: 0; }
-        @media (max-width: 992px) {
-            body { flex-direction: column; }
-            .left-panel {
-                padding: 50px 30px;
-                min-height: 30vh;
-                text-align: center;
-            }
-            .brand-tagline { 
-                margin: 0 auto;
-                font-size: 1rem;
-            }
-            .feature-list { display: none; }
-            .right-panel { 
-                padding: 40px 20px;
-                background: #fff;
-                border-top-left-radius: 30px;
-                border-top-right-radius: 30px;
-                margin-top: -30px;
-                position: relative;
-                z-index: 5;
-            }
-            .login-card {
-                max-width: 100%;
-            }
+        .form-input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
         }
-
-        @media (max-width: 480px) {
-            .brand-logo { font-size: 2rem; }
-            .login-card h2 { font-size: 1.5rem; }
-            .form-input { padding: 12px 16px 12px 42px; }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
+        .prefix-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-gray);
+        }
+        .password-field .form-input { padding-right: 42px; }
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .btn-submit:hover { background: var(--primary-hover); }
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+        .login-footer a { color: var(--primary); text-decoration: none; font-weight: 700; }
+        .alert-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert-error { background: var(--error-bg); border: 1px solid #FECACA; color: var(--error); }
+        .confirm-card {
+            background: var(--card-bg);
+            border: 1px solid #BBF7D0;
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .confirm-icon {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            background: var(--success-bg);
+            color: var(--success);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 14px;
+        }
+        .confirm-card h2 { font-size: 1.25rem; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+        .confirm-card p { font-size: 0.9rem; color: var(--text-gray); line-height: 1.55; margin-bottom: 8px; }
+        .confirm-list {
+            text-align: left;
+            list-style: none;
+            margin: 16px 0 8px;
+            padding: 0;
+        }
+        .confirm-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--navy);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .confirm-list li i { color: var(--success); margin-top: 2px; }
+        .confirm-next {
+            background: var(--rose-soft);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.85rem;
+            color: var(--navy);
+            margin: 16px 0 18px;
+            font-weight: 600;
+        }
+        .btn-confirm {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 22px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+        }
+        .btn-confirm:hover { background: var(--primary-hover); color: #fff; }
+        .pw-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .pw-row a { font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
-    <div class="left-panel">
-        <div class="brand">
-            <div class="brand-logo"><i class="bi bi-briefcase"></i> Fight D Fear</div>
-            <p class="brand-tagline">Empowering women with flexible job opportunities and financial independence. Dedicated to professional growth and safety.</p>
-            <ul class="feature-list">
-                <li><span class="feat-icon"><i class="bi bi-briefcase-fill"></i></span> Access Flexible Job Opportunities</li>
-                <li><span class="feat-icon"><i class="bi bi-shield-fill-check"></i></span> Safe & Verified Clients</li>
-                <li><span class="feat-icon"><i class="bi bi-calendar-check-fill"></i></span> Manage Your Bookings Effortlessly</li>
-                <li><span class="feat-icon"><i class="bi bi-wallet2"></i></span> Request Secure UPI Payouts</li>
-            </ul>
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <i class="bi bi-briefcase-fill"></i> Fight D Fear
+        </a>
+        <div class="header-links">
+            <a href="${pageContext.request.contextPath}/women-jobs/register">Register</a>
         </div>
-    </div>
-    <div class="right-panel">
-        <div class="login-card">
-            <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Back to Home</a>
-            <h2>Welcome, Partner 👋</h2>
-            <p class="subtitle">Enter your credentials to access your dashboard</p>
-            
-            <c:if test="${not empty error}">
-                <div class="error-alert"><i class="bi bi-exclamation-circle"></i> ${error}</div>
-            </c:if>
-            <c:if test="${not empty success}">
-                <div class="success-alert"><i class="bi bi-check-circle"></i> ${success}</div>
-            </c:if>
+    </header>
 
-            <form action="${pageContext.request.contextPath}/women-jobs/login" method="post">
+    <main class="main-container">
+        <c:if test="${not empty success}">
+            <div class="confirm-card" id="registrationConfirm">
+                <div class="confirm-icon"><i class="bi bi-check-lg"></i></div>
+                <h2>Registration Successful</h2>
+                <ul class="confirm-list">
+                    <li><i class="bi bi-check-circle-fill"></i> Account and application created successfully</li>
+                    <li><i class="bi bi-check-circle-fill"></i> ${success}</li>
+                </ul>
+                <div class="confirm-next">Sign in with the email you registered. After admin verification you can complete your profile and manage bookings from your worker portal.</div>
+                <a href="#workerLoginCard" class="btn-confirm" id="btnContinueLogin">Continue to Login <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </c:if>
+
+        <div class="form-card" id="workerLoginCard"<c:if test="${not empty success and empty error}"> style="display:none;"</c:if>>
+            <div class="card-header">
+                <h2>Women Jobs Sign In</h2>
+                <p>Enter your credentials to access your worker portal</p>
+            </div>
+
+            <c:if test="${not empty error}">
+                <div class="error-alert alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
+            </c:if>
+            <div id="js-login-error" class="error-alert alert-box alert-error" style="display:none;">
+                <i class="bi bi-exclamation-circle-fill"></i> <span id="js-login-error-msg"></span>
+            </div>
+
+            <form id="workerLoginForm" action="${pageContext.request.contextPath}/women-jobs/login" method="post">
                 <div class="form-group">
                     <label>Email Address</label>
                     <div class="input-wrapper">
                         <i class="bi bi-envelope prefix-icon"></i>
-                        <input type="email" name="email" class="form-input" placeholder="partner@example.com" required>
+                        <input type="email" name="email" class="form-input" placeholder="partner@example.com" value="<c:out value='${registeredEmail}'/>" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div class="pw-row">
                         <label style="margin-bottom: 0;">Password</label>
-                        <a href="${pageContext.request.contextPath}/auth/forgot-password" style="font-size: 0.8rem; color: #1e1b4b; text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper password-field">
                         <i class="bi bi-shield-lock prefix-icon"></i>
@@ -118,12 +279,12 @@
                         <button type="button" class="password-toggle-btn" onclick="togglePassword()"><i class="bi bi-eye"></i></button>
                     </div>
                 </div>
-                <button type="submit" class="btn-login">Sign In <i class="bi bi-arrow-right"></i></button>
+                <button type="submit" class="btn-login btn-submit">Sign In <i class="bi bi-arrow-right"></i></button>
             </form>
-            <p class="register-link">New Worker? <a href="${pageContext.request.contextPath}/women-jobs/register">Register here</a></p>
+            <p class="register-link login-footer">New Worker? <a href="${pageContext.request.contextPath}/women-jobs/register">Register here</a></p>
         </div>
-    </div>
-    
+    </main>
+
     <script>
         function togglePassword() {
             var passwordInput = document.getElementById("password");
@@ -138,6 +299,41 @@
                 toggleBtn.classList.add("bi-eye");
             }
         }
+
+        var continueBtn = document.getElementById('btnContinueLogin');
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var card = document.getElementById('workerLoginCard');
+                card.style.display = 'block';
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        document.getElementById('workerLoginForm').addEventListener('submit', function(event) {
+            var box = document.getElementById('js-login-error');
+            var msg = document.getElementById('js-login-error-msg');
+            box.style.display = 'none';
+            var email = (this.email.value || '').trim();
+            var password = this.password.value || '';
+            if (email === '') {
+                event.preventDefault();
+                msg.textContent = 'Email Address is required.';
+                box.style.display = 'flex';
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                event.preventDefault();
+                msg.textContent = 'Please enter a valid email address.';
+                box.style.display = 'flex';
+                return;
+            }
+            if (password === '') {
+                event.preventDefault();
+                msg.textContent = 'Password is required.';
+                box.style.display = 'flex';
+            }
+        });
     </script>
 </body>
 </html>

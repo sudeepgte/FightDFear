@@ -255,8 +255,7 @@
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
-        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 36px; width: 36px; border-radius: 8px; object-fit: cover;">
-        <h1 style="margin:0;">Fight D <span class="brand-fear">Fear</span></h1>
+        <i class="fa-solid fa-fire" style="font-size:24px; color:#F43F5E;"></i><h1 style="margin:0; font-size:20px !important; color:#F43F5E !important;">Fight D Fear</h1>
     </a>
     <nav id="navmenu" class="navmenu">
       <ul>
@@ -316,7 +315,7 @@
                     </a>
                 </li>
                 
-                <li><a href="${pageContext.request.contextPath}/users/profile/${user.id}">${user.fullName}</a></li>
+                <li><a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}">${not empty user ? user.fullName : sessionScope.user.fullName}</a></li>
             </c:otherwise>
         </c:choose>
       </ul>
@@ -339,10 +338,13 @@
             </a>
         </c:when>
         <c:otherwise>
-            <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="ms-3">
+            <a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}" class="ms-3">
                 <c:choose>
                     <c:when test="${not empty user.profilePhoto}">
                         <img src="${pageContext.request.contextPath}${user.profilePhoto}" alt="Profile" class="header-profile-img">
+                    </c:when>
+                    <c:when test="${not empty sessionScope.user.profilePhoto}">
+                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:otherwise>
                         <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
@@ -559,3 +561,4 @@
       }
   });
 </script>
+

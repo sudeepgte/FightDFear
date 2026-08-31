@@ -96,7 +96,7 @@ public class ChatController {
 
         User receiver = userRepo.findById(receiverId).orElse(null);
         if (receiver == null) return "redirect:/chat/users";
-        if (!followService.getFriends(sender.getId()).stream().anyMatch(f -> f.getId().equals(receiverId))) {
+        if (!canChat(sender, receiver)) {
             return "redirect:/chat/users";
         }
 
@@ -231,7 +231,7 @@ public class ChatController {
 
         if (!canChat(sender, receiver)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("success", false, "error", "You can only chat with friends"));
+                    .body(Map.of("success", false, "error", "You can only chat with friends or existing contacts"));
         }
 
         Map<String, Object> payload = chatService.deliverUserMessage(sender, receiver, String.valueOf(messageObj));

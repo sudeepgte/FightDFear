@@ -331,6 +331,11 @@ public class MobileAuthController {
             return ResponseEntity.badRequest().body(error("City / Location is required."));
         }
 
+        String genderErr = MobileValidation.requireWomenMemberGender(genderRaw);
+        if (genderErr != null) {
+            return ResponseEntity.badRequest().body(error(genderErr));
+        }
+
         if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error("Email already registered. Please sign in."));
         }
@@ -362,17 +367,7 @@ public class MobileAuthController {
                 return ResponseEntity.badRequest().body(error("Date of birth must be YYYY-MM-DD."));
             }
         }
-        if (!genderRaw.isEmpty()) {
-            try {
-                Gender g = Gender.valueOf(genderRaw.toUpperCase());
-                if (g == Gender.MALE) {
-                    return ResponseEntity.badRequest().body(error("Registration is restricted to Female / Other."));
-                }
-                user.setGender(g);
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest().body(error("Gender must be FEMALE or OTHER."));
-            }
-        }
+        user.setGender(MobileValidation.parseWomenMemberGender(genderRaw));
 
         try {
             userService.createUser(user);

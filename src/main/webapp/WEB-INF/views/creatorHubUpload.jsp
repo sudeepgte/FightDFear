@@ -19,11 +19,25 @@
     <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
     
     <style>
+        #wrapper { margin-top: 0 !important; }
+        #sidebar-wrapper { top: 0 !important; }
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
-            --accent-pink: #f43f5e;
-            --accent-purple: #8b5cf6;
+            --glow-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --accent-pink: #F43F5E;
+            --accent-purple: #64748B;
+            --fdf-text: #0F172A;
+            --fdf-muted: #64748B;
+            --fdf-border: #E2E8F0;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            --brand-purple: #64748B;
+            --brand-pink-light: #F43F5E;
+            --gradient-primary: linear-gradient(135deg, #F43F5E, #F43F5E);
         }
         
         body {
@@ -157,7 +171,7 @@
             border-radius: 20px;
             padding: 40px;
             text-align: center;
-            background: #fffcfd;
+            background: var(--glow-bg);
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -173,7 +187,7 @@
 
         /* Toggle switches list */
         .toggle-switch-card {
-            background: #fafafb;
+            background: var(--card-bg);
             border: 1px solid var(--fdf-border);
             border-radius: 16px;
             padding: 15px 20px;
@@ -242,8 +256,7 @@
 </head>
 <body>
 
-<!-- Header -->
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 
 <div id="wrapper">
     <!-- Sidebar -->
@@ -540,3 +553,5 @@
 
 </body>
 </html>
+
+

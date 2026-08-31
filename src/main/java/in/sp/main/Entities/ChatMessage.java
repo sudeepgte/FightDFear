@@ -40,6 +40,9 @@ public class ChatMessage {
     private boolean readStatus = false;
 
     private String messageType; // TEXT / REEL
+    
+    private boolean deletedForSender = false;
+    private boolean deletedForReceiver = false;
  
     public String getMessageType() {
 		return messageType;
@@ -145,6 +148,11 @@ public class ChatMessage {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public boolean isDeletedForSender() { return deletedForSender; }
+	public void setDeletedForSender(boolean deletedForSender) { this.deletedForSender = deletedForSender; }
+	public boolean isDeletedForReceiver() { return deletedForReceiver; }
+	public void setDeletedForReceiver(boolean deletedForReceiver) { this.deletedForReceiver = deletedForReceiver; }
 
 	@PrePersist
     protected void onCreate() {

@@ -23,9 +23,21 @@
       min-height: 100vh;
     }
     .orders-container {
-      max-width: 900px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 32px 24px 56px;
+      width: 100%;
+    }
+    .order-card-body {
+      padding: 20px 24px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .orders-container { padding: 20px 12px 40px; }
+      .order-card-body { grid-template-columns: 1fr; }
     }
     .back-link {
       display: inline-flex;
@@ -104,12 +116,6 @@
       justify-content: center;
       border-radius: 12px;
       font-size: 20px;
-    }
-    .order-card-body {
-      padding: 24px;
-      display: flex;
-      gap: 24px;
-      align-items: center;
     }
     .tracking-toggle-btn {
       display: inline-flex;

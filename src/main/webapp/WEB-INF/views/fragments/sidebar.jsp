@@ -1,6 +1,8 @@
 <%@ page language="java" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<c:set var="currentUri" value="${empty requestScope['javax.servlet.forward.request_uri'] ? pageContext.request.requestURI : requestScope['javax.servlet.forward.request_uri']}" />
+<c:set var="sidebarUserId" value="${not empty user ? user.id : (not empty currentUser ? currentUser.id : (not empty sessionScope.user ? sessionScope.user.id : ''))}" />
 
 <style>
     /* === Sidebar Layout CSS === */
@@ -208,14 +210,14 @@
         <span><i class="bi bi-list me-2"></i> Menu</span>
         <i class="bi bi-chevron-down" id="sidebarToggleIcon"></i>
     </button>
-    <c:set var="isWorkerPortal" value="${isWorkerDashboard || fn:contains(requestScope['javax.servlet.forward.request_uri'], '/women-jobs/') || fn:contains(pageContext.request.requestURI, 'worker-profile') || fn:contains(pageContext.request.requestURI, 'worker-dashboard')}" />
+    <c:set var="isWorkerPortal" value="${isWorkerDashboard || fn:contains(currentUri, '/women-jobs/') || fn:contains(pageContext.request.requestURI, 'worker-profile') || fn:contains(pageContext.request.requestURI, 'worker-dashboard')}" />
     <div class="list-group list-group-flush mt-1" id="sidebarNavList">
         <c:choose>
             <c:when test="${isWorkerPortal}">
-                <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/women-jobs/dashboard') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-jobs/dashboard') ? 'active' : ''}">
                     <i class="bi bi-briefcase-fill"></i> Job Bookings
                 </a>
-                <a href="${pageContext.request.contextPath}/women-jobs/profile" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/women-jobs/profile') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/women-jobs/profile" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-jobs/profile') ? 'active' : ''}">
                     <i class="bi bi-person-gear"></i> My Profile
                 </a>
                 <a href="${pageContext.request.contextPath}/logout" class="sidebar-list-group-item sidebar-logout-item">
@@ -223,53 +225,53 @@
                 </a>
             </c:when>
             <c:otherwise>
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/users/dashboard') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/users/dashboard" class="sidebar-list-group-item ${fn:contains(currentUri,'/users/dashboard') ? 'active' : ''}">
                     <i class="bi bi-house-door"></i> Dashboard
                 </a>
                 <a href="${pageContext.request.contextPath}/chat/users" class="sidebar-list-group-item ${fn:contains(pageContext.request.requestURI, '/chat/') ? 'active' : ''}">
                     <i class="bi bi-chat-dots"></i> Chat
                 </a>
-                <a href="${pageContext.request.contextPath}/creator-hub" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/creator-hub') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/creator-hub" class="sidebar-list-group-item ${fn:contains(currentUri,'/creator-hub') ? 'active' : ''}">
                     <i class="bi bi-camera-reels"></i> Creator Hub
                 </a>
                 <c:if test="${isWorker || sessionScope.isWorker}">
-                    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/women-jobs/dashboard') ? 'active' : ''}">
+                    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-jobs/dashboard') ? 'active' : ''}">
                         <i class="bi bi-briefcase-fill"></i> Job Bookings
                     </a>
                 </c:if>
-                <a href="${pageContext.request.contextPath}/sos/dashboard" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/sos') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/sos/dashboard" class="sidebar-list-group-item ${fn:contains(currentUri,'/sos') ? 'active' : ''}">
                     <i class="bi bi-exclamation-triangle"></i> SOS Emergency
                 </a>
-                <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/users/profile') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/users/profile/${sidebarUserId}" class="sidebar-list-group-item ${fn:contains(currentUri,'/users/profile') ? 'active' : ''}">
                     <i class="bi bi-person-badge"></i> Your Profile
                 </a>
-                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/centres') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="sidebar-list-group-item ${fn:contains(currentUri,'/centres') ? 'active' : ''}">
                     <i class="bi bi-shield-check"></i> Martial Arts Centres
                 </a>
-                <a href="${pageContext.request.contextPath}/video/allVideos" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/video/allVideos') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/video/allVideos" class="sidebar-list-group-item ${fn:contains(currentUri,'/video/allVideos') ? 'active' : ''}">
                     <i class="bi bi-play-circle"></i> View Videos
                 </a>
 
-                <a href="${pageContext.request.contextPath}/index/templates" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/templates') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/index/templates" class="sidebar-list-group-item ${fn:contains(currentUri,'/templates') ? 'active' : ''}">
                     <i class="bi bi-stars"></i> Glow Space
                 </a>
 
-                <a href="${pageContext.request.contextPath}/video/reels" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/reels') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/video/reels" class="sidebar-list-group-item ${fn:contains(currentUri,'/reels') ? 'active' : ''}">
                     <i class="bi bi-camera-video"></i> Reels
                 </a>
-                <a href="${pageContext.request.contextPath}/users/wallet" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/wallet') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/users/wallet" class="sidebar-list-group-item ${fn:contains(currentUri,'/wallet') ? 'active' : ''}">
                     <i class="bi bi-wallet2"></i> My Wallet
                 </a>
-                <a href="${pageContext.request.contextPath}/buddy" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/buddy') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/buddy" class="sidebar-list-group-item ${fn:contains(currentUri,'/buddy') ? 'active' : ''}">
                     <i class="bi bi-person-walking"></i> Buddy Mode
                 </a>
-                <a href="${pageContext.request.contextPath}/doctors/list" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/doctors') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/doctors/list" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors') ? 'active' : ''}">
                     <i class="bi bi-heart-pulse"></i> Women Doctors
                 </a>
-                <a href="${pageContext.request.contextPath}/marketplace" class="sidebar-list-group-item ${fn:contains(requestScope['javax.servlet.forward.request_uri'], '/marketplace') && (empty requestScope['javax.servlet.forward.query_string'] || !fn:contains(requestScope['javax.servlet.forward.query_string'], 'category=')) && !fn:contains(requestScope['javax.servlet.forward.request_uri'], '/marketplace/earn') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/marketplace" class="sidebar-list-group-item ${fn:contains(currentUri, '/marketplace') && (empty requestScope['javax.servlet.forward.query_string'] || !fn:contains(requestScope['javax.servlet.forward.query_string'], 'category=')) && !fn:contains(currentUri, '/marketplace/earn') ? 'active' : ''}">
                     <i class="bi bi-shop"></i> Women Marketplace
                 </a>
-                <a href="${pageContext.request.contextPath}/financial-literacy" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/financial-literacy') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/financial-literacy" class="sidebar-list-group-item ${fn:contains(currentUri,'/financial-literacy') ? 'active' : ''}">
                     <i class="bi bi-book"></i> Financial Literacy Hub
                 </a>
                 <c:if test="${not empty loggedEntrepreneur}">
@@ -285,22 +287,22 @@
                 <a href="${pageContext.request.contextPath}/marketplace/list?category=WOMEN_LAWYER" class="sidebar-list-group-item ${not empty requestScope['javax.servlet.forward.query_string'] && fn:contains(requestScope['javax.servlet.forward.query_string'], 'WOMEN_LAWYER') ? 'active' : ''}">
                     <i class="bi bi-briefcase"></i> Women Lawyers
                 </a>
-                <a href="${pageContext.request.contextPath}/fitness" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/fitness') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/fitness" class="sidebar-list-group-item ${fn:contains(currentUri,'/fitness') ? 'active' : ''}">
                     <i class="bi bi-activity"></i> Fitness & Wellness
                 </a>
-                <a href="${pageContext.request.contextPath}/women-events" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/women-events') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/women-events" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-events') ? 'active' : ''}">
                     <i class="bi bi-calendar-event"></i> Women Events
                 </a>
-                <a href="${pageContext.request.contextPath}/marketplace/earn" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/marketplace/earn') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/marketplace/earn" class="sidebar-list-group-item ${fn:contains(currentUri,'/marketplace/earn') ? 'active' : ''}">
                     <i class="bi bi-briefcase-fill"></i> Women Jobs
                 </a>
-                <a href="${pageContext.request.contextPath}/women-products" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/women-products') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/women-products" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-products') ? 'active' : ''}">
                     <i class="bi bi-bag-heart"></i> Women Products
                 </a>
-                <a href="${pageContext.request.contextPath}/journey" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/journey') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/journey" class="sidebar-list-group-item ${fn:contains(currentUri,'/journey') ? 'active' : ''}">
                     <i class="bi bi-pin-map"></i> Journey Safety Tracker
                 </a>
-                <a href="${pageContext.request.contextPath}/reminders" class="sidebar-list-group-item ${requestScope['javax.servlet.forward.request_uri'].contains('/reminders') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/reminders" class="sidebar-list-group-item ${fn:contains(currentUri,'/reminders') ? 'active' : ''}">
                     <i class="bi bi-alarm"></i> Routine Reminders
                 </a>
                 <a href="${pageContext.request.contextPath}/logout" class="sidebar-list-group-item sidebar-logout-item">
