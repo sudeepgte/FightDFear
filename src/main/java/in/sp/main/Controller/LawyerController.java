@@ -101,15 +101,8 @@ public class LawyerController {
             return "redirect:/lawyer/register";
         }
         
-        if (otp == null || otp.trim().isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "OTP is required!");
-            return "redirect:/lawyer/register";
-        }
-        
-        try {
-            otpVerificationService.verifyOtp(email, otp, OtpPurpose.MARKETPLACE_REGISTER);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Invalid or expired OTP!");
+        if (!otpVerificationService.hasVerifiedOtp(email, OtpPurpose.MARKETPLACE_REGISTER, 60)) {
+            redirectAttributes.addFlashAttribute("error", "Email verification via OTP is required!");
             return "redirect:/lawyer/register";
         }
 
@@ -165,13 +158,16 @@ public class LawyerController {
         if (otp != null) otp = otp.trim();
         
         try {
-            otpVerificationService.verifyOtp(email, otp, OtpPurpose.MARKETPLACE_REGISTER);
+            boolean isValid = otpVerificationService.verifyOtp(email, otp, OtpPurpose.MARKETPLACE_REGISTER);
+            if (!isValid) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "error", "Invalid or expired OTP"));
+            }
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Email verified successfully");
             return ResponseEntity.ok(res);
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", "Invalid or expired OTP"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "error", "Invalid or expired OTP"));
         }
     }
 
