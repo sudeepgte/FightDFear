@@ -85,7 +85,7 @@ public class SalonController {
             @RequestParam("phone") String phone,
             @RequestParam("password") String password,
             @RequestParam("confirmPassword") String confirmPassword,
-            @RequestParam("hygieneCertificate") MultipartFile hygieneCertificate,
+            @RequestParam(value = "hygieneCertificate", required = false) MultipartFile hygieneCertificate,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
             Model model) {
@@ -129,7 +129,10 @@ public class SalonController {
         }
 
         try {
-            String hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
+            String hygieneCertificateUrl = null;
+            if (hygieneCertificate != null && !hygieneCertificate.isEmpty()) {
+                hygieneCertificateUrl = fileUploadService.saveFile(hygieneCertificate);
+            }
 
             Salon salon = new Salon();
             salon.setName(cleanedName);

@@ -330,7 +330,7 @@
                 </div>
             </c:if>
 
-            <form id="regForm" action="${pageContext.request.contextPath}/salons/register" method="post">
+            <form id="regForm" action="${pageContext.request.contextPath}/salons/register" method="post" enctype="multipart/form-data">
                 
                 <div class="form-group">
                     <label for="salonName">Salon Name *</label>
@@ -381,6 +381,12 @@
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="hygieneCertificate">Proof Document / Hygiene Certificate *</label>
+                    <input class="form-input" type="file" id="hygieneCertificate" name="hygieneCertificate" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                    <small style="display:block;margin-top:6px;font-size:0.8rem;color:var(--text-gray);">PDF or image (JPG/PNG). Required to complete registration.</small>
                 </div>
 
                 <label class="terms-row">
@@ -449,6 +455,12 @@
             const cp = document.getElementById('confirmPassword').value;
             if (p !== cp) {
                 showAlert('Passwords do not match.');
+                return;
+            }
+
+            const cert = document.getElementById('hygieneCertificate');
+            if (!cert || !cert.files || cert.files.length === 0) {
+                showAlert('Please upload a proof document or hygiene certificate.');
                 return;
             }
 
