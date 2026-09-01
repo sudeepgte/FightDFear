@@ -12,24 +12,181 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
-</head>
-<body>
-    <c:set var="flAdminTitle" value="Edit Recorded Video" scope="request"/>
-    <c:set var="flAdminActive" value="edit-video" scope="request"/>
-    <%@ include file="_topbar.jsp" %>
+    <style>
+        :root {
+            --fl-primary: #1E1B4B;
+            --fl-secondary: #312E81;
+            --fl-accent: #F43F5E;
+            --fl-accent-hover: #E02B4C;
+            --fl-heading: #1E1B4B;
+            --fl-text: #1E1B4B;
+            --fl-muted: #64748B;
+            --fl-bg-light: #F8FAFC;
+            --fl-border: rgba(30, 27, 75, 0.12);
+        }
 
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #F8FAFC;
+            color: var(--fl-text);
+        }
+
+        .topbar {
+            background: #1E1B4B;
+            color: white;
+            padding: 14px 18px;
+            font-weight: 600;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 56px);
+        }
+
+        .main {
+            flex: 1;
+            padding: 24px 20px 40px;
+            min-width: 0;
+        }
+
+        .mainInner.narrow {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(30, 27, 75, 0.08);
+            border: 1px solid var(--fl-border);
+        }
+
+        .admin-card h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--fl-heading);
+        }
+
+        .form-label {
+            color: var(--fl-heading) !important;
+            font-weight: 600;
+        }
+
+        .form-label .text-danger {
+            color: var(--fl-accent) !important;
+        }
+
+        .form-control, .form-select {
+            color: var(--fl-text) !important;
+            border: 1px solid var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .form-control::placeholder {
+            color: var(--fl-muted) !important;
+            opacity: 0.85;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--fl-accent) !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+            color: var(--fl-text) !important;
+        }
+
+        .btn-outline-secondary {
+            color: var(--fl-text) !important;
+            border-color: var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            color: #FFFFFF !important;
+            background-color: var(--fl-accent) !important;
+            border-color: var(--fl-accent) !important;
+        }
+
+        .btn-purple, .btn-primary {
+            background-color: var(--fl-accent) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-purple:hover, .btn-primary:hover {
+            background-color: var(--fl-accent-hover) !important;
+            color: #FFFFFF !important;
+        }
+
+        .btn-light {
+            color: var(--fl-text) !important;
+            background-color: #F1F5F9 !important;
+            border: 1px solid var(--fl-border) !important;
+            font-weight: 600;
+        }
+
+        .btn-light:hover {
+            background-color: #E2E8F0 !important;
+            color: var(--fl-heading) !important;
+        }
+
+        .text-primary {
+            color: var(--fl-accent) !important;
+        }
+
+        .text-muted {
+            color: var(--fl-muted) !important;
+        }
+    </style>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
+    <style>
+        body.ap-page { margin: 0; }
+        .topbar { display: none !important; }
+        .layout { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    </style>
+</head>
+<body class="ap-page">
     <div class="layout">
         <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <main class="main">
-            <div class="mainInner narrow">
-                <div class="admin-card">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h3 class="mb-0">Edit Recorded Video</h3>
-                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back
-                        </a>
+            <%@ include file="_topbar.jsp" %>
+            <div class="ap-main-inner" style="max-width: 860px;">
+                <!-- Back Button -->
+                <div class="mb-3">
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn-back-theme">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+
+                <!-- Breadcrumb -->
+                <nav class="ap-crumb">
+                    <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+                    <span class="sep">&gt;</span>
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin">Financial Literacy</a>
+                    <span class="sep">&gt;</span>
+                    <span>Edit Video</span>
+                </nav>
+
+                <!-- Page Header -->
+                <div class="ap-page-head">
+                    <div class="ap-page-ico"><i class="fas fa-edit"></i></div>
+                    <div>
+                        <h1>Edit Recorded Video</h1>
+                        <p>Update video information, title, category, or video URL</p>
                     </div>
+                </div>
+
+                <div class="ap-panel p-4">
 
                     <c:if test="${not empty error}">
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">

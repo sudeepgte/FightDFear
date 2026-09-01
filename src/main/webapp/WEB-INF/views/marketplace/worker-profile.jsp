@@ -205,21 +205,21 @@
     <div class="wj-card">
         <div class="wj-card-b padded">
             <div class="wj-progress" id="profileProgress">
-                <span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                <span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
             </div>
-            <p class="wj-step-title" id="stepLabel">Step 1 of 12 — Worker identity</p>
+            <p class="wj-step-title" id="stepLabel">Step 1 of 11 — Worker identity</p>
             <p class="wj-step-desc" id="stepDesc">Your name, role, phone and experience.</p>
 
-            <form action="${pageContext.request.contextPath}/women-jobs/profile" method="post" id="workerProfileForm">
+            <form action="${pageContext.request.contextPath}/women-jobs/profile" method="post" id="workerProfileForm" enctype="multipart/form-data">
 
                 <div class="wj-step" data-step="1">
                     <div class="wj-row">
                         <div class="wj-field">
-                            <label class="wj-label">1.1 Full name <span class="wj-mobile-tag">Not editable on web</span></label>
-                            <div class="wj-readonly"><c:out value="${workerApp.user.fullName}"/></div>
+                            <label class="wj-label">1.1 Full name</label>
+                            <input type="text" name="fullName" class="wj-input" maxlength="120" value="${workerApp.user.fullName}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">Email <span class="wj-mobile-tag">Not editable on web</span></label>
+                            <label class="wj-label">Email <span class="wj-mobile-tag">Login identity — not changed here</span></label>
                             <div class="wj-readonly"><c:out value="${workerApp.user.email}"/></div>
                         </div>
                         <div class="wj-field">
@@ -227,8 +227,8 @@
                             <input type="text" name="designation" class="wj-input" maxlength="120" placeholder="e.g. Senior Baby Care Specialist" value="${workerApp.designation}">
                         </div>
                         <div class="wj-field">
-                            <label class="wj-label">1.5 Official phone <span class="wj-mobile-tag">Not editable on web</span></label>
-                            <div class="wj-readonly"><c:out value="${workerApp.user.phoneNumber}"/></div>
+                            <label class="wj-label">1.5 Official phone</label>
+                            <input type="text" name="phone" class="wj-input" maxlength="10" inputmode="numeric" value="${workerApp.user.phoneNumber}">
                         </div>
                         <div class="wj-field">
                             <label class="wj-label">1.6 WhatsApp</label>
@@ -262,32 +262,68 @@
                             <input type="text" name="pincode" id="pincode" class="wj-input" maxlength="6" inputmode="numeric" placeholder="6-digit Pincode" value="${workerApp.pincode}">
                             <small class="wj-field-err" id="err-pincode"></small>
                         </div>
-                    </div>
-                    <c:if test="${not empty workerApp.latitude and not empty workerApp.longitude}">
-                        <div class="wj-readonly"><span>2.6 / 2.7 Map pin <span class="wj-mobile-tag">Not editable on web</span></span>
-                            <c:out value="${workerApp.latitude}"/>, <c:out value="${workerApp.longitude}"/>
+                        <div class="wj-field">
+                            <label class="wj-label">2.6 Latitude</label>
+                            <input type="text" name="latitude" class="wj-input" placeholder="e.g. 12.9716" value="${workerApp.latitude}">
                         </div>
-                    </c:if>
+                        <div class="wj-field">
+                            <label class="wj-label">2.7 Longitude</label>
+                            <input type="text" name="longitude" class="wj-input" placeholder="e.g. 77.5946" value="${workerApp.longitude}">
+                        </div>
+                    </div>
                 </div>
 
                 <div class="wj-step" data-step="3" style="display:none;">
-                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include work categories.</p>
-                    <div class="wj-readonly"><span>3.1 Categories / primary category</span>
-                        <c:out value="${not empty workerApp.categoriesOffered ? workerApp.categoriesOffered : workerApp.jobCategory}"/>
-                    </div>
-                    <div class="wj-readonly"><span>Role / sub category</span>
-                        <c:out value="${workerApp.jobSubCategory}"/>
+                    <div class="wj-row">
+                        <div class="wj-field full">
+                            <label class="wj-label">3.1 Categories offered</label>
+                            <input type="text" name="categoriesOffered" class="wj-input" maxlength="255" placeholder="e.g. Teaching, Tutoring" value="${workerApp.categoriesOffered}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">Primary category</label>
+                            <select id="jobCategory" name="jobCategory" class="wj-input" onchange="updateSubCategories()">
+                                <option value="">Select Category</option>
+                                <option value="Caregiver" ${workerApp.jobCategory == 'Caregiver' ? 'selected' : ''}>Caregiver</option>
+                                <option value="Babysitting" ${workerApp.jobCategory == 'Babysitting' ? 'selected' : ''}>Babysitting</option>
+                                <option value="Housekeeping" ${workerApp.jobCategory == 'Housekeeping' ? 'selected' : ''}>Housekeeping</option>
+                                <option value="Cooking" ${workerApp.jobCategory == 'Cooking' ? 'selected' : ''}>Cooking</option>
+                                <option value="Beauty & Salon" ${workerApp.jobCategory == 'Beauty & Salon' ? 'selected' : ''}>Beauty &amp; Salon</option>
+                                <option value="Healthcare" ${workerApp.jobCategory == 'Healthcare' ? 'selected' : ''}>Healthcare</option>
+                                <option value="Teaching" ${workerApp.jobCategory == 'Teaching' ? 'selected' : ''}>Teaching</option>
+                                <option value="Office Jobs" ${workerApp.jobCategory == 'Office Jobs' ? 'selected' : ''}>Office Jobs</option>
+                                <option value="Retail" ${workerApp.jobCategory == 'Retail' ? 'selected' : ''}>Retail</option>
+                                <option value="Hospitality" ${workerApp.jobCategory == 'Hospitality' ? 'selected' : ''}>Hospitality</option>
+                                <option value="Customer Support" ${workerApp.jobCategory == 'Customer Support' ? 'selected' : ''}>Customer Support</option>
+                                <option value="Delivery & Logistics" ${workerApp.jobCategory == 'Delivery & Logistics' ? 'selected' : ''}>Delivery &amp; Logistics</option>
+                                <option value="Domestic Help" ${workerApp.jobCategory == 'Domestic Help' ? 'selected' : ''}>Domestic Help</option>
+                                <option value="Tailoring & Fashion" ${workerApp.jobCategory == 'Tailoring & Fashion' ? 'selected' : ''}>Tailoring &amp; Fashion</option>
+                                <option value="Digital Jobs" ${workerApp.jobCategory == 'Digital Jobs' ? 'selected' : ''}>Digital Jobs</option>
+                                <option value="Freelancing" ${workerApp.jobCategory == 'Freelancing' ? 'selected' : ''}>Freelancing</option>
+                                <option value="Entrepreneurship" ${workerApp.jobCategory == 'Entrepreneurship' ? 'selected' : ''}>Entrepreneurship</option>
+                            </select>
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">Role / sub category</label>
+                            <select id="jobSubCategory" name="jobSubCategory" class="wj-input">
+                                <option value="${workerApp.jobSubCategory}"><c:out value="${empty workerApp.jobSubCategory ? 'Select specific job' : workerApp.jobSubCategory}"/></option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="wj-step" data-step="4" style="display:none;">
-                    <c:if test="${not empty workerApp.audience or workerApp.doorService != null}">
-                        <div class="wj-readonly"><span>4.1 Audience / 4.2 Door visits <span class="wj-mobile-tag">Not editable on web</span></span>
-                            <c:out value="${workerApp.audience}"/>
-                            <c:if test="${workerApp.doorService != null}"> · Door service: ${workerApp.doorService}</c:if>
-                        </div>
-                    </c:if>
                     <div class="wj-row">
+                        <div class="wj-field full">
+                            <label class="wj-label">4.1 Audience</label>
+                            <input type="text" name="audience" class="wj-input" maxlength="255" placeholder="e.g. Families, Seniors" value="${workerApp.audience}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">4.2 Door visits</label>
+                            <select name="doorService" class="wj-input">
+                                <option value="true" ${workerApp.doorService == true ? 'selected' : ''}>Yes</option>
+                                <option value="false" ${workerApp.doorService != true ? 'selected' : ''}>No</option>
+                            </select>
+                        </div>
                         <div class="wj-field">
                             <label class="wj-label">4.3 Languages</label>
                             <input type="text" name="languages" class="wj-input" maxlength="200" placeholder="e.g. English, Hindi, Punjabi" value="${workerApp.languages}">
@@ -300,20 +336,39 @@
                 </div>
 
                 <div class="wj-step" data-step="5" style="display:none;">
-                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include facilities.</p>
-                    <div class="wj-readonly"><span>5.1 Amenities / readiness</span>
-                        <c:out value="${not empty workerApp.facilities ? workerApp.facilities : 'Not set on this record yet.'}"/>
+                    <div class="wj-field">
+                        <label class="wj-label">5.1 Amenities / readiness</label>
+                        <input type="text" name="facilities" class="wj-input" maxlength="500" placeholder="e.g. First-aid kit, Own transport" value="${workerApp.facilities}">
                     </div>
                 </div>
 
                 <div class="wj-step" data-step="6" style="display:none;">
-                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not include hours or calendar.</p>
-                    <div class="wj-readonly"><span>6.1 Open days</span><c:out value="${not empty workerApp.openDays ? workerApp.openDays : 'Not set'}"/></div>
-                    <div class="wj-readonly"><span>6.2–6.5 Hours</span>
-                        Open: <c:out value="${workerApp.openTime}"/> · Close: <c:out value="${workerApp.closeTime}"/>
-                        · Break: <c:out value="${workerApp.breakStart}"/>–<c:out value="${workerApp.breakEnd}"/>
+                    <div class="wj-row">
+                        <div class="wj-field full">
+                            <label class="wj-label">6.1 Open days</label>
+                            <input type="text" name="openDays" class="wj-input" placeholder="Mon,Tue,Wed,Thu,Fri" value="${workerApp.openDays}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">6.2 Open time</label>
+                            <input type="time" name="openTime" class="wj-input" value="${workerApp.openTime}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">6.3 Close time</label>
+                            <input type="time" name="closeTime" class="wj-input" value="${workerApp.closeTime}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">6.4 Break start</label>
+                            <input type="time" name="breakStart" class="wj-input" value="${workerApp.breakStart}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">6.5 Break end</label>
+                            <input type="time" name="breakEnd" class="wj-input" value="${workerApp.breakEnd}">
+                        </div>
+                        <div class="wj-field full">
+                            <label class="wj-label">6.6 Blocked dates</label>
+                            <input type="text" name="blockedDates" class="wj-input" placeholder="YYYY-MM-DD, YYYY-MM-DD" value="${workerApp.blockedDates}">
+                        </div>
                     </div>
-                    <div class="wj-readonly"><span>6.6 Blocked dates</span><c:out value="${not empty workerApp.blockedDates ? workerApp.blockedDates : 'None'}"/></div>
                 </div>
 
                 <div class="wj-step" data-step="7" style="display:none;">
@@ -326,19 +381,30 @@
                 </div>
 
                 <div class="wj-step" data-step="8" style="display:none;">
-                    <div class="wj-readonly"><span>8.1 Primary category <span class="wj-mobile-tag">Not editable on web</span></span><c:out value="${workerApp.jobCategory}"/></div>
-                    <div class="wj-readonly"><span>8.2 Role / service <span class="wj-mobile-tag">Not editable on web</span></span><c:out value="${workerApp.jobSubCategory}"/></div>
                     <div class="wj-row">
                         <div class="wj-field">
                             <label class="wj-label">8.5 Hourly rate (₹)</label>
                             <input type="number" name="hourlyRate" id="hourlyRate" class="wj-input" min="1" step="0.01" value="${workerApp.hourlyRate}">
                             <small class="wj-field-err" id="err-hourlyRate"></small>
                         </div>
+                        <div class="wj-field">
+                            <label class="wj-label">8.3 Duration (minutes)</label>
+                            <input type="number" name="durationMinutes" class="wj-input" min="1" value="${workerApp.durationMinutes}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">8.4 Buffer (minutes)</label>
+                            <input type="number" name="bufferMinutes" class="wj-input" min="0" value="${workerApp.bufferMinutes}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">8.6 Service mode</label>
+                            <input type="text" name="serviceMode" class="wj-input" placeholder="e.g. DOOR / CENTRE" value="${workerApp.serviceMode}">
+                        </div>
+                        <div class="wj-field">
+                            <label class="wj-label">8.7 Work type</label>
+                            <input type="text" name="workType" class="wj-input" placeholder="e.g. Full-time, Part-time" value="${workerApp.workType}">
+                        </div>
                     </div>
-                    <div class="wj-readonly"><span>8.3 Duration / 8.4 Buffer / 8.6 Mode / 8.7 Work type <span class="wj-mobile-tag">Not editable on web</span></span>
-                        Duration: <c:out value="${workerApp.durationMinutes}"/> min · Buffer: <c:out value="${workerApp.bufferMinutes}"/> min
-                        · Mode: <c:out value="${workerApp.serviceMode}"/> · Work type: <c:out value="${workerApp.workType}"/>
-                    </div>
+                    <p class="wj-step-desc">Primary category and role are saved in Step 3.</p>
                 </div>
 
                 <div class="wj-step" data-step="9" style="display:none;">
@@ -356,30 +422,33 @@
                 </div>
 
                 <div class="wj-step" data-step="10" style="display:none;">
-                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not accept file uploads.</p>
-                    <div class="wj-readonly"><span>10.1 Profile photo / proof document</span>
-                        <c:choose>
-                            <c:when test="${not empty workerApp.profileImageUrl}"><c:out value="${workerApp.profileImageUrl}"/></c:when>
-                            <c:when test="${not empty workerApp.documentPath}">
+                    <div class="wj-field">
+                        <label class="wj-label">10.1 Profile photo</label>
+                        <input type="file" name="profileImage" class="wj-input" accept="image/*">
+                        <c:if test="${not empty workerApp.profileImageUrl}">
+                            <div class="wj-readonly" style="margin-top:8px;">Current: <c:out value="${workerApp.profileImageUrl}"/></div>
+                        </c:if>
+                    </div>
+                    <div class="wj-field" style="margin-top:12px;">
+                        <label class="wj-label">Proof document</label>
+                        <input type="file" name="proofDocument" class="wj-input" accept="image/*,.pdf">
+                        <c:if test="${not empty workerApp.documentPath}">
+                            <div class="wj-readonly" style="margin-top:8px;">
                                 <a href="${pageContext.request.contextPath}${workerApp.documentPath}" target="_blank">View existing proof document</a>
-                            </c:when>
-                            <c:otherwise>No document on file yet.</c:otherwise>
-                        </c:choose>
+                            </div>
+                        </c:if>
                     </div>
                 </div>
 
                 <div class="wj-step" data-step="11" style="display:none;">
-                    <p class="wj-hint">Mobile-managed — not editable on web. The existing web save does not accept gallery uploads.</p>
-                    <div class="wj-readonly"><span>11.1 Gallery photos</span>
-                        <c:out value="${not empty workerApp.galleryPhotos ? workerApp.galleryPhotos : 'No work photos on file yet.'}"/>
+                    <div class="wj-field">
+                        <label class="wj-label">11.1 Gallery photos</label>
+                        <input type="file" name="galleryPhotos" class="wj-input" accept="image/*" multiple>
+                        <c:if test="${not empty workerApp.galleryPhotos}">
+                            <div class="wj-readonly" style="margin-top:8px;"><c:out value="${workerApp.galleryPhotos}"/></div>
+                        </c:if>
                     </div>
-                </div>
-
-                <div class="wj-step" data-step="12" style="display:none;">
-                    <p class="wj-hint">Review the details you can save on web, then use Save Profile. Existing OTP verification still applies.</p>
-                    <div class="wj-readonly"><span>Will be saved</span>
-                        Designation, WhatsApp, years of experience, address, city, state, pincode, languages, skills, about, hourly rate, UPI, and bank details.
-                    </div>
+                    <p class="wj-step-desc" style="margin-top:12px;">Save Profile still uses the existing email OTP, then stores all fields above.</p>
                 </div>
 
                 <div class="wj-nav-btns">
@@ -556,35 +625,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var labels = [
-        'Step 1 of 12 — Worker identity',
-        'Step 2 of 12 — Location',
-        'Step 3 of 12 — Work categories',
-        'Step 4 of 12 — Who I serve',
-        'Step 5 of 12 — Facilities & readiness',
-        'Step 6 of 12 — Hours & calendar',
-        'Step 7 of 12 — About you',
-        'Step 8 of 12 — First offering',
-        'Step 9 of 12 — Payout',
-        'Step 10 of 12 — Documents (optional)',
-        'Step 11 of 12 — Work photos (optional)',
-        'Step 12 of 12 — Review & save'
+        'Step 1 of 11 — Worker identity',
+        'Step 2 of 11 — Location',
+        'Step 3 of 11 — Work categories',
+        'Step 4 of 11 — Who I serve',
+        'Step 5 of 11 — Facilities & readiness',
+        'Step 6 of 11 — Hours & calendar',
+        'Step 7 of 11 — About you',
+        'Step 8 of 11 — First offering',
+        'Step 9 of 11 — Payout',
+        'Step 10 of 11 — Documents (optional)',
+        'Step 11 of 11 — Work photos (optional)'
     ];
     var descs = [
         'Your name, role, phone and experience.',
         'Address clients will use to find you.',
-        'Categories stored on your application (mobile-managed).',
-        'Audience on file, plus languages and skills you can save here.',
-        'Amenities stored on your application (mobile-managed).',
-        'Hours stored on your application (mobile-managed).',
+        'Categories you offer, plus primary category and role.',
+        'Audience, door visits, languages and skills.',
+        'Amenities and readiness.',
+        'Open days, hours, breaks and blocked dates.',
         'Tell clients about your work.',
-        'Hourly rate you can save here; offering details otherwise on file.',
+        'Hourly rate, duration, buffer, mode and work type.',
         'How you receive payouts.',
-        'Optional documents already on file.',
-        'Optional work photos already on file.',
-        'Save using the existing profile OTP flow.'
+        'Upload a profile photo or proof document (optional).',
+        'Add work photos (optional). Save using the existing profile OTP.'
     ];
     var step = 1;
-    var totalSteps = 12;
+    var totalSteps = 11;
     function fieldError(id, text) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -608,6 +675,11 @@ document.addEventListener('DOMContentLoaded', function() {
         errBox.style.display = 'none';
         clearFieldErrors();
         if (step === 1) {
+            var phone = (profileForm.phone.value || '').trim();
+            if (phone !== '' && !/^\d{10}$/.test(phone)) {
+                showProfileError('Phone number must be exactly 10 digits.');
+                return false;
+            }
             var years = (profileForm.yearsExperience.value || '').trim();
             if (years !== '') {
                 var y = parseInt(years, 10);
@@ -666,6 +738,51 @@ document.addEventListener('DOMContentLoaded', function() {
         if (step > 1) { step--; renderStep(); }
     });
     renderStep();
+
+    var categories = {
+        "Caregiver": ["Elderly Caregiver", "Patient Care Assistant", "Child Caregiver", "Home Care Assistant"],
+        "Babysitting": ["Babysitter", "Nanny", "Daycare Assistant"],
+        "Housekeeping": ["House Maid", "Housekeeper", "Cleaner"],
+        "Cooking": ["Home Cook", "Personal Cook", "Kitchen Assistant"],
+        "Beauty & Salon": ["Beautician", "Hair Stylist", "Makeup Artist", "Nail Technician"],
+        "Healthcare": ["Nurse", "Care Assistant", "Receptionist", "Lab Assistant"],
+        "Teaching": ["Tutor", "School Teacher", "Preschool Teacher"],
+        "Office Jobs": ["Receptionist", "Office Assistant", "Data Entry Operator"],
+        "Retail": ["Cashier", "Sales Executive", "Store Assistant"],
+        "Hospitality": ["Hotel Receptionist", "Housekeeping Staff", "Waitress"],
+        "Customer Support": ["Call Center Executive", "Customer Care Representative"],
+        "Delivery & Logistics": ["Parcel Coordinator", "Delivery Executive (where applicable)"],
+        "Domestic Help": ["Laundry Assistant", "Home Helper"],
+        "Tailoring & Fashion": ["Tailor", "Boutique Assistant", "Fashion Designer"],
+        "Digital Jobs": ["Content Writer", "Graphic Designer", "Social Media Executive"],
+        "Freelancing": ["Virtual Assistant", "Translator", "Online Tutor"],
+        "Entrepreneurship": ["Sell Handmade Products", "Home Bakery", "Boutique Owner"]
+    };
+    window.updateSubCategories = function () {
+        var categorySelect = document.getElementById("jobCategory");
+        var subCategorySelect = document.getElementById("jobSubCategory");
+        if (!categorySelect || !subCategorySelect) return;
+        var selectedCategory = categorySelect.value;
+        var current = subCategorySelect.value;
+        subCategorySelect.innerHTML = '<option value="">Select Specific Job</option>';
+        if (selectedCategory && categories[selectedCategory]) {
+            categories[selectedCategory].forEach(function (subCat) {
+                var option = document.createElement("option");
+                option.value = subCat;
+                option.text = subCat;
+                if (subCat === current) option.selected = true;
+                subCategorySelect.appendChild(option);
+            });
+        }
+        if (current && !subCategorySelect.value) {
+            var keep = document.createElement("option");
+            keep.value = current;
+            keep.text = current;
+            keep.selected = true;
+            subCategorySelect.appendChild(keep);
+        }
+    };
+    updateSubCategories();
 });
 </script>
 </body>

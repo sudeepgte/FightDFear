@@ -1837,39 +1837,108 @@ public class AdminController {
         return "redirect:/admin/pending-sellers";
     }
 
-    // Purpose: Event Host / Event Organizer verification for mobile + web registrations.
+    // Purpose: Event Host / Event Organizer verification — same queue layout as doctor verification.
     @GetMapping("/pending-event-hosts")
-    public String viewPendingEventHosts(Model model, HttpSession session) {
-        try {
-            if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+    public String viewPendingEventHosts(@RequestParam(value = "q", required = false) String q,
+                                        @RequestParam(value = "filter", required = false) String filter,
+                                        Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-            Map<Long, EventHost> pendingById = new LinkedHashMap<>();
-            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIn(
-                    PartnerLifecycleSupport.pendingQueueStatuses())) {
-                pendingById.put(h.getId(), h);
-            }
-            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIsNull()) {
-                if (h.getVerificationStatus() == null) {
-                    h.setVerificationStatus(VerificationStatus.PENDING);
-                    eventHostRepository.save(h);
-                }
-                pendingById.putIfAbsent(h.getId(), h);
-            }
-            List<EventHost> pending = new ArrayList<>(pendingById.values());
-            pending.sort(Comparator
-                    .comparingInt((EventHost h) -> PartnerLifecycleSupport.pendingPriority(h.getPartnerProfileStatus()))
-                    .thenComparing(EventHost::getId, Comparator.nullsLast(Long::compareTo)));
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(Locale.ROOT);
+        model.addAttribute("filter", activeFilter);
+        model.addAttribute("q", q == null ? "" : q.trim());
 
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
-            model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
-            model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
-            return "adminPendingEventHosts";
-        } catch (Exception e) {
-            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage());
-            return "adminPendingEventHosts";
+        List<EventHost> pending = new ArrayList<>();
+        List<EventHost> ready = new ArrayList<>();
+        List<EventHost> changesRequested = new ArrayList<>();
+        List<EventHost> approved = new ArrayList<>();
+        List<EventHost> rejected = new ArrayList<>();
+
+        for (EventHost h : eventHostRepository.findAll()) {
+            PartnerProfileStatus status = resolvedHostStatus(h);
+            if (status == PartnerProfileStatus.APPROVED) {
+                approved.add(h);
+            } else if (status == PartnerProfileStatus.REJECTED || status == PartnerProfileStatus.SUSPENDED) {
+                rejected.add(h);
+            } else if (status == PartnerProfileStatus.CHANGES_REQUESTED) {
+                changesRequested.add(h);
+            } else if (status == PartnerProfileStatus.READY_FOR_VERIFICATION) {
+                ready.add(h);
+                pending.add(h);
+            } else {
+                pending.add(h);
+            }
         }
+
+        Comparator<EventHost> byPriority = Comparator
+                .comparingInt((EventHost h) -> PartnerLifecycleSupport.pendingPriority(resolvedHostStatus(h)))
+                .thenComparing(EventHost::getId, Comparator.nullsLast(Long::compareTo));
+        pending.sort(byPriority);
+        ready.sort(byPriority);
+        changesRequested.sort(byPriority);
+
+        model.addAttribute("pending", pending);
+        model.addAttribute("ready", ready);
+        model.addAttribute("changesRequested", changesRequested);
+        model.addAttribute("approved", approved);
+        model.addAttribute("verified", approved);
+        model.addAttribute("rejected", rejected);
+        model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("readyCount", ready.size());
+        model.addAttribute("changesRequestedCount", changesRequested.size());
+        model.addAttribute("approvedCount", approved.size());
+        model.addAttribute("rejectedCount", rejected.size());
+        model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
+        model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
+
+        if (q != null && !q.trim().isEmpty()) {
+            String keyword = q.trim().toLowerCase(Locale.ROOT);
+            List<EventHost> searchResults = eventHostRepository.findAll().stream()
+                    .filter(h -> hostMatchesKeyword(h, keyword))
+                    .filter(h -> "all".equals(activeFilter) || matchesEventHostFilter(h, activeFilter))
+                    .sorted(byPriority)
+                    .toList();
+            model.addAttribute("searchResults", searchResults);
+        }
+
+        return "adminPendingEventHosts";
+    }
+
+    private PartnerProfileStatus resolvedHostStatus(EventHost h) {
+        if (h.getPartnerProfileStatus() != null) return h.getPartnerProfileStatus();
+        return PartnerLifecycleSupport.fromVerificationStatus(h.getVerificationStatus());
+    }
+
+    private boolean matchesEventHostFilter(EventHost h, String filter) {
+        PartnerProfileStatus status = resolvedHostStatus(h);
+        return switch (filter) {
+            case "approved" -> status == PartnerProfileStatus.APPROVED;
+            case "rejected" -> status == PartnerProfileStatus.REJECTED || status == PartnerProfileStatus.SUSPENDED;
+            case "changes_requested", "changes-requested" -> status == PartnerProfileStatus.CHANGES_REQUESTED;
+            case "ready" -> status == PartnerProfileStatus.READY_FOR_VERIFICATION;
+            case "all" -> true;
+            default -> status == PartnerProfileStatus.PENDING_ADMIN_APPROVAL
+                    || status == PartnerProfileStatus.READY_FOR_VERIFICATION
+                    || status == PartnerProfileStatus.PROFILE_INCOMPLETE
+                    || status == PartnerProfileStatus.REGISTERED
+                    || status == null;
+        };
+    }
+
+    private boolean hostMatchesKeyword(EventHost h, String keyword) {
+        return containsIgnoreCase(h.getFullName(), keyword)
+                || containsIgnoreCase(h.getEmail(), keyword)
+                || containsIgnoreCase(h.getPhone(), keyword)
+                || containsIgnoreCase(h.getHostContact(), keyword)
+                || containsIgnoreCase(h.getOrganizerName(), keyword)
+                || containsIgnoreCase(h.getOrganizerType(), keyword)
+                || containsIgnoreCase(h.getCity(), keyword)
+                || containsIgnoreCase(h.getState(), keyword)
+                || containsIgnoreCase(h.getEventCategories(), keyword);
+    }
+
+    private boolean containsIgnoreCase(String value, String keyword) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(keyword);
     }
 
     @GetMapping("/event-hosts/{id}/profile")
@@ -2255,40 +2324,57 @@ public class AdminController {
     // --- Women Entrepreneur Investment Platform Admin Actions ---
 
     @GetMapping("/pending-proposals")
-    public String viewPendingProposals(Model model, HttpSession session) {
+    public String viewPendingProposals(@RequestParam(value = "filter", defaultValue = "pending") String filter,
+                                       @RequestParam(value = "q", required = false) String q,
+                                       Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        
-        List<BusinessProposal> allProposals = businessProposalRepository.findAll();
+
         List<Entrepreneur> allEntrepreneurs = entrepreneurRepository.findAll();
-        List<Investor> allInvestors = investorRepository.findAll();
-        List<InvestmentMeeting> allMeetings = investmentMeetingRepository.findAll();
-        List<Investment> allInvestments = investmentRepository.findAll();
-        List<ProposalQuestion> allQuestions = proposalQuestionRepository.findAll();
-        List<ProposalChatMessage> allChats = proposalChatMessageRepository.findAll();
-
-        // Sort chat messages by timestamp descending
-        allChats.sort((c1, c2) -> {
-            if (c1.getTimestamp() == null || c2.getTimestamp() == null) return 0;
-            return c2.getTimestamp().compareTo(c1.getTimestamp());
-        });
-
-        model.addAttribute("allProposals", allProposals);
-        model.addAttribute("allEntrepreneurs", allEntrepreneurs);
-        model.addAttribute("allInvestors", allInvestors);
-        model.addAttribute("allMeetings", allMeetings);
-        model.addAttribute("allInvestments", allInvestments);
-        model.addAttribute("allQuestions", allQuestions);
-        model.addAttribute("allChats", allChats);
-
-        // Pending counts for quick badge counters in UI tabs
-        long pendingProposalsCount = allProposals.stream().filter(p -> p.getStatus() == VerificationStatus.PENDING).count();
-        long pendingEntCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.PENDING).count();
-        long pendingInvCount = allInvestors.stream().filter(i -> i.getVerificationStatus() == VerificationStatus.PENDING).count();
         
-        model.addAttribute("pendingProposalsCount", pendingProposalsCount);
-        model.addAttribute("pendingEntCount", pendingEntCount);
-        model.addAttribute("pendingInvCount", pendingInvCount);
+        long pendingCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.PENDING).count();
+        long reverificationCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION).count();
+        long changesRequestedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED).count();
+        long approvedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.VERIFIED).count();
+        long rejectedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.REJECTED).count();
+        
+        List<Entrepreneur> activeList = new ArrayList<>();
+        List<Entrepreneur> changesList = new ArrayList<>();
+        List<Entrepreneur> reverifyList = new ArrayList<>();
+        
+        String query = q != null ? q.toLowerCase() : "";
 
+        for (Entrepreneur e : allEntrepreneurs) {
+            if (e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) changesList.add(e);
+            if (e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION) reverifyList.add(e);
+            
+            boolean matchesSearch = query.isEmpty() || 
+                (e.getFullName() != null && e.getFullName().toLowerCase().contains(query)) ||
+                (e.getEmail() != null && e.getEmail().toLowerCase().contains(query)) ||
+                (e.getBusinessName() != null && e.getBusinessName().toLowerCase().contains(query));
+                
+            if (!matchesSearch) continue;
+
+            if ("pending".equals(filter) && e.getVerificationStatus() == VerificationStatus.PENDING) activeList.add(e);
+            else if ("reverification".equals(filter) && e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION) activeList.add(e);
+            else if ("changes_requested".equals(filter) && e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) activeList.add(e);
+            else if ("approved".equals(filter) && e.getVerificationStatus() == VerificationStatus.VERIFIED) activeList.add(e);
+            else if ("rejected".equals(filter) && e.getVerificationStatus() == VerificationStatus.REJECTED) activeList.add(e);
+            else if ("all".equals(filter)) activeList.add(e);
+        }
+
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("reverificationCount", reverificationCount);
+        model.addAttribute("changesRequestedCount", changesRequestedCount);
+        model.addAttribute("approvedCount", approvedCount);
+        model.addAttribute("rejectedCount", rejectedCount);
+        model.addAttribute("totalCount", allEntrepreneurs.size());
+        
+        model.addAttribute("activeFilter", filter);
+        model.addAttribute("q", q);
+        model.addAttribute("activeList", activeList);
+        model.addAttribute("changesRequested", changesList);
+        model.addAttribute("reverification", reverifyList);
+        
         return "admin/pendingProposals";
     }
 

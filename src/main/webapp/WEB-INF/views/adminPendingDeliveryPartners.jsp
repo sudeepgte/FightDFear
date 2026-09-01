@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,26 +9,86 @@
   <title>Pending Delivery Partners | Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
   <style>
-    body { background: #f8fafc; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    .page-wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-    .card-panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); padding: 1.25rem; }
-    .btn-approve { background: #059669; color: #fff; border: 0; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; }
-    .btn-reject { background: #dc2626; color: #fff; border: 0; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; }
-    .btn-changes { background: #d97706; color: #fff; border: 0; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; }
+    body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
+    body.wp-admin-wp .layout { display: flex; min-height: 100vh; }
+    body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    body.wp-admin-wp .mainInner { max-width: 1400px; margin: 0 auto; padding: 22px 24px 48px; }
+    body.wp-admin-wp .card-panel {
+      background: var(--ap-card); border-radius: var(--ap-radius); box-shadow: var(--ap-shadow);
+      border: 1px solid var(--ap-border); overflow: hidden;
+    }
+    body.wp-admin-wp .table { margin-bottom: 0; min-width: 720px; }
+    body.wp-admin-wp .table thead th {
+      text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
+      text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 14px;
+      border-bottom: 1px solid var(--ap-border); background: #FCFCFD;
+    }
+    body.wp-admin-wp .table tbody td { padding: 14px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; font-size: 0.86rem; }
+    body.wp-admin-wp .table tbody tr:hover { background: #FFF7F8; }
+    body.wp-admin-wp .btn-approve { background: var(--ap-success); color: #fff; border: 0; border-radius: 9px; padding: 7px 12px; font-size: 0.8rem; font-weight: 700; }
+    body.wp-admin-wp .btn-reject { background: var(--ap-danger); color: #fff; border: 0; border-radius: 9px; padding: 7px 12px; font-size: 0.8rem; font-weight: 700; }
+    body.wp-admin-wp .btn-changes { background: var(--ap-warn); color: #fff; border: 0; border-radius: 9px; padding: 7px 12px; font-size: 0.8rem; font-weight: 700; }
+    body.wp-admin-wp .ap-input { min-width: 140px; }
+    @media (max-width: 700px) {
+      body.wp-admin-wp .mainInner { padding: 16px 14px 40px; }
+      body.wp-admin-wp .ap-stats { grid-template-columns: 1fr !important; }
+    }
   </style>
 </head>
-<body>
-<div class="page-wrap">
-  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
-      <h1 class="h4 mb-1">Pending Delivery Partners</h1>
-      <p class="text-muted mb-0 small">Review Join Us → Delivery Guy submissions (${pendingCount})</p>
+<body class="ap-page wp-admin-wp">
+<c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
+<div class="layout">
+  <%@ include file="globalAdminMenu.jsp" %>
+  <main class="main">
+    <div class="ap-topbar topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:360px;">
+          <i class="fas fa-search"></i>
+          <input type="search" placeholder="Search anything..." aria-label="Search">
+          <span class="ap-kbd">Ctrl + K</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+        </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${apAdmin.id}">
+          <span class="ap-avatar">
+            <c:choose>
+              <c:when test="${not empty apAdmin.profilePhoto}"><img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt=""></c:when>
+              <c:otherwise>${fn:substring(apAdmin.name,0,1)}</c:otherwise>
+            </c:choose>
+          </span>
+          <span><div class="name"><c:out value="${apAdmin.name}"/></div><div class="role">Super Admin</div></span>
+        </a>
+      </div>
     </div>
-    <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="btn btn-outline-secondary btn-sm">
-      <i class="fas fa-arrow-left me-1"></i> Dashboard
-    </a>
-  </div>
+    <div class="mainInner">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <span>Delivery Partners</span>
+      </nav>
+      <div class="ap-page-head">
+        <div class="ap-page-ico"><i class="fas fa-truck"></i></div>
+        <div>
+          <h1>Pending Delivery Partners</h1>
+          <p>Review Join Us → Delivery Guy submissions (${pendingCount})</p>
+        </div>
+      </div>
+      <div class="ap-stats" style="grid-template-columns: repeat(1, minmax(0, 220px));">
+        <div class="ap-stat amber">
+          <div class="ico"><i class="fas fa-clock"></i></div>
+          <div class="val">${pendingCount}</div>
+          <div class="lbl">Pending</div>
+          <div class="sub">Awaiting review</div>
+        </div>
+      </div>
 
   <c:if test="${not empty message}">
     <div class="alert alert-success">${message}</div>
@@ -111,6 +172,8 @@
       </table>
     </div>
   </div>
+    </div>
+  </main>
 </div>
 </body>
 </html>

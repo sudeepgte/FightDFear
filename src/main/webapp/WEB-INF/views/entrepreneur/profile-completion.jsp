@@ -449,7 +449,7 @@
                     </div>
                     <div class="form-group">
                         <label>1.2 Business / Venture name *</label>
-                        <input type="text" name="businessName" class="form-input" value="<c:out value='${entrepreneur.businessName}'/>" placeholder="e.g. Lotus Crafts & Handloom" required>
+                        <input type="text" name="businessName" class="form-input" value="${entrepreneur.businessName eq 'Pending Profile Completion' ? '' : entrepreneur.businessName}" placeholder="e.g. Lotus Crafts & Handloom" required>
                     </div>
                 </div>
 
@@ -491,7 +491,7 @@
                 <div class="section-header">2. Location & operations</div>
                 <div class="form-group">
                     <label>2.1 Street address / Landmark *</label>
-                    <input type="text" name="businessLocation" class="form-input" value="<c:out value='${entrepreneur.businessLocation}'/>" placeholder="Shop/Office No, Building, Street" required>
+                    <input type="text" name="businessLocation" class="form-input" value="${entrepreneur.businessLocation eq 'Pending' ? '' : entrepreneur.businessLocation}" placeholder="Shop/Office No, Building, Street" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -515,17 +515,17 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>3.1 Funding / Investment required (₹) *</label>
-                        <input type="number" step="1000" name="investmentNeeded" class="form-input" value="<c:out value='${entrepreneur.investmentNeeded}'/>" placeholder="e.g. 250000" required>
+                        <input type="number" step="1000" name="investmentNeeded" class="form-input" value="${entrepreneur.investmentNeeded == 0.0 ? '' : entrepreneur.investmentNeeded}" placeholder="e.g. 250000" required>
                     </div>
                     <div class="form-group">
                         <label>3.2 Expected monthly revenue (₹) *</label>
-                        <input type="number" step="1000" name="expectedMonthlyIncome" class="form-input" value="<c:out value='${entrepreneur.expectedMonthlyIncome}'/>" placeholder="e.g. 50000" required>
+                        <input type="number" step="1000" name="expectedMonthlyIncome" class="form-input" value="${entrepreneur.expectedMonthlyIncome == 0.0 ? '' : entrepreneur.expectedMonthlyIncome}" placeholder="e.g. 50000" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>3.3 Business experience (Years) *</label>
-                    <input type="number" name="businessExperience" class="form-input" value="<c:out value='${entrepreneur.businessExperience}'/>" placeholder="e.g. 3" required>
+                    <input type="number" name="businessExperience" class="form-input" value="${entrepreneur.businessExperience == 0 ? '' : entrepreneur.businessExperience}" placeholder="e.g. 3" required>
                 </div>
             </div>
 
@@ -543,22 +543,34 @@
                 <div class="section-header">5. Business overview & pitch deck</div>
                 <div class="form-group">
                     <label>5.1 Business description & vision *</label>
-                    <textarea name="businessDescription" class="form-textarea" rows="4" placeholder="Describe your product/service, target customers, and expansion goals..."><c:out value="${entrepreneur.businessDescription}"/></textarea>
+                    <textarea name="businessDescription" class="form-textarea" rows="4" placeholder="Describe your product/service, target customers, and expansion goals..." required>${entrepreneur.businessDescription eq 'Profile pending completion by entrepreneur.' ? '' : entrepreneur.businessDescription}</textarea>
                 </div>
 
                 <div class="form-group">
                     <label>5.2 Entrepreneur Photo / Brand Logo</label>
-                    <input type="file" name="profilePhotoFile" class="form-input" accept="image/*">
+                    <input type="file" name="profilePhotoFile" class="form-input" accept="image/*"
+                           data-has-file="${not empty entrepreneur.profilePhoto ? 'true' : 'false'}">
+                    <c:if test="${not empty entrepreneur.profilePhoto}">
+                        <div class="text-success small mt-1"><i class="bi bi-check-circle-fill"></i> File already uploaded</div>
+                    </c:if>
                 </div>
 
                 <div class="form-group">
                     <label>5.3 Pitch Deck Document (PDF / Image)</label>
-                    <input type="file" name="pitchDeckFile" class="form-input" accept=".pdf,image/*">
+                    <input type="file" name="pitchDeckFile" class="form-input" accept=".pdf,image/*"
+                           data-has-file="${not empty entrepreneur.documentsPath ? 'true' : 'false'}">
+                    <c:if test="${not empty entrepreneur.documentsPath}">
+                        <div class="text-success small mt-1"><i class="bi bi-check-circle-fill"></i> File already uploaded</div>
+                    </c:if>
                 </div>
 
                 <div class="form-group">
                     <label>5.4 Business / Product Gallery Photos</label>
-                    <input type="file" name="businessPhotosFiles" class="form-input" accept="image/*" multiple>
+                    <input type="file" name="businessPhotosFiles" class="form-input" accept="image/*" multiple
+                           data-has-file="${not empty entrepreneur.photosPath ? 'true' : 'false'}">
+                    <c:if test="${not empty entrepreneur.photosPath}">
+                        <div class="text-success small mt-1"><i class="bi bi-check-circle-fill"></i> File(s) already uploaded</div>
+                    </c:if>
                 </div>
             </div>
 
@@ -588,12 +600,13 @@
             if (!form) return;
 
             function updateCompletionPct() {
-                let pct = 0;
+                let pct = 5; // Start with 5% for the logged-in email
                 const fullName = form.querySelector("[name='fullName']")?.value.trim();
                 const phone = form.querySelector("[name='phone']")?.value.trim();
                 const businessName = form.querySelector("[name='businessName']")?.value.trim();
                 const businessCategory = form.querySelector("[name='businessCategory']")?.value.trim();
                 const businessLocation = form.querySelector("[name='businessLocation']")?.value.trim();
+                const city = form.querySelector("[name='city']")?.value.trim();
                 const investmentNeeded = parseFloat(form.querySelector("[name='investmentNeeded']")?.value);
                 const expectedMonthlyIncome = parseFloat(form.querySelector("[name='expectedMonthlyIncome']")?.value);
                 const businessExperience = form.querySelector("[name='businessExperience']")?.value;
@@ -601,22 +614,30 @@
                 const businessDescription = form.querySelector("[name='businessDescription']")?.value.trim();
                 const upiId = form.querySelector("[name='upiId']")?.value.trim();
                 const bankDetails = form.querySelector("[name='bankDetails']")?.value.trim();
+                
+                const profilePhoto = form.querySelector("[name='profilePhotoFile']");
+                const pitchDeck = form.querySelector("[name='pitchDeckFile']");
+                const businessPhotos = form.querySelector("[name='businessPhotosFiles']");
 
-                if (fullName) pct += 7;
-                if (phone) pct += 13; // Basic contact complete (20%)
+                if (fullName) pct += 5;
+                if (phone) pct += 5;
 
-                if (businessName) pct += 7;
-                if (businessCategory) pct += 7;
-                if (businessLocation) pct += 6; // Business info complete (+20%)
+                if (businessName) pct += 5;
+                if (businessCategory) pct += 5;
+                if (businessLocation || city) pct += 5;
 
-                if (!isNaN(investmentNeeded) && investmentNeeded > 0) pct += 7;
-                if (!isNaN(expectedMonthlyIncome) && expectedMonthlyIncome > 0) pct += 7;
-                if (businessExperience !== "" && businessExperience !== null) pct += 6; // Financials complete (+20%)
+                if (!isNaN(investmentNeeded) && investmentNeeded > 0) pct += 5;
+                if (!isNaN(expectedMonthlyIncome) && expectedMonthlyIncome > 0) pct += 5;
+                if (businessExperience !== "" && businessExperience !== null) pct += 5;
 
-                if (aadhaarNumber && aadhaarNumber.length >= 12) pct += 20; // Aadhaar complete (+20%)
+                if (aadhaarNumber) pct += 10;
 
                 if (businessDescription) pct += 10;
-                if (upiId || bankDetails) pct += 10; // Pitch & settlement complete (+20%)
+                if (upiId || bankDetails) pct += 5;
+
+                if ((profilePhoto && profilePhoto.files.length > 0) || (profilePhoto && profilePhoto.getAttribute("data-has-file") === "true")) pct += 10;
+                if ((pitchDeck && pitchDeck.files.length > 0) || (pitchDeck && pitchDeck.getAttribute("data-has-file") === "true")) pct += 10;
+                if ((businessPhotos && businessPhotos.files.length > 0) || (businessPhotos && businessPhotos.getAttribute("data-has-file") === "true")) pct += 10;
 
                 pct = Math.min(100, pct);
 

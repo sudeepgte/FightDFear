@@ -88,5 +88,12 @@ public class DatabaseSchemaUpdate implements CommandLineRunner {
         } catch (Exception e) {
             System.err.println("Note: Could not check/seed default admin: " + e.getMessage());
         }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE women_events MODIFY COLUMN category VARCHAR(64) NOT NULL");
+            System.out.println("women_events.category widened to VARCHAR(64) for expanded event categories.");
+        } catch (Exception e) {
+            System.err.println("Note: Could not alter women_events.category: " + e.getMessage());
+        }
     }
 }

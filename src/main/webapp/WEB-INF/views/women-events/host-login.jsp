@@ -277,6 +277,9 @@
             </c:if>
             <c:if test="${param.registered}">
                 <div class="alert-box alert-success">
+
+                    <i class="bi bi-check-circle-fill"></i> Account created! Sign in to complete your host profile. Email and password are filled from registration.
+
                     <i class="bi bi-check-circle-fill"></i> Account created. Sign in with the email you just registered.
                 </div>
                 <div class="next-steps-card">
@@ -298,7 +301,8 @@
             <form id="loginForm" action="${pageContext.request.contextPath}/women-events/host/login" method="post" onsubmit="return handleLogin(event)">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus oninput="validateEmail()" onblur="validateEmail()">
+                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus oninput="validateEmail()" onblur="validateEmail()"
+                           value="<c:out value='${not empty registeredEmail ? registeredEmail : (not empty param.email ? param.email : \"\")}'/>">
                     <div class="error-feedback" id="error-email"></div>
                 </div>
 
@@ -398,8 +402,21 @@
                 if (firstInvalid) firstInvalid.focus();
                 return false;
             }
+            try { sessionStorage.removeItem('fdf_host_login_prefill'); } catch (err) { /* ignore */ }
             return true;
         }
+
+        (function prefillFromRegistration() {
+            const emailEl = document.getElementById('email');
+            const passEl = document.getElementById('password');
+            try {
+                const raw = sessionStorage.getItem('fdf_host_login_prefill');
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (data.email && emailEl && !emailEl.value) emailEl.value = data.email;
+                if (data.password && passEl) passEl.value = data.password;
+            } catch (err) { /* ignore */ }
+        })();
     </script>
 </body>
 </html>

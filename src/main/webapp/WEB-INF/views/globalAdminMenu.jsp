@@ -355,20 +355,11 @@
         Financial Literacy
     </div>
 
-    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-educators') ? 'active' : ''}"
-       href="${pageContext.request.contextPath}/admin/pending-educators">
-        <i class="fas fa-chalkboard-teacher"></i>
-        Educator Approvals
-        <c:if test="${side_pendingEducators > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto">${side_pendingEducators}</span>
-        </c:if>
-    </a>
-
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'financial-literacy/admin') && !fn:contains(pageContext.request.requestURI,'add-') && !fn:contains(pageContext.request.requestURI,'registrations') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/financial-literacy/admin">
 
         <i class="fas fa-book"></i>
-        Home
+        Financial Educator
 
     </a>
 
@@ -376,7 +367,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-video">
 
         <i class="fas fa-plus-circle"></i>
-        Add Video
+        Add Recorded Video
 
     </a>
 
@@ -384,7 +375,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session">
 
         <i class="fas fa-video"></i>
-        Add Live Session
+        Add Live Virtual Session
 
     </a>
 
@@ -392,7 +383,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop">
 
         <i class="fas fa-calendar-check"></i>
-        Add Workshop
+        Add Offline Workshop
 
     </a>
 

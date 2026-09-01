@@ -382,9 +382,16 @@ public class MarketplaceController {
                 b.getClient() != null && b.getClient().getId().equals(u.getId())
                         && ("ACCEPTED".equals(b.getStatus()) || "PAID".equals(b.getStatus()) || "COMPLETED".equals(b.getStatus())));
 
+        User workerOwner = app.getUser();
+        boolean ownWorkerProfile = workerOwner != null
+                && workerOwner.getId() != null
+                && u.getId() != null
+                && workerOwner.getId().equals(u.getId());
+
         model.addAttribute("workerApp", app);
         model.addAttribute("bookedTimes", bookedTimes);
         model.addAttribute("revealContact", revealContact);
+        model.addAttribute("ownWorkerProfile", ownWorkerProfile);
         return "marketplace/worker-details";
     }
 

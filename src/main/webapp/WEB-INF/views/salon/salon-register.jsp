@@ -576,8 +576,9 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="hygieneCertificate">Hygiene Certificate <span style="font-weight:400;color:var(--text-gray);">(optional)</span></label>
-                    <input type="file" id="hygieneCertificate" name="hygieneCertificate" class="form-input" accept=".pdf,.jpg,.jpeg,.png">
+                    <label for="hygieneCertificate">Proof Document / Hygiene Certificate *</label>
+                    <input class="form-input" type="file" id="hygieneCertificate" name="hygieneCertificate" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required>
+                    <small style="display:block;margin-top:6px;font-size:0.8rem;color:var(--text-gray);">PDF or image (JPG/PNG). Required to complete registration.</small>
                 </div>
 
                 <label class="terms-row">
@@ -822,6 +823,7 @@
             const cp = document.getElementById('confirmPassword').value;
             const termsCheck = document.getElementById('termsCheck');
 
+
             if (!name) { showAlert('Salon Name is required.'); return; }
             if (!username) { showAlert('Username is required.'); return; }
             if (!phone || phone.length !== 10) { showAlert('Valid 10-digit mobile number is required.'); return; }
@@ -844,6 +846,13 @@
         }
 
         function confirmRegistration() {
+   const cert = document.getElementById('hygieneCertificate');
+            if (!cert || !cert.files || cert.files.length === 0) {
+                showAlert('Please upload a proof document or hygiene certificate.');
+                return;
+            }
+
+
             document.getElementById('regForm').submit();
         }
     </script>
