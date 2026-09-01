@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,290 +9,132 @@
   <title>Seller Profile — Admin View</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-  :root {
-    --maroon:        #0F172A;
-    --maroon-light:  #F43F5E;
-    --maroon-dark:   #0F172A;
-    --maroon-pale:   #f8fafc;
-    --maroon-border: rgba(30, 27, 75, 0.12);
-    --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
-    --sidebar-w: 272px;
+  body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
+  body.wp-admin-wp .layout { display: flex; min-height: 100vh; }
+  body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+  body.wp-admin-wp .mainInner { max-width: 900px; margin: 0 auto; padding: 22px 24px 48px; }
+  body.wp-admin-wp .profile-card {
+      background: var(--ap-card); border-radius: var(--ap-radius); padding: 30px;
+      box-shadow: var(--ap-shadow); border: 1px solid var(--ap-border);
   }
-  * { box-sizing: border-box; }
-  body { font-family:'Poppins',sans-serif; margin:0; background:var(--maroon-pale); color:#1a1a2e; }
-
-  /* ── TOPBAR ── */
-  .topbar {
-    background: var(--maroon); color:#fff;
-    padding: 0 20px; height: 58px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 1000;
-    box-shadow: 0 3px 16px rgba(125,42,90,0.28);
+  body.wp-admin-wp .profile-header {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+      margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid var(--ap-border);
   }
-  .topbar .brand { font-size:1.1rem; font-weight:700; }
-  .topbar .btn-logout {
-    background:rgba(255,255,255,0.15); color:#fff;
-    border:1px solid rgba(255,255,255,0.3); border-radius:7px;
-    padding:5px 16px; font-size:0.85rem; font-weight:600;
-    text-decoration:none; transition:background 0.2s;
+  body.wp-admin-wp .profile-avatar {
+      width: 100px; height: 100px; background: #FFF1F2; color: var(--ap-accent);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; margin-bottom: 15px; border: 2px solid #FDA4AF;
   }
-
-  /* ── LAYOUT ── */
-  .layout { display:flex; min-height:calc(100vh - 58px); }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: var(--sidebar-w); background:#fff;
-    border-right:1px solid var(--maroon-border);
-    position:sticky; top:58px; height:calc(100vh - 58px);
-    padding:14px 12px; overflow-y:auto; flex-shrink:0;
+  body.wp-admin-wp .profile-name { font-size: 1.6rem; font-weight: 800; color: var(--ap-text); margin-bottom: 5px; }
+  body.wp-admin-wp .profile-business { color: var(--ap-accent); font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; }
+  body.wp-admin-wp .badge-status {
+    padding: 6px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; display: inline-block;
   }
-  .sidebar .brand-label { font-weight:700; color:var(--maroon); font-size:0.95rem; margin-bottom:10px; padding:0 6px; }
-  .sidebar .sec-title { margin:14px 8px 6px; font-size:0.72rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.06em; }
-  .sidebar a.nl {
-    display:flex; align-items:center; gap:9px;
-    padding:9px 10px; border-radius:9px;
-    color:#374151; text-decoration:none; font-weight:500; font-size:0.88rem;
-    transition:all 0.18s;
+  body.wp-admin-wp .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
+  body.wp-admin-wp .status-PENDING { background: #FEF3C7; color: #B45309; }
+  body.wp-admin-wp .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  body.wp-admin-wp .section-title {
+      font-size: 1.05rem; font-weight: 800; color: var(--ap-text); margin-bottom: 15px;
+      display: flex; align-items: center; gap: 8px;
   }
-  .sidebar a.nl i { width:18px; text-align:center; color:var(--maroon); font-size:0.9rem; }
-  .sidebar a.nl:hover { background:rgba(125,42,90,0.08); padding-left:14px; color:#1a1a2e; }
-  .sidebar a.nl.active { background:rgba(125,42,90,0.12); color:var(--maroon); font-weight:700; }
-
-  /* ── MAIN ── */
-  .main { flex:1; min-width:0; padding:28px 20px 48px; }
-  .mainInner { max-width:900px; margin:0 auto; animation:fadeUp 0.35s ease-out; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-
-  /* ── PAGE HEADER ── */
-  .pg-header {
-    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, #c04b7a 100%);
-    border-radius:16px; padding:22px 28px; margin-bottom:28px;
-    box-shadow:0 8px 28px rgba(125,42,90,0.22);
-    display:flex; align-items:center; justify-content:space-between;
+  body.wp-admin-wp .info-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 30px;
   }
-  .pg-header h4 { color:#fff; font-weight:700; font-size:1.2rem; margin:0; }
-  .pg-header p { color:rgba(255,255,255,0.7); margin:4px 0 0; font-size:0.85rem; }
-  .pg-header .btn-back {
-      background: rgba(255,255,255,0.2);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.4);
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
+  body.wp-admin-wp .info-item {
+      background: #F8FAFC; padding: 16px; border-radius: 12px; border: 1px solid var(--ap-border);
   }
-  .pg-header .btn-back:hover { background: rgba(255,255,255,0.3); }
-
-  /* ── PROFILE CARD ── */
-  .profile-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 30px;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--maroon-border);
+  body.wp-admin-wp .info-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--ap-muted); font-weight: 700; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 6px;
   }
-  
-  .profile-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 25px;
-      border-bottom: 1px solid var(--maroon-border);
+  body.wp-admin-wp .info-value { font-size: 1rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  body.wp-admin-wp .doc-box {
+      background: #F8FAFC; border-radius: 12px; padding: 20px; display: flex; align-items: center;
+      gap: 16px; border: 1px solid var(--ap-border); margin-bottom: 30px;
   }
-  .profile-avatar {
-      width: 100px;
-      height: 100px;
-      background: var(--maroon-pale);
-      color: var(--maroon);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      margin-bottom: 15px;
-      border: 2px solid var(--maroon-light);
-      object-fit: cover;
+  body.wp-admin-wp .doc-box-icon {
+      width: 50px; height: 50px; background: #fff; color: var(--ap-accent); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+      border: 1px solid var(--ap-border);
   }
-  .profile-name {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--maroon-dark);
-      margin-bottom: 5px;
+  body.wp-admin-wp .doc-box-content .label { font-size: 0.85rem; color: var(--ap-muted); margin-bottom: 4px; }
+  body.wp-admin-wp .doc-link { color: var(--ap-accent); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+  body.wp-admin-wp .action-bar {
+      display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+      padding-top: 25px; border-top: 1px solid var(--ap-border);
   }
-  .profile-business {
-      color: var(--maroon-light);
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 15px;
+  body.wp-admin-wp .btn-verify {
+      background: var(--ap-success); color: #fff; border: none; border-radius: 9px;
+      padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
   }
-  
-  .badge-status {
-    padding:6px 16px; border-radius:999px; font-size:0.8rem; font-weight:700;
-    display:inline-block; border:1px solid transparent;
+  body.wp-admin-wp .btn-reject {
+      background: var(--ap-danger); color: #fff; border: none; border-radius: 9px;
+      padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
   }
-  .status-VERIFIED { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-  .status-PENDING { background:#fef9c3; color:#854d0e; border-color:#fef08a; }
-  .status-REJECTED { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-
-  /* ── INFO GRID ── */
-  .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--maroon);
-      margin-bottom: 15px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+  body.wp-admin-wp .ap-btn-back {
+      display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 7px 14px;
+      border-radius: 9px; border: 1px solid var(--ap-border); background: #fff; color: var(--ap-text);
+      font-weight: 600; font-size: 0.85rem; text-decoration: none; margin-left: auto;
   }
-  
-  .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-  }
-  .info-item {
-      background: var(--maroon-pale);
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid var(--maroon-border);
-  }
-  .info-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--maroon-light);
-      font-weight: 700;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-  }
-  .info-value {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--maroon-dark);
-      word-break: break-word;
-  }
-
-  /* ── IDENTITY DOCUMENT ── */
-  .doc-box {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      border: 1px solid var(--maroon-border);
-      margin-bottom: 30px;
-  }
-  .doc-box-icon {
-      width: 50px;
-      height: 50px;
-      background: var(--maroon-pale);
-      color: var(--maroon);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-  }
-  .doc-box-content .label { font-size: 0.85rem; color: #6b7280; margin-bottom: 4px; }
-  .doc-link {
-      color: var(--maroon);
-      font-weight: 700;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-  }
-  .doc-link:hover { color: var(--maroon-light); text-decoration: underline; }
-
-  /* ── ACTIONS ── */
-  .action-bar {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      padding-top: 25px;
-      border-top: 1px solid var(--maroon-border);
-  }
-  .btn-verify {
-      background: #059669;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 24px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-  }
-  .btn-verify:hover { background: #047857; transform: translateY(-2px); }
-  
-  .btn-reject {
-      background: #dc2626;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 24px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-  }
-  .btn-reject:hover { background: #b91c1c; transform: translateY(-2px); }
-
-  @media(max-width:992px){
-    .layout{flex-direction:column;}
-    .sidebar{width:100%;position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--maroon-border);}
-  }
+  body.wp-admin-wp .ap-page-head { align-items: center; }
+  @media (max-width: 700px) { body.wp-admin-wp .mainInner { padding: 16px 14px 40px; } }
 </style>
 </head>
-<body class="wp-admin-wp">
-
-<div class="topbar">
-  <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
-  <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
-    <i class="fas fa-sign-out-alt"></i> Logout
-  </a>
-</div>
+<body class="ap-page wp-admin-wp">
+<c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
 
 <div class="layout">
-  <aside class="sidebar">
-    <div class="brand-label">Admin Menu</div>
-    <div class="sec-title">Dashboard</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/adminDashboard"><i class="fas fa-home"></i> Home</a>
-    
-    <div class="sec-title">Approvals</div>
-    <a class="nl" href="${pageContext.request.contextPath}/admin/pending-sellers"><i class="fas fa-shopping-bag"></i> Seller Verification</a>
-  </aside>
-
+  <%@ include file="globalAdminMenu.jsp" %>
   <main class="main">
+    <div class="ap-topbar topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:360px;">
+          <i class="fas fa-search"></i>
+          <input type="search" placeholder="Search anything..." aria-label="Search">
+          <span class="ap-kbd">Ctrl + K</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+        </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${apAdmin.id}">
+          <span class="ap-avatar">
+            <c:choose>
+              <c:when test="${not empty apAdmin.profilePhoto}"><img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt=""></c:when>
+              <c:otherwise>${fn:substring(apAdmin.name,0,1)}</c:otherwise>
+            </c:choose>
+          </span>
+          <span><div class="name"><c:out value="${apAdmin.name}"/></div><div class="role">Super Admin</div></span>
+        </a>
+      </div>
+    </div>
     <div class="mainInner">
-      
-      <!-- Header -->
-      <div class="pg-header">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <a href="${pageContext.request.contextPath}/admin/pending-sellers">Product Sellers</a>
+        <span class="sep">&gt;</span>
+        <span>Seller Profile</span>
+      </nav>
+      <div class="ap-page-head">
+        <div class="ap-page-ico"><i class="fas fa-store"></i></div>
         <div>
-          <h4><i class="fas fa-store me-2"></i>Seller Profile</h4>
+          <h1>Seller Profile</h1>
           <p>Full verification details for the seller</p>
         </div>
-        <a href="${pageContext.request.contextPath}/admin/pending-sellers" class="btn-back">
-            <i class="fas fa-arrow-left me-1"></i> Back to Sellers
+        <a href="${pageContext.request.contextPath}/admin/pending-sellers" class="ap-btn-back">
+            <i class="fas fa-arrow-left"></i> Back to Sellers
         </a>
       </div>
 
