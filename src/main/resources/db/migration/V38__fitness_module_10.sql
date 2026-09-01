@@ -1,3 +1,7 @@
+CREATE TABLE IF NOT EXISTS fitness_trainers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY
+);
+
 ALTER TABLE fitness_trainers
     ADD COLUMN designation VARCHAR(128),
     ADD COLUMN whatsapp_number VARCHAR(32),
@@ -26,6 +30,10 @@ ALTER TABLE fitness_trainers
     ADD COLUMN payout_requested_at DATETIME,
     ADD COLUMN gallery_photos TEXT,
     ADD COLUMN review_count INT DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS fitness_bookings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY
+);
 
 ALTER TABLE fitness_bookings
     ADD COLUMN payout_credited BOOLEAN DEFAULT FALSE,
