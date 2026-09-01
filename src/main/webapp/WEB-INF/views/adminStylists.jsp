@@ -11,12 +11,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --maroon: #1e1b4b;
-    --maroon-light: #312e81;
-    --maroon-dark: #1e1b4b;
-    --maroon-pale: #fffcfd;
-    --maroon-border: rgba(124, 45, 94, 0.12);
-    --shadow-premium: 0 20px 40px rgba(124, 45, 94, 0.08);
+    --maroon: #F43F5E;
+    --maroon-light: #fb7185;
+    --maroon-dark: #E11D48;
+    --maroon-pale: #F8FAFC;
+    --maroon-border: rgba(244, 63, 94, 0.15);
+    --shadow-premium: 0 20px 40px rgba(244, 63, 94, 0.08);
     --sidebar-w: 272px;
   }
   * { box-sizing: border-box; }
@@ -25,7 +25,7 @@
     background:var(--maroon); color:#fff; height:58px;
     display:flex; align-items:center; justify-content:space-between;
     padding:0 20px; position:sticky; top:0; z-index:1000;
-    box-shadow:0 3px 16px rgba(125,42,90,0.28);
+    box-shadow:0 3px 16px rgba(244, 63, 94, 0.28);
   }
   .topbar .brand { font-size:1.1rem; font-weight:700; }
   .topbar .btn-logout {
@@ -52,12 +52,15 @@
   }
   .sidebar .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
   .sidebar .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-  .sidebar .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+  .sidebar .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2); }
   .sidebar .navlink.active i { color: #fff; }
 
   .main { flex:1; min-width:0; padding:40px; }
   .card-table { background:#fff; border-radius:24px; overflow:hidden; border:1px solid var(--maroon-border); box-shadow:var(--shadow-premium); margin-bottom:40px; }
-  .card-table-header { background: linear-gradient(90deg, #fdfbff 0%, #fff 100%); padding:20px 25px; border-bottom:1px solid var(--maroon-border); font-weight:700; color:var(--maroon-dark); font-size:1.1rem; }
+  .card-table-header { background: linear-gradient(90deg, #F8FAFC 0%, #fff 100%); padding:20px 25px; border-bottom:1px solid var(--maroon-border); font-weight:700; color:var(--maroon-dark); font-size:1.1rem; }
+  
+  .btn-outline-primary { color: var(--maroon); border-color: var(--maroon); }
+  .btn-outline-primary:hover { background: var(--maroon); color: white; }
   .btn-approve { background:#10b981; color:#fff; border-radius:10px; padding:8px 18px; font-size:0.85rem; font-weight:600; border:none; transition:0.2s; }
   .btn-approve:hover { background:#059669; transform:translateY(-2px); }
   .btn-reject { background:#ef4444; color:#fff; border-radius:10px; padding:8px 18px; font-size:0.85rem; font-weight:600; border:none; transition:0.2s; }

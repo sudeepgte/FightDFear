@@ -13,16 +13,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
     :root {
-        --primary-purple: #1e1b4b;
-        --primary-purple-light: #312e81;
-        --light-bg: #fffcfd;
+        --primary-purple: #F43F5E;
+        --primary-purple-light: #fb7185;
+        --light-bg: #F8FAFC;
         --dark-bg: #0f0f1a;
-        --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
-        --maroon: #1e1b4b;
-        --maroon-light: #312e81;
-        --maroon-dark: #0b0920;
-        --maroon-pale: #f8fafc;
-        --maroon-border: rgba(30, 27, 75, 0.12);
+        --shadow-sm: 0 10px 30px rgba(244, 63, 94, 0.08);
+        --maroon: #F43F5E;
+        --maroon-light: #fb7185;
+        --maroon-dark: #E11D48;
+        --maroon-pale: #F8FAFC;
+        --maroon-border: rgba(244, 63, 94, 0.15);
         --sidebar-w: 272px;
     }
 
@@ -104,7 +104,7 @@
     }
     .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
     .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-    .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
+    .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2); }
     .navlink.active i { color: #fff; }
 
     .main { flex: 1; min-width: 0; }
@@ -112,11 +112,11 @@
     .mainInner { max-width: 1100px; margin: 0 auto; }
 
     .pg-header {
-        background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, #c04b7a 100%);
+        background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, var(--maroon-dark) 100%);
         border-radius: 16px;
         padding: 22px 28px;
         margin-bottom: 28px;
-        box-shadow: 0 8px 28px rgba(125,42,90,0.22);
+        box-shadow: 0 8px 28px rgba(244, 63, 94, 0.22);
     }
     .pg-header h4 { color: #fff; font-weight: 700; font-size: 1.2rem; margin: 0; }
     .pg-header p { color: rgba(255,255,255,0.75); margin: 4px 0 0; font-size: 0.85rem; }

@@ -353,6 +353,124 @@
                 width: 100%;
             }
         }
+
+        /* Confirmation Modal Card */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            max-width: 460px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header .icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--rose-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .modal-body {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .review-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .review-row:last-child {
+            border-bottom: none;
+        }
+
+        .review-row .label {
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .review-row .value {
+            color: var(--navy);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-modal-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            color: var(--navy);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-modal-confirm {
+            flex: 1.5;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            color: #FFFFFF;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
     </style>
 </head>
 <body>
@@ -478,6 +596,45 @@
         </div>
     </main>
 
+    <!-- Confirmation Modal Card -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div>
+                    <h3>Confirm Details</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-gray);">Review your information before account creation</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-row">
+                    <span class="label">Salon Name:</span>
+                    <span class="value" id="revName">—</span>
+                </div>
+                <div class="review-row">
+                    <span class="label">Username:</span>
+                    <span class="value" id="revUsername">—</span>
+                </div>
+                <div class="review-row">
+                    <span class="label">Phone Number:</span>
+                    <span class="value" id="revPhone">—</span>
+                </div>
+                <div class="review-row">
+                    <span class="label">Email:</span>
+                    <span class="value" id="revEmail">—</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeConfirmationModal()">Back / Edit</button>
+                <button type="button" class="btn-modal-confirm" onclick="confirmRegistration()">
+                    Confirm & Register <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Logic -->
     <script>
         const ctx = '${pageContext.request.contextPath}';
@@ -552,6 +709,8 @@
                     verifyOtpBtn.disabled = false;
                     verifyOtpBtn.textContent = 'Verify';
                     showFieldError('otpError', false);
+                    showAlert('OTP sent to ' + emailVal, false);
+                    alert('OTP sent to your email (' + emailVal + ')! Please check your inbox or spam folder.');
                     armOtpResend(60);
                     updateSubmitState();
                 } else {
@@ -593,6 +752,8 @@
                     verifyOtpBtn.style.display = 'none';
                     document.getElementById('otpSuccess').style.display = 'block';
                     showFieldError('otpError', false);
+                    showAlert('Email verified successfully!', false);
+                    alert('Email verified successfully! You can now complete registration.');
                     updateSubmitState();
                 } else {
                     showFieldError('otpError', true, data.error || data.message || 'Invalid or expired email OTP');
@@ -616,6 +777,10 @@
             el.innerHTML = '<i class="bi ' + (isError ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill') + '"></i> ' + msg;
             el.style.display = 'flex';
             window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function hideAlert() {
+            document.getElementById('jsAlert').style.display = 'none';
         }
 
         function togglePassVisibility(id, btn) {
@@ -648,24 +813,37 @@
         }
 
         function submitRegistration() {
-            if (!emailVerified) {
-                showAlert('Please verify your email with OTP before registering.');
-                return;
-            }
-
-            const termsCheck = document.getElementById('termsCheck');
-            if (!termsCheck.checked) {
-                showAlert('You must accept the terms and privacy policy.');
-                return;
-            }
-
-            const p = document.getElementById('password').value;
+            hideAlert();
+            const name = document.getElementById('salonName').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
             const cp = document.getElementById('confirmPassword').value;
-            if (p !== cp) {
-                showAlert('Passwords do not match.');
-                return;
-            }
+            const termsCheck = document.getElementById('termsCheck');
 
+            if (!name) { showAlert('Salon Name is required.'); return; }
+            if (!username) { showAlert('Username is required.'); return; }
+            if (!phone || phone.length !== 10) { showAlert('Valid 10-digit mobile number is required.'); return; }
+            if (!email || !email.includes('@')) { showAlert('Valid email address is required.'); return; }
+            if (!emailVerified) { showAlert('Please verify your email with OTP before registering.'); return; }
+            if (!pass || pass.length < 6) { showAlert('Password must be at least 6 characters.'); return; }
+            if (pass !== cp) { showAlert('Passwords do not match.'); return; }
+            if (!termsCheck.checked) { showAlert('You must accept the terms and privacy policy.'); return; }
+
+            document.getElementById('revName').textContent = name;
+            document.getElementById('revUsername').textContent = username;
+            document.getElementById('revPhone').textContent = phone;
+            document.getElementById('revEmail').textContent = email;
+
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeConfirmationModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function confirmRegistration() {
             document.getElementById('regForm').submit();
         }
     </script>

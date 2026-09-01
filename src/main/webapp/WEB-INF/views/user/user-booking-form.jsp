@@ -36,9 +36,9 @@
 				
 			<!-- 🎨 Custom CSS -->
 			<style>
-			/* Purple navbar */
+/* Purple navbar */
 #ftco-navbar {
-  background-color: #6a0dad !important; /* purple */
+  background-color: #F43F5E !important; /* coral */
 }
 
 /* Brand text */
@@ -74,7 +74,7 @@
 			    top: 0; left: 0;
 			    width: 100%;
 			    height: 100%;
-			    background: rgba(255, 215, 0, 0.35); /* 💛 Light golden transparent overlay */
+			    background: rgba(244, 63, 94, 0.35); /* Coral transparent overlay */
 			    z-index: 1;
 			}
 
@@ -102,19 +102,19 @@
 			}
 
 			.hero-section a.btn-primary {
-			    background-color: #e6b800;  /* ✨ Soft gold */
-			    border-color: #e6b800;
+			    background-color: #F43F5E;  /* Coral */
+			    border-color: #F43F5E;
 			    transition: 0.3s;
 			}
 
 			.hero-section a.btn-primary:hover {
-			    background-color: #f1c232;  /* Slightly brighter on hover */
-			    border-color: #f1c232;
+			    background-color: #E11D48;  /* Slightly brighter on hover */
+			    border-color: #E11D48;
 			}
 
 			.hero-section a.btn-outline-light:hover {
 			    background-color: #fff;
-			    color: #e6b800 !important;
+			    color: #F43F5E !important;
 			}
 			/* ✨ Increase only nav item font size */
 			#ftco-navbar .nav-link {
@@ -127,22 +127,26 @@
 			
 			/* 🔧 Fix button visibility */
 			.btn-primary {
-				background-color: #6a0dad !important;
-				border-color: #6a0dad !important;
+				background-color: #F43F5E !important;
+				border-color: #F43F5E !important;
 				color: #ffffff !important;
 				font-weight: 600;
 				padding: 12px 30px;
 				border-radius: 8px;
 				transition: all 0.3s ease;
-				box-shadow: 0 4px 6px rgba(106, 13, 173, 0.3);
+				box-shadow: 0 4px 6px rgba(244, 63, 94, 0.3);
 			}
 			
 			.btn-primary:hover {
-				background-color: #5a0c94 !important;
-				border-color: #5a0c94 !important;
+				background-color: #E11D48 !important;
+				border-color: #E11D48 !important;
 				transform: translateY(-2px);
-				box-shadow: 0 6px 12px rgba(106, 13, 173, 0.4);
+				box-shadow: 0 6px 12px rgba(244, 63, 94, 0.4);
 			}
+            
+            .text-primary {
+                color: #F43F5E !important;
+            }
 
 		
 			</style>

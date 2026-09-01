@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
@@ -27,12 +27,19 @@
             --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
         }
 
-        body {
+        html, body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--dashboard-bg);
             color: var(--fdf-text-dark);
             margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100vw;
             overflow-x: hidden;
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
         }
 
         /* Scrollbar styling */
@@ -381,6 +388,97 @@
         /* Hide existing top header and bottom save bar since we have the top header */
         .top-header { display: none !important; }
         .bottom-action-bar { display: none !important; }
+        
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 991px) {
+            .app-header {
+                padding: 12px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header-brand {
+                font-size: 1rem;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .main-content {
+                padding: 12px !important;
+                width: 100%;
+                overflow-x: hidden;
+            }
+            .hero-top-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .hero-info-box {
+                width: 100%;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .hero-photos-box {
+                width: 100%;
+            }
+            .logo-container {
+                width: 100px;
+                height: 100px;
+            }
+            .subtitle, .contact-list li {
+                justify-content: center;
+            }
+            .hero-bottom-actions {
+                flex-direction: column;
+                gap: 15px;
+                align-items: center;
+            }
+            .rating-box {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .action-btns {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 100%;
+            }
+            .action-btns .btn-edit, .action-btns .btn-preview {
+                flex: 1;
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .form-grid-3col, .f-row-2, .f-row-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-tracker {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+            .pt-left {
+                width: 100%;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .pt-steps {
+                flex-wrap: wrap;
+                gap: 15px;
+                width: 100%;
+            }
+            .pt-step {
+                width: calc(50% - 15px);
+                align-items: flex-start;
+                text-align: left;
+            }
+            .pt-steps::before {
+                display: none;
+            }
+            .pt-label {
+                text-align: left;
+            }
+        }
     </style>
 </head>
 <body>
@@ -770,11 +868,14 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <h4>Weekly Operating Hours</h4>
                     </div>
                     <style>
-                        .hours-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; }
+                        .hours-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; background: #fff; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; flex-wrap: wrap; gap: 10px; }
                         .hours-day { width: 90px; font-weight: 500; font-size: 0.95rem; }
-                        .hours-inputs { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
-                        .hours-input { padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; width: 110px; font-size: 0.85rem; }
-                        .hours-closed { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; }
+                        .hours-inputs { display: flex; align-items: center; gap: 10px; flex-grow: 1; flex-wrap: wrap; }
+                        .hours-input { padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; max-width: 110px; width: 100%; font-size: 0.85rem; }
+                        .hours-closed { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; white-space: nowrap; }
+                        @media (max-width: 767px) {
+                            .hours-day { width: 100%; }
+                        }
                     </style>
                     <div class="hours-grid">
                         <c:forEach var="day" items="monday,tuesday,wednesday,thursday,friday,saturday,sunday">

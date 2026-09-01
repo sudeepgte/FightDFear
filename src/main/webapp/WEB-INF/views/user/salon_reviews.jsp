@@ -11,10 +11,11 @@
     <style>
         /* ── CSS Variables ── */
         :root {
-            --brand-plum:    #7d265a;
-            --brand-purple:  #6a0dad;
-            --brand-light:   #ffd6ff;
-            --bg-page:       #f7f7fa;
+            --brand-plum:    #F43F5E; /* Coral/Rose CTA */
+            --brand-purple:  #E11D48; /* Darker Rose */
+            --brand-light:   #FFF1F3; /* Soft Rose Background */
+            --bg-page:       #F8FAFC; /* Off-White Background */
+            --text-dark:     #1E1B4B; /* Navy Text */
         }
 
         html, body {
@@ -28,7 +29,8 @@
 
         /* ── Navbar ── */
         .reviews-navbar {
-            background: linear-gradient(135deg, var(--brand-plum), var(--brand-purple));
+            background: #ffffff;
+            border-bottom: 1px solid #E2E8F0;
             padding: 14px 24px;
             display: flex;
             align-items: center;
@@ -38,13 +40,16 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
         }
         .reviews-navbar .brand {
-            color: #fff;
+            color: var(--brand-plum);
             font-size: 1.25rem;
-            font-weight: 700;
+            font-weight: 800;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .reviews-navbar .nav-links {
             display: flex;
@@ -52,18 +57,22 @@
             flex-wrap: wrap;
         }
         .reviews-navbar .nav-btn {
-            color: #fff;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.35);
+            color: var(--text-dark);
+            background: #ffffff;
+            border: 1px solid #E2E8F0;
             border-radius: 50px;
             padding: 6px 16px;
             text-decoration: none;
             font-size: 0.88rem;
+            font-weight: 600;
             transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .reviews-navbar .nav-btn:hover {
-            background: rgba(255,255,255,0.3);
-            color: #fff;
+            background: var(--brand-light);
+            border-color: var(--brand-plum);
+            color: var(--brand-plum);
+            transform: translateY(-1px);
         }
 
         /* ── Page Layout ── */
@@ -84,7 +93,7 @@
         .salon-title {
             font-size: 1.8rem;
             font-weight: 700;
-            color: var(--brand-plum);
+            color: var(--text-dark);
             margin-bottom: 4px;
         }
         .salon-meta {
@@ -118,13 +127,13 @@
         .review-comment { margin: 8px 0 0; color: #555; line-height: 1.6; }
 
         .reply-box {
-            background: #f8f0ff;
-            border-left: 4px solid var(--brand-purple);
+            background: var(--brand-light);
+            border-left: 4px solid var(--brand-plum);
             border-radius: 8px;
             padding: 12px 16px;
             margin-top: 12px;
             font-size: 0.9rem;
-            color: #4a0072;
+            color: var(--text-dark);
         }
         .reply-box strong { display: block; margin-bottom: 4px; }
 
@@ -138,14 +147,14 @@
             box-shadow: 0 4px 18px rgba(0,0,0,0.08);
         }
         .write-review-card h3 {
-            color: var(--brand-plum);
+            color: var(--text-dark);
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 20px;
         }
         .form-control:focus {
-            border-color: var(--brand-purple);
-            box-shadow: 0 0 0 0.2rem rgba(106,13,173,0.2);
+            border-color: var(--brand-plum);
+            box-shadow: 0 0 0 0.2rem rgba(244,63,94,0.2);
         }
         .btn-submit-review {
             background: linear-gradient(135deg, var(--brand-plum), var(--brand-purple));
@@ -181,8 +190,8 @@
 
     <!-- Sticky Navbar -->
     <nav class="reviews-navbar">
-        <a class="brand" href="${pageContext.request.contextPath}/users/dashboard">
-            <i class="fas fa-spa me-2"></i>Fight D Fear
+        <a class="brand" href="${pageContext.request.contextPath}/users/dashboard" style="color:#1e1b4b !important;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 2px;"> Fight D Fear
         </a>
         <div class="nav-links">
             <a href="${pageContext.request.contextPath}/user/salons" class="nav-btn">

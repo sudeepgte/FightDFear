@@ -106,10 +106,10 @@
 <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
     <div class="sidebar-brand-wrapper">
         <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand">
-            <i class="bi bi-gender-female"></i>
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;">
             <span>${not empty salon.name ? salon.name : (not empty sessionScope.loggedSalon.name ? sessionScope.loggedSalon.name : 'Priya Beauty & Wellness')}</span>
         </a>
-        <div class="subtitle">Women's Salon &bull; Beauty &bull; Wellness &bull; Hair Styling</div>
+        <div class="subtitle">Beauty &bull; Wellness</div>
     </div>
 
     <div class="nav-container">
@@ -118,60 +118,60 @@
                 <i class="bi bi-grid-1x2"></i>
                 <span>Dashboard</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'appointments' ? 'active' : ''}" href="${pageContext.request.contextPath}/booking/list">
+            <a class="nav-link-custom ${param.activeNav == 'appointments' ? 'active' : ''}" href="${pageContext.request.contextPath}/booking/list" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-calendar-check"></i>
                 <span>Appointments</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'calendar' ? 'active' : ''}" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal">
+            <a class="nav-link-custom ${param.activeNav == 'calendar' ? 'active' : ''}" href="#calendar" data-bs-toggle="modal" data-bs-target="#calendarModal" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-calendar3"></i>
                 <span>Calendar</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'services' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/viewServices">
+            <a class="nav-link-custom ${param.activeNav == 'services' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/viewServices" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-magic"></i>
                 <span>Services</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'staff' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/stylists">
+            <a class="nav-link-custom ${param.activeNav == 'staff' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/stylists" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-people"></i>
                 <span>Staff / Stylists</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'clients' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/clients">
+            <a class="nav-link-custom ${param.activeNav == 'clients' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/clients" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-people-fill"></i>
                 <span>Clients</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'packages' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/packages">
+            <a class="nav-link-custom ${param.activeNav == 'packages' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/packages" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-box-seam"></i>
                 <span>Packages &amp; Memberships</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'offers' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sid}">
+            <a class="nav-link-custom ${param.activeNav == 'offers' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sid}" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-percent"></i>
                 <span>Offers &amp; Discounts</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'billing' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/billing">
+            <a class="nav-link-custom ${param.activeNav == 'billing' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/billing" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-receipt"></i>
                 <span>Billing &amp; Invoices</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'payments' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/payments">
+            <a class="nav-link-custom ${param.activeNav == 'payments' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/payments" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-credit-card-2-front"></i>
                 <span>Payments &amp; Payouts</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'inventory' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/inventory">
+            <a class="nav-link-custom ${param.activeNav == 'inventory' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/inventory" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-box"></i>
                 <span>Inventory</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'reviews' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/reviews/list">
+            <a class="nav-link-custom ${param.activeNav == 'reviews' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/reviews/list" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-star-half"></i>
                 <span>Reviews &amp; Feedback</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'analytics' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/analytics">
+            <a class="nav-link-custom ${param.activeNav == 'analytics' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/analytics" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-bar-chart-line"></i>
                 <span>Reports &amp; Analytics</span>
             </a>
 
-            <a class="nav-link-custom ${param.activeNav == 'settings' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/settings">
+            <a class="nav-link-custom ${param.activeNav == 'settings' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/settings" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-sliders"></i>
                 <span>Settings</span>
             </a>
-            <a class="nav-link-custom ${param.activeNav == 'support' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/support">
+            <a class="nav-link-custom ${param.activeNav == 'support' ? 'active' : ''}" href="${pageContext.request.contextPath}/salon/support" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                 <i class="bi bi-question-circle"></i>
                 <span>Help &amp; Support</span>
             </a>
@@ -182,3 +182,14 @@
         </nav>
     </div>
 </div>
+
+<script>
+    function checkApproval(event, isApproved) {
+        if (!isApproved) {
+            event.preventDefault();
+            alert('Your profile is pending admin approval. You cannot access this feature yet.');
+            return false;
+        }
+        return true;
+    }
+</script>

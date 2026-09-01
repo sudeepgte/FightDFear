@@ -15,6 +15,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css" rel="stylesheet">
 
     <style>
         :root {
@@ -394,27 +397,15 @@
 </head>
 <body>
 
-    <!-- ===== TOP NAVBAR ===== -->
-    <nav class="fdf-navbar">
-        <div class="container d-flex align-items-center justify-content-between">
-            <a href="${pageContext.request.contextPath}/users/dashboard" class="fdf-brand">
-                <i class="bi bi-shield-heart-fill me-1"></i> Fight D Fear
-            </a>
+    <!-- ===== TOP HEADER ===== -->
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-            <div class="d-none d-md-flex align-items-center gap-2">
-                <a href="${pageContext.request.contextPath}/user/salons" class="nav-btn-link"><i class="bi bi-shop me-1"></i> All Salons</a>
-                <a href="${pageContext.request.contextPath}/user/salon/viewServicesForUser" class="nav-btn-link"><i class="bi bi-scissors me-1"></i> Services</a>
-                <a href="${pageContext.request.contextPath}/booking/myBookings" class="nav-btn-link"><i class="bi bi-calendar-check me-1"></i> My Bookings</a>
-                <a href="${pageContext.request.contextPath}/users/wallet" class="nav-btn-link"><i class="bi bi-wallet2 me-1"></i> Wallet</a>
-            </div>
-
-            <div class="d-flex align-items-center gap-2">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="btn-action-primary">
-                    <i class="bi bi-speedometer2 me-1"></i> Dashboard
-                </a>
-            </div>
-        </div>
-    </nav>
+    <div id="wrapper">
+        <!-- ===== SIDEBAR ===== -->
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        
+        <!-- ===== CONTENT WRAPPER ===== -->
+        <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;" data-skip-global-back="true">
 
     <div class="container">
         <!-- ===== SALON HERO HEADER ===== -->
@@ -879,16 +870,12 @@
         </div>
     </div>
 
-    <!-- ===== FOOTER ===== -->
-    <footer class="footer-glow">
-        <div class="container text-center">
-            <p class="fw-bold fs-5 mb-2">Fight D Fear — Women Safety & Wellness Marketplace</p>
-            <p class="text-muted small mb-4">Empowering women with verified salon services, safety assurance, and seamless bookings.</p>
-            <p class="text-muted small m-0">© <%= java.time.Year.now().getValue() %> Fight D Fear. All Rights Reserved.</p>
-        </div>
-    </footer>
+
+        </div><!-- /#page-content-wrapper -->
+    </div><!-- /#wrapper -->
 
     <!-- Bootstrap Bundle JS -->
+    <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>

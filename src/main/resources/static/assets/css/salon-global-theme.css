@@ -18,11 +18,34 @@
     /* Legacy Mappings to Force Theme Conformity */
     --brand-purple: var(--fdf-pink) !important;
     --brand-purple-darker: var(--fdf-text-dark) !important;
-    --gradient-dark: var(--fdf-text-dark) !important;
+    --gradient-dark: var(--dashboard-bg) !important; /* Sidebar should be light */
     --fdf-primary: var(--fdf-pink) !important;
     --primary-purple: var(--fdf-pink) !important;
     --primary-color: var(--fdf-pink) !important;
     --secondary-color: var(--fdf-rose) !important;
+}
+
+/* Force Sidebar to follow the light premium theme */
+.sidebar {
+    background: var(--card-bg) !important;
+    color: var(--fdf-text-dark) !important;
+    border-right: 1px solid var(--fdf-border) !important;
+}
+.sidebar-brand {
+    color: var(--fdf-text-dark) !important;
+}
+.sidebar-brand i {
+    color: var(--fdf-pink) !important;
+}
+.nav-link-custom {
+    color: var(--fdf-text-muted) !important;
+}
+.nav-link-custom:hover, .nav-link-custom.active {
+    background: var(--fdf-pink-light) !important;
+    color: var(--fdf-pink) !important;
+}
+.nav-link-custom i {
+    color: inherit !important;
 }
 
 body {

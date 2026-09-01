@@ -293,7 +293,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;" data-skip-global-back="true">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -358,9 +358,6 @@
                 </div>
             </c:if>
         </div>
-
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

@@ -21,8 +21,8 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
+            --glow-bg: var(--color-page-background);
+            --card-bg: var(--color-primary-surface);
         }
         
         body {
@@ -48,8 +48,8 @@
             opacity: 0.12;
             animation: floatBlob 20s infinite alternate;
         }
-        .blob-1 { top: -100px; right: -100px; background: var(--brand-purple); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--brand-pink); animation-delay: -5s; }
+        .blob-1 { top: -100px; right: -100px; background: var(--color-secondary-surface); }
+        .blob-2 { bottom: -150px; left: -150px; background: var(--color-secondary-rose); animation-delay: -5s; }
         
         @keyframes floatBlob {
             0% { transform: translate(0, 0) scale(1); }
@@ -68,9 +68,7 @@
             font-family: 'Montserrat', sans-serif;
             font-size: 38px;
             font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--color-text-primary);
             margin-bottom: 10px;
             letter-spacing: -0.5px;
         }
@@ -134,10 +132,10 @@
             transition: all 0.3s;
         }
         .glow-nav a:hover, .glow-nav a.active {
-            background: var(--gradient-primary);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(124, 45, 94, 0.2);
+            background: var(--color-secondary-surface);
+            color: var(--color-accent);
+            border-color: var(--color-accent);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.1);
         }
 
         /* Service Cards Grid */
@@ -221,14 +219,14 @@
             justify-content: center;
             gap: 8px;
             text-decoration: none;
-            background: var(--gradient-primary);
-            color: #fff;
+            background: var(--color-accent);
+            color: #FFFFFF;
         }
         .btn-glow-action:hover {
-            filter: brightness(1.1);
-            color: #fff;
+            background: var(--color-accent-hover);
+            color: #FFFFFF;
             transform: scale(1.02);
-            box-shadow: 0 4px 15px rgba(30, 27, 75, 0.25);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
         }
 
         /* Mobile Responsive adjustment */
@@ -271,7 +269,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Main page wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;" data-skip-global-back="true">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -285,12 +283,9 @@
                 <a href="${pageContext.request.contextPath}/user/bookings" class="top-btn">
                     <i class="bi bi-calendar-event"></i> My Bookings
                 </a>
-                <a href="${pageContext.request.contextPath}/qna" class="top-btn">
-                    <i class="bi bi-question-circle"></i> Q&amp;A Section
-                </a>
             </div>
             
-            <h1>Glow Space</h1>
+            <h1 style="color: #F43F5E;">Glow Space</h1>
             <p>Elevate your self-care journey. Discover elite nearby salons, connect with verified expert stylists, or book premium skincare treatments instantly.</p>
             
             <!-- Category Navigation Tab Pills -->
@@ -383,8 +378,6 @@
 
         </div>
 
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

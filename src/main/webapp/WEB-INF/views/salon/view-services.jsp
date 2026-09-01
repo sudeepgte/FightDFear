@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
@@ -356,20 +356,20 @@
         .btn-delete-icon:hover { background: #dc3545; color: white; }
 
         .btn-add-service {
-            background: var(--gradient-primary);
+            background: linear-gradient(90deg, #1e1b4b 0%, #f43f5e 100%);
             color: white;
             border: none;
             padding: 12px 25px;
             border-radius: 12px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(124, 45, 94, 0.2);
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.2);
             transition: all 0.3s ease;
             text-decoration: none;
         }
 
         .btn-add-service:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(124, 45, 94, 0.3);
+            box-shadow: 0 15px 30px rgba(244, 63, 94, 0.3);
             color: white;
         }
 
@@ -414,6 +414,9 @@
     <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid">
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            </div>
             
             <div class="page-header">
                 <div>

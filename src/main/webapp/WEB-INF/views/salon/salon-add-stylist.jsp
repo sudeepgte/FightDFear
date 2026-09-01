@@ -37,33 +37,87 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
 
     <meta charset="UTF-8">
+<%@ taglib uri="http://www.springframework.org/tags/form" prefix="form" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Add Offer | Fight D Fear</title>
+
+    <!-- ================= BOOTSTRAP ================= -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
+
+    <!-- ================= GOOGLE FONTS ================= -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Prata&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- ================= ICONS ================= -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/open-iconic-bootstrap.min.css">
+
+    <!-- ================= THEME CSS ================= -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/animate.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/owl.theme.default.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/magnific-popup.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/aos.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/ionicons.min.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/bootstrap-datepicker.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/jquery.timepicker.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/flaticon.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/icomoon.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/beauty/css/style.css">
+
+    <!-- ================= PROJECT CSS ================= -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
+
+    <meta charset="UTF-8">
     <title>Add Stylist</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
      footer {
     margin-top: 60px;
 }
+        :root {
+            --brand-pink: #F43F5E;
+            --bg-color: #F8FAFC;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --white: #FFFFFF;
+        }
         body {
-            background-color: #f8f9fa;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            font-family: 'Poppins', 'Open Sans', sans-serif;
         }
 
         #ftco-navbar {
             position: sticky !important;
             top: 0;
             z-index: 1050;
-            background-color: #6a0dad !important;
+            background-color: var(--white) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        #ftco-navbar .navbar-brand,
+        #ftco-navbar .navbar-brand {
+            color: var(--brand-pink) !important;
+            font-weight: 700;
+        }
+
         #ftco-navbar .nav-link {
-            color: #ffffff !important;
+            color: var(--text-dark) !important;
+            font-weight: 500;
         }
 
-        #ftco-navbar .nav-link:hover {
-            color: #ffd6ff !important;
+        #ftco-navbar .nav-link:hover, #ftco-navbar .nav-item.active .nav-link {
+            color: var(--brand-pink) !important;
         }
 
         main {
@@ -72,17 +126,85 @@
         }
 
         .offer-form {
-            background: #fff;
+            background: var(--white);
             border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             padding: 30px;
             max-width: 600px;
             margin: 0 auto 60px;
         }
 
-        .strike { text-decoration: line-through; color: #888; }
+        .strike { text-decoration: line-through; color: var(--text-muted); }
         .final-price { color: #28a745; font-weight: bold; }
-   </style>
+        
+        /* Form Card Styling */
+        .container.mt-5 > .row > .col-md-8 {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 50px;
+        }
+        
+        h2, .container h2, h2.mb-4 {
+            color: var(--text-dark) !important;
+            font-weight: 700 !important;
+            font-family: 'Poppins', sans-serif !important;
+            text-shadow: none !important;
+            -webkit-text-stroke: 0 !important;
+            letter-spacing: normal !important;
+        }
+        
+        .form-label, form label {
+            font-weight: 500 !important;
+            color: var(--text-dark) !important;
+        }
+        
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--brand-pink);
+            box-shadow: 0 0 0 0.2rem rgba(244, 63, 94, 0.25);
+        }
+        
+        .btn.btn-primary, button.btn-primary {
+            background-color: var(--brand-pink) !important;
+            border-color: var(--brand-pink) !important;
+            color: var(--white) !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            transition: 0.2s !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
+        
+        .btn.btn-primary:hover, button.btn-primary:hover {
+            background-color: #e11d48 !important;
+            border-color: #e11d48 !important;
+            color: var(--white) !important;
+        }
+        
+        a.btn-secondary, .btn.btn-secondary {
+            background-color: var(--white) !important;
+            color: var(--text-muted) !important;
+            border: 1px solid #cbd5e1 !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+        }
+        
+        a.btn-secondary:hover, .btn.btn-secondary:hover {
+            background-color: #f1f5f9 !important;
+            color: var(--text-dark) !important;
+        }
+    </style>
  
 
     <!-- Global Dashboard Theme -->
@@ -91,8 +213,8 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar" id="ftco-navbar">
     <div class="container">
-        <a class="navbar-brand" href="${pageContext.request.contextPath}/index/templates">
-            <span class="flaticon-lotus"></span> Fight D Fear
+        <a class="navbar-brand d-flex align-items-center gap-2" href="${pageContext.request.contextPath}/index/templates">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
         </a>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse"
@@ -192,60 +314,6 @@
         </div>
     </div>
 </div>
-<footer id="footer" class="footer position-relative">
-    <div class="container footer-top">
-        <div class="row gy-4">
-
-            <div class="col-lg-4 col-md-6 footer-about">
-                <a href="${pageContext.request.contextPath}/index/templates"
-                   class="d-flex align-items-center">
-                   Fight D Fear
-                </a>
-                <div class="pt-3">
-                    <p class="fw-semibold">Our Values</p>
-                    <p>Awareness • Safety • Equality • Empowerment</p>
-                    <p class="mt-2">Building a safer tomorrow, together.</p>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Useful Links</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/templates">Home</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/services">Services</a></li>
-                    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
-                </ul>
-            </div>
-
-            <div class="col-lg-2 col-md-3 footer-links">
-                <h4>Our Services</h4>
-                <ul>
-                    <li><i class="bi bi-chevron-right"></i> Emergency Assistance</li>
-                    <li><i class="bi bi-chevron-right"></i> Safety Education</li>
-                    <li><i class="bi bi-chevron-right"></i> Self-defense Training</li>
-                    <li><i class="bi bi-chevron-right"></i> Community Support</li>
-                </ul>
-            </div>
-
-            <div class="col-lg-4 col-md-12">
-                <h4>Follow Us</h4>
-                <p>Stay connected with us for safety updates and empowerment.</p>
-                <div class="social-links d-flex">
-                    <a href="#"><i class="bi bi-twitter"></i></a>
-                    <a href="#"><i class="bi bi-facebook"></i></a>
-                    <a href="#"><i class="bi bi-instagram"></i></a>
-                    <a href="#"><i class="bi bi-linkedin"></i></a>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="container text-center mt-4">
-        <p>© <strong>Fight D Fear</strong> All Rights Reserved</p>
-    </div>
-</footer>
 
 <!-- ================= JS FILES ================= -->
 <script src="${pageContext.request.contextPath}/beauty/js/jquery.min.js"></script>

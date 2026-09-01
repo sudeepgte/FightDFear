@@ -11,6 +11,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Offer | Fight D Fear</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
     <!-- Global Dashboard Theme -->
@@ -19,11 +32,11 @@
     <style>
         :root {
             --sidebar-width: 280px;
-            --dashboard-bg: #f8f5ff;
-            --brand-purple: #6a0dad;
-            --brand-purple-darker: #4a0080;
-            --gradient-dark: linear-gradient(135deg, #2b1055 0%, #7597de 100%);
-            --fdf-border: #eee;
+            --dashboard-bg: #F8FAFC;
+            --brand-purple: #F43F5E;
+            --brand-purple-darker: #1E293B;
+            --gradient-dark: linear-gradient(135deg, #1E293B 0%, #64748B 100%);
+            --fdf-border: #cbd5e1;
         }
 
         body { font-family: 'Poppins', sans-serif; background-color: var(--dashboard-bg); color: var(--brand-purple-darker); overflow-x: hidden; }
@@ -46,8 +59,8 @@
         .form-control, .form-select { border-radius: 12px; padding: 12px 15px; border: 1px solid #dee2e6; background-color: #f8f9fa; }
         .form-control:focus, .form-select:focus { border-color: var(--brand-purple); box-shadow: 0 0 0 0.25rem rgba(106, 13, 173, 0.1); background-color: white; }
 
-        .btn-submit { background: var(--gradient-primary); color: white; padding: 12px 30px; border-radius: 50px; font-weight: 700; border: none; transition: all 0.3s; }
-        .btn-submit:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(106, 13, 173, 0.3); }
+        .btn-submit { background: #F43F5E !important; color: white !important; padding: 12px 30px; border-radius: 50px; font-weight: 700; border: none; transition: all 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-submit:hover { background: #e11d48 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(244, 63, 94, 0.3); }
         
         .select2-container--default .select2-selection--multiple { border-radius: 12px; border: 1px solid #dee2e6; background-color: #f8f9fa; padding: 6px; }
     </style>
@@ -65,7 +78,7 @@
                 <a href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${salonId}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                     <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
-                <h2 class="fw-800 m-0 text-purple">Create New Offer / Discount</h2>
+                <h2 class="fw-800 m-0 text-purple" style="color: var(--brand-purple-darker) !important;">Create New Offer / Discount</h2>
             </div>
 
             <form action="${pageContext.request.contextPath}/salon/saveOffer" method="POST" enctype="multipart/form-data">

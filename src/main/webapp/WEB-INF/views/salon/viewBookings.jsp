@@ -359,7 +359,8 @@
     <div class="main-content">
         <div class="container-fluid">
             
-            <div class="page-header">
+            <div class="page-header d-flex flex-column align-items-start">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm mb-3" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
                 <h2>Customer Bookings</h2>
                 <div class="d-flex gap-2">
                     <span class="badge bg-white text-dark border p-2 rounded-3"><i class="bi bi-info-circle me-2"></i> Manage your appointments here</span>

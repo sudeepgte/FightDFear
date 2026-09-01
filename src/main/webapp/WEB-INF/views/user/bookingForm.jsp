@@ -24,15 +24,16 @@
     <style>
         :root {
             --brand-white: #ffffff;
-            --brand-soft-pink: #fff5f8;
-            --brand-purple-deep: #4c1d95;
+            --brand-soft-pink: #FFF5F7;
+            --brand-primary: #F43F5E;
             --text-dark: #1e293b;
             --text-muted: #64748b;
+            --page-bg: #F8FAFC;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #fdf2f8 0%, #f5f3ff 100%);
+            background: var(--page-bg);
             color: var(--text-dark);
             min-height: 100vh;
             display: flex;
@@ -77,7 +78,7 @@
 
         .badge-category {
             background: var(--brand-soft-pink);
-            color: var(--brand-pink);
+            color: var(--brand-primary);
             padding: 6px 16px;
             border-radius: 50px;
             font-size: 0.75rem;
@@ -92,7 +93,7 @@
             font-family: 'Montserrat', sans-serif;
             font-weight: 900;
             font-size: 2.8rem;
-            color: var(--brand-purple-darker);
+            color: var(--text-dark);
             line-height: 1.1;
             margin-bottom: 25px;
         }
@@ -103,20 +104,20 @@
             color: var(--text-muted);
             margin-bottom: 40px;
             padding-left: 20px;
-            border-left: 4px solid var(--brand-pink-light);
+            border-left: 4px solid var(--brand-primary);
         }
 
         .price-chip {
             display: inline-flex;
             align-items: center;
             gap: 15px;
-            background: var(--brand-purple-darker);
+            background: var(--brand-primary);
             color: white;
             padding: 12px 25px;
             border-radius: 20px;
             font-weight: 800;
             font-size: 1.4rem;
-            box-shadow: 0 10px 20px rgba(76, 29, 149, 0.15);
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.15);
         }
 
         .price-chip small {
@@ -131,7 +132,7 @@
             display: block;
             font-weight: 700;
             font-size: 0.85rem;
-            color: var(--brand-purple-dark);
+            color: var(--text-dark);
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -151,15 +152,15 @@
 
         .input-premium:focus {
             outline: none;
-            border-color: var(--brand-pink);
-            box-shadow: 0 0 0 4px rgba(219, 39, 119, 0.05);
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
             background: #fff;
         }
 
         .btn-confirm-booking {
             width: 100%;
             padding: 20px;
-            background: var(--gradient-primary);
+            background: var(--brand-primary);
             color: white;
             border: none;
             border-radius: 20px;
@@ -168,12 +169,12 @@
             letter-spacing: 0.5px;
             transition: all 0.3s ease;
             margin-top: 20px;
-            box-shadow: 0 15px 35px rgba(124, 45, 94, 0.2);
+            box-shadow: 0 15px 35px rgba(244, 63, 94, 0.2);
         }
 
         .btn-confirm-booking:hover {
             transform: translateY(-3px);
-            box-shadow: 0 20px 45px rgba(124, 45, 94, 0.3);
+            box-shadow: 0 20px 45px rgba(244, 63, 94, 0.3);
             filter: brightness(1.05);
         }
 
@@ -182,7 +183,7 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 30px;
-            color: var(--brand-pink);
+            color: var(--brand-primary);
             font-weight: 700;
             font-size: 0.9rem;
         }
@@ -233,7 +234,7 @@
         <!-- Right Panel: Booking Form -->
         <div class="form-panel">
             <div class="d-flex align-items-center gap-3 mb-5">
-                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; color: var(--brand-pink);">
+                <div class="bg-white rounded-circle d-flex align-items-center justify-content-center border" style="width: 50px; height: 50px; color: var(--brand-primary);">
                     <i class="bi bi-person-heart fs-4"></i>
                 </div>
                 <div>

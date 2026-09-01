@@ -21,8 +21,8 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
+            --glow-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
         }
         
         body {
@@ -68,9 +68,7 @@
             font-family: 'Montserrat', sans-serif;
             font-size: 38px;
             font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #F43F5E;
             margin-bottom: 10px;
         }
         .glow-header p {
@@ -99,7 +97,7 @@
             border-radius: 999px;
             background: #fff;
             border: 1px solid var(--fdf-border);
-            color: var(--brand-purple);
+            color: #64748B;
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
@@ -107,10 +105,11 @@
             box-shadow: var(--shadow-sm);
         }
         .top-btn:hover {
-            background: var(--brand-purple);
+            background: #F43F5E;
             color: #fff;
             transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 10px 25px rgba(244, 63, 94, 0.25);
+            border-color: #F43F5E;
         }
 
         /* Sub Navigation Pills */
@@ -133,10 +132,10 @@
             transition: all 0.3s;
         }
         .glow-nav a:hover, .glow-nav a.active {
-            background: var(--gradient-primary);
+            background: #F43F5E;
             color: #fff;
             border-color: transparent;
-            box-shadow: 0 4px 15px rgba(124, 45, 94, 0.2);
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.25);
         }
 
         /* Content Container */
@@ -149,14 +148,14 @@
         .section-title {
             font-size: 22px;
             font-weight: 800;
-            color: var(--brand-purple);
+            color: #1E293B;
             margin-bottom: 24px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
         .section-title i {
-            color: var(--brand-pink);
+            color: #F43F5E;
         }
 
         /* Modern Table Card wrapper */
@@ -175,7 +174,7 @@
         }
         .table th {
             font-weight: 700;
-            color: var(--brand-purple);
+            color: #64748B;
             border-top: none;
             padding: 14px 10px;
         }
@@ -237,9 +236,6 @@
             <div class="top-bar">
                 <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
                     <i class="bi bi-arrow-left"></i> Back to Dashboard
-                </a>
-                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="top-btn">
-                    <i class="bi bi-heart-pulse"></i> Medical Appointments
                 </a>
             </div>
             
@@ -454,8 +450,6 @@
             
         </div><!-- /bookings-container -->
 
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

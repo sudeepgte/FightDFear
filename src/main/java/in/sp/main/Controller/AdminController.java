@@ -2062,10 +2062,59 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/salons", method = GET)
-    public String showSalons(Model model, HttpSession session) {
+    public String showSalons(@RequestParam(value = "filter", required = false) String filter, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        model.addAttribute("pendingSalons", salonRepository.findByApproved(false));
-        model.addAttribute("approvedSalons", salonRepository.findByApproved(true));
+        
+        List<Salon> allSalons = salonRepository.findAll();
+        List<Stylist> allStylists = stylistRepository.findAll();
+        
+        List<Salon> pendingSalons = new java.util.ArrayList<>();
+        List<Stylist> pendingStylists = new java.util.ArrayList<>();
+        List<Salon> approvedSalons = new java.util.ArrayList<>();
+        List<Stylist> approvedStylists = new java.util.ArrayList<>();
+        List<Salon> rejectedSalons = new java.util.ArrayList<>();
+        List<Stylist> rejectedStylists = new java.util.ArrayList<>();
+        List<Salon> changesSalons = new java.util.ArrayList<>();
+        List<Stylist> changesStylists = new java.util.ArrayList<>();
+        
+        for (Salon s : allSalons) {
+            in.sp.main.Entities.PartnerProfileStatus st = s.getPartnerProfileStatus();
+            if (st == in.sp.main.Entities.PartnerProfileStatus.APPROVED || s.isApproved()) approvedSalons.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.REJECTED) rejectedSalons.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.CHANGES_REQUESTED) changesSalons.add(s);
+            else pendingSalons.add(s);
+        }
+        for (Stylist s : allStylists) {
+            in.sp.main.Entities.PartnerProfileStatus st = s.getPartnerProfileStatus();
+            if (st == in.sp.main.Entities.PartnerProfileStatus.APPROVED || s.isApproved()) approvedStylists.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.REJECTED) rejectedStylists.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.CHANGES_REQUESTED) changesStylists.add(s);
+            else pendingStylists.add(s);
+        }
+        
+        model.addAttribute("pendingCount", pendingSalons.size() + pendingStylists.size());
+        model.addAttribute("approvedCount", approvedSalons.size() + approvedStylists.size());
+        model.addAttribute("rejectedCount", rejectedSalons.size() + rejectedStylists.size());
+        model.addAttribute("changesRequestedCount", changesSalons.size() + changesStylists.size());
+        model.addAttribute("reverificationCount", 0);
+        model.addAttribute("totalCount", allSalons.size() + allStylists.size());
+        
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(java.util.Locale.ROOT);
+        
+        List<Salon> activeSalons;
+        List<Stylist> activeStylists;
+        
+        switch (activeFilter) {
+            case "approved": activeSalons = approvedSalons; activeStylists = approvedStylists; break;
+            case "rejected": activeSalons = rejectedSalons; activeStylists = rejectedStylists; break;
+            case "changes_requested": activeSalons = changesSalons; activeStylists = changesStylists; break;
+            default: activeSalons = pendingSalons; activeStylists = pendingStylists; activeFilter = "pending"; break;
+        }
+
+        model.addAttribute("activeFilter", activeFilter);
+        model.addAttribute("activeSalons", activeSalons);
+        model.addAttribute("activeStylists", activeStylists);
+        
         return "adminSalons";
     }
 

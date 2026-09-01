@@ -232,29 +232,15 @@
 
     </a>
 
-    <a class="navlink ${fn:contains(pageContext.request.requestURI,'salons') ? 'active' : ''}"
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'salons') || fn:contains(pageContext.request.requestURI,'stylists') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/admin/salons">
 
-        <i class="fas fa-cut"></i>
-        Salon Verification
+        <i class="fas fa-spa"></i>
+        Beauty and Wellness
 
-        <c:if test="${side_pendingSalons > 0}">
+        <c:if test="${(side_pendingSalons + side_pendingStylists) > 0}">
             <span class="badge rounded-pill bg-danger ms-auto">
-                ${side_pendingSalons}
-            </span>
-        </c:if>
-
-    </a>
-
-    <a class="navlink ${fn:contains(pageContext.request.requestURI,'stylists') ? 'active' : ''}"
-       href="${pageContext.request.contextPath}/admin/stylists">
-
-        <i class="fas fa-user-tie"></i>
-        Stylist Verification
-
-        <c:if test="${side_pendingStylists > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto">
-                ${side_pendingStylists}
+                ${side_pendingSalons + side_pendingStylists}
             </span>
         </c:if>
 
