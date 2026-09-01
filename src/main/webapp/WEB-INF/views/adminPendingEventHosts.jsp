@@ -9,56 +9,106 @@
   <title>Event Organizer Verification — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --maroon: #1e1b4b;
-    --maroon-pale: #f8fafc;
-    --maroon-border: rgba(30, 27, 75, 0.12);
+    --we-navy: #0F172A;
+    --we-accent: #F43F5E;
+    --we-bg: #F8FAFC;
+    --we-card: #FFFFFF;
+    --we-muted: #64748B;
+    --we-border: #E2E8F0;
     --sidebar-w: 272px;
   }
   * { box-sizing: border-box; }
-  body { font-family:'Poppins',sans-serif; margin:0; background:var(--maroon-pale); color:#1a1a2e; }
+  body { font-family:'Outfit',sans-serif; margin:0; background:var(--we-bg); color:var(--we-navy); }
   .topbar {
-    background: var(--maroon); color:#fff; padding: 0 20px; height: 58px;
+    background: var(--we-navy); color:#fff; padding: 0 20px; height: 58px;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 1000;
   }
-  .topbar .brand { font-size:1.1rem; font-weight:700; }
+  .topbar .brand { font-size:1.05rem; font-weight:700; }
   .topbar .btn-logout {
-    background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);
-    border-radius:7px; padding:5px 16px; font-size:0.85rem; font-weight:600; text-decoration:none;
+    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25);
+    border-radius:8px; padding:6px 14px; font-size:0.85rem; font-weight:600; text-decoration:none;
   }
   .layout { display:flex; min-height:calc(100vh - 58px); }
-  .sidebar {
-    width: var(--sidebar-w); background:#fff; border-right:1px solid var(--maroon-border);
-    position:sticky; top:58px; height:calc(100vh - 58px); padding:14px 12px; overflow-y:auto; flex-shrink:0;
-  }
   .main { flex:1; padding:24px; min-width:0; }
-  .pg-header h4 { font-weight:700; color:var(--maroon); margin:0 0 4px; }
-  .pg-header p { color:#64748b; margin:0 0 18px; font-size:0.92rem; }
+  .pg-header h4 { font-weight:800; color:var(--we-navy); margin:0 0 4px; font-size:1.25rem; }
+  .pg-header p { color:var(--we-muted); margin:0 0 20px; font-size:0.9rem; }
   .card-table {
-    background:#fff; border-radius:16px; overflow:hidden; margin-bottom:22px;
-    box-shadow:0 6px 20px rgba(125,42,90,0.08); border:1px solid var(--maroon-border);
+    background:var(--we-card); border-radius:16px; overflow:hidden; margin-bottom:22px;
+    box-shadow:0 4px 20px rgba(15,23,42,0.05); border:1px solid var(--we-border);
   }
   .card-table-header {
-    padding:14px 18px; font-weight:700; border-bottom:1px solid #f1f5f9;
-    display:flex; align-items:center; gap:8px;
+    padding:14px 18px; font-weight:700; border-bottom:1px solid var(--we-border);
+    display:flex; align-items:center; gap:8px; background:#fff;
   }
-  .table { margin:0; }
-  .table th { font-size:0.78rem; text-transform:uppercase; color:#94a3b8; font-weight:700; }
-  .badge-pending { background:#fef9c3; color:#854d0e; }
-  .badge-verified { background:#dcfce7; color:#166534; }
-  .badge-rejected { background:#ffe4e6; color:#9f1239; }
-  .btn-approve { background:#dcfce7; color:#166534; border:1.5px solid #166534; border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:700; }
-  .btn-reject { background:#ffe4e6; color:#9f1239; border:1.5px solid #9f1239; border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:700; }
-  .btn-profile {
-    background: #ede9fe; color: #5b21b6; border: 1.5px solid #7c3aed;
-    border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 700;
-    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  .table-scroll { overflow-x: auto; }
+  .we-data-table { width: 100%; min-width: 1080px; table-layout: fixed; border-collapse: collapse; margin: 0; }
+  .we-data-table th {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--we-muted); font-weight: 700; padding: 12px 14px; background: #F8FAFC;
+    border-bottom: 1px solid var(--we-border); white-space: nowrap;
   }
-  .btn-profile:hover { background: #ddd6fe; color: #4c1d95; }
-  .bio-clip { max-width:240px; white-space:normal; word-break:break-word; font-size:0.82rem; color:#555; }
+  .we-data-table td {
+    padding: 12px 14px; border-bottom: 1px solid #F1F5F9; vertical-align: middle;
+    font-size: 0.88rem; overflow: hidden;
+  }
+  .we-data-table tr:last-child td { border-bottom: none; }
+  .col-applicant { width: 180px; }
+  .col-org { width: 150px; }
+  .col-type { width: 110px; }
+  .col-loc { width: 120px; }
+  .col-cats { width: 140px; }
+  .col-contact { width: 120px; }
+  .col-bio { width: 200px; }
+  .col-status { width: 130px; }
+  .col-action { width: 110px; }
+  .clip, .bio-clip {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #475569;
+    font-size: 0.82rem;
+  }
+  .muted { color: var(--we-muted); }
+  .badge-pending { background:#FEF3C7; color:#92400E; }
+  .badge-verified { background:#DCFCE7; color:#166534; }
+  .badge-rejected { background:#FEE2E2; color:#991B1B; }
+  .badge-incomplete { background:#F1F5F9; color:#475569; }
+  .btn-approve { background:#DCFCE7; color:#166534; border:1px solid #86EFAC; border-radius:999px; padding:5px 12px; font-size:0.78rem; font-weight:700; }
+  .btn-reject { background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; border-radius:999px; padding:5px 12px; font-size:0.78rem; font-weight:700; }
+  .btn-profile, .btn-preview {
+    background: #FFF1F2; color: #BE123C; border: 1px solid #FECDD3;
+    border-radius: 999px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .btn-profile:hover, .btn-preview:hover { background: #FFE4E6; color: #9F1239; }
+  .empty-cell { text-align:center; color:var(--we-muted); padding: 28px 16px !important; }
+  .we-modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .we-modal-overlay.open { display:flex; }
+  .we-modal {
+    background:#fff; border-radius:18px; width:100%; max-width:640px; max-height:90vh;
+    overflow:auto; box-shadow:0 24px 64px rgba(15,23,42,.2);
+  }
+  .we-modal-header { padding:20px 22px 12px; border-bottom:1px solid var(--we-border); display:flex; justify-content:space-between; gap:12px; }
+  .we-modal-header h3 { margin:0; font-size:1.1rem; font-weight:800; }
+  .we-modal-body { padding:18px 22px 22px; }
+  .pv-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .pv-item label { display:block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--we-muted); }
+  .pv-item span, .pv-item p { font-size:0.9rem; font-weight:600; color:var(--we-navy); margin:0; word-break:break-word; }
+  .pv-desc { grid-column: 1 / -1; }
+  .pv-desc p { font-weight:500; white-space:pre-wrap; }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .pv-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -72,8 +122,8 @@
 
     <main class="main">
       <div class="pg-header">
-        <h4><i class="fas fa-calendar-check me-2"></i>Event Organizer Verification</h4>
-        <p>Approve Event Hosts registered from mobile / web, then approve their events</p>
+        <h4>Event Organizer Verification</h4>
+        <p>Review host applications, inspect full profiles, then approve events they create.</p>
       </div>
 
       <c:if test="${not empty message}">
@@ -84,22 +134,22 @@
 
       <div class="card-table">
         <div class="card-table-header">
-          <i class="fas fa-clock text-warning"></i> Pending Event Organizers
-          <span class="badge rounded-pill bg-danger ms-2">${fn:length(pending)}</span>
+          Pending Event Organizers
+          <span class="badge rounded-pill" style="background:#FEE2E2;color:#BE123C;">${fn:length(pending)}</span>
         </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
+        <div class="table-scroll">
+          <table class="we-data-table">
             <thead>
               <tr>
-                <th>Applicant</th>
-                <th>Organization</th>
-                <th>Type</th>
-                <th>Location</th>
-                <th>Categories</th>
-                <th>Contact</th>
-                <th>Bio</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th class="col-applicant">Applicant</th>
+                <th class="col-org">Organization</th>
+                <th class="col-type">Type</th>
+                <th class="col-loc">Location</th>
+                <th class="col-cats">Categories</th>
+                <th class="col-contact">Contact</th>
+                <th class="col-bio">Bio</th>
+                <th class="col-status">Status</th>
+                <th class="col-action">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -107,32 +157,43 @@
                 <c:when test="${not empty pending}">
                   <c:forEach var="h" items="${pending}">
                     <tr>
-                      <td>
-                        <div class="fw-bold">${h.fullName}</div>
-                        <div class="text-muted small">${h.email}</div>
+                      <td class="col-applicant">
+                        <div class="fw-bold clip" title="<c:out value='${h.fullName}'/>"><c:out value="${h.fullName}"/></div>
+                        <div class="clip muted" title="<c:out value='${h.email}'/>"><c:out value="${h.email}"/></div>
                       </td>
-                      <td class="fw-semibold">${h.organizerName}</td>
-                      <td><span class="badge bg-light text-dark border">${h.organizerType}</span></td>
-                      <td>
+                      <td class="col-org"><span class="clip" title="<c:out value='${h.organizerName}'/>"><c:out value="${empty h.organizerName ? '—' : h.organizerName}"/></span></td>
+                      <td class="col-type"><span class="clip"><c:out value="${empty h.organizerType ? '—' : h.organizerType}"/></span></td>
+                      <td class="col-loc">
+                        <span class="clip">
+                          <c:choose>
+                            <c:when test="${not empty h.city}"><c:out value="${h.city}"/><c:if test="${not empty h.state}">, <c:out value="${h.state}"/></c:if></c:when>
+                            <c:otherwise>Not provided</c:otherwise>
+                          </c:choose>
+                        </span>
+                      </td>
+                      <td class="col-cats"><span class="clip" title="<c:out value='${h.eventCategories}'/>"><c:out value="${empty h.eventCategories ? 'Not provided' : h.eventCategories}"/></span></td>
+                      <td class="col-contact"><span class="clip"><c:out value="${empty h.hostContact ? h.phone : h.hostContact}"/></span></td>
+                      <td class="col-bio">
                         <c:choose>
-                          <c:when test="${not empty h.city}">${h.city}<c:if test="${not empty h.state}">, ${h.state}</c:if></c:when>
-                          <c:otherwise>—</c:otherwise>
+                          <c:when test="${empty h.hostBio}"><span class="muted">Not provided</span></c:when>
+                          <c:otherwise>
+                            <span class="bio-clip" title="<c:out value='${h.hostBio}'/>"><c:out value="${h.hostBio}"/></span>
+                          </c:otherwise>
                         </c:choose>
                       </td>
-                      <td class="small">${empty h.eventCategories ? '—' : h.eventCategories}</td>
-                      <td>${empty h.hostContact ? h.phone : h.hostContact}</td>
-                      <td><div class="bio-clip">${h.hostBio}</div></td>
-                      <td><span class="badge badge-pending">${h.partnerProfileStatus != null ? h.partnerProfileStatus : h.verificationStatus}</span></td>
-                      <td>
+                      <td class="col-status">
+                        <span class="badge badge-pending"><c:out value="${h.partnerProfileStatus != null ? h.partnerProfileStatus : h.verificationStatus}"/></span>
+                      </td>
+                      <td class="col-action">
                         <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
-                          <i class="fas fa-user"></i> Review
+                          Review
                         </a>
                       </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="9" class="text-center text-muted py-4">No pending event organizer applications.</td></tr>
+                  <tr><td colspan="9" class="empty-cell">No pending event organizer applications.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
@@ -142,11 +203,11 @@
 
       <div class="card-table">
         <div class="card-table-header">
-          <i class="fas fa-calendar-day text-warning"></i> Pending Events (after host creates an event)
-          <span class="badge rounded-pill bg-warning text-dark ms-2">${fn:length(pendingEvents)}</span>
+          Pending Events
+          <span class="badge rounded-pill" style="background:#FEF3C7;color:#92400E;">${fn:length(pendingEvents)}</span>
         </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
+        <div class="table-scroll">
+          <table class="we-data-table" style="min-width:980px;">
             <thead>
               <tr>
                 <th>Event</th>
@@ -164,15 +225,21 @@
                 <c:when test="${not empty pendingEvents}">
                   <c:forEach var="e" items="${pendingEvents}">
                     <tr>
-                      <td class="fw-bold">${e.name}</td>
-                      <td><span class="badge bg-light text-dark border">${e.category}</span></td>
-                      <td>${e.eventDate}</td>
-                      <td>${e.venue}, ${e.city}</td>
-                      <td>${e.organizerName}</td>
-                      <td>₹${e.entryFee}</td>
-                      <td><span class="badge badge-pending">${e.status}</span></td>
+                      <td><span class="clip" title="<c:out value='${e.name}'/>"><c:out value="${e.name}"/></span></td>
+                      <td><c:out value="${e.category}"/></td>
+                      <td><c:out value="${e.eventDate}"/></td>
+                      <td><span class="clip"><c:out value="${e.venue}"/>, <c:out value="${e.city}"/></span></td>
+                      <td><span class="clip"><c:out value="${e.organizerName}"/></span></td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${e.free}">Free</c:when>
+                          <c:otherwise>₹<c:out value="${e.entryFee}"/></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td><span class="badge badge-pending"><c:out value="${e.status}"/></span></td>
                       <td>
                         <div class="d-flex gap-1 flex-wrap">
+                          <button type="button" class="btn-preview" onclick="openEventPreview('p${e.id}')">Preview</button>
                           <form action="${pageContext.request.contextPath}/admin/women-events/${e.id}/approve" method="post">
                             <button type="submit" class="btn-approve">Approve</button>
                           </form>
@@ -180,12 +247,31 @@
                             <button type="submit" class="btn-reject">Reject</button>
                           </form>
                         </div>
+                        <div id="ev-p${e.id}" class="d-none">
+                          <div class="pv-grid">
+                            <div class="pv-item"><label>Title</label><span><c:out value="${e.name}"/></span></div>
+                            <div class="pv-item"><label>Category</label><span><c:out value="${e.category}"/></span></div>
+                            <div class="pv-item"><label>Date</label><span><c:out value="${empty e.eventDate ? 'Not provided' : e.eventDate}"/></span></div>
+                            <div class="pv-item"><label>Time</label><span><c:out value="${empty e.eventTime ? 'Not provided' : e.eventTime}"/></span></div>
+                            <div class="pv-item"><label>Venue</label><span><c:out value="${empty e.venue ? 'Not provided' : e.venue}"/></span></div>
+                            <div class="pv-item"><label>City</label><span><c:out value="${empty e.city ? 'Not provided' : e.city}"/></span></div>
+                            <div class="pv-item"><label>Organizer</label><span><c:out value="${empty e.organizerName ? 'Not provided' : e.organizerName}"/></span></div>
+                            <div class="pv-item"><label>Organizer type</label><span><c:out value="${empty e.organizerType ? 'Not provided' : e.organizerType}"/></span></div>
+                            <div class="pv-item"><label>Capacity</label><span><c:out value="${e.maxParticipants != null ? e.maxParticipants : 'Not provided'}"/></span></div>
+                            <div class="pv-item"><label>Fee</label><span><c:choose><c:when test="${e.free}">Free</c:when><c:otherwise>₹<c:out value="${e.entryFee}"/></c:otherwise></c:choose></span></div>
+                            <div class="pv-item"><label>Contact</label><span><c:out value="${empty e.contactInfo ? 'Not provided' : e.contactInfo}"/></span></div>
+                            <div class="pv-item"><label>Maps</label><span><c:out value="${empty e.mapsLocation ? 'Not provided' : e.mapsLocation}"/></span></div>
+                            <div class="pv-item"><label>Virtual</label><span><c:out value="${e.virtual ? 'Yes' : 'No'}"/></span></div>
+                            <div class="pv-item"><label>Status</label><span><c:out value="${e.status}"/></span></div>
+                            <div class="pv-item pv-desc"><label>Description</label><p><c:out value="${empty e.description ? 'Not provided' : e.description}"/></p></div>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="8" class="text-center text-muted py-4">No pending events.</td></tr>
+                  <tr><td colspan="8" class="empty-cell">No pending events.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
@@ -195,10 +281,61 @@
 
       <div class="card-table">
         <div class="card-table-header">
-          <i class="fas fa-check-circle text-success"></i> Verified Event Organizers
+          Approved Events
+          <span class="badge rounded-pill" style="background:#DCFCE7;color:#166534;">${fn:length(approvedEvents)}</span>
         </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
+        <div class="table-scroll">
+          <table class="we-data-table" style="min-width:860px;">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Date</th>
+                <th>City</th>
+                <th>Organizer</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <c:choose>
+                <c:when test="${not empty approvedEvents}">
+                  <c:forEach var="e" items="${approvedEvents}">
+                    <tr>
+                      <td><span class="clip" title="<c:out value='${e.name}'/>"><c:out value="${e.name}"/></span></td>
+                      <td><c:out value="${e.eventDate}"/></td>
+                      <td><c:out value="${e.city}"/></td>
+                      <td><span class="clip"><c:out value="${e.organizerName}"/></span></td>
+                      <td><span class="badge badge-verified"><c:out value="${e.status}"/></span></td>
+                      <td>
+                        <button type="button" class="btn-preview" onclick="openEventPreview('a${e.id}')">Preview</button>
+                        <div id="ev-a${e.id}" class="d-none">
+                          <div class="pv-grid">
+                            <div class="pv-item"><label>Title</label><span><c:out value="${e.name}"/></span></div>
+                            <div class="pv-item"><label>Category</label><span><c:out value="${e.category}"/></span></div>
+                            <div class="pv-item"><label>Date / time</label><span><c:out value="${e.eventDate}"/> <c:out value="${e.eventTime}"/></span></div>
+                            <div class="pv-item"><label>Venue</label><span><c:out value="${e.venue}"/>, <c:out value="${e.city}"/></span></div>
+                            <div class="pv-item"><label>Organizer</label><span><c:out value="${e.organizerName}"/></span></div>
+                            <div class="pv-item"><label>Fee</label><span><c:choose><c:when test="${e.free}">Free</c:when><c:otherwise>₹<c:out value="${e.entryFee}"/></c:otherwise></c:choose></span></div>
+                            <div class="pv-item pv-desc"><label>Description</label><p><c:out value="${empty e.description ? 'Not provided' : e.description}"/></p></div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:when>
+                <c:otherwise>
+                  <tr><td colspan="6" class="empty-cell">No approved events yet.</td></tr>
+                </c:otherwise>
+              </c:choose>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-table">
+        <div class="card-table-header">Verified Event Organizers</div>
+        <div class="table-scroll">
+          <table class="we-data-table" style="min-width:820px;">
             <thead>
               <tr>
                 <th>Name</th>
@@ -215,22 +352,20 @@
                 <c:when test="${not empty verified}">
                   <c:forEach var="h" items="${verified}">
                     <tr>
-                      <td class="fw-bold">${h.fullName}</td>
-                      <td>${h.organizerName}</td>
-                      <td>${h.email}</td>
-                      <td>${h.organizerType}</td>
-                      <td>${empty h.city ? '—' : h.city}</td>
-                      <td><span class="badge badge-verified">${h.verificationStatus}</span></td>
+                      <td><span class="clip fw-bold"><c:out value="${h.fullName}"/></span></td>
+                      <td><span class="clip"><c:out value="${h.organizerName}"/></span></td>
+                      <td><span class="clip"><c:out value="${h.email}"/></span></td>
+                      <td><c:out value="${h.organizerType}"/></td>
+                      <td><c:out value="${empty h.city ? 'Not provided' : h.city}"/></td>
+                      <td><span class="badge badge-verified"><c:out value="${h.verificationStatus}"/></span></td>
                       <td>
-                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
-                          <i class="fas fa-user"></i> Profile
-                        </a>
+                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">Profile</a>
                       </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="7" class="text-center text-muted py-4">No verified organizers yet.</td></tr>
+                  <tr><td colspan="7" class="empty-cell">No verified organizers yet.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
@@ -239,11 +374,9 @@
       </div>
 
       <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-times-circle text-danger"></i> Rejected Event Organizers
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
+        <div class="card-table-header">Rejected Event Organizers</div>
+        <div class="table-scroll">
+          <table class="we-data-table" style="min-width:640px;">
             <thead>
               <tr>
                 <th>Name</th>
@@ -258,20 +391,18 @@
                 <c:when test="${not empty rejected}">
                   <c:forEach var="h" items="${rejected}">
                     <tr>
-                      <td class="fw-bold">${h.fullName}</td>
-                      <td>${h.organizerName}</td>
-                      <td>${h.email}</td>
-                      <td><span class="badge badge-rejected">${h.verificationStatus}</span></td>
+                      <td class="fw-bold"><c:out value="${h.fullName}"/></td>
+                      <td><span class="clip"><c:out value="${h.organizerName}"/></span></td>
+                      <td><span class="clip"><c:out value="${h.email}"/></span></td>
+                      <td><span class="badge badge-rejected"><c:out value="${h.verificationStatus}"/></span></td>
                       <td>
-                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">
-                          <i class="fas fa-user"></i> Profile
-                        </a>
+                        <a href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" class="btn-profile">Profile</a>
                       </td>
                     </tr>
                   </c:forEach>
                 </c:when>
                 <c:otherwise>
-                  <tr><td colspan="5" class="text-center text-muted py-4">No rejected applications.</td></tr>
+                  <tr><td colspan="5" class="empty-cell">No rejected applications.</td></tr>
                 </c:otherwise>
               </c:choose>
             </tbody>
@@ -280,10 +411,31 @@
       </div>
 
       <p class="text-muted small">
-        Legacy page also available:
+        Event list with feature / delete:
         <a href="${pageContext.request.contextPath}/women-events/admin/list">Women Events admin list</a>
       </p>
     </main>
   </div>
+
+  <div class="we-modal-overlay" id="eventPreviewOverlay" onclick="if(event.target===this)closeEventPreview()">
+    <div class="we-modal" role="dialog" aria-modal="true" aria-labelledby="epTitle">
+      <div class="we-modal-header">
+        <h3 id="epTitle">Event preview</h3>
+        <button type="button" class="btn-preview" onclick="closeEventPreview()">Close</button>
+      </div>
+      <div class="we-modal-body" id="epBody"></div>
+    </div>
+  </div>
+  <script>
+    function openEventPreview(key) {
+      const src = document.getElementById('ev-' + key);
+      if (!src) return;
+      document.getElementById('epBody').innerHTML = src.innerHTML;
+      document.getElementById('eventPreviewOverlay').classList.add('open');
+    }
+    function closeEventPreview() {
+      document.getElementById('eventPreviewOverlay').classList.remove('open');
+    }
+  </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * Fight D Fear — shared 60 / 30 / 10 page theme
- * reminders · journey · buddy · wallet
+ * reminders · journey · buddy · wallet · chat users
  * 60% #FFFFFF / #F8FAFC | 30% #FFF1F2 + #E2E8F0 | 10% #F43F5E
  */
 
@@ -148,11 +148,11 @@ body.fdf-page-shell .border-primary {
     border-color: #FECDD3 !important;
 }
 
-body.fdf-page-shell a:not(.btn):not(.sidebar-list-group-item):not(.fdf-nav-btn) {
+body.fdf-page-shell a:not(.btn):not(.sidebar-list-group-item):not(.fdf-nav-btn):not(.friend-card) {
     color: #F43F5E;
 }
 
-body.fdf-page-shell a:not(.btn):not(.sidebar-list-group-item):not(.fdf-nav-btn):hover {
+body.fdf-page-shell a:not(.btn):not(.sidebar-list-group-item):not(.fdf-nav-btn):not(.friend-card):hover {
     color: #E11D48;
 }
 

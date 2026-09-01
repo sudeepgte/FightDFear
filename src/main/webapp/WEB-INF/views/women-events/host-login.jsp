@@ -13,7 +13,7 @@
         :root {
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
+            --navy: #0F172A;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -224,6 +224,29 @@
             font-weight: 500;
             display: none;
         }
+
+        .next-steps-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .next-steps-card h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .next-steps-card ol {
+            margin: 0 0 0 18px;
+            padding: 0;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .next-steps-card ol strong { color: var(--navy); }
     </style>
 </head>
 <body>
@@ -254,7 +277,16 @@
             </c:if>
             <c:if test="${param.registered}">
                 <div class="alert-box alert-success">
-                    <i class="bi bi-check-circle-fill"></i> Account created! Please log in to complete your host profile.
+                    <i class="bi bi-check-circle-fill"></i> Account created. Sign in with the email you just registered.
+                </div>
+                <div class="next-steps-card">
+                    <h3>What happens next</h3>
+                    <ol>
+                        <li><strong>Sign in</strong> with this email and password.</li>
+                        <li><strong>Complete your organizer profile</strong> — organization, location, categories, bio, and documents.</li>
+                        <li><strong>Review the preview card</strong> on the profile page, then submit for admin verification.</li>
+                        <li>You can create events only after an admin <strong>approves</strong> your profile.</li>
+                    </ol>
                 </div>
             </c:if>
             <c:if test="${not empty success}">

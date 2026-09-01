@@ -13,7 +13,7 @@
         :root {
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
+            --navy: #0F172A;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -274,6 +274,51 @@
             display: none;
         }
 
+        .we-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .we-modal-overlay.open { display: flex; }
+        .we-modal {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2);
+        }
+        .we-modal-header {
+            padding: 20px 22px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .we-modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--navy); }
+        .we-modal-header p { margin: 6px 0 0; font-size: 0.82rem; color: var(--text-gray); }
+        .we-modal-body { padding: 16px 22px 8px; }
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.88rem;
+        }
+        .preview-row span { color: var(--text-gray); }
+        .preview-row strong { color: var(--navy); text-align: right; word-break: break-word; }
+        .we-modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 16px 22px 22px;
+            flex-wrap: wrap;
+        }
+        .we-modal-actions button { flex: 1; min-width: 140px; }
+
         .login-footer {
             text-align: center;
             margin-top: 20px;
@@ -416,6 +461,26 @@
             </div>
         </div>
     </main>
+
+    <div class="we-modal-overlay" id="registerPreviewOverlay" role="dialog" aria-modal="true" aria-labelledby="regPreviewTitle">
+        <div class="we-modal">
+            <div class="we-modal-header">
+                <h3 id="regPreviewTitle">Review your registration</h3>
+                <p>Confirm these details before creating your Event Host account. You will complete organization, bio, and documents after sign-in.</p>
+            </div>
+            <div class="we-modal-body">
+                <div class="preview-row"><span>Full name</span><strong id="pvName">—</strong></div>
+                <div class="preview-row"><span>Email</span><strong id="pvEmail">—</strong></div>
+                <div class="preview-row"><span>Phone</span><strong id="pvPhone">—</strong></div>
+                <div class="preview-row"><span>Email OTP</span><strong>Verified</strong></div>
+                <div class="preview-row"><span>Terms</span><strong>Accepted</strong></div>
+            </div>
+            <div class="we-modal-actions">
+                <button type="button" class="btn-submit" style="background:#fff;color:var(--navy);border:1px solid var(--border-color);box-shadow:none;" onclick="closeRegisterPreview()">Edit details</button>
+                <button type="button" class="btn-submit" id="btnConfirmRegister" onclick="submitRegistration()">Confirm &amp; create account</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let isEmailVerified = false;
@@ -648,10 +713,7 @@
             }
         }
 
-        async function handleRegistration(e) {
-            e.preventDefault();
-            hideAlert();
-
+        function registrationFieldsValid() {
             const isNameElValid = validateFullName();
             const isEmailElValid = validateEmail();
             const isPhoneElValid = validatePhone();
@@ -663,11 +725,34 @@
                 const firstInvalid = document.querySelector('.form-input.is-invalid, input[type="checkbox"].is-invalid');
                 if (firstInvalid) firstInvalid.focus();
                 showAlert('Please resolve the errors below before submitting.');
-                return;
+                return false;
             }
-
             if (!isEmailVerified) {
                 showAlert('Please verify your email via OTP before submitting.');
+                return false;
+            }
+            return true;
+        }
+
+        function handleRegistration(e) {
+            e.preventDefault();
+            hideAlert();
+            if (!registrationFieldsValid()) return;
+
+            document.getElementById('pvName').textContent = document.getElementById('fullName').value.trim();
+            document.getElementById('pvEmail').textContent = document.getElementById('email').value.trim();
+            document.getElementById('pvPhone').textContent = document.getElementById('phone').value.trim();
+            document.getElementById('registerPreviewOverlay').classList.add('open');
+        }
+
+        function closeRegisterPreview() {
+            document.getElementById('registerPreviewOverlay').classList.remove('open');
+        }
+
+        async function submitRegistration() {
+            hideAlert();
+            if (!registrationFieldsValid()) {
+                closeRegisterPreview();
                 return;
             }
 
@@ -680,8 +765,11 @@
             const acceptedTerms = document.getElementById('acceptedTerms').checked;
 
             const btnSubmit = document.getElementById('btnSubmitAccount');
+            const btnConfirm = document.getElementById('btnConfirmRegister');
             btnSubmit.disabled = true;
+            btnConfirm.disabled = true;
             btnSubmit.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Registering...';
+            btnConfirm.innerHTML = 'Creating account…';
 
             try {
                 const res = await fetch(contextPath + '/api/women-events/host/register-quick', {
@@ -701,14 +789,20 @@
                 if (data.success) {
                     window.location.href = contextPath + '/women-events/host/login?registered=true';
                 } else {
+                    closeRegisterPreview();
                     showAlert(data.error || 'Registration failed.');
                     btnSubmit.disabled = false;
+                    btnConfirm.disabled = false;
                     btnSubmit.innerHTML = '<i class="bi bi-person-plus-fill"></i> Create Host Account';
+                    btnConfirm.innerHTML = 'Confirm & create account';
                 }
             } catch (e) {
+                closeRegisterPreview();
                 showAlert('Server connection error during registration.');
                 btnSubmit.disabled = false;
+                btnConfirm.disabled = false;
                 btnSubmit.innerHTML = '<i class="bi bi-person-plus-fill"></i> Create Host Account';
+                btnConfirm.innerHTML = 'Confirm & create account';
             }
         }
     </script>

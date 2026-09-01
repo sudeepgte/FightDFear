@@ -65,6 +65,17 @@ public class SalonRegistrationService {
         }
     }
 
+    /** Consumes a prior email OTP verification (web form submit). */
+    public boolean consumeRegistrationVerification(String email) {
+        String normalizedEmail = MobileValidation.normalizeEmail(email);
+        String emailErr = MobileValidation.requireEmail(normalizedEmail);
+        if (emailErr != null) {
+            return false;
+        }
+        return otpVerificationService.consumeVerifiedOtp(
+                normalizedEmail, OtpPurpose.SALON_REGISTER, otpExpirationMinutes);
+    }
+
     @Transactional
     public Salon registerQuick(
             String username,

@@ -8,7 +8,7 @@
   <title>${doctor.fullName} | Medical Profile</title>
   
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -17,6 +17,7 @@
   <!-- Theme CSS -->
   <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-tokens.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-view.css">
 
   <style>
@@ -28,17 +29,20 @@
       --navy-soft: #1E293B;
       --border: #E2E8F0;
       --brand-soft-bg: var(--bg-page);
+      --text-gray: #64748B;
+      --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
     }
 
     body {
       background-color: var(--brand-soft-bg);
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--navy-soft);
+      overflow-x: hidden;
     }
 
     .doctor-hero-bg {
-      background: linear-gradient(135deg, #7f1d1d 0%, var(--primary) 100%);
-      height: 280px;
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 70%, #F43F5E 140%);
+      height: 220px;
       width: 100%;
       position: absolute;
       top: 0;
@@ -48,39 +52,40 @@
 
     .profile-header-card {
       background: white;
-      border-radius: 32px;
-      padding: 40px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.05);
-      margin-top: 100px;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      margin-top: 80px;
       border: 1px solid var(--border);
       position: relative;
     }
 
     .doctor-avatar-large {
-      width: 180px;
-      height: 180px;
-      border-radius: 40px;
+      width: 120px;
+      height: 120px;
+      border-radius: 16px;
       object-fit: cover;
-      border: 8px solid white;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-      margin-top: -120px;
+      border: 4px solid white;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+      margin-top: -72px;
       background: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 4rem;
+      font-size: 2.5rem;
       font-weight: 800;
     }
 
     .nav-pills-custom .nav-link {
-      border-radius: 12px;
-      padding: 12px 25px;
+      border-radius: 10px;
+      padding: 10px 18px;
       font-weight: 600;
       color: var(--navy-soft);
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       border: 1px solid transparent;
-      margin-right: 10px;
+      margin-right: 8px;
+      margin-bottom: 6px;
     }
 
     .nav-pills-custom .nav-link.active {
@@ -90,32 +95,33 @@
     }
 
     .info-grid-item {
-      padding: 25px;
+      padding: 20px;
       background: #f8fafc;
-      border-radius: 24px;
+      border-radius: 14px;
       border: 1px solid var(--border);
       height: 100%;
     }
 
     .booking-sticky-card {
       position: sticky;
-      top: 40px;
+      top: 24px;
       background: white;
-      border-radius: 28px;
-      padding: 30px;
+      border-radius: 16px;
+      padding: 24px;
       border: 1px solid var(--border);
-      box-shadow: 0 15px 40px rgba(0,0,0,0.03);
+      box-shadow: var(--shadow-card);
     }
 
     .day-selector-item {
       flex: 1;
       text-align: center;
-      padding: 15px 10px;
+      padding: 12px 8px;
       background: #f8fafc;
-      border-radius: 16px;
+      border-radius: 12px;
       border: 2px solid var(--border);
       cursor: pointer;
-      transition: 0.3s;
+      transition: 0.2s;
+      min-width: 64px;
     }
 
     .day-selector-item.active {
@@ -126,15 +132,15 @@
 
     .time-slot-pill {
       display: inline-block;
-      padding: 10px 20px;
+      padding: 10px 16px;
       background: white;
       border: 2px solid var(--border);
-      border-radius: 12px;
-      margin: 5px;
+      border-radius: 10px;
+      margin: 4px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 0.9rem;
-      transition: 0.3s;
+      font-size: 0.88rem;
+      transition: 0.2s;
     }
 
     .time-slot-pill:hover, .time-slot-pill.selected {
@@ -144,7 +150,7 @@
     }
 
     .review-item {
-      padding: 25px;
+      padding: 20px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -198,11 +204,33 @@
       background: var(--primary);
       color: white;
       border: none;
-      border-radius: 18px;
-      padding: 18px;
-      font-weight: 800;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-weight: 700;
       width: 100%;
-      box-shadow: 0 10px 25px rgba(244, 63, 94, 0.24);
+      box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+      font-family: inherit;
+      min-height: 48px;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .btn-book-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-book-primary:not(:disabled):hover {
+      background: #E11D48;
+    }
+
+    @media (max-width: 991px) {
+      .booking-sticky-card { position: static; margin-top: 24px; }
+      .profile-header-card { margin-top: 48px; padding: 20px; }
+      .doctor-avatar-large { width: 96px; height: 96px; margin-top: -56px; font-size: 2rem; }
+    }
+    @media (max-width: 576px) {
+      .doctor-hero-bg { height: 160px; }
+      .day-selector-item { min-width: 56px; padding: 10px 4px; font-size: 0.8rem; }
+      .nav-pills-custom { flex-wrap: wrap; }
     }
 
     .logo {
@@ -250,19 +278,25 @@
     .text-pink {
       color: var(--primary) !important;
     }
-    .text-purple {
+    .text-accent {
       color: var(--navy) !important;
     }
-    .btn-outline-purple {
+    .btn-outline-accent {
       border-color: var(--border);
       color: var(--navy-soft);
       background: #fff;
     }
-    .btn-check:checked + .btn-outline-purple {
+    .btn-check:checked + .btn-outline-accent {
       background: var(--primary);
       color: #fff;
       border-color: var(--primary);
     }
+    .btn-accent {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+    }
+    .btn-accent:hover { background: #E11D48; color: #fff; }
     
     .rating-stars {
       display: inline-flex;
@@ -348,7 +382,7 @@
             <div class="vr mx-2"></div>
             <div class="text-end">
               <div class="small text-muted fw-600">CONSULTATION FEE</div>
-              <div class="fs-3 fw-900 text-purple" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</div>
+              <div class="fs-3 fw-900 text-accent" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</div>
             </div>
           </div>
         </div>
@@ -386,28 +420,28 @@
                   <div class="info-grid-item">
                     <div class="text-pink mb-2"><i class="bi bi-mortarboard-fill fs-4"></i></div>
                     <div class="small fw-700 text-muted">QUALIFICATION</div>
-                    <div class="fw-800">${doctor.qualification != null ? doctor.qualification : 'Verified MD/MBBS'}</div>
+                    <div class="fw-800">${not empty doctor.qualification ? doctor.qualification : 'Not provided'}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="info-grid-item">
-                    <div class="text-purple mb-2"><i class="bi bi-shield-check fs-4"></i></div>
+                    <div class="text-accent mb-2"><i class="bi bi-shield-check fs-4"></i></div>
                     <div class="small fw-700 text-muted">REGISTRATION</div>
-                    <div class="fw-800">${doctor.medicalRegNumber}</div>
+                    <div class="fw-800">${not empty doctor.medicalRegNumber ? doctor.medicalRegNumber : 'Not provided'}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="info-grid-item">
                     <div class="text-primary mb-2"><i class="bi bi-building fs-4"></i></div>
                     <div class="small fw-700 text-muted">HOSPITAL</div>
-                    <div class="fw-800">${doctor.hospitalName != null ? doctor.hospitalName : 'Fight D Fear Clinic'}</div>
+                    <div class="fw-800">${not empty doctor.hospitalName ? doctor.hospitalName : 'Not provided'}</div>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="info-grid-item">
                     <div class="text-success mb-2"><i class="bi bi-activity fs-4"></i></div>
                     <div class="small fw-700 text-muted">CONSULTATION</div>
-                    <div class="fw-800">${doctor.consultationType} Available</div>
+                    <div class="fw-800">${not empty doctor.consultationModes ? doctor.consultationModes : (doctor.consultationType != null ? doctor.consultationType : 'Not provided')}</div>
                   </div>
                 </div>
               </div>
@@ -497,7 +531,7 @@
         <div class="booking-sticky-card">
           <h4 class="fw-900 mb-4">Book Appointment</h4>
           
-          <form id="bookingForm" onsubmit="event.preventDefault(); initiatePayment();">
+          <form id="bookingForm" onsubmit="event.preventDefault(); showBookingPreview();">
             <input type="hidden" id="doctorId" value="${doctor.id}">
             <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
             <input type="hidden" id="appointmentTime" value="">
@@ -515,45 +549,52 @@
               <input type="tel" id="patientPhone" class="form-control rounded-3 py-2" value="${user.phoneNumber}" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required>
             </div>
 
-                        <div class="mb-4">
-              <label class="small fw-800 text-muted mb-2 d-block">SELECT DATE *</label>
-              <input type="date" id="selectDate" class="form-control rounded-3 py-2" required>
-            </div>
-            
             <div class="mb-4">
-              <label class="small fw-800 text-muted mb-2 d-block">CHOOSE TIME SLOT *</label>
-              <input type="time" id="selectTime" class="form-control rounded-3 py-2" required>
+              <label class="small fw-800 text-muted mb-2 d-block">SELECT DATE</label>
+              <div class="d-flex gap-2 overflow-x-auto pb-2" id="dateScroll">
+                <!-- Dates dynamically generated -->
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="small fw-800 text-muted mb-2 d-block">CHOOSE TIME SLOT</label>
+              <div id="sessionSlots" class="d-flex flex-wrap gap-1">
+                <p class="text-muted small py-3 w-100 text-center">Please select a date first</p>
+              </div>
             </div>
 
             <div class="mb-4">
               <label class="small fw-800 text-muted mb-2 d-block">CONSULTATION MODE</label>
               <div class="btn-group w-100" role="group">
                 <input type="radio" class="btn-check" name="consultationType" id="mode1" value="CLINIC" checked>
-                <label class="btn btn-outline-purple py-3 fw-700" for="mode1">Clinic Visit</label>
+                <label class="btn btn-outline-accent py-3 fw-700" for="mode1">Clinic Visit</label>
                 
                 <input type="radio" class="btn-check" name="consultationType" id="mode2" value="VIDEO">
-                <label class="btn btn-outline-purple py-3 fw-700" for="mode2">Video Call</label>
+                <label class="btn btn-outline-accent py-3 fw-700" for="mode2">Video Call</label>
               </div>
             </div>
 
             <div class="mb-4">
-
               <label class="small fw-800 text-muted mb-2 d-block" for="appointmentReason">REASON FOR VISIT</label>
-              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500" onkeyup="document.getElementById('reasonCount').innerText = this.value.length;"
+              <textarea id="appointmentReason" class="form-control rounded-3 py-2" rows="3" maxlength="500"
                         placeholder="Briefly describe your symptoms or reason for consultation (optional)"></textarea>
               <div class="d-flex justify-content-between mt-1">
                 <span class="small text-muted">Shown to your doctor after booking</span>
                 <span class="small text-muted"><span id="reasonCount">0</span>/500</span>
               </div>
-
             </div>
 
-            <div id="selectedSummary" class="mb-4 p-3 bg-soft-pink rounded-3 text-pink small fw-700 text-center d-none">
-              <i class="bi bi-clock-fill me-1"></i> <span id="summaryText"></span>
+            <div id="selectedSummary" class="mb-4 p-3 rounded-3 d-none" style="background:#fff;border:1px solid #fecdd3;box-shadow:0 4px 16px rgba(244,63,94,0.06);">
+              <div class="small fw-800 text-muted mb-2" style="letter-spacing:0.04em;">BOOKING SUMMARY</div>
+              <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Doctor</span><span class="fw-700">Dr. ${doctor.fullName}</span></div>
+              <div class="d-flex justify-content-between small mb-1"><span class="text-muted">When</span><span class="fw-700" id="summaryText">—</span></div>
+              <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Mode</span><span class="fw-700" id="summaryMode">Clinic Visit</span></div>
+              <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Fee</span><span class="fw-700 text-pink" id="summaryFee">₹0</span></div>
+              <div class="d-flex justify-content-between small"><span class="text-muted">Patient</span><span class="fw-700" id="summaryPatient">${user.fullName}</span></div>
             </div>
 
             <button type="submit" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6">
-              Book Appointment
+              Review booking
             </button>
             <p class="text-center mt-3 small text-muted" id="payHint"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
           </form>
@@ -577,7 +618,6 @@
               <div class="alert alert-danger rounded-4 border-0 mb-3">${error}</div>
             </c:if>
             <div class="mb-4 text-center">
-
               <div class="rating-stars" role="radiogroup" aria-label="Doctor rating" id="doctorRatingGroup">
                 <input type="radio" name="rating" value="5" id="r5" autocomplete="off">
                 <label for="r5" title="5 stars"><i class="bi bi-star-fill"></i></label>
@@ -589,23 +629,63 @@
                 <label for="r2" title="2 stars"><i class="bi bi-star-fill"></i></label>
                 <input type="radio" name="rating" value="1" id="r1" autocomplete="off">
                 <label for="r1" title="1 star"><i class="bi bi-star-fill"></i></label>
-
-              <div class="rating-stars text-warning">
-                <input type="radio" name="rating" value="5" id="r5" required><label for="r5"></label>
-                <input type="radio" name="rating" value="4" id="r4"><label for="r4"></label>
-                <input type="radio" name="rating" value="3" id="r3"><label for="r3"></label>
-                <input type="radio" name="rating" value="2" id="r2"><label for="r2"></label>
-                <input type="radio" name="rating" value="1" id="r1"><label for="r1"></label>
-
               </div>
               <div id="ratingError" class="text-danger small fw-700 mt-2" style="display:none;">Please select a star rating.</div>
             </div>
             <textarea name="comment" class="form-control rounded-4 p-3" rows="4" placeholder="How was your visit with Dr. ${doctor.fullName}?"></textarea>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button type="submit" class="btn btn-purple w-100 py-3 rounded-4 fw-800">Post Review</button>
+            <button type="submit" class="btn btn-accent w-100 py-3 rounded-4 fw-800">Post Review</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookingPreviewModal" class="doc-modal-overlay" onclick="if(event.target===this)closeBookingPreview()">
+    <div class="doc-modal" role="dialog" aria-modal="true" aria-labelledby="bpTitle">
+      <div class="doc-modal-header">
+        <div>
+          <h3 id="bpTitle">Confirm your appointment</h3>
+          <p>Review the details before you book with Dr. ${doctor.fullName}</p>
+        </div>
+        <button type="button" class="doc-modal-close" onclick="closeBookingPreview()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="doc-modal-body">
+        <div class="doc-modal-row"><span class="k">Doctor</span><span class="v">Dr. ${doctor.fullName}</span></div>
+        <div class="doc-modal-row"><span class="k">Specialization</span><span class="v">${empty doctor.specialization ? 'General consultation' : doctor.specialization}</span></div>
+        <div class="doc-modal-row"><span class="k">When</span><span class="v" id="bpWhen">—</span></div>
+        <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="bpMode">Clinic visit</span></div>
+        <div class="doc-modal-row"><span class="k">Fee</span><span class="v" id="bpFee">₹0</span></div>
+        <div class="doc-modal-row"><span class="k">Patient</span><span class="v" id="bpPatient">—</span></div>
+        <div class="doc-modal-row"><span class="k">Reason</span><span class="v" id="bpReason">Not provided</span></div>
+        <p class="small text-muted mt-3 mb-0" id="bpPayHint">You will complete payment on the next step.</p>
+      </div>
+      <div class="doc-modal-footer">
+        <button type="button" class="doc-modal-btn secondary" onclick="closeBookingPreview()">← Edit</button>
+        <button type="button" id="bpConfirmBtn" class="doc-modal-btn primary" onclick="confirmBookingFromPreview()">Confirm &amp; Book</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bookingSuccessModal" class="doc-modal-overlay">
+    <div class="doc-modal" role="dialog" aria-modal="true">
+      <div class="doc-modal-header" style="flex-direction:column;align-items:center;text-align:center;gap:8px;">
+        <i class="bi bi-check-circle-fill" style="font-size:42px;color:var(--doc-primary);"></i>
+        <h3>Appointment requested</h3>
+        <p>Your booking has been sent to Dr. ${doctor.fullName}. Status starts as Pending until the doctor confirms.</p>
+      </div>
+      <div class="doc-modal-body">
+        <div class="doc-modal-row"><span class="k">Doctor</span><span class="v">Dr. ${doctor.fullName}</span></div>
+        <div class="doc-modal-row"><span class="k">Specialization</span><span class="v">${empty doctor.specialization ? 'General consultation' : doctor.specialization}</span></div>
+        <div class="doc-modal-row"><span class="k">When</span><span class="v" id="bsWhen">—</span></div>
+        <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="bsMode">—</span></div>
+        <div class="doc-modal-row"><span class="k">Fee</span><span class="v" id="bsFee">—</span></div>
+        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span class="doc-status pending">Pending</span></span></div>
+      </div>
+      <div class="doc-modal-footer" style="justify-content:center;">
+        <a class="doc-modal-btn primary" href="${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed">View my appointments</a>
+        <a class="doc-modal-btn secondary" href="${pageContext.request.contextPath}/doctors/list">Find another doctor</a>
       </div>
     </div>
   </div>
@@ -618,8 +698,8 @@
     var doctorAvailableDaysStr = "${doctor.availableDays}";
     var doctorStartTime = "${doctor.startTime}";
     var doctorEndTime = "${doctor.endTime}";
-    var daysMap = { "sun":0, "mon":1, "tue":2, "wed":3, "thu":4, "fri":5, "sat":6 };
-    var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase().substring(0,3)).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
+    var daysMap = { "sunday":0, "monday":1, "tuesday":2, "wednesday":3, "thursday":4, "friday":5, "saturday":6 };
+    var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase()).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
 
     function currentFee() {
       var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
@@ -631,17 +711,29 @@
       return isNaN(clinic) ? 0 : clinic;
     }
 
-            function syncFeeUi() {
+    function syncFeeUi() {
       var fee = currentFee();
       document.getElementById('amount').value = fee;
       var btn = document.getElementById('payBtn');
+      var hint = document.getElementById('payHint');
       var header = document.getElementById('headerFeeDisplay');
-      if (header) header.innerText = '?' + fee;
-      
-      // Kept button simple as requested
-      btn.innerText = 'Book Appointment';
-      btn.disabled = false;
-      btn.style.opacity = '1';
+      var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
+      var modeLabel = type === 'VIDEO' ? 'Video Call' : (type === 'ONLINE' ? 'Chat' : 'Clinic Visit');
+      if (header) header.innerText = '₹' + fee;
+      var summaryFee = document.getElementById('summaryFee');
+      var summaryMode = document.getElementById('summaryMode');
+      if (summaryFee) summaryFee.innerText = '₹' + fee;
+      if (summaryMode) summaryMode.innerText = modeLabel;
+      var summaryPatient = document.getElementById('summaryPatient');
+      var patientName = document.getElementById('patientName');
+      if (summaryPatient && patientName) summaryPatient.innerText = patientName.value || '—';
+      if (fee > 0) {
+        btn.innerText = 'Review & Pay ₹' + fee;
+        if (hint) hint.innerHTML = '<i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay';
+      } else {
+        btn.innerText = 'Review free booking';
+        if (hint) hint.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> No payment required for this mode';
+      }
     }
 
     function localDateISO(d) {
@@ -651,16 +743,84 @@
       return y + '-' + m + '-' + day;
     }
 
-    
+    function renderDates() {
+      var dateScroll = document.getElementById('dateScroll');
+      if(!availableDays.length) {
+        dateScroll.innerHTML = '<p class="text-danger small fw-700 p-2">This doctor has not set their schedule yet.</p>';
+        document.getElementById('payBtn').innerText = 'Schedule Unavailable';
+        return;
+      }
+      
+      var html = '';
+      var d = new Date();
+      var count = 0;
+      while(count < 14) {
+        if(availableDays.includes(d.getDay())) {
+          var dateISO = localDateISO(d);
+          var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+          html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
+                    <div class="small fw-700 opacity-50">\${dayName}</div>
+                    <div class="fs-5 fw-900">\${d.getDate()}</div>
+                   </div>`;
+          count++;
+        }
+        d.setDate(d.getDate() + 1);
+      }
+      if(html === '') {
+         dateScroll.innerHTML = '<p class="text-danger small fw-700 p-2">No available dates found.</p>';
+      } else {
+         dateScroll.innerHTML = html;
+      }
+      syncFeeUi();
+    }
 
-    async function bookFree(doctorId, time, type) {
+    var selectedDateObj = null;
+    function selectDate(el, dateISO) {
+      document.querySelectorAll('.day-selector-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      selectedDateObj = new Date(dateISO + 'T00:00:00');
+      renderTimeSlots();
+    }
+
+    function renderTimeSlots() {
+      var sessionSlots = document.getElementById('sessionSlots');
+      if(!doctorStartTime || !doctorEndTime) return;
+
+      var html = '';
+      var start = parseInt(doctorStartTime.split(':')[0]) * 60 + parseInt(doctorStartTime.split(':')[1] || 0);
+      var end = parseInt(doctorEndTime.split(':')[0]) * 60 + parseInt(doctorEndTime.split(':')[1] || 0);
+      
+      for(var m = start; m < end; m += 30) {
+        var h = Math.floor(m/60);
+        var mm = m%60;
+        var ampm = h >= 12 ? 'PM' : 'AM';
+        var t12 = (h%12 || 12) + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
+        var t24 = (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm + ':00';
+        html += `<div class="time-slot-pill" onclick="selectTime(this, '\${t24}', '\${t12}')">\${t12}</div>`;
+      }
+      sessionSlots.innerHTML = html;
+    }
+
+    function selectTime(el, t24, t12) {
+      document.querySelectorAll('.time-slot-pill').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      var fullTime = localDateISO(selectedDateObj) + ' ' + t24;
+      document.getElementById('appointmentTime').value = fullTime;
+      document.getElementById('summaryText').innerText = selectedDateObj.toDateString() + ' at ' + t12;
+      document.getElementById('selectedSummary').classList.remove('d-none');
+      document.getElementById('payBtn').disabled = false;
+      document.getElementById('payBtn').style.opacity = '1';
+      syncFeeUi();
+    }
+
+    async function bookFree(doctorId, time, type, reason) {
       const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: '' })
+        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
+        showBookingSuccess();
       } else {
         alert(data.error || 'Unable to book appointment');
       }
@@ -668,30 +828,46 @@
 
     async function initiatePayment() {
       syncFeeUi();
+      var payBtn = document.getElementById('payBtn');
+      if (payBtn && payBtn.dataset.busy === '1') return;
+      if (payBtn) {
+        payBtn.dataset.busy = '1';
+        payBtn.disabled = true;
+        payBtn.dataset.label = payBtn.textContent;
+        payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+      }
+
       const amount = document.getElementById('amount').value;
       const doctorId = document.getElementById('doctorId').value;
-              const dateVal = document.getElementById('selectDate').value;
-        const timeVal = document.getElementById('selectTime').value;
-        let time = '';
-        if (dateVal && timeVal) {
-            time = dateVal + ' ' + (timeVal.length === 5 ? timeVal + ':00' : timeVal);
-            document.getElementById('appointmentTime').value = time;
-        }
-        const type = document.querySelector('input[name="consultationType"]:checked').value;
-
-      const reason = (document.getElementById('appointmentReason').value || '').trim();
+      const time = document.getElementById('appointmentTime').value;
+      const typeEl = document.querySelector('input[name="consultationType"]:checked');
+      const type = typeEl ? typeEl.value : 'CLINIC';
+      const reasonEl = document.getElementById('appointmentReason') || document.getElementById('reason');
+      const reason = reasonEl ? (reasonEl.value || '').trim() : '';
       const fee = parseFloat(amount || '0');
+
+      function unlockPay() {
+        if (payBtn) {
+          payBtn.dataset.busy = '0';
+          payBtn.disabled = !time;
+          payBtn.innerHTML = payBtn.dataset.label || 'Confirm & Pay';
+        }
+      }
 
       if (!time) {
         alert('Please select date and time');
+        unlockPay();
         return;
       }
 
       if (fee <= 0) {
-        await bookFree(doctorId, time, type);
+        try {
+          await bookFree(doctorId, time, type, reason);
+        } finally {
+          unlockPay();
+        }
         return;
       }
-
 
       try {
         const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
@@ -701,12 +877,14 @@
             targetId: doctorId,
             consultationType: type,
             appointmentTime: time,
-            amount: amount
+            amount: amount,
+            reason: reason
           })
         });
         const order = await res.json();
         if (!res.ok || !order.orderId) {
           alert(order.error || 'Unable to create payment order');
+          unlockPay();
           return;
         }
         if (order.mock) {
@@ -716,40 +894,113 @@
               razorpay_order_id: order.orderId,
               razorpay_payment_id: 'mock_pay_' + Date.now(),
               razorpay_signature: 'mock_sig',
-              type: 'DOCTOR', targetId: doctorId, amount,
-              appointmentTime: time, consultationType: type
+              type: 'DOCTOR',
+              targetId: doctorId,
+              amount: amount,
+              appointmentTime: time,
+              consultationType: type,
+              reason: reason
             })
           });
-          if (verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
-          else alert('Verification failed');
+          if (verifyRes.ok) {
+            showBookingSuccess();
+          } else {
+            alert('Payment verification failed. Booking was not confirmed.');
+            unlockPay();
+          }
           return;
         }
         const options = {
-          key: order.key, amount: order.amount, currency: 'INR',
-          name: 'Fight D Fear Medical', description: 'Consultation with Dr. ${doctor.fullName}',
+          key: order.key,
+          amount: order.amount,
+          currency: 'INR',
+          name: 'Fight D Fear Medical',
+          description: 'Consultation with Dr. ${doctor.fullName}',
           order_id: order.orderId,
           handler: async function(response) {
-            const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
-              method: 'POST', headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-
-                type: 'DOCTOR', targetId: doctorId, amount, reason: reason,
-                appointmentTime: time, consultationType: type
-
-              })
-            });
-            if(verifyRes.ok) window.location.href = '${pageContext.request.contextPath}/user/bookings?message=Booking-Confirmed';
+            try {
+              const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  type: 'DOCTOR',
+                  targetId: doctorId,
+                  amount: amount,
+                  appointmentTime: time,
+                  consultationType: type,
+                  reason: reason
+                })
+              });
+              if (verifyRes.ok) {
+                showBookingSuccess();
+              } else {
+                alert('Payment verification failed. Booking was not confirmed.');
+                unlockPay();
+              }
+            } catch (err) {
+              alert('Payment verification failed. Please contact support if money was deducted.');
+              unlockPay();
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              alert('Payment cancelled. Your booking was not confirmed.');
+              unlockPay();
+            }
           }
         };
         new Razorpay(options).open();
-      } catch(e) { alert('Payment failed. Please try again.'); }
+      } catch (e) {
+        alert('Payment failed. Please try again.');
+        unlockPay();
+      }
+    }
+
+    function closeBookingPreview() {
+      var overlay = document.getElementById('bookingPreviewModal');
+      if (overlay) overlay.classList.remove('open');
+    }
+    function showBookingPreview() {
+      var time = document.getElementById('appointmentTime').value;
+      if (!time) {
+        alert('Please select date and time');
+        return;
+      }
+      var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
+      var modeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
+      var fee = currentFee();
+      var reasonEl = document.getElementById('appointmentReason');
+      var patient = (document.getElementById('patientName') || {}).value || '${user.fullName}';
+      document.getElementById('bpWhen').textContent = (document.getElementById('summaryText') || {}).innerText || time;
+      document.getElementById('bpMode').textContent = modeLabel;
+      document.getElementById('bpFee').textContent = fee > 0 ? ('₹' + fee) : 'Free';
+      document.getElementById('bpPatient').textContent = patient || 'Not provided';
+      document.getElementById('bpReason').textContent = (reasonEl && reasonEl.value.trim()) ? reasonEl.value.trim() : 'Not provided';
+      document.getElementById('bpPayHint').textContent = fee > 0 ? 'You will complete payment on the next step.' : 'No payment is required.';
+      var confirmBtn = document.getElementById('bpConfirmBtn');
+      confirmBtn.textContent = fee > 0 ? ('Confirm & Pay ₹' + fee) : 'Confirm free booking';
+      document.getElementById('bookingPreviewModal').classList.add('open');
+    }
+    function confirmBookingFromPreview() {
+      closeBookingPreview();
+      initiatePayment();
+    }
+    function showBookingSuccess() {
+      var overlay = document.getElementById('bookingSuccessModal');
+      if (!overlay) {
+        window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
+        return;
+      }
+      document.getElementById('bsWhen').textContent = (document.getElementById('bpWhen') || {}).textContent || document.getElementById('summaryText').innerText;
+      document.getElementById('bsMode').textContent = (document.getElementById('bpMode') || {}).textContent || 'Consultation';
+      document.getElementById('bsFee').textContent = (document.getElementById('bpFee') || {}).textContent || '—';
+      overlay.classList.add('open');
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      
+      renderDates();
 
 
       var reasonBox = document.getElementById('appointmentReason');
@@ -801,17 +1052,4 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
 

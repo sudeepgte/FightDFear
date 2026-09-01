@@ -272,7 +272,13 @@
                 <div class="user-profile">
                     <c:choose>
                         <c:when test="${not empty lawyer.profilePhoto}">
-                            <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" class="user-avatar" alt="Avatar">
+                            <c:set var="pUrl" value="${lawyer.profilePhoto}" />
+                            <c:choose>
+                                <c:when test="${fn:startsWith(pUrl, 'http')}"></c:when>
+                                <c:when test="${fn:startsWith(pUrl, '/')}"><c:set var="pUrl" value="${pageContext.request.contextPath}${pUrl}" /></c:when>
+                                <c:otherwise><c:set var="pUrl" value="${pageContext.request.contextPath}/uploads/${pUrl}" /></c:otherwise>
+                            </c:choose>
+                            <img src="${pUrl}" class="user-avatar" alt="Avatar">
                         </c:when>
                         <c:otherwise>
                             <div class="user-avatar" style="display:flex; justify-content:center; align-items:center; background:#FFE4E6; color:var(--primary); font-weight:700;">
@@ -353,16 +359,7 @@
 
                 <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
                     <div class="stats-grid">
-                        <div class="stat-card" onclick="window.location.href='${pageContext.request.contextPath}/lawyer/profile-completion'">
-                            <div class="stat-icon" style="background:<c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>#DCFCE7</c:when><c:otherwise>#FFE4E6</c:otherwise></c:choose>; color:<c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>#16A34A</c:when><c:otherwise>#DC2626</c:otherwise></c:choose>;">
-                                <i class="bi <c:choose><c:when test='${lawyer.profileCompletionPct >= 100}'>bi-person-check-fill</c:when><c:otherwise>bi-person-exclamation</c:otherwise></c:choose>"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h2 style="font-size: 1.25rem;"><c:choose><c:when test="${lawyer.profileCompletionPct >= 100}">Completed</c:when><c:otherwise>Incomplete</c:otherwise></c:choose></h2>
-                                <p>Profile Status</p>
-                                <span><c:choose><c:when test="${lawyer.profileCompletionPct >= 100}">All details added</c:when><c:otherwise>Update Profile</c:otherwise></c:choose></span>
-                            </div>
-                        </div>
+
                         <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
                             <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
                             <div class="stat-info">
@@ -464,7 +461,13 @@
                 <div class="profile-header-card">
                     <c:choose>
                         <c:when test="${not empty lawyer.profilePhoto}">
-                            <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" class="profile-header-avatar" alt="Avatar">
+                            <c:set var="pUrl" value="${lawyer.profilePhoto}" />
+                            <c:choose>
+                                <c:when test="${fn:startsWith(pUrl, 'http')}"></c:when>
+                                <c:when test="${fn:startsWith(pUrl, '/')}"><c:set var="pUrl" value="${pageContext.request.contextPath}${pUrl}" /></c:when>
+                                <c:otherwise><c:set var="pUrl" value="${pageContext.request.contextPath}/uploads/${pUrl}" /></c:otherwise>
+                            </c:choose>
+                            <img src="${pUrl}" class="profile-header-avatar" alt="Avatar">
                         </c:when>
                         <c:otherwise>
                             <div class="profile-header-avatar">
@@ -638,7 +641,13 @@
                                 <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Profile Photo</label>
                                 <c:choose>
                                     <c:when test="${not empty lawyer.profilePhoto}">
-                                        <img src="${pageContext.request.contextPath}/uploads/${lawyer.profilePhoto}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Profile Photo">
+                                        <c:set var="pUrl" value="${lawyer.profilePhoto}" />
+                                        <c:choose>
+                                            <c:when test="${fn:startsWith(pUrl, 'http')}"></c:when>
+                                            <c:when test="${fn:startsWith(pUrl, '/')}"><c:set var="pUrl" value="${pageContext.request.contextPath}${pUrl}" /></c:when>
+                                            <c:otherwise><c:set var="pUrl" value="${pageContext.request.contextPath}/uploads/${pUrl}" /></c:otherwise>
+                                        </c:choose>
+                                        <img src="${pUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Profile Photo">
                                     </c:when>
                                     <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
                                 </c:choose>
@@ -647,7 +656,13 @@
                                 <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Chamber Photo</label>
                                 <c:choose>
                                     <c:when test="${not empty lawyer.identityDocumentPath}">
-                                        <img src="${pageContext.request.contextPath}/uploads/${lawyer.identityDocumentPath}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Chamber Photo">
+                                        <c:set var="cUrl" value="${lawyer.identityDocumentPath}" />
+                                        <c:choose>
+                                            <c:when test="${fn:startsWith(cUrl, 'http')}"></c:when>
+                                            <c:when test="${fn:startsWith(cUrl, '/')}"><c:set var="cUrl" value="${pageContext.request.contextPath}${cUrl}" /></c:when>
+                                            <c:otherwise><c:set var="cUrl" value="${pageContext.request.contextPath}/uploads/${cUrl}" /></c:otherwise>
+                                        </c:choose>
+                                        <img src="${cUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Chamber Photo">
                                     </c:when>
                                     <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
                                 </c:choose>
@@ -826,7 +841,34 @@
                     <div class="card-header">
                         <h3>My Reviews</h3>
                     </div>
-                    <p style="color:var(--secondary); font-size:0.9rem;">You do not have any reviews yet.</p>
+                    <c:choose>
+                        <c:when test="${empty reviews}">
+                            <p style="color:var(--secondary); font-size:0.9rem;">You do not have any reviews yet.</p>
+                        </c:when>
+                        <c:otherwise>
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                <c:forEach var="rev" items="${reviews}">
+                                    <div style="border: 1px solid var(--border); border-radius: 12px; padding: 15px; background: #fff;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                            <strong style="color: var(--text-main);">${rev.user.fullName}</strong>
+                                            <div style="color: #F59E0B; font-size: 0.9rem;">
+                                                <c:forEach begin="1" end="5" var="i">
+                                                    <c:choose>
+                                                        <c:when test="${rev.rating >= i}"><i class="bi bi-star-fill"></i></c:when>
+                                                        <c:otherwise><i class="bi bi-star"></i></c:otherwise>
+                                                    </c:choose>
+                                                </c:forEach>
+                                            </div>
+                                        </div>
+                                        <p style="color: var(--secondary); font-size: 0.9rem; margin: 0;">${rev.comment}</p>
+                                        <small style="color: var(--secondary); font-size: 0.75rem;">
+                                            ${rev.createdAt.toLocalDate()}
+                                        </small>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
 
@@ -837,6 +879,9 @@
                         <h3>My Documents</h3>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Upload and manage your case documents here.</p>
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div class="profile-field"><label>Bar Council ID</label><div>${empty lawyer.barCouncilId ? 'Not added' : lawyer.barCouncilId}</div></div>
+                    </div>
                 </div>
             </div>
 
@@ -845,9 +890,15 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>My Availability</h3>
-                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Manage Availability</a>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Manage Availability</a>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Configure your working hours, break times, and unavailable dates.</p>
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="profile-field"><label>Operating Days</label><div>${empty lawyer.openDays ? 'Not added' : lawyer.openDays}</div></div>
+                        <div class="profile-field"><label>Working Time</label><div>${empty lawyer.openTime ? 'HH:MM' : lawyer.openTime} — ${empty lawyer.closeTime ? 'HH:MM' : lawyer.closeTime}</div></div>
+                        <div class="profile-field"><label>Consultation Mode</label><div>${empty lawyer.consultationMode ? 'Not added' : lawyer.consultationMode}</div></div>
+                        <div class="profile-field"><label>Service Mode</label><div>${empty lawyer.serviceMode ? 'Not added' : lawyer.serviceMode}</div></div>
+                    </div>
                 </div>
             </div>
 
@@ -856,9 +907,41 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>My Gallery</h3>
-                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Upload Photos</a>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Upload Photos</a>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Manage your profile and chamber photos.</p>
+                    <div style="margin-top: 15px; display:flex; gap:16px;">
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Profile Photo</label>
+                            <c:choose>
+                                <c:when test="${not empty lawyer.profilePhoto}">
+                                    <c:set var="pUrl" value="${lawyer.profilePhoto}" />
+                                    <c:choose>
+                                        <c:when test="${fn:startsWith(pUrl, 'http')}"></c:when>
+                                        <c:when test="${fn:startsWith(pUrl, '/')}"><c:set var="pUrl" value="${pageContext.request.contextPath}${pUrl}" /></c:when>
+                                        <c:otherwise><c:set var="pUrl" value="${pageContext.request.contextPath}/uploads/${pUrl}" /></c:otherwise>
+                                    </c:choose>
+                                    <img src="${pUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Profile Photo">
+                                </c:when>
+                                <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div style="flex:1;">
+                            <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Chamber Photo</label>
+                            <c:choose>
+                                <c:when test="${not empty lawyer.identityDocumentPath}">
+                                    <c:set var="cUrl" value="${lawyer.identityDocumentPath}" />
+                                    <c:choose>
+                                        <c:when test="${fn:startsWith(cUrl, 'http')}"></c:when>
+                                        <c:when test="${fn:startsWith(cUrl, '/')}"><c:set var="cUrl" value="${pageContext.request.contextPath}${cUrl}" /></c:when>
+                                        <c:otherwise><c:set var="cUrl" value="${pageContext.request.contextPath}/uploads/${cUrl}" /></c:otherwise>
+                                    </c:choose>
+                                    <img src="${cUrl}" style="width:100%; height:120px; object-fit:cover; border-radius:8px;" alt="Chamber Photo">
+                                </c:when>
+                                <c:otherwise><div style="width:100%; height:120px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--secondary);">Not added</div></c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -867,19 +950,78 @@
                 <div class="card">
                     <div class="card-header">
                         <h3>Bank & Payments</h3>
-                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px;">Update Bank Info</a>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Update Bank Info</a>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Manage your payout preferences, UPI ID, and Bank Account details.</p>
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div class="profile-field"><label>UPI ID</label><div>${empty lawyer.upiId ? 'Not added' : lawyer.upiId}</div></div>
+                        <div class="profile-field"><label>Bank Details</label><div>${empty lawyer.bankDetails ? 'Not added' : lawyer.bankDetails}</div></div>
+                    </div>
                 </div>
             </div>
 
             <!-- Settings Tab -->
             <div id="settings-tab" class="tab-section">
+                <!-- Profile Settings -->
+                <div class="card" style="margin-bottom:20px;">
+                    <div class="card-header">
+                        <h3><i class="bi bi-person" style="color:var(--primary); margin-right:8px;"></i>Account Details</h3>
+                        <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Edit Profile</a>
+                    </div>
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="profile-field"><label>Full Name</label><div style="font-weight:600; color:var(--text);">${empty lawyer.fullName ? 'Not added' : lawyer.fullName}</div></div>
+                        <div class="profile-field"><label>Email Address</label><div style="font-weight:600; color:var(--text);">${empty lawyer.email ? 'Not added' : lawyer.email}</div></div>
+                        <div class="profile-field"><label>Phone Number</label><div style="font-weight:600; color:var(--text);">${empty lawyer.phone ? 'Not added' : lawyer.phone}</div></div>
+                        <div class="profile-field"><label>Role / Category</label><div><span class="badge" style="background:#FFE4E6; color:var(--primary); padding:6px 12px; border-radius:20px; font-weight:600;">${empty lawyer.category ? 'Women Lawyer' : lawyer.category}</span></div></div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="card" style="margin-bottom:20px;">
+                    <div class="card-header">
+                        <h3><i class="bi bi-shield-lock" style="color:var(--primary); margin-right:8px;"></i>Security</h3>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; align-items:center; padding: 15px 0; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <div style="font-weight:600; color:var(--text);">Password</div>
+                            <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Change your password to keep your account secure.</div>
+                        </div>
+                        <button style="padding:8px 16px; border-radius:8px; border:1px solid var(--primary); background:transparent; color:var(--primary); font-weight:600; cursor:pointer;">Update Password</button>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; align-items:center; padding: 15px 0;">
+                        <div>
+                            <div style="font-weight:600; color:var(--text);">Two-Factor Authentication</div>
+                            <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Add an extra layer of security to your account.</div>
+                        </div>
+                        <div style="width: 40px; height: 20px; background: var(--border); border-radius: 20px; position: relative; cursor: pointer;">
+                            <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
                 <div class="card">
                     <div class="card-header">
-                        <h3>Account Settings</h3>
+                        <h3><i class="bi bi-bell" style="color:var(--primary); margin-right:8px;"></i>Notifications</h3>
                     </div>
-                    <p style="color:var(--secondary); font-size:0.9rem;">Manage your account preferences, password, and notifications.</p>
+                    <div style="display:flex; justify-content: space-between; align-items:center; padding: 15px 0; border-bottom: 1px solid var(--border);">
+                        <div>
+                            <div style="font-weight:600; color:var(--text);">Email Notifications</div>
+                            <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Receive updates and appointment details via email.</div>
+                        </div>
+                        <div style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
+                            <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; align-items:center; padding: 15px 0;">
+                        <div>
+                            <div style="font-weight:600; color:var(--text);">SMS Alerts</div>
+                            <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Receive immediate SMS alerts for bookings.</div>
+                        </div>
+                        <div style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
+                            <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             

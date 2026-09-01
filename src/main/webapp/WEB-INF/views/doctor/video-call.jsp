@@ -9,10 +9,10 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
     <style>
-        body, html { height: 100%; margin: 0; background: #0f0f1a; color: white; overflow: hidden; }
+        body, html { height: 100%; margin: 0; background: #0F172A; color: white; overflow: hidden; }
         #meet { width: 100%; height: calc(100% - 60px); }
-        .header-bar { height: 60px; background: rgba(74, 14, 120, 0.9); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.2rem; color: #ffd700; text-decoration: none; }
+        .header-bar { height: 60px; background: linear-gradient(135deg,#0F172A,#1E293B); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.35); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .logo-text { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.2rem; color: #F43F5E; text-decoration: none; }
     </style>
 </head>
 <body>

@@ -15,7 +15,7 @@
         :root {
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
+            --navy: #0F172A;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -66,6 +66,54 @@
         .badge-changes { background: var(--warning-bg); color: var(--warning); border: 1px solid #FFEDD5; }
         .badge-approved { background: var(--success-bg); color: var(--success); }
         .badge-rejected { background: var(--error-bg); color: var(--error); }
+
+        .org-preview-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 18px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+        }
+        .org-preview-card h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin: 0 0 4px;
+        }
+        .org-preview-card .preview-hint {
+            font-size: 0.78rem;
+            color: var(--text-gray);
+            margin-bottom: 12px;
+        }
+        .org-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 16px;
+        }
+        .org-preview-item label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-gray);
+            margin-bottom: 2px;
+        }
+        .org-preview-item span {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--navy);
+            word-break: break-word;
+        }
+        .org-preview-bio {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+        @media (max-width: 640px) {
+            .org-preview-grid { grid-template-columns: 1fr; }
+        }
 
         .progress-bar-container {
             height: 8px;
@@ -360,6 +408,24 @@
                     </c:forEach>
                 </ul>
             </c:if>
+        </div>
+
+        <div class="org-preview-card" id="orgPreviewCard">
+            <h3>Application preview</h3>
+            <p class="preview-hint">This is what admin will review. It updates as you fill the form — only existing profile fields are shown.</p>
+            <div class="org-preview-grid">
+                <div class="org-preview-item"><label>Full name</label><span id="pv-fullName">—</span></div>
+                <div class="org-preview-item"><label>Email</label><span><c:out value="${host.email}"/></span></div>
+                <div class="org-preview-item"><label>Phone</label><span id="pv-phone">—</span></div>
+                <div class="org-preview-item"><label>Organization</label><span id="pv-organizerName">—</span></div>
+                <div class="org-preview-item"><label>Type</label><span id="pv-organizerType">—</span></div>
+                <div class="org-preview-item"><label>Location</label><span id="pv-location">—</span></div>
+                <div class="org-preview-item"><label>Categories</label><span id="pv-categories">—</span></div>
+                <div class="org-preview-item"><label>Experience</label><span id="pv-years">—</span></div>
+            </div>
+            <div class="org-preview-bio">
+                <div class="org-preview-item"><label>Bio</label><span id="pv-bio">—</span></div>
+            </div>
         </div>
 
         <c:if test="${not empty success}">
@@ -1165,6 +1231,39 @@
                 alertBox.style.display = 'flex';
             }
         }
+
+        function previewVal(id) {
+            const el = document.getElementById(id);
+            if (!el) return '—';
+            const v = (el.value || '').trim();
+            return v ? v : '—';
+        }
+        function previewChecked(prefix) {
+            const boxes = document.querySelectorAll('input[id^="' + prefix + '"]:checked');
+            const vals = Array.from(boxes).map(b => b.value || b.nextElementSibling?.textContent?.trim() || b.parentElement?.textContent?.trim()).filter(Boolean);
+            return vals.length ? vals.join(', ') : '—';
+        }
+        function refreshOrgPreview() {
+            const set = (id, text) => { const n = document.getElementById(id); if (n) n.textContent = text || '—'; };
+            set('pv-fullName', previewVal('fullName'));
+            set('pv-phone', previewVal('phone'));
+            set('pv-organizerName', previewVal('organizerName'));
+            set('pv-organizerType', previewVal('organizerType'));
+            const city = previewVal('city');
+            const stateEl = document.getElementById('stateSelect');
+            const state = stateEl && stateEl.value ? stateEl.value : '';
+            set('pv-location', city === '—' && !state ? '—' : [city === '—' ? '' : city, state].filter(Boolean).join(', '));
+            set('pv-categories', previewChecked('cb-category'));
+            const years = previewVal('yearsExperience');
+            set('pv-years', years === '—' ? '—' : years + ' years');
+            set('pv-bio', previewVal('hostBio'));
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshOrgPreview();
+            const form = document.getElementById('hostProfileForm');
+            if (form) form.addEventListener('input', refreshOrgPreview);
+            if (form) form.addEventListener('change', refreshOrgPreview);
+        });
     </script>
 </body>
 </html>

@@ -10,113 +10,119 @@
   <title>Event Organizer Profile — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --maroon: #1e1b4b;
-    --maroon-light: #312e81;
-    --maroon-dark: #0b0920;
-    --maroon-pale: #f8fafc;
-    --maroon-border: rgba(30, 27, 75, 0.12);
-    --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
+    --we-navy: #0F172A;
+    --we-navy-soft: #1E293B;
+    --we-accent: #F43F5E;
+    --we-bg: #F8FAFC;
+    --we-card: #FFFFFF;
+    --we-muted: #64748B;
+    --we-border: #E2E8F0;
     --sidebar-w: 272px;
   }
   * { box-sizing: border-box; }
-  body { font-family:'Poppins',sans-serif; margin:0; background:var(--maroon-pale); color:#1a1a2e; }
+  body { font-family:'Outfit',sans-serif; margin:0; background:var(--we-bg); color:var(--we-navy); }
   .topbar {
-    background: var(--maroon); color:#fff; padding: 0 20px; height: 58px;
+    background: var(--we-navy); color:#fff; padding: 0 20px; height: 58px;
     display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 1000;
-    box-shadow: 0 3px 16px rgba(125,42,90,0.28);
   }
-  .topbar .brand { font-size:1.1rem; font-weight:700; }
+  .topbar .brand { font-size:1.05rem; font-weight:700; }
   .topbar .btn-logout {
-    background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3);
-    border-radius:7px; padding:5px 16px; font-size:0.85rem; font-weight:600; text-decoration:none;
+    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25);
+    border-radius:8px; padding:6px 14px; font-size:0.85rem; font-weight:600; text-decoration:none;
   }
   .layout { display:flex; min-height:calc(100vh - 58px); }
   .main { flex:1; min-width:0; padding:28px 20px 48px; }
-  .mainInner { max-width:900px; margin:0 auto; }
+  .mainInner { max-width:920px; margin:0 auto; }
   .pg-header {
-    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, #c04b7a 100%);
-    border-radius:16px; padding:22px 28px; margin-bottom:28px;
-    box-shadow:0 8px 28px rgba(125,42,90,0.22);
-    display:flex; align-items:center; justify-content:space-between;
+    background: #fff; border: 1px solid var(--we-border);
+    border-radius:16px; padding:20px 24px; margin-bottom:22px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
   }
-  .pg-header h4 { color:#fff; font-weight:700; font-size:1.2rem; margin:0; }
-  .pg-header p { color:rgba(255,255,255,0.7); margin:4px 0 0; font-size:0.85rem; }
+  .pg-header h4 { color:var(--we-navy); font-weight:800; font-size:1.2rem; margin:0; }
+  .pg-header p { color:var(--we-muted); margin:4px 0 0; font-size:0.85rem; }
   .pg-header .btn-back {
-    background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.4);
-    border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
+    background: #F8FAFC; color: var(--we-navy); border: 1px solid var(--we-border);
+    border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
   }
   .profile-card {
-    background: #fff; border-radius: 16px; padding: 30px;
-    box-shadow: var(--shadow-sm); border: 1px solid var(--maroon-border);
+    background: #fff; border-radius: 16px; padding: 28px;
+    box-shadow: 0 4px 20px rgba(15,23,42,0.05); border: 1px solid var(--we-border);
   }
   .profile-header {
     display: flex; flex-direction: column; align-items: center; text-align: center;
-    margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid var(--maroon-border);
+    margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--we-border);
   }
   .profile-avatar {
-    width: 100px; height: 100px; background: var(--maroon-pale); color: var(--maroon);
+    width: 96px; height: 96px; background: #FFF1F2; color: var(--we-accent);
     border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 2.5rem; margin-bottom: 15px; border: 2px solid var(--maroon-light);
+    font-size: 2.2rem; margin-bottom: 14px; border: 1px solid #FECDD3; object-fit: cover;
   }
-  .profile-name { font-size: 1.6rem; font-weight: 700; color: var(--maroon-dark); margin-bottom: 5px; }
-  .profile-email { color: #6b7280; font-size: 0.95rem; margin-bottom: 15px; }
+  .profile-name { font-size: 1.5rem; font-weight: 800; color: var(--we-navy); margin-bottom: 4px; }
+  .profile-email { color: var(--we-muted); font-size: 0.95rem; margin-bottom: 12px; }
   .badge-status {
-    padding:6px 16px; border-radius:999px; font-size:0.8rem; font-weight:700;
+    padding:6px 14px; border-radius:999px; font-size:0.78rem; font-weight:700;
     display:inline-block; border:1px solid transparent;
   }
-  .status-APPROVED, .status-VERIFIED { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-  .status-PENDING, .status-PENDING_ADMIN_APPROVAL { background:#fef9c3; color:#854d0e; border-color:#fef08a; }
-  .status-PROFILE_INCOMPLETE, .status-REGISTERED, .status-READY_FOR_VERIFICATION { background:#e0e7ff; color:#3730a3; border-color:#c7d2fe; }
-  .status-REJECTED { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-  .status-CHANGES_REQUESTED { background:#ffedd5; color:#9a3412; border-color:#fed7aa; }
+  .status-APPROVED, .status-VERIFIED { background:#DCFCE7; color:#166534; border-color:#BBF7D0; }
+  .status-PENDING, .status-PENDING_ADMIN_APPROVAL { background:#FEF3C7; color:#92400E; border-color:#FDE68A; }
+  .status-PROFILE_INCOMPLETE, .status-REGISTERED, .status-READY_FOR_VERIFICATION { background:#F1F5F9; color:#475569; border-color:#E2E8F0; }
+  .status-REJECTED { background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
+  .status-CHANGES_REQUESTED { background:#FFEDD5; color:#9A3412; border-color:#FED7AA; }
   .section-title {
-    font-size: 1.1rem; font-weight: 700; color: var(--maroon);
-    margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+    font-size: 1rem; font-weight: 800; color: var(--we-navy);
+    margin: 8px 0 14px; display: flex; align-items: center; gap: 8px;
   }
   .info-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px; margin-bottom: 30px;
+    gap: 14px; margin-bottom: 24px;
   }
   .info-item {
-    background: var(--maroon-pale); padding: 16px; border-radius: 12px;
-    border: 1px solid var(--maroon-border);
+    background: var(--we-bg); padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--we-border);
   }
   .info-label {
-    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--maroon-light); font-weight: 700; margin-bottom: 6px;
-    display: flex; align-items: center; gap: 6px;
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--we-muted); font-weight: 700; margin-bottom: 6px;
   }
-  .info-value { font-size: 1.05rem; font-weight: 600; color: var(--maroon-dark); word-break: break-word; }
-  .info-item.highlight { background: #fff; border: 2px solid var(--maroon-light); }
+  .info-value { font-size: 0.98rem; font-weight: 600; color: var(--we-navy); word-break: break-word; white-space: pre-wrap; }
+  .info-item.highlight { background: #fff; border: 1px solid #FECDD3; }
+  .bio-block { white-space: pre-wrap; font-weight: 500; line-height: 1.55; }
   .doc-box {
-    background: #fff; border-radius: 12px; padding: 20px;
-    display: flex; align-items: center; gap: 16px;
-    border: 1px solid var(--maroon-border); margin-bottom: 16px;
+    background: #fff; border-radius: 12px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+    border: 1px solid var(--we-border); margin-bottom: 12px;
   }
   .doc-box-icon {
-    width: 50px; height: 50px; background: var(--maroon-pale); color: var(--maroon);
-    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+    width: 44px; height: 44px; background: #FFF1F2; color: var(--we-accent);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
   }
-  .doc-link { color: var(--maroon); font-weight: 700; text-decoration: none; }
+  .doc-link { color: var(--we-navy); font-weight: 700; text-decoration: none; }
   .action-bar {
-    display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;
-    padding-top: 25px; border-top: 1px solid var(--maroon-border);
+    display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
+    padding-top: 22px; border-top: 1px solid var(--we-border);
   }
   .btn-verify {
     background: #059669; color: #fff; border: none; border-radius: 10px;
-    padding: 12px 28px; font-size: 1rem; font-weight: 600; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 8px;
+    padding: 11px 22px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
   }
   .btn-reject {
-    background: #dc2626; color: #fff; border: none; border-radius: 10px;
-    padding: 12px 28px; font-size: 1rem; font-weight: 600; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 8px;
+    background: #DC2626; color: #fff; border: none; border-radius: 10px;
+    padding: 11px 22px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
   }
-  .missing-list { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; color: #64748b; }
+  .missing-list { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; color: var(--we-muted); }
+  .event-row {
+    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:12px 0; border-bottom:1px solid #F1F5F9; font-size:0.9rem;
+  }
+  .event-row:last-child { border-bottom:none; }
+  @media (max-width: 720px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .profile-card { padding: 20px 16px; }
+  }
 </style>
 </head>
 <body>
@@ -134,8 +140,8 @@
 
       <div class="pg-header">
         <div>
-          <h4><i class="fas fa-calendar-check me-2"></i>Event Organizer Profile</h4>
-          <p>Full profile details before approval</p>
+          <h4>Event Organizer Profile</h4>
+          <p>Full application preview before approve / reject / request changes</p>
         </div>
         <a href="${pageContext.request.contextPath}/admin/pending-event-hosts" class="btn-back">
           <i class="fas fa-arrow-left me-1"></i> Back to Organizers
@@ -269,11 +275,27 @@
               <c:if test="${not empty openTimeLabel}"><br/>${openTimeLabel}<c:if test="${not empty closeTimeLabel}"> – ${closeTimeLabel}</c:if></c:if>
             </div>
           </div>
+          <div class="info-item">
+            <div class="info-label">Host contact</div>
+            <div class="info-value">${not empty host.hostContact ? host.hostContact : '—'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Facilities</div>
+            <div class="info-value">${not empty host.facilities ? host.facilities : '—'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">On-site / door service</div>
+            <div class="info-value">${host.doorService == true ? 'Yes' : 'No'}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">UPI ID</div>
+            <div class="info-value">${not empty host.upiId ? host.upiId : '—'}</div>
+          </div>
         </div>
 
         <div class="section-title"><i class="fas fa-align-left"></i> About</div>
         <div class="info-item mb-4">
-          <div class="info-value" style="font-weight:500;"><c:out value="${not empty host.hostBio ? host.hostBio : '—'}"/></div>
+          <div class="info-value bio-block"><c:out value="${not empty host.hostBio ? host.hostBio : 'Not provided'}"/></div>
         </div>
 
         <c:if test="${not empty missingItems}">
@@ -323,6 +345,29 @@
           </div>
         </div>
 
+        <div class="section-title"><i class="fas fa-calendar-day"></i> Events by this organizer</div>
+        <c:choose>
+          <c:when test="${not empty hostEvents}">
+            <c:forEach var="ev" items="${hostEvents}">
+              <div class="event-row">
+                <div>
+                  <strong><c:out value="${ev.name}"/></strong>
+                  <div class="text-muted small">
+                    <c:out value="${ev.category}"/> ·
+                    <c:out value="${empty ev.eventDate ? 'Date not set' : ev.eventDate}"/>
+                    <c:if test="${not empty ev.eventTime}"> · <c:out value="${ev.eventTime}"/></c:if>
+                    · <c:out value="${empty ev.city ? 'City not set' : ev.city}"/>
+                  </div>
+                </div>
+                <span class="badge-status status-${ev.status}"><c:out value="${ev.status}"/></span>
+              </div>
+            </c:forEach>
+          </c:when>
+          <c:otherwise>
+            <p class="text-muted mb-4">This organizer has not created any events yet.</p>
+          </c:otherwise>
+        </c:choose>
+
         <div class="section-title"><i class="fas fa-gavel"></i> Admin Decision</div>
         <div class="mb-3">
           <span class="badge-status status-${statusStr}">${statusLabel}</span>
@@ -351,6 +396,7 @@
         </div>
 
         <div class="action-bar">
+          <c:if test="${statusStr ne 'APPROVED'}">
           <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/approve" method="post" class="m-0">
             <input type="hidden" name="notes" id="approveNotes">
             <button type="submit" class="btn-verify"
@@ -358,7 +404,9 @@
               <i class="fas fa-check-circle"></i> Approve
             </button>
           </form>
+          </c:if>
 
+          <c:if test="${statusStr ne 'REJECTED' and statusStr ne 'SUSPENDED'}">
           <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/request-changes" method="post" class="m-0">
             <input type="hidden" name="notes" id="changesNotes">
             <input type="hidden" name="reasons" id="changesReasons">
@@ -370,7 +418,9 @@
               <i class="fas fa-edit"></i> Request Changes
             </button>
           </form>
+          </c:if>
 
+          <c:if test="${statusStr ne 'REJECTED'}">
           <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/reject" method="post" class="m-0"
                 onsubmit="return confirm('Reject this event organizer?')">
             <input type="hidden" name="notes" id="rejectNotes">
@@ -379,6 +429,7 @@
               <i class="fas fa-times-circle"></i> Reject
             </button>
           </form>
+          </c:if>
         </div>
       </div>
 

@@ -1893,6 +1893,7 @@ public class AdminController {
         if (h.getCloseTime() != null) {
             model.addAttribute("closeTimeLabel", h.getCloseTime().toString().substring(0, Math.min(5, h.getCloseTime().toString().length())));
         }
+        model.addAttribute("hostEvents", womenEventRepository.findByOrganizerOrderByCreatedAtDesc(h));
         return "adminViewEventHostProfile";
     }
 

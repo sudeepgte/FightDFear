@@ -23,6 +23,7 @@ import in.sp.main.Entities.ProviderCategory;
 import in.sp.main.Entities.ServiceProvider;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.ProviderBookingRepository;
+import in.sp.main.Repository.ProviderReviewRepository;
 import in.sp.main.Service.OtpVerificationService;
 import in.sp.main.Entities.OtpPurpose;
 import in.sp.main.Entities.OtpChannel;
@@ -47,6 +48,9 @@ public class LawyerController {
 
     @Autowired
     private ProviderBookingRepository bookingRepo;
+
+    @Autowired
+    private ProviderReviewRepository reviewRepo;
 
     @Autowired
     private FileUploadService fileUploadService;
@@ -228,6 +232,7 @@ public class LawyerController {
         p = providerRepo.findById(p.getId()).orElse(p);
         model.addAttribute("lawyer", p);
         model.addAttribute("bookings", bookingRepo.findByProviderOrderByRequestedTimeDesc(p));
+        model.addAttribute("reviews", reviewRepo.findByProviderIdOrderByCreatedAtDesc(p.getId()));
         
         return "lawyer/dashboard";
     }
