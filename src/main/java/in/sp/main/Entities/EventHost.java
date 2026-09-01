@@ -102,6 +102,21 @@ public class EventHost {
     private Double rating = 0.0;
     private Integer reviewCount = 0;
 
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+    private String dateOfBirth;
+    @Column(columnDefinition = "TEXT")
+    private String languages;
+    private String youtube;
+    @Column(name = "awards_recognition", columnDefinition = "TEXT")
+    private String awardsRecognition;
+    private String country;
+    private String area;
+    @Column(name = "events_conducted")
+    private Integer eventsConducted;
+    @Column(name = "previous_event_details", columnDefinition = "TEXT")
+    private String previousEventDetails;
+
     @PrePersist
     protected void onCreate() { this.createdAt = LocalDateTime.now(); }
 
@@ -253,4 +268,23 @@ public class EventHost {
     public void setRating(Double rating) { this.rating = rating; }
     public Integer getReviewCount() { return reviewCount == null ? 0 : reviewCount; }
     public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
+
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) { this.gender = gender; }
+    public String getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public String getLanguages() { return languages; }
+    public void setLanguages(String languages) { this.languages = languages; }
+    public String getYoutube() { return youtube; }
+    public void setYoutube(String youtube) { this.youtube = youtube; }
+    public String getAwardsRecognition() { return awardsRecognition; }
+    public void setAwardsRecognition(String awardsRecognition) { this.awardsRecognition = awardsRecognition; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+    public String getArea() { return area; }
+    public void setArea(String area) { this.area = area; }
+    public Integer getEventsConducted() { return eventsConducted; }
+    public void setEventsConducted(Integer eventsConducted) { this.eventsConducted = eventsConducted; }
+    public String getPreviousEventDetails() { return previousEventDetails; }
+    public void setPreviousEventDetails(String previousEventDetails) { this.previousEventDetails = previousEventDetails; }
 }

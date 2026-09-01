@@ -13,9 +13,111 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"/>
     
-    <!-- Custom Theme & Detail Stylesheets -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css"/>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css"/>
+    <!-- Event detail theme only — cream / plum / pink. No global palette. -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css?v=20260901"/>
+    <style>
+        :root {
+            --bg-primary: #FFF4F6;
+            --bg-card: #FFFFFF;
+            --bg-secondary: #FFF1F2;
+            --border-neutral: #F3D4DC;
+            --border-secondary: #FDA4AF;
+            --color-accent: #F43F5E;
+            --color-accent-hover: #E11D48;
+            --text-primary: #2D142C;
+            --text-secondary: #6B3A4A;
+            --shadow-sm: 0 4px 12px rgba(45, 20, 44, 0.04);
+            --shadow-md: 0 12px 30px rgba(45, 20, 44, 0.07);
+            --shadow-lg: 0 20px 48px rgba(45, 20, 44, 0.1);
+        }
+        body, #page-content-wrapper {
+            background-color: #FFF4F6 !important;
+            color: #2D142C !important;
+        }
+        .event-hero { background: #2D142C !important; }
+        .hero-overlay {
+            background: linear-gradient(to top, rgba(45, 20, 44, 0.95) 0%, rgba(45, 20, 44, 0.5) 60%, transparent 100%) !important;
+        }
+        .block-title, .event-title, .sidebar-price, .feature-card h4, .timeline-content h4,
+        .facilitator-info h4, .expect-item h5, .avg-rating-value, .reviewer-title-name,
+        .breadcrumb-container .breadcrumb-item.active, .sidebar-meta-item .meta-value {
+            color: #2D142C !important;
+        }
+        .register-sidebar,
+        .mobile-sticky-action-bar {
+            position: static !important;
+            top: auto !important;
+        }
+        .feature-card, .feature-card:hover,
+        .btn-premium-cta, .btn-premium-cta:hover,
+        .gallery-card-item img, .gallery-card-item:hover img,
+        .btn-map-guide, .btn-map-guide:hover {
+            transform: none !important;
+            transition: none !important;
+        }
+        .gallery-overlay-effect { background: rgba(45, 20, 44, 0.35) !important; }
+        .registered-badge-box {
+            background: #FFF1F2 !important;
+            border-color: #FDA4AF !important;
+            color: #F43F5E !important;
+        }
+        .avg-rating-stars, .rating-bar-fill, .review-stars-metric,
+        .star-input input:checked ~ label,
+        .star-input label:hover,
+        .star-input label:hover ~ label {
+            color: #F43F5E !important;
+            background-color: #F43F5E;
+        }
+        .avg-rating-stars, .review-stars-metric { background-color: transparent !important; }
+        .bottom-registration-cta {
+            background: linear-gradient(135deg, #2D142C 0%, #4A1A3A 70%, #F43F5E 100%) !important;
+        }
+        #page-content-wrapper .text-primary,
+        #page-content-wrapper .text-success,
+        #page-content-wrapper .text-warning,
+        #page-content-wrapper .text-danger { color: #F43F5E !important; }
+        #page-content-wrapper .bg-success { background-color: #F43F5E !important; }
+        #page-content-wrapper .bg-light { background-color: #FFF1F2 !important; }
+        #page-content-wrapper a { color: #F43F5E; }
+        #page-content-wrapper .btn-premium-cta,
+        #page-content-wrapper .btn-share-pill { color: #FFFFFF !important; }
+        .hero-featured-badge {
+            background: rgba(244, 63, 94, 0.22);
+            border: 1px solid #FDA4AF;
+            padding: 2px 10px;
+            border-radius: 99px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+        .reserved-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #F43F5E;
+            color: #FFFFFF;
+            padding: 14px 28px;
+            border-radius: 99px;
+            font-weight: 700;
+        }
+        .btn-share-pill {
+            background: #F43F5E;
+            color: #FFFFFF !important;
+            border: none;
+            border-radius: 99px;
+            padding: 8px 16px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .btn-share-outline {
+            background: transparent;
+            color: #2D142C !important;
+            border: 1px solid #FDA4AF;
+        }
+        @media (max-width: 991px) {
+            .detail-grid { padding-bottom: 40px !important; }
+            .mobile-sticky-action-bar { display: block; position: static !important; }
+        }
+    </style>
 </head>
 <body>
 
@@ -30,13 +132,13 @@
 
         <!-- Alert Banners -->
         <c:if test="${not empty success}">
-            <div class="flash-alert alert alert-success alert-dismissible fade show m-3" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; border-radius: 12px; box-shadow: var(--shadow-md);">
+            <div class="flash-alert alert alert-dismissible fade show m-3" role="alert" style="background:#FFF1F2; border:1px solid #FDA4AF; color:#2D142C; border-radius: 12px;">
                 <i class="bi bi-check-circle-fill me-2"></i>${success}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         <c:if test="${not empty error}">
-            <div class="flash-alert alert alert-danger alert-dismissible fade show m-3" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; border-radius: 12px; box-shadow: var(--shadow-md);">
+            <div class="flash-alert alert alert-dismissible fade show m-3" role="alert" style="background:#FFF1F2; border:1px solid #F43F5E; color:#2D142C; border-radius: 12px;">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -50,7 +152,7 @@
                 </c:when>
                 <c:otherwise>
                     <!-- Fallback abstract premium background pattern if banner is missing -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #1e1b4b 0%, #3F1430 50%, #f43f5e 100%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #2D142C 0%, #4A1A3A 55%, #F43F5E 100%);"></div>
                 </c:otherwise>
             </c:choose>
             <div class="hero-overlay"></div>
@@ -64,8 +166,8 @@
                     <span><i class="bi bi-geo-alt-fill"></i> ${event.venue}, ${event.city}</span>
                     <span><i class="bi bi-building-fill-check"></i> By ${event.organizerName}</span>
                     <c:if test="${event.featured}">
-                        <span style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; padding: 2px 10px; border-radius: 99px; font-weight: 700; color: #fbbf24;">
-                            <i class="bi bi-star-fill" style="color:#fbbf24;"></i> Featured
+                        <span class="hero-featured-badge">
+                            <i class="bi bi-star-fill"></i> Featured
                         </span>
                     </c:if>
                 </div>
@@ -248,7 +350,7 @@
                                     allowfullscreen loading="lazy"></iframe>
                             <div class="map-address-block">
                                 <div>
-                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${event.venue}</h5>
+                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill me-1" style="color:#F43F5E;"></i> ${event.venue}</h5>
                                     <p class="text-muted small mb-0">${event.city}, Safe Zone Mapping Enabled</p>
                                 </div>
                                 <a href="https://maps.google.com/maps?q=${event.mapsLocation}" target="_blank" class="btn-map-guide">
@@ -263,7 +365,7 @@
                 <div class="card-block">
                     <div class="block-title">
                         <i class="bi bi-images"></i> Photo Gallery 
-                        <span class="badge bg-secondary text-dark ms-2 font-weight-bold" style="font-size:0.75rem; border: 1px solid var(--border-secondary);">${photos.size()} Files</span>
+                        <span class="count-pill">${photos.size()} Files</span>
                     </div>
                     
                     <c:choose>
@@ -311,7 +413,7 @@
 
                 <!-- Reviews and Rating Section -->
                 <div class="card-block">
-                    <div class="block-title"><i class="bi bi-star-fill text-warning"></i> Ratings &amp; Reviews</div>
+                    <div class="block-title"><i class="bi bi-star-fill"></i> Ratings &amp; Reviews</div>
                     
                     <div class="reviews-summary-box">
                         <div>
@@ -366,7 +468,7 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div class="text-center py-4 bg-light rounded-4" style="border: 1px dashed var(--border-neutral);">
+                            <div class="text-center py-4 rounded-4" style="background: var(--bg-secondary); border: 1px dashed var(--border-neutral);">
                                 <i class="bi bi-chat-heart text-muted mb-2" style="font-size: 2rem;"></i>
                                 <p class="text-muted small mb-0">No reviews published yet for this event.</p>
                             </div>
@@ -458,10 +560,20 @@
                                     <div class="registered-badge-box">
                                         <i class="bi bi-check-circle-fill"></i>
                                         <h5>Registration Active</h5>
-                                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn btn-sm btn-link text-success fw-bold text-decoration-none mt-1">
-                                            <i class="bi bi-ticket-perforated-fill"></i> View My Ticket code
+                                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="ticket-link">
+                                            <i class="bi bi-ticket-perforated-fill"></i> View My Ticket
                                         </a>
                                     </div>
+                                </c:when>
+                                <c:when test="${soldOut}">
+                                    <button class="btn-premium-cta" disabled>
+                                        <i class="bi bi-x-circle-fill"></i> SOLD OUT
+                                    </button>
+                                </c:when>
+                                <c:when test="${registrationOpen == false}">
+                                    <button class="btn-premium-cta" disabled>
+                                        Registration for this event has closed.
+                                    </button>
                                 </c:when>
                                 <c:when test="${eventPassed}">
                                     <button class="btn-premium-cta" disabled>
@@ -472,6 +584,10 @@
                                     <c:choose>
                                         <c:when test="${event.free}">
                                             <form action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="width: 100%;">
+                                                <c:if test="${not empty coinQuote}">
+                                                    <p class="small text-muted mb-2">Coins available: ${coinQuote.availableCoins}. Max redeemable: ${coinQuote.maxRedeemableCoins}.</p>
+                                                    <input type="number" name="coins" min="0" max="${coinQuote.maxRedeemableCoins}" value="0" class="form-control mb-2" placeholder="Coins to apply"/>
+                                                </c:if>
                                                 <button type="submit" class="btn-premium-cta">
                                                     <i class="bi bi-ticket-perforated-fill"></i> Claim Free Ticket
                                                 </button>
@@ -490,19 +606,19 @@
 
                         <hr style="margin: 24px 0; border-color: var(--border-neutral);"/>
                         <div class="sidebar-extra">
-                            <p class="mb-1"><i class="bi bi-shield-lock-fill text-success"></i> Highly secure identity protection system</p>
-                            <p class="mb-0"><i class="bi bi-ticket-detailed-fill text-danger"></i> Digital secure ticket code issued instantly</p>
+                            <p class="mb-1"><i class="bi bi-shield-lock-fill"></i> Highly secure identity protection system</p>
+                            <p class="mb-0"><i class="bi bi-ticket-detailed-fill"></i> Digital secure ticket code issued instantly</p>
                         </div>
                     </div>
 
                     <!-- Share Event Card structure -->
                     <div class="sidebar-card">
-                        <h5 class="fw-bold mb-3" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-share-fill text-primary me-2"></i> Spread the Word</h5>
+                        <h5 class="share-title"><i class="bi bi-share-fill"></i> Spread the Word</h5>
                         <div class="share-links-wrapper">
                             <a href="https://wa.me/?text=Check+out+this+workshop:+${event.name}+at+${pageContext.request.contextPath}/women-events/${event.id}"
-                               target="_blank" class="btn btn-sm btn-success rounded-pill btn-share-pill"><i class="bi bi-whatsapp"></i> Share on WhatsApp</a>
-                            <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>alert('Link copied!'))" 
-                                    class="btn btn-sm btn-outline-secondary rounded-pill btn-share-pill"><i class="bi bi-link-45deg"></i> Copy Details Link</button>
+                               target="_blank" class="btn-share-pill"><i class="bi bi-whatsapp"></i> Share on WhatsApp</a>
+                            <button type="button" onclick="navigator.clipboard.writeText(window.location.href).then(()=>alert('Link copied!'))"
+                                    class="btn-share-pill btn-share-outline"><i class="bi bi-link-45deg"></i> Copy Details Link</button>
                         </div>
                     </div>
 
@@ -523,7 +639,7 @@
                         </a>
                     </c:when>
                     <c:when test="${alreadyRegistered}">
-                        <div class="d-inline-flex align-items-center gap-2 bg-success text-white py-3 px-5 rounded-pill fw-bold">
+                        <div class="reserved-pill">
                             <i class="bi bi-check-circle-fill"></i> Seat Reserved &amp; Confirmed
                         </div>
                     </c:when>
@@ -553,7 +669,7 @@
                         </a>
                     </c:when>
                     <c:when test="${alreadyRegistered}">
-                        <span class="badge bg-success py-2 px-3 rounded-pill fw-bold" style="font-size: 0.85rem;"><i class="bi-check-circle-fill me-1"></i> Registered</span>
+                        <span class="reserved-pill compact"><i class="bi bi-check-circle-fill me-1"></i> Registered</span>
                     </c:when>
                     <c:when test="${eventPassed}">
                         <button class="btn-premium-cta" disabled style="padding: 12px 24px; font-size: 0.9rem; width: auto;">Passed</button>
@@ -589,7 +705,7 @@
                                 <i class="bi bi-wallet2"></i>
                             </div>
                             <div class="ms-3">
-                                <h5 class="modal-title fw-bold" style="color: #1e1b4b; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
+                                <h5 class="modal-title fw-bold" style="color: #2D142C; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
                                 <p class="text-muted small mb-0" style="font-size:0.75rem;">Simulated Test Transaction Mode</p>
                             </div>
                         </div>
@@ -604,37 +720,37 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2 small text-muted">
                                 <span>Processing/Internet charge</span>
-                                <span class="text-success fw-bold">₹0.00</span>
+                                <span class="fw-bold" style="color:#F43F5E;">₹0.00</span>
                             </div>
                             <hr style="border-style: dashed; margin: 12px 0;">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold" style="color: #1e1b4b;">Total Payment</span>
-                                <span class="fs-5 fw-bold text-primary" style="font-family:'Outfit',sans-serif;">₹${event.entryFee}</span>
+                                <span class="fw-semibold" style="color: #2D142C;">Total Payment</span>
+                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif;color:#F43F5E;">₹${event.entryFee}</span>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small text-muted mb-1 font-weight-bold">Choose Payment Method</label>
                             <div class="d-grid gap-2">
-                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
+                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #FDA4AF; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="upi" checked class="me-3">
-                                    <i class="bi bi-qr-code text-primary me-2" style="font-size:1.15rem;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
+                                    <i class="bi bi-qr-code me-2" style="font-size:1.15rem;color:#F43F5E;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
                                 </div>
-                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
+                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #FDA4AF; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="card" class="me-3">
-                                    <i class="bi bi-credit-card text-success me-2" style="font-size:1.15rem;"></i> Credit or Debit Card checkout
+                                    <i class="bi bi-credit-card me-2" style="font-size:1.15rem;color:#F43F5E;"></i> Credit or Debit Card checkout
                                 </div>
                             </div>
                         </div>
                         <div id="eventOtpSection" style="display:none;" class="mt-3">
-                            <label class="form-label small text-danger mb-1 font-weight-bold">Simulated Authentication OTP (Enter 123456)</label>
+                            <label class="form-label small mb-1 font-weight-bold" style="color:#F43F5E;">Simulated Authentication OTP (Enter 123456)</label>
                             <input type="text" id="eventOtpInput" class="form-control text-center fs-5 fw-bold" maxlength="6" placeholder="------" style="letter-spacing: 5px;">
-                            <div class="text-danger small mt-1 text-center" id="eventOtpError" style="display:none; font-weight: 600;">Invalid verification OTP! Use simulated 123456 code.</div>
+                            <div class="small mt-1 text-center" id="eventOtpError" style="display:none; font-weight: 600; color:#F43F5E;">Invalid verification OTP! Use simulated 123456 code.</div>
                         </div>
                     </div>
                     <!-- Modal Footer -->
                     <div class="modal-footer border-0 pt-0" style="padding: 0 24px 24px;">
-                        <button type="button" class="btn btn-outline-secondary w-100 mb-2 rounded-pill small" data-bs-dismiss="modal">Cancel Transaction</button>
-                        <button type="button" class="btn btn-primary w-100 rounded-pill fw-semibold py-2 btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: var(--color-accent); border: none; box-shadow: none;">
+                        <button type="button" class="btn-share-outline w-100 mb-2 rounded-pill small" data-bs-dismiss="modal" style="padding:10px;">Cancel Transaction</button>
+                        <button type="button" class="btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()">
                             Proceed Payment of ₹${event.entryFee} Securely
                         </button>
                     </div>

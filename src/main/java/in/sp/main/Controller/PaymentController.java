@@ -100,6 +100,9 @@ public class PaymentController {
     private in.sp.main.Service.EventsCareService eventsCareService;
 
     @Autowired
+    private in.sp.main.Service.WomenEventBookingService womenEventBookingService;
+
+    @Autowired
     private in.sp.main.Service.CreatorCareService creatorCareService;
 
     @Autowired
@@ -466,8 +469,7 @@ public class PaymentController {
                     errorBody.put("error", "Already paid");
                     return ResponseEntity.badRequest().body(errorBody);
                 }
-                amount = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
-                        ? Math.max(0, reg.getEvent().getEntryFee()) : 0;
+                amount = womenEventBookingService.payableOf(reg);
                 if (amount <= 0) {
                     errorBody.put("error", "This event does not require payment");
                     return ResponseEntity.badRequest().body(errorBody);
@@ -1132,8 +1134,7 @@ public class PaymentController {
                     responseMap.put("ticketCode", reg.getTicketCode());
                     return ResponseEntity.ok(responseMap);
                 }
-                double expected = reg.getEvent() != null && reg.getEvent().getEntryFee() != null
-                        ? reg.getEvent().getEntryFee() : 0;
+                double expected = womenEventBookingService.payableOf(reg);
                 if (expected > 0 && Math.abs(expected - amountPaid) > 0.05) {
                     responseMap.put("error", "Payment amount does not match event entry fee.");
                     return ResponseEntity.status(400).body(responseMap);

@@ -18,11 +18,24 @@
         <a href="${ctx}/women-events/organizer/my-events" class="org-nav-item ${nav eq 'events' ? 'active' : ''}">
             <i class="bi bi-calendar3"></i><span>My Events</span>
         </a>
-        <a href="${ctx}/women-events/organizer/create" class="org-nav-item ${nav eq 'create' ? 'active' : ''}">
-            <i class="bi bi-plus-circle"></i><span>Create Event</span>
+        <c:choose>
+            <c:when test="${hostApproved eq true || host.partnerProfileStatus eq 'APPROVED' || host.verificationStatus eq 'VERIFIED'}">
+                <a href="${ctx}/women-events/organizer/create" class="org-nav-item ${nav eq 'create' ? 'active' : ''}">
+                    <i class="bi bi-plus-circle"></i><span>Create Event</span>
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a href="${ctx}/women-events/organizer/profile-completion" class="org-nav-item ${nav eq 'create' ? 'active' : ''}"
+                   title="Locked until admin approval" style="opacity:.65;">
+                    <i class="bi bi-lock-fill"></i><span>Create Event</span>
+                </a>
+            </c:otherwise>
+        </c:choose>
+        <a href="${ctx}/women-events/organizer/my-events" class="org-nav-item ${nav eq 'drafts' ? 'active' : ''}">
+            <i class="bi bi-file-earmark"></i><span>Draft Events</span>
         </a>
         <a href="${ctx}/women-events/organizer/registrations" class="org-nav-item ${nav eq 'registrations' ? 'active' : ''}">
-            <i class="bi bi-people"></i><span>Registrations</span>
+            <i class="bi bi-people"></i><span>Attendees</span>
         </a>
         <a href="${ctx}/women-events/organizer/notifications" class="org-nav-item ${nav eq 'notifications' ? 'active' : ''}">
             <i class="bi bi-bell"></i><span>Notifications</span>

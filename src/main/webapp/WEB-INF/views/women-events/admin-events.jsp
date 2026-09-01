@@ -230,8 +230,20 @@
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/reject" method="post" style="display:inline;">
                                                     <button type="submit" class="btn-reject">✗ Reject</button>
                                                 </form>
+                                                <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/request-changes" method="post" style="display:inline;"
+                                                      onsubmit="var r=prompt('What should the host change?'); if(!r) return false; this.querySelector('[name=reason]').value=r;">
+                                                    <input type="hidden" name="reason" value=""/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill">Request changes</button>
+                                                </form>
                                             </c:if>
                                             <c:if test="${ev.status == 'APPROVED'}">
+                                                <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/unpublish" method="post" style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Unpublish</button>
+                                                </form>
+                                                <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/cancel" method="post" style="display:inline;"
+                                                      onsubmit="return confirm('Cancel this event and notify the workflow?')">
+                                                    <button type="submit" class="btn-reject">Cancel event</button>
+                                                </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/feature" method="post" style="display:inline;">
                                                     <button type="submit" class="btn-feature">
                                                         <i class="bi bi-star${ev.featured ? '-fill' : ''}"></i>${ev.featured ? 'Unfeature' : 'Feature'}
