@@ -181,6 +181,10 @@ public class DoctorRegistrationService {
         }
         try {
             otpVerificationService.sendOtp(normalizedEmail, OtpPurpose.DOCTOR_REGISTER, OtpChannel.EMAIL);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            throw ex;
+        } catch (in.sp.main.Exception.RateLimitExceededException ex) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
         } catch (IllegalStateException ex) {
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
         }

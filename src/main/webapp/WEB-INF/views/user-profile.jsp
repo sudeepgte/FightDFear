@@ -1,41 +1,49 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="utf-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-			<title>User Profile</title>
-			<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>My Profile | Fight D Fear</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Icons & CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
 
-<!-- Icons & CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-<link href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css" rel="stylesheet">
-
-			<!-- 🎨 Custom CSS -->
-			</head>
-			<style>
-    /* ============================================
-       ORIGINAL STYLES (kept exactly as is)
-       ============================================ */
+    <!-- 🎨 Custom CSS -->
+    <style>
     :root {
-        --primary-purple: #1e1b4b;
-        --primary-purple-light: #312e81;
+        --primary-purple: #F8FAFC;
+        --primary-purple-light: #F43F5E;
         --primary-coral: #f43f5e;
         --primary-coral-dark: #1e1b4b;
         --primary-teal: #20c997;
         --primary-gold: #ffd700;
         --dark-bg: #0f0f1a;
         --light-bg: #fffcfd;
-        --gradient-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
+        --gradient-primary: #FFFFFF;
         --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
         --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
         --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
+        --surface-primary: #FFFFFF;
+        --surface-page: #F8FAFC;
+        --surface-rose-soft: #FFF1F2;
+        --surface-rose-light: #FFE4E6;
+        --border-neutral: #E2E8F0;
+        --text-primary: #0F172A;
+        --text-secondary: #64748B;
+        --accent-rose: #F43F5E;
+        --accent-rose-hover: #E11D48;
     }
 
     /* ===== Nav Item Theme Color (desktop only) ===== */
@@ -51,17 +59,8 @@
             box-shadow: none !important;
             letter-spacing: 0.3px;
         }
-        #navmenu ul li a[href*="/chat/users"]:hover,
-        #navmenu ul li a[href*="/user/bookings"]:hover,
-        #navmenu ul li a[href*="/users/wallet"]:hover {
-            color: #1e1b4b !important;
-            background: none !important;
-            transform: none !important;
-            filter: none !important;
-        }
     }
-
-
+    
     #ftco-navbar {
         background-color: var(--primary-purple) !important;
         box-shadow: var(--shadow-sm);
@@ -105,7 +104,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(123, 44, 191, 0.35);
+        background: rgba(244, 63, 94, 0.05);
         z-index: 1;
     }
 
@@ -370,229 +369,498 @@
         display: none;
     }
 
-    /* Profile page mobile: sidebar + content layout */
-    @media (max-width: 768px) {
-        body {
+    /* Profile page layout */
+    body.profile-page {
+            font-family: 'Poppins', sans-serif;
+            background: var(--surface-page);
+            color: var(--text-primary);
+
             overflow-x: hidden;
         }
 
-        #wrapper {
-            flex-direction: column !important;
-            width: 100% !important;
-            margin-top: 68px !important;
-        }
-
-        #page-content-wrapper {
-            margin-left: 0 !important;
+        #page-content-wrapper.profile-full {
+            margin-left: 260px;
             padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
+            min-height: calc(100vh - 80px);
+            background: var(--surface-page);
+            width: calc(100% - 260px);
         }
 
-        .profile-back-bar {
-            padding: 10px 12px 0 !important;
-            margin-bottom: 8px !important;
+        .profile-fullscreen {
+            display: flex;
+            min-height: calc(100vh - 80px);
+            width: 100%;
         }
 
-        .profile-back-btn {
-            font-size: 14px;
-            padding: 10px 16px;
+        /* 30% — full-height rose side panel */
+        .profile-side {
+            width: 300px;
+            min-width: 300px;
+            background: var(--surface-rose-soft);
+            border-right: 1px solid var(--border-neutral);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .user-split-section {
-            margin-top: 0 !important;
+        .profile-avatar {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--surface-primary);
+            box-shadow: 0 10px 28px rgba(244, 63, 94, 0.2);
+            margin-bottom: 16px;
         }
 
-        .user-split-section .container-fluid {
-            padding: 0 !important;
-            max-width: 100% !important;
+        .profile-side-name {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-align: center;
         }
 
-        .user-bg-left {
-            padding: 28px 16px !important;
-            border-radius: 0 0 20px 20px;
+        .profile-side-role {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 24px;
         }
 
-        .user-details-side {
-            width: 100% !important;
-            min-width: 0 !important;
+        .profile-coins {
+            width: 100%;
+            background: var(--surface-rose-light);
+            border: 1px solid #FECDD3;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .user-details {
-            padding: 18px 14px 24px !important;
+        .profile-coins-num {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--accent-rose);
         }
 
-        .user-details li {
-            font-size: 14px;
+        .profile-coins-txt {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-side-actions {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-rose {
+            background: var(--accent-rose);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 11px 18px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn-rose:hover { background: var(--accent-rose-hover); color: #fff; }
+
+        .btn-ghost {
+            background: var(--surface-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-neutral);
+            border-radius: 50px;
+            padding: 11px 18px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface-rose-light);
+            color: var(--text-primary);
+        }
+
+        /* 60% — full-width main area */
+        .profile-body {
+            flex: 1;
+            min-width: 0;
+            background: var(--surface-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 32px;
+            border-bottom: 1px solid var(--border-neutral);
+            background: var(--surface-primary);
+        }
+
+        .profile-topbar h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .profile-topbar p {
+            margin: 2px 0 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .profile-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 8px 14px;
+            border-radius: 50px;
+            border: 1px solid var(--border-neutral);
+            background: var(--surface-page);
+        }
+
+        .profile-back:hover {
+            background: var(--surface-rose-soft);
+            color: var(--text-primary);
+        }
+
+        .profile-content {
+            flex: 1;
+            padding: 28px 32px 40px;
+            background: var(--surface-page);
+        }
+
+        /* stats — full width strip */
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            background: var(--surface-primary);
+            border: 1px solid var(--border-neutral);
+            border-radius: 0;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .profile-stat {
+            text-align: center;
+            padding: 20px 16px;
+            border-right: 1px solid var(--border-neutral);
+            background: var(--surface-rose-soft);
+        }
+
+        .profile-stat:last-child { border-right: none; }
+
+        .profile-stat-num {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .profile-stat-lbl {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .profile-field {
+            background: var(--surface-primary);
+            border: 1px solid var(--border-neutral);
+            padding: 16px 18px;
+        }
+
+        .profile-field-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .profile-field-label i {
+            color: var(--accent-rose);
+            margin-right: 6px;
+        }
+
+        .profile-field-val {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
             word-break: break-word;
         }
 
-        .user-details .mt-4.d-flex.flex-wrap.gap-3 {
-            flex-direction: column;
-            gap: 10px !important;
+        .profile-field-val a {
+            color: var(--accent-rose);
+            text-decoration: none;
         }
 
-        .user-details .mt-4.d-flex.flex-wrap.gap-3 .btn {
-            width: 100%;
-            justify-content: center;
+        .profile-progress-block {
+            background: var(--surface-primary);
+            border: 1px solid var(--border-neutral);
+            padding: 20px 22px;
+            margin-bottom: 24px;
         }
 
-        .instagram-stats {
-            justify-content: space-between !important;
-            gap: 8px !important;
-        }
-    }
-
-    @media (max-width: 430px) {
-        .profile-back-btn {
-            width: 100%;
-            justify-content: center;
-            font-size: 13px;
+        .profile-progress-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
         }
 
-        .profile-back-btn .back-label-long {
-            display: none;
+        .profile-progress-top span:last-child {
+            font-weight: 800;
+            color: var(--accent-rose);
         }
 
-        .profile-back-btn .back-label-short {
-            display: inline;
+        .profile-progress-track {
+            height: 10px;
+            background: var(--surface-rose-light);
+            overflow: hidden;
         }
 
-        .user-bg-left img {
-            width: 110px !important;
-            height: 110px !important;
+        .profile-progress-fill {
+            height: 100%;
+            background: var(--accent-rose);
         }
 
-        .user-details h2 {
-            font-size: 1.35rem;
+        .profile-footer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 8px;
         }
 
-        .instagram-stats h5 {
-            font-size: 1rem;
+        .btn-edit-profile {
+            background: var(--accent-rose);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 28px;
+            font-weight: 700;
+            text-decoration: none;
         }
 
-        .instagram-stats small {
-            font-size: 11px;
+        .btn-edit-profile:hover {
+            background: var(--accent-rose-hover);
+            color: #fff;
         }
-    }
-</style>
-<body>
 
-    <!-- Header -->
-    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+        .btn-del-profile {
+            background: var(--surface-primary);
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            border-radius: 50px;
+            padding: 12px 28px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .btn-del-profile:hover {
+            background: #FEF2F2;
+            color: #DC2626;
+        }
+
+        @media (max-width: 992px) {
+            #page-content-wrapper.profile-full {
+                margin-left: 0 !important;
+                width: 100% !important;
+            }
+            .profile-fullscreen { flex-direction: column; }
+            .profile-side {
+                width: 100%;
+                min-width: 0;
+                border-right: none;
+                border-bottom: 1px solid var(--border-neutral);
+            }
+            .profile-side-actions { margin-top: 20px; }
+        }
+
+        @media (max-width: 768px) {
+            #wrapper { flex-direction: column !important; margin-top: 68px !important; }
+            .profile-topbar { padding: 16px; flex-wrap: wrap; gap: 12px; }
+            .profile-content { padding: 16px; }
+            .profile-grid { grid-template-columns: 1fr; }
+            .profile-stats { grid-template-columns: 1fr; }
+            .profile-stat { border-right: none; border-bottom: 1px solid var(--border-neutral); }
+            .profile-stat:last-child { border-bottom: none; }
+        }
+    </style>
+</head>
+<body class="profile-page">
+
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" class="profile-full" data-skip-global-back="true">
 
-<section class="user-split-section" style="padding-top: 0 !important; margin-top: 0 !important; background: transparent;">
-					     <div class="container-fluid p-0">
-					       <div class="row no-gutters align-items-stretch">
-					       <div class="col-md-6 user-bg-left d-flex flex-column align-items-center p-4">
-    <img src="${pageContext.request.contextPath}${user.profilePhoto}"
-         onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
-         alt="User Profile Picture"
-         style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #f43f5e;box-shadow:0 4px 14px rgba(219,39,119,0.35);" class="mb-4">
 
-    <!-- 📊 Account Summary Integrated Here -->
-    <div class="text-center text-white px-3">
-        <div class="coin-box d-inline-block mb-3 shadow-sm" style="background: rgba(255, 215, 0, 0.2); border: 1px solid var(--primary-gold); color: #fff;">
-            🪙 <span style="font-size: 20px;"><strong>${user.rewardPoints != null ? user.rewardPoints : 0}</strong></span> Coins Earned
+        <div class="profile-fullscreen">
+            <!-- 30% full-height side -->
+            <aside class="profile-side">
+                <c:set var="userPUrl" value="${user.profilePhoto}" />
+                <c:choose>
+                    <c:when test="${not empty userPUrl}">
+                        <c:if test="${not fn:startsWith(userPUrl, 'http') and not fn:startsWith(userPUrl, '/')}">
+                            <c:set var="userPUrl" value="/uploads/${userPUrl}" />
+                        </c:if>
+                        <c:if test="${not fn:startsWith(userPUrl, 'http')}">
+                            <c:set var="userPUrl" value="${pageContext.request.contextPath}${userPUrl}" />
+                        </c:if>
+                        <img src="${userPUrl}"
+                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';"
+                             alt="Profile" class="profile-avatar">
+                    </c:when>
+                    <c:otherwise>
+                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="profile-avatar">
+                    </c:otherwise>
+                </c:choose>
+                <div class="profile-side-name">${user.fullName}</div>
+                <div class="profile-side-role">Member profile</div>
+
+                <div class="profile-coins">
+                    <div class="profile-coins-num">${user.rewardPoints != null ? user.rewardPoints : 0}</div>
+                    <div class="profile-coins-txt"><i class="bi bi-coin"></i> Coins earned</div>
+                </div>
+
+                <div class="profile-side-actions">
+                    <a href="${pageContext.request.contextPath}/index/contact" class="btn-rose">
+                        <i class="bi bi-chat-dots me-1"></i> Get in Touch
+                    </a>
+                    <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn-ghost">
+                        <i class="bi bi-telephone me-1"></i> Emergency Contacts
+                    </a>
+                </div>
+            </aside>
+
+            <!-- 60% full-width main -->
+            <main class="profile-body">
+                <div class="profile-topbar">
+                    <div>
+                        <h1>Hello, ${user.fullName}</h1>
+                        <p>Your complete profile overview</p>
+                    </div>
+                    <a href="${pageContext.request.contextPath}/users/dashboard" class="profile-back">
+                        <i class="bi bi-arrow-left"></i> Dashboard
+                    </a>
+                </div>
+
+                <div class="profile-content">
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-num">${postsCount != null ? postsCount : 0}</div>
+                            <div class="profile-stat-lbl">Posts</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-num">${followersCount != null ? followersCount : 0}</div>
+                            <div class="profile-stat-lbl">Followers</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-num">${followingCount != null ? followingCount : 0}</div>
+                            <div class="profile-stat-lbl">Following</div>
+                        </div>
+                    </div>
+
+                    <div class="profile-grid">
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-envelope"></i>Email</div>
+                            <div class="profile-field-val">${user.email}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-phone"></i>Phone</div>
+                            <div class="profile-field-val">${not empty user.phoneNumber ? user.phoneNumber : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-geo-alt"></i>Address</div>
+                            <div class="profile-field-val">${not empty user.homeAddress ? user.homeAddress : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-building"></i>City</div>
+                            <div class="profile-field-val">${not empty user.city ? user.city : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-calendar-event"></i>Date of birth</div>
+                            <div class="profile-field-val">${not empty user.dob ? user.dob : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-person"></i>Age</div>
+                            <div class="profile-field-val">${user.age != null ? user.age : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-gender-ambiguous"></i>Gender</div>
+                            <div class="profile-field-val">${user.gender != null ? user.gender : '—'}</div>
+                        </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-hash"></i>User ID</div>
+                            <div class="profile-field-val">${user.id}</div>
+                        </div>
+                        <c:if test="${not empty user.identityDocument && !fn:contains(user.identityDocument, 'web-member')}">
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-file-earmark"></i>ID document</div>
+                            <div class="profile-field-val">
+                                <a href="${pageContext.request.contextPath}${user.identityDocument}" target="_blank">View document</a>
+                            </div>
+                        </div>
+                        </c:if>
+                    </div>
+
+                    <div class="profile-progress-block">
+                        <div class="profile-progress-top">
+                            <strong>Profile completion</strong>
+                            <span>${completionPercentage != null ? completionPercentage : 0}%</span>
+                        </div>
+                        <div class="profile-progress-track">
+                            <div class="profile-progress-fill" style="width:${completionPercentage != null ? completionPercentage : 0}%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="profile-footer-actions">
+                        <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn-edit-profile">
+                            <i class="bi bi-pencil-square me-1"></i> Edit profile
+                        </a>
+                        <a href="${pageContext.request.contextPath}/users/delete/${user.id}" class="btn-del-profile"
+                           onclick="return confirm('Are you sure you want to delete your account?');">
+                            <i class="bi bi-trash me-1"></i> Delete account
+                        </a>
+                    </div>
+                </div>
+            </main>
+
         </div>
-        <h4 class="text-white mb-2" style="font-weight: 700;">Account Overview</h4>
-        <p class="small mb-3" style="opacity: 0.8;">Manage your safety profile and contacts below.</p>
-        
-        <div class="d-flex flex-column gap-2 w-100" style="max-width: 300px;">
-            <a href="${pageContext.request.contextPath}/index/contact" class="btn btn-light btn-sm py-2 px-4 rounded-pill" style="color:var(--primary-purple);font-weight:700;">
-                <i class="fas fa-comment-alt me-2"></i> Get in Touch
-            </a>
-            <a href="${pageContext.request.contextPath}/users/${user.id}/emergency-contacts" class="btn btn-outline-light btn-sm py-2 px-4 rounded-pill" style="font-weight: 700;">
-                <i class="fas fa-phone-alt me-2"></i> Emergency Contacts
-            </a>
-        </div>
+
     </div>
-
 </div>
-					          
-					         <!-- 📋 Right Side: User Details -->
-					         <div class="col-md-6 user-details-side d-flex align-items-start">
-					           <div class="user-details p-3 p-lg-5 pt-lg-3">
-					             
-					             <!-- Header -->
-					             <div class="heading-section ftco-animate mb-4">
-					               <h2 class="mb-2">Hello, ${user.fullName} 👋</h2>
-					               
-					               <!-- 📊 Instagram-style Stats -->
-					               <div class="d-flex instagram-stats gap-4 my-3 py-2 border-top border-bottom">
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${postsCount != null ? postsCount : 0}</h5>
-					                       <small class="text-muted">Posts</small>
-					                   </div>
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${followersCount != null ? followersCount : 0}</h5>
-					                       <small class="text-muted">Followers</small>
-					                   </div>
-					                   <div class="text-center">
-					                       <h5 class="mb-0 fw-bold">${followingCount != null ? followingCount : 0}</h5>
-					                       <small class="text-muted">Following</small>
-					                   </div>
-					               </div>
-
-					               <p class="text-muted">Here’s your complete profile overview</p>
-					             </div>
-
-					             <!-- Details List -->
-					             <ul class="list-unstyled ftco-animate">
-					               <li class="mb-3"><i class="fas fa-envelope text-primary me-2"></i> <strong>Email:</strong> ${user.email}</li>
-					               <li class="mb-3"><i class="fas fa-phone text-primary me-2"></i> <strong>Phone:</strong> ${user.phoneNumber}</li>
-					               <li class="mb-3"><i class="fas fa-home text-primary me-2"></i> <strong>Address:</strong> ${user.homeAddress}</li>
-					               <li class="mb-3"><i class="fas fa-id-badge text-primary me-2"></i> <strong>User ID:</strong> ${user.id}</li>
-					               <li class="mb-3">
-    <i class="fas fa-calendar-alt text-primary me-2"></i>
-    <strong>Date of Birth:</strong> ${user.dob}
-</li>
-					               
-					               <li class="mb-3"><i class="fas fa-calendar-alt text-primary me-2"></i> <strong>Age:</strong> ${user.age}</li>
-					               <li class="mb-3"><i class="fas fa-venus-mars text-primary me-2"></i> <strong>Gender:</strong> ${user.gender}</li>
-					               <li class="mb-3"><i class="fas fa-file text-primary me-2"></i> 
-					                 <strong>ID Document:</strong> 
-					                 <a href="${pageContext.request.contextPath}${user.identityDocument}" target="_blank" class="text-decoration-none">View</a>
-					               </li>
-					             </ul>
-
-					             <!-- 📊 Profile Completion -->
-					             <div class="progress-container mt-4">
-					               <div class="progress" style="height: 12px; border-radius: 10px;">
-					                 <div class="progress-bar bg-primary" role="progressbar"
-					                      style="width: ${completionPercentage}%;"
-					                      aria-valuenow="${completionPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
-					               </div>
-					               <p class="mt-2 mb-0 text-muted">
-					                 Profile Completion: <strong>${completionPercentage}%</strong>
-					               </p>
-					             </div>
-
-					             <!-- 🔘 Action Buttons -->
-					             <div class="mt-4 d-flex flex-wrap gap-3">
-					               <a href="${pageContext.request.contextPath}/users/update/${user.id}" class="btn btn-primary px-4 py-2 text-white">
-					                 <i class="fas fa-user-edit me-2"></i> Edit
-					               </a>
-					               <a href="${pageContext.request.contextPath}/users/delete/${user.id}" class="btn btn-outline-danger px-4 py-2">
-					                 <i class="fas fa-trash-alt me-2"></i> Delete
-					               </a>
-					             </div>
-
-					           </div>
-					         </div>
-
-					       </div>
-					     </div>
-					   </section>
 
 
-
- <!-- 🌸 Footer -->
   
 
 <!-- Scripts -->
@@ -613,8 +881,16 @@
 					  	<script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
 					  	<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
 
-					      </div>
-</div>
 </body>
 					  </html>
+
+
+
+
+
+
+
+<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 

@@ -21,6 +21,9 @@ public interface Booking1Repository extends JpaRepository<Booking1, Long> {
 
     List<Booking1> findBySalon(Salon salon);
 
+    /** Prefer ID-based lookup - session Salon entities are detached. */
+    List<Booking1> findBySalon_IdOrderByIdDesc(Long salonId);
+
     // Find bookings for a salon on a specific date
     List<Booking1> findBySalonAndBookingDate(Salon salon, LocalDate date);
 

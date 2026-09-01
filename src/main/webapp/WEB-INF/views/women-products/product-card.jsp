@@ -1,6 +1,3 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <article class="product-card">
   <a href="${pageContext.request.contextPath}/women-products/view/${p.id}" class="product-img-wrapper" style="display:block; text-decoration:none; color:inherit;">
     <c:choose>
@@ -30,8 +27,12 @@
   <form class="wish-float" action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
     <input type="hidden" name="productId" value="${p.id}">
     <input type="hidden" name="returnTo" value="shop">
+    <c:set var="inWishlist" value="false"/>
+    <c:forEach var="wid" items="${wishlistIds}">
+      <c:if test="${wid == p.id}"><c:set var="inWishlist" value="true"/></c:if>
+    </c:forEach>
     <button type="submit" title="Wishlist" aria-label="Toggle wishlist">
-      <i class="bi ${wishlistIds.contains(p.id) ? 'bi-heart-fill' : 'bi-heart'}"></i>
+      <i class="bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}"></i>
     </button>
   </form>
   <div class="product-body">
@@ -39,9 +40,9 @@
     <c:if test="${not empty p.brand}"><div class="product-brand"><c:out value="${p.brand}"/></div></c:if>
     <div class="product-name"><c:out value="${p.name}"/></div>
     <div class="product-seller">
-      <i class="bi bi-patch-check-fill" style="color:#2563eb;"></i>
-      <c:out value="${p.seller.businessName}"/>
-      <c:if test="${p.seller.approvedForCatalog}"><span style="font-size:10px;font-weight:800;color:#059669;">Verified seller</span></c:if>
+      <i class="bi bi-patch-check-fill" style="color:#F43F5E;"></i>
+      <c:out value="${p.seller != null ? p.seller.businessName : 'Seller'}"/>
+      <c:if test="${p.seller != null && p.seller.approvedForCatalog}"><span style="font-size:10px;font-weight:800;color:#059669;">Verified seller</span></c:if>
     </div>
     <c:set var="avg" value="${avgRatings[p.id]}"/>
     <c:set var="rc" value="${reviewCounts[p.id]}"/>
@@ -69,6 +70,13 @@
           <input type="hidden" name="productId" value="${p.id}">
           <button type="submit" class="btn-shop btn-shop-primary w-100">
             <i class="bi bi-cart-plus"></i> Add to Cart
+          </button>
+        </form>
+        <form action="${pageContext.request.contextPath}/women-products/buy-now" method="post" style="flex: 1;">
+          <input type="hidden" name="productId" value="${p.id}">
+          <input type="hidden" name="quantity" value="1">
+          <button type="submit" class="btn-shop btn-shop-outline w-100">
+            <i class="bi bi-lightning-charge-fill"></i> Buy Now
           </button>
         </form>
       </c:if>

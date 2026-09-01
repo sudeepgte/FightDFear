@@ -6,142 +6,132 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investor Login — Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            /* Mobile Flutter Theme Colors - Rose, Plum & neutral Slate */
+            --primary-rose: #f43f5e;
+            --primary-rose-hover: #e11d48;
+            --primary-plum: #4c0519;
+            --bg-scaffold: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-light: #e2e8f0;
+            --border-focus: #f43f5e;
+            --rose-bg-light: #ffe4e6;
+            --rose-text-dark: #be123c;
+            --font-heading: 'Poppins', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: var(--font-body);
+            background: var(--bg-scaffold);
             min-height: 100vh;
             display: flex;
-            background: #f8fafc;
-        }
-
-        .left-panel {
-            flex: 1;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-            display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 60px 40px;
-            position: relative;
-            overflow: hidden;
+            padding: 20px;
+            margin: 0;
         }
 
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            top: -100px; right: -100px;
-            width: 400px; height: 400px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.06);
-        }
-
-        .left-panel .brand {
-            position: relative; z-index: 2;
-            text-align: center;
-            color: white;
-        }
-
-        .brand-logo {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-
-        .brand-tagline {
-            font-size: 1.15rem;
-            font-weight: 300;
-            opacity: 0.9;
-            max-width: 360px;
-            line-height: 1.7;
-            margin-bottom: 40px;
-        }
-
-        .feature-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            font-weight: 400;
-        }
-
-        .feature-list li .feat-icon {
-            width: 40px; height: 40px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.15);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .right-panel {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-        }
-
-        .login-card {
+        .login-container {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
+            background: var(--bg-surface);
+            border-radius: 16px;
+            padding: 40px; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            position: relative;
         }
 
-        .login-card h2 {
-            font-size: 1.85rem;
+        .back-link-top {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-rose);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 25px;
+            transition: color 0.2s;
+        }
+
+        .back-link-top:hover {
+            color: var(--primary-rose-hover);
+        }
+
+        .header-title {
+            font-family: var(--font-heading);
             font-weight: 800;
-            color: #0f172a;
+            color: var(--primary-plum);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.6rem;
+        }
+
+        .header-title span {
+            color: var(--primary-rose);
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 600;
             margin-bottom: 6px;
         }
 
-        .login-card .subtitle {
-            color: #64748b;
+        .form-control {
+            border-radius: 12px;
+            border: 1.5px solid var(--border-light);
+            background-color: var(--bg-surface);
+            color: var(--text-primary);
+            padding: 12px 16px 12px 42px;
             font-size: 0.95rem;
-            margin-bottom: 32px;
+            transition: all 0.3s;
+            height: 50px;
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .form-control:focus {
+            outline: none;
+            background-color: var(--bg-surface);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
         }
-
-        .form-group label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-        }
-
-        .input-wrapper {
+        
+        .input-group-custom {
             position: relative;
         }
 
-        .input-wrapper i {
+        .input-group-custom .field-icon-left {
             position: absolute;
             left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 1rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
         }
 
-        .input-wrapper .toggle-password {
-            left: auto;
+        .input-group-custom .field-icon-right {
+            position: absolute;
             right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
             cursor: pointer;
             z-index: 10;
         }
@@ -150,219 +140,151 @@
             display: block;
             text-align: right;
             font-size: 0.85rem;
-            color: #312e81;
+            color: var(--primary-rose);
             font-weight: 600;
             text-decoration: none;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            transition: color 0.2s;
         }
 
-        .form-input {
-            width: 100%;
-            padding: 14px 16px 14px 46px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            background: #fff;
-            color: #0f172a;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #312e81;
-            box-shadow: 0 0 0 4px rgba(49, 46, 129, 0.1);
+        .forgot-password:hover {
+            color: var(--primary-rose-hover);
+            text-decoration: underline;
         }
 
         .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0f172a, #312e81);
+            background: var(--primary-rose);
             color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            padding: 14px;
             font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(49, 46, 129, 0.3);
+            border-radius: 12px;
+            width: 100%;
+            transition: all 0.3s;
+            font-size: 1rem;
         }
 
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(49, 46, 129, 0.4);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin: 24px 0;
-            color: #94a3b8;
-            font-size: 0.8rem;
-        }
-
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
+            background: var(--primary-rose-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 15px rgba(244, 63, 94, 0.2);
+            color: white;
         }
 
         .register-link {
             text-align: center;
+            margin-top: 25px;
             font-size: 0.9rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .register-link a {
-            color: #312e81;
-            text-decoration: none;
+            color: var(--primary-rose);
             font-weight: 700;
-        }
-
-        .error-alert {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .success-alert {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            color: #16a34a;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .back-home {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #64748b;
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 28px;
         }
 
-        @media (max-width: 992px) {
-            body { flex-direction: column; }
-            .left-panel { padding: 50px 30px; min-height: 35vh; }
-            .feature-list { display: none; }
-            .right-panel { padding: 40px 20px; background: #fff; margin-top: -30px; border-radius: 30px 30px 0 0; }
+        .register-link a:hover {
+            text-decoration: underline;
         }
-    </style>
+
+        .rose-alert {
+            background: var(--rose-bg-light);
+            border: 1px solid #fecaca;
+            color: var(--rose-text-dark);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rose-alert-success {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #9b2c2c;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 
-    <!-- Left Panel -->
-    <div class="left-panel">
-        <div class="brand">
-            <div class="brand-logo">
-                <i class="bi bi-wallet2"></i> Investor Portal
+    <div class="login-container">
+        
+        <a href="${pageContext.request.contextPath}/" class="back-link-top">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+
+        <h2 class="header-title">
+            Investor <span>Login</span>
+        </h2>
+        <p class="header-subtitle">Welcome Back! Log in to view marketplace opportunities</p>
+
+        <!-- Dynamic Success/Error Banners -->
+        <c:if test="${not empty error}">
+            <div class="rose-alert" role="alert">
+                <i class="bi bi-exclamation-circle"></i> ${error}
             </div>
-            <p class="brand-tagline">
-                Discover next-gen women entrepreneurs. Browse verified proposals, ask questions, schedule sessions, and build a premium portfolio.
-            </p>
-            <ul class="feature-list">
-                <li>
-                    <span class="feat-icon"><i class="bi bi-search"></i></span>
-                    Browse a variety of verified business categories
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-sliders"></i></span>
-                    Invest full or custom partial amounts dynamically
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-calendar-check"></i></span>
-                    Direct meeting and interview scheduling
-                </li>
-                <li>
-                    <span class="feat-icon"><i class="bi bi-graph-up-arrow"></i></span>
-                    Track ROI, progress, and messages on your dashboard
-                </li>
-            </ul>
-        </div>
-    </div>
+        </c:if>
 
-    <!-- Right Panel -->
-    <div class="right-panel">
-        <div class="login-card">
+        <c:if test="${not empty success}">
+            <div class="rose-alert-success" role="alert">
+                <i class="bi bi-check-circle"></i> ${success}
+            </div>
+        </c:if>
 
-            <a href="${pageContext.request.contextPath}/" class="back-home">
-                <i class="bi bi-arrow-left"></i> Back to Home
-            </a>
-
-            <h2>Welcome Back, Investor! 👋</h2>
-            <p class="subtitle">Log in to view marketplace opportunities and track your portfolio</p>
-
-            <c:if test="${not empty error}">
-                <div class="error-alert">
-                    <i class="bi bi-exclamation-circle"></i>
-                    ${error}
+        <form action="${pageContext.request.contextPath}/investor/login" method="post">
+            
+            <div class="mb-3">
+                <label class="form-label" for="email">Email Address *</label>
+                <div class="input-group-custom">
+                    <i class="field-icon-left bi bi-envelope"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
                 </div>
-            </c:if>
+            </div>
 
-            <c:if test="${not empty success}">
-                <div class="success-alert">
-                    <i class="bi bi-check-circle"></i>
-                    ${success}
+            <div class="mb-3">
+                <label class="form-label" for="password">Password *</label>
+                <div class="input-group-custom">
+                    <i class="field-icon-left bi bi-lock"></i>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                    <i class="field-icon-right bi bi-eye-slash" id="togglePassword"></i>
                 </div>
-            </c:if>
-
-            <form action="${pageContext.request.contextPath}/investor/login" method="post">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-envelope"></i>
-                        <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required>
-                    </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label for="password">Password</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password" required>
-                        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
-                    </div>
-                </div>
-
                 <a href="${pageContext.request.contextPath}/investor/forgot-password" class="forgot-password">Forgot Password?</a>
+            </div>
 
-                <button type="submit" class="btn-login">
-                    Sign In <i class="bi bi-arrow-right"></i>
-                </button>
-            </form>
+            <button type="submit" class="btn-login">
+                Sign In <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
 
-            <div class="divider">or</div>
-
-            <p class="register-link">
-                Don't have an investor account? <a href="${pageContext.request.contextPath}/investor/register">Register here</a>
-            </p>
-        </div>
+        <p class="register-link">
+            Don't have an investor account? <a href="${pageContext.request.contextPath}/investor/register">Register here</a>
+        </p>
     </div>
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
 
         if (togglePassword && password) {
-            togglePassword.addEventListener('click', function () {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
+            togglePassword.addEventListener('click', function() {
+                const type = password.type === 'password' ? 'text' : 'password';
+                password.type = type;
                 this.classList.toggle('bi-eye');
                 this.classList.toggle('bi-eye-slash');
             });

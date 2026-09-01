@@ -1,15 +1,21 @@
 package in.sp.main.Controller;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import in.sp.main.Entities.ChatMessage;
@@ -90,7 +96,7 @@ public class ChatController {
 
         User receiver = userRepo.findById(receiverId).orElse(null);
         if (receiver == null) return "redirect:/chat/users";
-        if (!followService.getFriends(sender.getId()).stream().anyMatch(f -> f.getId().equals(receiverId))) {
+        if (!canChat(sender, receiver)) {
             return "redirect:/chat/users";
         }
 
@@ -183,12 +189,117 @@ public class ChatController {
         msg.setVideoUrl(videoUrl);
         msg.setTimestamp(LocalDateTime.now());
 
-        chatService.save(msg);
-
-        // Send via WebSocket
-        messagingTemplate.convertAndSend("/topic/messages/" + receiverId, msg);
+        msg = chatService.save(msg);
+        Map<String, Object> payload = chatService.toWirePayload(msg, sender, receiver);
+        messagingTemplate.convertAndSend("/topic/messages/" + receiverId, payload);
+        messagingTemplate.convertAndSend("/topic/messages/" + sender.getId(), payload);
 
         return "OK";
+    }
+
+    /** Reliable HTTP send — works even when WebSocket is disconnected (emoji-safe UTF-8). */
+    @PostMapping(value = "/send-message", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> apiSend(@RequestBody Map<String, Object> body,
+                                                       HttpSession session) {
+        User sender = (User) session.getAttribute("user");
+        if (sender == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "error", "Not logged in"));
+        }
+
+        Object receiverObj = body == null ? null : body.get("receiverId");
+        Object messageObj = body == null ? null : body.get("message");
+        if (receiverObj == null || messageObj == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "receiverId and message are required"));
+        }
+
+        Long receiverId;
+        try {
+            receiverId = Long.valueOf(String.valueOf(receiverObj));
+        } catch (NumberFormatException ex) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Invalid receiverId"));
+        }
+
+        User receiver = userRepo.findById(receiverId).orElse(null);
+        if (receiver == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Receiver not found"));
+        }
+
+        if (!canChat(sender, receiver)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "error", "You can only chat with friends or existing contacts"));
+        }
+
+        Map<String, Object> payload = chatService.deliverUserMessage(sender, receiver, String.valueOf(messageObj));
+        if (payload == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "Message is empty"));
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", payload);
+        return ResponseEntity.ok(res);
+    }
+
+    /** Poll new messages for a chat (backup when WebSocket misses a push). */
+    @GetMapping(value = "/messages-since/{otherUserId}", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> apiPollMessages(@PathVariable Long otherUserId,
+                                                                 @RequestParam(required = false) String since,
+                                                                 HttpSession session) {
+        User me = (User) session.getAttribute("user");
+        if (me == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "error", "Not logged in"));
+        }
+
+        User other = userRepo.findById(otherUserId).orElse(null);
+        if (other == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("success", false, "error", "User not found"));
+        }
+
+        LocalDateTime sinceTime = LocalDateTime.now().minusHours(24);
+        if (since != null && !since.isBlank()) {
+            try {
+                sinceTime = LocalDateTime.parse(since.replace(" ", "T").substring(0, Math.min(19, since.length())));
+                sinceTime = sinceTime.minusSeconds(1);
+            } catch (DateTimeParseException ignored) {
+                // keep default window
+            }
+        }
+
+        List<ChatMessage> rows = chatService.getMessagesSince(me, other, sinceTime);
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (ChatMessage row : rows) {
+            User sender = row.getSender();
+            User receiver = row.getReceiver();
+            if (sender == null || receiver == null) continue;
+            items.add(chatService.toWirePayload(row, sender, receiver));
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("messages", items);
+        return ResponseEntity.ok(res);
+    }
+
+    private boolean canChat(User sender, User receiver) {
+        if (sender == null || receiver == null) {
+            return false;
+        }
+        boolean friends = followService.getFriends(sender.getId()).stream()
+                .anyMatch(f -> f.getId().equals(receiver.getId()));
+        if (friends) {
+            return true;
+        }
+        return !chatService.getChatHistory(sender, receiver).isEmpty();
     }
 
 }

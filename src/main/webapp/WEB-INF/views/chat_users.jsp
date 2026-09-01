@@ -6,364 +6,229 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Chat with Friends — Fight D Fear</title>
-    
-    <!-- Icons & Fonts -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Theme files -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
-    
+    <link href="${pageContext.request.contextPath}/assets/css/fdf-6010-pages.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/chat-users-theme.css" rel="stylesheet">
     <style>
-        :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
-        }
-        
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--glow-bg);
-            color: var(--fdf-text);
-            overflow-x: hidden;
-        }
-
-        /* Floating background blobs */
-        .glow-bg-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .blob {
-            position: absolute;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.12;
-            animation: floatBlob 20s infinite alternate;
-        }
-        .blob-1 { top: -100px; right: -100px; background: var(--brand-purple); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--brand-pink); animation-delay: -5s; }
-        
-        @keyframes floatBlob {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(40px, 30px) scale(1.15); }
-        }
-
-        /* Clean Minimal Header */
-        .glow-header {
-            padding: 60px 20px 40px;
-            text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--fdf-border);
-            position: relative;
-            margin-bottom: 40px;
-        }
-        .glow-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 38px;
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .glow-header p {
-            color: var(--fdf-muted);
-            font-size: 15px;
-            max-width: 650px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* Top Bar navigation */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 16px 30px;
-            position: absolute;
-            top: 0; right: 0;
-            width: 100%;
-        }
-        .top-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--brand-purple);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
-        }
-        .top-btn:hover {
-            background: var(--brand-purple);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* Friend Grid */
-        .friends-grid {
+        body.fdf-page-chats .friends-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 25px;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 0 auto 60px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
         }
-        .friend-card {
-            background: var(--card-bg);
-            border: 1px solid var(--fdf-border);
+        body.fdf-page-chats .friend-card {
+            background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 100%);
+            border: 1px solid #FECDD3;
             border-radius: 20px;
-            padding: 30px 24px;
+            padding: 28px 22px;
             text-align: center;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            box-shadow: 0 4px 16px rgba(244, 63, 94, 0.06);
             display: flex;
             flex-direction: column;
             align-items: center;
             text-decoration: none !important;
+            color: #0F172A !important;
         }
-        .friend-card:hover {
+        body.fdf-page-chats .friend-card:hover {
             transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--brand-pink-light);
+            box-shadow: 0 12px 32px rgba(244, 63, 94, 0.12);
+            border-color: #F43F5E;
+            color: #0F172A !important;
         }
-        .friend-avatar {
-            width: 85px;
-            height: 85px;
+        body.fdf-page-chats .friend-avatar {
+            width: 84px;
+            height: 84px;
             border-radius: 50%;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fff5f7;
-            border: 3px solid var(--brand-pink-light);
-            margin-bottom: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: #FFF1F2;
+            border: 3px solid #FECDD3;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.08);
         }
-        .friend-avatar img {
+        body.fdf-page-chats .friend-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .friend-name {
+        body.fdf-page-chats .friend-name {
             font-size: 16px;
             font-weight: 800;
-            color: var(--brand-purple);
+            color: #0F172A !important;
             margin-bottom: 14px;
         }
-        .btn-chat-open {
+        body.fdf-page-chats .friend-role {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #F43F5E;
+            margin-bottom: 6px;
+        }
+        body.fdf-page-chats .btn-chat-open {
             padding: 8px 20px;
-            border-radius: 30px;
+            border-radius: 999px;
             font-size: 13px;
             font-weight: 700;
             border: none;
             color: #fff;
-            background: var(--gradient-primary);
-            transition: all 0.2s;
+            background: #F43F5E;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.28);
             display: inline-flex;
             align-items: center;
             gap: 6px;
         }
-        .btn-chat-open:hover {
-            filter: brightness(1.1);
+        body.fdf-page-chats .friend-card:hover .btn-chat-open {
+            background: #E11D48;
         }
-
-        .chat-toast {
+        body.fdf-page-chats .chat-empty { grid-column: 1 / -1; }
+        body.fdf-page-chats .chat-toast {
             position: fixed;
             top: 90px;
             right: 20px;
             z-index: 9999;
             min-width: 280px;
             background: #fff;
-            border: 1px solid var(--fdf-border);
-            border-left: 4px solid var(--brand-pink);
+            border: 1px solid #FECDD3;
+            border-left: 4px solid #F43F5E;
             border-radius: 12px;
             padding: 14px 16px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 12px 32px rgba(244, 63, 94, 0.12);
             display: none;
-            animation: slideIn 0.3s ease;
         }
-        .chat-toast.show { display: block; }
-        .chat-toast a { color: var(--brand-purple); font-weight: 700; text-decoration: none; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
+        body.fdf-page-chats .chat-toast.show { display: block; }
+        body.fdf-page-chats .chat-toast a { color: #F43F5E; font-weight: 700; text-decoration: none; }
         @media (max-width: 768px) {
-            .glow-header { padding-top: 30px; padding-bottom: 20px; }
-            .top-bar {
-                position: relative;
-                justify-content: center;
-                padding: 10px;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-bottom: 15px;
-            }
-            .top-btn {
-                padding: 8px 14px;
-                font-size: 12px;
-                margin-right: 0 !important;
-            }
-            .glow-header h1 { font-size: 28px; }
-            .friends-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                padding: 15px;
-            }
+            body.fdf-page-chats .friends-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body>
+<body class="fdf-page-shell fdf-page-chats">
 
-<!-- Header -->
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
-    <!-- Sidebar -->
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    
-    <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
-        
-        <!-- Blobs overlay -->
-        <div class="glow-bg-layer">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-        </div>
 
-        <!-- Dashboard Header -->
-        <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
+    <div id="page-content-wrapper">
+        <main class="fdf-page-main">
+            <header class="fdf-page-header">
+                <div>
+                    <h1 class="fdf-page-title">My Active Chats</h1>
+                    <p class="fdf-page-subtitle">Access your ongoing conversations with friends and medical professionals.</p>
+                </div>
+                <a href="${pageContext.request.contextPath}/users/dashboard" class="fdf-nav-btn">
                     <i class="bi bi-house-door"></i> Home
                 </a>
-            </div>
-            
-            <h1>My Active Chats</h1>
-            <p>Access your ongoing conversations with friends and medical professionals.</p>
-        </div>
+            </header>
 
-        <!-- Active Chats Grid -->
-        <div class="friends-grid">
-            <% 
-                // Fallback to fetch data directly via JDBC if backend wasn't restarted or if JPA mapping fails
-                org.springframework.context.ApplicationContext ctx = 
-                    org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(application);
-                in.sp.main.Entities.User currentUser = (in.sp.main.Entities.User) session.getAttribute("user");
-                
-                if (currentUser != null && request.getAttribute("doctors") == null) {
-                    try {
-                        javax.sql.DataSource ds = ctx.getBean(javax.sql.DataSource.class);
-                        java.util.List doctors = new java.util.ArrayList();
-                        java.util.List usersList = new java.util.ArrayList();
-                        
-                        try (java.sql.Connection conn = ds.getConnection()) {
-                            // Fetch Doctors
-                            try (java.sql.PreparedStatement ps = conn.prepareStatement(
-                                "SELECT DISTINCT d.* FROM doctors d INNER JOIN doctor_chat_messages m ON d.id = m.doctor_id WHERE m.user_id = ?")) {
-                                ps.setLong(1, currentUser.getId());
-                                try (java.sql.ResultSet rs = ps.executeQuery()) {
-                                    while (rs.next()) {
-                                        in.sp.main.Entities.Doctor d = new in.sp.main.Entities.Doctor();
-                                        d.setId(rs.getLong("id"));
-                                        d.setFullName(rs.getString("full_name"));
-                                        d.setProfilePhotoPath(rs.getString("profile_photo_path"));
-                                        doctors.add(d);
+            <div class="friends-grid">
+                <%
+                    org.springframework.context.ApplicationContext ctx =
+                        org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(application);
+                    in.sp.main.Entities.User currentUser = (in.sp.main.Entities.User) session.getAttribute("user");
+
+                    if (currentUser != null && request.getAttribute("doctors") == null) {
+                        try {
+                            javax.sql.DataSource ds = ctx.getBean(javax.sql.DataSource.class);
+                            java.util.List doctors = new java.util.ArrayList();
+                            java.util.List usersList = new java.util.ArrayList();
+
+                            try (java.sql.Connection conn = ds.getConnection()) {
+                                try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                                    "SELECT DISTINCT d.* FROM doctors d INNER JOIN doctor_chat_messages m ON d.id = m.doctor_id WHERE m.user_id = ?")) {
+                                    ps.setLong(1, currentUser.getId());
+                                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                        while (rs.next()) {
+                                            in.sp.main.Entities.Doctor d = new in.sp.main.Entities.Doctor();
+                                            d.setId(rs.getLong("id"));
+                                            d.setFullName(rs.getString("full_name"));
+                                            d.setProfilePhotoPath(rs.getString("profile_photo_path"));
+                                            doctors.add(d);
+                                        }
+                                    }
+                                }
+
+                                try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                                    "SELECT DISTINCT u.* FROM user u INNER JOIN chat_message m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
+                                    ps.setLong(1, currentUser.getId());
+                                    ps.setLong(2, currentUser.getId());
+                                    ps.setLong(3, currentUser.getId());
+                                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                        while (rs.next()) {
+                                            in.sp.main.Entities.User u = new in.sp.main.Entities.User();
+                                            u.setId(rs.getLong("id"));
+                                            u.setFullName(rs.getString("full_name"));
+                                            u.setEmail(rs.getString("email"));
+                                            u.setProfilePhoto(rs.getString("profile_photo"));
+                                            usersList.add(u);
+                                        }
                                     }
                                 }
                             }
-                            
-                            // Fetch Users
-                            try (java.sql.PreparedStatement ps = conn.prepareStatement(
-                                "SELECT DISTINCT u.* FROM user u INNER JOIN chat_messages m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
-                                ps.setLong(1, currentUser.getId());
-                                ps.setLong(2, currentUser.getId());
-                                ps.setLong(3, currentUser.getId());
-                                try (java.sql.ResultSet rs = ps.executeQuery()) {
-                                    while (rs.next()) {
-                                        in.sp.main.Entities.User u = new in.sp.main.Entities.User();
-                                        u.setId(rs.getLong("id"));
-                                        u.setFullName(rs.getString("full_name"));
-                                        u.setEmail(rs.getString("email"));
-                                        u.setProfilePhoto(rs.getString("profile_photo"));
-                                        usersList.add(u);
-                                    }
-                                }
-                            }
+                            request.setAttribute("doctors", doctors);
+                            request.setAttribute("users", usersList);
+                        } catch(Exception e) {
+                            e.printStackTrace();
                         }
-                        request.setAttribute("doctors", doctors);
-                        request.setAttribute("users", usersList);
-                    } catch(Exception e) {
-                        e.printStackTrace();
                     }
-                }
-            %>
+                %>
 
-            <!-- Doctor Contacts -->
-            <c:forEach var="doc" items="${doctors}">
-                <a href="${pageContext.request.contextPath}/doctors/chat/${doc.id}" class="friend-card" data-aos="fade-up">
-                    <div class="friend-avatar">
-                        <img src="${pageContext.request.contextPath}/uploads/${doc.profilePhotoPath}"
-                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
-                             alt="Dr. ${doc.fullName}">
+                <c:forEach var="doc" items="${doctors}">
+                    <a href="${pageContext.request.contextPath}/doctors/chat/${doc.id}" class="friend-card" data-aos="fade-up">
+                        <div class="friend-avatar">
+                            <img src="${pageContext.request.contextPath}/uploads/${doc.profilePhotoPath}"
+                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
+                                 alt="Dr. ${doc.fullName}">
+                        </div>
+                        <div class="friend-role">Doctor</div>
+                        <div class="friend-name">Dr. ${doc.fullName}</div>
+                        <span class="btn-chat-open">
+                            <i class="bi bi-chat-fill"></i> Open Chat
+                        </span>
+                    </a>
+                </c:forEach>
+
+                <c:forEach var="chatUser" items="${users}">
+                    <a href="${pageContext.request.contextPath}/chat/window/${chatUser.id}" class="friend-card" data-aos="fade-up">
+                        <div class="friend-avatar">
+                            <img src="${pageContext.request.contextPath}${chatUser.profilePhoto}"
+                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
+                                 alt="${chatUser.fullName}">
+                        </div>
+                        <div class="friend-name">${not empty chatUser.fullName ? chatUser.fullName : chatUser.email}</div>
+                        <span class="btn-chat-open">
+                            <i class="bi bi-chat-fill"></i> Open Chat
+                        </span>
+                    </a>
+                </c:forEach>
+
+                <c:if test="${empty users and empty doctors}">
+                    <div class="fdf-empty-state chat-empty">
+                        <i class="bi bi-chat-dots display-6 mb-3 d-block"></i>
+                        <p class="mb-0">You don't have any active chats right now.</p>
                     </div>
-                    <div class="friend-name" style="color: var(--brand-purple);">Dr. ${doc.fullName}</div>
-                    <span class="btn-chat-open">
-                        <i class="bi bi-chat-fill"></i> Open Chat
-                    </span>
-                </a>
-            </c:forEach>
-
-            <!-- User Contacts -->
-            <c:forEach var="chatUser" items="${users}">
-                <a href="${pageContext.request.contextPath}/chat/window/${chatUser.id}" class="friend-card" data-aos="fade-up">
-                    <div class="friend-avatar">
-                        <img src="${pageContext.request.contextPath}${chatUser.profilePhoto}"
-                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
-                             alt="${chatUser.fullName}">
-                    </div>
-                    <div class="friend-name">${not empty chatUser.fullName ? chatUser.fullName : chatUser.email}</div>
-                    <span class="btn-chat-open">
-                        <i class="bi bi-chat-fill"></i> Open Chat
-                    </span>
-                </a>
-            </c:forEach>
-            
-            <c:if test="${empty users and empty doctors}">
-                <div class="col-12 text-center py-5 text-muted">
-                    <i class="bi bi-chat-dots display-3 mb-3"></i>
-                    <p class="fs-5">You don't have any active chats right now.</p>
-                </div>
-            </c:if>
-        </div>
-
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-
-    </div><!-- /#page-content-wrapper -->
-</div><!-- /#wrapper -->
+                </c:if>
+            </div>
+        </main>
+    </div>
+</div>
 
 <div id="chatToast" class="chat-toast" role="alert">
-    <div class="fw-bold mb-1"><i class="bi bi-chat-dots-fill text-primary me-1"></i> New Message</div>
-    <div id="chatToastBody" class="small text-muted mb-2"></div>
+    <div class="fw-bold mb-1"><i class="bi bi-chat-dots-fill me-1"></i> New Message</div>
+    <div id="chatToastBody" class="small fdf-muted mb-2"></div>
     <a id="chatToastLink" href="#">Open Chat →</a>
 </div>
 
-<!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

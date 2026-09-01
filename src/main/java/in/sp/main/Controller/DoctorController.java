@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +22,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import in.sp.main.Entities.ConsultationType;
 import in.sp.main.Entities.Doctor;
 import in.sp.main.Entities.DoctorAppointment;
 import in.sp.main.Entities.DoctorAppointmentStatus;
+import in.sp.main.Entities.DoctorDocumentType;
+import in.sp.main.Entities.DoctorProfileStatus;
 import in.sp.main.Entities.DoctorReview;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
@@ -34,6 +40,7 @@ import in.sp.main.Repository.DoctorRepository;
 import in.sp.main.Repository.DoctorReviewRepository;
 import in.sp.main.Service.DoctorAppointmentService;
 import in.sp.main.Service.DoctorBookingService;
+import in.sp.main.Service.DoctorDocumentService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
@@ -79,138 +86,89 @@ public class DoctorController {
     @Autowired
     private in.sp.main.Repository.UserRepository userRepo;
 
+    @Autowired
+    private DoctorDocumentService doctorDocumentService;
+
+    /** One-time post-registration login autofill (server session only; never localStorage). */
+    private static final String DOCTOR_PREFILL_EMAIL = "doctorRegPrefillEmail";
+    private static final String DOCTOR_PREFILL_PASSWORD = "doctorRegPrefillPassword";
+  private static final String DOCTOR_PREFILL_AT = "doctorRegPrefillAt";
+    private static final String DOCTOR_REG_SUCCESS_NAME = "doctorRegSuccessName";
+    private static final long DOCTOR_PREFILL_TTL_MS = 10L * 60L * 1000L;
+
     // ==============================
     // Doctor Registration + Login
     // ==============================
     @GetMapping("/register")
-    public String registerPage() {
+    public String registerPage(@RequestParam(value = "success", required = false) String success,
+                               HttpSession session,
+                               Model model) {
+        if ("1".equals(success) || "true".equalsIgnoreCase(success)) {
+            Object name = session.getAttribute(DOCTOR_REG_SUCCESS_NAME);
+            if (name != null) {
+                model.addAttribute("registrationSuccess", true);
+                model.addAttribute("registeredName", name.toString());
+                session.removeAttribute(DOCTOR_REG_SUCCESS_NAME);
+                return "doctor/doctor-register";
+            }
+        }
         return "doctor/doctor-register";
     }
 
+    /**
+     * Web registration aligned with Mobile {@code register-quick}:
+     * email OTP must already be verified; then create account via DoctorRegistrationService.
+     */
     @PostMapping("/register")
     public String register(
-            // ── Step 1: Basic Details ──
             @RequestParam String fullName,
             @RequestParam String email,
-            @RequestParam String phone,
+    @RequestParam String phone,
             @RequestParam String password,
-            @RequestParam(required = false, defaultValue = "FEMALE") String gender,
-            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
-
-            // ── Step 2: Professional Details ──
-            @RequestParam(required = false) String medicalRegNumber,
-            @RequestParam(required = false) String specialization,
-            @RequestParam(required = false) Integer experienceYears,
-            @RequestParam(required = false) String qualification,
-            @RequestParam(required = false) String hospitalName,
-            @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
-
-            // ── Step 3: Location Details ──
-            @RequestParam(required = false) String clinicAddress,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String googleMapLocation,
-
-            // ── Step 4: Availability ──
-            @RequestParam(required = false) List<String> availableDays,
-            @RequestParam(required = false) String startTime,
-            @RequestParam(required = false) String endTime,
-            @RequestParam(required = false) String emergencyAvailable,
-
-            // ── Step 5: Verification Documents ──
-            @RequestParam(value = "medicalLicense", required = false) MultipartFile medicalLicense,
-            @RequestParam(value = "idProof", required = false) MultipartFile idProof,
-            @RequestParam(value = "degreeCertificate", required = false) MultipartFile degreeCertificate,
-
-            // ── Step 6: Earnings Setup ──
-            @RequestParam(required = false, defaultValue = "0.0") Double consultationFee,
-            @RequestParam(required = false) Double chatFee,
-            @RequestParam(required = false) Double callFee,
-            @RequestParam(required = false) Double videoFee,
-            @RequestParam(required = false) String upiId,
-            @RequestParam(required = false) String bankDetails,
-
+            @RequestParam String confirmPassword,
+            @RequestParam(required = false) String acceptedTerms,
+            HttpSession session,
             Model model) {
 
-        if (doctorRepo.findByEmail(email.trim().toLowerCase()).isPresent()) {
-            model.addAttribute("error", "Email already registered.");
-            return "doctor/doctor-register";
-        }
-
-        if (phone == null || !phone.trim().matches("^\\d{10}$")) {
-            model.addAttribute("error", "Phone number must be exactly 10 digits.");
-            return "doctor/doctor-register";
-        }
+        boolean termsAccepted = "true".equalsIgnoreCase(acceptedTerms)
+                || "on".equalsIgnoreCase(acceptedTerms)
+                || "yes".equalsIgnoreCase(acceptedTerms)
+                || "1".equals(acceptedTerms);
 
         try {
-            // Save uploaded files
-            String profilePhotoPath = (profilePhoto != null && !profilePhoto.isEmpty()) ? fileUploadService.saveFile(profilePhoto) : null;
-            String medicalLicensePath = (medicalLicense != null && !medicalLicense.isEmpty()) ? fileUploadService.saveFile(medicalLicense) : null;
-            String idProofPath = (idProof != null && !idProof.isEmpty()) ? fileUploadService.saveFile(idProof) : null;
-            String degreeCertificatePath = (degreeCertificate != null && !degreeCertificate.isEmpty()) ? fileUploadService.saveFile(degreeCertificate) : null;
+            Doctor d = doctorRegistrationService.registerQuick(
+                    fullName,
+                    email,
+                    phone,
+                    password,
+                    confirmPassword,
+                    null,
+                    termsAccepted);
 
-            Doctor d = new Doctor();
+            // Short-lived email handoff for login autofill only (never store password in session).
+            session.setAttribute(DOCTOR_PREFILL_EMAIL, d.getEmail());
+            session.setAttribute(DOCTOR_PREFILL_AT, System.currentTimeMillis());
+            session.setAttribute(DOCTOR_REG_SUCCESS_NAME, d.getFullName());
 
-            // Step 1
-            d.setFullName(fullName);
-            d.setEmail(email.trim().toLowerCase());
-            d.setPhone(phone);
-            d.setPassword(passwordService.encode(password));
-            d.setGender(Gender.valueOf(gender));
-            d.setProfilePhotoPath(profilePhotoPath);
-
-            // Step 2
-            d.setMedicalRegNumber(medicalRegNumber);
-            d.setSpecialization(specialization);
-            d.setExperienceYears(experienceYears);
-            d.setQualification(qualification);
-            d.setHospitalName(hospitalName);
-            d.setConsultationType(ConsultationType.valueOf(consultationType));
-
-            // Step 3
-            d.setClinicAddress(clinicAddress);
-            d.setCity(city);
-            d.setState(state);
-            d.setPincode(pincode);
-            d.setLocationText(city + ", " + state);
-            d.setGoogleMapLocation(googleMapLocation);
-
-            // Step 4
-            if (availableDays != null && !availableDays.isEmpty()) {
-                d.setAvailableDays(String.join(",", availableDays));
-            }
-            d.setStartTime(startTime);
-            d.setEndTime(endTime);
-            d.setEmergencyAvailable("yes".equalsIgnoreCase(emergencyAvailable));
-
-            // Step 5
-            d.setMedicalLicensePath(medicalLicensePath);
-            d.setIdProofPath(idProofPath);
-            d.setDegreeCertificatePath(degreeCertificatePath);
-            d.setIdentityDocumentPath(idProofPath);
-
-            // Step 6
-            d.setConsultationFee(consultationFee);
-            d.setChatFee(chatFee);
-            d.setCallFee(callFee);
-            d.setVideoFee(videoFee);
-            d.setUpiId(upiId);
-            d.setBankDetails(bankDetails);
-
-            doctorRegistrationService.initializeLegacyRegisteredDoctor(d);
-
-            doctorRepo.save(d);
-            model.addAttribute("message", "Registration successful! Await admin verification.");
-            return "redirect:/doctors/login";
-        } catch (IOException e) {
-            model.addAttribute("error", "Failed to upload documents. Please try again.");
+            return "redirect:/doctors/register?success=1";
+        } catch (ResponseStatusException ex) {
+            model.addAttribute("error", ex.getReason() != null ? ex.getReason() : "Registration failed.");
+            model.addAttribute("fullName", fullName);
+            model.addAttribute("email", email);
+            model.addAttribute("phone", phone);
+            return "doctor/doctor-register";
+        } catch (Exception ex) {
+            model.addAttribute("error", "Registration failed. Please try again.");
+            model.addAttribute("fullName", fullName);
+            model.addAttribute("email", email);
+            model.addAttribute("phone", phone);
             return "doctor/doctor-register";
         }
     }
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(HttpSession session, Model model) {
+        consumeDoctorLoginPrefill(session, model);
         return "doctor/doctor-login";
     }
 
@@ -220,9 +178,13 @@ public class DoctorController {
                         HttpSession session,
                         jakarta.servlet.http.HttpServletResponse response,
                         Model model) {
-        Optional<Doctor> dOpt = doctorRepo.findByEmail(email.trim().toLowerCase());
+        // Clear any leftover prefill so credentials are not reused after a failed attempt.
+        clearDoctorLoginPrefill(session);
+
+        Optional<Doctor> dOpt = doctorRepo.findByEmail(email.trim().toLowerCase(Locale.ROOT));
         if (dOpt.isEmpty()) {
             model.addAttribute("error", "Doctor not found.");
+            model.addAttribute("prefillEmail", email);
             return "doctor/doctor-login";
         }
         Doctor candidate = dOpt.get();
@@ -232,13 +194,14 @@ public class DoctorController {
         });
         if (!ok) {
             model.addAttribute("error", "Invalid password.");
+            model.addAttribute("prefillEmail", email);
             return "doctor/doctor-login";
         }
 
         Doctor d;
         try {
             d = doctorRegistrationService.requireLoginDoctor(candidate);
-        } catch (org.springframework.web.server.ResponseStatusException ex) {
+        } catch (ResponseStatusException ex) {
             model.addAttribute("error", ex.getReason() == null ? "Unable to login." : ex.getReason());
             return "doctor/doctor-login";
         }
@@ -246,7 +209,7 @@ public class DoctorController {
         // Clear conflicting user session so doctor chat/calls use doctor role, not leftover user session
         session.removeAttribute("user");
         session.setAttribute("loggedDoctor", d);
-        
+
         // Generate JWT and add to response
         String token = jwtUtil.generateToken(d.getEmail(), "DOCTOR");
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
@@ -254,32 +217,280 @@ public class DoctorController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
-        
+
+        if (needsProfileCompletion(d)) {
+            return "redirect:/doctors/profile-completion";
+        }
         return "redirect:/doctors/dashboard";
+    }
+
+
+    // ==============================
+    // Profile completion (onboarding)
+    // ==============================
+    @GetMapping("/profile-completion")
+    public String profileCompletionPage(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+        Doctor d = requireLoggedDoctor(session);
+        if (d == null) {
+            return "redirect:/doctors/login";
+        }
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        doctorProfileService.refreshCompletion(d);
+        doctorRepo.save(d);
+        session.setAttribute("loggedDoctor", d);
+
+        model.addAttribute("doctor", d);
+        model.addAttribute("profile", doctorProfileService.profilePayload(d));
+        model.addAttribute("profileCompletionPct", d.getProfileCompletionPct() == null ? 0 : d.getProfileCompletionPct());
+        model.addAttribute("missingItems", doctorProfileService.missingItems(d));
+        model.addAttribute("statusLabel",
+                in.sp.main.Service.DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
+        model.addAttribute("nextStepGuidance", doctorProfileService.nextStepGuidance(d));
+        return "doctor/doctor-profile-completion";
+    }
+
+    @PostMapping("/profile-completion")
+    public String saveProfileCompletion(
+            @RequestParam String fullName,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String specialization,
+            @RequestParam(required = false) String qualification,
+            @RequestParam(required = false) Integer experienceYears,
+            @RequestParam(required = false) String medicalRegNumber,
+            @RequestParam(required = false) String hospitalName,
+            @RequestParam(required = false) List<String> consultationModes,
+            @RequestParam(required = false) String consultationType,
+            @RequestParam(required = false) List<String> availableDays,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) Integer slotDurationMinutes,
+            @RequestParam(required = false) Integer bufferMinutes,
+            @RequestParam(required = false) String breakStart,
+            @RequestParam(required = false) String breakEnd,
+            @RequestParam(required = false) String blockedDates,
+            @RequestParam(required = false) String autoConfirm,
+            @RequestParam(required = false) String emergencyAvailable,
+            @RequestParam(required = false) String clinicAddress,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String googleMapLocation,
+            @RequestParam(required = false) String languages,
+            @RequestParam(required = false) String services,
+            @RequestParam(required = false) String bio,
+            @RequestParam(required = false) Double consultationFee,
+            @RequestParam(required = false) Double chatFee,
+            @RequestParam(required = false) Double callFee,
+            @RequestParam(required = false) Double videoFee,
+            @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) String bankDetails,
+            @RequestParam(required = false) MultipartFile profilePhoto,
+            @RequestParam(required = false) MultipartFile medicalLicense,
+            @RequestParam(required = false) MultipartFile idProof,
+            @RequestParam(required = false) MultipartFile degreeCertificate,
+            @RequestParam(required = false) String intent,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        Doctor d = requireLoggedDoctor(session);
+        if (d == null) {
+            return "redirect:/doctors/login";
+        }
+        d = doctorRepo.findById(d.getId()).orElse(d);
+
+        try {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("fullName", fullName);
+            if (phone != null) body.put("phone", phone);
+            if (specialization != null) body.put("specialization", specialization);
+            if (qualification != null) body.put("qualification", qualification);
+            if (experienceYears != null) body.put("experienceYears", experienceYears);
+            if (medicalRegNumber != null) body.put("medicalRegNumber", medicalRegNumber);
+            if (hospitalName != null) body.put("hospitalName", hospitalName);
+            if (clinicAddress != null) body.put("clinicAddress", clinicAddress);
+            if (city != null) body.put("city", city);
+            if (state != null) body.put("state", state);
+            if (pincode != null) body.put("pincode", pincode);
+            if (googleMapLocation != null) body.put("googleMapLocation", googleMapLocation);
+            if (languages != null) body.put("languages", languages);
+            if (services != null) body.put("services", services);
+            if (bio != null) body.put("bio", bio);
+            if (consultationFee != null) body.put("consultationFee", consultationFee);
+            if (chatFee != null) body.put("chatFee", chatFee);
+            if (callFee != null) body.put("callFee", callFee);
+            if (videoFee != null) body.put("videoFee", videoFee);
+            if (upiId != null) body.put("upiId", upiId);
+            if (bankDetails != null) body.put("bankDetails", bankDetails);
+            body.put("emergencyAvailable", "yes".equalsIgnoreCase(emergencyAvailable) || "true".equalsIgnoreCase(emergencyAvailable) || "on".equalsIgnoreCase(emergencyAvailable));
+
+            if (consultationModes != null && !consultationModes.isEmpty()) {
+                body.put("consultationModes", consultationModes);
+            } else if (consultationType != null && !consultationType.isBlank()) {
+                body.put("consultationType", consultationType);
+            }
+            if (availableDays != null && !availableDays.isEmpty()) {
+                body.put("availableDays", String.join(",", availableDays));
+            }
+            if (startTime != null) body.put("startTime", startTime);
+            if (endTime != null) body.put("endTime", endTime);
+            if (slotDurationMinutes != null) body.put("slotDurationMinutes", slotDurationMinutes);
+            if (bufferMinutes != null) body.put("bufferMinutes", bufferMinutes);
+            if (breakStart != null) body.put("breakStart", breakStart);
+            if (breakEnd != null) body.put("breakEnd", breakEnd);
+            if (blockedDates != null) body.put("blockedDates", blockedDates);
+            body.put("autoConfirm", "yes".equalsIgnoreCase(autoConfirm) || "true".equalsIgnoreCase(autoConfirm) || "on".equalsIgnoreCase(autoConfirm));
+
+            doctorProfileService.updateProfile(d, body);
+
+            if (gender != null && !gender.isBlank() && d.getDoctorProfileStatus() != DoctorProfileStatus.APPROVED) {
+                try {
+                    d.setGender(Gender.valueOf(gender.trim().toUpperCase(Locale.ROOT)));
+                } catch (IllegalArgumentException ignored) {
+                    // keep existing gender
+                }
+            }
+
+            uploadOptionalDoc(d, profilePhoto, DoctorDocumentType.PROFILE_PHOTO);
+            uploadOptionalDoc(d, idProof, DoctorDocumentType.GOVERNMENT_ID);
+            uploadOptionalDoc(d, medicalLicense, DoctorDocumentType.MEDICAL_LICENSE);
+            uploadOptionalDoc(d, degreeCertificate, DoctorDocumentType.MEDICAL_REGISTRATION);
+
+            doctorProfileService.refreshCompletion(d);
+            doctorRepo.save(d);
+            session.setAttribute("loggedDoctor", d);
+
+            if ("submitVerification".equalsIgnoreCase(intent == null ? "" : intent.trim())) {
+                try {
+                    doctorRegistrationService.submitForVerification(d);
+                    session.setAttribute("loggedDoctor", d);
+                    redirectAttributes.addFlashAttribute("message",
+                            "Profile saved and submitted for verification. Admin review is in progress.");
+                    return "redirect:/doctors/dashboard?section=profile";
+                } catch (ResponseStatusException ex) {
+                    redirectAttributes.addFlashAttribute("error",
+                            ex.getReason() != null ? ex.getReason() : "Profile saved, but verification submit failed. Fix missing items and try again.");
+                    return "redirect:/doctors/profile-completion";
+                }
+            }
+
+            redirectAttributes.addFlashAttribute("message", "Profile updated successfully. Review section 11 when you are ready to submit for verification.");
+            return "redirect:/doctors/profile-completion";
+        } catch (ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Unable to save profile.");
+            return "redirect:/doctors/profile-completion";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Unable to save profile. Please try again.");
+            return "redirect:/doctors/profile-completion";
+        }
+    }
+
+    @GetMapping("/profile-completion/skip")
+    public String skipProfileCompletion(HttpSession session, RedirectAttributes redirectAttributes) {
+        Doctor d = requireLoggedDoctor(session);
+        if (d == null) {
+            return "redirect:/doctors/login";
+        }
+        // Skip does not mark fields complete and does not destroy unsaved form data (nothing posted).
+        redirectAttributes.addFlashAttribute("message", "You can complete your profile anytime from My Profile.");
+        return "redirect:/doctors/dashboard";
+    }
+
+    @GetMapping("/logout")
+    public String doctorLogout(HttpSession session, jakarta.servlet.http.HttpServletResponse response) {
+        if (session != null) {
+            session.invalidate();
+        }
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", null);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
+        return "redirect:/doctors/login?logout=true";
+    }
+
+    private void uploadOptionalDoc(Doctor d, MultipartFile file, DoctorDocumentType type) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        doctorDocumentService.uploadDocument(d, type, file);
+    }
+
+    private Doctor requireLoggedDoctor(HttpSession session) {
+        Object d = session == null ? null : session.getAttribute("loggedDoctor");
+        return d instanceof Doctor ? (Doctor) d : null;
+    }
+
+    private static boolean needsProfileCompletion(Doctor d) {
+        if (d == null) {
+            return true;
+        }
+        DoctorProfileStatus status = d.getDoctorProfileStatus();
+        if (status == null) {
+            return true;
+        }
+        return status == DoctorProfileStatus.REGISTERED
+                || status == DoctorProfileStatus.PROFILE_INCOMPLETE
+                || status == DoctorProfileStatus.CHANGES_REQUESTED
+                || status == DoctorProfileStatus.REJECTED;
+    }
+
+    private void consumeDoctorLoginPrefill(HttpSession session, Model model) {
+        if (session == null) {
+            return;
+        }
+        Object atObj = session.getAttribute(DOCTOR_PREFILL_AT);
+        long at = 0L;
+        if (atObj instanceof Long l) {
+            at = l;
+        } else if (atObj instanceof Number n) {
+            at = n.longValue();
+        }
+        boolean expired = at <= 0L || (System.currentTimeMillis() - at) > DOCTOR_PREFILL_TTL_MS;
+
+        Object email = session.getAttribute(DOCTOR_PREFILL_EMAIL);
+        // Always clear after consume attempt (one-time).
+        clearDoctorLoginPrefill(session);
+
+        if (expired || email == null) {
+            return;
+        }
+        model.addAttribute("prefillEmail", email.toString());
+        model.addAttribute("prefillFromRegistration", true);
+    }
+
+    private void clearDoctorLoginPrefill(HttpSession session) {
+        if (session == null) {
+            return;
+        }
+        session.removeAttribute(DOCTOR_PREFILL_EMAIL);
+        session.removeAttribute(DOCTOR_PREFILL_PASSWORD);
+        session.removeAttribute(DOCTOR_PREFILL_AT);
     }
 
     @GetMapping("/dashboard")
     public String dashboard(@RequestParam(value = "section", defaultValue = "overview") String section,
                             @RequestParam(value = "userId", required = false) Long userId,
                             Model model, HttpSession session, RedirectAttributes redirectAttributes) {
+
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
-
         d = doctorRepo.findById(d.getId()).orElse(d);
-        session.setAttribute("loggedDoctor", d);
+
         
-        // Enforce profile approval
-        boolean isApproved = (d.getDoctorProfileStatus() == in.sp.main.Entities.DoctorProfileStatus.APPROVED || 
-                              d.getVerificationStatus() == in.sp.main.Entities.VerificationStatus.VERIFIED);
-        if (!isApproved && !section.equals("profile")) {
-            redirectAttributes.addFlashAttribute("error", "You must complete your profile and wait for admin approval before accessing other features.");
-            return "redirect:/doctors/dashboard?section=profile";
-        }
+
+        session.setAttribute("loggedDoctor", d);
+
+        // Incomplete / pending doctors may open the dashboard after Skip (Mobile-aligned).
+        // Profile completion remains available via /doctors/profile-completion and My Profile.
 
         doctorProfileService.refreshCompletion(d);
-        doctorRepo.save(d);
-        List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
         model.addAttribute("doctor", d);
+
+        // Fetch appointments for this doctor.
+        List<DoctorAppointment> appts = appointmentRepo.findByDoctorOrderByAppointmentTimeDesc(d);
+
+        
         model.addAttribute("appointments", appts);
         model.addAttribute("appointmentCount", appts.size());
         model.addAttribute("section", section);
@@ -396,124 +607,13 @@ public class DoctorController {
             }
         }
 
-        // Profile Completion Calculation
-        int totalFields = 15;
-        int completedFields = 0;
-        if (d.getFullName() != null && !d.getFullName().trim().isEmpty()) completedFields++;
-        if (d.getPhone() != null && !d.getPhone().trim().isEmpty()) completedFields++;
-        if (d.getGender() != null) completedFields++;
-        if (d.getProfilePhotoPath() != null && !d.getProfilePhotoPath().trim().isEmpty()) completedFields++;
-        if (d.getMedicalRegNumber() != null && !d.getMedicalRegNumber().trim().isEmpty()) completedFields++;
-        if (d.getSpecialization() != null && !d.getSpecialization().trim().isEmpty()) completedFields++;
-        if (d.getExperienceYears() != null) completedFields++;
-        if (d.getQualification() != null && !d.getQualification().trim().isEmpty()) completedFields++;
-        if (d.getConsultationType() != null) completedFields++;
-        if (d.getClinicAddress() != null && !d.getClinicAddress().trim().isEmpty()) completedFields++;
-        if (d.getCity() != null && !d.getCity().trim().isEmpty()) completedFields++;
-        if (d.getState() != null && !d.getState().trim().isEmpty()) completedFields++;
-        if (d.getAvailableDays() != null && !d.getAvailableDays().trim().isEmpty()) completedFields++;
-        if (d.getMedicalLicensePath() != null && !d.getMedicalLicensePath().trim().isEmpty()) completedFields++;
-        if (d.getIdProofPath() != null && !d.getIdProofPath().trim().isEmpty()) completedFields++;
-
-        int completionPercentage = (completedFields * 100) / totalFields;
+        // Profile Completion — same calculator as Mobile / DoctorProfileService (13 fields)
+        int completionPercentage = doctorProfileService.calculateCompletionPct(d);
         model.addAttribute("profileCompletion", completionPercentage);
+        model.addAttribute("missingItems", doctorProfileService.missingItems(d));
 
         return "doctor/doctor-dashboard";
-    }
 
-    @PostMapping("/update-full-profile")
-    public String updateFullProfile(
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam(required = false) String gender,
-            @RequestParam(required = false) String specialization,
-            @RequestParam(required = false) String qualification,
-            @RequestParam(required = false) Integer experienceYears,
-            @RequestParam(required = false) String medicalRegNumber,
-            @RequestParam(required = false) String hospitalName,
-            @RequestParam(required = false) String consultationType,
-            @RequestParam(required = false) List<String> availableDays,
-            @RequestParam(required = false) String startTime,
-            @RequestParam(required = false) String endTime,
-            @RequestParam(required = false) String emergencyAvailable,
-            @RequestParam(required = false) String clinicAddress,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String googleMapLocation,
-            @RequestParam(required = false) Double consultationFee,
-            @RequestParam(required = false) Double chatFee,
-            @RequestParam(required = false) Double callFee,
-            @RequestParam(required = false) Double videoFee,
-            @RequestParam(required = false) String upiId,
-            @RequestParam(required = false) MultipartFile profilePhoto,
-            @RequestParam(required = false) MultipartFile medicalLicense,
-            @RequestParam(required = false) MultipartFile idProof,
-            @RequestParam(required = false) MultipartFile degreeCertificate,
-            HttpSession session, RedirectAttributes redirectAttributes) {
-
-        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
-        if (d == null) return "redirect:/doctors/login";
-
-        d = doctorRepo.findById(d.getId()).orElse(d);
-
-        try {
-            if (profilePhoto != null && !profilePhoto.isEmpty()) {
-                d.setProfilePhotoPath(fileUploadService.saveFile(profilePhoto));
-            }
-            if (medicalLicense != null && !medicalLicense.isEmpty()) {
-                d.setMedicalLicensePath(fileUploadService.saveFile(medicalLicense));
-            }
-            if (idProof != null && !idProof.isEmpty()) {
-                d.setIdProofPath(fileUploadService.saveFile(idProof));
-                d.setIdentityDocumentPath(d.getIdProofPath());
-            }
-            if (degreeCertificate != null && !degreeCertificate.isEmpty()) {
-                d.setDegreeCertificatePath(fileUploadService.saveFile(degreeCertificate));
-            }
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error uploading files.");
-            return "redirect:/doctors/dashboard?section=profile";
-        }
-
-        d.setFullName(fullName);
-        d.setPhone(phone);
-        if (gender != null) d.setGender(Gender.valueOf(gender));
-        d.setSpecialization(specialization);
-        d.setQualification(qualification);
-        d.setExperienceYears(experienceYears);
-        d.setMedicalRegNumber(medicalRegNumber);
-        d.setHospitalName(hospitalName);
-        if (consultationType != null) d.setConsultationType(ConsultationType.valueOf(consultationType));
-
-        if (availableDays != null && !availableDays.isEmpty()) {
-            d.setAvailableDays(String.join(",", availableDays));
-        } else {
-            d.setAvailableDays(null);
-        }
-        d.setStartTime(startTime);
-        d.setEndTime(endTime);
-        d.setEmergencyAvailable("yes".equalsIgnoreCase(emergencyAvailable));
-
-        d.setClinicAddress(clinicAddress);
-        d.setCity(city);
-        d.setState(state);
-        d.setPincode(pincode);
-        if (city != null && state != null) {
-            d.setLocationText(city + ", " + state);
-        }
-        d.setGoogleMapLocation(googleMapLocation);
-
-        if (consultationFee != null) d.setConsultationFee(consultationFee);
-        d.setChatFee(chatFee);
-        d.setCallFee(callFee);
-        d.setVideoFee(videoFee);
-        d.setUpiId(upiId != null ? upiId.trim() : null);
-
-        doctorRepo.save(d);
-        session.setAttribute("loggedDoctor", d);
-        redirectAttributes.addFlashAttribute("message", "Profile updated successfully!");
-        return "redirect:/doctors/dashboard?section=profile";
     }
 
     @PostMapping("/submit-for-verification")
@@ -522,13 +622,17 @@ public class DoctorController {
         if (d == null) return "redirect:/doctors/login";
 
         d = doctorRepo.findById(d.getId()).orElse(d);
-        d.setDoctorProfileStatus(in.sp.main.Entities.DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
-        d.setVerificationStatus(in.sp.main.Entities.VerificationStatus.PENDING);
-        doctorRepo.save(d);
-        
-        session.setAttribute("loggedDoctor", d);
-        redirectAttributes.addFlashAttribute("message", "Your profile has been submitted successfully. Your profile is currently being verified by the admin.");
-        return "redirect:/doctors/dashboard?section=profile";
+        try {
+            doctorRegistrationService.submitForVerification(d);
+            session.setAttribute("loggedDoctor", d);
+            redirectAttributes.addFlashAttribute("message",
+                    "Your profile has been submitted successfully. Your profile is currently being verified by the admin.");
+            return "redirect:/doctors/dashboard?section=profile";
+        } catch (ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("error",
+                    ex.getReason() != null ? ex.getReason() : "Unable to submit for verification.");
+            return "redirect:/doctors/profile-completion";
+        }
     }
 
     @PostMapping("/update-fees")
@@ -547,18 +651,26 @@ public class DoctorController {
             redirectAttributes.addFlashAttribute("error", "Consultation fee cannot be negative.");
             return "redirect:/doctors/dashboard?section=earnings";
         }
-        if ((chatFee != null && chatFee < 0) || (callFee != null && callFee < 0) || (videoFee != null && videoFee < 0)) {
-            redirectAttributes.addFlashAttribute("error", "Fees cannot be negative.");
+        if (chatFee != null && chatFee < 0) {
+            redirectAttributes.addFlashAttribute("error", "Chat fee cannot be negative.");
+            return "redirect:/doctors/dashboard?section=earnings";
+        }
+        if (callFee != null && callFee < 0) {
+            redirectAttributes.addFlashAttribute("error", "Call fee cannot be negative.");
+            return "redirect:/doctors/dashboard?section=earnings";
+        }
+        if (videoFee != null && videoFee < 0) {
+            redirectAttributes.addFlashAttribute("error", "Video fee cannot be negative.");
             return "redirect:/doctors/dashboard?section=earnings";
         }
 
         d = doctorRepo.findById(d.getId()).orElse(d);
         if (consultationFee != null) d.setConsultationFee(consultationFee);
-        d.setChatFee(chatFee);
-        d.setCallFee(callFee);
-        d.setVideoFee(videoFee);
-        d.setUpiId(upiId != null ? upiId.trim() : null);
-        d.setBankDetails(bankDetails != null ? bankDetails.trim() : null);
+        if (chatFee != null) d.setChatFee(chatFee);
+        if (callFee != null) d.setCallFee(callFee);
+        if (videoFee != null) d.setVideoFee(videoFee);
+        if (upiId != null) d.setUpiId(upiId.trim().isEmpty() ? null : upiId.trim());
+        if (bankDetails != null) d.setBankDetails(bankDetails.trim().isEmpty() ? null : bankDetails.trim());
 
         doctorRepo.save(d);
         session.setAttribute("loggedDoctor", d);
@@ -629,34 +741,72 @@ public class DoctorController {
         return "redirect:/doctors/dashboard?section=earnings";
     }
 
-    @PostMapping("/appointments/{id}/status")
-    public String updateAppointmentStatus(@PathVariable Long id,
-                                          @RequestParam String status,
-                                          HttpSession session,
-                                          RedirectAttributes redirectAttributes) {
+    @PostMapping("/toggle-online")
+    public String toggleOnline(HttpSession session) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
-        if (d == null) return "redirect:/doctors/login";
-
-        DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
-        if (appt == null || appt.getDoctor() == null || !appt.getDoctor().getId().equals(d.getId())) {
-            redirectAttributes.addFlashAttribute("message", "Appointment not found.");
-            return "redirect:/doctors/dashboard";
-        }
-
-        try {
-            doctorAppointmentService.transitionByDoctor(appt, d, DoctorAppointmentStatus.valueOf(status));
-            redirectAttributes.addFlashAttribute("message", "Status updated.");
-        } catch (org.springframework.web.server.ResponseStatusException ex) {
-            redirectAttributes.addFlashAttribute("message", ex.getReason());
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("message", "Invalid status.");
+        if (d != null) {
+            d = doctorRepo.findById(d.getId()).orElse(d);
+            d.setIsOnline(d.getIsOnline() != null && d.getIsOnline() ? false : true);
+            doctorRepo.save(d);
+            session.setAttribute("loggedDoctor", d);
         }
         return "redirect:/doctors/dashboard";
     }
 
-    // ==============================
-    // User: Search + Book + Review
-    // ==============================
+    @PostMapping("/update-availability")
+    public String updateAvailability(@RequestParam String availableDays, @RequestParam String startTime, @RequestParam String endTime, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes attrs) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d != null) {
+            d = doctorRepo.findById(d.getId()).orElse(d);
+            d.setAvailableDays(availableDays);
+            d.setStartTime(startTime);
+            d.setEndTime(endTime);
+            doctorRepo.save(d);
+            session.setAttribute("loggedDoctor", d);
+            attrs.addFlashAttribute("message", "Availability updated successfully.");
+        }
+        return "redirect:/doctors/dashboard";
+    }
+
+    @PostMapping("/upload-certificate")
+    public String uploadCertificate(@RequestParam("certificate") org.springframework.web.multipart.MultipartFile file, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        if (file != null && !file.isEmpty()) {
+            try {
+                String filePath = fileUploadService.saveFile(file);
+                d = doctorRepo.findById(d.getId()).orElse(d);
+                d.setMedicalLicensePath(filePath);
+                
+                // Certificate uploaded, awaiting admin review
+                d.setDoctorProfileStatus(in.sp.main.Entities.DoctorProfileStatus.PENDING_ADMIN_APPROVAL);
+                d.setVerificationStatus(in.sp.main.Entities.VerificationStatus.PENDING);
+                
+                doctorRepo.save(d);
+                session.setAttribute("loggedDoctor", d);
+                redirectAttributes.addFlashAttribute("message", "Certificate uploaded successfully. Your profile is now verified!");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("message", "Failed to upload certificate.");
+            }
+        }
+        return "redirect:/doctors/dashboard";
+    }
+
+    @PostMapping("/appointments/{id}/status")
+    public String updateAppointmentStatus(@PathVariable Long id, @RequestParam String status, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
+        if (d == null) return "redirect:/doctors/login";
+
+        in.sp.main.Entities.DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
+        if (appt != null && appt.getDoctor() != null && appt.getDoctor().getId().equals(d.getId())) {
+            appt.setStatus(in.sp.main.Entities.DoctorAppointmentStatus.valueOf(status));
+            appointmentRepo.save(appt);
+            redirectAttributes.addFlashAttribute("message", "Appointment status updated to " + status);
+        }
+        return "redirect:/doctors/dashboard";
+    }
+
     @GetMapping("/list")
     public String listForUsers(Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
@@ -687,9 +837,13 @@ public class DoctorController {
         }
 
         List<DoctorReview> reviews = reviewRepo.findByDoctorIdOrderByCreatedAtDesc(id);
+        boolean completedVisit = appointmentRepo.findByUserOrderByAppointmentTimeDesc(u).stream()
+                .anyMatch(a -> a.getDoctor() != null
+                        && a.getDoctor().getId().equals(id)
+                        && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
         model.addAttribute("doctor", d);
         model.addAttribute("reviews", reviews);
-        model.addAttribute("canReview", !reviewRepo.existsByUserIdAndDoctorId(u.getId(), id));
+        model.addAttribute("canReview", completedVisit && !reviewRepo.existsByUserIdAndDoctorId(u.getId(), id));
         return "doctor/doctor-view";
     }
 
@@ -834,6 +988,15 @@ public class DoctorController {
             return "redirect:/doctors/view/" + doctorId;
         }
 
+        boolean completedVisit = appointmentRepo.findByUserOrderByAppointmentTimeDesc(u).stream()
+                .anyMatch(a -> a.getDoctor() != null
+                        && a.getDoctor().getId().equals(doctorId)
+                        && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
+        if (!completedVisit) {
+            redirectAttributes.addFlashAttribute("error", "You can review a doctor only after a completed consultation.");
+            return "redirect:/doctors/view/" + doctorId;
+        }
+
         DoctorReview r = new DoctorReview();
         r.setUser(u);
         r.setDoctor(d);
@@ -860,7 +1023,11 @@ public class DoctorController {
     // Real-time: Chat, Video, Call
     // ==============================
     @GetMapping("/chat/{doctorId}")
-    public String chatWithDoctor(@PathVariable Long doctorId, @RequestParam(required = false) Long userId, Model model, HttpSession session) {
+    public String chatWithDoctor(@PathVariable Long doctorId,
+                                 @RequestParam(required = false) Long userId,
+                                 Model model,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
@@ -870,32 +1037,34 @@ public class DoctorController {
         boolean doctorOwner = d != null && d.getId().equals(doctorId);
 
         if (doctorOwner) {
+            if (userId == null) {
+                redirectAttributes.addFlashAttribute("message", "Select a patient conversation from your dashboard.");
+                return "redirect:/doctors/dashboard?section=chats";
+            }
+            User chatUser = userRepo.findById(userId).orElse(null);
+            if (chatUser == null || !doctorAppointmentService.hasActiveRelationship(target, chatUser)) {
+                redirectAttributes.addFlashAttribute("message", "Chat is available only with patients who have booked you.");
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("currentUser", "Dr. " + d.getFullName());
             model.addAttribute("currentId", d.getId());
             model.addAttribute("senderType", "DOCTOR");
-            if (userId != null) {
-                User chatUser = userRepo.findById(userId).orElse(null);
-                model.addAttribute("targetUserId", userId);
-                if (chatUser != null) {
-                    model.addAttribute("targetUserName", chatUser.getFullName());
-                    model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target));
-                    // Mark this patient's messages as read when doctor opens the chat
-                    java.util.List<in.sp.main.Entities.DoctorChatMessage> unread =
-                            doctorChatRepo.findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(target, chatUser, "USER");
-                    if (!unread.isEmpty()) {
-                        for (in.sp.main.Entities.DoctorChatMessage msg : unread) {
-                            msg.setReadByDoctor(true);
-                        }
-                        doctorChatRepo.saveAll(unread);
-                    }
-                } else {
-                    model.addAttribute("targetUserName", "Unknown Patient");
-                    model.addAttribute("chatHistory", java.util.Collections.emptyList());
+            model.addAttribute("targetUserId", userId);
+            model.addAttribute("targetUserName", chatUser.getFullName());
+            model.addAttribute("chatHistory", doctorChatRepo.findByUserAndDoctorOrderByTimestampAsc(chatUser, target));
+            java.util.List<in.sp.main.Entities.DoctorChatMessage> unread =
+                    doctorChatRepo.findByDoctorAndUserAndSenderTypeAndReadByDoctorFalse(target, chatUser, "USER");
+            if (!unread.isEmpty()) {
+                for (in.sp.main.Entities.DoctorChatMessage msg : unread) {
+                    msg.setReadByDoctor(true);
                 }
-            } else {
-                model.addAttribute("chatHistory", java.util.Collections.emptyList());
+                doctorChatRepo.saveAll(unread);
             }
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                redirectAttributes.addFlashAttribute("message", "Chat unlocks after you book this doctor.");
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("currentUser", u.getFullName());
             model.addAttribute("currentId", u.getId());
             model.addAttribute("senderType", "USER");
@@ -928,6 +1097,9 @@ public class DoctorController {
         if ("USER".equals(senderType)) {
             User u = (User) session.getAttribute("user");
             if (u == null) return "NOT_LOGGED_IN";
+            if (!doctorAppointmentService.hasActiveRelationship(doc, u)) {
+                return "ACCESS_DENIED";
+            }
             msg.setUser(u);
             msg.setSenderType("USER");
             msg.setReadByDoctor(false);
@@ -935,12 +1107,14 @@ public class DoctorController {
             Doctor d = (Doctor) session.getAttribute("loggedDoctor");
             if (d == null) return "NOT_LOGGED_IN";
             if (!d.getId().equals(doctorId)) return "ACCESS_DENIED";
+            if (userId == null) return "ACCESS_DENIED";
+            User targetUser = userRepo.findById(userId).orElse(null);
+            if (targetUser == null || !doctorAppointmentService.hasActiveRelationship(doc, targetUser)) {
+                return "ACCESS_DENIED";
+            }
             msg.setSenderType("DOCTOR");
             msg.setReadByDoctor(true);
-            if (userId != null) {
-                User targetUser = userRepo.findById(userId).orElse(null);
-                msg.setUser(targetUser);
-            }
+            msg.setUser(targetUser);
         }
 
         doctorChatRepo.save(msg);
@@ -963,12 +1137,19 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-doc-" + doctorId + "-" + System.currentTimeMillis();
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         if (doctorOwner) {
+            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
+                    userRepo.findById(userId).orElse(null))) {
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-doc-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            roomName = "safeher-doc-" + doctorId + "-user-" + userId;
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-doc-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
@@ -989,12 +1170,19 @@ public class DoctorController {
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         String roomName = "safeher-call-" + doctorId + "-" + System.currentTimeMillis();
+        boolean doctorOwner = d != null && d.getId().equals(doctorId);
         if (doctorOwner) {
+            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
+                    userRepo.findById(userId).orElse(null))) {
+                return "redirect:/doctors/dashboard?section=chats";
+            }
             model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-call-" + doctorId + "-user-" + (userId != null ? userId : 0);
+            roomName = "safeher-call-" + doctorId + "-user-" + userId;
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                return "redirect:/doctors/view/" + doctorId;
+            }
             model.addAttribute("displayName", u.getFullName());
             roomName = "safeher-call-" + doctorId + "-user-" + u.getId();
         } else if (d != null) {
@@ -1030,11 +1218,7 @@ public class DoctorController {
         }
 
         DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
-        if (prescriptionText != null && prescriptionText.length() > 500) {
-            redirectAttributes.addFlashAttribute("error", "Prescription cannot exceed 500 characters.");
-            return "redirect:/doctors/dashboard?section=prescriptions";
-        }
-        if (appt != null && appt.getDoctor().getId().equals(d.getId())) {
+        if (appt != null && appt.getDoctor() != null && appt.getDoctor().getId().equals(d.getId())) {
             appt.setPrescriptionText(text);
             appointmentRepo.save(appt);
             redirectAttributes.addFlashAttribute("message", "Prescription saved successfully!");
@@ -1044,3 +1228,31 @@ public class DoctorController {
         return "redirect:/doctors/dashboard?section=prescriptions";
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

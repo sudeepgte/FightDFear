@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,457 +8,600 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${event.name} — Women Events</title>
     <meta name="description" content="${event.description}"/>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"/>
+    
+    <!-- Custom Theme & Detail Stylesheets -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: 'Outfit', sans-serif; background: #faf7fb; color: #1a1a2e; margin: 0; }
-
-        /* Hero banner */
-        .event-hero {
-            width: 100%; min-height: 420px; position: relative;
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #f43f5e 100%);
-            display: flex; align-items: flex-end;
-        }
-        .event-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 60%, transparent 100%); }
-        .hero-content { position: relative; z-index: 2; color: white; padding: 40px; max-width: 900px; }
-        .cat-badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 20px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 12px; }
-        .event-title { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 800; margin-bottom: 12px; line-height: 1.2; }
-        .hero-meta { display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.9rem; opacity: 0.9; }
-        .hero-meta span { display: flex; align-items: center; gap: 6px; }
-
-        /* Layout */
-        .detail-grid { display: grid; grid-template-columns: 1fr 360px; gap: 28px;
-            max-width: 1200px; margin: 0 auto; padding: 36px 20px 60px; }
-        @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
-
-        /* Card blocks */
-        .card-block { background: white; border-radius: 20px; padding: 28px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 24px; }
-        .block-title { font-size: 1.1rem; font-weight: 700; color: #1e1b4b; margin-bottom: 16px;
-            display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #f0e8f5; padding-bottom: 12px; }
-
-        /* Register card (sticky) */
-        .register-card { background: white; border-radius: 20px; padding: 28px;
-            box-shadow: 0 8px 40px rgba(124,45,94,0.12); position: sticky; top: 24px; border: 2px solid #f0e8f5; }
-        .price-display { font-size: 2rem; font-weight: 800; color: #1e1b4b; margin-bottom: 4px; }
-        .price-sub { font-size: 0.85rem; color: #888; margin-bottom: 20px; }
-        .reg-btn { width: 100%; background: linear-gradient(135deg, #1e1b4b, #f43f5e); color: white;
-            border: none; border-radius: 14px; padding: 16px; font-family: 'Outfit', sans-serif;
-            font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .reg-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(244,63,94,0.35); }
-        .reg-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .reg-info { display: flex; justify-content: space-between; padding: 10px 0;
-            border-bottom: 1px solid #f5f0f8; font-size: 0.88rem; }
-        .reg-info:last-child { border-bottom: none; }
-        .reg-info .label { color: #888; }
-        .reg-info .value { font-weight: 600; color: #333; }
-
-        /* Stars */
-        .stars { color: #f59e0b; font-size: 1.1rem; }
-        .star-empty { color: #d1d5db; }
-
-        /* Reviews */
-        .review-item { padding: 16px 0; border-bottom: 1px solid #f5f0f8; }
-        .review-item:last-child { border-bottom: none; }
-        .reviewer-name { font-weight: 700; font-size: 0.9rem; }
-        .review-date { font-size: 0.78rem; color: #aaa; }
-        .review-text { font-size: 0.92rem; color: #444; margin-top: 6px; line-height: 1.5; }
-
-        /* Gallery */
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-        .gallery-img { width: 100%; height: 110px; object-fit: cover; border-radius: 12px; cursor: pointer;
-            transition: transform 0.2s; }
-        .gallery-img:hover { transform: scale(1.05); }
-
-        /* Review form */
-        .star-input { display: flex; gap: 6px; margin-bottom: 12px; }
-        .star-input input { display: none; }
-        .star-input label { font-size: 1.8rem; color: #d1d5db; cursor: pointer; transition: color 0.15s; }
-        .star-input input:checked ~ label, .star-input label:hover,
-        .star-input label:hover ~ label { color: #f59e0b; }
-        .star-input { flex-direction: row-reverse; }
-
-        /* Upload zone */
-        .upload-zone { border: 2px dashed #d8b4fe; border-radius: 14px; padding: 24px;
-            text-align: center; cursor: pointer; transition: all 0.2s; }
-        .upload-zone:hover { background: #faf5ff; border-color: #a855f7; }
-
-        /* Map embed */
-        .map-frame { width: 100%; height: 200px; border: none; border-radius: 12px; }
-
-        /* Flash */
-        .flash-alert { position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 380px;
-            border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); animation: slideIn 0.4s ease; }
-        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+      .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+      .we-modal-overlay.open { display:flex; }
     </style>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css"/>
 </head>
 <body>
 
+<!-- Header Component -->
 <jsp:include page="/WEB-INF/views/fragments/header.jsp"/>
 
 <div id="wrapper">
+    <!-- Sidebar Component -->
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip; background: #faf7fb;">
+    
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;">
 
-<c:if test="${not empty success}">
-    <div class="flash-alert alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>${success}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-</c:if>
-<c:if test="${not empty error}">
-    <div class="flash-alert alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-</c:if>
-
-<!-- Event Hero Banner -->
-<div class="event-hero">
-    <c:if test="${not empty event.bannerImage}">
-        <img src="${pageContext.request.contextPath}/uploads/${event.bannerImage}" alt="${event.name}"/>
-    </c:if>
-    <div class="hero-overlay"></div>
-    <div class="hero-content">
-        <span class="cat-badge"><i class="bi bi-tag-fill me-1"></i>${event.category.displayName}</span>
-        <div class="event-title">${event.name}</div>
-        <div class="hero-meta">
-            <span><i class="bi bi-calendar3"></i>${event.eventDate} <c:if test="${not empty event.eventTime}">at ${event.eventTime}</c:if></span>
-            <span><i class="bi bi-geo-alt-fill"></i>${event.venue}, ${event.city}</span>
-            <span><i class="bi bi-building"></i>${event.organizerName} (${event.organizerType})</span>
-            <c:if test="${event.featured}"><span><i class="bi bi-star-fill" style="color:#f59e0b;"></i>Featured Event</span></c:if>
-        </div>
-    </div>
-</div>
-
-<!-- Breadcrumb -->
-<div class="container mt-3" style="max-width:1200px;">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb" style="font-size:0.85rem;">
-            <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events" style="color:#1e1b4b;">Events</a></li>
-            <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events?category=${event.category}" style="color:#1e1b4b;">${event.category.displayName}</a></li>
-            <li class="breadcrumb-item active">${event.name}</li>
-        </ol>
-    </nav>
-</div>
-
-<!-- Detail Grid -->
-<div class="detail-grid">
-
-    <!-- Left Column -->
-    <div>
-        <!-- About -->
-        <div class="card-block">
-            <div class="block-title"><i class="bi bi-info-circle-fill"></i>About This Event</div>
-            <p style="line-height:1.8; color:#444; white-space:pre-line;">${event.description}</p>
-        </div>
-
-        <!-- Event Details -->
-        <div class="card-block">
-            <div class="block-title"><i class="bi bi-list-check"></i>Event Details</div>
-            <div class="reg-info"><span class="label">📅 Date</span><span class="value">${event.eventDate}</span></div>
-            <div class="reg-info"><span class="label">🕐 Time</span><span class="value">${not empty event.eventTime ? event.eventTime : 'TBA'}</span></div>
-            <div class="reg-info"><span class="label">📍 Venue</span><span class="value">${event.venue}</span></div>
-            <div class="reg-info"><span class="label">🏙️ City</span><span class="value">${event.city}</span></div>
-            <div class="reg-info"><span class="label">💰 Entry Fee</span><span class="value">${event.free ? 'FREE' : '₹'.concat(event.entryFee.toString())}</span></div>
-            <div class="reg-info"><span class="label">👥 Max Participants</span><span class="value">${not empty event.maxParticipants ? event.maxParticipants : 'Unlimited'}</span></div>
-            <div class="reg-info"><span class="label">📞 Contact</span><span class="value">${event.contactInfo}</span></div>
-            <div class="reg-info"><span class="label">🏢 Organizer</span><span class="value">${event.organizerName} (${event.organizerType})</span></div>
-        </div>
-
-        <!-- Map -->
-        <c:if test="${not empty event.mapsLocation}">
-            <div class="card-block">
-                <div class="block-title"><i class="bi bi-map-fill"></i>Location</div>
-                <iframe class="map-frame"
-                        src="https://maps.google.com/maps?q=${event.mapsLocation}&output=embed"
-                        allowfullscreen loading="lazy"></iframe>
-                <a href="https://maps.google.com/maps?q=${event.mapsLocation}" target="_blank"
-                   style="color:#1e1b4b; font-weight:600; font-size:0.9rem; display:inline-block; margin-top:10px;">
-                    <i class="bi bi-box-arrow-up-right"></i> Open in Google Maps
-                </a>
+        <!-- Alert Banners -->
+        <c:if test="${not empty success}">
+            <div class="flash-alert alert alert-success alert-dismissible fade show m-3" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; border-radius: 12px; box-shadow: var(--shadow-md);">
+                <i class="bi bi-check-circle-fill me-2"></i>${success}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </c:if>
+        <c:if test="${not empty error}">
+            <div class="flash-alert alert alert-danger alert-dismissible fade show m-3" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; border-radius: 12px; box-shadow: var(--shadow-md);">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
 
-        <!-- Photo Gallery -->
-        <div class="card-block">
-            <div class="block-title"><i class="bi bi-images"></i>Photo Gallery (${photos.size()})</div>
+        <!-- Premium Hero Section -->
+        <div class="event-hero">
             <c:choose>
-                <c:when test="${not empty photos}">
-                    <div class="gallery-grid">
-                        <c:forEach var="ph" items="${photos}">
-                            <img src="${pageContext.request.contextPath}/uploads/${ph.photoPath}"
-                                 class="gallery-img" alt="${ph.caption}" data-bs-toggle="modal" data-bs-target="#photoModal"
-                                 onclick="document.getElementById('modalPhoto').src=this.src"/>
-                        </c:forEach>
-                    </div>
+                <c:when test="${not empty event.bannerImage}">
+                    <img src="${pageContext.request.contextPath}/uploads/${event.bannerImage}" alt="${event.name}"/>
                 </c:when>
                 <c:otherwise>
-                    <p class="text-muted small">No photos uploaded yet. Be the first to share!</p>
+                    <!-- Fallback abstract premium background pattern if banner is missing -->
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #F43F5E 140%);"></div>
                 </c:otherwise>
             </c:choose>
-
-            <!-- Upload photo (if registered & event passed) -->
-            <c:if test="${alreadyRegistered && eventPassed && not empty loggedUser}">
-                <hr style="margin: 20px 0; border-color: #f0e8f5;"/>
-                <div class="block-title" style="font-size:0.95rem;"><i class="bi bi-cloud-upload-fill"></i>Share Your Photos</div>
-                <form action="${pageContext.request.contextPath}/women-events/${event.id}/upload-photo" method="post" enctype="multipart/form-data">
-                    <div class="upload-zone" onclick="document.getElementById('photoFile').click()">
-                        <i class="bi bi-camera-fill" style="font-size:2rem; color:#a855f7; display:block; margin-bottom:8px;"></i>
-                        <div style="font-weight:600; color:#555;">Click to upload event photos</div>
-                        <div class="text-muted small">JPG, PNG up to 5MB</div>
-                    </div>
-                    <input type="file" id="photoFile" name="photo" accept="image/*" style="display:none;" required onchange="this.form.querySelector('.upload-zone div').textContent=this.files[0].name"/>
-                    <input type="text" name="caption" class="form-control mt-2" placeholder="Add a caption (optional)" style="border-radius:10px; border:1.5px solid #e5e7eb; font-family:'Outfit',sans-serif;"/>
-                    <button type="submit" class="reg-btn mt-2" style="font-size:0.9rem; padding:12px;">Upload Photo</button>
-                </form>
-            </c:if>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <span class="hero-cat-badge">
+                    <i class="bi bi-bookmark-heart-fill"></i> ${event.category.displayName}
+                </span>
+                <h1 class="event-title">${event.name}</h1>
+                <div class="hero-meta">
+                    <span><i class="bi bi-calendar3"></i> ${event.eventDate} <c:if test="${not empty event.eventTime}">at ${event.eventTime}</c:if></span>
+                    <span><i class="bi bi-geo-alt-fill"></i> ${event.venue}, ${event.city}</span>
+                    <span><i class="bi bi-building-fill-check"></i> By ${event.organizerName}</span>
+                    <c:if test="${event.featured}">
+                        <span style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; padding: 2px 10px; border-radius: 99px; font-weight: 700; color: #fbbf24;">
+                            <i class="bi bi-star-fill" style="color:#fbbf24;"></i> Featured
+                        </span>
+                    </c:if>
+                </div>
+            </div>
         </div>
 
-        <!-- Reviews -->
-        <div class="card-block">
-            <div class="block-title">
-                <i class="bi bi-star-fill" style="color:#f59e0b;"></i>Reviews & Ratings
-                <span style="font-size:0.85rem; color:#888; font-weight:500; margin-left:auto;">${reviews.size()} reviews · Avg: ${avgRating} ⭐</span>
-            </div>
+        <!-- Breadcrumb Navigation -->
+        <div class="breadcrumb-container">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb" style="font-size:0.88rem; margin: 0;">
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events">Events</a></li>
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events?category=${event.category}">${event.category.displayName}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">${event.name}</li>
+                </ol>
+            </nav>
+        </div>
 
-            <c:choose>
-                <c:when test="${not empty reviews}">
-                    <c:forEach var="rev" items="${reviews}">
-                        <div class="review-item">
-                            <div class="d-flex justify-content-between align-items-start">
+        <!-- Two-Column Page Layout -->
+        <div class="detail-grid">
+            
+            <!-- Left Grid: Event Contents -->
+            <div class="main-content-column">
+                
+                <!-- About Block -->
+                <div class="card-block">
+                    <div class="block-title"><i class="bi bi-info-circle-fill"></i> About The Event</div>
+                    <p style="color: var(--text-primary); font-size: 1.05rem; line-height: 1.8; white-space: pre-line; margin-bottom: 0;">
+                        <c:choose>
+                            <c:when test="${not empty event.description}">${event.description}</c:when>
+                            <c:otherwise>Not provided</c:otherwise>
+                        </c:choose>
+                    </p>
+                </div>
+
+                <div class="card-block">
+                    <div class="block-title"><i class="bi bi-calendar-event"></i> Event details</div>
+                    <div class="we-fact-grid">
+                        <div class="we-fact"><div class="k">Date</div><div class="v">${not empty event.eventDate ? event.eventDate : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Time</div><div class="v">${not empty event.eventTime ? event.eventTime : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Venue</div><div class="v">${not empty event.venue ? event.venue : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">City</div><div class="v">${not empty event.city ? event.city : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Mode</div><div class="v">${event.virtual ? 'Online' : 'In person'}</div></div>
+                        <div class="we-fact"><div class="k">Capacity</div><div class="v">${event.maxParticipants != null ? event.maxParticipants : 'Not limited'}</div></div>
+                        <div class="we-fact"><div class="k">Entry</div><div class="v"><c:choose><c:when test="${event.free}">Free</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></div></div>
+                        <div class="we-fact"><div class="k">Registered</div><div class="v">${registrationCount}</div></div>
+                    </div>
+                    <c:if test="${event.virtual && not empty event.streamLink}">
+                        <p class="mt-3 mb-0 small text-muted">Stream link is shared with registered attendees.</p>
+                    </c:if>
+                </div>
+
+                <div class="card-block">
+                    <div class="block-title"><i class="bi bi-building"></i> Organizer</div>
+                    <div class="we-fact-grid">
+                        <div class="we-fact"><div class="k">Name</div><div class="v">${not empty event.organizerName ? event.organizerName : 'Not provided'}</div></div>
+                        <div class="we-fact"><div class="k">Type</div><div class="v">${not empty event.organizerType ? event.organizerType : 'Not provided'}</div></div>
+                        <div class="we-fact" style="grid-column:1 / -1;"><div class="k">Contact</div><div class="v">${not empty event.contactInfo ? event.contactInfo : 'Not provided'}</div></div>
+                    </div>
+                </div>
+
+                <!-- Map & Directions -->
+                <c:if test="${not empty event.mapsLocation}">
+                    <div class="card-block">
+                        <div class="block-title"><i class="bi bi-map-fill"></i> Location &amp; Directions</div>
+                        <div class="map-container">
+                            <iframe class="map-frame"
+                                    src="https://maps.google.com/maps?q=${event.mapsLocation}&output=embed"
+                                    allowfullscreen loading="lazy"></iframe>
+                            <div class="map-address-block">
                                 <div>
-                                    <div class="reviewer-name">${rev.user.fullName}</div>
-                                    <div class="stars">
-                                        <c:forEach begin="1" end="${rev.rating}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
-                                        <c:forEach begin="${rev.rating + 1}" end="5" var="s"><i class="bi bi-star" class="star-empty"></i></c:forEach>
-                                    </div>
+                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${event.venue}</h5>
+                                    <p class="text-muted small mb-0">${not empty event.city ? event.city : 'Not provided'}</p>
                                 </div>
-                                <div class="review-date">${rev.createdAt}</div>
+                                <a href="https://maps.google.com/maps?q=${event.mapsLocation}" target="_blank" class="btn-map-guide">
+                                    <i class="bi bi-box-arrow-up-right"></i> Get Directions
+                                </a>
                             </div>
-                            <div class="review-text">${rev.reviewText}</div>
                         </div>
-                    </c:forEach>
-                </c:when>
-                <c:otherwise>
-                    <p class="text-muted small">No reviews yet. Attend this event and share your experience!</p>
-                </c:otherwise>
-            </c:choose>
-
-            <!-- Submit review -->
-            <c:if test="${alreadyRegistered && eventPassed && not alreadyReviewed && not empty loggedUser}">
-                <hr style="margin: 20px 0; border-color: #f0e8f5;"/>
-                <div class="block-title" style="font-size:0.95rem;"><i class="bi bi-pencil-square"></i>Write a Review</div>
-                <form action="${pageContext.request.contextPath}/women-events/${event.id}/review" method="post">
-                    <div class="star-input mb-3">
-                        <input type="radio" id="s5" name="rating" value="5"/><label for="s5">★</label>
-                        <input type="radio" id="s4" name="rating" value="4"/><label for="s4">★</label>
-                        <input type="radio" id="s3" name="rating" value="3"/><label for="s3">★</label>
-                        <input type="radio" id="s2" name="rating" value="2"/><label for="s2">★</label>
-                        <input type="radio" id="s1" name="rating" value="1"/><label for="s1">★</label>
                     </div>
-                    <textarea name="reviewText" rows="4" required placeholder="Share your experience at this event..." class="form-control" style="border-radius:12px; border:1.5px solid #e5e7eb; font-family:'Outfit',sans-serif; resize:none;"></textarea>
-                    <button type="submit" class="reg-btn mt-3" style="font-size:0.9rem; padding:12px;">Submit Review</button>
-                </form>
-            </c:if>
+                </c:if>
+
+                <!-- Photo Gallery section -->
+                <div class="card-block">
+                    <div class="block-title">
+                        <i class="bi bi-images"></i> Photo Gallery 
+                        <span class="badge bg-secondary text-dark ms-2 font-weight-bold" style="font-size:0.75rem; border: 1px solid var(--border-secondary);">${photos.size()} Files</span>
+                    </div>
+                    
+                    <c:choose>
+                        <c:when test="${not empty photos}">
+                            <div class="premium-gallery">
+                                <c:forEach var="ph" items="${photos}">
+                                    <div class="gallery-card-item" data-bs-toggle="modal" data-bs-target="#photoModal"
+                                         onclick="document.getElementById('modalPhoto').src=this.querySelector('img').src">
+                                        <img src="${pageContext.request.contextPath}/uploads/${ph.photoPath}" alt="${ph.caption}"/>
+                                        <div class="gallery-overlay-effect">
+                                            <i class="bi bi-zoom-in"></i>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="gallery-empty">
+                                <i class="bi bi-flower1"></i>
+                                <h5>No Gallery Photos Yet</h5>
+                                <p>Be the first to share your positive visual experience from this event!</p>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <!-- Upload Zone (if registered & event passed) -->
+                    <c:if test="${alreadyRegistered && eventPassed && not empty loggedUser}">
+                        <hr style="margin: 32px 0; border-color: var(--border-neutral);"/>
+                        <div class="block-title" style="font-size:1.05rem;"><i class="bi bi-cloud-upload-fill"></i> Add Photo to Event Gallery</div>
+                        <form action="${pageContext.request.contextPath}/women-events/${event.id}/upload-photo" method="post" enctype="multipart/form-data">
+                            <div class="upload-zone" onclick="document.getElementById('photoFile').click()">
+                                <i class="bi bi-camera-fill" style="font-size:2rem; color:var(--color-accent); display:block; margin-bottom:8px;"></i>
+                                <div style="font-weight:700; color:var(--text-primary);">Click to pick a photo</div>
+                                <div class="text-muted small">PNG, JPG or JPEG files up to 5MB supported</div>
+                            </div>
+                            <input type="file" id="photoFile" name="photo" accept="image/*" style="display:none;" required 
+                                   onchange="this.form.querySelector('.upload-zone div').textContent=this.files[0].name"/>
+                            <input type="text" name="caption" class="form-control mt-3" placeholder="Write a short photo caption (optional)"/>
+                            <button type="submit" class="btn-premium-cta mt-3" style="padding: 12px 24px; font-size: 0.95rem; max-width: 250px;">
+                                <i class="bi bi-cloud-arrow-up-fill"></i> Upload Image file
+                            </button>
+                        </form>
+                    </c:if>
+                </div>
+
+                <!-- Reviews and Rating Section -->
+                <div class="card-block">
+                    <div class="block-title"><i class="bi bi-star-fill text-warning"></i> Ratings &amp; Reviews</div>
+                    
+                    <div class="reviews-summary-box">
+                        <div>
+                            <div class="avg-rating-value">${avgRating > 0 ? avgRating : '—'}</div>
+                            <div class="avg-rating-stars">
+                                <c:forEach begin="1" end="${avgRating.intValue() > 0 ? avgRating.intValue() : 0}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
+                                <c:forEach begin="${(avgRating.intValue() > 0 ? avgRating.intValue() : 0) + 1}" end="5" var="s"><i class="bi bi-star star-empty"></i></c:forEach>
+                            </div>
+                            <div class="text-muted text-center mt-2 small" style="font-weight: 600;">${reviews.size()} review${reviews.size() != 1 ? 's' : ''}</div>
+                        </div>
+                    </div>
+
+                    <c:choose>
+                        <c:when test="${not empty reviews}">
+                            <div class="reviews-list-container">
+                                <c:forEach var="rev" items="${reviews}">
+                                    <div class="premium-review-card">
+                                        <div class="review-card-header">
+                                            <div class="reviewer-avatar-box">
+                                                <div class="reviewer-avatar">${rev.user.fullName.substring(0,1).toUpperCase()}</div>
+                                                <div>
+                                                    <div class="reviewer-title-name">${rev.user.fullName}</div>
+                                                    <div class="review-stars-metric">
+                                                        <c:forEach begin="1" end="${rev.rating}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
+                                                        <c:forEach begin="${rev.rating + 1}" end="5" var="s"><i class="bi bi-star star-empty"></i></c:forEach>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="review-item-date">${rev.createdAt}</div>
+                                        </div>
+                                        <div class="review-body-text">${rev.reviewText}</div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="text-center py-4 bg-light rounded-4" style="border: 1px dashed var(--border-neutral);">
+                                <i class="bi bi-chat-heart text-muted mb-2" style="font-size: 2rem;"></i>
+                                <p class="text-muted small mb-0">No reviews published yet for this event.</p>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <!-- Critique Submission Form (registered & passed event) -->
+                    <c:if test="${alreadyRegistered && eventPassed && not alreadyReviewed && not empty loggedUser}">
+                        <hr style="margin: 32px 0; border-color: var(--border-neutral);"/>
+                        <div class="block-title" style="font-size: 1.05rem;"><i class="bi bi-chat-quote-fill"></i> Share Your Review</div>
+                        <form action="${pageContext.request.contextPath}/women-events/${event.id}/review" method="post">
+                            <div class="mb-3">
+                                <label class="form-label small text-muted font-weight-bold">Rate this Workshop</label>
+                                <div class="star-input">
+                                    <input type="radio" id="s5" name="rating" value="5" required/><label for="s5">★</label>
+                                    <input type="radio" id="s4" name="rating" value="4"/><label for="s4">★</label>
+                                    <input type="radio" id="s3" name="rating" value="3"/><label for="s3">★</label>
+                                    <input type="radio" id="s2" name="rating" value="2"/><label for="s2">★</label>
+                                    <input type="radio" id="s1" name="rating" value="1"/><label for="s1">★</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted font-weight-bold">Feedback Details</label>
+                                <textarea name="reviewText" rows="4" required class="form-control" placeholder="Share how the event went for you..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-premium-cta" style="max-width: 250px; padding: 12px 24px; font-size: 0.95rem;">
+                                <i class="bi bi-send-fill"></i> Submit review
+                            </button>
+                        </form>
+                    </c:if>
+                </div>
+            </div>
+
+            <!-- Right Grid: Sticky Registration/Details Sidebar -->
+            <div class="sidebar-column">
+                <div class="register-sidebar">
+                    
+                    <div class="sidebar-card">
+                        <div class="sidebar-price"><c:choose><c:when test="${event.free}">FREE</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></div>
+                        <div class="sidebar-price-sub">${event.free ? 'No entry fee' : 'Entry fee — paid at checkout'}</div>
+
+                        <div class="sidebar-meta-list">
+                            <div class="sidebar-meta-item">
+                                <i class="bi bi-people-fill"></i>
+                                <div>
+                                    <div class="meta-label">Registered</div>
+                                    <div class="meta-value">${registrationCount}<c:if test="${not empty event.maxParticipants}"> / ${event.maxParticipants}</c:if></div>
+                                </div>
+                            </div>
+                            <div class="sidebar-meta-item">
+                                <i class="bi bi-calendar3"></i>
+                                <div>
+                                    <div class="meta-label">Date</div>
+                                    <div class="meta-value">${not empty event.eventDate ? event.eventDate : 'Not provided'}</div>
+                                </div>
+                            </div>
+                            <div class="sidebar-meta-item">
+                                <i class="bi bi-clock-fill"></i>
+                                <div>
+                                    <div class="meta-label">Time</div>
+                                    <div class="meta-value">${not empty event.eventTime ? event.eventTime : 'Not provided'}</div>
+                                </div>
+                            </div>
+                            <div class="sidebar-meta-item">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <div>
+                                    <div class="meta-label">Venue</div>
+                                    <div class="meta-value">${not empty event.venue ? event.venue : 'Not provided'}<c:if test="${not empty event.city}">, ${event.city}</c:if></div>
+                                </div>
+                            </div>
+                            <div class="sidebar-meta-item">
+                                <i class="bi bi-telephone-fill"></i>
+                                <div>
+                                    <div class="meta-label">Contact</div>
+                                    <div class="meta-value">${not empty event.contactInfo ? event.contactInfo : 'Not provided'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="sidebar-action-button-layer">
+                            <c:choose>
+                                <c:when test="${empty loggedUser}">
+                                    <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
+                                        <i class="bi bi-person-circle"></i> Login to Register
+                                    </a>
+                                </c:when>
+                                <c:when test="${alreadyRegistered}">
+                                    <div class="registered-badge-box">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <h5>Registration Active</h5>
+                                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn btn-sm btn-link text-success fw-bold text-decoration-none mt-1">
+                                            <i class="bi bi-ticket-perforated-fill"></i> View my ticket
+                                        </a>
+                                    </div>
+                                </c:when>
+                                <c:when test="${eventPassed}">
+                                    <button class="btn-premium-cta" disabled>
+                                        <i class="bi bi-x-circle-fill"></i> Event has passed
+                                    </button>
+                                </c:when>
+                                <c:otherwise>
+                                    <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                                        <i class="bi bi-ticket-perforated-fill"></i>
+                                        <c:choose>
+                                            <c:when test="${event.free}">Review &amp; register</c:when>
+                                            <c:otherwise>Review &amp; pay ₹${event.entryFee}</c:otherwise>
+                                        </c:choose>
+                                    </button>
+                                    <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+
+                        <hr style="margin: 24px 0; border-color: var(--border-neutral);"/>
+                        <div class="sidebar-extra">
+                            <p class="mb-1"><i class="bi bi-ticket-detailed-fill" style="color:var(--we-accent);"></i> A ticket code is issued after registration</p>
+                            <p class="mb-0"><i class="bi bi-shield-check" style="color:var(--we-success);"></i> Show your ticket at entry</p>
+                        </div>
+                    </div>
+
+                    <!-- Share Event Card structure -->
+                    <div class="sidebar-card">
+                        <h5 class="fw-bold mb-3" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-share-fill text-primary me-2"></i> Spread the Word</h5>
+                        <div class="share-links-wrapper">
+                            <a href="https://wa.me/?text=Check+out+this+workshop:+${event.name}+at+${pageContext.request.contextPath}/women-events/${event.id}"
+                               target="_blank" class="btn btn-sm btn-success rounded-pill btn-share-pill"><i class="bi bi-whatsapp"></i> Share on WhatsApp</a>
+                            <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>alert('Link copied!'))" 
+                                    class="btn btn-sm btn-outline-secondary rounded-pill btn-share-pill"><i class="bi bi-link-45deg"></i> Copy Details Link</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
         </div>
-    </div>
 
-    <!-- Right Sidebar -->
-    <div>
-        <div class="register-card">
-            <div class="price-display">${event.free ? 'FREE' : '₹'.concat(event.entryFee.toString())}</div>
-            <div class="price-sub">${event.free ? 'No registration fee' : 'Entry fee — pay at venue'}</div>
-
-            <div class="reg-info">
-                <span class="label"><i class="bi bi-people-fill text-primary"></i> Registered</span>
-                <span class="value">${registrationCount} <c:if test="${not empty event.maxParticipants}">/ ${event.maxParticipants}</c:if></span>
-            </div>
-            <div class="reg-info">
-                <span class="label"><i class="bi bi-calendar-event-fill text-danger"></i> Date</span>
-                <span class="value">${event.eventDate}</span>
-            </div>
-            <div class="reg-info">
-                <span class="label"><i class="bi bi-clock-fill text-warning"></i> Time</span>
-                <span class="value">${not empty event.eventTime ? event.eventTime : 'TBA'}</span>
-            </div>
-            <div class="reg-info">
-                <span class="label"><i class="bi bi-geo-alt-fill text-success"></i> City</span>
-                <span class="value">${event.city}</span>
-            </div>
-
-            <div style="margin-top: 20px;">
+        <!-- Full-Width Bottom Registration CTA Banner -->
+        <div class="container px-3 pb-5" style="max-width: 1200px; margin: 0 auto;">
+            <div class="bottom-registration-cta">
+                <h3>Register for ${event.name}</h3>
+                <p>Review your booking details, then confirm. A ticket code is issued after registration.</p>
                 <c:choose>
                     <c:when test="${empty loggedUser}">
-                        <a href="${pageContext.request.contextPath}/login" class="reg-btn d-block text-center" style="text-decoration:none; padding:16px;">
-                            <i class="bi bi-person-circle me-2"></i>Login to Register
+                        <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
+                            <i class="bi bi-person-circle"></i> Login and register
                         </a>
                     </c:when>
                     <c:when test="${alreadyRegistered}">
-                        <div style="background:#f0fdf4; border-radius:12px; padding:16px; text-align:center;">
-                            <i class="bi bi-check-circle-fill" style="color:#15803d; font-size:1.5rem;"></i>
-                            <div style="font-weight:700; color:#15803d; margin-top:4px;">You're Registered!</div>
-                            <a href="${pageContext.request.contextPath}/women-events/my-registrations"
-                               style="color:#1e1b4b; font-weight:600; font-size:0.9rem; display:inline-block; margin-top:8px; text-decoration:none;">
-                                <i class="bi bi-ticket-perforated-fill"></i> View My Ticket
-                            </a>
-                        </div>
+                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn-premium-cta">
+                            <i class="bi bi-ticket-perforated-fill"></i> View my ticket
+                        </a>
                     </c:when>
                     <c:when test="${eventPassed}">
-                        <button class="reg-btn" disabled>Event Has Passed</button>
+                        <button class="btn-premium-cta" disabled style="background:#555;">Event complete</button>
                     </c:when>
                     <c:otherwise>
-                        <c:choose>
-                            <c:when test="${event.free}">
-                                <form action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post">
-                                    <button type="submit" class="reg-btn">
-                                        <i class="bi bi-ticket-perforated-fill me-2"></i>Register Now — FREE
-                                    </button>
-                                </form>
-                            </c:when>
-                            <c:otherwise>
-                                <button type="button" class="reg-btn" onclick="openEventCheckoutModal()">
-                                    <i class="bi bi-ticket-perforated-fill me-2"></i>Register Now — ₹${event.entryFee}
-                                </button>
-                                <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
-                            </c:otherwise>
-                        </c:choose>
+                        <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                            <i class="bi bi-ticket-perforated-fill"></i> Review &amp; register
+                        </button>
                     </c:otherwise>
                 </c:choose>
             </div>
+        </div>
 
-            <hr style="margin: 20px 0; border-color: #f0e8f5;"/>
-            <div style="font-size:0.82rem; color:#888; text-align:center; line-height: 1.6;">
-                <i class="bi bi-shield-check text-success"></i> Safe & verified platform<br/>
-                <i class="bi bi-bell-fill text-warning"></i> You'll receive a digital ticket after registering
+        <!-- Mobile Sticky Bottom Buy Row -->
+        <div class="mobile-sticky-action-bar">
+            <div class="mobile-sticky-inner">
+                <div class="mobile-price-section">
+                    <span class="mobile-price-value"><c:choose><c:when test="${event.free}">FREE</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></span>
+                    <span class="mobile-price-lbl">Entry</span>
+                </div>
+                <c:choose>
+                    <c:when test="${empty loggedUser}">
+                        <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">
+                            <i class="bi bi-person-circle"></i> Login
+                        </a>
+                    </c:when>
+                    <c:when test="${alreadyRegistered}">
+                        <span class="badge bg-success py-2 px-3 rounded-pill fw-bold" style="font-size: 0.85rem;"><i class="bi-check-circle-fill me-1"></i> Registered</span>
+                    </c:when>
+                    <c:when test="${eventPassed}">
+                        <button class="btn-premium-cta" disabled style="padding: 12px 24px; font-size: 0.9rem; width: auto;">Passed</button>
+                    </c:when>
+                    <c:otherwise>
+                        <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">
+                            <i class="bi bi-ticket-perforated-fill"></i> Register
+                        </button>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </div>
 
-        <!-- Share block -->
-        <div class="card-block mt-3">
-            <div class="block-title"><i class="bi bi-share-fill"></i>Share Event</div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="https://wa.me/?text=Check+out+this+event:+${event.name}+at+${pageContext.request.contextPath}/women-events/${event.id}"
-                   target="_blank" class="btn btn-sm btn-success rounded-pill"><i class="bi bi-whatsapp"></i> WhatsApp</a>
-                <button onclick="navigator.clipboard.writeText(window.location.href).then(()=>alert('Link copied!'))"
-                        class="btn btn-sm btn-outline-secondary rounded-pill"><i class="bi bi-link-45deg"></i> Copy Link</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Photo Modal -->
-<div class="modal fade" id="photoModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 bg-transparent">
-            <div class="modal-body p-0 text-center">
-                <img id="modalPhoto" src="" style="max-width:100%; border-radius:16px; max-height:80vh;"/>
-            </div>
-        </div>
-    </div>
-</div>
-
-<jsp:include page="/WEB-INF/views/fragments/footer.jsp"/>
-
-<!-- Event Paid Booking Checkout Modal -->
-<div class="modal fade" id="eventCheckoutModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px);">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 24px; background: #ffffff;">
-            <!-- Modal Header -->
-            <div class="modal-header border-0 pb-0" style="padding: 24px 24px 0;">
-                <div class="d-flex align-items-center">
-                    <div style="background: #fdf2f8; color: #f43f5e; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                        <i class="bi bi-wallet2"></i>
-                    </div>
-                    <div class="ms-3">
-                        <h5 class="modal-title fw-bold" style="color: #1e1b4b; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
-                        <p class="text-muted small mb-0" style="font-size:0.75rem;">Simulated Test Transaction</p>
+        <!-- Lightbox Photo Viewer Modal -->
+        <div class="modal fade" id="photoModal" tabindex="-1" style="backdrop-filter: blur(10px);">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 bg-transparent">
+                    <div class="modal-body p-0 text-center">
+                        <img id="modalPhoto" src="" style="max-width:100%; border-radius:16px; max-height:85vh; box-shadow: var(--shadow-lg); border: 2px solid white;"/>
                     </div>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="box-shadow: none;"></button>
             </div>
-            <!-- Modal Body -->
-            <div class="modal-body py-4" style="padding: 24px;">
-                <div class="p-3 mb-4" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                    <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>Event Ticket</span>
-                        <span>₹${event.entryFee}</span>
+        </div>
+
+        <!-- Booking review -->
+        <div id="weReviewOverlay" class="we-modal-overlay" onclick="if(event.target===this)closeEventReviewModal()">
+            <div class="we-modal" role="dialog" aria-labelledby="weReviewTitle">
+                <div class="we-modal-header">
+                    <div>
+                        <h3 id="weReviewTitle">Review registration</h3>
+                        <p>Confirm these details before submitting. Quantity is 1 attendee ticket.</p>
                     </div>
-                    <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>Internet Fee</span>
-                        <span class="text-success">₹0.00</span>
-                    </div>
-                    <hr style="border-style: dashed; margin: 12px 0;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-semibold" style="color: #1e1b4b;">Total Payout</span>
-                        <span class="fs-5 fw-bold text-primary" style="font-family:'Outfit',sans-serif;">₹${event.entryFee}</span>
-                    </div>
+                    <button type="button" class="we-modal-close" onclick="closeEventReviewModal()" aria-label="Close">&times;</button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label small text-muted mb-1">Select Payment Mode</label>
-                    <div class="d-grid gap-2">
-                        <div class="border rounded-3 p-2 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1;">
-                            <input type="radio" name="eventPayMode" value="upi" checked class="me-2">
-                            <i class="bi bi-qr-code text-primary me-2"></i> UPI (PhonePe / GPay / Paytm)
+                <div class="we-modal-body">
+                    <div class="we-modal-row"><span class="k">Event</span><span class="v">${event.name}</span></div>
+                    <div class="we-modal-row"><span class="k">Organizer</span><span class="v">${not empty event.organizerName ? event.organizerName : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Date</span><span class="v">${not empty event.eventDate ? event.eventDate : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Time</span><span class="v">${not empty event.eventTime ? event.eventTime : 'Not provided'}</span></div>
+                    <div class="we-modal-row"><span class="k">Venue</span><span class="v">${not empty event.venue ? event.venue : 'Not provided'}<c:if test="${not empty event.city}">, ${event.city}</c:if></span></div>
+                    <div class="we-modal-row"><span class="k">Attendee</span><span class="v">${not empty loggedUser.fullName ? loggedUser.fullName : 'Signed-in user'}</span></div>
+                    <div class="we-modal-row"><span class="k">Ticket</span><span class="v">1 × attendee</span></div>
+                    <div class="we-modal-row"><span class="k">Amount</span><span class="v"><c:choose><c:when test="${event.free}">Free</c:when><c:otherwise>₹${event.entryFee}</c:otherwise></c:choose></span></div>
+                </div>
+                <div class="we-modal-footer">
+                    <button type="button" class="we-modal-btn secondary" onclick="closeEventReviewModal()">Edit</button>
+                    <button type="button" class="we-modal-btn primary" id="weConfirmRegisterBtn" onclick="confirmEventRegistration()">
+                        <c:choose>
+                            <c:when test="${event.free}">Confirm registration</c:when>
+                            <c:otherwise>Continue to payment</c:otherwise>
+                        </c:choose>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Razorpay Sim Gateway Modal -->
+        <div class="modal fade" id="eventCheckoutModal" tabindex="-1" aria-hidden="true" style="backdrop-filter: blur(8px);">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background: #ffffff;">
+                    <!-- Modal Header -->
+                    <div class="modal-header border-0 pb-0" style="padding: 24px 24px 0;">
+                        <div class="d-flex align-items-center">
+                            <div style="background: #fff1f2; color: #f43f5e; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border: 1px solid var(--we-border);">
+                                <i class="bi bi-wallet2"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="modal-title fw-bold" style="color: #0F172A; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
+                                <p class="text-muted small mb-0" style="font-size:0.75rem;">Simulated Test Transaction Mode</p>
+                            </div>
                         </div>
-                        <div class="border rounded-3 p-2 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1;">
-                            <input type="radio" name="eventPayMode" value="card" class="me-2">
-                            <i class="bi bi-credit-card text-success me-2"></i> Credit or Debit Card
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="box-shadow: none;"></button>
+                    </div>
+                    <!-- Modal Body -->
+                    <div class="modal-body py-4" style="padding: 24px;">
+                        <div class="p-3 mb-4" style="background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
+                            <div class="d-flex justify-content-between mb-2 small text-muted">
+                                <span>Event ticket</span>
+                                <span class="fw-bold">₹${event.entryFee}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 small text-muted">
+                                <span>Processing charge</span>
+                                <span class="fw-bold" style="color:#16A34A;">₹0.00</span>
+                            </div>
+                            <hr style="border-style: dashed; margin: 12px 0;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold" style="color: #0F172A;">Total</span>
+                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif; color:#0F172A;">₹${event.entryFee}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1 font-weight-bold">Choose Payment Method</label>
+                            <div class="d-grid gap-2">
+                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
+                                    <input type="radio" name="eventPayMode" value="upi" checked class="me-3">
+                                    <i class="bi bi-qr-code me-2" style="font-size:1.15rem; color:#F43F5E;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
+                                </div>
+                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #cbd5e1; cursor: pointer;">
+                                    <input type="radio" name="eventPayMode" value="card" class="me-3">
+                                    <i class="bi bi-credit-card me-2" style="font-size:1.15rem; color:#16A34A;"></i> Credit or Debit Card checkout
+                                </div>
+                            </div>
+                        </div>
+                        <div id="eventOtpSection" style="display:none;" class="mt-3">
+                            <label class="form-label small text-danger mb-1 font-weight-bold">Simulated Authentication OTP (Enter 123456)</label>
+                            <input type="text" id="eventOtpInput" class="form-control text-center fs-5 fw-bold" maxlength="6" placeholder="------" style="letter-spacing: 5px;">
+                            <div class="text-danger small mt-1 text-center" id="eventOtpError" style="display:none; font-weight: 600;">Invalid verification OTP! Use simulated 123456 code.</div>
                         </div>
                     </div>
+                    <!-- Modal Footer -->
+                    <div class="modal-footer border-0 pt-0" style="padding: 0 24px 24px;">
+                        <button type="button" class="btn btn-outline-secondary w-100 mb-2 rounded-pill small" data-bs-dismiss="modal">Cancel Transaction</button>
+                        <button type="button" class="btn w-100 rounded-pill fw-semibold py-2 btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: var(--we-accent); border: none; box-shadow: none;">
+                            Proceed Payment of ₹${event.entryFee} Securely
+                        </button>
+                    </div>
                 </div>
-                <div id="eventOtpSection" style="display:none;" class="mt-3">
-                    <label class="form-label small text-danger mb-1">Enter Simulated OTP (123456)</label>
-                    <input type="text" id="eventOtpInput" class="form-control text-center fs-5 fw-bold" maxlength="6" placeholder="------" style="letter-spacing: 5px;">
-                    <div class="text-danger small mt-1 text-center" id="eventOtpError" style="display:none;">Invalid OTP! Please enter 123456.</div>
-                </div>
-            </div>
-            <!-- Modal Footer -->
-            <div class="modal-footer border-0 pt-0" style="padding: 0 24px 24px;">
-                <button type="button" class="btn btn-outline-secondary w-100 mb-2 rounded-pill small" data-bs-dismiss="modal">Cancel Payout</button>
-                <button type="button" class="btn-primary w-100 rounded-pill fw-semibold py-2" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: linear-gradient(135deg, #1e1b4b, #f43f5e); border: none;">
-                    Pay ₹${event.entryFee} Securely
-                </button>
             </div>
         </div>
-    </div>
-</div>
 
-<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script>
-    setTimeout(() => {
-        document.querySelectorAll('.flash-alert').forEach(el => {
-            el.style.transition='opacity 0.5s'; el.style.opacity='0';
-            setTimeout(()=>el.remove(),500);
-        });
-    }, 4000);
+        <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script>
+            var weEventIsFree = ${event.free};
+            var weSubmitting = false;
 
-    function openEventCheckoutModal() {
-        var modal = new bootstrap.Modal(document.getElementById('eventCheckoutModal'));
-        modal.show();
-    }
+            setTimeout(() => {
+                document.querySelectorAll('.flash-alert').forEach(el => {
+                    el.style.transition='opacity 0.5s'; el.style.opacity='0';
+                    setTimeout(()=>el.remove(),500);
+                });
+            }, 4000);
 
-    var eventPaymentStep = 1;
-    function processEventBookingPayment() {
-        if (eventPaymentStep === 1) {
-            document.getElementById('eventOtpSection').style.display = 'block';
-            document.getElementById('eventPayBtn').textContent = 'Submit OTP & Verify';
-            eventPaymentStep = 2;
-        } else if (eventPaymentStep === 2) {
-            var otp = document.getElementById('eventOtpInput').value;
-            if (otp === '123456') {
-                document.getElementById('eventOtpError').style.display = 'none';
-                document.getElementById('eventRegisterForm').submit();
-            } else {
-                document.getElementById('eventOtpError').style.display = 'block';
+            function openEventReviewModal() {
+                document.getElementById('weReviewOverlay').classList.add('open');
             }
-        }
-    }
-</script>
+            function closeEventReviewModal() {
+                document.getElementById('weReviewOverlay').classList.remove('open');
+            }
+            function confirmEventRegistration() {
+                if (weSubmitting) return;
+                closeEventReviewModal();
+                if (weEventIsFree) {
+                    submitEventRegisterForm();
+                } else {
+                    openEventCheckoutModal();
+                }
+            }
+            function submitEventRegisterForm() {
+                if (weSubmitting) return;
+                var form = document.getElementById('eventRegisterForm');
+                if (!form) return;
+                weSubmitting = true;
+                var btn = document.getElementById('weConfirmRegisterBtn');
+                if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+                form.submit();
+            }
+            function openEventCheckoutModal() {
+                var modal = new bootstrap.Modal(document.getElementById('eventCheckoutModal'));
+                modal.show();
+            }
+
+            var eventPaymentStep = 1;
+            function processEventBookingPayment() {
+                if (eventPaymentStep === 1) {
+                    document.getElementById('eventOtpSection').style.display = 'block';
+                    document.getElementById('eventPayBtn').textContent = 'Verify simulated OTP';
+                    eventPaymentStep = 2;
+                } else if (eventPaymentStep === 2) {
+                    var otp = document.getElementById('eventOtpInput').value;
+                    if (otp === '123456') {
+                        document.getElementById('eventOtpError').style.display = 'none';
+                        submitEventRegisterForm();
+                    } else {
+                        document.getElementById('eventOtpError').style.display = 'block';
+                    }
+                }
+            }
+        </script>
     </div>
 </div>
 </body>

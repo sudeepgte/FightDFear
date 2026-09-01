@@ -1805,10 +1805,15 @@ public class AdminController {
                                @RequestParam(value = "reason", required = false) String reason,
                                HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        String reasonErr = in.sp.main.Util.WomenProductValidation.validateRejectionReason(reason);
+        if (reasonErr != null) {
+            ra.addFlashAttribute("error", reasonErr);
+            return "redirect:/admin/pending-sellers";
+        }
         WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
         if (s != null) {
             womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.REJECTED);
-            s.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+            s.setRejectionReason(reason.trim());
             womenSellerRepo.save(s);
         }
         ra.addFlashAttribute("message", "Seller rejected.");
@@ -1867,9 +1872,36 @@ public class AdminController {
         }
     }
 
+    @GetMapping("/event-hosts/{id}/profile")
+    public String viewEventHostProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        EventHost h = eventHostRepository.findById(id).orElse(null);
+        if (h == null) {
+            ra.addFlashAttribute("message", "Event organizer not found.");
+            return "redirect:/admin/pending-event-hosts";
+        }
+        model.addAttribute("admin", session.getAttribute("admin"));
+        model.addAttribute("host", h);
+        model.addAttribute("statusLabel", EventHostProfileService.statusLabel(h.getPartnerProfileStatus()));
+        model.addAttribute("missingItems", eventHostProfileService.missingItems(h));
+        if (h.getProfileCompletionPct() == null) {
+            h.setProfileCompletionPct(eventHostProfileService.calculateCompletionPct(h));
+        }
+        if (h.getOpenTime() != null) {
+            model.addAttribute("openTimeLabel", h.getOpenTime().toString().substring(0, Math.min(5, h.getOpenTime().toString().length())));
+        }
+        if (h.getCloseTime() != null) {
+            model.addAttribute("closeTimeLabel", h.getCloseTime().toString().substring(0, Math.min(5, h.getCloseTime().toString().length())));
+        }
+        model.addAttribute("hostEvents", womenEventRepository.findByOrganizerOrderByCreatedAtDesc(h));
+        return "adminViewEventHostProfile";
+    }
+
     @PostMapping("/event-hosts/{id}/approve")
     @Transactional
-    public String approveEventHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveEventHost(@PathVariable Long id,
+                                   @RequestParam(value = "notes", required = false) String notes,
+                                   HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         EventHost h = eventHostRepository.findById(id).orElse(null);
         if (h != null) {
@@ -1878,41 +1910,51 @@ public class AdminController {
             h.setChangesRequestedNote(null);
             eventHostRepository.save(h);
         }
-        ra.addFlashAttribute("message", "Event organizer approved. They can now log in and create events.");
-        return "redirect:/admin/pending-event-hosts";
+        ra.addFlashAttribute("message", "Event organizer approved. They can now create events.");
+        return "redirect:/admin/event-hosts/" + id + "/profile";
     }
 
     @PostMapping("/event-hosts/{id}/reject")
     @Transactional
     public String rejectEventHost(@PathVariable Long id,
                                   @RequestParam(value = "reason", required = false) String reason,
+                                  @RequestParam(value = "notes", required = false) String notes,
                                   HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         EventHost h = eventHostRepository.findById(id).orElse(null);
         if (h != null) {
             eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.REJECTED);
-            h.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+            String combined = (notes != null && !notes.isBlank()) ? notes.trim()
+                    : (reason == null || reason.isBlank() ? null : reason.trim());
+            h.setRejectionReason(combined);
             eventHostRepository.save(h);
         }
         ra.addFlashAttribute("message", "Event organizer application rejected.");
-        return "redirect:/admin/pending-event-hosts";
+        return "redirect:/admin/event-hosts/" + id + "/profile";
     }
 
     @PostMapping("/event-hosts/{id}/request-changes")
     @Transactional
     public String requestEventHostChanges(@PathVariable Long id,
                                           @RequestParam(value = "note", required = false) String note,
+                                          @RequestParam(value = "notes", required = false) String notes,
+                                          @RequestParam(value = "reasons", required = false) String reasons,
                                           HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         EventHost h = eventHostRepository.findById(id).orElse(null);
         if (h != null) {
             eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.CHANGES_REQUESTED);
-            h.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+            String combined = (notes != null && !notes.isBlank()) ? notes.trim()
+                    : (note == null || note.isBlank() ? null : note.trim());
+            if (reasons != null && !reasons.isBlank()) {
+                combined = (combined == null ? "" : combined + " ") + "[" + reasons.trim() + "]";
+            }
+            h.setChangesRequestedNote(combined == null || combined.isBlank() ? null : combined.trim());
             h.setRejectionReason(null);
             eventHostRepository.save(h);
         }
         ra.addFlashAttribute("message", "Changes requested from event host.");
-        return "redirect:/admin/pending-event-hosts";
+        return "redirect:/admin/event-hosts/" + id + "/profile";
     }
 
     @PostMapping("/women-events/{id}/approve")
@@ -2207,8 +2249,18 @@ public class AdminController {
         businessProposalRepository.findById(id).ifPresent(p -> {
             p.setStatus(VerificationStatus.VERIFIED);
             businessProposalRepository.save(p);
+
+            if (p.getEntrepreneur() != null) {
+                Entrepreneur e = p.getEntrepreneur();
+                e.setPartnerProfileStatus(PartnerProfileStatus.APPROVED);
+                e.setVerificationStatus(VerificationStatus.VERIFIED);
+                e.setProfileCompletionPct(100);
+                e.setRejectionReason(null);
+                e.setChangesRequestedNote(null);
+                entrepreneurRepository.save(e);
+            }
         });
-        ra.addFlashAttribute("message", "Business proposal approved successfully.");
+        ra.addFlashAttribute("message", "Business proposal approved & entrepreneur unlocked successfully.");
         return "redirect:/admin/pending-proposals";
     }
 
@@ -2229,11 +2281,19 @@ public class AdminController {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
             entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.APPROVED);
+            e.setVerificationStatus(VerificationStatus.VERIFIED);
             e.setRejectionReason(null);
             e.setChangesRequestedNote(null);
+            e.setProfileCompletionPct(100);
             entrepreneurRepository.save(e);
+
+            List<BusinessProposal> proposals = businessProposalRepository.findByEntrepreneur(e);
+            for (BusinessProposal p : proposals) {
+                p.setStatus(VerificationStatus.VERIFIED);
+                businessProposalRepository.save(p);
+            }
         });
-        ra.addFlashAttribute("message", "Entrepreneur verified successfully.");
+        ra.addFlashAttribute("message", "Entrepreneur verified & approved successfully.");
         return "redirect:/admin/pending-proposals";
     }
 

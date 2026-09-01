@@ -51,4 +51,13 @@ public class CreatorStory {
 
     public boolean isDraft() { return isDraft; }
     public void setDraft(boolean isDraft) { this.isDraft = isDraft; }
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "story_viewers",
+        joinColumns = @JoinColumn(name = "story_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private java.util.Set<User> viewers = new java.util.HashSet<>();
+
+    public java.util.Set<User> getViewers() { return viewers; }
+    public void setViewers(java.util.Set<User> viewers) { this.viewers = viewers; }
 }

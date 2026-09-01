@@ -12,17 +12,15 @@ import 'package:flutter/foundation.dart';
 ///   flutter build apk --dart-define=API_BASE=http://<LAPTOP-IP>:8084
 class ApiConfig {
   static const String productionHost = 'https://fightdfire.chethancodehub.com';
-  static const String localWifiHost = 'http://10.10.100.108:8084';
   static const String androidEmulatorHost = 'http://10.0.2.2:8084';
   static const String localhostHost = 'http://localhost:8084';
 
   /// Override at build time:
-  /// flutter run --dart-define=API_BASE=http://10.10.100.108:8084
+  /// flutter run --dart-define=API_BASE=http://192.168.x.x:8084
   static const String fromEnv = String.fromEnvironment('API_BASE');
 
   static String resolve({required bool isAndroid}) {
     if (fromEnv.isNotEmpty) return fromEnv;
-    // In debug mode or if not specified
     if (kDebugMode) {
       return isAndroid ? androidEmulatorHost : localhostHost;
     }

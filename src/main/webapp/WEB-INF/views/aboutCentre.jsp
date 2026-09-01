@@ -7,392 +7,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${center.name} — Provider Profile Review | Fight D Fear Admin</title>
-
-    <!-- Bootstrap & Icons & Typography -->
+    <title>${center.name} - Provider Profile Review | Fight D Fear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
+<style>
+  body.ap-page { margin: 0; padding-bottom: 96px; }
+  .topbar { display: none !important; }
+  .layout { display: flex; min-height: 100vh; }
+  .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+  .review-container { max-width: 1100px; margin: 0 auto; padding: 22px 24px 40px; }
 
-    <style>
-        :root {
-            --navy-dark: #0f0d26;
-            --navy-primary: #1e1b4b;
-            --navy-light: #312e81;
-            --coral-primary: #f43f5e;
-            --coral-light: #ffe4e6;
-            --success-color: #059669;
-            --warning-color: #d97706;
-            --danger-color: #dc2626;
-            --card-bg: #ffffff;
-            --page-bg: #f8fafc;
-            --border-color: #e2e8f0;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-        }
+  .back-nav {
+    display: inline-flex; align-items: center; gap: 8px; color: var(--ap-muted);
+    text-decoration: none; font-weight: 600; font-size: 0.88rem; margin-bottom: 14px;
+  }
+  .back-nav:hover { color: var(--ap-accent); }
 
-        body {
-            background-color: var(--page-bg);
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-dark);
-            margin: 0;
-            padding-bottom: 80px;
-        }
+  .header-card {
+    background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
+    padding: 22px; margin-bottom: 18px; box-shadow: var(--ap-shadow); color: var(--ap-text);
+  }
+  .header-card h1, .header-card .h3 { color: var(--ap-text) !important; }
+  .avatar-box {
+    width: 96px; height: 96px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    border: 3px solid #FFE4E6; background: var(--ap-accent-soft);
+  }
+  .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
+  .contact-line { color: var(--ap-muted); }
+  .contact-line a { color: var(--ap-text); font-weight: 600; text-decoration: none; }
+  .progress-wrap { height: 8px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--ap-accent); border-radius: 999px; }
 
-        /* Topbar */
-        .admin-topbar {
-            background: var(--navy-primary);
-            color: white;
-            padding: 14px 24px;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
+  .review-card {
+    background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
+    padding: 22px; margin-bottom: 16px; box-shadow: var(--ap-shadow);
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--ap-border);
+  }
+  .section-header i {
+    width: 34px; height: 34px; border-radius: 10px; background: var(--ap-accent-soft); color: var(--ap-accent);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .section-header h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ap-text); }
 
-        .admin-topbar .brand {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.15rem;
-            font-weight: 700;
-        }
+  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 18px; }
+  .info-field-label {
+    display: block; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
+  }
+  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  .empty-text { color: #94A3B8; font-size: 0.88rem; font-style: italic; }
 
-        .admin-topbar .brand img {
-            height: 32px;
-            width: 32px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
+  .badge-status-lg {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
+    font-size: 0.75rem; font-weight: 800;
+  }
+  .status-APPROVED { background: var(--ap-success-bg); color: var(--ap-success); }
+  .status-REJECTED, .status-SUSPENDED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  .status-CHANGES_REQUESTED { background: #FFEDD5; color: #C2410C; }
+  .status-PENDING_ADMIN_APPROVAL, .status-PROFILE_INCOMPLETE, .status-REGISTERED,
+  .status-READY_FOR_VERIFICATION { background: #FEF3C7; color: #B45309; }
 
-        .review-container {
-            max-width: 1200px;
-            margin: 28px auto 0;
-            padding: 0 16px;
-        }
+  .tag-pill {
+    display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px;
+    background: #F8FAFC; border: 1px solid var(--ap-border); font-size: 0.78rem; font-weight: 600;
+    margin: 0 6px 6px 0; color: #334155;
+  }
+  .batch-card {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border: 1px solid var(--ap-border); border-radius: 12px; padding: 14px; margin-bottom: 10px; background: #FCFCFD;
+  }
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+  }
+  .gallery-item {
+    aspect-ratio: 1; border-radius: 12px; overflow: hidden; border: 1px solid var(--ap-border); cursor: pointer;
+  }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
 
-        .back-nav {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.92rem;
-            text-decoration: none;
-            margin-bottom: 20px;
-            transition: color 0.2s;
-        }
+  .action-dock {
+    position: fixed; left: var(--sidebar-w, 272px); right: 0; bottom: 0; z-index: 1050;
+    background: #0F172A; color: #fff; padding: 14px 20px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  .btn-action-approve, .btn-action-changes, .btn-action-reject, .btn-action-delete {
+    border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 700; font-size: 0.88rem;
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  }
+  .btn-action-approve { background: var(--ap-success); color: #fff; }
+  .btn-action-changes { background: var(--ap-warn); color: #fff; }
+  .btn-action-reject, .btn-action-delete { background: var(--ap-danger); color: #fff; }
 
-        .back-nav:hover {
-            color: var(--navy-primary);
-        }
+  .owner-shell { max-width: 1100px; margin: 0 auto; padding: 22px 24px 40px; }
 
-        /* Provider Header Card */
-        .header-card {
-            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-light) 100%);
-            border-radius: 20px;
-            padding: 32px;
-            color: white;
-            box-shadow: 0 12px 30px rgba(30, 27, 75, 0.15);
-            margin-bottom: 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header-card::after {
-            content: '';
-            position: absolute;
-            right: -60px;
-            top: -60px;
-            width: 220px;
-            height: 220px;
-            background: rgba(244, 63, 94, 0.12);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        .avatar-box {
-            width: 120px;
-            height: 120px;
-            border-radius: 20px;
-            border: 4px solid rgba(255,255,255,0.25);
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            flex-shrink: 0;
-        }
-
-        .avatar-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .badge-status-lg {
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-APPROVED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .status-PENDING_ADMIN_APPROVAL { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .status-READY_FOR_VERIFICATION { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-        .status-CHANGES_REQUESTED { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-        .status-PROFILE_INCOMPLETE, .status-REGISTERED { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .status-REJECTED, .status-SUSPENDED { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-        /* Progress Bar */
-        .progress-wrap {
-            background: rgba(255,255,255,0.15);
-            border-radius: 50px;
-            height: 10px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #f43f5e, #10b981);
-            height: 100%;
-            border-radius: 50px;
-            transition: width 0.6s ease;
-        }
-
-        /* Review Section Cards */
-        .review-card {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            padding: 24px 28px;
-            margin-bottom: 24px;
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .section-header i {
-            color: var(--coral-primary);
-            font-size: 1.25rem;
-        }
-
-        .section-header h3 {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: var(--navy-primary);
-            margin: 0;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 18px;
-        }
-
-        .info-field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .info-field-label {
-            font-size: 0.76rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--text-muted);
-        }
-
-        .info-field-value {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            word-break: break-word;
-        }
-
-        .tag-pill {
-            display: inline-block;
-            background: #f1f5f9;
-            color: var(--navy-primary);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            margin-right: 6px;
-            margin-bottom: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .tag-pill.highlight {
-            background: var(--coral-light);
-            color: #9f1239;
-            border-color: #fecdd3;
-        }
-
-        /* Gallery Grid */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 14px;
-        }
-
-        .gallery-item {
-            position: relative;
-            border-radius: 12px;
-            overflow: hidden;
-            aspect-ratio: 4/3;
-            border: 1px solid var(--border-color);
-            background: #f8fafc;
-            cursor: pointer;
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.06);
-        }
-
-        /* Batch Card */
-        .batch-card {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        /* Sticky Action Bar */
-        .action-dock {
-            position: sticky;
-            bottom: 20px;
-            background: rgba(30, 27, 75, 0.94);
-            backdrop-filter: blur(10px);
-            padding: 16px 24px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            z-index: 900;
-        }
-
-        .btn-action-approve {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 10px;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .btn-action-approve:hover {
-            background: #059669;
-            transform: translateY(-1px);
-            color: white;
-        }
-
-        .btn-action-changes {
-            background: #f59e0b;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .btn-action-changes:hover {
-            background: #d97706;
-            transform: translateY(-1px);
-            color: white;
-        }
-
-        .btn-action-reject {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .btn-action-reject:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-            color: white;
-        }
-
-        .btn-action-delete {
-            background: transparent;
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            padding: 8px 18px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .btn-action-delete:hover {
-            background: #ef4444;
-            color: white;
-        }
-
-        .empty-text {
-            color: var(--text-muted);
-            font-style: italic;
-            font-size: 0.9rem;
-        }
-    </style>
+  @media (max-width: 992px) {
+    .action-dock { left: 0; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
-<body>
+<body class="ap-page">
 
-    <!-- Topbar -->
-    <header class="admin-topbar">
-        <a href="${pageContext.request.contextPath}/admin/martialManagement" class="brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-            <span>Fight D Fear Admin Portal</span>
-        </a>
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge bg-light text-dark fw-bold px-3 py-2">Provider Review</span>
-            <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-outline-light">
-                <i class="bi bi-box-arrow-right"></i> Sign Out
-            </a>
+<c:set var="isAdmin" value="${not empty sessionScope.admin}"/>
+
+<c:choose>
+  <c:when test="${isAdmin}">
+<div class="layout">
+  <%@ include file="globalAdminMenu.jsp" %>
+  <main class="main">
+    <div class="ap-topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:320px;">
+          <i class="fas fa-search"></i>
+          <input type="search" placeholder="Search anything..." aria-label="Search" readonly
+                 onclick="window.location.href='${pageContext.request.contextPath}/admin/martialManagement'">
+          <span class="ap-kbd">Ctrl + K</span>
         </div>
-    </header>
-
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+        </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${admin.id}">
+          <span class="ap-avatar">${fn:substring(admin.name,0,1)}</span>
+          <span>
+            <div class="name"><c:out value="${admin.name}"/></div>
+            <div class="role">Super Admin</div>
+          </span>
+        </a>
+      </div>
+    </div>
     <div class="review-container">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <a href="${pageContext.request.contextPath}/admin/martialManagement">Martial Arts Centres</a>
+        <span class="sep">&gt;</span>
+        <span>Review</span>
+      </nav>
+      <a href="${pageContext.request.contextPath}/admin/martialManagement" class="back-nav">
+        <i class="bi bi-arrow-left"></i> Back to Martial Arts Centres Management
+      </a>
+  </c:when>
+  <c:otherwise>
+    <div class="owner-shell">
+      <a href="${pageContext.request.contextPath}/centres/dashboard" class="back-nav">
+        <i class="bi bi-arrow-left"></i> Back to Centre Dashboard
+      </a>
+  </c:otherwise>
+</c:choose>
 
-        <!-- Flash messages -->
         <c:if test="${not empty message}">
             <div class="alert alert-success alert-dismissible fade show mb-4 rounded-4 shadow-sm" role="alert">
                 <i class="bi bi-check-circle-fill me-2"></i> ${message}
@@ -405,10 +177,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
-
-        <a href="${pageContext.request.contextPath}/admin/martialManagement" class="back-nav">
-            <i class="bi bi-arrow-left"></i> Back to Martial Arts Management Dashboard
-        </a>
 
         <!-- PROVIDER HEADER CARD -->
         <div class="header-card">
@@ -428,7 +196,7 @@
 
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-                        <h1 class="h3 fw-bold mb-0 text-white">${center.name}</h1>
+                        <h1 class="h3 fw-bold mb-0">${center.name}</h1>
                         <c:set var="statusKey" value="${center.centreProfileStatus != null ? center.centreProfileStatus : (center.approved ? 'APPROVED' : 'PENDING_ADMIN_APPROVAL')}"/>
                         <span class="badge-status-lg status-${statusKey}">
                             <i class="bi ${center.approved ? 'bi-check-circle-fill' : 'bi-clock-history'}"></i>
@@ -436,16 +204,16 @@
                         </span>
                     </div>
 
-                    <div class="d-flex flex-wrap gap-4 text-white-50 small mb-3">
-                        <div><i class="bi bi-person-fill text-white"></i> <strong>Manager:</strong> ${not empty center.contactPerson ? center.contactPerson : 'Not provided'}</div>
-                        <div><i class="bi bi-envelope-fill text-white"></i> <a href="mailto:${center.email}" class="text-white text-decoration-none">${center.email}</a></div>
-                        <div><i class="bi bi-telephone-fill text-white"></i> <a href="tel:${center.phoneNumber}" class="text-white text-decoration-none">${center.phoneNumber}</a></div>
-                        <div><i class="bi bi-geo-alt-fill text-white"></i> ${not empty center.city ? center.city : center.location}</div>
+                    <div class="d-flex flex-wrap gap-4 contact-line small mb-3">
+                        <div><i class="bi bi-person-fill me-1" style="color:var(--ap-accent);"></i> <strong>Manager:</strong> ${not empty center.contactPerson ? center.contactPerson : 'Not provided'}</div>
+                        <div><i class="bi bi-envelope-fill me-1" style="color:var(--ap-accent);"></i> <a href="mailto:${center.email}" class="text-decoration-none">${center.email}</a></div>
+                        <div><i class="bi bi-telephone-fill me-1" style="color:var(--ap-accent);"></i> <a href="tel:${center.phoneNumber}" class="text-decoration-none">${center.phoneNumber}</a></div>
+                        <div><i class="bi bi-geo-alt-fill me-1" style="color:var(--ap-accent);"></i> ${not empty center.city ? center.city : center.location}</div>
                     </div>
 
                     <!-- Profile Completion -->
                     <div class="mt-2" style="max-width: 480px;">
-                        <div class="d-flex justify-content-between small fw-bold text-white mb-1">
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
                             <span>Profile Completion</span>
                             <span>${center.profileCompletionPct != null ? center.profileCompletionPct : (center.approved ? 100 : 0)}%</span>
                         </div>
@@ -530,7 +298,7 @@
                     <span class="info-field-label">Google Maps Link / Coordinates</span>
                     <c:choose>
                         <c:when test="${not empty center.googleMapLocation}">
-                            <a href="${center.googleMapLocation}" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2 mt-1" style="max-width: 250px;">
+                            <a href="${center.googleMapLocation}" target="_blank" class="ap-btn-view d-inline-flex align-items-center gap-2 mt-1" style="max-width: 250px;">
                                 <i class="bi bi-map-fill"></i> Open in Google Maps
                             </a>
                         </c:when>
@@ -751,7 +519,7 @@
                     <c:forEach var="b" items="${center.batches}">
                         <div class="batch-card">
                             <div>
-                                <h6 class="fw-bold mb-1 text-dark">${b.name} <span class="badge bg-primary ms-2">${b.style}</span></h6>
+                                <h6 class="fw-bold mb-1 text-dark">${b.name} <span class="ap-badge ap-badge-reverify ms-2">${b.style}</span></h6>
                                 <div class="small text-muted">
                                     <i class="bi bi-person"></i> Coach: ${not empty b.instructor ? b.instructor : center.contactPerson} &nbsp;|&nbsp;
                                     <i class="bi bi-clock"></i> ${b.startTime} - ${b.endTime} (${b.days})
@@ -825,7 +593,7 @@
                                 <small class="text-muted">Official accreditation document submitted by provider</small>
                             </div>
                         </div>
-                        <a href="${pageContext.request.contextPath}${center.trainerCertificatePath}" target="_blank" class="btn btn-primary fw-bold">
+                        <a href="${pageContext.request.contextPath}${center.trainerCertificatePath}" target="_blank" class="ap-btn ap-btn-primary">
                             <i class="bi bi-box-arrow-up-right me-1"></i> View / Open Document
                         </a>
                     </div>
@@ -898,6 +666,7 @@
             </div>
         </div>
 
+<c:if test="${isAdmin}">
         <!-- STICKY ACTION DOCK -->
         <div class="action-dock">
             <div>
@@ -976,6 +745,19 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+</c:if>
+
+<c:choose>
+  <c:when test="${isAdmin}">
+  </main>
+</div>
+  </c:when>
+  <c:otherwise>
+    </div>
+  </c:otherwise>
+</c:choose>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -6,252 +6,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investor Registration — Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            /* Mobile Flutter Theme Colors - Rose, Plum & neutral Slate */
+            --primary-rose: #f43f5e;
+            --primary-rose-hover: #e11d48;
+            --primary-plum: #4c0519;
+            --bg-scaffold: #f8fafc;
+            --bg-surface: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-light: #e2e8f0;
+            --border-focus: #f43f5e;
+            --rose-bg-light: #ffe4e6;
+            --rose-text-dark: #be123c;
+            --font-heading: 'Poppins', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f4f6fa;
+            font-family: var(--font-body);
+            background: var(--bg-scaffold);
             min-height: 100vh;
             display: flex;
-            overflow-x: hidden;
-            margin: 0;
-            padding: 0;
-        }
-
-        .left-panel {
-            width: 35%;
-            min-width: 400px;
-            flex-shrink: 0;
-            background: linear-gradient(180deg, #1a164b 0%, #3e1b6a 50%, #902166 100%);
-            display: flex;
-            flex-direction: column;
             justify-content: center;
-            padding: 60px 40px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .left-panel::before {
-            content: '';
-            position: absolute;
-            top: -100px; left: -100px;
-            width: 400px; height: 400px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.02);
-            z-index: 1;
-        }
-
-        .left-panel-content {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
-        }
-
-        .brand-logo {
-            font-size: 1.8rem;
-            font-weight: 800;
-            display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 40px;
-        }
-
-        .brand-logo i {
-            background: #f43f5e;
-            color: white;
-            height: 40px;
-            width: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            font-size: 1.2rem;
-        }
-
-        .hero-pretitle {
-            color: #f43f5e;
-            font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-        }
-
-        .hero-title {
-            font-size: 2.8rem;
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 24px;
-        }
-
-        .hero-desc {
-            font-size: 1.05rem;
-            opacity: 0.85;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-
-        .feature-box {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 25px;
-        }
-
-        .feature-icon {
-            height: 45px;
-            width: 45px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-            color: #e2e8f0;
-        }
-
-        .feature-text h4 {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 3px;
-        }
-
-        .feature-text p {
-            font-size: 0.85rem;
-            opacity: 0.7;
-            margin: 0;
-            line-height: 1.4;
-        }
-
-        .right-panel {
-            flex: 1;
             padding: 20px;
-            height: 100vh;
-            overflow-y: auto;
-            background: #f4f6fa;
+            margin: 0;
         }
 
         .register-container {
             width: 100%;
-            max-width: 900px;
-            margin: 40px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 40px 50px; 
+            max-width: 480px;
+            background: var(--bg-surface);
+            border-radius: 16px;
+            padding: 40px; 
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border-light);
             position: relative;
         }
 
         .back-link-top {
-            position: absolute;
-            top: 40px;
-            right: 50px;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #312e81;
+            color: var(--primary-rose);
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
+            margin-bottom: 25px;
+            transition: color 0.2s;
+        }
+
+        .back-link-top:hover {
+            color: var(--primary-rose-hover);
         }
 
         .header-title {
-            text-align: center;
+            font-family: var(--font-heading);
             font-weight: 800;
-            color: #1e1b4b;
+            color: var(--primary-plum);
             margin-bottom: 5px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .header-title i {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 40px;
-            width: 40px;
-            border-radius: 50%;
-            background: #f1f5f9;
-            color: #312e81;
-            font-size: 1.1rem;
+            gap: 10px;
+            font-size: 1.6rem;
         }
 
         .header-title span {
-            color: #312e81;
+            color: var(--primary-rose);
         }
 
         .header-subtitle {
-            text-align: center;
-            color: #64748b;
-            font-size: 0.95rem;
-            margin-bottom: 35px;
-        }
-        
-        .section-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-title span {
-            background: #312e81;
-            color: white;
-            font-size: 0.75rem;
-            height: 22px;
-            width: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 30px;
         }
 
         .form-label {
             font-size: 0.85rem;
-            color: #0f172a;
-            font-weight: 700;
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 6px;
         }
 
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1.5px solid #cbd5e1;
-            background-color: #ffffff;
-            color: #1e293b;
-            padding: 10px 15px;
-            font-size: 0.9rem;
+        .form-control {
+            border-radius: 12px;
+            border: 1.5px solid var(--border-light);
+            background-color: var(--bg-surface);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            font-size: 0.95rem;
             transition: all 0.3s;
+            height: 50px;
         }
 
-        .form-control:focus, .form-select:focus {
+        .form-control:focus {
             outline: none;
-            background-color: #ffffff;
-            border-color: #312e81;
-            box-shadow: 0 0 0 3px rgba(49, 46, 129, 0.1);
+            background-color: var(--bg-surface);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
         }
         
         .input-group-custom {
             position: relative;
         }
 
-        .input-group-custom i {
+        .input-group-custom .field-icon {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: var(--text-secondary);
         }
         
         .toggle-password {
@@ -260,263 +131,541 @@
         }
 
         .btn-register {
-            background: linear-gradient(135deg, #312e81, #f43f5e);
+            background: var(--primary-rose);
             color: white;
             border: none;
             padding: 14px;
             font-weight: 700;
-            border-radius: 8px;
+            border-radius: 12px;
             width: 100%;
             transition: all 0.3s;
-            margin-top: 10px;
+            margin-top: 15px;
             font-size: 1rem;
         }
 
         .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(244, 63, 94, 0.3);
+            background: var(--primary-rose-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 15px rgba(244, 63, 94, 0.2);
             color: white;
+        }
+
+        .btn-register:disabled {
+            background-color: #cbd5e1;
+            color: #94a3b8;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
         }
 
         .login-link {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px;
             font-size: 0.9rem;
-            color: #64748b;
+            color: var(--text-secondary);
         }
 
         .login-link a {
-            color: #312e81;
+            color: var(--primary-rose);
             font-weight: 700;
             text-decoration: none;
         }
 
-        @media (max-width: 992px) {
-            body { flex-direction: column; overflow-y: auto; }
-            .left-panel { flex: none; padding: 50px 30px; min-height: auto; }
-            .right-panel { height: auto; padding: 20px; }
-            .register-container { padding: 30px 20px; }
-            .hero-title { font-size: 2.2rem; }
-            .back-link-top { position: relative; top: 0; right: 0; justify-content: center; margin-bottom: 20px; }
+        .login-link a:hover {
+            text-decoration: underline;
         }
-    </style>
+
+        .btn-otp {
+            height: 50px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: 1.5px solid var(--border-light);
+            background-color: transparent;
+            color: var(--text-primary);
+        }
+
+        .btn-otp:hover {
+            border-color: var(--primary-rose);
+            color: var(--primary-rose);
+        }
+
+        .btn-verify-submit {
+            height: 50px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background-color: var(--primary-rose);
+            color: white;
+            border: none;
+        }
+        
+        .btn-verify-submit:hover {
+            opacity: 0.9;
+        }
+
+        .otp-verified-badge {
+            color: var(--rose-text-dark);
+            background: var(--rose-bg-light);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 50px;
+        }
+
+        /* Password Strength Bar */
+        .strength-meter {
+            height: 6px;
+            background-color: var(--border-light);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        .strength-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-rose);
+            border-color: var(--primary-rose);
+        }
+
+        .form-check-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .form-check-label a {
+            color: var(--primary-rose);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .rose-alert {
+            background: var(--rose-bg-light);
+            border: 1px solid #fecaca;
+            color: var(--rose-text-dark);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 
-    <!-- LEFT PANEL: Branding & Features -->
-    <div class="left-panel">
-        <div class="left-panel-content">
-            <div class="brand-logo">
-                <i class="bi bi-graph-up-arrow"></i> InvestHub
-            </div>
+    <div class="register-container">
+        
+        <a href="${pageContext.request.contextPath}/investor/login" class="back-link-top">
+            <i class="bi bi-arrow-left"></i> Back to Login
+        </a>
 
-            <div class="hero-pretitle">JOIN OUR NETWORK</div>
-            <h1 class="hero-title">Invest in Ideas.<br>Build the Future.</h1>
-            <p class="hero-desc">
-                Create your investor account and access high-potential opportunities, innovative startups, and impactful ventures.
-            </p>
+        <h2 class="header-title">
+            Register as <span>Investor</span>
+        </h2>
+        <p class="header-subtitle">Join us and access our venture matching marketplace</p>
 
-            <div class="feature-box">
-                <div class="feature-icon"><i class="bi bi-bullseye"></i></div>
-                <div class="feature-text">
-                    <h4>Discover Opportunities</h4>
-                    <p>Find and invest in high-potential startups and growing businesses.</p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <div class="feature-icon"><i class="bi bi-graph-up"></i></div>
-                <div class="feature-text">
-                    <h4>Smart Investment Matching</h4>
-                    <p>Get matched with opportunities that align with your interests.</p>
-                </div>
-            </div>
-
-            <div class="feature-box">
-                <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
-                <div class="feature-text">
-                    <h4>Secure & Verified</h4>
-                    <p>We ensure a secure platform with verified documents and data protection.</p>
-                </div>
-            </div>
-            
-            <div class="feature-box">
-                <div class="feature-icon"><i class="bi bi-people"></i></div>
-                <div class="feature-text">
-                    <h4>Grow Your Portfolio</h4>
-                    <p>Diversify your investments and maximize long-term returns.</p>
-                </div>
-            </div>
+        <!-- JS Alert Box -->
+        <div class="rose-alert" id="jsAlert" style="display: none;">
+            <i class="bi bi-exclamation-circle"></i> <span id="jsAlertText"></span>
         </div>
-    </div>
 
-    <!-- RIGHT PANEL: Registration Form Container -->
-    <div class="right-panel">
-        <div class="register-container">
+        <c:if test="${not empty error}">
+            <div class="rose-alert" role="alert">
+                <i class="bi bi-exclamation-circle"></i> ${error}
+            </div>
+        </c:if>
+
+        <form action="${pageContext.request.contextPath}/investor/register" method="post" id="investorRegForm">
             
-            <a href="${pageContext.request.contextPath}/investor/login" class="back-link-top">
-                <i class="bi bi-arrow-left"></i> Back to Login
-            </a>
+            <!-- Contact Details -->
+            <div class="mb-3">
+                <label class="form-label" for="fullName">Full Name *</label>
+                <input type="text" id="fullName" name="fullName" class="form-control" placeholder="Enter your full name" required>
+            </div>
 
-            <h2 class="header-title">
-                <i class="bi bi-person"></i> Register as <span>Investor</span>
-            </h2>
-            <p class="header-subtitle">Fill in the details below to create your investor account</p>
-
-            <c:if test="${not empty error}">
-                <div class="alert alert-danger" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${error}
-                </div>
-            </c:if>
-
-            <!-- EXACT HTML PRESERVED: Registration Form -->
-            <form action="${pageContext.request.contextPath}/investor/register" method="post" enctype="multipart/form-data">
-                
-                <!-- SECTION 1: Personal Details -->
-                <div class="mb-4">
-                    <h4 class="section-title"><span>1</span> Contact Details</h4>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Full Name *</label>
-                            <input type="text" name="fullName" class="form-control" placeholder="Enter your full name" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email Address *</label>
-                            <div class="input-group-custom">
-                                <input type="email" name="email" class="form-control" placeholder="Enter your email address" required>
-                                <i class="bi bi-envelope"></i>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phone Number *</label>
-                            <input type="tel" name="phone" class="form-control" placeholder="Enter 10-digit number" pattern="[0-9]{10}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Password *</label>
-                            <div class="input-group-custom">
-                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required minlength="6">
-                                <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Profile Photo (Optional)</label>
-                            <div class="input-group-custom">
-                                <input type="file" name="profilePhoto" class="form-control" accept="image/*">
-                            </div>
+            <div class="mb-3">
+                <label class="form-label" for="email">Email Address *</label>
+                <div class="row g-2">
+                    <div class="col-8">
+                        <div class="input-group-custom">
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter email address" required>
+                            <i class="field-icon bi bi-envelope"></i>
                         </div>
                     </div>
-                </div>
-
-                <!-- SECTION 2: Profile & Investment Interests -->
-                <div class="mb-4">
-                    <h4 class="section-title"><span>2</span> Entity Profile</h4>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Company / Institution Name *</label>
-                            <input type="text" name="companyName" class="form-control" placeholder="e.g. Angel Network, NGO, Bank, Self" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Budget Range (Investment Capacity) *</label>
-                            <select name="budgetRange" class="form-select" required>
-                                <option value="">Select Budget Range</option>
-                                <option value="Under Rs. 50,000">Under ₹50,000</option>
-                                <option value="Rs. 50,000 - Rs. 2,00,000">₹50,000 - ₹2,00,000</option>
-                                <option value="Rs. 2,00,000 - Rs. 10,00,000">₹2,00,000 - ₹10,00,000</option>
-                                <option value="Rs. 10,00,000+">₹10,00,000+</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Investment Interests / Bio *</label>
-                            <textarea name="investmentInterests" class="form-control" rows="2" placeholder="Explain what type of businesses you are interested in funding (e.g. boutiques, local food startups, tech etc.)" required></textarea>
-                        </div>
+                    <div class="col-4">
+                        <button type="button" id="sendOtpBtn" class="btn w-100 btn-otp">Send OTP</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- SECTION 3: Preferences -->
-                <div class="mb-4">
-                    <h4 class="section-title"><span>3</span> Match Preferences</h4>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Preferred Locations *</label>
-                            <input type="text" name="preferredLocations" class="form-control" placeholder="e.g. TN, Tho, Choeng, All (comma sep)" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Preferred Categories *</label>
-                            <input type="text" name="preferredCategories" class="form-control" placeholder="e.g. Tea Shop, Boutique, All (comma sep)" required>
-                        </div>
+            <!-- OTP Verification Row (Hidden by default, triggered on email send) -->
+            <div class="mb-3" id="otpRow" style="display: none;">
+                <label class="form-label" for="emailOtp">Enter Email OTP *</label>
+                <div class="row g-2">
+                    <div class="col-8">
+                        <input type="text" id="emailOtp" name="emailOtp" class="form-control" placeholder="6-digit code">
+                    </div>
+                    <div class="col-4">
+                        <button type="button" id="verifyOtpBtn" class="btn w-100 btn-verify-submit">Verify</button>
                     </div>
                 </div>
+                <small class="form-text text-muted" id="otpStatusHint" style="font-size: 0.8rem; margin-top: 4px; display: block;"></small>
+            </div>
 
-                <!-- SECTION 4: Verification Documents -->
-                <div class="mb-4">
-                    <h4 class="section-title"><span>4</span> Verification Documents</h4>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label">Verification Document Upload *</label>
-                            <div class="input-group-custom">
-                                <input type="file" name="verificationDocs" class="form-control" accept=".pdf,.doc,.docx,.jpg,.png" required>
-                            </div>
-                            <div class="form-text text-muted" style="font-size: 0.75rem;">Please upload business registration, ID proof, or incorporation documents to build trust.</div>
-                        </div>
-                    </div>
+            <!-- Verified Badge indicator -->
+            <div class="mb-3" id="otpVerifiedBadge" style="display: none;">
+                <label class="form-label">Email Status</label>
+                <div class="otp-verified-badge">
+                    <i class="bi bi-patch-check-fill"></i> Email verified successfully
                 </div>
+            </div>
 
-                <button type="submit" id="submitBtn" class="btn btn-register">
-                    <i class="bi bi-person-plus"></i> Register as Investor
-                </button>
-            </form>
-            <!-- END OF FORM -->
+            <div class="mb-3">
+                <label class="form-label" for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter 10-digit number" pattern="[0-9]{10}" required>
+            </div>
 
-            <p class="login-link">
-                Already have an account? <a href="${pageContext.request.contextPath}/investor/login">Sign in here</a>
-            </p>
-        </div>
+            <div class="mb-3">
+                <label class="form-label" for="password">Password *</label>
+                <div class="input-group-custom">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password (min 6 characters)" required>
+                    <i class="field-icon bi bi-eye-slash toggle-password" id="togglePassword"></i>
+                </div>
+                <!-- PW Strength Meter -->
+                <div class="strength-meter" id="pwStrengthMeter">
+                    <div class="strength-bar" id="pwStrengthBar"></div>
+                </div>
+                <div class="strength-label" id="pwStrengthLabel">Password strength</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" for="confirmPassword">Confirm Password *</label>
+                <div class="input-group-custom">
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                    <i class="field-icon bi bi-eye-slash toggle-password" id="toggleConfirmPassword"></i>
+                </div>
+                <small class="form-text text-danger" id="passwordMatchError" style="display: none;">Passwords do not match</small>
+            </div>
+
+            <!-- Terms and Privacy Checkbox -->
+            <div class="mb-4 form-check">
+                <input type="checkbox" class="form-check-input" id="acceptedTerms" name="acceptedTerms" required>
+                <label class="form-check-label" for="acceptedTerms">
+                    I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.
+                </label>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-register">
+                <i class="bi bi-person-plus"></i> Register as Investor
+            </button>
+        </form>
+
+        <p class="login-link">
+            Already have an account? <a href="${pageContext.request.contextPath}/investor/login">Sign in here</a>
+        </p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Eye icon toggle logic
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
+        const CONTEXT_PATH = "${pageContext.request.contextPath}";
 
-        if (togglePassword && password) {
-            togglePassword.addEventListener('click', function () {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                this.classList.toggle('bi-eye');
-                this.classList.toggle('bi-eye-slash');
-            });
-        }
+        let isEmailVerified = false;
+        let isPasswordMatching = false;
+        let isPasswordStrongVal = false;
 
-        // Basic front-end form validation
         const form = document.querySelector('form');
-        form.addEventListener('submit', function (e) {
-            let isValid = true;
-            const phoneInput = document.querySelector('input[name="phone"]');
-            const emailInput = document.querySelector('input[name="email"]');
-            
-            // Phone validation
-            const phoneRegex = /^[0-9]{10}$/;
-            if (phoneInput && !phoneRegex.test(phoneInput.value)) {
-                alert('Please enter a valid 10-digit phone number.');
-                phoneInput.style.borderColor = 'red';
-                isValid = false;
-            } else if (phoneInput) {
+        const emailInput = document.getElementById('email');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const otpRow = document.getElementById('otpRow');
+        const emailOtpInput = document.getElementById('emailOtp');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const otpVerifiedBadge = document.getElementById('otpVerifiedBadge');
+        const otpStatusHint = document.getElementById('otpStatusHint');
+
+        const phoneInput = document.getElementById('phone');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const passwordMatchError = document.getElementById('passwordMatchError');
+        const acceptedTermsCheckbox = document.getElementById('acceptedTerms');
+        const submitBtn = document.getElementById('submitBtn');
+
+        const setupTogglePassword = (triggerId, fieldId) => {
+            const trigger = document.getElementById(triggerId);
+            const field = document.getElementById(fieldId);
+            if (trigger && field) {
+                trigger.addEventListener('click', function() {
+                    const type = field.type === 'password' ? 'text' : 'password';
+                    field.type = type;
+                    this.classList.toggle('bi-eye');
+                    this.classList.toggle('bi-eye-slash');
+                });
+            }
+        };
+
+        setupTogglePassword('togglePassword', 'password');
+        setupTogglePassword('toggleConfirmPassword', 'confirmPassword');
+
+        const checkFormState = () => {
+            // Managed inside form submit validation instead of disabling button
+        };
+
+        sendOtpBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                alert('Please enter a valid email address first.');
+                emailInput.focus();
+                return;
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.innerText = 'Sending...';
+
+            try {
+                const response = await fetch(`${CONTEXT_PATH}/api/investor/otp/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    otpStatusHint.innerText = 'OTP sent! Please check your inbox.';
+                    otpStatusHint.style.color = '#be123c';
+                    otpRow.style.display = 'block';
+                    emailOtpInput.required = true;
+                    emailInput.readOnly = true;
+                } else {
+                    alert('Failed to send OTP: ' + (data.error || 'Unknown error'));
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerText = 'Send OTP';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error. Failed to send OTP.');
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerText = 'Send OTP';
+            }
+        });
+
+        verifyOtpBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            const otp = emailOtpInput.value.trim();
+            if (!otp) {
+                alert('Please enter the OTP code.');
+                emailOtpInput.focus();
+                return;
+            }
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.innerText = 'Verifying...';
+
+            try {
+                const response = await fetch(`${CONTEXT_PATH}/api/investor/otp/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    isEmailVerified = true;
+                    otpRow.style.display = 'none';
+                    otpVerifiedBadge.style.display = 'flex';
+                    emailOtpInput.readOnly = true;
+                    sendOtpBtn.style.display = 'none';
+                    checkFormState();
+                } else {
+                    alert('Invalid OTP. Please enter the correct OTP code.');
+                    verifyOtpBtn.disabled = false;
+                    verifyOtpBtn.innerText = 'Verify';
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Verification request failed. Please try again.');
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerText = 'Verify';
+            }
+        });
+
+        const validatePasswordStrength = (pwd) => {
+            const meter = document.getElementById('pwStrengthMeter');
+            const bar = document.getElementById('pwStrengthBar');
+            const label = document.getElementById('pwStrengthLabel');
+
+            if (!pwd) {
+                meter.style.display = 'none';
+                label.style.display = 'none';
+                isPasswordStrongVal = false;
+                return;
+            }
+
+            meter.style.display = 'block';
+            label.style.display = 'block';
+
+            let score = 0;
+            if (pwd.length >= 6) score++;
+            if (pwd.length >= 10) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[!@#$%^&*]/.test(pwd)) score++;
+
+            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
+            const isCompliant = passwordRegex.test(pwd);
+
+            let pct = (score / 5) * 100;
+            bar.style.width = pct + '%';
+
+            if (!isCompliant) {
+                bar.style.backgroundColor = '#be123c';
+                label.innerText = 'Format: Min 6 characters with 1 number and 1 special symbol (!@#$%)';
+                label.style.color = '#be123c';
+                isPasswordStrongVal = false;
+            } else if (score < 4) {
+                bar.style.backgroundColor = '#be123c';
+                label.innerText = 'Medium strength';
+                label.style.color = '#be123c';
+                isPasswordStrongVal = true;
+            } else {
+                bar.style.backgroundColor = '#be123c';
+                label.innerText = 'Strong password';
+                label.style.color = '#be123c';
+                isPasswordStrongVal = true;
+            }
+        };
+
+        passwordInput.addEventListener('input', () => {
+            validatePasswordStrength(passwordInput.value);
+            checkPasswordsMatch();
+            checkFormState();
+        });
+
+        const checkPasswordsMatch = () => {
+            const pwd = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+
+            if (!confirm) {
+                passwordMatchError.style.display = 'none';
+                isPasswordMatching = false;
+                return;
+            }
+
+            if (pwd === confirm) {
+                passwordMatchError.style.display = 'none';
+                isPasswordMatching = true;
+                confirmPasswordInput.style.borderColor = '#cbd5e1';
+            } else {
+                passwordMatchError.style.display = 'block';
+                isPasswordMatching = false;
+                confirmPasswordInput.style.borderColor = '#be123c';
+            }
+        };
+
+        confirmPasswordInput.addEventListener('input', () => {
+            checkPasswordsMatch();
+            checkFormState();
+        });
+
+        phoneInput.addEventListener('input', () => {
+            if (phoneInput.value.length === 10) {
                 phoneInput.style.borderColor = '#cbd5e1';
+            } else {
+                phoneInput.style.borderColor = '#be123c';
             }
+            checkFormState();
+        });
 
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (emailInput && !emailRegex.test(emailInput.value)) {
-                alert('Please enter a valid email address.');
-                emailInput.style.borderColor = 'red';
-                isValid = false;
-            } else if (emailInput) {
-                emailInput.style.borderColor = '#cbd5e1';
+        document.getElementById('fullName').addEventListener('input', checkFormState);
+        acceptedTermsCheckbox.addEventListener('change', checkFormState);
+
+        const showAlert = (msg) => {
+            const el = document.getElementById('jsAlert');
+            const txt = document.getElementById('jsAlertText');
+            if (el && txt) {
+                txt.innerText = msg;
+                el.style.display = 'flex';
+                window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+            } else {
+                alert(msg);
             }
+        };
 
-            if (!isValid) {
+        const hideAlert = () => {
+            const el = document.getElementById('jsAlert');
+            if (el) el.style.display = 'none';
+        };
+
+        const regForm = document.getElementById('investorRegForm');
+        regForm.addEventListener('submit', function(e) {
+            hideAlert();
+
+            const name = document.getElementById('fullName').value.trim();
+            const email = emailInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const termsChecked = acceptedTermsCheckbox.checked;
+
+            if (!name) {
+                showAlert('Full Name is required.');
                 e.preventDefault();
+                return;
+            }
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showAlert('Please enter a valid email address.');
+                e.preventDefault();
+                return;
+            }
+            if (!isEmailVerified) {
+                showAlert('Please verify your email address via OTP first.');
+                e.preventDefault();
+                return;
+            }
+            if (!phone || phone.length !== 10) {
+                showAlert('Please enter a valid 10-digit phone number.');
+                e.preventDefault();
+                return;
+            }
+            
+            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
+            if (!password || !passwordRegex.test(password)) {
+                showAlert('Password must contain at least 6 characters, including 1 number and 1 special symbol (!@#$%).');
+                e.preventDefault();
+                return;
+            }
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match.');
+                e.preventDefault();
+                return;
+            }
+            if (!termsChecked) {
+                showAlert('You must accept the Terms of Use and Privacy Policy.');
+                e.preventDefault();
+                return;
             }
         });
     </script>

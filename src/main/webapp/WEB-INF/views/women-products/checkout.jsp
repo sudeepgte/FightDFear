@@ -9,13 +9,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
     }
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #fffcfd;
+      font-family: 'Inter', 'Poppins', sans-serif;
+      background: #F8FAFC;
       color: var(--fdf-text);
       min-height: 100vh;
       padding: 40px 20px;
@@ -54,10 +55,14 @@
     }
 
     .checkout-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
+    .details-column, .summary-column { display: contents; }
+    .wp-addr { order: 1; }
+    .wp-sum { order: 2; }
+    .wp-pay { order: 3; }
 
     .checkout-card {
       background: #fff;
@@ -298,26 +303,43 @@
     }
     .modal-title { font-size: 18px; font-weight: 800; color: var(--brand-purple); }
     .close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #999; }
-    .form-row { display: flex; gap: 16px; }
-    .form-row .fdf-form-group { flex: 1; }
+    .checkout-wrapper { max-width: 1100px; }
+    .page-title { color: #1E1B4B; }
+    .back-link { color: #1E1B4B; }
+    .back-link:hover { background: #F43F5E; color: #fff; }
+    .checkout-grid { grid-template-columns: 1fr; }
+    .card-title { color: #1E1B4B; }
+    .pay-option i, .pay-option span { color: #1E1B4B; }
+    .summary-item .name { color: #1E1B4B; }
+    @media (max-width: 768px) {
+      body { padding: 20px 12px; }
+      .checkout-card { padding: 18px 16px; }
+      .payment-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
-<body>
+<body class="wp-shop">
   <div class="checkout-wrapper">
     <a href="${pageContext.request.contextPath}/women-products/cart" class="back-link">
       <i class="bi bi-arrow-left"></i> My Collection
     </a>
     
-    <div class="page-title">Shopping Checkout</div>
+    <div class="page-title">Checkout</div>
+    <div class="wp-subnav" style="justify-content:flex-start;margin:0 0 24px;">
+      <a href="${pageContext.request.contextPath}/women-products">Shop</a>
+      <a href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
+      <a class="active" href="${pageContext.request.contextPath}/women-products/checkout">Checkout</a>
+      <a href="${pageContext.request.contextPath}/women-products/my-orders">My Orders</a>
+    </div>
 
     <form method="post" action="${pageContext.request.contextPath}/women-products/checkout/place" id="checkoutForm">
       <c:if test="${buyNowMode}"><input type="hidden" name="buyNow" value="1"></c:if>
       <div class="checkout-grid">
         <!-- Left Column: Details -->
         <div class="details-column">
-          <div class="checkout-card">
+          <div class="checkout-card wp-addr">
             <div class="card-title" style="display:flex; justify-content:space-between; width:100%;">
-              <div><i class="bi bi-geo-alt-fill"></i> Delivery Destination</div>
+              <div><i class="bi bi-geo-alt-fill"></i> Delivery Address</div>
               <button type="button" class="btn-add-new" onclick="openAddressModal()"><i class="bi bi-plus-lg"></i> Add New</button>
             </div>
             
@@ -327,8 +349,8 @@
             <input type="hidden" name="shippingAddress" id="finalShippingAddress" required>
           </div>
 
-          <div class="checkout-card">
-            <div class="card-title"><i class="bi bi-shield-check"></i> Secure Payment</div>
+          <div class="checkout-card wp-pay">
+            <div class="card-title"><i class="bi bi-wallet2"></i> Payment Method</div>
             <div class="payment-grid">
               <div class="pay-option selected" onclick="selectPayment(this, 'COD')">
                 <i class="bi bi-truck-flatbed"></i>
@@ -353,8 +375,7 @@
 
         <!-- Right Column: Summary -->
         <div class="summary-column">
-          <div class="checkout-card">
-            <div class="card-title"><i class="bi bi-bag-check-fill"></i> Collection Summary</div>
+          <div class="checkout-card wp-sum">
             <div class="summary-list">
               <c:forEach var="ci" items="${cartItems}">
                 <div class="summary-item">
@@ -389,7 +410,7 @@
             </div>
 
             <button type="submit" class="btn-place-order">
-              Complete Order <i class="bi bi-arrow-right-circle-fill"></i>
+              Place Order <i class="bi bi-arrow-right-circle-fill"></i>
             </button>
           </div>
           
@@ -690,6 +711,7 @@
     };
   </script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>
 

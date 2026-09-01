@@ -46,11 +46,15 @@ import in.sp.main.Repository.BroadcastMessageRepository;
 import in.sp.main.Repository.DangerPointRepository;
 import in.sp.main.Entities.BroadcastMessage;
 import in.sp.main.Entities.DangerPoint;
+import in.sp.main.Entities.EmergencyContact;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.MartialArtsCenterService;
 import in.sp.main.Service.ServiceService;
 import in.sp.main.Service.UserFollowService;
+import in.sp.main.Service.UserNotificationService;
 import in.sp.main.Service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import in.sp.main.Service.PasswordService;
@@ -89,6 +93,9 @@ public class UserController {
 
     @Autowired
     private BroadcastMessageRepository broadcastMessageRepository;
+
+    @Autowired
+    private UserNotificationService userNotificationService;
 
     @Autowired
     private StylistRepository stylistRepository;
@@ -285,10 +292,7 @@ public class UserController {
      * and Flutter RegisterScreen. Visual page uses Fitness Web auth styling.
      */
     @RequestMapping(value = "/register", method = RequestMethod.POST)
-    public String createUser(@RequestParam(value = "image", required = false) MultipartFile image,
-                             @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
-                             @RequestParam(value = "emergencyContact", required = false) String emergencyContact,
-                             @RequestParam(value = "preferredLanguage", required = false) String preferredLanguage,
+    public String createUser(@RequestParam(value = "confirmPassword", required = false) String confirmPassword,
                              @RequestParam(value = "acceptedTerms", required = false) String acceptedTerms,
                              HttpServletRequest request,
                              HttpSession session,
@@ -301,15 +305,12 @@ public class UserController {
             String emailRaw = trimParam(request.getParameter("email"));
             String phone = trimParam(request.getParameter("phoneNumber"));
             String password = request.getParameter("password") == null ? "" : request.getParameter("password");
-            String homeAddress = trimParam(request.getParameter("homeAddress"));
+            String city = trimParam(request.getParameter("city"));
             String dob = trimParam(request.getParameter("dob"));
             String genderRaw = trimParam(request.getParameter("gender"));
-            String emergency = trimParam(emergencyContact != null ? emergencyContact : request.getParameter("emergencyContact"));
-            String language = trimParam(preferredLanguage != null ? preferredLanguage : request.getParameter("preferredLanguage"));
-            if (language.isEmpty()) language = "English";
 
             if (acceptedTerms == null || !("true".equalsIgnoreCase(acceptedTerms) || "on".equalsIgnoreCase(acceptedTerms))) {
-                model.addAttribute("error", "You must accept the Terms & Conditions to register.");
+                model.addAttribute("error", "You must accept the Terms & Conditions and Privacy Policy to register.");
                 return "user";
             }
 
@@ -342,35 +343,30 @@ public class UserController {
                 return "user";
             }
 
-            if (dob.isEmpty()) {
-                model.addAttribute("error", "Date of birth is required.");
+            if (city.isEmpty()) {
+                model.addAttribute("error", "City / Location is required.");
                 return "user";
             }
-            try {
-                LocalDate birthDate = LocalDate.parse(dob);
-                if (birthDate.isAfter(LocalDate.now())) {
-                    model.addAttribute("error", "Date of birth cannot be in the future.");
+
+            String genderErr = in.sp.main.Util.MobileValidation.requireWomenMemberGender(genderRaw);
+            if (genderErr != null) {
+                model.addAttribute("error", genderErr);
+                return "user";
+            }
+
+            if (!dob.isEmpty()) {
+                try {
+                    LocalDate birthDate = LocalDate.parse(dob);
+                    if (birthDate.isAfter(LocalDate.now())) {
+                        model.addAttribute("error", "Date of birth cannot be in the future.");
+                        return "user";
+                    }
+                    user.setDob(dob);
+                    user.setAge(java.time.Period.between(birthDate, LocalDate.now()).getYears());
+                } catch (Exception e) {
+                    model.addAttribute("error", "Date of birth must be YYYY-MM-DD.");
                     return "user";
                 }
-                user.setDob(dob);
-                user.setAge(java.time.Period.between(birthDate, LocalDate.now()).getYears());
-            } catch (Exception e) {
-                model.addAttribute("error", "Date of birth must be YYYY-MM-DD.");
-                return "user";
-            }
-
-            if (homeAddress.isEmpty()) {
-                model.addAttribute("error", "Current location / address is required.");
-                return "user";
-            }
-
-            if (emergency.isEmpty() || !emergency.matches("^\\d{10}$")) {
-                model.addAttribute("error", "Emergency contact must be exactly 10 digits.");
-                return "user";
-            }
-            if (emergency.equals(phone)) {
-                model.addAttribute("error", "Emergency contact should differ from your phone number.");
-                return "user";
             }
 
             if (userRepository.findByEmail(normEmail).isPresent()) {
@@ -378,45 +374,38 @@ public class UserController {
                 return "redirect:/login";
             }
 
-            if (!otpVerificationService.consumeVerifiedOtp(normEmail,
-                    in.sp.main.Entities.OtpPurpose.USER_REGISTER, otpExpirationMinutes)) {
-                model.addAttribute("error", "Email not verified. Please verify the OTP sent to your email first.");
+            if (userRepository.findByPhoneNumber(phone).isPresent()) {
+                model.addAttribute("error", "Phone number already registered.");
                 return "user";
             }
 
-            final long maxFileSize = 5L * 1024 * 1024;
-            if (image != null && !image.isEmpty()) {
-                if (image.getSize() > maxFileSize) {
-                    model.addAttribute("error", "Profile photo must be 5 MB or smaller.");
+            if (!isEmailVerifiedForRegistration(session, normEmail)
+                    && !otpVerificationService.hasVerifiedOtp(normEmail,
+                    in.sp.main.Entities.OtpPurpose.USER_REGISTER, otpExpirationMinutes)) {
+                String emailOtp = trimParam(request.getParameter("emailOtp"));
+                if (!emailOtp.isEmpty() && otpVerificationService.verifyOtp(normEmail, emailOtp,
+                        in.sp.main.Entities.OtpPurpose.USER_REGISTER)) {
+                    session.setAttribute("REG_VERIFIED_EMAIL", normEmail);
+                } else {
+                    model.addAttribute("error", "Email not verified. Please verify the OTP sent to your email first.");
                     return "user";
                 }
-                user.setProfilePhoto(fileUploadService.saveFile(image));
             }
 
             user.setFullName(fullName);
             user.setEmail(normEmail);
             user.setPhoneNumber(phone);
-            user.setHomeAddress(homeAddress);
+            user.setCity(city);
             user.setPassword(passwordService.encode(password));
-            // Match mobile member registration: verified after email OTP (not admin-gated).
             user.setVerificationStatus(VerificationStatus.VERIFIED);
-            user.setIdentityDocument("web-member|lang:" + language);
-
-            if (!genderRaw.isEmpty()) {
-                try {
-                    user.setGender(Gender.valueOf(genderRaw.toUpperCase()));
-                } catch (IllegalArgumentException e) {
-                    model.addAttribute("error", "Gender must be MALE, FEMALE, or OTHER.");
-                    return "user";
-                }
-            }
-
-            in.sp.main.Entities.EmergencyContact ec =
-                    new in.sp.main.Entities.EmergencyContact("Emergency", emergency, "Emergency", null);
-            ec.setUser(user);
-            user.setEmergencyContacts(java.util.List.of(ec));
+            user.setIdentityDocument("web-member|lang:English");
+            user.setGender(in.sp.main.Util.MobileValidation.parseWomenMemberGender(genderRaw));
 
             userService.createUser(user);
+
+            otpVerificationService.consumeVerifiedOtp(normEmail,
+                    in.sp.main.Entities.OtpPurpose.USER_REGISTER, otpExpirationMinutes);
+            session.removeAttribute("REG_VERIFIED_EMAIL");
 
             session.setAttribute("regPrefillEmail", normEmail);
             session.setAttribute("regPrefillPassword", password);
@@ -426,13 +415,14 @@ public class UserController {
 
             return "redirect:/users/register/success";
 
-        } catch (IOException e) {
-            log.error("File upload error during registration", e);
-            model.addAttribute("error", "File upload failed. Please try again.");
-            return "user";
         } catch (Exception e) {
             log.error("Registration failed", e);
-            model.addAttribute("error", "Registration failed: " + e.getMessage());
+            String msg = e.getMessage() == null ? "Unknown error" : e.getMessage();
+            if (msg.contains("Duplicate") || msg.contains("duplicate") || msg.contains("unique")) {
+                model.addAttribute("error", "Email or phone number is already registered.");
+            } else {
+                model.addAttribute("error", "Registration failed. Please check your details and try again.");
+            }
             return "user";
         }
     }
@@ -456,6 +446,14 @@ public class UserController {
 
     private static String trimParam(String v) {
         return v == null ? "" : v.trim();
+    }
+
+    private boolean isEmailVerifiedForRegistration(HttpSession session, String normEmail) {
+        if (session == null || normEmail == null || normEmail.isBlank()) {
+            return false;
+        }
+        Object verified = session.getAttribute("REG_VERIFIED_EMAIL");
+        return normEmail.equals(verified);
     }
 
 
@@ -760,29 +758,51 @@ public class UserController {
         return "userDashboard";
     }
 
+    @GetMapping("/notifications")
+    @ResponseBody
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> notifications(HttpSession session) {
+        User loggedInUser = (User) session.getAttribute("user");
+        if (loggedInUser == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        User fresh = userRepository.findById(loggedInUser.getId()).orElse(loggedInUser);
+        return ResponseEntity.ok(userNotificationService.buildForUser(fresh));
+    }
+
     @RequestMapping(value = "/broadcast/read", method = RequestMethod.POST)
     @ResponseBody
-    public String markBroadcastsAsRead(HttpSession session) {
+    public Map<String, Object> markBroadcastsAsRead(HttpSession session) {
         User loggedInUser = (User) session.getAttribute("user");
-        if (loggedInUser != null) {
-            loggedInUser.setLastReadBroadcastTime(java.time.LocalDateTime.now());
-            userService.updateUser(loggedInUser.getId(), loggedInUser);
-            session.setAttribute("user", loggedInUser);
-            return "success";
+        if (loggedInUser == null) {
+            return Map.of("success", false, "error", "Unauthorized");
         }
-        return "error";
+        userNotificationService.markAllRead(loggedInUser);
+        User fresh = userRepository.findById(loggedInUser.getId()).orElse(loggedInUser);
+        session.setAttribute("user", fresh);
+        return Map.of("success", true);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.GET)
     public String showUpdateForm(@PathVariable Long id, Model model, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null || !sessionUser.getId().equals(id)) {
+            session.setAttribute("redirectAfterLogin", "/users/update/" + id);
             return "redirect:/login";
         }
-        User user = userService.getUserById(id);
+        User user = userService.getUserByIdForProfileForm(id);
         if (user == null) {
             return "redirect:/login";
         }
+        String lang = "English";
+        if (user.getIdentityDocument() != null && user.getIdentityDocument().contains("lang:")) {
+            int idx = user.getIdentityDocument().indexOf("lang:");
+            lang = user.getIdentityDocument().substring(idx + 5);
+            if (lang.contains("|")) {
+                lang = lang.substring(0, lang.indexOf("|"));
+            }
+        }
+        model.addAttribute("preferredLanguage", lang.trim());
         model.addAttribute("user", user);
         model.addAttribute("profileCompletionPct", calculateCompletionPercentage(user));
         model.addAttribute("profileMissingItems", missingProfileItems(user));
@@ -794,13 +814,24 @@ public class UserController {
                              @RequestParam("name") String name,
                              @RequestParam("email") String email,
                              @RequestParam("phone") String phone,
-                             @RequestParam("address") String address,
-                             @RequestParam("dob") String dob,
+                             @RequestParam(value = "city", required = false) String city,
+                             @RequestParam(value = "address", required = false) String address,
+                             @RequestParam(value = "dob", required = false) String dob,
                              @RequestParam(value = "gender", required = false) String gender,
                              @RequestParam(value = "isPrivate", defaultValue = "false") boolean isPrivate,
                              @RequestParam(value = "confirmSave", required = false) String confirmSave,
                              @RequestParam(value = "identityFile", required = false) MultipartFile identityFile,
                              @RequestParam(value = "image", required = false) MultipartFile image,
+                             @RequestParam(value = "emergencyContactName", required = false) String emergencyContactName,
+                             @RequestParam(value = "emergencyContactPhone", required = false) String emergencyContactPhone,
+                             @RequestParam(value = "emergencyContactRelation", required = false) String emergencyContactRelation,
+                             @RequestParam(value = "workCollegeAddress", required = false) String workCollegeAddress,
+                             @RequestParam(value = "bloodGroup", required = false) String bloodGroup,
+                             @RequestParam(value = "allergies", required = false) String allergies,
+                             @RequestParam(value = "medicalHistory", required = false) String medicalHistory,
+                             @RequestParam(value = "medications", required = false) String medications,
+                             @RequestParam(value = "preferredLanguage", required = false) String preferredLanguage,
+                             @RequestParam(value = "safetyPreferences", required = false) String safetyPreferences,
                              HttpSession session,
                              RedirectAttributes redirectAttributes) throws IOException {
 
@@ -809,7 +840,7 @@ public class UserController {
             return "redirect:/login";
         }
 
-        User existingUser = userService.getUserById(id);
+        User existingUser = userService.getUserByIdForProfileForm(id);
         if (existingUser == null) {
             return "error";
         }
@@ -824,33 +855,94 @@ public class UserController {
             return "redirect:/users/update/" + id;
         }
 
-        if (dob == null || dob.isBlank()) {
-            redirectAttributes.addFlashAttribute("error", "Date of birth is required.");
-            return "redirect:/users/update/" + id;
+        if (dob != null && !dob.isBlank()) {
+            try {
+                LocalDate birthDate = LocalDate.parse(dob);
+                if (birthDate.isAfter(LocalDate.now()) || birthDate.isBefore(LocalDate.now().minusYears(100))) {
+                    redirectAttributes.addFlashAttribute("error", "Invalid date of birth.");
+                    return "redirect:/users/update/" + id;
+                }
+                int calculatedAge = java.time.Period.between(birthDate, LocalDate.now()).getYears();
+                existingUser.setDob(dob);
+                existingUser.setAge(calculatedAge);
+            } catch (Exception ex) {
+                redirectAttributes.addFlashAttribute("error", "Invalid date of birth format.");
+                return "redirect:/users/update/" + id;
+            }
+        } else {
+            existingUser.setDob(null);
+            existingUser.setAge(null);
         }
-
-        LocalDate birthDate = LocalDate.parse(dob);
-        if (birthDate.isAfter(LocalDate.now()) || birthDate.isBefore(LocalDate.now().minusYears(100))) {
-            redirectAttributes.addFlashAttribute("error", "Invalid date of birth.");
-            return "redirect:/users/update/" + id;
-        }
-        int calculatedAge = java.time.Period.between(birthDate, LocalDate.now()).getYears();
 
         existingUser.setFullName(name);
-        // Keep email ownership stable — do not allow arbitrary email change without OTP in Phase 1.
         existingUser.setPhoneNumber(phone.trim());
         existingUser.setHomeAddress(address);
-        existingUser.setDob(dob);
-        existingUser.setAge(calculatedAge);
         existingUser.setPrivate(isPrivate);
+        existingUser.setWorkCollegeAddress(workCollegeAddress);
+        existingUser.setSafetyPreferences(safetyPreferences);
+        if (city != null) {
+            existingUser.setCity(city.trim());
+        }
 
         if (gender != null && !gender.isBlank()) {
             try {
-                existingUser.setGender(Gender.valueOf(gender.toUpperCase()));
+                Gender g = Gender.valueOf(gender.toUpperCase());
+                if (g == Gender.MALE) {
+                    redirectAttributes.addFlashAttribute("error", "Gender is restricted to Female / Other.");
+                    return "redirect:/users/update/" + id;
+                }
+                existingUser.setGender(g);
             } catch (IllegalArgumentException e) {
                 redirectAttributes.addFlashAttribute("error", "Invalid gender value.");
                 return "redirect:/users/update/" + id;
             }
+        } else {
+            existingUser.setGender(null);
+        }
+
+        // Create/Update Emergency Contact
+        if (emergencyContactName != null && !emergencyContactName.isBlank() &&
+            emergencyContactPhone != null && !emergencyContactPhone.isBlank()) {
+            
+            if (!emergencyContactPhone.trim().matches("^\\d{10}$")) {
+                redirectAttributes.addFlashAttribute("error", "Emergency contact phone must be exactly 10 digits.");
+                return "redirect:/users/update/" + id;
+            }
+            if (emergencyContactPhone.trim().equals(phone.trim())) {
+                redirectAttributes.addFlashAttribute("error", "Emergency contact phone should differ from your phone number.");
+                return "redirect:/users/update/" + id;
+            }
+
+            List<EmergencyContact> contactList = existingUser.getEmergencyContacts();
+            EmergencyContact primaryContact = (contactList != null && !contactList.isEmpty()) ? contactList.get(0) : null;
+            if (primaryContact == null) {
+                primaryContact = new EmergencyContact();
+                primaryContact.setUser(existingUser);
+                if (contactList == null) {
+                    contactList = new ArrayList<>();
+                    existingUser.setEmergencyContacts(contactList);
+                }
+                contactList.add(primaryContact);
+            }
+            primaryContact.setName(emergencyContactName.trim());
+            primaryContact.setPhone(emergencyContactPhone.trim());
+            primaryContact.setRelation(emergencyContactRelation != null ? emergencyContactRelation.trim() : "Other");
+        }
+
+        // Create/Update Medical Details
+        in.sp.main.Entities.MedicalDetails medical = existingUser.getMedicalDetails();
+        if (medical == null) {
+            medical = new in.sp.main.Entities.MedicalDetails();
+            medical.setUser(existingUser);
+            existingUser.setMedicalDetails(medical);
+        }
+        medical.setBloodGroup(bloodGroup != null ? bloodGroup.trim() : "");
+        medical.setAllergies(allergies != null ? allergies.trim() : "");
+        medical.setMedicalHistory(medicalHistory != null ? medicalHistory.trim() : "");
+        medical.setMedications(medications != null ? medications.trim() : "");
+
+        if (preferredLanguage != null && !preferredLanguage.isBlank()) {
+            existingUser.setIdentityDocument("web-member|lang:" + preferredLanguage.trim());
         }
 
         if (identityFile != null && !identityFile.isEmpty()) {
@@ -864,7 +956,8 @@ public class UserController {
         }
 
         userService.updateUser(id, existingUser);
-        session.setAttribute("user", userService.getUserById(id));
+        User savedUser = userService.getUserById(id);
+        session.setAttribute("user", savedUser != null ? savedUser : existingUser);
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully.");
         return "redirect:/users/profile/" + id;
     }

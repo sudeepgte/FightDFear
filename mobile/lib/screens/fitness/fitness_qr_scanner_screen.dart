@@ -44,7 +44,7 @@ class _FitnessQrScannerScreenState extends State<FitnessQrScannerScreen> {
 
   Future<void> _processToken(String token) async {
     setState(() => _isProcessing = true);
-    final fitness = context.read<AuthState>().services.fitness;
+    final fitness = FitnessService(context.read<AuthState>().api);
 
     // Show processing modal
     showDialog(
@@ -149,7 +149,7 @@ class _FitnessQrScannerScreenState extends State<FitnessQrScannerScreen> {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 13, color: Colors.black84, height: 1.4),
+                style: const TextStyle(fontSize: 13, color: Color(0xD6000000), height: 1.4),
               ),
               if (completedSessions != null && remainingSessions != null) ...[
                 const SizedBox(height: 14),
@@ -205,7 +205,7 @@ class _FitnessQrScannerScreenState extends State<FitnessQrScannerScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Enter the session token displayed on your trainer\'s dashboard screen:',
-                  style: TextStyle(fontSize: 13, color: Colors.black84)),
+                  style: TextStyle(fontSize: 13, color: Color(0xD6000000))),
               const SizedBox(height: 14),
               TextField(
                 controller: tokenCtrl,

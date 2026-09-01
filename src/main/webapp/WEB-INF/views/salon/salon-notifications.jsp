@@ -15,6 +15,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -85,29 +87,9 @@
 </head>
 <body>
 
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
-            <i class="bi bi-stars"></i> <span>Fight D Fear</span>
-        </a>
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile"><i class="bi bi-person-circle"></i> <span>Salon Profile</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list"><i class="bi bi-calendar-check"></i> <span>Manage Bookings</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients"><i class="bi bi-people-fill"></i> <span>Clients</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists"><i class="bi bi-person-badge"></i> <span>Staff / Stylists</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages"><i class="bi bi-box-seam"></i> <span>Packages & Memberships</span></a>
-            
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sessionScope.loggedSalon.id}"><i class="bi bi-tags"></i> <span>Offers & Discounts</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing"><i class="bi bi-receipt"></i> <span>Billing & Invoices</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments"><i class="bi bi-wallet2"></i> <span>Payments & Payouts</span></a>
-            
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory"><i class="bi bi-box2"></i> <span>Inventory</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics"><i class="bi bi-bar-chart-fill"></i> <span>Reports & Analytics</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/settings"><i class="bi bi-sliders"></i> <span>Settings</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/support"><i class="bi bi-question-circle"></i> <span>Help & Support</span></a>
-            <a class="nav-link-custom text-danger mt-3" href="${pageContext.request.contextPath}/salons/logout"><i class="bi bi-box-arrow-left"></i> <span>Logout</span></a>
-        </nav>
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value=""/>
+</jsp:include>
 
     <div class="main-content">
         

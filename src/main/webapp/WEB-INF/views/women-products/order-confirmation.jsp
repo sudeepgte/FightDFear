@@ -10,11 +10,17 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
-    body { font-family: Poppins, sans-serif; background: #fffcfd; margin: 0; color: var(--fdf-text); }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 16px 60px; }
-    .card { background: #fff; border: 1px solid var(--fdf-border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-sm); margin-bottom: 16px; }
-    h1 { font-family: Montserrat, sans-serif; font-size: 1.6rem; color: var(--brand-purple-darker); }
+    body { font-family: Inter, Poppins, sans-serif; background: #F8FAFC; margin: 0; color: var(--fdf-text); }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 36px 20px 64px; }
+    .hero { text-align:center; margin-bottom: 24px; }
+    .hero .ok-icon { width:72px;height:72px;border-radius:50%;background:#F0FDF4;color:#16A34A;display:inline-flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:12px; }
+    .card { background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 24px; box-shadow: 0 8px 24px rgba(30,27,75,.05); margin-bottom: 16px; }
+    h1 { font-family: Montserrat, sans-serif; font-size: 1.55rem; color: #1E1B4B; margin: 8px 0; }
+    .ok { color: #059669; font-weight: 800; }
+    .btn-main { background: #F43F5E; color: #fff; }
+    .btn-sec { background: #FFF1F2; color: #1E1B4B; }
     .ok { color: #059669; font-weight: 800; }
     .line { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
     .line img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; }
@@ -24,11 +30,14 @@
     @media (max-width: 600px) { .wrap { padding: 20px 12px 48px; } h1 { font-size: 1.3rem; } }
   </style>
 </head>
-<body>
+<body class="wp-shop">
   <div class="wrap">
-    <p class="ok"><i class="bi bi-check-circle-fill"></i> Order placed</p>
-    <h1>Thank you — your order is confirmed</h1>
-    <p style="color:var(--fdf-muted);">We’ve recorded your order. Track status anytime from My Orders.</p>
+    <div class="hero">
+      <div class="ok-icon"><i class="bi bi-check-lg"></i></div>
+      <p class="ok">Order placed successfully</p>
+      <h1>Thank you — your order is confirmed</h1>
+      <p style="color:#64748B;">We’ve recorded your order. Track status anytime from My Orders.</p>
+    </div>
 
     <c:forEach var="o" items="${orders}">
       <div class="card">
@@ -63,5 +72,6 @@
       <a class="btn btn-sec" href="${pageContext.request.contextPath}/women-products">Continue shopping</a>
     </div>
   </div>
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
 </body>
 </html>

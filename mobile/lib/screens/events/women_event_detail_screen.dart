@@ -20,7 +20,7 @@ class WomenEventDetailScreen extends StatefulWidget {
   final Map<String, dynamic>? initialSummary;
 
   static const Color primary = Color(0xFFF43F5E);
-  static const Color navy = Color(0xFF1E1B4B);
+  static const Color navy = Color(0xFF0F172A);
 
   @override
   State<WomenEventDetailScreen> createState() => _WomenEventDetailScreenState();
@@ -101,6 +101,14 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
   bool get _myPaid => _event['myPaid'] == true;
   bool get _needsPay => _already && !_myPaid && _fee > 0;
 
+  String _venueLine() {
+    final venue = [
+      _event['venue'],
+      _event['city'],
+    ].where((e) => e != null && '$e'.trim().isNotEmpty).join(', ');
+    return venue.isEmpty ? 'Venue not provided' : venue;
+  }
+
   Future<void> _pay(int registrationId, double amount) async {
     await _checkout.pay(
       context: context,
@@ -116,6 +124,8 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
       },
       onSuccess: () async {
         await _load();
+        if (!mounted) return;
+        await _showConfirmationSheet(_event['myTicketCode']?.toString());
         if (mounted) Navigator.of(context).pop(true);
       },
       onError: (msg) {
@@ -143,6 +153,9 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
       return;
     }
 
+    final confirmed = await _showReviewSheet();
+    if (confirmed != true || !mounted) return;
+
     setState(() => _registering = true);
     try {
       final res = await _api.register(widget.eventId);
@@ -163,11 +176,8 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
         await _pay(registrationId, amount);
         await _load();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Registered · Ticket: ${res['ticketCode'] ?? ''}')),
-        );
+        await _showConfirmationSheet(res['ticketCode']?.toString());
         await _load();
-        if (mounted) Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
@@ -176,6 +186,89 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
     } finally {
       if (mounted) setState(() => _registering = false);
     }
+  }
+
+  Future<bool?> _showReviewSheet() {
+    return showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Review registration',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: WomenEventDetailScreen.navy)),
+            const SizedBox(height: 12),
+            Text(_event['name']?.toString() ?? 'Event',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text('Organizer: ${_event['organizerName'] ?? 'Not provided'}'),
+            Text('Date: ${_event['eventDate'] ?? 'Not provided'} ${_event['eventTime'] ?? ''}'),
+            Text(_venueLine()),
+            Text(_fee <= 0 ? 'Amount: Free' : 'Amount: ₹${_fee.toStringAsFixed(0)}'),
+            Text('Ticket: 1 × attendee'),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Edit'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    style: FilledButton.styleFrom(backgroundColor: WomenEventDetailScreen.primary),
+                    child: Text(_fee > 0 ? 'Continue' : 'Confirm'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showConfirmationSheet(String? ticketCode) async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Registration confirmed',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+            const SizedBox(height: 8),
+            Text(_event['name']?.toString() ?? 'Event',
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+            if (ticketCode != null && ticketCode.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('Ticket code: $ticketCode', style: const TextStyle(fontWeight: FontWeight.w800)),
+            ],
+            Text('Date: ${_event['eventDate'] ?? 'Not provided'} ${_event['eventTime'] ?? ''}'),
+            Text(_venueLine()),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: FilledButton.styleFrom(backgroundColor: WomenEventDetailScreen.primary),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -258,7 +351,9 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _chip(Icons.event, _event['eventDate']?.toString() ?? 'Date TBA'),
+                          _chip(Icons.event, _event['eventDate']?.toString().trim().isNotEmpty == true
+                              ? _event['eventDate'].toString()
+                              : 'Date not provided'),
                           if (_event['eventTime'] != null)
                             _chip(Icons.schedule, '${_event['eventTime']}'),
                           _chip(
@@ -281,7 +376,7 @@ class _WomenEventDetailScreenState extends State<WomenEventDetailScreen> {
                               _event['myTicketCode']?.toString() ?? 'Registered',
                             ),
                           if (_event['rating'] is num && (_event['rating'] as num) > 0)
-                            _chip(Icons.star, '${(_event['rating'] as num).toStringAsFixed(1)}'),
+                            _chip(Icons.star, (_event['rating'] as num).toStringAsFixed(1)),
                         ],
                       ),
                       if (_event['organizerName'] != null) ...[

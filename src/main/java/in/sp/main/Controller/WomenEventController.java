@@ -3,6 +3,8 @@ package in.sp.main.Controller;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.EventHostProfileService;
+import in.sp.main.Service.PartnerLifecycleSupport;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -10,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -48,6 +51,9 @@ public class WomenEventController {
     @Autowired
     private FileUploadService fileUploadService;
 
+    @Autowired
+    private EventHostProfileService eventHostProfileService;
+
     // =========================================================
     // PUBLIC ROUTES — Browse & Discovery
     // =========================================================
@@ -56,6 +62,7 @@ public class WomenEventController {
      * Browse all approved events with optional city/category filters.
      */
     @GetMapping
+    @Transactional(readOnly = true)
     public String browse(@RequestParam(required = false) String city,
                          @RequestParam(required = false) WomenEventCategory category,
                          @RequestParam(required = false) String query,
@@ -374,6 +381,20 @@ public class WomenEventController {
         return refreshed;
     }
 
+    /** Matches Flutter Event Host login: incomplete / changes-requested hosts complete profile first. */
+    private boolean hostNeedsProfileCompletion(EventHost host) {
+        if (host == null) return false;
+        PartnerProfileStatus status = host.getPartnerProfileStatus();
+        return status == null || PartnerLifecycleSupport.needsProfileCompletion(status);
+    }
+
+    private String redirectAfterHostLogin(EventHost host) {
+        if (hostNeedsProfileCompletion(host)) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        return "redirect:/women-events/organizer/dashboard";
+    }
+
     @GetMapping("/host/register")
     public String showHostRegisterForm() {
         return "women-events/host-register";
@@ -407,7 +428,8 @@ public class WomenEventController {
         host.setOrganizerType(organizerType);
         host.setHostContact(hostContact);
         host.setHostBio(hostBio);
-        host.setVerificationStatus(VerificationStatus.PENDING);
+        host.setPartnerProfileStatus(PartnerProfileStatus.PROFILE_INCOMPLETE);
+        host.setProfileCompletionPct(10); // Initial quick reg percentage
 
         eventHostRepository.save(host);
         return "redirect:/women-events/host/login?registered=true";
@@ -438,30 +460,31 @@ public class WomenEventController {
             model.addAttribute("error", "Invalid password.");
             return "women-events/host-login";
         }
-        if (host.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your account is pending verification by Admin. Please check back later.");
-            return "women-events/host-login";
-        }
-        if (host.getVerificationStatus() == VerificationStatus.REJECTED) {
-            model.addAttribute("error", "Your account has been rejected by admin.");
-            return "women-events/host-login";
-        }
-
+        // Allow login for incomplete & pending profile hosts so they can complete profile or view pending status
         session.setAttribute("loggedHost", host);
 
-        // Generate JWT token if possible
+        // Handle profile lifecycle status routing matching mobile app flow
+        PartnerProfileStatus partnerStatus = host.getPartnerProfileStatus();
+        VerificationStatus verStatus = host.getVerificationStatus();
+
+        if (partnerStatus == PartnerProfileStatus.SUSPENDED || verStatus == VerificationStatus.REJECTED || partnerStatus == PartnerProfileStatus.REJECTED) {
+            model.addAttribute("error", "Your account has been rejected or suspended by admin." + (host.getRejectionReason() != null ? " Reason: " + host.getRejectionReason() : ""));
+            return "women-events/host-login";
+        }
+
+        // Generate JWT token
         try {
             String token = jwtUtil.generateToken(host.getEmail(), "HOST");
             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
             cookie.setPath("/");
             cookie.setHttpOnly(true);
-            cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+            cookie.setMaxAge(365 * 24 * 60 * 60);
             response.addCookie(cookie);
         } catch (Exception ex) {
-            // jwtUtil exception fallback
+            // token generation fallback
         }
 
-        return "redirect:/women-events/organizer/dashboard";
+        return redirectAfterHostLogin(host);
     }
 
     @GetMapping("/host/logout")
@@ -483,41 +506,61 @@ public class WomenEventController {
      * Organizer dashboard.
      */
     @GetMapping("/organizer/dashboard")
+    @Transactional(readOnly = true)
     public String organizerDashboard(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) {
             return "redirect:/women-events/host/login";
         }
+        if (hostNeedsProfileCompletion(host)) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        populateOrganizerDashboardModel(host, session, model, "dashboard");
+        return "women-events/organizer-dashboard";
+    }
+
+    /** Organizer My Events list page */
+    @GetMapping("/organizer/my-events")
+    @Transactional(readOnly = true)
+    public String myEvents(HttpSession session, Model model) {
+        EventHost host = checkAndGetHost(session);
+        if (host == null) return "redirect:/women-events/host/login";
+        if (hostNeedsProfileCompletion(host)) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        populateOrganizerDashboardModel(host, session, model, "events");
+        return "women-events/organizer-dashboard";
+    }
+
+    private void populateOrganizerDashboardModel(EventHost host, HttpSession session, Model model, String navActive) {
+        host = eventHostRepository.findById(host.getId()).orElse(host);
+        host = eventHostProfileService.refreshCompletion(host);
+        session.setAttribute("loggedHost", host);
+
+        model.addAttribute("hostApproved", EventHostProfileService.isApproved(host));
+        model.addAttribute("nextStepGuidance", eventHostProfileService.profilePayload(host).get("nextStepGuidance"));
+        model.addAttribute("organizerNavActive", navActive);
 
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
         long totalRegistrations = myEvents.stream()
                 .mapToLong(e -> womenEventRegistrationRepository.countByEvent(e)).sum();
         long approvedCount = myEvents.stream().filter(e -> "APPROVED".equals(e.getStatus())).count();
-        long pendingCount  = myEvents.stream().filter(e -> "PENDING".equals(e.getStatus())).count();
+        long pendingCount = myEvents.stream().filter(e -> "PENDING".equals(e.getStatus())).count();
 
-        // Recent registrations (newest 5 across all organiser events)
-        List<WomenEventRegistration> recentRegistrations = myEvents.stream()
-                .flatMap(e -> womenEventRegistrationRepository.findByEvent(e).stream())
-                .sorted((a, b) -> {
-                    if (a.getRegisteredAt() == null || b.getRegisteredAt() == null) return 0;
-                    return b.getRegisteredAt().compareTo(a.getRegisteredAt());
-                })
-                .limit(5)
-                .collect(Collectors.toList());
-
-        // All registrations for "Registrations" page
-        List<WomenEventRegistration> allRegistrations = myEvents.stream()
-                .flatMap(e -> womenEventRegistrationRepository.findByEvent(e).stream())
+        List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
+                ? List.of()
+                : womenEventRegistrationRepository.findByEventsWithUserAndEvent(myEvents).stream()
                 .sorted((a, b) -> {
                     if (a.getRegisteredAt() == null || b.getRegisteredAt() == null) return 0;
                     return b.getRegisteredAt().compareTo(a.getRegisteredAt());
                 })
                 .collect(Collectors.toList());
 
-        // Notification count = pending registrations in last 7 days
-        long newNotifCount = recentRegistrations.stream()
-                .filter(r -> r.getRegisteredAt() != null &&
-                        r.getRegisteredAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
+        List<WomenEventRegistration> recentRegistrations = allRegistrations.stream().limit(5).collect(Collectors.toList());
+
+        long newNotifCount = allRegistrations.stream()
+                .filter(r -> r.getRegisteredAt() != null
+                        && r.getRegisteredAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
                 .count();
 
         double commissionsDue = myEvents.stream()
@@ -536,67 +579,87 @@ public class WomenEventController {
         model.addAttribute("newNotifCount", newNotifCount);
         model.addAttribute("loggedUser", host);
         model.addAttribute("user", host);
-        return "women-events/organizer-dashboard";
-    }
-
-    /** Organizer My Events list page */
-    @GetMapping("/organizer/my-events")
-    public String myEvents(HttpSession session, Model model) {
-        EventHost host = checkAndGetHost(session);
-        if (host == null) return "redirect:/women-events/host/login";
-        List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
-        model.addAttribute("host", host);
-        model.addAttribute("myEvents", myEvents);
-        model.addAttribute("loggedUser", host);
-        return "women-events/organizer-dashboard"; // reuse dashboard, filtered via anchor
     }
 
     /** Organizer Registrations page */
     @GetMapping("/organizer/registrations")
+    @Transactional(readOnly = true)
     public String organizerRegistrations(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
-        List<WomenEventRegistration> allRegistrations = myEvents.stream()
-                .flatMap(e -> womenEventRegistrationRepository.findByEvent(e).stream())
+        List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
+                ? List.of()
+                : womenEventRegistrationRepository.findByEventsWithUserAndEvent(myEvents).stream()
                 .sorted((a, b) -> {
                     if (a.getRegisteredAt() == null || b.getRegisteredAt() == null) return 0;
                     return b.getRegisteredAt().compareTo(a.getRegisteredAt());
                 })
                 .collect(Collectors.toList());
+        long newNotifCount = allRegistrations.stream()
+                .filter(r -> r.getRegisteredAt() != null
+                        && r.getRegisteredAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
+                .count();
         model.addAttribute("host", host);
         model.addAttribute("allRegistrations", allRegistrations);
         model.addAttribute("loggedUser", host);
+        model.addAttribute("user", host);
+        model.addAttribute("organizerNavActive", "registrations");
+        model.addAttribute("newNotifCount", newNotifCount);
         return "women-events/organizer-registrations";
     }
 
     /** Organizer Notifications page – shows recent registrations */
     @GetMapping("/organizer/notifications")
+    @Transactional(readOnly = true)
     public String organizerNotifications(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
-        List<WomenEventRegistration> notifications = myEvents.stream()
-                .flatMap(e -> womenEventRegistrationRepository.findByEvent(e).stream())
+        List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
+                ? List.of()
+                : womenEventRegistrationRepository.findByEventsWithUserAndEvent(myEvents);
+        List<WomenEventRegistration> notifications = allRegistrations.stream()
                 .sorted((a, b) -> {
                     if (a.getRegisteredAt() == null || b.getRegisteredAt() == null) return 0;
                     return b.getRegisteredAt().compareTo(a.getRegisteredAt());
                 })
                 .limit(20)
                 .collect(Collectors.toList());
+        long newNotifCount = allRegistrations.stream()
+                .filter(r -> r.getRegisteredAt() != null
+                        && r.getRegisteredAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
+                .count();
         model.addAttribute("host", host);
         model.addAttribute("notifications", notifications);
         model.addAttribute("loggedUser", host);
+        model.addAttribute("user", host);
+        model.addAttribute("organizerNavActive", "notifications");
+        model.addAttribute("newNotifCount", newNotifCount);
         return "women-events/organizer-notifications";
     }
 
-    /** Edit Profile – GET */
-    @GetMapping("/organizer/edit-profile")
-    public String editProfileForm(HttpSession session, Model model) {
+    /** Host Profile Completion / Edit Profile – GET */
+    @GetMapping({"/organizer/profile-completion", "/organizer/edit-profile"})
+    public String editProfileForm(@RequestParam(value = "submitted", required = false) Boolean submitted,
+                                  HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        host = eventHostRepository.findById(host.getId()).orElse(host);
+        host = eventHostProfileService.refreshCompletion(host);
+        session.setAttribute("loggedHost", host);
+        Map<String, Object> profilePayload = eventHostProfileService.profilePayload(host);
         model.addAttribute("host", host);
         model.addAttribute("loggedUser", host);
+        model.addAttribute("profilePayload", profilePayload);
+        model.addAttribute("missingItems", profilePayload.get("missingItems"));
+        model.addAttribute("nextStepGuidance", profilePayload.get("nextStepGuidance"));
+        model.addAttribute("canSubmitForVerification", profilePayload.get("canSubmitForVerification"));
+        model.addAttribute("organizerNavActive", "profile");
+        model.addAttribute("newNotifCount", 0L);
+        if (Boolean.TRUE.equals(submitted)) {
+            model.addAttribute("success", "Profile submitted for admin verification. You can keep updating details while we review.");
+        }
         return "women-events/organizer-edit-profile";
     }
 
@@ -635,11 +698,23 @@ public class WomenEventController {
 
     /** Settings – GET */
     @GetMapping("/organizer/settings")
+    @Transactional(readOnly = true)
     public String settingsForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
+        List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
+                ? List.of()
+                : womenEventRegistrationRepository.findByEventsWithUserAndEvent(myEvents);
+        long newNotifCount = allRegistrations.stream()
+                .filter(r -> r.getRegisteredAt() != null
+                        && r.getRegisteredAt().isAfter(java.time.LocalDateTime.now().minusDays(7)))
+                .count();
         model.addAttribute("host", host);
         model.addAttribute("loggedUser", host);
+        model.addAttribute("user", host);
+        model.addAttribute("organizerNavActive", "settings");
+        model.addAttribute("newNotifCount", newNotifCount);
         return "women-events/organizer-settings";
     }
 
@@ -674,9 +749,15 @@ public class WomenEventController {
     public String createEventForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
         model.addAttribute("categories", WomenEventCategory.values());
+        model.addAttribute("host", host);
         model.addAttribute("loggedUser", host);
         model.addAttribute("user", host);
+        model.addAttribute("organizerNavActive", "create");
+        model.addAttribute("newNotifCount", 0L);
         return "women-events/create-event";
     }
 
@@ -704,6 +785,10 @@ public class WomenEventController {
                                HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            ra.addFlashAttribute("error", "Event creation is locked until Admin profile approval.");
+            return "redirect:/women-events/organizer/profile-completion";
+        }
 
         WomenEvent event = new WomenEvent();
         event.setName(name);

@@ -3,206 +3,403 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Event Host Login | Fight D Fear</title>
-    
-    <link href="${pageContext.request.contextPath}/assets/img/favicon.png" rel="icon">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Host Sign In — Fight D Fear</title>
+    <!-- Google Fonts & Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --primary: #1e1b4b;
-            --primary-accent: #f43f5e;
-            --primary-light: #f8fafc;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border-clr: #e2e8f0;
-            --gradient-main: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%);
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #0F172A;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif; min-height: 100vh; display: block; color: var(--text-dark); background: white; }
-        
-        .split-layout { display: flex; width: 100%; min-height: 100vh; }
-        
-        /* Left Panel */
-        .left-panel {
-            flex: 0.8;
-            background: linear-gradient(135deg, #1e1b4b 0%, #1e1b4b 40%, #f43f5e 100%);
-            padding: 60px 80px;
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid var(--border-clr);
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .header-brand i {
+            color: var(--primary);
+            font-size: 1.3rem;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 440px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .card-header p {
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
             position: relative;
         }
-        .icon-circle {
-            width: 70px; height: 70px; background: rgba(255,255,255,0.15); color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 1.8rem; margin-bottom: 40px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
+            transition: all 0.2s ease;
         }
-        .welcome-title { font-size: 2.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 20px; color: white; }
-        .welcome-title span { color: var(--primary-accent); }
-        .welcome-desc { color: rgba(255,255,255,0.9); font-size: 1.1rem; line-height: 1.6; margin-bottom: 50px; max-width: 90%; font-weight: 300; }
-        
-        .feature-item { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 30px; }
-        .feature-icon { 
-            width: 50px; height: 50px; min-width: 50px; background: rgba(255,255,255,0.15); color: white;
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
-        .feature-text h5 { font-size: 1.05rem; font-weight: 700; margin-bottom: 5px; color: white; }
-        .feature-text p { font-size: 0.95rem; color: rgba(255,255,255,0.8); margin: 0; line-height: 1.5; }
-        
-        /* Right Panel */
-        .right-panel {
-            flex: 1.2;
-            padding: 60px 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: white;
-            overflow-y: auto;
+
+        .password-field .form-input {
+            padding-right: 42px;
         }
-        
-        .form-container { width: 100%; max-width: 480px; }
-        
-        .form-header { display: flex; align-items: center; gap: 15px; margin-bottom: 40px; }
-        .form-header .icon {
-            width: 45px; height: 45px; border-radius: 12px; border: 1.5px solid var(--border-clr); background: var(--primary-light);
-            color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
         }
-        .form-header h2 { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin: 0; font-family: 'Montserrat', sans-serif; border-left: 5px solid var(--primary-accent); padding-left: 15px; }
-        
-        .input-group-custom { margin-bottom: 25px; position: relative; }
-        .input-group-custom label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 10px; color: var(--text-dark); }
-        .input-wrap { position: relative; }
-        .input-wrap i.prefix { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a1a1aa; font-size: 1.2rem; }
-        .input-wrap i.suffix { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #a1a1aa; font-size: 1.2rem; cursor: pointer; }
-        
-        .input-wrap input {
-            width: 100%; padding: 14px 15px 14px 45px; border: 1.5px solid var(--border-clr);
-            border-radius: 8px; font-family: inherit; font-size: 0.95rem; color: var(--text-dark); outline: none; transition: 0.2s;
-        }
-        .input-wrap input::placeholder { color: #a1a1aa; font-weight: 400; }
-        .input-wrap input:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 4px rgba(219,39,119,0.05); background: white; }
-        
+
         .btn-submit {
-            width: 100%; padding: 18px; background: var(--gradient-main); color: white;
-            border: none; border-radius: 12px; font-family: inherit; font-size: 1.05rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
-            transition: 0.3s; margin-top: 10px; box-shadow: 0 8px 20px rgba(124, 45, 94, 0.2);
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
         }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(124, 45, 94, 0.3); }
-        
-        .signin-link { text-align: center; margin-top: 25px; font-size: 0.95rem; color: var(--text-muted); }
-        .signin-link a { color: var(--primary-accent); font-weight: 700; text-decoration: none; }
-        .signin-link a:hover { text-decoration: underline; }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .alert-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
         .alert-error {
-            background: #FEE2E2; color: #B91C1C; padding: 15px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            color: var(--error);
         }
+
         .alert-success {
-            background: #ecfdf5; color: #047857; padding: 15px; border-radius: 8px; font-size: 0.9rem; font-weight: 500; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; border: 1px solid #d1fae5;
+            background: var(--success-bg);
+            border: 1px solid #BBF7D0;
+            color: var(--success);
         }
-        
-        @media (max-width: 992px) {
-            .split-layout { flex-direction: column; display: block; }
-            .left-panel { padding: 40px 20px; min-height: auto; text-align: center; align-items: center; }
-            .welcome-desc { text-align: center; margin: 0 auto 30px; }
-            .feature-item { display: none; }
-            .right-panel { padding: 40px 20px; display: block; height: auto; border-top: 1px solid var(--border-clr); }
+
+        .form-input.is-invalid {
+            border-color: var(--error) !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
         }
+
+        .form-input.is-valid {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12) !important;
+        }
+
+        .error-feedback {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .next-steps-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .next-steps-card h3 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
+        .next-steps-card ol {
+            margin: 0 0 0 18px;
+            padding: 0;
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .next-steps-card ol strong { color: var(--navy); }
     </style>
 </head>
 <body>
 
-<div class="split-layout">
-    <!-- Left Visual Panel -->
-    <div class="left-panel">
-        <div class="icon-circle">
-            <i class="bi bi-box-arrow-in-right"></i>
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/women-events" class="header-brand">
+            <i class="bi bi-shield-heart-fill"></i> Fight D Fear Event Studio
+        </a>
+        <div style="font-size: 0.88rem;">
+            New Host? <a href="${pageContext.request.contextPath}/women-events/host/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register here</a>
         </div>
-        <h2 class="welcome-title">Welcome Back,<br><span>Event Organizer!</span></h2>
-        <p class="welcome-desc">Log in to your organizer account and start managing your safety events.</p>
-        
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-calendar2-check"></i></div>
-            <div class="feature-text">
-                <h5>Create Events</h5>
-                <p>Organize and manage events seamlessly.</p>
-            </div>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-people"></i></div>
-            <div class="feature-text">
-                <h5>Reach More People</h5>
-                <p>Connect with participants and grow your community.</p>
-            </div>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
-            <div class="feature-text">
-                <h5>Track & Manage</h5>
-                <p>Track registrations and manage everything in one place.</p>
-            </div>
-        </div>
-    </div>
+    </header>
 
-    <!-- Right Form Panel -->
-    <div class="right-panel">
-        <div class="form-container">
-            <div class="form-header">
-                <div class="icon"><i class="bi bi-person-circle"></i></div>
-                <h2>Host Portal Login</h2>
+    <main class="main-container">
+        <div class="form-card">
+            <div class="card-header">
+                <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--rose-soft); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 12px;">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <h2>Host Sign In</h2>
+                <p>Sign in to manage women safety events, attendees & profile</p>
             </div>
-            
+
             <c:if test="${not empty error}">
-                <div class="alert-error">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${error}
+                <div class="alert-box alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
                 </div>
             </c:if>
-
             <c:if test="${param.registered}">
-                <div class="alert-success">
-                    <i class="bi bi-check-circle-fill"></i> Registration successful! Pending Admin approval.
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Account created. Sign in with the email you just registered.
+                </div>
+                <div class="next-steps-card">
+                    <h3>What happens next</h3>
+                    <ol>
+                        <li><strong>Sign in</strong> with this email and password.</li>
+                        <li><strong>Complete your organizer profile</strong> — organization, location, categories, bio, and documents.</li>
+                        <li><strong>Review the preview card</strong> on the profile page, then submit for admin verification.</li>
+                        <li>You can create events only after an admin <strong>approves</strong> your profile.</li>
+                    </ol>
+                </div>
+            </c:if>
+            <c:if test="${not empty success}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ${success}
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/women-events/host/login" method="post">
-                
-                <div class="input-group-custom">
-                    <label>Email Address</label>
-                    <div class="input-wrap">
-                        <i class="bi bi-envelope prefix"></i>
-                        <input type="email" name="email" placeholder="organizer@example.com" required/>
-                    </div>
+            <form id="loginForm" action="${pageContext.request.contextPath}/women-events/host/login" method="post" onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus oninput="validateEmail()" onblur="validateEmail()">
+                    <div class="error-feedback" id="error-email"></div>
                 </div>
 
-                <div class="input-group-custom">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label style="margin-bottom: 0;">Password</label>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper password-field">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required oninput="validatePassword()" onblur="validatePassword()">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
-                    <div class="input-wrap">
-                        <i class="bi bi-lock prefix"></i>
-                        <input type="password" id="evPassword" name="password" placeholder="•••••••••" required/>
-                        <i class="bi bi-eye suffix" onclick="const p=document.getElementById('evPassword'); p.type=p.type==='password'?'text':'password';"></i>
-                    </div>
+                    <div class="error-feedback" id="error-password"></div>
+                </div>
+
+                <div class="form-group" style="text-align: right; margin-top: -8px; margin-bottom: 14px;">
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password" style="color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn-submit">
-                    Sign In as Host <i class="bi bi-arrow-right ms-2"></i>
+                    Sign In <i class="bi bi-arrow-right"></i>
                 </button>
-
-                <p class="signin-link">
-                    Want to host events? <a href="${pageContext.request.contextPath}/women-events/host/register">Register Now</a>
-                </p>
             </form>
-        </div>
-    </div>
-</div>
 
+            <div class="login-footer">
+                New Host? <a href="${pageContext.request.contextPath}/women-events/host/register">Register here</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        function validateEmail() {
+            const el = document.getElementById('email');
+            const err = document.getElementById('error-email');
+            const val = el.value.trim();
+            if (!val) {
+                showFieldInvalid(el, err, 'Email Address is required.');
+                return false;
+            }
+            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!regex.test(val)) {
+                showFieldInvalid(el, err, 'Please enter a valid email address.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function validatePassword() {
+            const el = document.getElementById('password');
+            const err = document.getElementById('error-password');
+            const val = el.value;
+            if (!val) {
+                showFieldInvalid(el, err, 'Password is required.');
+                return false;
+            }
+            if (val.length < 6) {
+                showFieldInvalid(el, err, 'Password must be at least 6 characters.');
+                return false;
+            }
+            showFieldValid(el, err);
+            return true;
+        }
+
+        function showFieldInvalid(el, err, msg) {
+            el.classList.add('is-invalid');
+            el.classList.remove('is-valid');
+            err.innerText = msg;
+            err.style.display = 'block';
+        }
+
+        function showFieldValid(el, err) {
+            el.classList.remove('is-invalid');
+            el.classList.add('is-valid');
+            err.innerText = '';
+            err.style.display = 'none';
+        }
+
+        function handleLogin(e) {
+            const isEmailValid = validateEmail();
+            const isPasswordValid = validatePassword();
+
+            if (!isEmailValid || !isPasswordValid) {
+                e.preventDefault();
+                const firstInvalid = document.querySelector('.form-input.is-invalid');
+                if (firstInvalid) firstInvalid.focus();
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>

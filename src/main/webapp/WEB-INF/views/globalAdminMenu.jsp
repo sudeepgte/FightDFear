@@ -9,7 +9,8 @@
     <div class="d-flex justify-content-between align-items-center mb-3 d-lg-none">
 
         <div class="brand mb-0">
-            Admin Menu
+            <div class="brand-title">Fight D Fear Admin</div>
+            <div class="brand-sub">Admin Portal</div>
         </div>
 
         <button type="button"
@@ -22,7 +23,8 @@
 
     <!-- DESKTOP HEADER -->
     <div class="brand d-none d-lg-block">
-        Admin Menu
+        <div class="brand-title">Fight D Fear Admin</div>
+        <div class="brand-sub">Admin Portal</div>
     </div>
 
     <!-- DASHBOARD -->
@@ -33,8 +35,8 @@
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'adminDashboard') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/admin/adminDashboard">
 
-        <i class="fas fa-home"></i>
-        Home
+        <i class="fas fa-th-large"></i>
+        Dashboard
 
     </a>
 
@@ -461,192 +463,184 @@
 
 <style>
     /* ========================================================
-       PREMIUM ROSE-NAVY SIDEBAR & LAYOUT THEMING
+       LIGHT ADMIN SIDEBAR — reference portal style
        ======================================================== */
     :root {
-        --admin-navy: #1e1b4b;
-        --admin-navy-light: #312e81;
-        --admin-rose: #f43f5e;
-        --admin-rose-hover: #e11d48;
-        --admin-bg: #f8fafc;
-        --admin-border: rgba(255, 255, 255, 0.08);
+        --admin-accent: #F43F5E;
+        --admin-accent-soft: #FFF1F2;
+        --admin-text: #0F172A;
+        --admin-muted: #64748B;
+        --admin-bg: #F8FAFC;
+        --admin-card: #FFFFFF;
+        --admin-border: #E2E8F0;
+        --sidebar-w: 272px;
     }
-    
+
     body {
         background: var(--admin-bg) !important;
-        color: #0f172a !important;
+        color: var(--admin-text) !important;
     }
-    
+
     .topbar {
-        background: var(--admin-navy) !important;
+        background: var(--admin-card) !important;
         border-bottom: 1px solid var(--admin-border) !important;
-        height: 58px !important;
+        height: 64px !important;
         display: flex !important;
         align-items: center !important;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        box-shadow: none !important;
+        color: var(--admin-text) !important;
     }
-    
-    .topbar .title {
-        color: #fff !important;
-        font-weight: 700 !important;
-    }
-    
+
+    .topbar .title { color: var(--admin-text) !important; font-weight: 700 !important; }
     .topbar .btn-logout, .topbar .btn-light {
-        border-radius: 20px !important;
-        background: rgba(255,255,255,0.1) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        color: #fff !important;
+        border-radius: 10px !important;
+        background: var(--admin-accent-soft) !important;
+        border: 1px solid #FECDD3 !important;
+        color: var(--admin-accent) !important;
         font-weight: 600 !important;
-        padding: 5px 15px !important;
-        transition: all 0.3s !important;
-    }
-    
-    .topbar .btn-logout:hover, .topbar .btn-light:hover {
-        background: var(--admin-rose) !important;
-        border-color: var(--admin-rose) !important;
+        padding: 6px 14px !important;
     }
 
     .layout {
         display: flex !important;
-        min-height: calc(100vh - 58px) !important;
+        min-height: calc(100vh - 64px) !important;
     }
 
     .sidebar {
-        width: 272px !important;
-        background: var(--admin-navy) !important;
+        width: var(--sidebar-w) !important;
+        background: #FFFFFF !important;
         border-right: 1px solid var(--admin-border) !important;
         position: sticky !important;
-        top: 58px !important;
-        height: calc(100vh - 58px) !important;
-        padding: 20px 14px !important;
+        top: 0 !important;
+        height: 100vh !important;
+        padding: 18px 12px 24px !important;
         overflow-y: auto !important;
         flex-shrink: 0 !important;
         z-index: 1000 !important;
         transition: all 0.3s ease !important;
         display: flex !important;
         flex-direction: column !important;
-        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: none !important;
     }
-    
+
     .sidebar .brand {
-        font-size: 1.1rem !important;
-        font-weight: 800 !important;
-        color: #fff !important;
-        background: linear-gradient(135deg, #fb7185, var(--admin-rose)) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
-        background-clip: text !important;
-        padding: 10px 15px !important;
+        padding: 8px 12px 16px !important;
         border-bottom: 1px solid var(--admin-border) !important;
-        margin-bottom: 15px !important;
+        margin-bottom: 10px !important;
+        text-transform: none !important;
+        letter-spacing: 0 !important;
+        background: none !important;
+        -webkit-text-fill-color: unset !important;
     }
-    
+    .sidebar .brand-title {
+        font-size: 1rem !important;
+        font-weight: 800 !important;
+        color: var(--admin-text) !important;
+        line-height: 1.25 !important;
+    }
+    .sidebar .brand-sub {
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
+        color: var(--admin-muted) !important;
+        margin-top: 2px !important;
+    }
+
     .sidebar .sectionTitle {
-        font-size: 0.72rem !important;
+        font-size: 0.68rem !important;
         font-weight: 700 !important;
-        color: #94a3b8 !important;
+        color: #94A3B8 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.06em !important;
-        margin: 18px 15px 8px !important;
+        margin: 16px 12px 6px !important;
     }
-    
+
     .sidebar a.navlink {
         display: flex !important;
         align-items: center !important;
-        gap: 12px !important;
-        padding: 10px 15px !important;
+        gap: 10px !important;
+        padding: 9px 12px !important;
         border-radius: 10px !important;
-        color: #cbd5e1 !important;
+        color: #334155 !important;
         text-decoration: none !important;
         font-weight: 500 !important;
-        font-size: 0.9rem !important;
-        transition: all 0.25s !important;
+        font-size: 0.875rem !important;
+        transition: all 0.2s !important;
         margin-bottom: 2px !important;
     }
-    
+
     .sidebar a.navlink i {
-        width: 20px !important;
+        width: 18px !important;
         text-align: center !important;
-        color: var(--admin-rose) !important;
-        font-size: 1rem !important;
-        transition: transform 0.25s !important;
+        color: #64748B !important;
+        font-size: 0.92rem !important;
+        transition: none !important;
+        transform: none !important;
     }
-    
+
     .sidebar a.navlink:hover {
-        background: rgba(244, 63, 94, 0.08) !important;
-        color: #fff !important;
-        padding-left: 20px !important;
+        background: #F8FAFC !important;
+        color: var(--admin-text) !important;
+        padding-left: 12px !important;
     }
-    
-    .sidebar a.navlink:hover i {
-        transform: scale(1.1) !important;
-    }
-    
+    .sidebar a.navlink:hover i { color: var(--admin-accent) !important; transform: none !important; }
+
     .sidebar a.navlink.active {
-        background: var(--admin-rose) !important;
-        color: #fff !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3) !important;
+        background: var(--admin-accent-soft) !important;
+        color: var(--admin-accent) !important;
+        font-weight: 700 !important;
+        box-shadow: none !important;
     }
-    
-    .sidebar a.navlink.active i {
-        color: #fff !important;
+    .sidebar a.navlink.active i { color: var(--admin-accent) !important; }
+
+    .sidebar .badge {
+        font-size: 0.68rem !important;
+        font-weight: 700 !important;
+        padding: 3px 7px !important;
     }
-    
+
     .main {
-        padding: 24px 20px 40px !important;
+        padding: 0 !important;
         background: var(--admin-bg) !important;
+        min-width: 0 !important;
+        flex: 1 !important;
     }
-    
+
     .sidebar-overlay {
         display: none;
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(4px);
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
         z-index: 1500;
-        transition: all 0.3s ease;
     }
-    
-    .sidebar-overlay.active {
-        display: block !important;
-    }
-    
+    .sidebar-overlay.active { display: block !important; }
+
     .mobile-toggle {
         background: none !important;
         border: none !important;
-        color: #fff !important;
-        font-size: 1.3rem !important;
+        color: var(--admin-text) !important;
+        font-size: 1.25rem !important;
         cursor: pointer !important;
-        padding: 6px 12px !important;
-        margin-right: 10px !important;
+        padding: 6px 10px !important;
+        margin-right: 8px !important;
         display: none !important;
-        transition: transform 0.2s !important;
-    }
-    .mobile-toggle:hover {
-        transform: scale(1.1) !important;
     }
 
-    /* Responsive Queries */
     @media (max-width: 992px) {
-        .mobile-toggle {
-            display: block !important;
-        }
+        .mobile-toggle { display: block !important; }
         .sidebar {
             position: fixed !important;
-            left: -280px !important;
+            left: -290px !important;
             top: 0 !important;
             bottom: 0 !important;
             height: 100vh !important;
             width: 280px !important;
             z-index: 2000 !important;
-            background: var(--admin-navy) !important;
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25) !important;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            background: #fff !important;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.12) !important;
+            transition: left 0.3s ease !important;
         }
-        .sidebar.active {
-            left: 0 !important;
-        }
+        .sidebar.active { left: 0 !important; }
     }
 </style>
 

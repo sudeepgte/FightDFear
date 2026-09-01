@@ -164,7 +164,29 @@
         .alert-error { background: var(--error-bg); border: 1px solid #FECACA; color: var(--error); }
         .alert-success { background: var(--success-bg); border: 1px solid #BBF7D0; color: var(--success); }
         .hint { font-size: 0.75rem; color: var(--text-gray); margin-top: 4px; }
-        .file-input { padding: 10px; }
+        .otp-box { background:#F8FAFC; border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:18px; }
+        .otp-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+        .otp-row input { flex:1; min-width:120px; }
+        .btn-otp { padding:10px 14px; border:none; border-radius:10px; background:var(--navy); color:#fff; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-otp:disabled { opacity:0.5; cursor:not-allowed; }
+        .otp-msg { font-size:0.82rem; margin-top:8px; font-weight:600; }
+        .otp-msg.ok { color:var(--success); }
+        .otp-msg.err { color:var(--error); }
+        .confirm-card {
+            background: var(--card-bg);
+            border: 1px solid #BBF7D0;
+            border-radius: 16px;
+            padding: 28px 24px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        .confirm-icon { width:64px;height:64px;border-radius:50%;background:var(--success-bg);color:var(--success);display:inline-flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:12px; }
+        .confirm-card h2 { font-size:1.3rem; font-weight:800; margin-bottom:10px; }
+        .confirm-list { list-style:none; text-align:left; margin:16px 0; }
+        .confirm-list li { display:flex; gap:8px; margin-bottom:8px; font-weight:600; }
+        .confirm-list i { color:var(--success); }
+        .confirm-next { background:var(--rose-soft); border-radius:12px; padding:12px; font-size:0.88rem; font-weight:600; margin:16px 0; }
+        .btn-confirm { display:inline-flex; align-items:center; gap:8px; padding:12px 22px; background:var(--primary); color:#fff; border-radius:12px; text-decoration:none; font-weight:700; }
         @media (max-width: 640px) {
             .row-2 { grid-template-columns: 1fr; }
             .app-header { padding: 12px 16px; }
@@ -172,7 +194,7 @@
         }
     </style>
 </head>
-<body>
+<body class="wp-auth">
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/women-products">
             <i class="bi bi-bag-heart-fill"></i> Women Products
@@ -188,16 +210,20 @@
             <p>Create your shop account. An admin will verify your details before you can manage products and orders.</p>
         </div>
 
-        <div class="form-card">
-            <c:if test="${not empty success}">
-                <div class="alert-box alert-success">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <div>
-                        ${success}
-                        <div style="margin-top:8px;"><a href="${pageContext.request.contextPath}/women-products/seller/login" style="color:#16A34A; font-weight:800;">Go to Seller Login</a></div>
-                    </div>
-                </div>
-            </c:if>
+        <c:if test="${not empty success}">
+            <div class="confirm-card" id="sellerRegConfirm">
+                <div class="confirm-icon"><i class="bi bi-check-lg"></i></div>
+                <h2>Registration successful</h2>
+                <ul class="confirm-list">
+                    <li><i class="bi bi-check-circle-fill"></i> Seller account / application created</li>
+                    <li><i class="bi bi-check-circle-fill"></i> ${success}</li>
+                </ul>
+                <div class="confirm-next">Next step: sign in after admin verification, then complete your shop profile.</div>
+                <a class="btn-confirm" href="${pageContext.request.contextPath}/women-products/seller/login">Continue to Seller Login <i class="bi bi-arrow-right"></i></a>
+            </div>
+        </c:if>
+
+        <div class="form-card"<c:if test="${not empty success}"> style="display:none;"</c:if>>
             <c:if test="${not empty error}">
                 <div class="alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
             </c:if>
@@ -211,7 +237,8 @@
                     </div>
                     <div class="form-group">
                         <label for="businessName">Shop / business name *</label>
-                        <input class="form-input" type="text" name="businessName" id="businessName" maxlength="100" required placeholder="Shop name">
+                        <input class="form-input" type="text" name="businessName" id="businessName" maxlength="100" required
+                               pattern="[A-Za-z0-9][A-Za-z0-9 &amp;.,'()\-]{1,99}" placeholder="Shop name">
                     </div>
                 </div>
                 <div class="row-2">
@@ -224,6 +251,15 @@
                         <input class="form-input" type="tel" name="phone" id="phone" required maxlength="10" inputmode="numeric"
                                placeholder="10-digit mobile" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                     </div>
+                </div>
+                <div class="otp-box">
+                    <label>Email OTP *</label>
+                    <div class="otp-row" style="margin-top:8px;">
+                        <button type="button" class="btn-otp" id="btnSendOtp">Send OTP</button>
+                        <input class="form-input" type="text" id="sellerOtp" maxlength="6" inputmode="numeric" placeholder="6-digit OTP" autocomplete="one-time-code">
+                        <button type="button" class="btn-otp" id="btnVerifyOtp">Verify OTP</button>
+                    </div>
+                    <div class="otp-msg" id="otpMsg"></div>
                 </div>
                 <div class="row-2">
                     <div class="form-group">
@@ -280,19 +316,119 @@
                 icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
             });
         });
+        var otpVerified = false;
+        var ctx = '${pageContext.request.contextPath}';
+        function setOtpMsg(text, ok) {
+            var el = document.getElementById('otpMsg');
+            el.textContent = text;
+            el.className = 'otp-msg ' + (ok ? 'ok' : 'err');
+        }
+        document.getElementById('btnSendOtp').addEventListener('click', function () {
+            var email = document.getElementById('email').value.trim();
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                setOtpMsg('Enter a valid email first.', false);
+                return;
+            }
+            otpVerified = false;
+            fetch(ctx + '/api/women-products/seller/otp/send-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+              .then(function (x) {
+                  setOtpMsg(x.j.message || (x.ok ? 'OTP sent' : 'Could not send OTP'), x.ok && x.j.success !== false);
+              }).catch(function () { setOtpMsg('Could not send OTP.', false); });
+        });
+        document.getElementById('btnVerifyOtp').addEventListener('click', function () {
+            var email = document.getElementById('email').value.trim();
+            var otp = document.getElementById('sellerOtp').value.trim();
+            if (otp.length < 4) {
+                setOtpMsg('OTP is required.', false);
+                return;
+            }
+            fetch(ctx + '/api/women-products/seller/otp/verify-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, otp: otp })
+            }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+              .then(function (x) {
+                  otpVerified = !!(x.ok && x.j.success !== false);
+                  setOtpMsg(x.j.message || (otpVerified ? 'OTP verified' : 'Invalid OTP'), otpVerified);
+              }).catch(function () { otpVerified = false; setOtpMsg('Verification failed.', false); });
+        });
+        document.getElementById('email').addEventListener('change', function () { otpVerified = false; });
         document.getElementById('sellerForm').addEventListener('submit', function (e) {
+            var fullName = document.getElementById('fullName').value.trim();
+            var businessName = document.getElementById('businessName').value.trim();
+            var email = document.getElementById('email').value.trim();
             var phone = document.getElementById('phone').value.trim();
             var pass = document.getElementById('password').value;
             var confirm = document.getElementById('confirmPassword').value;
+            var address = document.getElementById('address').value.trim();
+            var photo = document.getElementById('profilePhoto');
+            var identity = document.getElementById('identityDoc');
+            var terms = this.querySelector('[name="acceptedTerms"]');
+
+            if (!otpVerified) {
+                e.preventDefault();
+                alert('Please verify the email OTP before creating the account.');
+                return;
+            }
+            if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(fullName)) {
+                e.preventDefault();
+                alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).');
+                return;
+            }
+            if (!/^[A-Za-z0-9][A-Za-z0-9 &.,'()\-]{1,99}$/.test(businessName) || businessName.length < 2) {
+                e.preventDefault();
+                alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
+                return;
+            }
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                e.preventDefault();
+                alert('Enter a valid email address.');
+                return;
+            }
             if (!/^[6-9]\d{9}$/.test(phone)) {
                 e.preventDefault();
                 alert('Enter a valid 10-digit Indian mobile number.');
                 return;
             }
+            if (!/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/.test(pass)) {
+                e.preventDefault();
+                alert('Password must be at least 6 characters and include a number and special character.');
+                return;
+            }
             if (pass !== confirm) {
                 e.preventDefault();
                 alert('Passwords do not match.');
+                return;
             }
+            if (address.length < 10 || address.length > 1000) {
+                e.preventDefault();
+                alert('Please enter a complete address (at least 10 characters).');
+                return;
+            }
+            if (!photo.files || !photo.files.length) {
+                e.preventDefault();
+                alert('Profile photo is required.');
+                return;
+            }
+            if (!identity.files || !identity.files.length) {
+                e.preventDefault();
+                alert('ID / document is required.');
+                return;
+            }
+            if (!terms || !terms.checked) {
+                e.preventDefault();
+                alert('Please accept the Terms and Privacy Policy.');
+                return;
+            }
+            document.getElementById('fullName').value = fullName;
+            document.getElementById('businessName').value = businessName;
+            document.getElementById('email').value = email;
+            document.getElementById('phone').value = phone;
+            document.getElementById('address').value = address;
         });
     </script>
 </body>

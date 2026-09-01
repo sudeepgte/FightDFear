@@ -100,7 +100,7 @@ public class CreatorHubController {
     }
 
     // MAIN FEED
-    @GetMapping
+    @GetMapping("/feed")
     public String showFeed(HttpSession session, Model model, 
                            @RequestParam(required = false) String search,
                            @RequestParam(required = false) String category) {
@@ -422,7 +422,254 @@ public class CreatorHubController {
         return "creatorProfile";
     }
 
+    // OWN PROFILE PAGE (Logged-in user)
+    @GetMapping({"", "/", "/profile"})
+    public String showMyProfile(HttpSession session, Model model) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "redirect:/login";
+
+        // Follow stats
+        int followersCount = userFollowRepository.findByFollowed(currentUser).size();
+        int followingCount = userFollowRepository.findByFollower(currentUser).size();
+
+        // Posts: all non-blocked, non-draft approved uploads by user
+        List<Videoupload> allUploads = videoUploadRepository.findByUser_Id(currentUser.getId()).stream()
+                .filter(v -> !v.isDraft() && !v.isBlocked())
+                .sorted((a, b) -> b.getUploadTime().compareTo(a.getUploadTime()))
+                .collect(Collectors.toList());
+
+        List<Videoupload> posts = allUploads.stream()
+                .filter(v -> !v.isReel() && "IMAGE".equalsIgnoreCase(v.getFileType()))
+                .collect(Collectors.toList());
+
+        List<Videoupload> reels = allUploads.stream()
+                .filter(Videoupload::isReel)
+                .collect(Collectors.toList());
+
+        // Saved/bookmarked posts
+        List<VideoBookmark> bookmarks = videoBookmarkRepository.findByUser_Id(currentUser.getId());
+        List<Videoupload> savedPosts = bookmarks.stream()
+                .map(VideoBookmark::getVideo)
+                .filter(v -> v != null && !v.isBlocked())
+                .collect(Collectors.toList());
+
+        int savedCount = savedPosts.size();
+
+        // Stories (last 24h)
+        LocalDateTime twentyFourHoursAgo = LocalDateTime.now().minusHours(24);
+        List<CreatorStory> myStories = creatorStoryRepository
+                .findByUser_IdAndIsDraftFalseAndUploadTimeAfter(currentUser.getId(), twentyFourHoursAgo);
+
+        // Notifications
+        int unreadNotifCount = creatorNotificationRepository.countByUser_IdAndIsReadFalse(currentUser.getId());
+
+        // Enrich posts with like state
+        for (Videoupload v : allUploads) {
+            v.setLikedByCurrentUser(videoLikeRepository.existsByVideoAndUser(v, currentUser));
+        }
+
+        model.addAttribute("currentUser", currentUser);
+        model.addAttribute("followersCount", followersCount);
+        model.addAttribute("followingCount", followingCount);
+        model.addAttribute("postsCount", posts.size());
+        model.addAttribute("reelsCount", reels.size());
+        model.addAttribute("savedCount", savedCount);
+        model.addAttribute("posts", posts);
+        model.addAttribute("reels", reels);
+        model.addAttribute("savedPosts", savedPosts);
+        model.addAttribute("myStories", myStories);
+        model.addAttribute("unreadNotifCount", unreadNotifCount);
+        model.addAttribute("followersList", userFollowRepository.findByFollowed(currentUser)
+                .stream().map(f -> f.getFollower()).collect(Collectors.toList()));
+        model.addAttribute("followingList", userFollowRepository.findByFollower(currentUser)
+                .stream().map(f -> f.getFollowed()).collect(Collectors.toList()));
+
+        // People to follow suggestions (all registered users except self, limit 8)
+        java.util.Set<Long> alreadyFollowingIds = userFollowRepository.findByFollower(currentUser)
+                .stream().map(f -> f.getFollowed().getId()).collect(java.util.stream.Collectors.toSet());
+        model.addAttribute("suggestedUsers", userRepository.findAll().stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()) && !alreadyFollowingIds.contains(u.getId()))
+                .limit(8)
+                .collect(Collectors.toList()));
+
+        // Recent notifications (last 10)
+        model.addAttribute("recentNotifications", creatorNotificationRepository
+                .findByUser_IdOrderByCreatedAtDesc(currentUser.getId()).stream()
+                .limit(10).collect(Collectors.toList()));
+
+        return "creatorMyProfile";
+    }
+
+    // ─── PROFILE PHOTO UPLOAD (AJAX) ───────────────────────────────────────────
+    @PostMapping("/profile/upload-photo")
+    @ResponseBody
+    public Map<String, Object> uploadProfilePhoto(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) { result.put("success", false); result.put("error", "Not logged in"); return result; }
+        try {
+            String url = fileUploadService.saveFile(file);
+            currentUser.setProfilePhoto(url);
+            userRepository.save(currentUser);
+            session.setAttribute("user", userRepository.findById(currentUser.getId()).orElse(currentUser));
+            result.put("success", true);
+            result.put("url", url);
+        } catch (IOException e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    // ─── STORY UPLOAD (AJAX multipart) ────────────────────────────────────────
+    @PostMapping("/story/upload")
+    @ResponseBody
+    public Map<String, Object> uploadStory(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "caption", required = false) String caption,
+            HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) { result.put("success", false); return result; }
+        try {
+            String mediaPath = fileUploadService.saveFile(file);
+            String fileType  = (file.getContentType() != null && file.getContentType().startsWith("video")) ? "VIDEO" : "IMAGE";
+            CreatorStory story = new CreatorStory();
+            story.setUser(currentUser);
+            story.setMediaPath(mediaPath);
+            story.setFileType(fileType);
+            story.setCaption(caption != null ? caption : "");
+            story.setDraft(false);
+            story.setPrivate(false);
+            creatorStoryRepository.save(story);
+            result.put("success", true);
+            result.put("id", story.getId());
+            result.put("mediaPath", mediaPath);
+            result.put("fileType", fileType);
+            result.put("caption", story.getCaption());
+            result.put("uploadTime", story.getUploadTime().toString());
+        } catch (IOException e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    // ─── STORY DATA API (returns full story list for logged-in user) ───────────
+    @GetMapping("/story/my")
+    @ResponseBody
+    public List<Map<String, Object>> getMyStories(HttpSession session) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return List.of();
+        LocalDateTime since = LocalDateTime.now().minusHours(24);
+        return creatorStoryRepository
+                .findByUser_IdAndIsDraftFalseAndUploadTimeAfter(currentUser.getId(), since)
+                .stream().map(s -> {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", s.getId());
+                    m.put("mediaPath", s.getMediaPath());
+                    m.put("fileType", s.getFileType());
+                    m.put("caption", s.getCaption());
+                    m.put("uploadTime", s.getUploadTime().toString());
+                    m.put("viewCount", s.getViewCount());
+                    return m;
+                }).collect(Collectors.toList());
+    }
+
+    // ─── STORY VIEW (increment view count & track viewer) ─────────────────────────────────────
+    @PostMapping("/story/{storyId}/view")
+    @ResponseBody
+    public Map<String, Object> viewStory(@PathVariable Long storyId, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        User currentUser = getSessionUser(session);
+        if(currentUser != null) {
+            creatorStoryRepository.findById(storyId).ifPresent(story -> {
+                if(!story.getUser().getId().equals(currentUser.getId())) {
+                    story.getViewers().add(currentUser);
+                    story.setViewCount(story.getViewers().size());
+                    creatorStoryRepository.save(story);
+                }
+            });
+        }
+        result.put("success", true);
+        return result;
+    }
+
+    // ─── STORY VIEWERS (Real Dynamic Data) ───
+    @GetMapping("/story/{storyId}/viewers")
+    @ResponseBody
+    public List<Map<String, Object>> getStoryViewers(@PathVariable Long storyId, HttpSession session) {
+        return creatorStoryRepository.findById(storyId).map(story -> 
+            story.getViewers().stream().map(v -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", v.getId());
+                m.put("name", v.getFullName());
+                m.put("avatar", v.getProfilePhoto());
+                return m;
+            }).collect(Collectors.toList())
+        ).orElse(List.of());
+    }
+
+    // ─── DELETE ENDPOINTS ───
+    @DeleteMapping("/story/{id}")
+    @ResponseBody
+    public Map<String, Object> deleteStory(@PathVariable Long id, HttpSession session) {
+        User currentUser = getSessionUser(session);
+        Map<String, Object> result = new HashMap<>();
+        if (currentUser != null) {
+            creatorStoryRepository.findById(id).ifPresent(story -> {
+                if (story.getUser().getId().equals(currentUser.getId())) {
+                    creatorStoryRepository.delete(story);
+                }
+            });
+            result.put("success", true);
+        }
+        return result;
+    }
+
+    @DeleteMapping("/post/{id}")
+    @ResponseBody
+    public Map<String, Object> deletePost(@PathVariable Long id, HttpSession session) {
+        User currentUser = getSessionUser(session);
+        Map<String, Object> result = new HashMap<>();
+        if (currentUser != null) {
+            videoUploadRepository.findById(id).ifPresent(post -> {
+                if (post.getUser().getId().equals(currentUser.getId())) {
+                    videoUploadRepository.delete(post);
+                }
+            });
+            result.put("success", true);
+        }
+        return result;
+    }
+
+    // ─── EDIT PROFILE (AJAX) ───
+    @PostMapping("/profile/edit")
+    @ResponseBody
+    public Map<String, Object> editProfile(
+            @RequestParam("fullName") String fullName,
+            @RequestParam("creatorHandle") String creatorHandle,
+            @RequestParam("creatorBio") String creatorBio,
+            @RequestParam("creatorCity") String creatorCity,
+            HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) { result.put("success", false); return result; }
+        
+        currentUser.setFullName(fullName);
+        currentUser.setCreatorHandle(creatorHandle);
+        currentUser.setCreatorBio(creatorBio);
+        currentUser.setCreatorCity(creatorCity);
+        userRepository.save(currentUser);
+        session.setAttribute("user", currentUser);
+        result.put("success", true);
+        return result;
+    }
+
     // SOCIAL INTERACTIONS & ENGAGEMENTS
+
     @PostMapping("/creator/follow/{id}")
     @ResponseBody
     @Transactional
@@ -1336,4 +1583,61 @@ public class CreatorHubController {
         redirectAttributes.addFlashAttribute("success", "Sponsorship campaign created successfully!");
         return "redirect:/admin/adminDashboard?hubTab=campaign#creatorHubTabs";
     }
+
+    @GetMapping("/chat")
+    public String showChat(HttpSession session, Model model) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "redirect:/login";
+        model.addAttribute("currentUser", currentUser);
+        
+        List<User> followingList = userFollowRepository.findByFollower(currentUser)
+                .stream().map(f -> f.getFollowed()).collect(java.util.stream.Collectors.toList());
+        List<User> followersList = userFollowRepository.findByFollowed(currentUser)
+                .stream().map(f -> f.getFollower()).collect(java.util.stream.Collectors.toList());
+                
+        // Combine them to get a unique list of friends to chat with
+        java.util.Set<User> chatUsersSet = new java.util.LinkedHashSet<>(followingList);
+        chatUsersSet.addAll(followersList);
+        model.addAttribute("chatUsers", new java.util.ArrayList<>(chatUsersSet));
+        
+        return "creatorHubChat";
+    }
+
+    @GetMapping("/coins")
+    public String showCoins(HttpSession session, Model model) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "redirect:/login";
+        model.addAttribute("currentUser", currentUser);
+        
+        // Calculate likes and views
+        List<in.sp.main.Entities.Videoupload> userVideos = videoUploadRepository.findByUser_Id(currentUser.getId());
+        int totalLikes = 0;
+        int totalViews = 0;
+        if (userVideos != null) {
+            for (in.sp.main.Entities.Videoupload v : userVideos) {
+                totalLikes += v.getLikeCount();
+                totalViews += v.getViewCount();
+            }
+        }
+        
+        int totalFollowers = userFollowRepository.findByFollowed(currentUser).size();
+        
+        // Coin formulas
+        int likesCoins = totalLikes; // 1 coin per like
+        int viewsCoins = totalViews / 10; // 1 coin per 10 views
+        int followersCoins = totalFollowers * 5; // 5 coins per follower
+        int totalCoins = likesCoins + viewsCoins + followersCoins;
+        
+        model.addAttribute("totalLikes", totalLikes);
+        model.addAttribute("totalViews", totalViews);
+        model.addAttribute("totalFollowers", totalFollowers);
+        
+        model.addAttribute("likesCoins", likesCoins);
+        model.addAttribute("viewsCoins", viewsCoins);
+        model.addAttribute("followersCoins", followersCoins);
+        model.addAttribute("totalCoins", totalCoins);
+        
+        return "creatorHubCoins";
+    }
 }
+

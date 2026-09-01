@@ -6,50 +6,71 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Partner Login — Women Products</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
     <style>
-        body { font-family: 'Poppins', sans-serif; min-height: 100vh; display:flex; background:#fffcfd; color:#1e293b; margin:0; }
-        .auth-container { flex:1; display:flex; width:100%; }
-        .visual-panel { flex:1; background: linear-gradient(135deg, #1e1b4b 0%, #f43f5e 100%); color:#fff; display:flex; align-items:center; justify-content:center; padding:60px; }
-        .form-panel { flex:1.2; display:flex; justify-content:center; align-items:center; padding:60px; background:#fff; }
-        .login-card { width:100%; max-width:450px; }
-        .login-card h2 { font-family:'Montserrat',sans-serif; font-size:2rem; font-weight:900; color:#3F1430; margin-bottom:8px; }
-        .subtitle { color:#64748b; margin-bottom:28px; }
-        .fdf-form-group { margin-bottom:20px; }
-        .fdf-form-group label { display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:8px; }
-        .fdf-input { width:100%; padding:14px 16px; border:2px solid #f1f3f5; border-radius:14px; background:#f8fafc; font-family:inherit; box-sizing:border-box; }
-        .btn-fdf-login { width:100%; padding:16px; background:linear-gradient(135deg,#1e1b4b,#f43f5e); color:#fff; border:none; border-radius:16px; font-weight:800; cursor:pointer; }
-        .alert { background:#fef2f2; color:#b91c1c; padding:12px 16px; border-radius:12px; margin-bottom:16px; font-weight:600; }
-        .register-link { text-align:center; margin-top:20px; color:#64748b; }
-        .register-link a { color:#f43f5e; font-weight:800; text-decoration:none; }
-        .back-home { color:#64748b; text-decoration:none; font-weight:600; display:inline-block; margin-bottom:20px; }
-        @media (max-width:992px) { .auth-container { flex-direction:column; } .visual-panel { min-height:22vh; padding:40px 24px; } }
+        :root { --primary:#F43F5E; --primary-hover:#E11D48; --navy:#1E1B4B; --text-gray:#64748B; --bg-page:#F8FAFC; --card-bg:#FFFFFF; --border-color:#E2E8F0; --error:#DC2626; --error-bg:#FEF2F2; --rose-soft:#FFE4E6; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',sans-serif; min-height:100vh; background:var(--bg-page); color:var(--navy); display:flex; flex-direction:column; }
+        .app-header { background:#fff; border-bottom:1px solid var(--border-color); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; }
+        .header-brand { display:flex; align-items:center; gap:10px; font-size:1.15rem; font-weight:800; color:var(--navy); text-decoration:none; }
+        .header-brand i { color:var(--primary); }
+        .header-links a { color:var(--text-gray); text-decoration:none; font-weight:600; font-size:0.9rem; }
+        .header-links a:hover { color:var(--primary); }
+        .main-container { flex:1; max-width:480px; width:100%; margin:40px auto; padding:0 16px; }
+        .info-banner { background:var(--rose-soft); border-radius:16px; padding:18px 20px; margin-bottom:20px; border:1px solid #FECDD3; }
+        .info-banner h2 { font-size:1.15rem; font-weight:800; margin-bottom:4px; }
+        .form-card { background:#fff; border:1px solid var(--border-color); border-radius:16px; padding:28px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.03); }
+        .form-group { margin-bottom:18px; }
+        .form-group label { display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px; }
+        .form-input { width:100%; padding:12px 14px; border:1px solid var(--border-color); border-radius:10px; font-size:0.95rem; font-family:inherit; }
+        .form-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(244,63,94,0.12); }
+        .password-field { position:relative; }
+        .password-field .form-input { padding-right:42px; }
+        .password-toggle-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--text-gray); cursor:pointer; }
+        .btn-submit { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:700; font-family:inherit; cursor:pointer; box-shadow:0 4px 14px rgba(244,63,94,0.25); }
+        .btn-submit:hover { background:var(--primary-hover); }
+        .login-footer { text-align:center; margin-top:20px; font-size:0.9rem; color:var(--text-gray); }
+        .login-footer a { color:var(--primary); font-weight:700; text-decoration:none; }
+        .alert { background:var(--error-bg); color:var(--error); padding:12px 14px; border-radius:10px; margin-bottom:16px; font-weight:600; }
+        @media (max-width:480px) { .form-card { padding:22px 16px; } }
     </style>
 </head>
-<body>
-<div class="auth-container">
-    <div class="visual-panel">
-        <div>
-            <h2 style="font-family:Montserrat,sans-serif;">Women Products Delivery</h2>
-            <p>Pick up assigned orders and update delivery status securely.</p>
-        </div>
-    </div>
-    <div class="form-panel">
-        <div class="login-card">
-            <a class="back-home" href="${pageContext.request.contextPath}/women-products"><i class="bi bi-arrow-left"></i> Back to shop</a>
+<body class="wp-auth">
+    <header class="app-header">
+        <a class="header-brand" href="${pageContext.request.contextPath}/women-products"><i class="bi bi-truck"></i> Women Products</a>
+        <div class="header-links"><a href="${pageContext.request.contextPath}/women-products/delivery/register">Register</a></div>
+    </header>
+    <main class="main-container">
+        <div class="info-banner">
             <h2>Delivery login</h2>
-            <p class="subtitle">Sign in to view assigned Women Products deliveries.</p>
+            <p>Sign in to view assigned Women Products deliveries.</p>
+        </div>
+        <div class="form-card">
             <c:if test="${not empty error}"><div class="alert">${error}</div></c:if>
             <form action="${pageContext.request.contextPath}/women-products/delivery/login" method="post">
-                <div class="fdf-form-group"><label>Email</label><input class="fdf-input" type="email" name="email" required></div>
-                <div class="fdf-form-group"><label>Password</label><input class="fdf-input" type="password" name="password" required></div>
-                <button class="btn-fdf-login" type="submit">Sign In</button>
+                <div class="form-group"><label>Email</label><input class="form-input" type="email" name="email" required></div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-field">
+                        <input class="form-input" type="password" name="password" id="password" required>
+                        <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
+                    </div>
+                </div>
+                <button class="btn-submit" type="submit">Sign In</button>
             </form>
-            <p class="register-link">New partner? <a href="${pageContext.request.contextPath}/women-products/delivery/register">Register here</a></p>
+            <p class="login-footer">New partner? <a href="${pageContext.request.contextPath}/women-products/delivery/register">Register here</a></p>
         </div>
-    </div>
-</div>
+    </main>
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            var input = document.getElementById('password');
+            var icon = this.querySelector('i');
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
+        });
+    </script>
 </body>
 </html>

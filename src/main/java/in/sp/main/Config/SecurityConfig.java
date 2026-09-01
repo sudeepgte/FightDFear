@@ -126,6 +126,7 @@ public class SecurityConfig {
             "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
+            "/doctors/logout",
             "/doctors/register",
             "/doctors/register/**",
             "/salons/login",
@@ -164,6 +165,10 @@ public class SecurityConfig {
             "/women-events",
             "/women-events/*",
             "/women-events/host/**",
+            "/host/login",
+            "/host/login/**",
+            "/host/register",
+            "/host/register/**",
             "/fitness",
             "/fitness/**",
             "/fitness/trainer/login",
@@ -212,13 +217,21 @@ public class SecurityConfig {
             )
             .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
                 String path = request.getRequestURI();
-                boolean wantsJson = path != null && (path.startsWith("/api/") || path.startsWith("/payment/"));
+                boolean wantsJson = path != null && (path.startsWith("/api/")
+                        || path.startsWith("/payment/")
+                        || path.startsWith("/chat/send-message")
+                        || path.startsWith("/chat/messages-since"));
                 if (wantsJson) {
                     response.setStatus(401);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
                 } else if (path != null && path.startsWith("/admin/")) {
                     response.sendRedirect("/admin/loginAdmin");
+                } else if (path != null && (
+                        path.startsWith("/doctors/dashboard")
+                        || path.startsWith("/doctors/profile-completion")
+                        || path.equals("/doctors/logout"))) {
+                    response.sendRedirect("/doctors/login");
                 } else {
                     response.sendRedirect("/login");
                 }

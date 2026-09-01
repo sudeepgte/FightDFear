@@ -103,6 +103,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
+        /* Web pages use HttpSession; REST chat APIs need SecurityContext too. */
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                Object sessionUser = session.getAttribute("user");
+                if (sessionUser instanceof in.sp.main.Entities.User appUser) {
+                    String principal = appUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "user-" + appUser.getId() + "@session.fightdfear";
+                    }
+                    UserDetails userDetails = User.withUsername(principal).password("").roles("USER").build();
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    Object sessionAdmin = session.getAttribute("admin");
+                    if (sessionAdmin instanceof Admin adminUser) {
+                        String principal = adminUser.getEmail();
+                        if (principal == null || principal.isBlank()) {
+                            principal = "admin-" + adminUser.getId() + "@session.fightdfear";
+                        }
+                        UserDetails userDetails = User.withUsername(principal).password("").roles("ADMIN").build();
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
+                }
+            }
+        }
+
         filterChain.doFilter(request, response);
     }
 

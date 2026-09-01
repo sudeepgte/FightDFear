@@ -211,7 +211,11 @@
             .right-panel { padding: 30px 15px; }
             .login-card h2 { font-size: 1.5rem; }
         }
-    </style>
+    
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 

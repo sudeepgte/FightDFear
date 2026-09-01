@@ -1,20 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@800;900&display=swap');
+@import url('doctor-tokens.css');
 
 :root {
-  --dv-purple: #2D0B2E;
-  --dv-purple-mid: #4A1E38;
-  --dv-crimson: #f43f5e;
-  --dv-crimson-light: #F472B6;
-  --dv-bg: #fffcfd;
-  --dv-card: #ffffff;
-  --dv-text: #2D0B2E;
-  --dv-muted: #6B7280;
   --dv-glass: rgba(255, 255, 255, 0.85);
-  --dv-glass-border: rgba(30, 27, 75, 0.1);
-  --dv-gradient: linear-gradient(135deg, #2D0B2E 0%, #4A1E38 50%, #f43f5e 100%);
-  --dv-shadow: 0 20px 50px rgba(45, 11, 46, 0.1);
-  --dv-radius: 28px;
-  --sidebar-w: 260px;
+  --dv-glass-border: rgba(15, 23, 42, 0.08);
+  --sidebar-w: var(--doc-sidebar-w, 240px);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -144,9 +134,9 @@ body.dv-page {
 }
 
 .dv-pinfo .meta-item.rating { background: #fefce8; color: #854d0e; }
-.dv-pinfo .meta-item.exp { background: #eff6ff; color: #1e40af; }
-.dv-pinfo .meta-item.qual { background: #fdf2f8; color: #9d174d; }
-.dv-pinfo .meta-item.fee { background: #f0fdf4; color: #166534; font-size: 1.1rem; }
+.dv-pinfo .meta-item.exp { background: var(--doc-info-bg, #F1F5F9); color: var(--doc-navy-soft, #1E293B); }
+.dv-pinfo .meta-item.qual { background: var(--doc-primary-soft, #FFF1F2); color: #BE123C; }
+.dv-pinfo .meta-item.fee { background: var(--doc-success-bg, #DCFCE7); color: var(--doc-success-text, #166534); font-size: 1.1rem; }
 
 /* Action buttons */
 .dv-actions { display: flex; gap: 12px; flex-shrink: 0; }
@@ -164,9 +154,9 @@ body.dv-page {
   text-decoration: none;
 }
 
-.dv-act.chat { background: #fdf2f8; color: var(--dv-crimson); }
-.dv-act.call { background: #f0fdf4; color: #16a34a; }
-.dv-act.video { background: #eff6ff; color: #2563eb; }
+.dv-act.chat { background: var(--doc-primary-soft, #FFF1F2); color: var(--dv-crimson); }
+.dv-act.call { background: var(--doc-success-bg, #DCFCE7); color: #16a34a; }
+.dv-act.video { background: var(--doc-primary-light, #FFE4E6); color: #BE123C; }
 
 .dv-act:hover {
   transform: scale(1.15) rotate(5deg);

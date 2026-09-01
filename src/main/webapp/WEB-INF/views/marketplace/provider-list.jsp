@@ -1,14 +1,15 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Verified ${not empty categoryLabel ? categoryLabel : category}s | Marketplace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Find Your Right Lawyer | LexAssist</title>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- CSS -->
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -18,174 +19,914 @@
 
     <style>
         :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #fffcfd;
+            --primary: #F43F5E;
+            --secondary: #64748B;
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            --text-main: #0F172A;
+            --border: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+
+        .container {
+            padding: 0 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Top Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            background: var(--bg);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+
+
+    <style>
+        /* Marketplace /list only — Martial Arts hub tokens, scoped (no sidebar/header global restyle) */
+        body.mp-list-page {
+            --m-navy: #0F172A;
+            --m-navy-mid: #1E293B;
+            --m-rose: #F43F5E;
+            --m-rose-hover: #E11D48;
+            --m-rose-soft: #FFF1F2;
+            --m-bg: #F8FAFC;
+            --m-muted: #64748B;
+            --m-border: #E2E8F0;
+        }
+        body.mp-list-page #page-content-wrapper {
             font-family: 'Poppins', sans-serif;
             background: var(--m-bg);
-            color: #333;
+            color: var(--m-navy);
             min-height: 100vh;
         }
-
-        .list-header {
-            background: linear-gradient(135deg, var(--m-purple) 0%, #4a1e38 100%);
-            padding: 50px 0;
-            color: white;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        body.mp-list-page .list-header {
+            background: #FFFFFF;
+            padding: 28px 0 20px;
+            color: var(--m-navy);
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--m-border);
+            box-shadow: none;
         }
-
-        .provider-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            transition: 0.3s;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 25px rgba(124, 45, 94, 0.05);
+        body.mp-list-page .list-header h1 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--m-navy);
+            letter-spacing: -0.5px;
+        }
+        body.mp-list-page .list-header p { color: var(--m-muted); }
+        body.mp-list-page .list-header .btn-outline-dark,
+        body.mp-list-page .list-header .btn-outline-light {
+            background: #FFFFFF;
+            border: 1px solid var(--m-border);
+            color: var(--m-navy);
+            min-height: 42px;
+        }
+        body.mp-list-page .list-header .btn-outline-dark:hover,
+        body.mp-list-page .list-header .btn-outline-light:hover {
+            background: var(--m-rose);
+            border-color: var(--m-rose);
+            color: #fff;
+        }
+        body.mp-list-page .provider-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 24px;
+            transition: 0.25s ease;
+            border: 1px solid var(--m-border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             height: 100%;
             display: flex;
             flex-direction: column;
+            text-decoration: none;
         }
-
-        .provider-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(124, 45, 94, 0.12);
-            border-color: var(--m-pink);
+        body.mp-list-page .provider-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border-color: #CBD5E1;
         }
-
-        .provider-avatar {
+        body.mp-list-page .provider-avatar {
             width: 60px;
             height: 60px;
-            background: #fdf2f8;
-            border-radius: 15px;
+            background: var(--m-rose-soft);
+            border: 1px solid #FECDD3;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--m-pink);
+            color: var(--m-rose);
             font-size: 1.5rem;
             font-weight: 800;
             margin-bottom: 20px;
         }
-
-        .rating-badge {
-            background: #fff9db;
-            color: #f59f00;
+        body.mp-list-page .rating-badge {
+            background: var(--m-rose-soft);
+            border: 1px solid #FECDD3;
+            color: #9F1239;
             padding: 4px 12px;
             border-radius: 50px;
             font-size: 0.85rem;
+
             font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            font-size: 1.1rem;
+        }
+        .header-logo span {
+            color: var(--text-main);
+            font-size: 0.75rem;
+            font-weight: 400;
+            display: block;
         }
 
-        .location-tag {
-            font-size: 0.8rem;
-            color: #888;
+
+        /* Hero Section */
+        .hero {
+            padding: 10px 0 20px 0;
+        }
+        .hero h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+        .hero p {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+        body.mp-list-page .location-tag {
+            font-size: 0.85rem;
+            color: var(--m-muted);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 5px;
         }
-
-        .provider-name {
+        body.mp-list-page .provider-name {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
             font-size: 1.25rem;
-            color: var(--m-purple);
+            color: var(--m-navy);
             margin-bottom: 5px;
         }
-
-        .provider-desc {
+        body.mp-list-page .provider-desc {
             font-size: 0.9rem;
-            color: #666;
+            color: var(--m-muted);
             margin-bottom: 20px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        }
+        body.mp-list-page .btn-view {
+            margin-top: auto;
+            background: var(--m-rose);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            min-height: 42px;
+            border-radius: 12px;
         }
 
-        .btn-view {
-            margin-top: auto;
-            background: var(--m-purple);
+        /* Search & Filters */
+        .search-box {
+            display: flex;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 5px;
+            margin-bottom: 15px;
+        }
+        .search-input {
+            flex: 1;
+            border: none;
+            padding: 10px 15px;
+            outline: none;
+            background: transparent;
+            font-size: 0.9rem;
+        }
+        .search-btn {
+            background: var(--primary);
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 12px;
-            font-weight: 700;
-            transition: 0.3s;
+            border-radius: 10px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
 
-        .btn-view:hover {
-            background: var(--m-pink);
-            color: white;
-            transform: scale(1.02);
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
         }
+        .location-selector {
+            flex: 1;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        .location-selector i {
+            color: var(--primary);
+        }
+        .filter-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        /* Practice Areas */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+
+        }
+        .view-all {
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .practice-areas {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none;
+            margin-bottom: 30px;
+        }
+        .practice-areas::-webkit-scrollbar {
+            display: none;
+        }
+        .practice-card {
+            min-width: 110px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .practice-icon {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        .practice-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .practice-count {
+            font-size: 0.7rem;
+            color: var(--secondary);
+        }
+
+        /* Lawyer Cards */
+        .lawyer-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .promoted-badge {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .favorite-btn {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        .lawyer-header {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-start;
+        }
+        .lawyer-photo {
+            width: 70px;
+            height: 70px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #E2E8F0;
+        }
+        .lawyer-info {
+            flex: 1;
+        }
+        .price-availability-col {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-left: auto;
+            text-align: right;
+            padding-top: 5px;
+        }
+        .lawyer-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 2px;
+        }
+        .verified-icon {
+            color: var(--success-text);
+            font-size: 0.9rem;
+        }
+        .lawyer-designation {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+        .lawyer-meta {
+            font-size: 0.75rem;
+            color: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .lawyer-meta i.star {
+            color: #F59E0B;
+        }
+        .price-box {
+            text-align: right;
+        }
+        .price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .price-label {
+            font-size: 0.7rem;
+            color: var(--secondary);
+
+            transition: 0.25s ease;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+        }
+        body.mp-list-page .btn-view:hover {
+            background: var(--m-rose-hover);
+            color: #fff;
+        }
+        body.mp-list-page .btn-primary {
+            background: var(--m-rose);
+            border-color: var(--m-rose);
+            color: #fff;
+            min-height: 42px;
+        }
+        body.mp-list-page .btn-primary:hover {
+            background: var(--m-rose-hover);
+            border-color: var(--m-rose-hover);
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            body.mp-list-page .list-header { padding: 20px 0 16px; }
+            body.mp-list-page .list-header .container {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 16px;
+            }
+
+        }
+        .availability {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--success-text);
+        }
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .tag {
+            background: var(--bg);
+            color: var(--secondary);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-secondary, .btn-primary-action {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-secondary {
+            background: var(--card);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-primary-action {
+            background: var(--primary);
+            border: 1px solid var(--primary);
+            color: white;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 20px 0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--secondary);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .nav-item i {
+            font-size: 1.3rem;
+        }
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--secondary);
+            opacity: 0.3;
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+        /* Bottom Mobile Nav */
+        .bottom-nav {
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+            border-radius: 20px;
+        }
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            gap: 6px;
+        }
+        .bottom-nav .nav-item i {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+        .bottom-nav .nav-item.active {
+            color: var(--primary);
+        }
+        .bottom-nav .nav-item.active i {
+            text-shadow: 0 0 1px var(--primary);
+        }
+
+        /* Adjust wrapper for bottom nav */
+        #page-content-wrapper { padding-bottom: 30px !important; }
+
     </style>
 </head>
+
 <body>
+    <style>
+        /* Override sidebar layout to remove top gap since header is removed */
+        #wrapper {
+            margin-top: 0 !important;
+        }
+        #sidebar-wrapper {
+            top: 0 !important;
+        }
+    </style>
+
+<body class="mp-list-page">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding-bottom: 80px; background-color: var(--bg);">
 
+    <div class="container-fluid" style="padding: 20px 40px;">
 
-    <header class="list-header">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="fw-bold mb-1">${not empty categoryLabel ? categoryLabel : category}s</h1>
-                <p class="mb-0 opacity-75">Connect with verified experts in your community.</p>
+        <!-- Hero -->
+        <section class="hero">
+            <h1>Find the Right Lawyer</h1>
+            <p>Trusted legal support, when you need it.</p>
+
+            <div class="search-box">
+                <i class="bi bi-search" style="padding:12px 10px; color:var(--secondary);"></i>
+                <input type="text" class="search-input" placeholder="Search by name or practice area">
+                <button class="search-btn"><i class="bi bi-search"></i></button>
             </div>
-            <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-outline-light rounded-pill px-4">
-                <i class="bi bi-grid-fill me-2"></i> Categories
-            </a>
-        </div>
-    </header>
 
-    <div class="container mb-5">
-        <c:if test="${not empty providers}">
-            <div class="row g-4">
-                <c:forEach var="p" items="${providers}">
-                    <div class="col-md-6 col-lg-4">
-                        <div class="provider-card">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="provider-avatar">
-                                    ${p.fullName.charAt(0)}
-                                </div>
-                                <div class="rating-badge">
-                                    <i class="fas fa-star"></i> ${p.rating > 0 ? p.rating : 'New'}
-                                </div>
+            <div class="filter-row">
+                <div class="location-selector" style="display:flex; align-items:center;">
+                    <i class="bi bi-geo-alt-fill" style="margin-right:8px; color:var(--primary);"></i>
+                    <select id="locationSelect" style="background:transparent; border:none; outline:none; font-weight:600; font-size:0.9rem; color:#000; width:100%; cursor:pointer;">
+                        <option value="all">All Locations</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Bangalore">Bangalore</option>
+                    </select>
+                </div>
+                <div class="dropdown">
+                    <div class="filter-btn" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;">
+                        <i class="bi bi-filter"></i> Filter
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" style="border-radius:12px; padding:10px;">
+                        <li><a class="dropdown-item sort-opt" href="#" data-sort="rating">Highest Rating</a></li>
+                        <li><a class="dropdown-item sort-opt" href="#" data-sort="experience">Most Experience</a></li>
+                        <li><a class="dropdown-item sort-opt" href="#" data-sort="fee">Lowest Fee</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Practice Areas (Dynamic) -->
+        <div class="section-header">
+            <div class="section-title">Practice Areas</div>
+            <a href="#" class="view-all" onclick="document.querySelector('.practice-areas').style.flexWrap = 'wrap'; return false;">View all</a>
+        </div>
+        <%
+            java.util.Map<String, Integer> areaCounts = new java.util.HashMap<String, Integer>();
+            // Pre-populate with standard categories so the UI always looks full
+            areaCounts.put("Family Law", 0);
+            areaCounts.put("Criminal Law", 0);
+            areaCounts.put("Property Law", 0);
+            areaCounts.put("Corporate Law", 0);
+            areaCounts.put("Civil Law", 0);
+            areaCounts.put("Cyber Law", 0);
+            
+            Object obj = request.getAttribute("providers");
+            if (obj instanceof java.util.List) {
+                java.util.List list = (java.util.List) obj;
+                for (Object pObj : list) {
+                    try {
+                        in.sp.main.Entities.ServiceProvider p = (in.sp.main.Entities.ServiceProvider) pObj;
+                        String areas = p.getPracticeAreas();
+                        if (areas != null && !areas.trim().isEmpty()) {
+                            for (String a : areas.split(",")) {
+                                a = a.trim();
+                                if (!a.isEmpty()) {
+                                    // Capitalize first letter to match defaults if possible, or just add
+                                    String normalized = a.substring(0, 1).toUpperCase() + a.substring(1).toLowerCase();
+                                    // Find if it exists case-insensitive to avoid duplicates
+                                    String matchedKey = normalized;
+                                    for (String key : areaCounts.keySet()) {
+                                        if (key.equalsIgnoreCase(a)) {
+                                            matchedKey = key;
+                                            break;
+                                        }
+                                    }
+                                    areaCounts.put(matchedKey, areaCounts.getOrDefault(matchedKey, 0) + 1);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {}
+                }
+            }
+            java.util.List<java.util.Map.Entry<String, Integer>> sortedAreas = new java.util.ArrayList<java.util.Map.Entry<String, Integer>>(areaCounts.entrySet());
+            sortedAreas.sort(new java.util.Comparator<java.util.Map.Entry<String, Integer>>() {
+                public int compare(java.util.Map.Entry<String, Integer> e1, java.util.Map.Entry<String, Integer> e2) {
+                    return e2.getValue().compareTo(e1.getValue());
+                }
+            });
+            request.setAttribute("topAreas", sortedAreas);
+        %>
+        <div class="practice-areas">
+            <c:choose>
+                <c:when test="${not empty topAreas}">
+                    <c:forEach var="entry" items="${topAreas}">
+                        <div class="practice-card filter-area-card" onclick="document.querySelector('.search-input').value = '${entry.key}'; document.querySelector('.search-input').dispatchEvent(new Event('input'));" style="cursor:pointer;">
+                            <c:choose>
+                                <c:when test="${fn:containsIgnoreCase(entry.key, 'Family') or fn:containsIgnoreCase(entry.key, 'Divorce')}"><i class="bi bi-people practice-icon"></i></c:when>
+                                <c:when test="${fn:containsIgnoreCase(entry.key, 'Criminal')}"><i class="bi bi-hammer practice-icon"></i></c:when>
+                                <c:when test="${fn:containsIgnoreCase(entry.key, 'Property')}"><i class="bi bi-house practice-icon"></i></c:when>
+                                <c:when test="${fn:containsIgnoreCase(entry.key, 'Corporate')}"><i class="bi bi-briefcase practice-icon"></i></c:when>
+                                <c:otherwise><i class="bi bi-book practice-icon"></i></c:otherwise>
+                            </c:choose>
+                            <div class="practice-name">${entry.key}</div>
+                            <div class="practice-count">${entry.value} Lawyers</div>
+                        </div>
+                    </c:forEach>
+                </c:when>
+                <c:otherwise>
+                    <div class="practice-card">
+                        <i class="bi bi-people practice-icon"></i>
+                        <div class="practice-name">Family Law</div>
+                        <div class="practice-count">0 Lawyers</div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+        <!-- Lawyer List -->
+        <div class="empty-state" style="display: ${empty providers ? 'block' : 'none'};">
+            <i class="bi bi-search"></i>
+            <h3>No lawyers found</h3>
+            <p>Try changing your search or filters.</p>
+        </div>
+
+        <c:forEach var="lawyer" items="${providers}">
+            <div class="lawyer-card" data-rating="${empty lawyer.rating ? 0 : lawyer.rating}" data-experience="${empty lawyer.experienceYears ? 0 : lawyer.experienceYears}" data-fee="${empty lawyer.consultationFee ? 999999 : lawyer.consultationFee}">
+                
+                <div class="lawyer-header">
+                    <c:choose>
+                        <c:when test="${not empty lawyer.profilePhoto}">
+                            <c:set var="pUrl" value="${lawyer.profilePhoto}" />
+                            <c:if test="${not fn:startsWith(pUrl, 'http') and not fn:startsWith(pUrl, '/')}">
+                                <c:set var="pUrl" value="/uploads/${pUrl}" />
+                            </c:if>
+                            <c:if test="${not fn:startsWith(pUrl, 'http')}">
+                                <c:set var="pUrl" value="${pageContext.request.contextPath}${pUrl}" />
+                            </c:if>
+                            <img src="${pUrl}" class="lawyer-photo" alt="Photo">
+                        </c:when>
+                        <c:otherwise>
+                            <div class="lawyer-photo" style="display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem; font-weight:700;">
+                                ${fn:substring(lawyer.fullName, 0, 1)}
                             </div>
-                            <h3 class="provider-name">${p.fullName}</h3>
-                            <div class="location-tag">
-                                <i class="bi bi-geo-alt-fill"></i> ${p.locationText}
-                            </div>
-                            <p class="provider-desc">${p.description}</p>
-                            <a href="${pageContext.request.contextPath}/marketplace/view/${p.id}" class="btn btn-view">
-                                View Profile & Classes
-                            </a>
+                        </c:otherwise>
+                    </c:choose>
+                    
+                    <div class="lawyer-info">
+                        <div class="lawyer-name">
+                            ${lawyer.fullName}
+                        </div>
+                        <div class="lawyer-designation">${not empty lawyer.designation ? lawyer.designation : lawyer.category.label}</div>
+                        
+                        <div class="lawyer-meta">
+                            <c:if test="${lawyer.rating > 0}">
+                                <span><i class="bi bi-star-fill star"></i> ${lawyer.rating} (0)</span>
+                                <span>&bull;</span>
+                            </c:if>
+                            <c:if test="${not empty lawyer.experienceYears}">
+                                <span>${lawyer.experienceYears}+ Years Exp.</span>
+                            </c:if>
+                        </div>
+                        <div class="lawyer-meta" style="margin-top:2px;">
+                            <i class="bi bi-geo-alt"></i> ${not empty lawyer.city ? lawyer.city.concat(', ').concat(lawyer.state) : lawyer.locationText}
                         </div>
                     </div>
-                </c:forEach>
-            </div>
-        </c:if>
+                    
+                    <div class="price-availability-col">
+                        <i class="bi bi-heart favorite-btn"></i>
+                        <div class="price-box">
+                            <div class="price">₹${not empty lawyer.consultationFee ? lawyer.consultationFee : '1,500'}</div>
+                            <div class="price-label">Starting Fee</div>
+                        </div>
+                        <div class="availability" style="margin-top: 10px;">
+                            Available Today
+                        </div>
+                    </div>
+                </div>
 
-        <c:if test="${empty providers}">
-            <div class="text-center py-5">
-                <i class="bi bi-people text-muted display-1 opacity-25"></i>
-                <h3 class="mt-4 text-muted">No ${not empty categoryLabel ? categoryLabel : category}s found in your area.</h3>
-                <p class="text-muted">Check back later or explore other categories.</p>
-                <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-primary mt-3 px-4">Back to Marketplace</a>
+                <div class="tags">
+                    <!-- Dynamic Practice Areas Tags -->
+                    <c:choose>
+                        <c:when test="${not empty lawyer.practiceAreas}">
+                            <c:forEach var="tag" items="${fn:split(lawyer.practiceAreas, ',')}">
+                                <div class="tag">${fn:trim(tag)}</div>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="tag">Family Law</div>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <div class="card-actions">
+                    <a href="${pageContext.request.contextPath}/marketplace/view/${lawyer.id}" class="btn-secondary">View Profile</a>
+                    <a href="${pageContext.request.contextPath}/marketplace/view/${lawyer.id}" class="btn-secondary">Write Review</a>
+                    <a href="${pageContext.request.contextPath}/marketplace/view/${lawyer.id}" class="btn-primary-action">Book Now</a>
+                </div>
             </div>
-        </c:if>
+        </c:forEach>
+
     </div>
 
-    <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    </div>
     </div>
 </div>
+
+<!-- Bottom Mobile Nav -->
+<c:set var="navUserId" value="${not empty user ? user.id : (not empty sessionScope.user ? sessionScope.user.id : '')}" />
+<div class="bottom-nav">
+    <a href="${pageContext.request.contextPath}/users/dashboard" class="nav-item">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Home</span>
+    </a>
+    <a href="${pageContext.request.contextPath}/marketplace/list?category=WOMEN_LAWYER" class="nav-item active">
+        <i class="bi bi-people-fill"></i>
+        <span>Lawyers</span>
+    </a>
+    <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="nav-item">
+        <i class="bi bi-calendar-event"></i>
+        <span>Appointments</span>
+    </a>
+    <a href="${pageContext.request.contextPath}/users/profile/${navUserId}" class="nav-item">
+        <i class="bi bi-person"></i>
+        <span>Profile</span>
+    </a>
+</div>
+
+
+
+    <!-- Dynamic Filter and Search Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Search Functionality
+            const searchInput = document.querySelector('.search-input');
+            const lawyerCards = document.querySelectorAll('.lawyer-card');
+            const emptyState = document.querySelector('.empty-state');
+
+            function filterLawyers() {
+                const query = searchInput.value.toLowerCase();
+                const selectedLocation = document.getElementById('locationSelect').value.toLowerCase();
+                let visibleCount = 0;
+
+                lawyerCards.forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    const city = card.getAttribute('data-city').toLowerCase();
+                    
+                    const matchesSearch = text.includes(query);
+                    const matchesLocation = selectedLocation === 'all' || city.includes(selectedLocation);
+
+                    if (matchesSearch && matchesLocation) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (emptyState) {
+                    emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+                }
+            }
+
+            searchInput.addEventListener('input', filterLawyers);
+
+            // 2. Setup Location Filtering
+            lawyerCards.forEach(card => {
+                const geoIcon = card.querySelector('.lawyer-meta i.bi-geo-alt');
+                if (geoIcon && geoIcon.parentElement) {
+                    const locationText = geoIcon.parentElement.textContent.trim();
+                    if (locationText) {
+                        card.setAttribute('data-city', locationText); // Store for easy filtering
+                    }
+                }
+            });
+            
+            document.getElementById('locationSelect').addEventListener('change', filterLawyers);
+
+            // 3. View All Practice Areas
+            const viewAllBtn = document.querySelector('.view-all');
+            const practiceAreasContainer = document.querySelector('.practice-areas');
+            viewAllBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (practiceAreasContainer.style.flexWrap === 'wrap') {
+                    practiceAreasContainer.style.flexWrap = 'nowrap';
+                    practiceAreasContainer.style.overflowX = 'auto';
+                    viewAllBtn.textContent = 'View all';
+                } else {
+                    practiceAreasContainer.style.flexWrap = 'wrap';
+                    practiceAreasContainer.style.overflowX = 'visible';
+                    viewAllBtn.textContent = 'Show less';
+                }
+            });
+
+            // 4. Filter / Sort Logic
+            const sortOpts = document.querySelectorAll('.sort-opt');
+            const lawyerContainer = document.querySelector('.container-fluid');
+            
+            sortOpts.forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sortType = this.getAttribute('data-sort');
+                    const cardsArray = Array.from(lawyerCards);
+                    
+                    cardsArray.sort((a, b) => {
+                        const valA = parseFloat(a.getAttribute(`data-${sortType}`)) || 0;
+                        const valB = parseFloat(b.getAttribute(`data-${sortType}`)) || 0;
+                        
+                        if (sortType === 'fee') {
+                            return valA - valB; // Lowest fee first
+                        } else {
+                            return valB - valA; // Highest rating/exp first
+                        }
+                    });
+                    
+                    // Re-append in sorted order (only if they aren't the empty state or other divs)
+                    cardsArray.forEach(card => {
+                        // Find the card's parent and append it to the end
+                        card.parentNode.appendChild(card);
+                    });
+                });
+            });
+        });
+    </script>
+
+    <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

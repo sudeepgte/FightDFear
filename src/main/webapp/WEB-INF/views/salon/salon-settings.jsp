@@ -14,42 +14,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <!-- Global Dashboard Theme -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
     <style>
+        :root { 
+            --sidebar-width: 280px; 
+            --dashboard-bg: #F8FAFC;
+            --primary-accent: #F43F5E;
+            --secondary-subtext: #64748B;
+            --card-bg: #FFFFFF;
+            
+            --success-bg: #F0FDF4;
+            --success-text: #16A34A;
+            
+            --warning-bg: #FFF7ED;
+            --warning-text: #C2410C;
+            
+            --error-bg: #FEF2F2;
+            --error-text: #DC2626;
+            
+            --border-color: #E2E8F0;
+            --text-main: #0F172A;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: var(--light-bg, #f8f9fa);
+            background-color: var(--dashboard-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+            margin: 0;
         }
+        
         .settings-card {
-            background: white;
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
             margin-bottom: 25px;
             overflow: hidden;
         }
         .settings-card-header {
-            background: linear-gradient(135deg, var(--primary-color, #ff4d4d) 0%, var(--secondary-color, #ff1a1a) 100%);
-            color: white;
-            padding: 20px 25px;
-            border-bottom: none;
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 24px 25px;
+            border-bottom: 1px solid var(--border-color);
         }
         .settings-card-header h5 {
             margin: 0;
-            font-weight: 600;
+            font-weight: 700;
+        }
+        .settings-card-header h5 i {
+            color: var(--primary-accent);
         }
         .settings-card-body {
             padding: 30px;
         }
         .form-label {
-            font-weight: 500;
-            color: #495057;
+            font-weight: 600;
+            color: var(--secondary-subtext);
         }
         .form-control:focus {
-            border-color: var(--primary-color, #ff4d4d);
-            box-shadow: 0 0 0 0.25rem rgba(255, 77, 77, 0.25);
+            border-color: var(--primary-accent);
+            box-shadow: 0 0 0 0.25rem rgba(244, 63, 94, 0.25);
         }
         .btn-save {
-            background: linear-gradient(135deg, var(--primary-color, #ff4d4d) 0%, var(--secondary-color, #ff1a1a) 100%);
+            background-color: var(--primary-accent);
             color: white;
             border: none;
             padding: 12px 30px;
@@ -59,12 +88,13 @@
         }
         .btn-save:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 77, 77, 0.4);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
             color: white;
+            background-color: #E11D48;
         }
         .form-check-input:checked {
-            background-color: var(--primary-color, #ff4d4d);
-            border-color: var(--primary-color, #ff4d4d);
+            background-color: var(--primary-accent);
+            border-color: var(--primary-accent);
         }
         
         /* Modern Toggle Switch */
@@ -77,52 +107,50 @@
         .switch-label {
             display: flex;
             align-items: center;
-            font-weight: 500;
+            font-weight: 600;
             margin-bottom: 15px;
+            color: var(--text-main);
         }
         .switch-label i {
             font-size: 1.2rem;
             margin-right: 10px;
-            color: var(--primary-color, #ff4d4d);
+            color: var(--primary-accent);
         }
         
         /* Sidebar layout adjustment */
-        :root { --sidebar-width: 280px; }
-        .sidebar { background: var(--gradient-dark); color: white; width: var(--sidebar-width); height: 100vh; position: fixed; left: 0; top: 0; padding: 30px 20px; z-index: 1000; box-shadow: 10px 0 30px rgba(0,0,0,0.1); }
+        @media (min-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                padding: 30px 20px;
+                z-index: 1000;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.04);
+                background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+            }
+            .main-content {
+                margin-left: var(--sidebar-width);
+            }
+        }
+        
         .sidebar-brand { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; color: white; text-decoration: none; }
         .nav-link-custom { display: flex; align-items: center; gap: 15px; padding: 12px 20px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: all 0.3s ease; font-weight: 500; }
-        .nav-link-custom:hover, .nav-link-custom.active { background: rgba(255,255,255,0.1); color: white; transform: translateX(5px); }
+        .nav-link-custom:hover, .nav-link-custom.active { background: var(--primary-accent); color: white; transform: translateX(5px); }
         
         .main-content {
-            padding: 25px;
-            margin-left: var(--sidebar-width);
+            padding: 40px;
+            background-color: var(--dashboard-bg);
+            min-height: 100vh;
         }
     </style>
 </head>
 <body>
 
-    <div class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebarMenu">
-        <a href="${pageContext.request.contextPath}/salons/dashboard" class="sidebar-brand sidebar-brand-desktop">
-            <i class="bi bi-stars"></i> <span>Fight D Fear</span>
-        </a>
-        <nav class="nav flex-column">
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/dashboard"><i class="bi bi-grid-1x2-fill"></i> <span>Dashboard</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salons/profile"><i class="bi bi-person-circle"></i> <span>Salon Profile</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/booking/list"><i class="bi bi-calendar-check"></i> <span>Manage Bookings</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/clients"><i class="bi bi-people-fill"></i> <span>Clients</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/stylists"><i class="bi bi-person-badge"></i> <span>Staff / Stylists</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/packages"><i class="bi bi-box-seam"></i> <span>Packages & Memberships</span></a>
-            
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/viewOffers?salonId=${sessionScope.loggedSalon.id}"><i class="bi bi-tags"></i> <span>Offers & Discounts</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/billing"><i class="bi bi-receipt"></i> <span>Billing & Invoices</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/payments"><i class="bi bi-wallet2"></i> <span>Payments & Payouts</span></a>
-            
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/inventory"><i class="bi bi-box2"></i> <span>Inventory</span></a>
-            <a class="nav-link-custom" href="${pageContext.request.contextPath}/salon/analytics"><i class="bi bi-bar-chart-fill"></i> <span>Reports & Analytics</span></a>
-            <a class="nav-link-custom active" href="${pageContext.request.contextPath}/salon/settings"><i class="bi bi-sliders"></i> <span>Settings</span></a>
-            <a class="nav-link-custom text-danger mt-3" href="${pageContext.request.contextPath}/salons/logout"><i class="bi bi-box-arrow-left"></i> <span>Logout</span></a>
-        </nav>
-    </div>
+    <jsp:include page="../fragments/salon-sidebar.jsp">
+    <jsp:param name="activeNav" value="settings"/>
+</jsp:include>
 
     <div class="main-content">
         

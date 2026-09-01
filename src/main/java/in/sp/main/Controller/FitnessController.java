@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -728,7 +729,6 @@ public class FitnessController {
 
     // TRAINER SUBMIT VERIFICATION POST
     @PostMapping(value = {"/trainer/submitVerification", "/trainer/submit-verification"})
-    @Transactional
     public String submitTrainerVerification(HttpSession session, RedirectAttributes redirectAttributes) {
         FitnessTrainer sessionTrainer = getSessionTrainer(session);
         if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
@@ -738,11 +738,12 @@ public class FitnessController {
             trainer = trainerRegistrationService.submitForVerification(trainer);
             session.setAttribute("loggedTrainer", trainer);
             redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! Admin review is in progress.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/fitness/trainer/dashboard";
+        } catch (ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("error",
+                    ex.getReason() != null ? ex.getReason() : "Unable to submit profile for verification.");
             return "redirect:/fitness/trainer/profile-completion";
         }
-        return "redirect:/fitness/trainer/dashboard";
     }
 
     // TRAINER LOGOUT

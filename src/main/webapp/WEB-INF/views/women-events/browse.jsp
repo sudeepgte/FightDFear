@@ -11,24 +11,47 @@
     <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Theme files -->
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css" rel="stylesheet">
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
-            --accent-pink: #f43f5e;
-            --accent-purple: #8b5cf6;
+            /* 60% Primary Surfaces */
+            --bg-primary: #F8FAFC;
+            --glow-bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+
+            /* 30% Secondary Structure */
+            --bg-secondary: #F8FAFC;
+            --fdf-border: #E2E8F0;
+            --border-secondary: #E2E8F0;
+
+            /* 10% Accent */
+            --brand-pink: #F43F5E;
+            --brand-pink-light: #FDA4AF;
+            --brand-pink-dark: #E11D48;
+            --brand-gold: #F59E0B;
+
+            /* Text colors */
+            --fdf-text: #0F172A;
+            --fdf-muted: #64748B;
+
+            /* Shadows & Transitions */
+            --shadow-sm: 0 10px 30px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 15px 35px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 25px 55px rgba(15, 23, 42, 0.10);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Outfit', sans-serif;
             background: var(--glow-bg);
             color: var(--fdf-text);
             overflow-x: hidden;
@@ -46,378 +69,479 @@
             position: absolute;
             width: 500px; height: 500px;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.12;
+            filter: blur(100px);
+            opacity: 0.06;
             animation: floatBlob 20s infinite alternate;
         }
-        .blob-1 { top: -100px; right: -100px; background: var(--accent-purple); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--accent-pink); animation-delay: -5s; }
+        .blob-1 { top: -100px; right: -100px; background: var(--brand-pink); }
+        .blob-2 { bottom: -150px; left: -150px; background: var(--brand-pink); animation-delay: -5s; }
         
         @keyframes floatBlob {
             0% { transform: translate(0, 0) scale(1); }
             100% { transform: translate(40px, 30px) scale(1.15); }
         }
 
-        /* Clean Minimal Header */
-        .glow-header {
-            padding: 60px 20px 40px;
+        /* Hero section with clean white-rose gradient */
+        .hero-banner-section {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-secondary) 100%);
+            padding: 85px 24px;
+            border-radius: 32px;
             text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--fdf-border);
             position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(244, 63, 94, 0.08);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+            margin-top: 10px;
         }
-        .glow-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 38px;
+        .hero-banner-section::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 10% 20%, rgba(244, 63, 94, 0.04) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        
+        .hero-banner-section h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 46px;
             font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
+            color: var(--fdf-text);
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            line-height: 1.2;
         }
-        .glow-header p {
+        .hero-banner-section p {
             color: var(--fdf-muted);
-            font-size: 15px;
-            max-width: 650px;
-            margin: 0 auto;
+            font-size: 17px;
+            max-width: 680px;
+            margin: 0 auto 30px;
             line-height: 1.6;
+            font-weight: 500;
         }
 
         /* Search bar */
         .search-bar { 
-            background: white; 
+            background: #FFFFFF; 
             border-radius: 50px; 
-            padding: 6px 6px 6px 20px;
+            padding: 8px 8px 8px 24px;
             display: flex; 
             align-items: center; 
-            gap: 8px; 
-            max-width: 600px; 
-            margin: 20px auto 0;
+            gap: 12px; 
+            max-width: 650px; 
+            margin: 0 auto;
             border: 1px solid var(--fdf-border);
             box-shadow: var(--shadow-sm); 
+            transition: var(--transition-smooth);
+        }
+        .search-bar:focus-within {
+            box-shadow: 0 10px 30px rgba(244, 63, 94, 0.12);
+            border-color: var(--brand-pink-light);
         }
         .search-bar input { 
             border: none; 
             outline: none; 
             flex: 1; 
-            font-size: 14px; 
-            color: #333; 
+            font-size: 15px; 
+            color: var(--fdf-text); 
+            font-weight: 500;
+        }
+        .search-bar input::placeholder {
+            color: #94A3B8;
         }
         .search-bar button { 
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%);
             border: none; 
-            color: white; 
+            color: #FFFFFF; 
             border-radius: 40px; 
-            padding: 8px 22px;
+            padding: 10px 28px;
             font-weight: 700; 
             cursor: pointer; 
-            font-size: 13px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+            transition: var(--transition-smooth);
         }
-
+        .search-bar button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(244, 63, 94, 0.3);
+        }
+ 
         /* Stats strip */
-        .stats-strip { 
-            background: white; 
-            padding: 15px 0; 
-            border-bottom: 1px solid var(--fdf-border); 
+        .stats-container-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid var(--fdf-border);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
         }
-        .stat-item { text-align: center; padding: 0 20px; }
-        .stat-num { font-size: 22px; font-weight: 800; color: var(--brand-purple); }
-        .stat-label { font-size: 10px; color: var(--fdf-muted); font-weight: 600; text-transform: uppercase; }
-
+        .stat-item { text-align: center; position: relative; }
+        .stat-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 15%;
+            height: 70%;
+            width: 1px;
+            background: var(--fdf-border);
+        }
+        @media (max-width: 768px) {
+            .stat-item:not(:last-child)::after { display: none; }
+        }
+        .stat-num { font-size: 28px; font-weight: 800; color: var(--fdf-text); }
+        .stat-label { font-size: 11px; color: var(--fdf-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+ 
         /* Category pills scroll */
+        .cat-scroll-outer {
+            margin-bottom: 40px;
+        }
         .cat-scroll-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             overflow-x: auto;
             scrollbar-width: none;
-            padding-bottom: 4px;
+            padding: 4px 0;
         }
         .cat-scroll-container::-webkit-scrollbar {
             display: none;
         }
         .btn-cat-pill {
-            padding: 8px 20px;
+            padding: 10px 24px;
             border-radius: 999px;
-            background: #fff;
+            background: #FFFFFF;
             border: 1px solid var(--fdf-border);
-            color: var(--fdf-muted);
-            font-size: 13px;
+            color: var(--fdf-text);
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition-smooth);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             text-decoration: none;
             white-space: nowrap;
+            box-shadow: var(--shadow-sm);
         }
-        .btn-cat-pill:hover, .btn-cat-pill.active {
-            background: var(--gradient-primary);
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+        .btn-cat-pill:hover {
+            border-color: var(--brand-pink-light);
+            color: var(--brand-pink);
+            transform: translateY(-1px);
         }
-
+        .btn-cat-pill.active {
+            background: var(--brand-pink);
+            color: #FFFFFF;
+            border-color: var(--brand-pink);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);
+        }
+ 
         /* Layout */
         .main-grid { 
             display: grid; 
-            grid-template-columns: 280px 1fr; 
-            gap: 30px; 
-            max-width: 1200px;
-            margin: 40px auto 60px; 
+            grid-template-columns: 300px 1fr; 
+            gap: 40px; 
+            max-width: 1400px;
+            margin: 0 auto 60px; 
             padding: 0 15px; 
         }
         @media (max-width: 992px) { 
             .main-grid { grid-template-columns: 1fr; } 
-            .filter-panel { order: -1; } 
         }
-
-        /* Filter panel */
+ 
+        /* Filter panel (30% secondary structure soft-rose background) */
         .filter-panel { 
-            background: white; 
-            border-radius: 24px; 
-            padding: 24px;
+            background: var(--bg-secondary); 
+            border-radius: 28px; 
+            padding: 28px;
             box-shadow: var(--shadow-sm); 
             height: fit-content; 
-            border: 1px solid var(--fdf-border);
+            border: 1px solid var(--border-secondary);
         }
         .filter-title { 
             font-weight: 800; 
-            font-size: 16px; 
-            color: var(--brand-purple); 
-            margin-bottom: 20px;
+            font-size: 18px; 
+            color: var(--fdf-text); 
+            margin-bottom: 24px;
             display: flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 10px; 
+            border-bottom: 2px solid var(--border-secondary);
+            padding-bottom: 12px;
         }
         .filter-label { 
-            font-size: 11px; 
+            font-size: 12px; 
             font-weight: 700; 
-            color: var(--brand-purple); 
+            color: var(--fdf-text); 
             text-transform: uppercase;
-            margin-bottom: 8px; 
-            margin-top: 16px; 
+            margin-bottom: 10px; 
+            margin-top: 20px; 
+            letter-spacing: 0.5px;
         }
         .filter-input { 
             width: 100%; 
             border: 1px solid var(--fdf-border); 
-            border-radius: 12px; 
-            padding: 10px 14px;
-            font-size: 14px; 
+            border-radius: 14px; 
+            padding: 12px 16px;
+            font-size: 15px; 
             outline: none; 
-            background: #fff;
+            background: #FFFFFF;
+            color: var(--fdf-text);
+            font-weight: 500;
+            transition: var(--transition-smooth);
+        }
+        .filter-input:focus {
+            border-color: var(--brand-pink);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.1);
         }
         .filter-btn { 
             width: 100%; 
-            background: var(--gradient-primary);
-            color: white; 
+            background: var(--brand-pink);
+            color: #FFFFFF; 
             border: none; 
-            border-radius: 12px; 
-            padding: 12px; 
+            border-radius: 14px; 
+            padding: 14px; 
             font-weight: 700; 
             cursor: pointer; 
-            margin-top: 20px; 
-            font-size: 14px; 
+            margin-top: 24px; 
+            font-size: 15px; 
+            transition: var(--transition-smooth);
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.15);
+        }
+        .filter-btn:hover { 
+            background: var(--brand-pink-dark);
+            transform: translateY(-1px);
         }
         .filter-clear { 
             display: block; 
             text-align: center; 
-            margin-top: 10px; 
+            margin-top: 14px; 
             color: var(--fdf-muted);
-            font-size: 13px; 
-            text-decoration: none; 
+            font-size: 14px; 
+            text-decoration: none !important; 
             font-weight: 600; 
+            transition: var(--transition-smooth);
         }
-
-        /* Featured Scroll */
+        .filter-clear:hover {
+            color: var(--brand-pink);
+        }
+ 
+        /* Featured Section (30% secondary structure soft rose background) */
         .featured-section { 
-            background: rgba(244, 63, 94, 0.02); 
-            border-top: 1px solid var(--fdf-border);
-            border-bottom: 1px solid var(--fdf-border);
-            padding: 30px 0; 
+            background: var(--bg-secondary); 
+            border: 1px solid var(--border-secondary);
+            border-radius: 32px;
+            padding: 35px; 
+            margin-bottom: 40px;
         }
         .section-title { 
-            font-size: 18px; 
-            font-weight: 800; 
-            color: var(--brand-purple); 
-            margin-bottom: 20px;
+            font-size: 22px; 
+            font-weight: 900; 
+            color: var(--fdf-text); 
+            margin-bottom: 24px;
             display: flex; 
             align-items: center; 
-            gap: 8px; 
+            gap: 10px; 
+            letter-spacing: -0.5px;
         }
         .featured-scroll { 
-            display: flex; 
-            gap: 20px; 
-            overflow-x: auto; 
-            scrollbar-width: none; 
-            padding-bottom: 10px; 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
         }
-        .featured-scroll::-webkit-scrollbar { display: none; }
         .featured-card { 
-            min-width: 290px; 
-            max-width: 290px; 
-            background: white; 
-            border-radius: 20px;
+            background: #FFFFFF; 
+            border-radius: 24px;
             overflow: hidden; 
             box-shadow: var(--shadow-sm); 
-            flex-shrink: 0;
             border: 1px solid var(--fdf-border);
-            transition: all 0.3s; 
+            transition: var(--transition-smooth); 
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .featured-card:hover { 
-            transform: translateY(-4px); 
-            box-shadow: var(--shadow-md);
+            transform: translateY(-6px); 
+            box-shadow: var(--shadow-lg);
             border-color: var(--brand-pink-light);
         }
-
+ 
         /* Event cards */
         .events-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 20px; 
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+            gap: 24px; 
         }
         .event-card { 
-            background: white; 
-            border-radius: 20px; 
+            background: #FFFFFF; 
+            border-radius: 24px; 
             overflow: hidden;
             border: 1px solid var(--fdf-border);
             box-shadow: var(--shadow-sm); 
-            transition: all 0.3s; 
+            transition: var(--transition-smooth); 
             display: flex;
             flex-direction: column;
             height: 100%;
         }
         .event-card:hover { 
-            transform: translateY(-5px); 
+            transform: translateY(-6px); 
             box-shadow: var(--shadow-lg); 
             border-color: var(--brand-pink-light);
         }
         .card-banner { 
             width: 100%; 
-            height: 170px; 
+            height: 200px; 
             object-fit: cover; 
+            transition: var(--transition-smooth);
+        }
+        .event-card:hover .card-banner, .featured-card:hover .card-banner {
+            transform: scale(1.05);
         }
         .card-banner-placeholder { 
             width: 100%; 
-            height: 170px; 
-            background: #fff5f7;
+            height: 200px; 
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-secondary) 100%);
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 3rem; 
+            font-size: 3.5rem; 
         }
         .card-body { 
-            padding: 20px; 
+            padding: 24px; 
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
         .card-cat { 
-            font-size: 10px; 
+            font-size: 11px; 
             font-weight: 800; 
             text-transform: uppercase; 
-            letter-spacing: 0.8px;
+            letter-spacing: 1px;
             color: var(--brand-pink); 
-            margin-bottom: 6px; 
+            margin-bottom: 8px; 
         }
         .card-title { 
-            font-size: 15px; 
+            font-size: 18px; 
             font-weight: 800; 
-            margin-bottom: 12px; 
+            margin-bottom: 14px; 
             line-height: 1.4;
-            color: var(--brand-purple);
+            color: var(--fdf-text);
         }
         .card-meta { 
             display: flex; 
             flex-direction: column; 
-            gap: 6px; 
-            margin-bottom: 16px; 
+            gap: 8px; 
+            margin-bottom: 20px; 
         }
         .card-meta span { 
-            font-size: 12px; 
+            font-size: 13px; 
             color: var(--fdf-muted); 
             display: flex; 
             align-items: center; 
-            gap: 6px; 
+            gap: 8px; 
+            font-weight: 500;
+        }
+        .card-meta i {
+            color: var(--brand-pink);
+            font-size: 14px;
         }
         .card-footer-row { 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
             margin-top: auto;
-            padding-top: 14px;
-            border-top: 1px dashed var(--fdf-border);
+            padding-top: 18px;
+            border-top: 1px solid var(--fdf-border);
         }
         .fee-badge { 
-            background: #f0fdf4; 
-            color: #15803d; 
+            background: var(--bg-secondary); 
+            color: var(--brand-pink); 
             border-radius: 20px; 
-            padding: 4px 12px;
-            font-size: 12px; 
-            font-weight: 700; 
+            padding: 6px 16px;
+            font-size: 13px; 
+            font-weight: 800; 
         }
-        .fee-badge.paid { 
-            background: #fff7ed; 
-            color: #c2410c; 
+        .fee-badge.free { 
+            background: #F0FDF4; 
+            color: #16A34A; 
         }
         .featured-badge { 
             position: absolute; 
-            top: 12px; 
-            left: 12px; 
-            background: var(--gradient-primary);
-            color: white; 
-            font-size: 10px; 
-            font-weight: 700; 
-            padding: 4px 10px; 
+            top: 16px; 
+            left: 16px; 
+            background: var(--brand-pink);
+            color: #FFFFFF; 
+            font-size: 11px; 
+            font-weight: 800; 
+            padding: 6px 14px; 
             border-radius: 20px; 
+            box-shadow: 0 4px 10px rgba(244, 63, 94, 0.25);
+            z-index: 2;
         }
-        .card-img-wrap { position: relative; }
+        .card-img-wrap { position: relative; overflow: hidden; }
         .register-btn { 
-            font-size: 12px; 
+            font-size: 13px; 
             font-weight: 700; 
-            color: var(--brand-purple); 
+            color: var(--brand-pink); 
             text-decoration: none !important;
-            border: 1px solid var(--fdf-border); 
-            border-radius: 20px; 
-            padding: 5px 12px;
-            transition: all 0.2s; 
+            border: 1.5px solid var(--brand-pink); 
+            border-radius: 24px; 
+            padding: 6px 16px;
+            transition: var(--transition-smooth); 
         }
         .register-btn:hover { 
-            background: var(--brand-purple); 
-            color: white; 
+            background: var(--brand-pink); 
+            color: #FFFFFF; 
             border-color: transparent;
         }
-
-        /* Organizer CTA */
+ 
+        /* Organizer CTA (30% secondary structure soft rose background) */
         .organizer-cta { 
-            background: white;
-            border: 1px solid var(--fdf-border);
-            border-radius: 24px; 
-            padding: 35px; 
+            background: var(--bg-secondary);
+            border-radius: 32px; 
+            padding: 45px; 
             text-align: center; 
-            margin: 40px auto;
-            max-width: 800px; 
-            box-shadow: var(--shadow-sm);
+            margin: 60px auto 40px;
+            max-width: 1000px; 
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-secondary);
         }
-        .organizer-cta h3 { font-size: 22px; font-weight: 800; color: var(--brand-purple); margin-bottom: 10px; }
-        .organizer-cta p { color: var(--fdf-muted); margin-bottom: 24px; font-size: 14px; }
+        .organizer-cta::after {
+            content: '';
+            position: absolute;
+            bottom: -50px; right: -50px;
+            width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.1) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+        .organizer-cta h3 { font-size: 26px; font-weight: 900; color: var(--fdf-text); margin-bottom: 12px; }
+        .organizer-cta p { color: var(--fdf-muted); margin-bottom: 30px; font-size: 15px; max-width: 600px; margin-left: auto; margin-right: auto; }
         
         .cta-btn { 
-            background: var(--gradient-primary); 
-            color: white; 
+            background: var(--brand-pink); 
+            color: #FFFFFF; 
             border: none; 
             border-radius: 30px;
-            padding: 12px 30px; 
+            padding: 14px 36px; 
             font-weight: 700; 
             cursor: pointer;
-            font-size: 14px; 
+            font-size: 15px; 
             text-decoration: none !important; 
             display: inline-block; 
-            transition: all 0.2s; 
+            transition: var(--transition-smooth); 
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
         }
         .cta-btn:hover { 
-            filter: brightness(1.1);
-            color: white;
+            background: var(--brand-pink-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35);
+            color: #FFFFFF;
+        }
+ 
+        /* Empty State */
+        .no-events.bg-white {
+            background-color: var(--bg-secondary) !important;
+            border-color: var(--border-secondary) !important;
         }
 
         /* Alert */
@@ -429,6 +553,7 @@
             max-width: 380px; 
             border-radius: 16px;
             box-shadow: var(--shadow-lg); 
+            border: 1px solid var(--border-secondary) !important;
             animation: slideIn 0.4s ease; 
         }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -437,7 +562,7 @@
 <body>
 
 <!-- Header -->
-
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <!-- Sidebar -->
@@ -465,46 +590,44 @@
             </div>
         </c:if>
 
-        <!-- Dashboard Header -->
-        <div class="glow-header">
-            <h1>Women Events 🌸</h1>
-            <p>Discover educational seminars, fitness workout workshops, entrepreneur meetups, and local health safety campaigns near you.</p>
+        <!-- Dashboard Header / Hero -->
+        <div class="hero-banner-section">
+            <h1>Discover <span>Events Made for Women</span> 🌸</h1>
+            <p>Discover workshops, conferences, wellness events, entrepreneurship, finance, career, and community meetups designed to inspire and empower you.</p>
             
             <form method="get" action="${pageContext.request.contextPath}/women-events" class="search-bar">
-                <i class="bi bi-search" style="color:var(--brand-purple); font-size: 14px;"></i>
-                <input type="text" name="query" placeholder="Search events by name..." value="${query}"/>
-                <button type="submit">Search</button>
+                <i class="bi bi-search" style="color:var(--brand-pink); font-size: 16px;"></i>
+                <input type="text" name="query" placeholder="Search events by name, category, or keyword..." value="${query}"/>
+                <button type="submit">Search Events</button>
             </form>
         </div>
 
         <!-- Stats Strip -->
-        <div class="stats-strip">
-            <div class="container">
-                <div class="row justify-content-center g-3">
-                    <div class="col-auto stat-item">
-                        <div class="stat-num">${events.size()}</div>
-                        <div class="stat-label">Events Near You</div>
-                    </div>
-                    <div class="col-auto stat-item">
-                        <div class="stat-num">6</div>
-                        <div class="stat-label">Categories</div>
-                    </div>
-                    <div class="col-auto stat-item">
-                        <div class="stat-num">${cities.size()}</div>
-                        <div class="stat-label">Cities</div>
-                    </div>
-                    <div class="col-auto stat-item">
-                        <div class="stat-num">9+</div>
-                        <div class="stat-label">Organizer Types</div>
-                    </div>
+        <div class="stats-container-card">
+            <div class="row justify-content-center g-3">
+                <div class="col-6 col-md-3 stat-item">
+                    <div class="stat-num">${events.size()}</div>
+                    <div class="stat-label">Events Near You</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item">
+                    <div class="stat-num">6</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item">
+                    <div class="stat-num">${cities.size()}</div>
+                    <div class="stat-label">Cities Active</div>
+                </div>
+                <div class="col-6 col-md-3 stat-item">
+                    <div class="stat-num">9+</div>
+                    <div class="stat-label">Organizer Types</div>
                 </div>
             </div>
         </div>
 
         <!-- Category Pills Scroll -->
-        <div class="container mt-4">
-            <div class="d-flex align-items-center justify-content-center mt-3" style="max-width: 800px; margin: 0 auto;">
-                <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+        <div class="cat-scroll-outer mt-4">
+            <div class="d-flex align-items-center justify-content-center" style="max-width: 800px; margin: 0 auto;">
+                <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)" style="border-color: var(--fdf-border); color: var(--fdf-text);">
                     <i class="bi bi-chevron-left"></i>
                 </button>
                 <div class="cat-scroll-container flex-grow-1" style="margin-top: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
@@ -512,25 +635,25 @@
                         <i class="bi bi-grid-fill"></i> All Events
                     </a>
                     <a href="?category=HEALTH_WELLNESS" class="btn-cat-pill ${'HEALTH_WELLNESS' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-heart-pulse"></i> Health &amp; Wellness
+                        <i class="bi bi-heart-pulse-fill"></i> Health &amp; Wellness
                     </a>
                     <a href="?category=ENTREPRENEURSHIP_CAREER" class="btn-cat-pill ${'ENTREPRENEURSHIP_CAREER' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-briefcase"></i> Entrepreneurship
+                        <i class="bi bi-briefcase-fill"></i> Entrepreneurship
                     </a>
                     <a href="?category=FITNESS_SPORTS" class="btn-cat-pill ${'FITNESS_SPORTS' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-trophy"></i> Fitness &amp; Sports
+                        <i class="bi bi-trophy-fill"></i> Fitness &amp; Sports
                     </a>
                     <a href="?category=EDUCATION_SKILLS" class="btn-cat-pill ${'EDUCATION_SKILLS' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-book"></i> Education &amp; Skills
+                        <i class="bi bi-book-fill"></i> Education &amp; Skills
                     </a>
                     <a href="?category=SOCIAL_COMMUNITY" class="btn-cat-pill ${'SOCIAL_COMMUNITY' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-people"></i> Social &amp; Community
+                        <i class="bi bi-people-fill"></i> Social &amp; Community
                     </a>
                     <a href="?category=SAFETY_AWARENESS" class="btn-cat-pill ${'SAFETY_AWARENESS' == selectedCategory ? 'active' : ''}">
-                        <i class="bi bi-shield-check"></i> Safety &amp; Awareness
+                        <i class="bi bi-shield-fill-check"></i> Safety &amp; Awareness
                     </a>
                 </div>
-                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)" style="border-color: var(--fdf-border); color: var(--fdf-text);">
                     <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
@@ -562,6 +685,15 @@
                                         <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
                                         <span><i class="bi bi-geo-alt-fill"></i> ${ev.city}</span>
                                     </div>
+                                    <div class="card-footer-row">
+                                        <span class="fee-badge ${ev.free ? 'free' : ''}">
+                                            <c:choose>
+                                                <c:when test="${ev.free}">🆓 Free</c:when>
+                                                <c:otherwise>₹${ev.entryFee}</c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                        <span class="register-btn">View Details →</span>
+                                    </div>
                                 </div>
                             </a>
                         </c:forEach>
@@ -572,9 +704,9 @@
 
         <!-- Recommended Events (if any) -->
         <c:if test="${not empty recommendations && empty selectedCategory && empty query}">
-            <div class="featured-section" style="background: rgba(16, 185, 129, 0.02); border-top: none;">
+            <div class="featured-section" style="background: var(--bg-secondary); border: 1px solid var(--border-secondary); margin-top: 20px;">
                 <div class="container px-4">
-                    <div class="section-title" style="color: #10b981;"><i class="bi bi-stars"></i> Recommended for You</div>
+                    <div class="section-title" style="color: var(--fdf-text);"><i class="bi bi-stars text-warning"></i> Recommended for You</div>
                     <div class="featured-scroll">
                         <c:forEach var="ev" items="${recommendations}">
                             <a href="${pageContext.request.contextPath}/women-events/${ev.id}" class="featured-card" style="text-decoration:none; color:inherit;">
@@ -587,14 +719,23 @@
                                             <div class="card-banner-placeholder">🌸</div>
                                         </c:otherwise>
                                     </c:choose>
-                                    <span class="featured-badge" style="background: #10b981;"><i class="bi bi-stars"></i> Recommended</span>
+                                    <span class="featured-badge" style="background: var(--brand-pink);"><i class="bi bi-stars text-warning"></i> Recommended</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="card-cat" style="color:#10b981;">${ev.category.displayName}</div>
+                                    <div class="card-cat" style="color: var(--brand-pink);">${ev.category.displayName}</div>
                                     <div class="card-title">${ev.name}</div>
                                     <div class="card-meta">
                                         <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
                                         <span><i class="bi bi-geo-alt-fill"></i> ${ev.city}</span>
+                                    </div>
+                                    <div class="card-footer-row">
+                                        <span class="fee-badge ${ev.free ? 'free' : ''}">
+                                            <c:choose>
+                                                <c:when test="${ev.free}">🆓 Free</c:when>
+                                                <c:otherwise>₹${ev.entryFee}</c:otherwise>
+                                            </c:choose>
+                                        </span>
+                                        <span class="register-btn">View Details →</span>
                                     </div>
                                 </div>
                             </a>
@@ -608,7 +749,7 @@
         <div class="main-grid">
             <!-- Filter Panel -->
             <aside class="filter-panel">
-                <div class="filter-title"><i class="bi bi-funnel-fill"></i> Filter Events</div>
+                <div class="filter-title"><i class="bi bi-funnel-fill" style="color:var(--brand-pink);"></i> Filter Events</div>
                 <form method="get" action="${pageContext.request.contextPath}/women-events">
                     <div class="filter-label">City</div>
                     <select name="city" class="filter-input">
@@ -637,37 +778,37 @@
 
                 <c:if test="${not empty loggedUser}">
                     <a href="${pageContext.request.contextPath}/women-events/my-registrations"
-                       style="display:block; background:#fff5f7; color:var(--brand-purple); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid var(--brand-pink-light);">
-                        <i class="bi bi-ticket-perforated-fill"></i> My Tickets
+                       style="display:block; background:var(--bg-secondary); color:var(--fdf-text); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid var(--border-secondary);">
+                        <i class="bi bi-ticket-perforated-fill text-danger me-1"></i> My Tickets
                     </a>
                 </c:if>
 
                 <c:choose>
                     <c:when test="${not empty loggedHost}">
                         <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard"
-                           style="display:block; background:#f0fdf4; color:#15803d; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px;">
-                            <i class="bi bi-calendar-plus-fill"></i> Organizer Dashboard
+                           style="display:block; background:var(--bg-secondary); color:var(--fdf-text); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid var(--fdf-border);">
+                            <i class="bi bi-calendar-plus-fill me-1"></i> Organizer Dashboard
                         </a>
                         <a href="${pageContext.request.contextPath}/women-events/host/logout"
-                           style="display:block; background:#fee2e2; color:#ef4444; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px;">
-                            <i class="bi bi-box-arrow-right"></i> Host Logout
+                           style="display:block; background:var(--bg-secondary); color:var(--brand-pink); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid rgba(244,63,94,0.15);">
+                            <i class="bi bi-box-arrow-right me-1"></i> Host Logout
                         </a>
                     </c:when>
                     <c:otherwise>
                         <a href="${pageContext.request.contextPath}/women-events/host/register"
-                           style="display:block; background:#fef3c7; color:#d97706; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px;">
-                            <i class="bi bi-person-badge-fill"></i> Register as Host
+                           style="display:block; background:var(--bg-secondary); color:var(--fdf-text); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid var(--border-secondary);">
+                            <i class="bi bi-person-badge-fill text-warning me-1"></i> Register as Host
                         </a>
                         <a href="${pageContext.request.contextPath}/women-events/host/login"
-                           style="display:block; background:#f0fdf4; color:#16a34a; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px;">
-                            <i class="bi bi-box-arrow-in-right"></i> Host Login
+                           style="display:block; background:#FFFFFF; color:var(--fdf-text); border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600; margin-bottom:10px; border: 1px solid var(--fdf-border);">
+                            <i class="bi bi-box-arrow-in-right text-danger me-1"></i> Host Login
                         </a>
                     </c:otherwise>
                 </c:choose>
 
                 <c:if test="${empty loggedUser && empty loggedHost}">
                     <a href="${pageContext.request.contextPath}/login"
-                       style="display:block; background: var(--gradient-primary); color:white; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:600;">
+                       style="display:block; background: var(--brand-pink); color:white; border-radius:12px; padding:12px; text-align:center; text-decoration:none; font-weight:700; box-shadow: 0 4px 10px rgba(244,63,94,0.2); transition: var(--transition-smooth);">
                         <i class="bi bi-person-circle me-1"></i> Login to Register
                     </a>
                 </c:if>
@@ -689,7 +830,7 @@
                             <c:forEach var="ev" items="${events}">
                                 <div class="col-12" style="display: contents;">
                                     <div class="event-card">
-                                        <a href="${pageContext.request.contextPath}/women-events/${ev.id}">
+                                        <a href="${pageContext.request.contextPath}/women-events/${ev.id}" style="text-decoration:none; color:inherit; display:flex; flex-direction:column; height:100%;">
                                             <div class="card-img-wrap">
                                                 <c:choose>
                                                     <c:when test="${not empty ev.bannerImage}">
@@ -698,7 +839,7 @@
                                                     <c:otherwise>
                                                         <div class="card-banner-placeholder">
                                                             <c:choose>
-                                                                <c:when test="${ev.category == 'HEALTH_WELLNESS'}">💊</c:when>
+                                                                <c:when test="${ev.category == 'HEALTH_WELLNESS'}">❤️</c:when>
                                                                 <c:when test="${ev.category == 'ENTREPRENEURSHIP_CAREER'}">💼</c:when>
                                                                 <c:when test="${ev.category == 'FITNESS_SPORTS'}">🏃‍♀️</c:when>
                                                                 <c:when test="${ev.category == 'EDUCATION_SKILLS'}">📚</c:when>
@@ -716,12 +857,12 @@
                                                 <div class="card-cat">${ev.category.displayName}</div>
                                                 <h4 class="card-title">${ev.name}</h4>
                                                 <div class="card-meta">
-                                                    <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
-                                                    <span><i class="bi bi-geo-alt"></i> ${ev.venue}, ${ev.city}</span>
-                                                    <span><i class="bi bi-person"></i> ${ev.organizerName} <small class="text-muted">(${ev.organizerType})</small></span>
+                                                    <span><i class="bi bi-calendar3"></i> ${not empty ev.eventDate ? ev.eventDate : 'Date not provided'}</span>
+                                                    <span><i class="bi bi-geo-alt"></i> ${not empty ev.venue ? ev.venue : 'Venue not provided'}<c:if test="${not empty ev.city}">, ${ev.city}</c:if></span>
+                                                    <span><i class="bi bi-person"></i> ${not empty ev.organizerName ? ev.organizerName : 'Organizer not provided'}</span>
                                                 </div>
                                                 <div class="card-footer-row">
-                                                    <span class="fee-badge ${ev.free ? '' : 'paid'}">
+                                                    <span class="fee-badge ${ev.free ? 'free' : ''}">
                                                         <c:choose>
                                                             <c:when test="${ev.free}">🆓 Free</c:when>
                                                             <c:otherwise>₹${ev.entryFee}</c:otherwise>
@@ -740,7 +881,7 @@
                         <div class="no-events text-center py-5 text-muted bg-white rounded-4 border">
                             <span class="display-3 mb-3 d-block">🔍</span>
                             <h4 class="fw-bold text-dark mb-1">No events found</h4>
-                            <p class="small mb-0">Try adjusting your filters or <a href="${pageContext.request.contextPath}/women-events" style="color:var(--brand-purple); font-weight:700;">browse all events</a>.</p>
+                            <p class="small mb-0">Try adjusting your filters or <a href="${pageContext.request.contextPath}/women-events" style="color:var(--brand-pink); font-weight:700;">browse all events</a>.</p>
                         </div>
                     </c:otherwise>
                 </c:choose>
@@ -754,7 +895,7 @@
                             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="cta-btn">Organizer Dashboard</a>
                         </c:when>
                         <c:otherwise>
-                            <a href="${pageContext.request.contextPath}/women-events/host/login" class="cta-btn me-2" style="background:#fff; border:1px solid var(--fdf-border); color:var(--brand-purple);">Host Login</a>
+                            <a href="${pageContext.request.contextPath}/women-events/host/login" class="cta-btn me-2" style="background:#FFFFFF; border:1px solid var(--fdf-border); color:var(--brand-pink);">Host Login</a>
                             <a href="${pageContext.request.contextPath}/women-events/host/register" class="cta-btn">Register to Host</a>
                         </c:otherwise>
                     </c:choose>

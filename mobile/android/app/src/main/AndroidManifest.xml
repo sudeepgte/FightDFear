@@ -34,10 +34,15 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM"/>
-        <!-- Emulator GPU often blacks out with Impeller OpenGLES; use Skia on this machine. -->
+        <!-- Emulator GPU (ranchu/virtgpu) often fails to composite Flutter SurfaceView
+             frames (widget tree/a11y live, pixels stay black). Prefer Skia + software
+             rendering so the first frame always paints; TextureView is set in MainActivity. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableSoftwareRendering"
+            android:value="true" />
     </application>
     <queries>
         <intent>

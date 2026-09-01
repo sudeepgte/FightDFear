@@ -4,6 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import java.beans.PropertyEditorSupport;
+import org.springframework.web.multipart.MultipartFile;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.*;
@@ -24,6 +28,9 @@ public class OfferController {
 
     @Autowired
     private OfferRepository offerRepository;
+
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @Autowired
     private UserRepository userRepository;
@@ -63,6 +70,7 @@ public class OfferController {
                             @RequestParam(value = "serviceIds", required = false) List<Long> serviceIds,
                             @RequestParam(value = "startTimeStr", required = false) String startTimeStr,
                             @RequestParam(value = "endTimeStr", required = false) String endTimeStr,
+                            @RequestParam(value = "offerImage", required = false) MultipartFile offerImage,
                             HttpSession session,
                             Model model) {
         
@@ -103,12 +111,21 @@ public class OfferController {
         }
         offer.setApplicableServices(linkedServices);
         
+        if (offerImage != null && !offerImage.isEmpty()) {
+            try {
+                String imageUrl = fileUploadService.saveFile(offerImage);
+                offer.setImageUrl(imageUrl);
+            } catch (java.io.IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
         offerService.saveOffer(offer);
         session.setAttribute("successMsg", "Offer created successfully!");
         return "redirect:/salon/viewOffers?salonId=" + salonId;
     }
 
-    private static String validateOffer(Offer offer) {
+        private static String validateOffer(Offer offer) {
         if (offer.getTitle() == null || offer.getTitle().isBlank()) {
             return "Offer Title is required.";
         }
@@ -130,11 +147,11 @@ public class OfferController {
         if (offer.getOriginalPrice() <= 0) {
             return "Original Price must be greater than zero.";
         }
-        if (offer.getOfferPrice() < 0) {
-            return "Offer Price cannot be negative.";
+        if (offer.getDiscountedPrice() < 0) {
+            return "Discounted Price cannot be negative.";
         }
-        if (offer.getOfferPrice() >= offer.getOriginalPrice()) {
-            return "Offer Price must be less than the Original Price.";
+        if (offer.getDiscountedPrice() >= offer.getOriginalPrice()) {
+            return "Discounted Price must be less than the Original Price.";
         }
         if (offer.getStartDate() == null) {
             return "Campaign Start Date is required.";
@@ -150,8 +167,8 @@ public class OfferController {
         double discount = offer.getDiscountPercent();
         if (discount <= 0 || discount >= 100) {
             // Fall back to computing from prices when discount missing/invalid but prices are usable
-            if (offer.getOfferPrice() >= 0 && offer.getOfferPrice() < offer.getOriginalPrice()) {
-                discount = ((offer.getOriginalPrice() - offer.getOfferPrice()) / offer.getOriginalPrice()) * 100.0;
+            if (offer.getDiscountedPrice() >= 0 && offer.getDiscountedPrice() < offer.getOriginalPrice()) {
+                discount = ((offer.getOriginalPrice() - offer.getDiscountedPrice()) / offer.getOriginalPrice()) * 100.0;
             }
         }
         if (discount <= 0 || discount >= 100) {
@@ -160,9 +177,6 @@ public class OfferController {
         discount = Math.round(discount * 100.0) / 100.0;
         offer.setDiscountPercent(discount);
 
-        // Keep offer price aligned with the entered discount
-        double computedOffer = offer.getOriginalPrice() * (1.0 - (discount / 100.0));
-        offer.setOfferPrice(Math.round(computedOffer * 100.0) / 100.0);
         return null;
     }
 
@@ -310,3 +324,6 @@ public class OfferController {
     }
 
 }
+
+
+

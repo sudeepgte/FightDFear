@@ -12,12 +12,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --navy-dark: #0f172a;
-            --navy-light: #1e1b4b;
-            --primary: #312e81;
+            --navy-dark: #0f172a; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519;
+            --navy-light: #4c0519;
+            --primary: #f43f5e;
             --coral: #f43f5e;
             --coral-hover: #e11d48;
-            --bg-light: #f8fafc;
+            --bg-light: #f8fafc; --rose-bg-light: #ffe4e6;
         }
 
         body {
@@ -35,8 +35,8 @@
             width: 210px;
             min-width: 210px;
             max-width: 210px;
-            background: var(--navy-dark);
-            color: white;
+            background: #ffffff;
+            color: #0f172a;
             height: 100vh;
             position: fixed;
             top: 0;
@@ -45,7 +45,7 @@
             padding: 20px 0;
             margin: 0;
             z-index: 1000;
-            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+            box-shadow: 2px 0 16px rgba(244,63,94,0.08); border-right: 1px solid #ffe4e6;
         }
 
         .sidebar-heading {
@@ -55,12 +55,13 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid #ffe4e6;
+            color: #4c0519;
         }
 
         .sidebar-link {
             background: transparent;
-            color: rgba(255,255,255,0.7);
+            color: #64748b;
             padding: 10px 20px;
             margin-bottom: 8px;
             font-size: 0.9rem;
@@ -74,9 +75,9 @@
         }
 
         .sidebar-link:hover, .sidebar-link.active {
-            color: white;
-            background: rgba(255,255,255,0.05);
-            border-left-color: var(--coral);
+            color: #f43f5e;
+            background: #fff1f2;
+            border-left-color: #f43f5e;
         }
 
         #page-content-wrapper {
@@ -141,7 +142,7 @@
         .proposal-title-block h3 {
             font-size: 1.5rem;
             font-weight: 700;
-            color: var(--navy-dark);
+            color: #0f172a;
             margin-bottom: 4px;
         }
         .proposal-title-block p {
@@ -206,7 +207,7 @@
             }
             .sidebar-link:hover, .sidebar-link.active {
                 border-left-color: transparent !important;
-                background: var(--coral) !important;
+                background: #f43f5e !important;
             }
             #page-content-wrapper {
                 margin-left: 0 !important;
@@ -233,7 +234,30 @@
                 padding: 12px 10px !important;
             }
         }
-    </style>
+    
+        .btn-rose {
+            background-color: #f43f5e;
+            color: white;
+            border: none;
+        }
+        .btn-rose:hover {
+            background-color: #e11d48;
+            color: white;
+        }
+        .btn-outline-rose {
+            color: #f43f5e;
+            border-color: #f43f5e;
+            background-color: transparent;
+        }
+        .btn-outline-rose:hover {
+            background-color: #f43f5e;
+            color: white;
+        }
+
+        .bg-rose { background-color: #f43f5e !important; color: white !important; }
+        .text-rose { color: #f43f5e !important; }
+        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+</style>
 </head>
 <body>
 
@@ -257,13 +281,13 @@
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link active">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/dashboard#bookings-section" class="sidebar-link">
                 <i class="bi bi-calendar2-check"></i> My Bookings
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/dashboard#portfolio-section" class="sidebar-link">
                 <i class="bi bi-wallet2"></i> Wallet
             </a>
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
+            <a href="${pageContext.request.contextPath}/investor/complete-profile" class="sidebar-link">
                 <i class="bi bi-person"></i> Profile
             </a>
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
@@ -289,7 +313,7 @@
                 <h3>${proposal.title}</h3>
                 <p>${proposal.category} <i class="bi bi-dot"></i> <i class="bi bi-geo-alt"></i> ${proposal.location}</p>
                 <c:if test="${investor.subscribed}">
-                    <a href="${pageContext.request.contextPath}/investor/chat/${proposal.entrepreneur.id}?proposalId=${proposal.id}" class="btn btn-primary rounded-pill px-4 mt-2" style="background-color: var(--primary); border: none; font-size:0.85rem;">
+                    <a href="${pageContext.request.contextPath}/investor/chat/${proposal.entrepreneur.id}?proposalId=${proposal.id}" class="btn btn-rose rounded-pill px-4 mt-2" style="background-color: #f43f5e; border: none; font-size:0.85rem;">
                         <i class="bi bi-chat-dots-fill"></i> Chat with Entrepreneur
                     </a>
                 </c:if>
@@ -297,13 +321,13 @@
 
             <!-- Funding Progress Bar -->
             <div class="funding-section">
-                <h5 class="fw-bold mb-3" style="color: var(--navy-dark); font-size:1rem;"><i class="bi bi-graph-up-arrow"></i> Funding Target</h5>
+                <h5 class="fw-bold mb-3" style="color: #0f172a; font-size:1rem;"><i class="bi bi-graph-up-arrow"></i> Funding Target</h5>
                 <div class="d-flex justify-content-between mb-2 fw-semibold" style="font-size:0.95rem;">
-                    <span class="text-success">₹${proposal.amountRaised} Raised</span>
-                    <span class="text-navy">₹${proposal.fundingNeeded} Target</span>
+                    <span class="text-rose">₹${proposal.amountRaised} Raised</span>
+                    <span class="text-dark">₹${proposal.fundingNeeded} Target</span>
                 </div>
                 <div class="progress mb-3">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: ${(proposal.amountRaised/proposal.fundingNeeded)*100}%;"></div>
+                    <div class="progress-bar bg-rose" role="progressbar" style="width: ${(proposal.amountRaised/proposal.fundingNeeded)*100}%;"></div>
                 </div>
                 <div class="text-muted small d-flex justify-content-between flex-wrap">
                     <span>Remaining required capital: <strong>₹${proposal.fundingNeeded - proposal.amountRaised}</strong></span>
@@ -318,14 +342,14 @@
                 <!-- Main Content Column -->
                 <div class="col-lg-8">
                     <div class="panel pb-0 mb-0">
-                        <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-file-text-fill"></i> Project Description</h5>
+                        <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-file-text-fill"></i> Project Description</h5>
                         <p class="text-secondary" style="line-height:1.7; font-size:0.95rem;">
                             ${proposal.description}
                         </p>
 
                         <!-- Media Grid -->
                         <c:if test="${not empty proposal.photos}">
-                            <h5 class="fw-bold mb-3 mt-4" style="color: var(--navy-dark);"><i class="bi bi-images"></i> Business Photos</h5>
+                            <h5 class="fw-bold mb-3 mt-4" style="color: #0f172a;"><i class="bi bi-images"></i> Business Photos</h5>
                             <div class="row g-3 mb-3">
                                 <c:forEach var="photo" items="${fn:split(proposal.photos, ',')}">
                                     <div class="col-6 col-sm-4">
@@ -337,7 +361,7 @@
 
                         <!-- Video Pitch Player -->
                         <c:if test="${not empty proposal.videoPitch}">
-                            <h5 class="fw-bold mb-2 mt-3" style="color: var(--navy-dark); font-size:1rem;"><i class="bi bi-play-btn-fill"></i> Video Pitch</h5>
+                            <h5 class="fw-bold mb-2 mt-3" style="color: #0f172a; font-size:1rem;"><i class="bi bi-play-btn-fill"></i> Video Pitch</h5>
                             <div class="video-pitch-wrapper">
                                 <div class="ratio ratio-16x9">
                                     <video controls class="w-100 h-100" style="display:block;">
@@ -357,7 +381,7 @@
                         <c:choose>
                             <c:when test="${investor.subscribed}">
                                 <!-- Unmasked Profile -->
-                                <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-person-fill-check"></i> Entrepreneur Profile</h5>
+                                <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-person-fill-check"></i> Entrepreneur Profile</h5>
                                 <div class="text-center mb-3">
                                     <img src="${pageContext.request.contextPath}${proposal.entrepreneur.profilePhoto}" alt="Profile" class="rounded-circle border" style="width:75px; height:75px; object-fit:cover;">
                                     <h6 class="fw-bold mt-2 mb-0">${proposal.entrepreneur.fullName}</h6>
@@ -415,7 +439,7 @@
                             </div>
                         </c:if>
                         <div class="${not investor.subscribed ? 'masked-blur' : ''}">
-                            <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-cash-stack"></i> Funding Selector</h5>
+                            <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-cash-stack"></i> Funding Selector</h5>
                             
                             <c:choose>
                                 <c:when test="${proposal.amountRaised >= proposal.fundingNeeded}">
@@ -434,11 +458,11 @@
                                         <input type="range" class="form-range" id="fundingSlider" min="100" max="${openRemaining}" step="100" value="100" oninput="updateInvestmentDisplay(this.value)">
                                         <div class="d-flex justify-content-between small text-muted mt-1" style="font-size:0.75rem;">
                                             <span>Min: ₹100</span>
-                                            <span class="fw-bold text-navy" id="sliderValueDisplay">₹100</span>
+                                            <span class="fw-bold text-dark" id="sliderValueDisplay">₹100</span>
                                             <span>Max: ₹${openRemaining}</span>
                                         </div>
                                     </div>
-                                    <button class="btn btn-primary w-100 py-2 rounded-pill fw-bold" style="background-color: var(--coral); border:none; font-size:0.85rem;" onclick="triggerInvestmentCheckout()">
+                                    <button class="btn btn-rose w-100 py-2 rounded-pill fw-bold" style="background-color: var(--coral); border:none; font-size:0.85rem;" onclick="triggerInvestmentCheckout()">
                                         Submit Investment
                                     </button>
                                 </c:otherwise>
@@ -459,21 +483,22 @@
                             </div>
                         </c:if>
                         <div class="${not investor.subscribed ? 'masked-blur' : ''}">
-                            <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-calendar-check-fill"></i> Schedule Meeting</h5>
+                            <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-calendar-check-fill"></i> Schedule Meeting</h5>
+                            <p class="mb-3" style="font-size:0.78rem; background:#f0f9ff; border-left:3px solid #0284c7; padding:8px 10px; border-radius:6px; color:#0369a1;">
+                                <i class="bi bi-info-circle me-1"></i>
+                                The entrepreneur will provide a meeting link once they accept your request.
+                            </p>
                             <form action="${pageContext.request.contextPath}/investor/proposal/${proposal.id}/meeting" method="post">
                                 <div class="mb-2">
                                     <label class="form-label small fw-semibold">Date & Time *</label>
                                     <input type="datetime-local" name="meetingTime" class="form-control form-control-sm" required>
                                 </div>
-                                <div class="mb-2">
-                                    <label class="form-label small fw-semibold">Location / Link *</label>
-                                    <input type="text" name="location" class="form-control form-control-sm" placeholder="e.g. Google Meet link or address" required>
-                                </div>
+
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold">Agenda Notes *</label>
                                     <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Describe meeting agenda..." required></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill" style="background-color: var(--primary); border:none;">Request Meeting</button>
+                                <button type="submit" class="btn btn-rose btn-sm w-100 rounded-pill" style="background-color: #f43f5e; border:none;">Request Meeting</button>
                             </form>
                         </div>
                     </div>
@@ -491,13 +516,13 @@
                             </div>
                         </c:if>
                         <div class="${not investor.subscribed ? 'masked-blur' : ''}">
-                            <h5 class="fw-bold mb-3" style="color: var(--navy-dark);"><i class="bi bi-question-square-fill"></i> Q&A Board</h5>
+                            <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-question-square-fill"></i> Q&A Board</h5>
                             
                             <!-- Ask Box -->
                             <form action="${pageContext.request.contextPath}/investor/proposal/${proposal.id}/ask" method="post" class="mb-3">
                                 <div class="input-group input-group-sm">
                                     <input type="text" name="question" class="form-control" placeholder="Ask a question..." required>
-                                    <button class="btn btn-primary" type="submit" style="background-color: var(--primary); border: none;">Ask</button>
+                                    <button class="btn btn-rose" type="submit" style="background-color: #f43f5e; border: none;">Ask</button>
                                 </div>
                             </form>
 
@@ -505,10 +530,10 @@
                             <div style="max-height: 250px; overflow-y: auto;">
                                 <c:forEach var="q" items="${qna}">
                                     <div class="border-bottom py-2" style="font-size:0.8rem;">
-                                        <div class="fw-bold text-navy"><i class="bi bi-chat-left-text"></i> Q by ${q.investor.fullName}:</div>
+                                        <div class="fw-bold text-dark"><i class="bi bi-chat-left-text"></i> Q by ${q.investor.fullName}:</div>
                                         <p class="text-secondary mb-1">"${q.question}"</p>
                                         <div class="ps-2 border-start py-1 bg-light">
-                                            <span class="fw-semibold text-success">A:</span>
+                                            <span class="fw-semibold text-rose">A:</span>
                                             <span class="text-secondary">
                                                 <c:choose>
                                                     <c:when test="${not empty q.answer}">
@@ -540,7 +565,7 @@
             <!-- Header -->
             <div class="modal-header bg-dark text-white border-0 py-3" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-fill-check text-success fs-3"></i>
+                    <i class="bi bi-shield-fill-check text-rose fs-3"></i>
                     <div>
                         <h6 class="modal-title fw-bold m-0" style="letter-spacing:1px;">RAZORPAY CHECKOUT</h6>
                         <span class="text-muted small" style="font-size:10px;">Test Mode</span>
@@ -560,32 +585,32 @@
                     <div class="p-3 border rounded-3 text-start bg-light mb-4" style="font-size:0.9rem;">
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Proposal Title:</span>
-                            <span class="fw-bold text-navy">${proposal.title}</span>
+                            <span class="fw-bold text-dark">${proposal.title}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-muted">Entrepreneur:</span>
-                            <span class="fw-bold text-navy">${proposal.entrepreneur.fullName}</span>
+                            <span class="fw-bold text-dark">${proposal.entrepreneur.fullName}</span>
                         </div>
                     </div>
                     
-                    <button class="btn btn-primary w-100 rounded-pill py-3 fw-bold" onclick="simulatePaymentProcessing()">
+                    <button class="btn btn-rose w-100 rounded-pill py-3 fw-bold" onclick="simulatePaymentProcessing()">
                         Confirm Simulated Investment
                     </button>
                 </div>
 
                 <!-- Loading screen -->
                 <div id="checkoutLoadingContent" style="display:none;" class="py-4">
-                    <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+                    <div class="spinner-border text-rose" role="status" style="width: 3rem; height: 3rem;">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <h5 class="fw-bold text-success mt-4">Processing Simulated Transfer...</h5>
+                    <h5 class="fw-bold text-rose mt-4">Processing Simulated Transfer...</h5>
                     <p class="text-muted small">Please do not refresh or close this dialog.</p>
                 </div>
 
                 <!-- Success Screen -->
                 <div id="checkoutSuccessContent" style="display:none;" class="py-4">
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                    <h5 class="fw-bold text-success mt-4">Investment Successful!</h5>
+                    <i class="bi bi-check-circle-fill text-rose" style="font-size: 4rem;"></i>
+                    <h5 class="fw-bold text-rose mt-4">Investment Successful!</h5>
                     <p class="text-muted small">Recording transactions...</p>
                 </div>
             </div>

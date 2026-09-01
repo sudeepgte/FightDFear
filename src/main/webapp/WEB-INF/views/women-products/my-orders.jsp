@@ -14,17 +14,30 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: #fffcfd;
+      font-family: 'Inter', 'Poppins', sans-serif;
+      background: #F8FAFC;
       color: var(--fdf-text);
       min-height: 100vh;
     }
     .orders-container {
-      max-width: 900px;
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 40px 20px;
+      padding: 32px 24px 56px;
+      width: 100%;
+    }
+    .order-card-body {
+      padding: 20px 24px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .orders-container { padding: 20px 12px 40px; }
+      .order-card-body { grid-template-columns: 1fr; }
     }
     .back-link {
       display: inline-flex;
@@ -103,12 +116,6 @@
       justify-content: center;
       border-radius: 12px;
       font-size: 20px;
-    }
-    .order-card-body {
-      padding: 24px;
-      display: flex;
-      gap: 24px;
-      align-items: center;
     }
     .tracking-toggle-btn {
       display: inline-flex;
@@ -298,7 +305,7 @@
       letter-spacing: 0.5px;
     }
     .status-PLACED { background: #fef3c7; color: #92400e; }
-    .status-CONFIRMED { background: #dbeafe; color: #1e40af; }
+    .status-CONFIRMED { background: #ffe4e6; color: #9f1239; }
     .status-SHIPPED { background: #f3e8ff; color: #6b21a8; }
     .status-DELIVERED { background: #d1fae5; color: #065f46; }
     .status-CANCELLED { background: #fee2e2; color: #991b1b; }
@@ -408,7 +415,7 @@
     }
   </style>
 </head>
-<body>
+<body class="wp-shop">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -419,6 +426,12 @@
     </a>
     
     <div class="page-title"><i class="bi bi-box-seam-fill"></i> Your Orders</div>
+    <div class="wp-subnav" style="justify-content:flex-start;margin:0 0 24px;">
+      <a href="${pageContext.request.contextPath}/women-products">Shop</a>
+      <a href="${pageContext.request.contextPath}/women-products/wishlist">Wishlist</a>
+      <a href="${pageContext.request.contextPath}/women-products/cart">Cart</a>
+      <a class="active" href="${pageContext.request.contextPath}/women-products/my-orders">My Orders</a>
+    </div>
 
     <c:if test="${not empty message}">
       <div class="success-alert">
@@ -466,7 +479,7 @@
           
           <div class="order-info">
             <div class="product-name">${o.product.name}</div>
-            <div class="seller"><i class="bi bi-patch-check-fill text-primary"></i> ${o.seller.businessName}</div>
+            <div class="seller"><i class="bi bi-patch-check-fill" style="color:#F43F5E;"></i> ${o.seller.businessName}</div>
             
             <div class="order-meta">
               <div class="meta-item"><i class="bi bi-calendar3"></i> ${o.orderTime}</div>
@@ -540,7 +553,7 @@
                 </c:if>
               </div>
               
-              <div class="tracking-container" style="display: none;">
+              <div class="tracking-container">
                 <div class="tracking-wrapper">
                   <c:forEach var="step" items="${orderTracking[o.id]}">
                     <div class="track-step ${step.state}">
@@ -935,7 +948,7 @@
 
     });
   </script>
-  <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+  <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
   <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="${pageContext.request.contextPath}/assets/vendor/aos/aos.js"></script>
   <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
