@@ -89,8 +89,41 @@
         .hero p {
             color: var(--primary);
             font-size: 0.9rem;
+ HEAD
             margin-bottom: 20px;
         }
+
+        }
+        body.mp-list-page .location-tag {
+            font-size: 0.85rem;
+            color: var(--m-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        body.mp-list-page .provider-name {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--m-navy);
+            margin-bottom: 5px;
+        }
+        body.mp-list-page .provider-desc {
+            font-size: 0.9rem;
+            color: var(--m-muted);
+            margin-bottom: 20px;
+        }
+        body.mp-list-page .btn-view {
+            margin-top: auto;
+            background: var(--m-rose);
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            min-height: 42px;
+            border-radius: 12px;
+        }
+
 
         /* Search & Filters */
         .search-box {

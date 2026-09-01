@@ -313,13 +313,13 @@
                         <div class="hint"><i class="bi bi-info-circle me-1"></i> Helps identify proximity self-defense centers & zone map overlays.</div>
                     </div>
                     <div class="form-group">
-                        <label>Gender (optional)</label>
-                        <select name="gender" id="gender" class="form-select">
-                            <option value="">Prefer not to say</option>
+                        <label for="gender">Gender *</label>
+                        <select name="gender" id="gender" class="form-select" required>
+                            <option value="" disabled selected>Select gender</option>
                             <option value="FEMALE">Female</option>
                             <option value="OTHER">Other</option>
                         </select>
-                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Helps customize buddy matching companion preferences.</div>
+                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Fight D Fear is a women-only platform. Gender is required for buddy matching and safety features.</div>
                     </div>
                 </div>
 
@@ -663,6 +663,11 @@
         }
         if (!document.getElementById('acceptedTerms').checked) {
             alert('Please accept the Terms & Conditions.');
+            return;
+        }
+        var genderVal = document.getElementById('gender').value.trim();
+        if (!genderVal) {
+            alert('Please select your gender. Fight D Fear is a women-only platform.');
             return;
         }
 

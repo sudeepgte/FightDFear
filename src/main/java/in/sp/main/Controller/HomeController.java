@@ -48,5 +48,15 @@ public class HomeController {
 	public String trainerRegisterRedirect() {
 		return "redirect:/fitness/trainer/register";
 	}
+
+	@RequestMapping({"/host/login", "/host/login.html"})
+	public String hostLoginRedirect() {
+		return "redirect:/women-events/host/login";
+	}
+
+	@RequestMapping({"/host/register", "/host/register.html"})
+	public String hostRegisterRedirect() {
+		return "redirect:/women-events/host/register";
+	}
 }
 

@@ -880,7 +880,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 8),
                     Text(successData?['message']?.toString() ?? 'Welcome to your workout with $trainerName.',
-                        textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.black84)),
+                        textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Color(0xD6000000))),
                     if (completed != null && remaining != null) ...[
                       const SizedBox(height: 14),
                       Container(
@@ -921,7 +921,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Enter the session token displayed on your trainer\'s screen:',
-                      style: TextStyle(fontSize: 13, color: Colors.black84)),
+                      style: TextStyle(fontSize: 13, color: Color(0xD6000000))),
                   const SizedBox(height: 14),
                   TextField(
                     controller: tokenCtrl,

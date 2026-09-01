@@ -18,7 +18,7 @@ class EventHostProfileCompletionScreen extends StatefulWidget {
   final void Function(BuildContext context)? onFinished;
 
   static const Color primary = Color(0xFFF43F5E);
-  static const Color navy = Color(0xFF1E1B4B);
+  static const Color navy = Color(0xFF0F172A);
 
   @override
   State<EventHostProfileCompletionScreen> createState() =>
@@ -76,11 +76,21 @@ class _EventHostProfileCompletionScreenState
   @override
   void initState() {
     super.initState();
+    for (final c in [_name, _orgName, _phone, _city, _bio, _years, _address, _stateOther]) {
+      c.addListener(_onPreviewChanged);
+    }
     _load();
+  }
+
+  void _onPreviewChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    for (final c in [_name, _orgName, _phone, _city, _bio, _years, _address, _stateOther]) {
+      c.removeListener(_onPreviewChanged);
+    }
     for (final c in [
       _name, _orgName, _phone, _whatsapp, _years, _address, _city, _stateOther,
       _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential,
@@ -411,6 +421,8 @@ class _EventHostProfileCompletionScreenState
                         ),
                 ),
                 const SizedBox(height: 12),
+                _applicationPreview(),
+                const SizedBox(height: 12),
                 FilledButton(
                   onPressed: (_submitting || !canSubmit) ? null : _submit,
                   style: FilledButton.styleFrom(
@@ -610,6 +622,90 @@ class _EventHostProfileCompletionScreenState
             ...children,
           ],
         ),
+      ),
+    );
+  }
+
+  String _previewDash(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Not provided';
+    return v.trim();
+  }
+
+  Widget _applicationPreview() {
+    final locParts = [
+      _city.text.trim(),
+      if (_state == 'Other') _stateOther.text.trim() else (_state ?? '').trim(),
+    ].where((e) => e.isNotEmpty).toList();
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Application preview',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: EventHostProfileCompletionScreen.navy,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'This is what admin will review. Only fields you have entered are shown.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 12),
+            _previewRow('Name', _previewDash(_name.text)),
+            _previewRow('Organization', _previewDash(_orgName.text)),
+            _previewRow('Type', _previewDash(_designation)),
+            _previewRow('Phone', _previewDash(_phone.text)),
+            _previewRow('Location', locParts.isEmpty ? 'Not provided' : locParts.join(', ')),
+            _previewRow(
+              'Categories',
+              _categories.isEmpty ? 'Not provided' : _categories.join(', '),
+            ),
+            _previewRow(
+              'Experience',
+              _years.text.trim().isEmpty ? 'Not provided' : '${_years.text.trim()} years',
+            ),
+            _previewRow('Bio', _previewDash(_bio.text)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _previewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: EventHostProfileCompletionScreen.navy,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
