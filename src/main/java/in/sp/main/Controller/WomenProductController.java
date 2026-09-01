@@ -51,6 +51,9 @@ public class WomenProductController {
     @Autowired
     private in.sp.main.Service.DoctorPaymentService doctorPaymentService;
 
+    @Autowired
+    private in.sp.main.Service.OtpVerificationService otpVerificationService;
+
     private static final String BUY_NOW_PRODUCT_ID = "wpBuyNowProductId";
     private static final String BUY_NOW_QTY = "wpBuyNowQty";
     private static final String JUST_PLACED_ORDER_IDS = "wpJustPlacedOrderIds";
@@ -61,6 +64,48 @@ public class WomenProductController {
     @GetMapping("/seller/register")
     public String sellerRegisterPage() {
         return "women-products/seller-register";
+    }
+
+    @PostMapping("/seller/send-otp")
+    @ResponseBody
+    public Map<String, Object> sendSellerOtp(@RequestParam String email) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String cleaned = email == null ? "" : email.trim().toLowerCase();
+            if (sellerRepo.findByEmail(cleaned).isPresent()) {
+                response.put("success", false);
+                response.put("message", "Email already registered.");
+                return response;
+            }
+            otpVerificationService.sendOtp(
+                    cleaned,
+                    in.sp.main.Entities.OtpPurpose.SELLER_REGISTER,
+                    in.sp.main.Entities.OtpChannel.EMAIL);
+            response.put("success", true);
+            response.put("message", "OTP sent successfully.");
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage() != null ? e.getMessage() : "Could not send OTP.");
+        }
+        return response;
+    }
+
+    @PostMapping("/seller/verify-otp")
+    @ResponseBody
+    public Map<String, Object> verifySellerOtp(@RequestParam String email, @RequestParam String otp) {
+        Map<String, Object> response = new HashMap<>();
+        String cleaned = email == null ? "" : email.trim().toLowerCase();
+        String code = otp == null ? "" : otp.replaceAll("\\D", "");
+        boolean verified = otpVerificationService.verifyOtp(
+                cleaned, code, in.sp.main.Entities.OtpPurpose.SELLER_REGISTER);
+        if (verified) {
+            response.put("success", true);
+            response.put("message", "Email verified successfully!");
+        } else {
+            response.put("success", false);
+            response.put("message", "Invalid or expired OTP.");
+        }
+        return response;
     }
 
     @PostMapping("/seller/register")
@@ -343,7 +388,20 @@ public class WomenProductController {
                                      @RequestParam(required = false) String workingHoursFrom,
                                      @RequestParam(required = false) String workingHoursTo,
                                      @RequestParam(required = false) String languagesSpoken,
+                                     @RequestParam(required = false) String designation,
+                                     @RequestParam(required = false) String whatsappNumber,
+                                     @RequestParam(required = false) String city,
+                                     @RequestParam(required = false) String state,
+                                     @RequestParam(required = false) String pincode,
+                                     @RequestParam(required = false) String audience,
+                                     @RequestParam(required = false) String facilities,
+                                     @RequestParam(required = false) String brandType,
+                                     @RequestParam(required = false) String gstin,
+                                     @RequestParam(required = false) String upiId,
+                                     @RequestParam(required = false) String bankDetails,
                                      @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+                                     @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
+                                     @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
                                      HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -407,6 +465,17 @@ public class WomenProductController {
                 existing.setWorkingHoursFrom(workingHoursFrom != null ? workingHoursFrom.trim() : "");
                 existing.setWorkingHoursTo(workingHoursTo != null ? workingHoursTo.trim() : "");
                 existing.setLanguagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : "");
+                existing.setDesignation(designation != null ? designation.trim() : "");
+                existing.setWhatsappNumber(whatsappNumber != null ? whatsappNumber.trim() : "");
+                existing.setCity(city != null ? city.trim() : "");
+                existing.setState(state != null ? state.trim() : "");
+                existing.setPincode(pincode != null ? pincode.trim() : "");
+                existing.setAudience(audience != null ? audience.trim() : "");
+                existing.setFacilities(facilities != null ? facilities.trim() : "");
+                existing.setBrandType(brandType != null ? brandType.trim() : "");
+                existing.setGstin(gstin != null ? gstin.trim() : "");
+                existing.setUpiId(upiId != null ? upiId.trim() : "");
+                existing.setBankDetails(bankDetails != null ? bankDetails.trim() : "");
 
                 
                 if (profilePhoto != null && !profilePhoto.isEmpty()) {
@@ -422,6 +491,22 @@ public class WomenProductController {
                     }
                 }
                 
+                if (identityDoc != null && !identityDoc.isEmpty()) {
+                    existing.setIdentityDocPath(fileUploadService.saveFile(identityDoc));
+                }
+                if (galleryPhotos != null) {
+                    java.util.List<String> existingGallery = new java.util.ArrayList<>();
+                    if (existing.getGalleryPhotos() != null && !existing.getGalleryPhotos().isBlank()) {
+                        existingGallery.addAll(java.util.Arrays.asList(existing.getGalleryPhotos().split(",")));
+                    }
+                    for (MultipartFile photo : galleryPhotos) {
+                        if (photo != null && !photo.isEmpty()) {
+                            existingGallery.add(fileUploadService.saveFile(photo));
+                        }
+                    }
+                    existing.setGalleryPhotos(String.join(",", existingGallery.stream().map(String::trim).filter(part -> !part.isEmpty()).toList()));
+                }
+
                 sellerRepo.save(existing);
                 session.setAttribute("loggedSeller", existing);
                 ra.addFlashAttribute("message", "Profile updated successfully!");

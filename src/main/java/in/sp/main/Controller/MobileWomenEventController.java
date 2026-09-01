@@ -1,14 +1,21 @@
 package in.sp.main.Controller;
 
+import in.sp.main.Entities.EventFavorite;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.WomenEvent;
 import in.sp.main.Entities.WomenEventCategory;
 import in.sp.main.Entities.WomenEventRegistration;
+import in.sp.main.Repository.EventAgendaItemRepository;
+import in.sp.main.Repository.EventFavoriteRepository;
+import in.sp.main.Repository.EventSpeakerRepository;
+import in.sp.main.Repository.EventTicketTypeRepository;
 import in.sp.main.Repository.WomenEventRegistrationRepository;
 import in.sp.main.Repository.WomenEventRepository;
 import in.sp.main.Repository.WomenEventReviewRepository;
 import in.sp.main.Service.EventHostProfileService;
 import in.sp.main.Service.EventsCareService;
+import in.sp.main.Service.WomenEventBookingService;
+import in.sp.main.Service.WomenEventSupport;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +40,16 @@ public class MobileWomenEventController {
     private WomenEventReviewRepository reviewRepo;
     @Autowired
     private EventsCareService eventsCareService;
+    @Autowired
+    private WomenEventBookingService bookingService;
+    @Autowired
+    private EventFavoriteRepository favoriteRepo;
+    @Autowired
+    private EventTicketTypeRepository ticketTypeRepo;
+    @Autowired
+    private EventSpeakerRepository speakerRepo;
+    @Autowired
+    private EventAgendaItemRepository agendaRepo;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories() {
@@ -50,7 +67,8 @@ public class MobileWomenEventController {
         WomenEventCategory filterCat = WomenEventCategory.fromFlexible(category);
         String cityFilter = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
         String sortKey = sort == null ? "newest" : sort.trim().toLowerCase(Locale.ROOT);
-        List<WomenEvent> filtered = eventRepo.findByStatusOrderByCreatedAtDesc("APPROVED").stream()
+        List<WomenEvent> filtered = eventRepo.findListedEvents().stream()
+                .filter(WomenEventSupport::isPubliclyListed)
                 .filter(e -> e.getOrganizer() == null || EventHostProfileService.isApproved(e.getOrganizer()))
                 .filter(e -> filterCat == null || filterCat.equals(e.getCategory()))
                 .filter(e -> cityFilter.isBlank()
@@ -81,7 +99,7 @@ public class MobileWomenEventController {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenEvent e = eventRepo.findById(id).orElse(null);
-        if (e == null || !"APPROVED".equals(e.getStatus())) return badRequest("Event not found");
+        if (e == null || !WomenEventSupport.isPubliclyListed(e)) return badRequest("Event not found");
         if (e.getOrganizer() != null && !EventHostProfileService.isApproved(e.getOrganizer())) {
             return badRequest("Event not found");
         }
@@ -93,52 +111,44 @@ public class MobileWomenEventController {
 
     @PostMapping("/{id}/register")
     @Transactional
-    public ResponseEntity<Map<String, Object>> register(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> register(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
-        WomenEvent e = eventRepo.findById(id).orElse(null);
-        if (e == null || !"APPROVED".equalsIgnoreCase(e.getStatus())) {
-            return badRequest("Event not found");
-        }
-        if (e.getOrganizer() != null && !EventHostProfileService.isApproved(e.getOrganizer())) {
-            return badRequest("Event not found");
-        }
-        if (registrationRepo.existsActiveByEventAndUser(e, user)) {
-            return badRequest("Already registered");
-        }
-        Integer max = e.getMaxParticipants();
-        if (max != null && max > 0) {
-            long taken = registrationRepo.countActiveByEvent(e);
-            if (taken >= max) {
-                return badRequest("Event is full");
+        Long ticketTypeId = null;
+        int quantity = 1;
+        int coins = 0;
+        if (body != null) {
+            if (body.get("ticketTypeId") != null) {
+                try { ticketTypeId = Long.parseLong(String.valueOf(body.get("ticketTypeId"))); } catch (Exception ignored) {}
+            }
+            if (body.get("quantity") != null) {
+                try { quantity = Integer.parseInt(String.valueOf(body.get("quantity"))); } catch (Exception ignored) {}
+            }
+            if (body.get("coins") != null || body.get("coinsApplied") != null) {
+                Object c = body.get("coins") != null ? body.get("coins") : body.get("coinsApplied");
+                try { coins = Integer.parseInt(String.valueOf(c)); } catch (Exception ignored) {}
             }
         }
-        double fee = e.getEntryFee() == null ? 0 : Math.max(0, e.getEntryFee());
-        WomenEventRegistration reg = registrationRepo.findByEventAndUser(e, user).orElse(null);
-        if (reg != null && "CANCELLED".equalsIgnoreCase(reg.getStatus())) {
-            reg.setStatus("REGISTERED");
-            reg.setCheckedIn(false);
-            reg.setPaid(fee <= 0);
-            reg.setAmountPaid(0.0);
-            reg.setRegisteredAt(java.time.LocalDateTime.now());
-        } else {
-            reg = new WomenEventRegistration();
-            reg.setEvent(e);
-            reg.setUser(user);
-            reg.setStatus("REGISTERED");
-            reg.setPaid(fee <= 0);
-            reg.setAmountPaid(0.0);
+        try {
+            WomenEventRegistration reg = bookingService.book(user, id, ticketTypeId, quantity, coins);
+            session.setAttribute("user", user);
+            double fee = bookingService.payableOf(reg);
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("message", fee > 0 ? "Registered — complete payment to confirm ticket" : "Registered");
+            data.put("registrationId", reg.getId());
+            data.put("ticketCode", reg.getTicketCode());
+            data.put("qrToken", reg.getQrToken());
+            data.put("amount", fee);
+            data.put("coinsUsed", reg.getCoinsUsed());
+            data.put("paymentRequired", fee > 0 && !reg.isPaid());
+            data.put("paid", reg.isPaid());
+            return ResponseEntity.ok(ok(data));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
         }
-        registrationRepo.save(reg);
-        try { eventsCareService.notifyRegistered(reg); } catch (Exception ignored) {}
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("message", fee > 0 ? "Registered — complete payment to confirm ticket" : "Registered");
-        data.put("registrationId", reg.getId());
-        data.put("ticketCode", reg.getTicketCode());
-        data.put("amount", fee);
-        data.put("paymentRequired", fee > 0 && !reg.isPaid());
-        data.put("paid", reg.isPaid());
-        return ResponseEntity.ok(ok(data));
     }
 
     @PostMapping("/registrations/{id}/cancel")
@@ -202,7 +212,9 @@ public class MobileWomenEventController {
             m.put("id", r.getId());
             m.put("registrationId", r.getId());
             m.put("status", r.getStatus());
-            m.put("ticketCode", r.getTicketCode());
+            m.put("qrToken", r.getQrToken());
+            m.put("coinsUsed", r.getCoinsUsed());
+            m.put("payableAmount", bookingService.payableOf(r));
             m.put("checkedIn", r.isCheckedIn());
             m.put("registeredAt", r.getRegisteredAt() == null ? null : r.getRegisteredAt().toString());
             m.put("paid", r.isPaid());
@@ -246,7 +258,17 @@ public class MobileWomenEventController {
         m.put("organizerType", e.getOrganizerType());
         m.put("contactInfo", e.getContactInfo());
         m.put("virtual", e.isVirtual());
-        m.put("streamLink", e.getStreamLink());
+        m.put("eventFormat", e.getEventFormat() == null ? null : e.getEventFormat().name());
+        m.put("shortDescription", e.getShortDescription());
+        boolean eligible = false;
+        if (user != null) {
+            eligible = registrationRepo.findActiveByEventAndUser(e, user)
+                    .map(r -> r.isPaid() || e.isFree() || bookingService.payableOf(r) <= 0)
+                    .orElse(false);
+        }
+        m.put("streamLink", WomenEventSupport.hideAccessIfUnauthorized(e, eligible));
+        m.put("meetingPlatform", eligible ? e.getMeetingPlatform() : null);
+        m.put("accessInstructions", eligible ? e.getAccessInstructions() : null);
         if (e.getOrganizer() != null) {
             m.put("hostRating", e.getOrganizer().getRating());
             m.put("hostReviewCount", e.getOrganizer().getReviewCount());
@@ -263,11 +285,44 @@ public class MobileWomenEventController {
         Integer max = e.getMaxParticipants();
         if (max != null && max > 0) {
             m.put("seatsRemaining", Math.max(0, max - seatsTaken));
-            m.put("full", seatsTaken >= max);
         } else {
             m.put("seatsRemaining", null);
-            m.put("full", false);
         }
+        m.put("full", bookingService.isSoldOut(e));
+        m.put("soldOut", bookingService.isSoldOut(e));
+        m.put("registrationOpen", WomenEventSupport.registrationWindowOpen(e, java.time.LocalDateTime.now()));
+        m.put("startsAt", e.getStartsAt() == null ? null : e.getStartsAt().toString());
+        m.put("endsAt", e.getEndsAt() == null ? null : e.getEndsAt().toString());
+        m.put("cancellationPolicy", e.getCancellationPolicy() != null ? e.getCancellationPolicy() : EventsCareService.CANCEL_POLICY);
+        m.put("saved", user != null && favoriteRepo.existsByEventAndUser(e, user));
+        m.put("ticketTypes", ticketTypeRepo.findByEventOrderByIdAsc(e).stream().map(t -> {
+            Map<String, Object> tm = new LinkedHashMap<>();
+            tm.put("id", t.getId());
+            tm.put("name", t.getName());
+            tm.put("description", t.getDescription());
+            tm.put("price", t.getPrice());
+            tm.put("remaining", t.remaining());
+            tm.put("maxPerUser", t.getMaxPerUser());
+            return tm;
+        }).toList());
+        m.put("speakers", speakerRepo.findByEventOrderBySortOrderAscIdAsc(e).stream().map(s -> {
+            Map<String, Object> sm = new LinkedHashMap<>();
+            sm.put("name", s.getName());
+            sm.put("designation", s.getDesignation());
+            sm.put("organization", s.getOrganization());
+            sm.put("topic", s.getTopic());
+            sm.put("bio", s.getBio());
+            return sm;
+        }).toList());
+        m.put("agenda", agendaRepo.findByEventOrderBySortOrderAscStartTimeAsc(e).stream().map(a -> {
+            Map<String, Object> am = new LinkedHashMap<>();
+            am.put("title", a.getTitle());
+            am.put("description", a.getDescription());
+            am.put("startTime", a.getStartTime() == null ? null : a.getStartTime().toString());
+            am.put("endTime", a.getEndTime() == null ? null : a.getEndTime().toString());
+            am.put("speaker", a.getSpeakerName());
+            return am;
+        }).toList());
 
         boolean already = user != null && registrationRepo.existsActiveByEventAndUser(e, user);
         m.put("alreadyRegistered", already);
@@ -280,6 +335,56 @@ public class MobileWomenEventController {
             });
         }
         return m;
+    }
+
+    @GetMapping("/{id}/coins-quote")
+    public ResponseEntity<Map<String, Object>> coinsQuote(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int coins,
+            @RequestParam(required = false) Long ticketTypeId,
+            @RequestParam(defaultValue = "1") int quantity,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenEvent e = eventRepo.findById(id).orElse(null);
+        if (e == null) return badRequest("Event not found");
+        double unit = e.getEntryFee() == null ? 0 : e.getEntryFee();
+        if (ticketTypeId != null) {
+            unit = ticketTypeRepo.findById(ticketTypeId).map(t -> t.getPrice()).orElse(unit);
+        }
+        if (quantity < 1) quantity = 1;
+        return ResponseEntity.ok(ok(bookingService.quoteCoins(user, unit * quantity, coins)));
+    }
+
+    @PostMapping("/{id}/save")
+    public ResponseEntity<Map<String, Object>> saveEvent(@PathVariable Long id, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        WomenEvent e = eventRepo.findById(id).orElse(null);
+        if (e == null) return badRequest("Event not found");
+        boolean saved;
+        var existing = favoriteRepo.findByEventAndUser(e, user);
+        if (existing.isPresent()) {
+            favoriteRepo.delete(existing.get());
+            saved = false;
+        } else {
+            EventFavorite fav = new EventFavorite();
+            fav.setEvent(e);
+            fav.setUser(user);
+            favoriteRepo.save(fav);
+            saved = true;
+        }
+        return ResponseEntity.ok(ok(Map.of("saved", saved)));
+    }
+
+    @GetMapping("/saved")
+    public ResponseEntity<Map<String, Object>> savedEvents(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<Map<String, Object>> items = favoriteRepo.findByUserOrderByCreatedAtDesc(user).stream()
+                .map(f -> eventDto(f.getEvent(), user))
+                .toList();
+        return ResponseEntity.ok(ok(Map.of("events", items)));
     }
 
     private User requireUser(HttpSession session) {

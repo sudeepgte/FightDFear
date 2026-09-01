@@ -77,7 +77,7 @@
 <header class="top">
     <div>
         <h1>Complete your shop profile</h1>
-        <p>12 sections using fields the web profile save already supports</p>
+        <p>11 sections. Every field on this form is saved with Save Profile.</p>
     </div>
     <a class="btn-skip" href="${pageContext.request.contextPath}/women-products/seller/dashboard">Skip for now</a>
 </header>
@@ -85,8 +85,8 @@
     <c:if test="${not empty error}"><div class="alert alert-err">${error}</div></c:if>
     <c:if test="${not empty message}"><div class="alert alert-ok">${message}</div></c:if>
     <div class="card">
-        <div class="progress" id="progress"><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
-        <p class="step-title" id="stepLabel">Step 1 of 12 — Seller identity</p>
+        <div class="progress" id="progress"><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <p class="step-title" id="stepLabel">Step 1 of 11 — Seller identity</p>
         <p class="step-desc" id="stepDesc">Owner, shop name and contact phone.</p>
         <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data" novalidate>
             <div class="wj-step" data-step="1">
@@ -95,14 +95,17 @@
                     <div><label>1.3 Shop name *</label><input name="businessName" id="businessName" required maxlength="100" value="${seller.businessName}"><small class="field-err" id="err-businessName"></small></div>
                     <div><label>Email <span class="tag">Not editable on web</span></label><div class="ro"><c:out value="${seller.email}"/></div></div>
                     <div><label>1.5 Official phone *</label><input name="phone" id="phone" required maxlength="10" inputmode="numeric" value="${seller.phone}"><small class="field-err" id="err-phone"></small></div>
+                    <div><label>1.2 Role / designation</label><input name="designation" maxlength="120" value="${seller.designation}"></div>
+                    <div><label>1.6 WhatsApp</label><input name="whatsappNumber" maxlength="10" inputmode="numeric" value="${seller.whatsappNumber}"></div>
                     <div><label>1.7 Experience</label><input name="experience" maxlength="100" value="${seller.experience}" placeholder="e.g. 5 years"></div>
                 </div>
             </div>
             <div class="wj-step" data-step="2" style="display:none;">
                 <div class="grid">
                     <div class="full"><label>2.1 Landmark / address *</label><input name="address" id="address" required maxlength="1000" value="${seller.address}"><small class="field-err" id="err-address"></small></div>
-                    <div><label>City <span class="tag">Not editable on web save</span></label><div class="ro"><c:out value="${empty seller.city ? 'Not set' : seller.city}"/></div></div>
-                    <div><label>State / pincode <span class="tag">Not editable on web save</span></label><div class="ro"><c:out value="${seller.state}"/> · <c:out value="${seller.pincode}"/></div></div>
+                    <div><label>City</label><input name="city" maxlength="80" value="${seller.city}"></div>
+                    <div><label>State</label><input name="state" maxlength="80" value="${seller.state}"></div>
+                    <div><label>Pincode</label><input name="pincode" maxlength="6" inputmode="numeric" value="${seller.pincode}"></div>
                 </div>
             </div>
             <div class="wj-step" data-step="3" style="display:none;">
@@ -110,14 +113,23 @@
                 <input name="category" maxlength="100" value="${seller.category}" placeholder="Primary category">
             </div>
             <div class="wj-step" data-step="4" style="display:none;">
-                <label>Service area</label>
-                <input name="serviceArea" maxlength="255" value="${seller.serviceArea}" placeholder="Cities / regions you serve">
-                <div class="hint" style="margin-top:12px;">Audience / pickup options are mobile-managed and are not on the web save.</div>
+                <div class="grid">
+                    <div class="full"><label>Service area</label>
+                        <input name="serviceArea" maxlength="255" value="${seller.serviceArea}" placeholder="Cities / regions you serve">
+                    </div>
+                    <div class="full"><label>Languages spoken</label>
+                        <input name="languagesSpoken" maxlength="255" value="${seller.languagesSpoken}" placeholder="e.g. English, Hindi">
+                    </div>
+                    <div class="full"><label>Audience</label>
+                        <input name="audience" maxlength="255" value="${seller.audience}" placeholder="e.g. Women, Families">
+                    </div>
+                </div>
             </div>
             <div class="wj-step" data-step="5" style="display:none;">
                 <label>Qualification / credentials</label>
                 <textarea name="qualification" rows="3" maxlength="2000">${seller.qualification}</textarea>
-                <div class="hint" style="margin-top:12px;">Shop amenity chips are mobile-managed.</div>
+                <label style="margin-top:12px;">Shop amenities</label>
+                <input name="facilities" maxlength="500" value="${seller.facilities}" placeholder="e.g. Parking, Trial room">
             </div>
             <div class="wj-step" data-step="6" style="display:none;">
                 <div class="grid">
@@ -131,23 +143,32 @@
                 <textarea name="description" rows="4" maxlength="2000">${seller.description}</textarea>
             </div>
             <div class="wj-step" data-step="8" style="display:none;">
-                <p class="hint">Listing defaults such as brand type and dispatch hours are mobile-managed. Primary category is saved in section 3.</p>
+                <label>Brand / listing type</label>
+                <input name="brandType" maxlength="120" value="${seller.brandType}" placeholder="e.g. Handmade, Retail">
             </div>
             <div class="wj-step" data-step="9" style="display:none;">
-                <p class="hint">UPI / GST / bank payout fields exist on the seller record but are not included in the web profile save.</p>
-                <div class="ro"><c:out value="${empty seller.upiId ? 'UPI not set' : seller.upiId}"/></div>
+                <div class="grid">
+                    <div class="full"><label>UPI ID</label><input name="upiId" value="${seller.upiId}" placeholder="upi-handle@bank"></div>
+                    <div class="full"><label>GSTIN</label><input name="gstin" value="${seller.gstin}" placeholder="GST number"></div>
+                    <div class="full"><label>Bank details</label><input name="bankDetails" value="${seller.bankDetails}" placeholder="Bank, A/C, IFSC"></div>
+                </div>
             </div>
             <div class="wj-step" data-step="10" style="display:none;">
                 <label>Profile photo (optional update)</label>
                 <input type="file" name="profilePhoto" accept="image/png,image/jpeg,image/jpg,image/webp">
-                <p class="hint" style="margin-top:10px;">Identity document is already on file and is not re-uploaded here.</p>
+                <label style="margin-top:12px;">Identity document (optional update)</label>
+                <input type="file" name="identityDoc" accept="image/*,.pdf">
+                <c:if test="${not empty seller.identityDocPath}">
+                    <p class="hint" style="margin-top:10px;"><a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank">View current identity document</a></p>
+                </c:if>
             </div>
             <div class="wj-step" data-step="11" style="display:none;">
-                <p class="hint">Gallery photos are mobile-managed.</p>
-                <div class="ro"><c:out value="${empty seller.galleryPhotos ? 'No gallery photos on file' : seller.galleryPhotos}"/></div>
-            </div>
-            <div class="wj-step" data-step="12" style="display:none;">
-                <p class="hint">Save uses the existing profile update. Skip goes straight to the seller dashboard.</p>
+                <label>Gallery photos</label>
+                <input type="file" name="galleryPhotos" accept="image/*" multiple>
+                <c:if test="${not empty seller.galleryPhotos}">
+                    <div class="ro" style="margin-top:10px;"><c:out value="${seller.galleryPhotos}"/></div>
+                </c:if>
+                <p class="hint" style="margin-top:10px;">Save stores all profile fields, then opens the seller dashboard.</p>
             </div>
             <div class="wp-profile-nav">
                 <a class="btn-skip" href="${pageContext.request.contextPath}/women-products/seller/dashboard">Skip for now</a>
@@ -163,18 +184,18 @@
 <script>
 (function () {
     var form = document.getElementById('sellerProfileForm');
-    var step = 1, total = 12;
+    var step = 1, total = 11;
     var labels = [
-        'Step 1 of 12 — Seller identity','Step 2 of 12 — Location','Step 3 of 12 — Categories you sell',
-        'Step 4 of 12 — Who I serve','Step 5 of 12 — Shop facilities','Step 6 of 12 — Hours & calendar',
-        'Step 7 of 12 — About the shop','Step 8 of 12 — First listing defaults','Step 9 of 12 — Payout',
-        'Step 10 of 12 — Documents (optional)','Step 11 of 12 — Work photos (optional)','Step 12 of 12 — Review & save'
+        'Step 1 of 11 — Seller identity','Step 2 of 11 — Location','Step 3 of 11 — Categories you sell',
+        'Step 4 of 11 — Who I serve','Step 5 of 11 — Shop facilities','Step 6 of 11 — Hours & calendar',
+        'Step 7 of 11 — About the shop','Step 8 of 11 — First listing defaults','Step 9 of 11 — Payout',
+        'Step 10 of 11 — Documents (optional)','Step 11 of 11 — Work photos (optional)'
     ];
     var descs = [
         'Owner, shop name and contact phone.','Shop address.','Primary sell category.',
-        'Service area you cover.','Credentials shown to customers.','Days and hours.',
-        'About the shop.','Mobile-managed listing defaults.','Payout details on file.',
-        'Optional photo update.','Gallery on file.','Save or skip to dashboard.'
+        'Service area and languages.','Credentials shown to customers.','Days and hours.',
+        'About the shop.','Mobile-managed listing defaults.','Payout details on file (mobile-managed).',
+        'Optional photo update.','Gallery on file. Save or skip to dashboard.'
     ];
     function showErr(id, text) {
         var el = document.getElementById(id);

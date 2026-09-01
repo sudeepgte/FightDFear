@@ -24,6 +24,8 @@ public interface WomenEventRegistrationRepository extends JpaRepository<WomenEve
 
     Optional<WomenEventRegistration> findByTicketCode(String ticketCode);
 
+    Optional<WomenEventRegistration> findByQrToken(String qrToken);
+
     List<WomenEventRegistration> findByEventAndRole(WomenEvent event, String role);
 
     boolean existsByEventAndUserAndRole(WomenEvent event, User user, String role);

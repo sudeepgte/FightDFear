@@ -155,9 +155,13 @@
                         </div>
 
                         <div class="qr-section">
+                            <div class="qr-label">Digital Ticket</div>
+                            <div class="qr-code-box">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&amp;data=${empty reg.qrToken ? reg.ticketCode : reg.qrToken}" alt="QR" style="width:100%;height:100%;object-fit:contain;"/>
+                            </div>
                             <div class="qr-label">Ticket code</div>
                             <div class="ticket-code">${reg.ticketCode}</div>
-                            <div class="qr-label">Show at entry</div>
+                            <a href="${pageContext.request.contextPath}/women-events/tickets/${reg.id}" class="qr-label">Open ticket</a>
                         </div>
                     </div>
 

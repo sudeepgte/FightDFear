@@ -90,7 +90,7 @@ public class OtpVerificationService {
             EmailOtpVerification existing = latest.get();
             LocalDateTime cooldownUntil = existing.getCreatedAt().plusSeconds(resendCooldownSeconds);
             if (LocalDateTime.now().isBefore(cooldownUntil)) {
-                throw new IllegalStateException("Please wait before requesting another OTP");
+                throw new IllegalStateException(cooldownMessage(cooldownUntil));
             }
         }
 
@@ -197,9 +197,23 @@ public class OtpVerificationService {
             EmailOtpVerification existing = latest.get();
             LocalDateTime cooldownUntil = existing.getCreatedAt().plusSeconds(resendCooldownSeconds);
             if (LocalDateTime.now().isBefore(cooldownUntil)) {
-                throw new IllegalStateException("Please wait before requesting another OTP");
+                throw new IllegalStateException(cooldownMessage(cooldownUntil));
             }
         }
+    }
+
+    public int getExpirationMinutes() {
+        return expirationMinutes;
+    }
+
+    public int getResendCooldownSeconds() {
+        return resendCooldownSeconds;
+    }
+
+    private String cooldownMessage(LocalDateTime cooldownUntil) {
+        long wait = Math.max(1, Duration.between(LocalDateTime.now(), cooldownUntil).getSeconds());
+        return "Please wait " + wait + " seconds before requesting another OTP. Each code is valid for "
+                + expirationMinutes + " minutes.";
     }
 
     private void persistOtp(String normalized, OtpPurpose purpose, OtpChannel channel, String code) {

@@ -181,11 +181,16 @@
             <c:if test="${not empty error}">
                 <div class="alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
             </c:if>
-            <c:if test="${param.registered == 'true'}">
-                <div class="alert-box alert-success"><i class="bi bi-shield-check"></i> Account registered. Your seller account is awaiting approval.</div>
+            <c:if test="${not empty success}">
+                <div class="confirm-card" style="background:#fff;border:1px solid #BBF7D0;border-radius:16px;padding:24px;text-align:center;margin-bottom:20px;">
+                    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Registration successful</h2>
+                    <p style="color:#64748B;font-size:0.9rem;margin-bottom:14px;">${success}</p>
+                    <p style="background:#FFE4E6;border-radius:12px;padding:10px;font-weight:600;font-size:0.85rem;">Next: sign in after admin verification, then complete your shop profile.</p>
+                </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/women-products/seller/login" method="post">
+            <div id="js-login-error" class="alert-box alert-error" style="display:none;"><i class="bi bi-exclamation-circle-fill"></i> <span id="js-login-error-msg"></span></div>
+            <form id="sellerLoginForm" action="${pageContext.request.contextPath}/women-products/seller/login" method="post">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input class="form-input" type="email" name="email" id="email" required placeholder="Enter your email">
@@ -213,6 +218,24 @@
             var show = input.type === 'password';
             input.type = show ? 'text' : 'password';
             icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
+        });
+        document.getElementById('sellerLoginForm').addEventListener('submit', function (e) {
+            var box = document.getElementById('js-login-error');
+            var msg = document.getElementById('js-login-error-msg');
+            box.style.display = 'none';
+            var email = (this.email.value || '').trim();
+            var password = this.password.value || '';
+            if (email === '' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                e.preventDefault();
+                msg.textContent = 'Enter a valid email address.';
+                box.style.display = 'flex';
+                return;
+            }
+            if (password === '') {
+                e.preventDefault();
+                msg.textContent = 'Password is required.';
+                box.style.display = 'flex';
+            }
         });
     </script>
 </body>

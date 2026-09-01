@@ -243,13 +243,36 @@
                                     <input type="date" name="eventDate" required/>
                                 </div>
                                 <div class="fg">
-                                    <label>Event Time</label>
+                                    <label>Start Time</label>
                                     <input type="time" name="eventTime"/>
+                                </div>
+                            </div>
+                            <div class="two-col">
+                                <div class="fg">
+                                    <label>End Date</label>
+                                    <input type="date" name="endDate"/>
+                                </div>
+                                <div class="fg">
+                                    <label>End Time</label>
+                                    <input type="time" name="endTime"/>
+                                </div>
+                            </div>
+                            <div class="fg">
+                                <label>Registration Closes</label>
+                                <input type="datetime-local" name="registrationCloses"/>
+                                <div class="hint">Cannot be after event start. Timezone: Asia/Kolkata.</div>
+                            </div>
+                            <div class="fg">
+                                <label>Event Format</label>
+                                <div class="fee-toggle">
+                                    <label class="fee-option"><input type="radio" name="eventFormat" value="OFFLINE" checked onchange="toggleFormat('OFFLINE')"/> Offline</label>
+                                    <label class="fee-option"><input type="radio" name="eventFormat" value="ONLINE" onchange="toggleFormat('ONLINE')"/> Online</label>
+                                    <label class="fee-option"><input type="radio" name="eventFormat" value="HYBRID" onchange="toggleFormat('HYBRID')"/> Hybrid</label>
                                 </div>
                             </div>
                             <div class="fg">
                                 <label class="virtual-toggle">
-                                    <input type="checkbox" name="virtual" value="true" onchange="toggleVirtual(this)"/>
+                                    <input type="checkbox" name="virtual" value="true" id="virtualBox" onchange="toggleVirtual(this)"/>
                                     <span>This is a Virtual / Online Event</span>
                                 </label>
                             </div>
@@ -311,6 +334,37 @@
 
                     <div class="form-card">
                         <div class="form-card-header">
+                            <div class="header-icon"><i class="bi bi-shield-check"></i></div>
+                            <h3>Policies</h3>
+                        </div>
+                        <div class="form-card-body">
+                            <div class="fg">
+                                <label>Cancellation Policy</label>
+                                <textarea name="cancellationPolicy" rows="2" placeholder="Platform policy applies if left blank."></textarea>
+                            </div>
+                            <div class="fg">
+                                <label>Refund Policy</label>
+                                <textarea name="refundPolicy" rows="2"></textarea>
+                            </div>
+                            <div class="two-col">
+                                <div class="fg">
+                                    <label>Age Restriction</label>
+                                    <input type="text" name="ageRestriction" placeholder="e.g. 18+"/>
+                                </div>
+                                <div class="fg">
+                                    <label>What to Bring</label>
+                                    <input type="text" name="whatToBring" placeholder="ID, water bottle"/>
+                                </div>
+                            </div>
+                            <div class="fg">
+                                <label>Participant Requirements</label>
+                                <textarea name="participantRequirements" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="form-card-header">
                             <div class="header-icon"><i class="bi bi-telephone"></i></div>
                             <h3>Contact Information</h3>
                         </div>
@@ -345,6 +399,8 @@
                             <i class="bi bi-info-circle"></i>
                             Your event is submitted for admin approval before it appears publicly.
                         </div>
+                        <button type="submit" class="submit-btn" name="saveDraft" value="false"><i class="bi bi-send"></i> Submit for Approval</button>
+                        <button type="submit" class="cancel-btn" name="saveDraft" value="true" style="cursor:pointer;">Save Draft</button>
                         <button type="button" class="submit-btn" onclick="openCreatePreview()"><i class="bi bi-eye"></i> Review event</button>
                         <button type="submit" id="createEventSubmitHidden" style="display:none;">Submit</button>
                         <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="cancel-btn">Cancel</a>
@@ -501,6 +557,13 @@ function toggleFee(isFree) {
     if (isFree) { feeField.value = '0'; feeField.min = '0'; }
     else { feeField.min = '1'; if (feeField.value === '0') feeField.value = ''; }
     feeField.required = !isFree;
+}
+
+function toggleFormat(fmt) {
+    const box = document.getElementById('virtualBox');
+    if (!box) return;
+    box.checked = fmt === 'ONLINE' || fmt === 'HYBRID';
+    toggleVirtual(box);
 }
 
 function toggleVirtual(checkbox) {

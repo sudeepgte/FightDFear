@@ -18,43 +18,61 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
 
     <style>
-        :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #fffcfd;
-            --m-shadow: 0 15px 35px rgba(30, 27, 75, 0.1);
-        }
-        body {
+        /* /marketplace/earn only — Women Jobs / Martial Arts 60-30-10 */
+        body.wj-earn-page {
+            --wj-rose: #F43F5E;
+            --wj-rose-hover: #E11D48;
+            --wj-navy: #1E1B4B;
+            --wj-text: #0F172A;
+            --wj-muted: #64748B;
+            --wj-bg: #F8FAFC;
+            --wj-border: #E2E8F0;
             font-family: 'Poppins', sans-serif;
-            background: var(--m-bg);
-            color: #333;
+            background: var(--wj-bg);
+            color: var(--wj-text);
             min-height: 100vh;
         }
-        .form-container {
-            background: white;
+        body.wj-earn-page #page-content-wrapper {
+            background: var(--wj-bg);
+        }
+        body.wj-earn-page .form-container {
+            background: #FFFFFF;
             border-radius: 20px;
             padding: 40px;
-            box-shadow: var(--m-shadow);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
             margin-top: 50px;
             margin-bottom: 50px;
-            border: 1px solid rgba(30, 27, 75, 0.1);
+            border: 1px solid var(--wj-border);
         }
-        .form-header {
+        body.wj-earn-page .form-header {
             text-align: center;
             margin-bottom: 30px;
         }
-        .form-header h2 {
+        body.wj-earn-page .form-header h2 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
-            color: var(--m-purple);
+            color: var(--wj-navy);
         }
-        .form-control, .form-select {
+        body.wj-earn-page .form-header p {
+            color: var(--wj-muted);
+        }
+        body.wj-earn-page .form-label {
+            color: var(--wj-navy);
+        }
+        body.wj-earn-page .form-control,
+        body.wj-earn-page .form-select {
             border-radius: 10px;
             padding: 12px 15px;
+            border-color: var(--wj-border);
         }
-        .btn-submit {
-            background: linear-gradient(135deg, var(--m-purple) 0%, var(--m-pink) 100%);
-            color: white;
+        body.wj-earn-page .form-control:focus,
+        body.wj-earn-page .form-select:focus {
+            border-color: var(--wj-rose);
+            box-shadow: 0 0 0 0.2rem rgba(244, 63, 94, 0.15);
+        }
+        body.wj-earn-page .btn-submit {
+            background: var(--wj-rose);
+            color: #fff;
             border: none;
             padding: 12px 30px;
             border-radius: 50px;
@@ -62,13 +80,14 @@
             width: 100%;
             transition: 0.3s;
         }
-        .btn-submit:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(219, 39, 119, 0.3);
+        body.wj-earn-page .btn-submit:hover {
+            background: var(--wj-rose-hover);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.25);
         }
     </style>
 </head>
-<body>
+<body class="wj-earn-page">
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
@@ -162,6 +181,31 @@
     </div>
 
     <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+    <style>
+        /* After shared footer.jsp so this page can override its navy !important without editing the fragment */
+        body.wj-earn-page .global-footer {
+            background-color: #FFF1F2 !important;
+            color: #0F172A !important;
+            border-top: 1px solid #FECDD3;
+        }
+        body.wj-earn-page .global-footer h4,
+        body.wj-earn-page .global-footer p {
+            color: #0F172A !important;
+        }
+        body.wj-earn-page .global-footer a {
+            color: #F43F5E !important;
+        }
+        body.wj-earn-page .global-footer a:hover {
+            color: #E11D48 !important;
+        }
+        body.wj-earn-page .global-footer .sitename {
+            color: #F43F5E !important;
+        }
+        body.wj-earn-page .global-footer .bi,
+        body.wj-earn-page .global-footer i {
+            color: #F43F5E !important;
+        }
+    </style>
 
     <!-- Bootstrap JS -->
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

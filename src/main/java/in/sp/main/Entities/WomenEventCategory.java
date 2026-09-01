@@ -12,7 +12,23 @@ public enum WomenEventCategory {
     FITNESS_SPORTS("Fitness & Sports"),
     EDUCATION_SKILLS("Education & Skills"),
     SOCIAL_COMMUNITY("Social & Community"),
-    SAFETY_AWARENESS("Safety & Awareness");
+    SAFETY_AWARENESS("Safety & Awareness"),
+    WOMEN_EMPOWERMENT("Women Empowerment"),
+    CAREER("Career"),
+    EDUCATION("Education"),
+    BUSINESS("Business"),
+    ENTREPRENEURSHIP("Entrepreneurship"),
+    NETWORKING("Networking"),
+    FITNESS("Fitness"),
+    SELF_DEFENSE("Self Defense"),
+    BEAUTY("Beauty"),
+    FINANCE("Finance"),
+    INVESTMENT("Investment"),
+    TECHNOLOGY("Technology"),
+    ARTS_CULTURE("Arts & Culture"),
+    ENTERTAINMENT("Entertainment"),
+    COMMUNITY("Community"),
+    OTHER("Other");
 
     private final String displayName;
 

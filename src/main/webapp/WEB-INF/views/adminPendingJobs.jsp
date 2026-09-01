@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%> 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,270 +14,145 @@
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-    /* Page-scoped Martial Arts 60/30/10 theme — this JSP only */
-    body.wj-admin-jobs {
-        --maroon: #1e1b4b;
-        --maroon-light: #312e81;
-        --maroon-dark: #0b0920;
-        --maroon-pale: #f8fafc;
-        --maroon-border: rgba(30, 27, 75, 0.12);
-        --rose: #f43f5e;
-        --rose-mid: #c04b7a;
-        --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
-        --sidebar-w: 272px;
-        font-family: 'Poppins', 'Inter', sans-serif;
-        margin: 0;
-        background: var(--maroon-pale);
-        color: #1a1a2e;
+    /* Scoped to this Women Jobs admin page only — Martial Arts admin-portal language */
+    body.wj-admin-jobs { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
+    body.wj-admin-jobs .layout { display: flex; min-height: 100vh; }
+    body.wj-admin-jobs .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    body.wj-admin-jobs .content { padding: 0; }
+    body.wj-admin-jobs .mainInner { max-width: 1400px; margin: 0 auto; padding: 22px 24px 48px; }
+    body.wj-admin-jobs .nav-tabs {
+        display: flex; flex-wrap: wrap; gap: 4px; border: 0; border-bottom: 1px solid var(--ap-border);
+        padding: 0 8px; margin-bottom: 0; background: var(--ap-card);
     }
-
-    body.wj-admin-jobs .topbar {
-        background: #F43F5E;
-        color: #fff;
-        padding: 0 20px;
-        height: 58px;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        box-shadow: 0 3px 16px rgba(125,42,90,0.28);
-        display: flex;
-        align-items: center;
-    }
-    body.wj-admin-jobs .topbar .container-fluid { width: 100%; }
-    body.wj-admin-jobs .topbar .wrap {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        min-height: 58px;
-    }
-    body.wj-admin-jobs .topbar .btn-light {
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 7px;
-        font-weight: 600;
-    }
-    body.wj-admin-jobs .topbar .btn-light:hover {
-        background: rgba(255,255,255,0.25);
-        color: #fff;
-    }
-
-    body.wj-admin-jobs .layout {
-        display: flex;
-        min-height: calc(100vh - 58px);
-    }
-    body.wj-admin-jobs .sidebar {
-        width: var(--sidebar-w); background: #fff;
-        border-right: 1px solid var(--maroon-border);
-        position: sticky; top: 58px; height: calc(100vh - 58px);
-        padding: 14px 12px; overflow-y: auto; flex-shrink: 0;
-    }
-    body.wj-admin-jobs .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
-    body.wj-admin-jobs .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
-    body.wj-admin-jobs .navlink {
-        display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
-        color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
-    }
-    body.wj-admin-jobs .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
-    body.wj-admin-jobs .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-    body.wj-admin-jobs .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
-    body.wj-admin-jobs .navlink.active i { color: #fff; }
-
-    body.wj-admin-jobs .main { flex: 1; min-width: 0; }
-    body.wj-admin-jobs .content { padding: 28px 20px 48px; }
-    body.wj-admin-jobs .mainInner { max-width: 1200px; margin: 0 auto; }
-
-    body.wj-admin-jobs .pg-header {
-        background: linear-gradient(135deg, #1e1b4b 0%, #581c87 38%, #c04b7a 78%, #f43f5e 100%);
-        border-radius: 16px;
-        padding: 22px 28px;
-        margin-bottom: 24px;
-        box-shadow: 0 8px 28px rgba(125,42,90,0.22);
-    }
-    body.wj-admin-jobs .pg-header h2 { color: #fff; font-weight: 700; font-size: 1.2rem; margin: 0; }
-    body.wj-admin-jobs .pg-header p { color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 0.85rem; }
-
-    body.wj-admin-jobs .nav-tabs { border: none; gap: 8px; }
     body.wj-admin-jobs .nav-tabs .nav-link {
-        border: 1px solid var(--maroon-border);
-        border-radius: 10px !important;
-        color: var(--maroon-dark);
-        font-weight: 700;
-        font-size: 0.85rem;
-        padding: 10px 16px;
-        background: #fff;
+        border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important;
+        color: var(--ap-muted); font-weight: 600; font-size: 0.86rem; padding: 12px 14px; background: transparent;
+        margin-bottom: -1px;
     }
-    body.wj-admin-jobs .nav-tabs .nav-link:hover {
-        border-color: var(--rose);
-        color: var(--rose);
-        background: #fff;
-    }
+    body.wj-admin-jobs .nav-tabs .nav-link:hover { color: var(--ap-text); background: transparent; }
     body.wj-admin-jobs .nav-tabs .nav-link.active {
-        background: var(--rose);
-        color: #fff;
-        border-color: var(--rose);
-        box-shadow: 0 4px 12px rgba(244,63,94,0.28);
+        color: var(--ap-accent) !important; background: transparent !important;
+        border-bottom-color: var(--ap-accent) !important; box-shadow: none;
     }
-
-    body.wj-admin-jobs .table-responsive {
-        background: #fff;
-        border-radius: 16px;
-        padding: 0;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--maroon-border);
-        overflow-x: auto;
-    }
-    body.wj-admin-jobs .table { margin-bottom: 0; }
-    body.wj-admin-jobs .table > thead.table-light > tr > th,
+    body.wj-admin-jobs .tab-content { background: var(--ap-card); border: 1px solid var(--ap-border); border-top: 0;
+        border-radius: 0 0 var(--ap-radius) var(--ap-radius); box-shadow: var(--ap-shadow); overflow: hidden; }
+    body.wj-admin-jobs .table-responsive { overflow-x: auto; }
+    body.wj-admin-jobs .table { margin-bottom: 0; min-width: 780px; }
     body.wj-admin-jobs .table thead th {
-        background: rgba(125,42,90,0.03);
-        color: var(--maroon-dark);
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding: 16px;
-        border: none;
-        border-bottom: 1px solid var(--maroon-border);
+        text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
+        text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 14px;
+        border-bottom: 1px solid var(--ap-border); background: #FCFCFD; white-space: nowrap;
     }
     body.wj-admin-jobs .table tbody td {
-        padding: 16px;
-        vertical-align: middle;
-        font-size: 0.9rem;
-        border-bottom: 1px solid var(--maroon-border);
-        color: #1a1a2e;
+        padding: 14px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; font-size: 0.86rem; color: var(--ap-text);
     }
-    body.wj-admin-jobs .table tbody tr:last-child td { border-bottom: none; }
-    body.wj-admin-jobs .table-hover > tbody > tr:hover > * {
-        background: rgba(125,42,90,0.02);
-        --bs-table-accent-bg: rgba(125,42,90,0.02);
-    }
-
-    body.wj-admin-jobs .badge {
-        padding: 6px 12px;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-    }
-    body.wj-admin-jobs .badge-pending { background: #FFF7ED; color: #C2410C; border: 1px solid #FFEDD5; }
-    body.wj-admin-jobs .badge-approved { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
-    body.wj-admin-jobs .badge-rejected { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
-
-    body.wj-admin-jobs .btn-success {
-        background: #059669;
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
-        color: #fff;
-    }
-    body.wj-admin-jobs .btn-success:hover { background: #047857; color: #fff; }
-    body.wj-admin-jobs .btn-danger {
-        background: #dc2626;
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
-        color: #fff;
-    }
-    body.wj-admin-jobs .btn-danger:hover { background: #b91c1c; color: #fff; }
-    body.wj-admin-jobs .btn-info {
-        background: var(--maroon);
-        border: none;
-        border-radius: 8px;
-        font-weight: 700;
-    }
-    body.wj-admin-jobs .btn-info:hover { background: #3b0764; color: #fff; }
-    body.wj-admin-jobs .wj-actions {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        min-width: 138px;
-    }
-    body.wj-admin-jobs .wj-actions form {
-        display: block;
-        margin: 0;
-        width: 100%;
-    }
-    body.wj-admin-jobs .wj-actions .btn {
-        width: 100%;
-        height: 36px;
-        margin: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        border-radius: 8px;
-        box-sizing: border-box;
-    }
+    body.wj-admin-jobs .table-hover > tbody > tr:hover > * { background: #FFF7F8; --bs-table-accent-bg: #FFF7F8; }
+    body.wj-admin-jobs .badge-pending { background: #FEF3C7; color: #B45309; }
+    body.wj-admin-jobs .badge-approved { background: var(--ap-success-bg); color: var(--ap-success); }
+    body.wj-admin-jobs .badge-rejected { background: var(--ap-danger-bg); color: var(--ap-danger); }
+    body.wj-admin-jobs .btn-success { background: var(--ap-success); border: 0; border-radius: 9px; font-weight: 700; color: #fff; }
+    body.wj-admin-jobs .btn-danger { background: var(--ap-danger); border: 0; border-radius: 9px; font-weight: 700; color: #fff; }
+    body.wj-admin-jobs .btn-info { background: #fff; color: var(--ap-text); border: 1px solid var(--ap-border); border-radius: 9px; font-weight: 600; }
+    body.wj-admin-jobs .btn-info:hover { border-color: #FDA4AF; color: var(--ap-accent); background: #fff; }
+    body.wj-admin-jobs .wj-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+    body.wj-admin-jobs .wj-actions form { display: inline-flex; margin: 0; }
+    body.wj-admin-jobs .wj-actions .btn { height: 36px; padding: 7px 12px; font-size: 0.8rem; }
     body.wj-admin-jobs .btn-outline-primary {
-        background: #fdf2f8;
-        color: var(--maroon);
-        border: 1px solid rgba(244,63,94,0.35);
-        border-radius: 8px;
-        font-weight: 700;
+        background: #fff; color: var(--ap-text); border: 1px solid var(--ap-border); border-radius: 9px; font-weight: 600;
     }
-    body.wj-admin-jobs .btn-outline-primary:hover {
-        background: var(--rose);
-        color: #fff;
-        border-color: var(--rose);
-    }
-    body.wj-admin-jobs .modal-header {
-        background: var(--maroon);
-        color: #fff;
-        border-bottom: none;
-    }
-    body.wj-admin-jobs .modal-header .btn-close { filter: invert(1); }
-    body.wj-admin-jobs .modal-title { color: #fff; font-weight: 700; }
-    body.wj-admin-jobs .empty-row td {
-        text-align: center;
-        color: #64748B;
-        padding: 40px 16px !important;
-        background: var(--maroon-pale);
-        font-weight: 500;
-    }
-    @media (max-width: 992px) {
-        body.wj-admin-jobs .layout { flex-direction: column; display: block; }
-        body.wj-admin-jobs .sidebar { display: none !important; }
-        body.wj-admin-jobs .content { padding: 20px 15px; }
-        body.wj-admin-jobs .pg-header { padding: 18px; }
-        body.wj-admin-jobs .topbar { padding: 0 15px; }
+    body.wj-admin-jobs .btn-outline-primary:hover { border-color: #FDA4AF; color: var(--ap-accent); background: #fff; }
+    body.wj-admin-jobs .modal-header { background: #fff; color: var(--ap-text); border-bottom: 1px solid var(--ap-border); }
+    body.wj-admin-jobs .modal-header .btn-close { filter: none; }
+    body.wj-admin-jobs .modal-title { color: var(--ap-text); font-weight: 700; }
+    body.wj-admin-jobs .empty-row td { text-align: center; color: var(--ap-muted); padding: 36px 16px !important; background: #FCFCFD; }
+    @media (max-width: 700px) {
+        body.wj-admin-jobs .mainInner { padding: 16px 14px 40px; }
+        body.wj-admin-jobs .ap-stats { grid-template-columns: 1fr !important; }
     }
 </style>
 </head>
-<body class="wj-admin-jobs">
+<body class="ap-page wj-admin-jobs">
+<c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
 
-    <!-- Topbar -->
-    <div class="topbar">
-        <div class="container-fluid">
-            <div class="wrap">
-                <div class="d-flex align-items-center">
-                    <p class="title mb-0" style="font-size: 1.25rem;">Fight D Fear Admin Dashboard</p>
-                </div>
-                <div class="meta">
-                    <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-light">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Content -->
     <div class="layout">
-        <!-- Sidebar -->
         <%@ include file="globalAdminMenu.jsp" %>
 
-        <!-- Main -->
         <main class="main">
+            <div class="ap-topbar topbar">
+              <div class="ap-topbar-left">
+                <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+                <div class="ap-search" style="max-width:360px;">
+                  <i class="fas fa-search"></i>
+                  <input type="search" id="apHeaderSearch" placeholder="Search anything..." aria-label="Search">
+                  <span class="ap-kbd">Ctrl + K</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+                  <i class="fas fa-bell"></i>
+                  <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+                </a>
+                <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${apAdmin.id}">
+                  <span class="ap-avatar">
+                    <c:choose>
+                      <c:when test="${not empty apAdmin.profilePhoto}">
+                        <img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt="">
+                      </c:when>
+                      <c:otherwise>${fn:substring(apAdmin.name,0,1)}</c:otherwise>
+                    </c:choose>
+                  </span>
+                  <span>
+                    <div class="name"><c:out value="${apAdmin.name}"/></div>
+                    <div class="role">Super Admin</div>
+                  </span>
+                </a>
+              </div>
+            </div>
+
             <div class="content">
                 <div class="container-fluid mainInner">
-                    
-                    <div class="pg-header">
-                        <h2>Women Jobs — Worker Verification</h2>
+                    <nav class="ap-crumb">
+                      <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+                      <span class="sep">&gt;</span>
+                      <span>Women Jobs</span>
+                    </nav>
+                    <div class="ap-page-head">
+                      <div class="ap-page-ico"><i class="fas fa-briefcase"></i></div>
+                      <div>
+                        <h1>Women Jobs — Worker Verification</h1>
                         <p>Review worker profiles before they appear to clients on Women Jobs.</p>
+                      </div>
+                    </div>
+                    <div class="ap-stats" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                      <div class="ap-stat amber">
+                        <div class="ico"><i class="fas fa-clock"></i></div>
+                        <div class="val">${pendingApplications.size()}</div>
+                        <div class="lbl">Pending</div>
+                        <div class="sub">Awaiting review</div>
+                      </div>
+                      <div class="ap-stat green">
+                        <div class="ico"><i class="fas fa-check-circle"></i></div>
+                        <div class="val">${approvedApplications.size()}</div>
+                        <div class="lbl">Approved</div>
+                        <div class="sub">Live on Women Jobs</div>
+                      </div>
+                      <div class="ap-stat rose">
+                        <div class="ico"><i class="fas fa-times-circle"></i></div>
+                        <div class="val">${rejectedApplications.size()}</div>
+                        <div class="lbl">Rejected</div>
+                        <div class="sub">Not listed</div>
+                      </div>
+                    </div>
+                    <div class="ap-filter-row">
+                      <div class="grow">
+                        <input type="text" id="wjAdminSearch" class="ap-input" placeholder="Search name, email, category...">
+                      </div>
+                      <button type="button" class="ap-btn ap-btn-primary" id="wjAdminSearchBtn"><i class="fas fa-filter"></i> Search / Filter</button>
+                      <button type="button" class="ap-btn ap-btn-ghost" id="wjAdminClearBtn"><i class="fas fa-times"></i> Clear</button>
                     </div>
 
                     <c:if test="${not empty message}">
@@ -286,7 +162,8 @@
                         </div>
                     </c:if>
 
-                    <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+                    <div class="ap-panel">
+                    <ul class="nav nav-tabs mb-0" id="myTab" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">Pending (${pendingApplications.size()})</button>
                         </li>
@@ -340,7 +217,7 @@
                                                 <td>${app.appliedAt.toLocalDate()}</td>
                                                 <td>
                                                     <div class="wj-actions">
-                                                    <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#viewModal${app.id}">
+                                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal${app.id}">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
@@ -424,7 +301,7 @@
                                                 <td><span class="badge badge-approved">Approved</span></td>
                                                 <td>
                                                     <div class="wj-actions">
-                                                    <button type="button" class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#viewModalApproved${app.id}">
+                                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModalApproved${app.id}">
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST">
@@ -520,11 +397,40 @@
                             </div>
                         </div>
                     </div>
+                    </div>
 
                 </div>
             </div>
         </main>
     </div>
 
+<script>
+(function () {
+  var input = document.getElementById('wjAdminSearch');
+  var header = document.getElementById('apHeaderSearch');
+  function apply() {
+    var q = ((input && input.value) || '').toLowerCase().trim();
+    document.querySelectorAll('.tab-pane table tbody tr').forEach(function (tr) {
+      if (tr.classList.contains('empty-row')) return;
+      tr.style.display = !q || tr.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+    });
+  }
+  if (input) {
+    document.getElementById('wjAdminSearchBtn') && document.getElementById('wjAdminSearchBtn').addEventListener('click', apply);
+    document.getElementById('wjAdminClearBtn') && document.getElementById('wjAdminClearBtn').addEventListener('click', function () {
+      input.value = ''; if (header) header.value = ''; apply();
+    });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); apply(); } });
+  }
+  if (header) {
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); header.focus(); }
+    });
+    header.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); if (input) input.value = header.value; apply(); }
+    });
+  }
+})();
+</script>
 </body>
 </html>

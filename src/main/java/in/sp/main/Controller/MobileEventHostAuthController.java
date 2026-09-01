@@ -9,6 +9,8 @@ import in.sp.main.Service.EventHostProfileService;
 import in.sp.main.Service.EventHostRegistrationService;
 import in.sp.main.Service.EventsCareService;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.WomenEventBookingService;
+import in.sp.main.Service.WomenEventLifecycleService;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Util.MobileValidation;
@@ -50,14 +52,23 @@ public class MobileEventHostAuthController {
     private EventsCareService eventsCareService;
     @Autowired
     private FileUploadService fileUploadService;
+    @Autowired
+    private WomenEventLifecycleService lifecycleService;
+    @Autowired
+    private WomenEventBookingService bookingService;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
         try {
             hostRegistrationService.sendRegistrationOtp(body == null ? null : body.get("email"));
+            int mins = hostRegistrationService.getOtpExpirationMinutes();
+            int cooldown = hostRegistrationService.getOtpResendCooldownSeconds();
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "OTP sent to your email");
+            res.put("expirationMinutes", mins);
+            res.put("resendCooldownSeconds", cooldown);
+            res.put("message", "OTP sent to your email. Valid for " + mins
+                    + " minutes. You can resend after " + cooldown + " seconds.");
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
@@ -72,7 +83,8 @@ public class MobileEventHostAuthController {
                     body == null ? null : body.get("otp"));
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Email verified");
+            res.put("message", "Email verified. OTP was valid for "
+                    + hostRegistrationService.getOtpExpirationMinutes() + " minutes.");
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
@@ -80,7 +92,7 @@ public class MobileEventHostAuthController {
     }
 
     @PostMapping("/register-quick")
-    public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Map<String, Object>> registerQuick(@RequestBody Map<String, Object> body, HttpSession session) {
         try {
             boolean accepted = body != null && (
                     Boolean.TRUE.equals(body.get("acceptedTerms"))
@@ -93,10 +105,13 @@ public class MobileEventHostAuthController {
                     str(body, "confirmPassword"),
                     str(body, "emailOtp"),
                     accepted);
+            session.setAttribute("pendingHostLoginEmail", host.getEmail());
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Account created. Login and complete your profile to submit for verification.");
+            res.put("message", "Account created. Sign in to complete your host profile.");
             res.put("hostId", host.getId());
+            res.put("email", host.getEmail());
+            res.put("loginPath", "/women-events/host/login");
             res.put("partnerProfileStatus", host.getPartnerProfileStatus() == null
                     ? null : host.getPartnerProfileStatus().name());
             res.put("profileCompletionPct", host.getProfileCompletionPct());
@@ -383,11 +398,26 @@ public class MobileEventHostAuthController {
         event.setVirtual(virtual);
         event.setStreamLink(trim(Objects.toString(body.get("streamLink"), "")));
         event.setBoothFee(parseDouble(body.get("boothFee"), 0.0));
-        event.setStatus("PENDING");
+        boolean draft = Boolean.parseBoolean(Objects.toString(body.get("draft"), "false"))
+                || Boolean.parseBoolean(Objects.toString(body.get("saveDraft"), "false"));
+        lifecycleService.applyCreateStatus(event, draft);
+        if (body.get("eventFormat") != null) {
+            event.setEventFormat(EventFormat.fromFlexible(Objects.toString(body.get("eventFormat"), "OFFLINE")));
+            event.setVirtual(event.getEventFormat() == EventFormat.ONLINE || event.getEventFormat() == EventFormat.HYBRID);
+        }
+        if (body.get("shortDescription") != null) event.setShortDescription(trim(Objects.toString(body.get("shortDescription"), "")));
+        if (body.get("cancellationPolicy") != null) event.setCancellationPolicy(trim(Objects.toString(body.get("cancellationPolicy"), "")));
+        if (body.get("refundPolicy") != null) event.setRefundPolicy(trim(Objects.toString(body.get("refundPolicy"), "")));
+        event.setTimezone("Asia/Kolkata");
+        if (event.getEventDate() != null) {
+            LocalTime st = event.getEventTime() == null ? LocalTime.of(10, 0) : event.getEventTime();
+            event.setStartsAt(java.time.LocalDateTime.of(event.getEventDate(), st));
+            event.setRegistrationClosesAt(event.getStartsAt());
+        }
         eventRepo.save(event);
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("message", "Event submitted for admin approval");
+        data.put("message", draft ? "Draft saved" : "Event submitted for admin approval");
         data.put("event", eventDto(event));
         return ResponseEntity.status(HttpStatus.CREATED).body(ok(data));
     }
@@ -518,11 +548,29 @@ public class MobileEventHostAuthController {
             return badRequest(EventsCareService.CANCEL_POLICY);
         }
         event.setStatus("CANCELLED_BY_HOST");
-        eventRepo.save(event);
+        lifecycleService.transition(event, EventLifecycleStatus.CANCELLED,
+                "EVENT_HOST", host.getId(), host.getEmail(), "Cancelled by host");
         return ResponseEntity.ok(ok(Map.of(
                 "message", "Event cancelled",
                 "event", eventDto(event)
         )));
+    }
+
+    @PostMapping("/events/{id}/submit")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> submitEvent(@PathVariable Long id, HttpSession session) {
+        EventHost host = requireHost(session);
+        if (host == null) return unauthorized();
+        if (!EventHostProfileService.isApproved(host)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error("Host must be verified"));
+        }
+        WomenEvent event = eventRepo.findById(id).orElse(null);
+        if (event == null || event.getOrganizer() == null || !event.getOrganizer().getId().equals(host.getId())) {
+            return badRequest("Event not found");
+        }
+        lifecycleService.transition(event, EventLifecycleStatus.SUBMITTED,
+                "EVENT_HOST", host.getId(), host.getEmail(), "Submitted for approval");
+        return ResponseEntity.ok(ok(Map.of("message", "Event submitted for admin approval", "event", eventDto(event))));
     }
 
     @PostMapping("/events/{id}/checkin")
@@ -538,40 +586,29 @@ public class MobileEventHostAuthController {
             return badRequest("Event not found");
         }
         String ticketCode = trim(Objects.toString(body == null ? null : body.get("ticketCode"), ""));
+        if (ticketCode.isBlank() && body != null && body.get("qrToken") != null) {
+            ticketCode = trim(Objects.toString(body.get("qrToken"), ""));
+        }
         if (ticketCode.isBlank()) return badRequest("ticketCode is required");
-
-        WomenEventRegistration reg = registrationRepo.findByTicketCode(ticketCode).orElse(null);
-        if (reg == null || reg.getEvent() == null || !reg.getEvent().getId().equals(event.getId())) {
-            return badRequest("Ticket not found for this event");
+        try {
+            WomenEventRegistration reg = bookingService.checkIn(event, ticketCode);
+            Map<String, Object> attendee = new LinkedHashMap<>();
+            attendee.put("id", reg.getId());
+            attendee.put("ticketCode", reg.getTicketCode());
+            attendee.put("status", reg.getStatus());
+            attendee.put("checkedIn", true);
+            attendee.put("paid", reg.isPaid());
+            if (reg.getUser() != null) {
+                attendee.put("userName", reg.getUser().getFullName());
+                attendee.put("userEmail", reg.getUser().getEmail());
+            }
+            return ResponseEntity.ok(ok(Map.of(
+                    "message", "Checked in successfully",
+                    "registration", attendee
+            )));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         }
-        if ("CANCELLED".equalsIgnoreCase(reg.getStatus())) {
-            return badRequest("Registration is cancelled");
-        }
-        if (reg.isCheckedIn() || "ATTENDED".equalsIgnoreCase(reg.getStatus())) {
-            return badRequest("Already checked in");
-        }
-        double fee = event.getEntryFee() == null ? 0 : Math.max(0, event.getEntryFee());
-        if (fee > 0 && !reg.isPaid()) {
-            return badRequest("Payment pending for this ticket");
-        }
-        reg.setCheckedIn(true);
-        reg.setStatus("ATTENDED");
-        registrationRepo.save(reg);
-
-        Map<String, Object> attendee = new LinkedHashMap<>();
-        attendee.put("id", reg.getId());
-        attendee.put("ticketCode", reg.getTicketCode());
-        attendee.put("status", reg.getStatus());
-        attendee.put("checkedIn", true);
-        attendee.put("paid", reg.isPaid());
-        if (reg.getUser() != null) {
-            attendee.put("userName", reg.getUser().getFullName());
-            attendee.put("userEmail", reg.getUser().getEmail());
-        }
-        return ResponseEntity.ok(ok(Map.of(
-                "message", "Checked in successfully",
-                "registration", attendee
-        )));
     }
 
     @GetMapping("/events/{id}/registrations")
