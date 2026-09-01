@@ -277,9 +277,9 @@
             </c:if>
             <c:if test="${param.registered}">
                 <div class="alert-box alert-success">
-<<<<<<< HEAD
+
                     <i class="bi bi-check-circle-fill"></i> Account created! Sign in to complete your host profile. Email and password are filled from registration.
-=======
+
                     <i class="bi bi-check-circle-fill"></i> Account created. Sign in with the email you just registered.
                 </div>
                 <div class="next-steps-card">
@@ -290,7 +290,6 @@
                         <li><strong>Review the preview card</strong> on the profile page, then submit for admin verification.</li>
                         <li>You can create events only after an admin <strong>approves</strong> your profile.</li>
                     </ol>
->>>>>>> 977a3c5eb51e653e2654f1498f4a15377a662a29
                 </div>
             </c:if>
             <c:if test="${not empty success}">

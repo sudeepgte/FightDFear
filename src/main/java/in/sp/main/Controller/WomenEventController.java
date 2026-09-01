@@ -4,16 +4,12 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.EventHostProfileService;
-<<<<<<< HEAD
 import in.sp.main.Service.EventsCareService;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.EventCoinPolicy;
 import in.sp.main.Service.WomenEventBookingService;
 import in.sp.main.Service.WomenEventLifecycleService;
 import in.sp.main.Service.WomenEventSupport;
-=======
-import in.sp.main.Service.PartnerLifecycleSupport;
->>>>>>> 977a3c5eb51e653e2654f1498f4a15377a662a29
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -439,6 +435,11 @@ public class WomenEventController {
             ra.addFlashAttribute("error", message);
         }
         if (PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus())) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        return "redirect:/women-events/organizer/dashboard";
+    }
+
     /** Matches Flutter Event Host login: incomplete / changes-requested hosts complete profile first. */
     private boolean hostNeedsProfileCompletion(EventHost host) {
         if (host == null) return false;
@@ -497,10 +498,11 @@ public class WomenEventController {
     public String showHostLoginForm(HttpSession session, Model model,
                                     @RequestParam(value = "email", required = false) String email) {
         Object pending = session.getAttribute("pendingHostLoginEmail");
-        if (pending instanceof String pendingEmail && !pendingEmail.isBlank()) {
+        String pendingEmail = (pending instanceof String) ? ((String) pending).trim() : "";
+        if (!pendingEmail.isEmpty()) {
             model.addAttribute("registeredEmail", pendingEmail);
             session.removeAttribute("pendingHostLoginEmail");
-        } else if (email != null && !email.isBlank()) {
+        } else if (email != null && !email.trim().isEmpty()) {
             model.addAttribute("registeredEmail", email.trim().toLowerCase());
         }
         return "women-events/host-login";
@@ -561,11 +563,6 @@ public class WomenEventController {
             // token generation fallback
         }
 
-        if (PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus())
-                && !EventHostProfileService.isApproved(host)) {
-            return "redirect:/women-events/organizer/profile-completion";
-        }
-        return "redirect:/women-events/organizer/dashboard";
         return redirectAfterHostLogin(host);
     }
 
@@ -636,7 +633,7 @@ public class WomenEventController {
         long draftCount = myEvents.stream().filter(e -> "DRAFT".equals(e.getStatus())).count();
         long publishedCount = approvedCount;
         long upcomingCount = myEvents.stream().filter(e -> {
-            var start = WomenEventSupport.eventStart(e);
+            java.time.LocalDateTime start = WomenEventSupport.eventStart(e);
             return start != null && start.isAfter(java.time.LocalDateTime.now())
                     && WomenEventSupport.isPubliclyListed(e);
         }).count();
