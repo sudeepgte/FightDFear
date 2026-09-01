@@ -16,7 +16,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
-
+    
     <style>
         :root {
             --primary: #F43F5E;
@@ -66,92 +66,6 @@
             align-items: center;
             gap: 10px;
             color: var(--primary);
-
-
-    <style>
-        /* Marketplace /list only — Martial Arts hub tokens, scoped (no sidebar/header global restyle) */
-        body.mp-list-page {
-            --m-navy: #0F172A;
-            --m-navy-mid: #1E293B;
-            --m-rose: #F43F5E;
-            --m-rose-hover: #E11D48;
-            --m-rose-soft: #FFF1F2;
-            --m-bg: #F8FAFC;
-            --m-muted: #64748B;
-            --m-border: #E2E8F0;
-        }
-        body.mp-list-page #page-content-wrapper {
-            font-family: 'Poppins', sans-serif;
-            background: var(--m-bg);
-            color: var(--m-navy);
-            min-height: 100vh;
-        }
-        body.mp-list-page .list-header {
-            background: #FFFFFF;
-            padding: 28px 0 20px;
-            color: var(--m-navy);
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--m-border);
-            box-shadow: none;
-        }
-        body.mp-list-page .list-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            color: var(--m-navy);
-            letter-spacing: -0.5px;
-        }
-        body.mp-list-page .list-header p { color: var(--m-muted); }
-        body.mp-list-page .list-header .btn-outline-dark,
-        body.mp-list-page .list-header .btn-outline-light {
-            background: #FFFFFF;
-            border: 1px solid var(--m-border);
-            color: var(--m-navy);
-            min-height: 42px;
-        }
-        body.mp-list-page .list-header .btn-outline-dark:hover,
-        body.mp-list-page .list-header .btn-outline-light:hover {
-            background: var(--m-rose);
-            border-color: var(--m-rose);
-            color: #fff;
-        }
-        body.mp-list-page .provider-card {
-            background: #fff;
-            border-radius: 18px;
-            padding: 24px;
-            transition: 0.25s ease;
-            border: 1px solid var(--m-border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-        }
-        body.mp-list-page .provider-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            border-color: #CBD5E1;
-        }
-        body.mp-list-page .provider-avatar {
-            width: 60px;
-            height: 60px;
-            background: var(--m-rose-soft);
-            border: 1px solid #FECDD3;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--m-rose);
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-        body.mp-list-page .rating-badge {
-            background: var(--m-rose-soft);
-            border: 1px solid #FECDD3;
-            color: #9F1239;
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 0.85rem;
-
             font-weight: 700;
             font-size: 1.1rem;
         }
@@ -162,7 +76,6 @@
             display: block;
         }
 
-
         /* Hero Section */
         .hero {
             padding: 10px 0 20px 0;
@@ -170,12 +83,16 @@
         .hero h1 {
             font-size: 1.75rem;
             font-weight: 700;
-            color: var(--text-main);
+            color: var(--primary);
             margin-bottom: 5px;
         }
         .hero p {
-            color: var(--secondary);
+            color: var(--primary);
             font-size: 0.9rem;
+ HEAD
+            margin-bottom: 20px;
+        }
+
         }
         body.mp-list-page .location-tag {
             font-size: 0.85rem;
@@ -206,6 +123,7 @@
             min-height: 42px;
             border-radius: 12px;
         }
+
 
         /* Search & Filters */
         .search-box {
@@ -282,7 +200,6 @@
         .section-title {
             font-size: 1.1rem;
             font-weight: 700;
-
         }
         .view-all {
             color: var(--primary);
@@ -418,35 +335,6 @@
         .price-label {
             font-size: 0.7rem;
             color: var(--secondary);
-
-            transition: 0.25s ease;
-            text-align: center;
-            display: block;
-            text-decoration: none;
-        }
-        body.mp-list-page .btn-view:hover {
-            background: var(--m-rose-hover);
-            color: #fff;
-        }
-        body.mp-list-page .btn-primary {
-            background: var(--m-rose);
-            border-color: var(--m-rose);
-            color: #fff;
-            min-height: 42px;
-        }
-        body.mp-list-page .btn-primary:hover {
-            background: var(--m-rose-hover);
-            border-color: var(--m-rose-hover);
-            color: #fff;
-        }
-        @media (max-width: 768px) {
-            body.mp-list-page .list-header { padding: 20px 0 16px; }
-            body.mp-list-page .list-header .container {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 16px;
-            }
-
         }
         .availability {
             font-size: 0.75rem;
@@ -578,7 +466,6 @@
 
     </style>
 </head>
-
 <body>
     <style>
         /* Override sidebar layout to remove top gap since header is removed */
@@ -589,10 +476,6 @@
             top: 0 !important;
         }
     </style>
-
-<body class="mp-list-page">
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
-
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding-bottom: 80px; background-color: var(--bg);">
@@ -898,11 +781,16 @@
 
             // 4. Filter / Sort Logic
             const sortOpts = document.querySelectorAll('.sort-opt');
-            const lawyerContainer = document.querySelector('.container-fluid');
+            const filterBtn = document.querySelector('.filter-btn');
             
             sortOpts.forEach(opt => {
                 opt.addEventListener('click', function(e) {
                     e.preventDefault();
+                    
+                    // Update button text
+                    const optText = this.textContent;
+                    filterBtn.innerHTML = `<i class="bi bi-filter"></i> ${optText}`;
+
                     const sortType = this.getAttribute('data-sort');
                     const cardsArray = Array.from(lawyerCards);
                     
