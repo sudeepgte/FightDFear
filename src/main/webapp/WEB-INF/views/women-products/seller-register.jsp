@@ -187,6 +187,42 @@
         .confirm-list i { color:var(--success); }
         .confirm-next { background:var(--rose-soft); border-radius:12px; padding:12px; font-size:0.88rem; font-weight:600; margin:16px 0; }
         .btn-confirm { display:inline-flex; align-items:center; gap:8px; padding:12px 22px; background:var(--primary); color:#fff; border-radius:12px; text-decoration:none; font-weight:700; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+        }
+        .modal-card {
+            background: #FFFFFF; border-radius: 20px; max-width: 460px; width: 100%; padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .modal-header .icon-wrap {
+            width: 40px; height: 40px; border-radius: 10px; background: var(--rose-soft); color: var(--primary);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .modal-header h3 { font-size: 1.15rem; font-weight: 800; color: var(--navy); margin: 0; }
+        .modal-body {
+            background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 14px; margin-bottom: 20px;
+        }
+        .review-row {
+            display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color); font-size: 0.85rem;
+        }
+        .review-row:last-child { border-bottom: none; }
+        .review-row .label { color: var(--text-gray); font-weight: 500; }
+        .review-row .value { color: var(--navy); font-weight: 700; text-align: right; word-break: break-word; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-cancel {
+            flex: 1; padding: 12px; background: #FFFFFF; border: 1px solid var(--border-color);
+            color: var(--navy); border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit;
+        }
+        .btn-modal-confirm {
+            flex: 1.5; padding: 12px; background: var(--primary); border: none; color: #FFFFFF;
+            border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;
+        }
         @media (max-width: 640px) {
             .row-2 { grid-template-columns: 1fr; }
             .app-header { padding: 12px 16px; }
@@ -305,6 +341,29 @@
             <p class="login-footer">Already registered? <a href="${pageContext.request.contextPath}/women-products/seller/login">Sign in</a></p>
         </div>
     </main>
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap"><i class="bi bi-shield-lock-fill"></i></div>
+                <div>
+                    <h3>Confirm Details</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-gray); margin: 0;">Review your information before account creation</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-row"><span class="label">Shop Name:</span><span class="value" id="revShop">—</span></div>
+                <div class="review-row"><span class="label">Contact Person:</span><span class="value" id="revName">—</span></div>
+                <div class="review-row"><span class="label">Mobile Number:</span><span class="value" id="revPhone">—</span></div>
+                <div class="review-row"><span class="label">Email:</span><span class="value" id="revEmail">—</span></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" id="btnConfirmBack">Back / Edit</button>
+                <button type="button" class="btn-modal-confirm" id="btnConfirmRegister">
+                    Confirm &amp; Register <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     <script>
         document.querySelectorAll('.password-toggle-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -317,6 +376,7 @@
             });
         });
         var otpVerified = false;
+        var wpConfirmReady = false;
         var ctx = '${pageContext.request.contextPath}';
         function setOtpMsg(text, ok) {
             var el = document.getElementById('otpMsg');
@@ -324,36 +384,39 @@
             el.className = 'otp-msg ' + (ok ? 'ok' : 'err');
         }
         document.getElementById('btnSendOtp').addEventListener('click', function () {
-            var email = document.getElementById('email').value.trim();
+            var email = document.getElementById('email').value.trim().toLowerCase();
             if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
                 setOtpMsg('Enter a valid email first.', false);
                 return;
             }
             otpVerified = false;
-            fetch(ctx + '/api/women-products/seller/otp/send-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
-            }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-              .then(function (x) {
-                  setOtpMsg(x.j.message || (x.ok ? 'OTP sent' : 'Could not send OTP'), x.ok && x.j.success !== false);
+            fetch(ctx + '/women-products/seller/send-otp?email=' + encodeURIComponent(email), {
+                method: 'POST'
+            }).then(function (r) { return r.json(); })
+              .then(function (data) {
+                  var ok = !!data.success;
+                  setOtpMsg(data.message || data.error || (ok ? 'OTP sent' : 'Could not send OTP'), ok);
+                  if (ok) {
+                      alert('OTP sent to your email (' + email + ')! Please check your inbox or spam folder.');
+                  }
               }).catch(function () { setOtpMsg('Could not send OTP.', false); });
         });
         document.getElementById('btnVerifyOtp').addEventListener('click', function () {
-            var email = document.getElementById('email').value.trim();
-            var otp = document.getElementById('sellerOtp').value.trim();
-            if (otp.length < 4) {
-                setOtpMsg('OTP is required.', false);
+            var email = document.getElementById('email').value.trim().toLowerCase();
+            var otp = document.getElementById('sellerOtp').value.replace(/\D/g, '');
+            if (otp.length !== 6) {
+                setOtpMsg('Enter the 6-digit OTP from your email.', false);
                 return;
             }
-            fetch(ctx + '/api/women-products/seller/otp/verify-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, otp: otp })
-            }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-              .then(function (x) {
-                  otpVerified = !!(x.ok && x.j.success !== false);
-                  setOtpMsg(x.j.message || (otpVerified ? 'OTP verified' : 'Invalid OTP'), otpVerified);
+            fetch(ctx + '/women-products/seller/verify-otp?email=' + encodeURIComponent(email) + '&otp=' + encodeURIComponent(otp), {
+                method: 'POST'
+            }).then(function (r) { return r.json(); })
+              .then(function (data) {
+                  otpVerified = !!data.success;
+                  setOtpMsg(data.message || data.error || (otpVerified ? 'OTP verified' : 'Invalid OTP'), otpVerified);
+                  if (otpVerified) {
+                      alert('Email verified successfully! You can now complete registration.');
+                  }
               }).catch(function () { otpVerified = false; setOtpMsg('Verification failed.', false); });
         });
         document.getElementById('email').addEventListener('change', function () { otpVerified = false; });
@@ -429,6 +492,23 @@
             document.getElementById('email').value = email;
             document.getElementById('phone').value = phone;
             document.getElementById('address').value = address;
+            if (!wpConfirmReady) {
+                e.preventDefault();
+                document.getElementById('revShop').textContent = businessName;
+                document.getElementById('revName').textContent = fullName;
+                document.getElementById('revPhone').textContent = phone;
+                document.getElementById('revEmail').textContent = email;
+                document.getElementById('confirmModal').style.display = 'flex';
+            }
+        });
+        document.getElementById('btnConfirmBack').addEventListener('click', function () {
+            document.getElementById('confirmModal').style.display = 'none';
+            wpConfirmReady = false;
+        });
+        document.getElementById('btnConfirmRegister').addEventListener('click', function () {
+            wpConfirmReady = true;
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('sellerForm').requestSubmit();
         });
     </script>
 </body>
