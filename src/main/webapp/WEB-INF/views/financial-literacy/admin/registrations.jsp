@@ -19,24 +19,23 @@
     
     <style>
         :root {
-            --primary-purple: #7C2D5E;
-            --primary-purple-light: #a64281;
-            --primary-pink: #DB2777;
-            --primary-gold: #ffd700;
-            --dark-bg: #0f0f1a;
-            --light-bg: #fffcfd;
-            --light-gray: #f8fafc;
+            --fl-heading: #0B1736;
+            --fl-text: #17233D;
+            --fl-muted: #5B6B86;
+            --fl-accent: #FF3B5C;
+            --fl-border: #D9E0EA;
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: var(--light-bg);
+            background: #F4F6FA;
+            color: var(--fl-text);
         }
 
         /* Topbar */
         .topbar {
-            background: var(--primary-purple);
+            background: #0B1736;
             color: white;
             padding: 14px 18px;
             font-weight: 600;
@@ -60,7 +59,7 @@
         .sidebar {
             width: 272px;
             background: white;
-            border-right: 1px solid rgba(124, 45, 94, 0.18);
+            border-right: 1px solid var(--fl-border);
             padding: 14px 12px;
             height: calc(100vh - 56px);
             position: sticky;
@@ -75,7 +74,7 @@
             gap: 12px;
             padding: 10px 15px;
             border-radius: 12px;
-            color: #4b5563;
+            color: #5B6B86;
             text-decoration: none;
             font-weight: 500;
             font-size: 0.9rem;
@@ -84,12 +83,12 @@
         }
 
         .navlink:hover {
-            background: rgba(124, 45, 94, 0.1);
-            color: var(--primary-purple);
+            background: rgba(11, 23, 54, 0.08);
+            color: #0B1736;
         }
 
         .navlink.active {
-            background: var(--primary-purple);
+            background: #0B1736;
             color: white;
         }
 
@@ -106,20 +105,68 @@
         /* Section Card */
         .admin-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(124, 45, 94, 0.1);
+            box-shadow: 0 10px 30px rgba(11, 23, 54, 0.06);
+            border: 1px solid var(--fl-border);
         }
 
         .admin-card h3 {
             font-family: 'Montserrat', sans-serif;
             font-weight: 800;
-            color: var(--primary-purple);
+            color: #0B1736;
             margin-bottom: 24px;
         }
 
+        .admin-card h3 i {
+            color: #FF3B5C;
+        }
+
+        /* Nav Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid #E2E8F0;
+        }
+
+        .nav-tabs .nav-link {
+            color: #5B6B86;
+            font-weight: 600;
+            border: 1px solid transparent;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            padding: 10px 20px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0B1736;
+            border-color: #E2E8F0 #E2E8F0 transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0B1736 !important;
+            font-weight: 700;
+            background-color: #ffffff;
+            border-color: #D9E0EA #D9E0EA #ffffff !important;
+        }
+
+        /* Table Styling */
         .table {
             font-size: 0.9rem;
+            color: #17233D;
+        }
+
+        .table thead th {
+            color: #0B1736;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 12px;
+        }
+
+        .table tbody td {
+            color: #17233D;
+            vertical-align: middle;
         }
 
         .badge-pending {

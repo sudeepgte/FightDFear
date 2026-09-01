@@ -367,15 +367,6 @@
         Financial Literacy
     </div>
 
-    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-educators') ? 'active' : ''}"
-       href="${pageContext.request.contextPath}/admin/pending-educators">
-        <i class="fas fa-chalkboard-teacher"></i>
-        Educator Approvals
-        <c:if test="${side_pendingEducators > 0}">
-            <span class="badge rounded-pill bg-danger ms-auto">${side_pendingEducators}</span>
-        </c:if>
-    </a>
-
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'financial-literacy/admin') && !fn:contains(pageContext.request.requestURI,'add-') && !fn:contains(pageContext.request.requestURI,'registrations') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/financial-literacy/admin">
 

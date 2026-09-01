@@ -11,6 +11,139 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
+    <style>
+        :root {
+            --fl-heading: #0B1736;
+            --fl-text: #17233D;
+            --fl-muted: #5B6B86;
+            --fl-accent: #FF3B5C;
+            --fl-accent-hover: #D92B4B;
+            --fl-purple: #312E81;
+            --fl-bg-light: #FFF1F3;
+            --fl-border: #D9E0EA;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #F4F6FA;
+            color: var(--fl-text);
+        }
+
+        .topbar {
+            background: #0B1736;
+            color: white;
+            padding: 14px 18px;
+            font-weight: 600;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 56px);
+        }
+
+        .main {
+            flex: 1;
+            padding: 24px 20px 40px;
+            min-width: 0;
+        }
+
+        .mainInner.narrow {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(11, 23, 54, 0.06);
+            border: 1px solid var(--fl-border);
+        }
+
+        .admin-card h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--fl-heading);
+        }
+
+        .form-label {
+            color: var(--fl-heading) !important;
+            font-weight: 600;
+        }
+
+        .form-label .text-danger {
+            color: var(--fl-accent) !important;
+        }
+
+        .form-control, .form-select {
+            color: var(--fl-text) !important;
+            border: 1px solid var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .form-control::placeholder {
+            color: var(--fl-muted) !important;
+            opacity: 0.85;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--fl-accent) !important;
+            box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.15) !important;
+            color: var(--fl-text) !important;
+        }
+
+        .btn-outline-secondary {
+            color: var(--fl-text) !important;
+            border-color: var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            color: #FFFFFF !important;
+            background-color: var(--fl-accent) !important;
+            border-color: var(--fl-accent) !important;
+        }
+
+        .btn-purple, .btn-primary {
+            background-color: var(--fl-accent) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-purple:hover, .btn-primary:hover {
+            background-color: var(--fl-accent-hover) !important;
+            color: #FFFFFF !important;
+        }
+
+        .btn-light {
+            color: var(--fl-text) !important;
+            background-color: #F1F5F9 !important;
+            border: 1px solid var(--fl-border) !important;
+            font-weight: 600;
+        }
+
+        .btn-light:hover {
+            background-color: #E2E8F0 !important;
+            color: var(--fl-heading) !important;
+        }
+
+        .text-primary {
+            color: var(--fl-accent) !important;
+        }
+
+        .text-muted {
+            color: var(--fl-muted) !important;
+        }
+    </style>
 </head>
 <body>
     <c:set var="flAdminTitle" value="Add Recorded Video" scope="request"/>
