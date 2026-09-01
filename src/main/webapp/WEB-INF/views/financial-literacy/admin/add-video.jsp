@@ -13,25 +13,26 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
     <style>
         :root {
-            --fl-heading: #0B1736;
-            --fl-text: #17233D;
-            --fl-muted: #5B6B86;
-            --fl-accent: #FF3B5C;
-            --fl-accent-hover: #D92B4B;
-            --fl-purple: #312E81;
-            --fl-bg-light: #FFF1F3;
-            --fl-border: #D9E0EA;
+            --fl-primary: #1E1B4B;
+            --fl-secondary: #312E81;
+            --fl-accent: #F43F5E;
+            --fl-accent-hover: #E02B4C;
+            --fl-heading: #1E1B4B;
+            --fl-text: #1E1B4B;
+            --fl-muted: #64748B;
+            --fl-bg-light: #F8FAFC;
+            --fl-border: rgba(30, 27, 75, 0.12);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: #F4F6FA;
+            background: #F8FAFC;
             color: var(--fl-text);
         }
 
         .topbar {
-            background: #0B1736;
+            background: #1E1B4B;
             color: white;
             padding: 14px 18px;
             font-weight: 600;
@@ -57,7 +58,7 @@
             background: white;
             border-radius: 20px;
             padding: 28px;
-            box-shadow: 0 10px 30px rgba(11, 23, 54, 0.06);
+            box-shadow: 0 10px 30px rgba(30, 27, 75, 0.08);
             border: 1px solid var(--fl-border);
         }
 
@@ -91,7 +92,7 @@
 
         .form-control:focus, .form-select:focus {
             border-color: var(--fl-accent) !important;
-            box-shadow: 0 0 0 3px rgba(255, 59, 92, 0.15) !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
             color: var(--fl-text) !important;
         }
 
@@ -144,24 +145,47 @@
             color: var(--fl-muted) !important;
         }
     </style>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
+    <style>
+        body.ap-page { margin: 0; }
+        .topbar { display: none !important; }
+        .layout { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    </style>
 </head>
-<body>
-    <c:set var="flAdminTitle" value="Add Recorded Video" scope="request"/>
-    <c:set var="flAdminActive" value="add-video" scope="request"/>
-    <%@ include file="_topbar.jsp" %>
-
+<body class="ap-page">
     <div class="layout">
         <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
         <main class="main">
-            <div class="mainInner narrow">
-                <div class="admin-card">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <h3 class="mb-0">Add Recorded Video</h3>
-                        <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back
-                        </a>
+            <%@ include file="_topbar.jsp" %>
+            <div class="ap-main-inner" style="max-width: 860px;">
+                <!-- Back Button -->
+                <div class="mb-3">
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn-back-theme">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+
+                <!-- Breadcrumb -->
+                <nav class="ap-crumb">
+                    <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+                    <span class="sep">&gt;</span>
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin">Financial Literacy</a>
+                    <span class="sep">&gt;</span>
+                    <span>Add Recorded Video</span>
+                </nav>
+
+                <!-- Page Header -->
+                <div class="ap-page-head">
+                    <div class="ap-page-ico"><i class="fas fa-video"></i></div>
+                    <div>
+                        <h1>Add Recorded Video</h1>
+                        <p>Upload or embed a new educational video for learners</p>
                     </div>
+                </div>
+
+                <div class="ap-panel p-4">
 
                     <c:if test="${not empty error}">
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">

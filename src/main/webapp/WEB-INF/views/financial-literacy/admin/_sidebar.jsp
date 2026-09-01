@@ -10,26 +10,26 @@
   <div class="mb-4">
     <a href="${pageContext.request.contextPath}/financial-literacy/admin"
        class="navlink ${activeNav == 'home' ? 'active' : ''}">
-      <i class="fas fa-home"></i> Home
+      <i class="fas fa-book"></i> Financial Educator
     </a>
   </div>
 
   <h6 class="sidebar-section-title">Videos</h6>
   <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-video"
      class="navlink ${activeNav == 'add-video' ? 'active' : ''}">
-    <i class="fas fa-plus-circle"></i> Add Video
+    <i class="fas fa-plus-circle"></i> Add Recorded Video
   </a>
 
   <h6 class="sidebar-section-title spaced">Live Sessions</h6>
   <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session"
      class="navlink ${activeNav == 'add-live-session' ? 'active' : ''}">
-    <i class="fas fa-video"></i> Add Session
+    <i class="fas fa-video"></i> Add Live Virtual Session
   </a>
 
   <h6 class="sidebar-section-title spaced">Workshops</h6>
   <a href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop"
      class="navlink ${activeNav == 'add-workshop' ? 'active' : ''}">
-    <i class="fas fa-calendar-check"></i> Add Workshop
+    <i class="fas fa-calendar-check"></i> Add Offline Workshop
   </a>
   <a href="${pageContext.request.contextPath}/financial-literacy/admin/registrations"
      class="navlink ${activeNav == 'registrations' ? 'active' : ''}">

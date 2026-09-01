@@ -373,7 +373,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin">
 
         <i class="fas fa-book"></i>
-        Home
+        Financial Educator
 
     </a>
 
@@ -381,7 +381,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-video">
 
         <i class="fas fa-plus-circle"></i>
-        Add Video
+        Add Recorded Video
 
     </a>
 
@@ -389,7 +389,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-live-session">
 
         <i class="fas fa-video"></i>
-        Add Live Session
+        Add Live Virtual Session
 
     </a>
 
@@ -397,7 +397,7 @@
        href="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop">
 
         <i class="fas fa-calendar-check"></i>
-        Add Workshop
+        Add Offline Workshop
 
     </a>
 
