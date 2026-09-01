@@ -2206,40 +2206,57 @@ public class AdminController {
     // --- Women Entrepreneur Investment Platform Admin Actions ---
 
     @GetMapping("/pending-proposals")
-    public String viewPendingProposals(Model model, HttpSession session) {
+    public String viewPendingProposals(@RequestParam(value = "filter", defaultValue = "pending") String filter,
+                                       @RequestParam(value = "q", required = false) String q,
+                                       Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        
-        List<BusinessProposal> allProposals = businessProposalRepository.findAll();
+
         List<Entrepreneur> allEntrepreneurs = entrepreneurRepository.findAll();
-        List<Investor> allInvestors = investorRepository.findAll();
-        List<InvestmentMeeting> allMeetings = investmentMeetingRepository.findAll();
-        List<Investment> allInvestments = investmentRepository.findAll();
-        List<ProposalQuestion> allQuestions = proposalQuestionRepository.findAll();
-        List<ProposalChatMessage> allChats = proposalChatMessageRepository.findAll();
-
-        // Sort chat messages by timestamp descending
-        allChats.sort((c1, c2) -> {
-            if (c1.getTimestamp() == null || c2.getTimestamp() == null) return 0;
-            return c2.getTimestamp().compareTo(c1.getTimestamp());
-        });
-
-        model.addAttribute("allProposals", allProposals);
-        model.addAttribute("allEntrepreneurs", allEntrepreneurs);
-        model.addAttribute("allInvestors", allInvestors);
-        model.addAttribute("allMeetings", allMeetings);
-        model.addAttribute("allInvestments", allInvestments);
-        model.addAttribute("allQuestions", allQuestions);
-        model.addAttribute("allChats", allChats);
-
-        // Pending counts for quick badge counters in UI tabs
-        long pendingProposalsCount = allProposals.stream().filter(p -> p.getStatus() == VerificationStatus.PENDING).count();
-        long pendingEntCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.PENDING).count();
-        long pendingInvCount = allInvestors.stream().filter(i -> i.getVerificationStatus() == VerificationStatus.PENDING).count();
         
-        model.addAttribute("pendingProposalsCount", pendingProposalsCount);
-        model.addAttribute("pendingEntCount", pendingEntCount);
-        model.addAttribute("pendingInvCount", pendingInvCount);
+        long pendingCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.PENDING).count();
+        long reverificationCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION).count();
+        long changesRequestedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED).count();
+        long approvedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.VERIFIED).count();
+        long rejectedCount = allEntrepreneurs.stream().filter(e -> e.getVerificationStatus() == VerificationStatus.REJECTED).count();
+        
+        List<Entrepreneur> activeList = new ArrayList<>();
+        List<Entrepreneur> changesList = new ArrayList<>();
+        List<Entrepreneur> reverifyList = new ArrayList<>();
+        
+        String query = q != null ? q.toLowerCase() : "";
 
+        for (Entrepreneur e : allEntrepreneurs) {
+            if (e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) changesList.add(e);
+            if (e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION) reverifyList.add(e);
+            
+            boolean matchesSearch = query.isEmpty() || 
+                (e.getFullName() != null && e.getFullName().toLowerCase().contains(query)) ||
+                (e.getEmail() != null && e.getEmail().toLowerCase().contains(query)) ||
+                (e.getBusinessName() != null && e.getBusinessName().toLowerCase().contains(query));
+                
+            if (!matchesSearch) continue;
+
+            if ("pending".equals(filter) && e.getVerificationStatus() == VerificationStatus.PENDING) activeList.add(e);
+            else if ("reverification".equals(filter) && e.getVerificationStatus() == VerificationStatus.RE_VERIFICATION) activeList.add(e);
+            else if ("changes_requested".equals(filter) && e.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) activeList.add(e);
+            else if ("approved".equals(filter) && e.getVerificationStatus() == VerificationStatus.VERIFIED) activeList.add(e);
+            else if ("rejected".equals(filter) && e.getVerificationStatus() == VerificationStatus.REJECTED) activeList.add(e);
+            else if ("all".equals(filter)) activeList.add(e);
+        }
+
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("reverificationCount", reverificationCount);
+        model.addAttribute("changesRequestedCount", changesRequestedCount);
+        model.addAttribute("approvedCount", approvedCount);
+        model.addAttribute("rejectedCount", rejectedCount);
+        model.addAttribute("totalCount", allEntrepreneurs.size());
+        
+        model.addAttribute("activeFilter", filter);
+        model.addAttribute("q", q);
+        model.addAttribute("activeList", activeList);
+        model.addAttribute("changesRequested", changesList);
+        model.addAttribute("reverification", reverifyList);
+        
         return "admin/pendingProposals";
     }
 

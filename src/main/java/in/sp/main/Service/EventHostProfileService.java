@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import in.sp.main.Entities.EventHost;
+import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.EventHostRepository;
@@ -181,6 +182,15 @@ public class EventHostProfileService {
         m.put("rating", h.getRating());
         m.put("reviewCount", h.getReviewCount());
         m.put("bio", h.getHostBio());
+        m.put("youtube", h.getYoutube());
+        m.put("languages", splitCsv(h.getLanguages()));
+        m.put("awardsRecognition", h.getAwardsRecognition());
+        m.put("country", h.getCountry());
+        m.put("area", h.getArea());
+        m.put("eventsConducted", h.getEventsConducted());
+        m.put("previousEventDetails", h.getPreviousEventDetails());
+        m.put("dateOfBirth", h.getDateOfBirth());
+        m.put("gender", h.getGender() == null ? null : h.getGender().name());
     }
 
     @Transactional
@@ -248,6 +258,24 @@ public class EventHostProfileService {
         if (body.get("instagram") != null) h.setInstagram(blankToNull(str(body.get("instagram"))));
         if (body.get("facebook") != null) h.setFacebook(blankToNull(str(body.get("facebook"))));
         if (body.get("linkedin") != null) h.setLinkedin(blankToNull(str(body.get("linkedin"))));
+        if (body.get("youtube") != null) h.setYoutube(blankToNull(str(body.get("youtube"))));
+        if (body.get("languages") != null) h.setLanguages(csv(body.get("languages")));
+        if (body.get("awardsRecognition") != null || body.get("awards") != null) {
+            h.setAwardsRecognition(blankToNull(str(
+                    body.get("awardsRecognition") != null ? body.get("awardsRecognition") : body.get("awards"))));
+        }
+        if (body.get("country") != null) h.setCountry(blankToNull(str(body.get("country"))));
+        if (body.get("area") != null) h.setArea(blankToNull(str(body.get("area"))));
+        if (body.get("eventsConducted") != null && !str(body.get("eventsConducted")).isBlank()) {
+            try { h.setEventsConducted(Integer.parseInt(str(body.get("eventsConducted")))); } catch (Exception ignored) {}
+        }
+        if (body.get("previousEventDetails") != null) h.setPreviousEventDetails(blankToNull(str(body.get("previousEventDetails"))));
+        if (body.get("dateOfBirth") != null || body.get("dob") != null) {
+            h.setDateOfBirth(blankToNull(str(body.get("dateOfBirth") != null ? body.get("dateOfBirth") : body.get("dob"))));
+        }
+        if (body.get("gender") != null && !str(body.get("gender")).isBlank()) {
+            try { h.setGender(Gender.valueOf(str(body.get("gender")).toUpperCase())); } catch (Exception ignored) {}
+        }
         return h;
     }
 

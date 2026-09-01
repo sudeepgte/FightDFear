@@ -35,10 +35,7 @@ public class RoutineReminderController {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        model.addAttribute("user", user);
-        model.addAttribute("reminders", reminderService.list(user));
-        model.addAttribute("days", DayAvailable.values());
-        return "reminders";
+        return "redirect:/users/dashboard";
     }
 
     @PostMapping("/add")

@@ -34,6 +34,9 @@ public class EventHostRegistrationService {
     @Value("${otp.expiration-minutes:10}")
     private int otpExpirationMinutes;
 
+    @Value("${otp.resend-cooldown-seconds:60}")
+    private int otpResendCooldownSeconds;
+
     public void sendRegistrationOtp(String email) {
         String normalizedEmail = MobileValidation.normalizeEmail(email);
         String emailErr = MobileValidation.requireEmail(normalizedEmail);
@@ -60,8 +63,17 @@ public class EventHostRegistrationService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
         if (!otpVerificationService.verifyOtp(normalizedEmail, otp, OtpPurpose.EVENT_HOST_REGISTER)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired email OTP");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid or expired email OTP. Codes expire in " + otpExpirationMinutes + " minutes.");
         }
+    }
+
+    public int getOtpExpirationMinutes() {
+        return otpExpirationMinutes;
+    }
+
+    public int getOtpResendCooldownSeconds() {
+        return otpResendCooldownSeconds;
     }
 
     @Transactional

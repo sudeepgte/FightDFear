@@ -32,9 +32,7 @@ public class JourneyController {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        model.addAttribute("user", user);
-        model.addAttribute("activeJourney", journeyService.active(user));
-        return "journey";
+        return "redirect:/users/dashboard";
     }
 
     @GetMapping("/active")

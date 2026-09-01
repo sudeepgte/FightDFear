@@ -319,7 +319,7 @@
                             <option value="FEMALE">Female</option>
                             <option value="OTHER">Other</option>
                         </select>
-                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Fight D Fear is a women-only platform. Gender is required for buddy matching and safety features.</div>
+                        <div class="hint"><i class="bi bi-info-circle me-1"></i> Fight D Fear is a women-only platform. Gender is required for safety features.</div>
                     </div>
                 </div>
 

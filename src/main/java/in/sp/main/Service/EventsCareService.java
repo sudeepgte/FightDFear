@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,11 +33,11 @@ public class EventsCareService {
     @Autowired private EventHostRepository hostRepository;
     @Autowired private WomenEventReviewRepository reviewRepository;
     @Autowired private PushNotificationService pushNotificationService;
+    @Autowired @Lazy private WomenEventBookingService bookingService;
+    @Autowired private EventCoinPolicy coinPolicy;
 
     public LocalDateTime eventStart(WomenEvent e) {
-        if (e == null || e.getEventDate() == null) return null;
-        LocalTime t = e.getEventTime() == null ? LocalTime.of(10, 0) : e.getEventTime();
-        return LocalDateTime.of(e.getEventDate(), t);
+        return WomenEventSupport.eventStart(e);
     }
 
     public boolean canCancel(WomenEventRegistration r) {
@@ -65,6 +66,23 @@ public class EventsCareService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, CANCEL_POLICY);
         }
         r.setStatus("CANCELLED");
+        if (r.getTicketType() != null && r.getQuantity() != null && r.getQuantity() > 0) {
+            var t = r.getTicketType();
+            t.setSoldCount(Math.max(0, t.getSoldCount() - r.getQuantity()));
+        }
+        if (r.getCoinsUsed() != null && r.getCoinsUsed() > 0) {
+            bookingService.restoreCoins(r, "Event cancellation coin restore");
+        }
+        if (Boolean.TRUE.equals(r.getPayoutCredited()) && r.getAmountPaid() != null && r.getAmountPaid() > 0) {
+            EventHost host = hostOf(r);
+            if (host != null) {
+                host.setPayoutBalance(Math.max(0, host.getPayoutBalance() - r.getAmountPaid()));
+                hostRepository.save(host);
+                r.setPayoutCredited(false);
+            }
+        }
+        r.setRefunded(true);
+        r.setRefundAmount(r.getAmountPaid() == null ? 0.0 : r.getAmountPaid());
         return registrationRepository.save(r);
     }
 
@@ -78,7 +96,8 @@ public class EventsCareService {
             amount = r.getEvent().getEntryFee();
         }
         if (amount <= 0) return;
-        host.setPayoutBalance(host.getPayoutBalance() + amount);
+        double net = amount - coinPolicy.platformFee(amount);
+        host.setPayoutBalance(host.getPayoutBalance() + Math.max(0, net));
         hostRepository.save(host);
         r.setPayoutCredited(true);
         registrationRepository.save(r);
@@ -164,5 +183,14 @@ public class EventsCareService {
                 "Women Events",
                 "You're registered. " + CANCEL_POLICY,
                 Map.of("type", "WOMEN_EVENT", "registrationId", String.valueOf(r.getId())));
+    }
+
+    public void notifyHost(EventHost host, String title, String body) {
+        if (host == null) return;
+        pushNotificationService.notifyUser(
+                host.getId(),
+                title == null ? "Women Events" : title,
+                body == null ? "" : body,
+                Map.of("type", "EVENT_HOST", "hostId", String.valueOf(host.getId())));
     }
 }

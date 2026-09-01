@@ -30,10 +30,33 @@ public class WomenEventRegistration {
 
     private boolean checkedIn = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_type_id")
+    private EventTicketType ticketType;
+
+    private String ticketTypeName;
+    private Integer quantity = 1;
+    private Integer coinsUsed = 0;
+    private Double payableAmount = 0.0;
+    private Boolean refunded = false;
+    private Double refundAmount = 0.0;
+
+    @Column(name = "qr_token", unique = true, length = 64)
+    private String qrToken;
+
+    private LocalDateTime checkedInAt;
+
     @PrePersist
     protected void onCreate() {
-        this.registeredAt = LocalDateTime.now();
-        this.ticketCode = UUID.randomUUID().toString().toUpperCase().replace("-", "").substring(0, 12);
+        if (this.registeredAt == null) this.registeredAt = LocalDateTime.now();
+        if (this.ticketCode == null || this.ticketCode.isBlank()) {
+            this.ticketCode = UUID.randomUUID().toString().toUpperCase().replace("-", "").substring(0, 12);
+        }
+        if (this.qrToken == null || this.qrToken.isBlank()) {
+            this.qrToken = UUID.randomUUID().toString().replace("-", "");
+        }
+        if (this.quantity == null || this.quantity < 1) this.quantity = 1;
+        if (this.coinsUsed == null) this.coinsUsed = 0;
     }
 
     private String role = "ATTENDEE"; // ATTENDEE, VOLUNTEER
@@ -90,4 +113,23 @@ public class WomenEventRegistration {
     public void setPayoutCredited(Boolean payoutCredited) { this.payoutCredited = payoutCredited; }
     public String getCoachNotes() { return coachNotes; }
     public void setCoachNotes(String coachNotes) { this.coachNotes = coachNotes; }
+
+    public EventTicketType getTicketType() { return ticketType; }
+    public void setTicketType(EventTicketType ticketType) { this.ticketType = ticketType; }
+    public String getTicketTypeName() { return ticketTypeName; }
+    public void setTicketTypeName(String ticketTypeName) { this.ticketTypeName = ticketTypeName; }
+    public Integer getQuantity() { return quantity == null ? 1 : quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public Integer getCoinsUsed() { return coinsUsed == null ? 0 : coinsUsed; }
+    public void setCoinsUsed(Integer coinsUsed) { this.coinsUsed = coinsUsed; }
+    public Double getPayableAmount() { return payableAmount == null ? 0d : payableAmount; }
+    public void setPayableAmount(Double payableAmount) { this.payableAmount = payableAmount; }
+    public Boolean getRefunded() { return refunded; }
+    public void setRefunded(Boolean refunded) { this.refunded = refunded; }
+    public Double getRefundAmount() { return refundAmount == null ? 0d : refundAmount; }
+    public void setRefundAmount(Double refundAmount) { this.refundAmount = refundAmount; }
+    public String getQrToken() { return qrToken; }
+    public void setQrToken(String qrToken) { this.qrToken = qrToken; }
+    public LocalDateTime getCheckedInAt() { return checkedInAt; }
+    public void setCheckedInAt(LocalDateTime checkedInAt) { this.checkedInAt = checkedInAt; }
 }
