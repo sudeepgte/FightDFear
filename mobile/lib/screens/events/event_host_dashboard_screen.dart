@@ -12,7 +12,7 @@ class EventHostDashboardScreen extends StatefulWidget {
   const EventHostDashboardScreen({super.key});
 
   static const Color primary = Color(0xFFF43F5E);
-  static const Color navy = Color(0xFF1E1B4B);
+  static const Color navy = Color(0xFF0F172A);
   static const Color muted = Color(0xFF64748B);
   static const Color softPink = Color(0xFFFFF1F2);
   static const Color softBg = Color(0xFFFAF7F8);
@@ -202,6 +202,21 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
       _error = '$e';
     }
     if (mounted) setState(() => _loading = false);
+
+    if (mounted && _needsProfile) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => EventHostProfileCompletionScreen(
+            onFinished: (ctx) {
+              Navigator.of(ctx).pushReplacement(
+                MaterialPageRoute(builder: (_) => const EventHostDashboardScreen()),
+              );
+            },
+          ),
+        ),
+      );
+      return;
+    }
 
     if (_selectedEventId != null && mounted) {
       await _loadRegistrations(_selectedEventId!);

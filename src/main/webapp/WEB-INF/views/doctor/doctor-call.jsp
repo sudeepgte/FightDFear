@@ -10,14 +10,14 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body,html{height:100%;overflow:hidden;background:#0f0a1e;font-family:'Poppins',sans-serif}
-    .call-header{height:56px;background:linear-gradient(135deg,rgba(74,14,120,0.95),rgba(123,44,191,0.95));display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:10;position:relative}
-    .call-header .brand{font-size:15px;font-weight:800;color:#ffd700;display:flex;align-items:center;gap:8px}
+    body,html{height:100%;overflow:hidden;background:#0F172A;font-family:'Poppins',sans-serif}
+    .call-header{height:56px;background:linear-gradient(135deg,#0F172A,#1E293B);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:10;position:relative;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .call-header .brand{font-size:15px;font-weight:800;color:#F43F5E;display:flex;align-items:center;gap:8px}
     .call-header .brand i{font-size:20px}
     .call-info{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px}
     .call-info .badge{padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700}
-    .call-info .badge.video{background:rgba(74,144,217,0.2);color:#4a90d9}
-    .call-info .badge.voice{background:rgba(32,201,151,0.2);color:#20c997}
+    .call-info .badge.video{background:rgba(244,63,94,0.2);color:#fb7185}
+    .call-info .badge.voice{background:rgba(22,163,74,0.2);color:#4ade80}
     .call-leave{padding:6px 16px;border-radius:999px;border:2px solid rgba(255,107,107,0.5);background:transparent;color:#f43f5e;font-size:12px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:5px}
     .call-leave:hover{background:#f43f5e;color:#fff}
     #meet{width:100%;height:calc(100vh - 56px)}

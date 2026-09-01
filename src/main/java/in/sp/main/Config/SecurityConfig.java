@@ -126,6 +126,7 @@ public class SecurityConfig {
             "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
+            "/doctors/logout",
             "/doctors/register",
             "/doctors/register/**",
             "/salons/login",
@@ -226,6 +227,11 @@ public class SecurityConfig {
                     response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
                 } else if (path != null && path.startsWith("/admin/")) {
                     response.sendRedirect("/admin/loginAdmin");
+                } else if (path != null && (
+                        path.startsWith("/doctors/dashboard")
+                        || path.startsWith("/doctors/profile-completion")
+                        || path.equals("/doctors/logout"))) {
+                    response.sendRedirect("/doctors/login");
                 } else {
                     response.sendRedirect("/login");
                 }

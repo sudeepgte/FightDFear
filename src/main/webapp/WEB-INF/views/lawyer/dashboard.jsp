@@ -215,10 +215,10 @@
             </div>
         </div>
         <div class="nav-items" style="overflow-y: auto; overflow-x: hidden;">
-            <div class="nav-item" onclick="switchTab('dashboard', this)">
+            <div class="nav-item active" onclick="switchTab('dashboard', this)">
                 <i class="bi bi-grid"></i> Dashboard
             </div>
-            <div class="nav-item active" onclick="switchTab('profile', this)">
+            <div class="nav-item" onclick="switchTab('profile', this)">
                 <i class="bi bi-person"></i> My Profile
             </div>
             <div class="nav-item" onclick="switchTab('appointments', this)">
@@ -314,7 +314,7 @@
             </c:if>
 
             <!-- Dashboard Tab -->
-            <div id="dashboard-tab" class="tab-section">
+            <div id="dashboard-tab" class="tab-section active">
                 
                 <div class="welcome-bar">
                     <div class="welcome-text">
@@ -457,7 +457,7 @@
             </div>
 
             <!-- Profile Tab -->
-            <div id="profile-tab" class="tab-section active">
+            <div id="profile-tab" class="tab-section">
                 <div class="profile-header-card">
                     <c:choose>
                         <c:when test="${not empty lawyer.profilePhoto}">
@@ -972,7 +972,7 @@
                         <div class="profile-field"><label>Full Name</label><div style="font-weight:600; color:var(--text);">${empty lawyer.fullName ? 'Not added' : lawyer.fullName}</div></div>
                         <div class="profile-field"><label>Email Address</label><div style="font-weight:600; color:var(--text);">${empty lawyer.email ? 'Not added' : lawyer.email}</div></div>
                         <div class="profile-field"><label>Phone Number</label><div style="font-weight:600; color:var(--text);">${empty lawyer.phone ? 'Not added' : lawyer.phone}</div></div>
-                        <div class="profile-field"><label>Role / Category</label><div><span class="badge" style="background:#FFE4E6; color:var(--primary); padding:6px 12px; border-radius:20px; font-weight:600;">${empty lawyer.category ? 'Women Lawyer' : lawyer.category}</span></div></div>
+                        <div class="profile-field"><label>Role / Category</label><div><span class="badge" style="background:#FFE4E6; color:var(--primary); padding:6px 12px; border-radius:20px; font-weight:600;">${empty lawyer.category ? 'Women Lawyer' : lawyer.category.displayName}</span></div></div>
                     </div>
                 </div>
 

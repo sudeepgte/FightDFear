@@ -515,9 +515,7 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
   Future<void> _handleSend() async {
     if (_sending || _verifying) return;
     if (widget.onSend != null) {
-      // Reveal the OTP field immediately — don't wait for SMTP/network.
       setState(() => _sending = true);
-      _revealOtpField();
       var ok = false;
       try {
         ok = await widget.onSend!();
@@ -532,6 +530,8 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
       }
       if (!mounted) return;
       if (ok) {
+        // Only reveal OTP field after a successful send.
+        _revealOtpField();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('OTP sent to your ${widget.label.toLowerCase()}')),
         );
@@ -601,23 +601,43 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(child: Text('${widget.label} OTP verification')),
-            TextButton(
-              onPressed: (_sending || _verifying) ? null : _handleSend,
-              child: _sending
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(_sent ? 'Resend OTP' : 'Send OTP'),
-            ),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          '${widget.label} OTP verification',
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
         ),
-        if (_sent)
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          child: FilledButton.tonal(
+            onPressed: (_sending || _verifying) ? null : () {
+              FocusManager.instance.primaryFocus?.unfocus();
+              _handleSend();
+            },
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: _sending
+                ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 10),
+                      Text('Sending OTP…'),
+                    ],
+                  )
+                : Text(_sent ? 'Resend OTP' : 'Send OTP'),
+          ),
+        ),
+        if (_sent) ...[
+          const SizedBox(height: 10),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: TextField(
@@ -640,22 +660,33 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
                     helperText: _sending
                         ? 'Sending code… you can type it as soon as it arrives'
                         : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              FilledButton(
-                onPressed: _verifying ? null : _handleVerify,
-                child: _verifying
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Verify'),
+              SizedBox(
+                height: 56,
+                child: FilledButton(
+                  onPressed: _verifying ? null : _handleVerify,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(96, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: _verifying
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Verify'),
+                ),
               ),
             ],
           ),
+        ],
       ],
     );
   }

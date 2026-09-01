@@ -1,5 +1,9 @@
 -- Fitness trainer online availability for mobile dashboard toggle.
 
+CREATE TABLE IF NOT EXISTS fitness_trainers (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY
+);
+
 SET @db := DATABASE();
 
 SET @sql := IF(

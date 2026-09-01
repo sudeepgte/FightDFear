@@ -8,19 +8,20 @@
   <title>My Appointments — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-tokens.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root{
       --primary:#F43F5E;--rose-soft:#FFF1F2;--bg-page:#F8FAFC;--navy:#0F172A;--navy-soft:#1E293B;--border:#E2E8F0;
       --ma-coral:#f43f5e;--ma-teal:#16a34a;--ma-gold:#eab308;--ma-bg:var(--bg-page);--ma-card:#fff;
       --ma-text:var(--navy);--ma-muted:#64748b;--ma-border:var(--border);
-      --ma-gradient:linear-gradient(135deg,var(--navy),var(--navy-soft),var(--primary));
-      --ma-shadow:0 4px 24px rgba(15, 23, 42, 0.08);--ma-radius:16px;
+      --ma-gradient:linear-gradient(135deg,#0F172A 0%,#1E293B 70%,#F43F5E 140%);
+      --ma-shadow:0 4px 20px rgba(15, 23, 42, 0.04);--ma-radius:16px;
       --sidebar-w:240px
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Poppins',sans-serif;background:var(--ma-bg);min-height:100vh;color:var(--ma-text)}
+    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--ma-bg);min-height:100vh;color:var(--ma-text);overflow-x:hidden}
 
     /* Hero */
     .ma-hero{background:var(--ma-gradient);padding:32px 24px 60px;position:relative}
@@ -46,14 +47,14 @@
     /* Sidebar */
     .ma-sidebar{position:sticky;top:24px;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);overflow:hidden;display:flex;flex-direction:column}
     .ma-sidebar-nav{display:flex;flex-direction:column;padding:8px;flex:1}
-    .ma-sidebar-btn{display:flex;align-items:center;gap:12px;padding:14px 18px;border:none;background:transparent;font-size:14px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--ma-muted);cursor:pointer;border-radius:12px;transition:all 0.25s;text-align:left;margin-bottom:2px;text-decoration:none}
+    .ma-sidebar-btn{display:flex;align-items:center;gap:12px;padding:14px 18px;border:none;background:transparent;font-size:14px;font-weight:600;font-family:inherit;color:var(--ma-muted);cursor:pointer;border-radius:10px;transition:all 0.2s;text-align:left;margin-bottom:2px;text-decoration:none}
     .ma-sidebar-btn i{font-size:18px;width:22px;text-align:center}
-    .ma-sidebar-btn:hover{background:rgba(123,44,191,0.04);color:var(--ma-text)}
+    .ma-sidebar-btn:hover{background:var(--rose-soft);color:var(--primary)}
     .ma-sidebar-btn.active{background:var(--rose-soft);color:var(--primary);box-shadow:inset 3px 0 0 var(--primary)}
     .ma-sidebar-btn.active i{color:var(--primary)}
     .ma-sidebar-footer{padding:16px 18px;border-top:1px solid var(--ma-border);font-size:11px;color:var(--ma-muted)}
-    .ma-sidebar-footer a{color:var(--primary);text-decoration:none;font-weight:600;transition:all 0.25s ease;display:inline-block}
-    .ma-sidebar-footer a:hover{color:#e11d48;text-shadow:0 0 2px rgba(244,63,94,0.2);transform:translateX(3px)}
+    .ma-sidebar-footer a{color:var(--primary);text-decoration:none;font-weight:600;transition:all 0.2s ease;display:inline-block}
+    .ma-sidebar-footer a:hover{color:#e11d48;transform:translateX(3px)}
 
     /* Content */
     .ma-content{min-width:0;display:flex;flex-direction:column}
@@ -66,8 +67,8 @@
 
     /* Appointment Cards */
     .ma-appt-list{display:flex;flex-direction:column;gap:14px;flex:1}
-    .ma-appt-card{background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);padding:20px 24px;display:flex;align-items:center;gap:20px;transition:all 0.25s}
-    .ma-appt-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(30, 27, 75, 0.12)}
+    .ma-appt-card{background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);padding:20px 24px;display:flex;align-items:center;gap:20px;transition:all 0.25s;cursor:pointer}
+    .ma-appt-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(15, 23, 42, 0.08);border-color:#FECDD3}
 
     .ma-doc-avatar{width:56px;height:56px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
     .ma-doc-avatar img{width:56px;height:56px;border-radius:50%;object-fit:cover}
@@ -81,18 +82,18 @@
 
     .ma-appt-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
     .ma-status{padding:5px 14px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-    .ma-status.pending{background:rgba(255,193,7,0.12);color:#d4a017}
-    .ma-status.confirmed{background:rgba(32,201,151,0.12);color:#0d9668}
-    .ma-status.completed{background:rgba(15,23,42,0.08);color:var(--navy-soft)}
-    .ma-status.cancelled{background:rgba(255,107,107,0.12);color:var(--ma-coral)}
-    .ma-status.rejected{background:rgba(255,107,107,0.12);color:var(--ma-coral)}
+    .ma-status.pending{background:#FEF3C7;color:#92400E}
+    .ma-status.confirmed{background:#DCFCE7;color:#166534}
+    .ma-status.completed{background:#F1F5F9;color:#475569}
+    .ma-status.cancelled{background:#FEE2E2;color:#991B1B}
+    .ma-status.rejected{background:#FEE2E2;color:#991B1B}
 
     .ma-type-badge{padding:4px 12px;border-radius:8px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-    .ma-type-badge.clinic{background:rgba(32,201,151,0.08);color:#0d9668}
-    .ma-type-badge.video{background:rgba(15,23,42,0.08);color:var(--navy-soft)}
+    .ma-type-badge.clinic{background:#DCFCE7;color:#166534}
+    .ma-type-badge.video{background:#FFF1F2;color:#BE123C}
 
-    .ma-join-btn{padding:6px 16px;border:none;border-radius:999px;background:var(--ma-teal);color:#fff;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s}
-    .ma-join-btn:hover{filter:brightness(1.1);transform:scale(1.05);color:#fff}
+    .ma-join-btn{padding:8px 16px;border:none;border-radius:10px;background:var(--ma-teal);color:#fff;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;min-height:40px}
+    .ma-join-btn:hover{filter:brightness(1.08);color:#fff}
 
     /* Empty state */
     .ma-empty{text-align:center;padding:60px 20px;color:var(--ma-muted);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border)}
@@ -180,15 +181,29 @@
   <div class="ma-content">
 
     <c:if test="${not empty param.message}">
-      <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> Appointment booked successfully! Awaiting doctor confirmation.</div>
+      <div class="doc-confirm-banner">
+        <h3><i class="bi bi-check-circle-fill"></i> Booking confirmed</h3>
+        <p>Your appointment request has been sent. The doctor will confirm the slot. You can track it below.</p>
+        <c:if test="${not empty appointments}">
+          <c:set var="latest" value="${appointments[0]}"/>
+          <div class="doc-confirm-grid">
+            <div><div class="k">Doctor</div><div class="v">Dr. ${empty latest.doctor.fullName ? 'Doctor' : latest.doctor.fullName}</div></div>
+            <div><div class="k">Specialization</div><div class="v">${empty latest.doctor.specialization ? 'General consultation' : latest.doctor.specialization}</div></div>
+            <div><div class="k">Date &amp; time</div><div class="v">${empty latest.appointmentTime ? 'To be confirmed' : latest.appointmentTime}</div></div>
+            <div><div class="k">Consultation</div><div class="v">${latest.consultationType == 'VIDEO' ? 'Video' : (latest.consultationType == 'ONLINE' ? 'Online' : 'Clinic visit')}</div></div>
+            <div><div class="k">Fee</div><div class="v"><c:choose><c:when test="${latest.amountPaid != null}">&#8377;${latest.amountPaid}</c:when><c:otherwise>As listed</c:otherwise></c:choose></div></div>
+            <div><div class="k">Status</div><div class="v">${empty latest.status ? 'PENDING' : latest.status}</div></div>
+          </div>
+        </c:if>
+      </div>
+    </c:if>
+    <c:if test="${empty param.message and not empty message}">
+      <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> ${message}</div>
     </c:if>
     <c:if test="${not empty error}">
       <div class="ma-flash" style="background:rgba(244,63,94,0.1);color:#be123c;border-color:rgba(244,63,94,0.2)">
         <i class="bi bi-exclamation-circle-fill"></i> ${error}
       </div>
-    </c:if>
-    <c:if test="${not empty message}">
-      <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> ${message}</div>
     </c:if>
 
     <c:if test="${empty appointments}">
@@ -203,7 +218,24 @@
     <c:if test="${not empty appointments}">
       <div class="ma-appt-list" id="apptList">
         <c:forEach var="a" items="${appointments}">
-          <div class="ma-appt-card" data-status="${a.status}" data-has-rx="${not empty a.prescriptionText}">
+          <div class="ma-appt-card" data-status="${a.status}" data-has-rx="${not empty a.prescriptionText}"
+               role="button" tabindex="0"
+               onclick="openUserApptPreview(this)"
+               onkeydown="if(event.key==='Enter')openUserApptPreview(this)"
+               data-doctor="${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}"
+               data-spec="${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}"
+               data-hospital="${empty a.doctor.hospitalName ? '' : a.doctor.hospitalName}"
+               data-time="${empty a.appointmentTime ? '' : a.appointmentTime}"
+               data-reason="${empty a.reason ? '' : a.reason}"
+               data-type="${a.consultationType}"
+               data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+               data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+               data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+               data-chat-url="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}"
+               data-video-url="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}"
+               data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${a.doctor.id}"
+               data-profile-url="${pageContext.request.contextPath}/doctors/view/${a.doctor.id}"
+               data-rx-url="<c:if test='${not empty a.prescriptionText}'>${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view</c:if>">
             <div class="ma-doc-avatar">
               <c:choose>
                 <c:when test="${not empty a.doctor.profilePhotoPath}">
@@ -213,19 +245,29 @@
               </c:choose>
             </div>
             <div class="ma-appt-info">
-              <div class="doc-name">${a.doctor.fullName}</div>
-              <div class="doc-spec">${a.doctor.specialization}</div>
+              <div class="doc-name">Dr. ${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}</div>
+              <div class="doc-spec">${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}</div>
               <div class="appt-meta">
-                <span><i class="bi bi-calendar3"></i> ${a.appointmentTime}</span>
-                <c:if test="${a.reason != null && a.reason != ''}">
-                  <span><i class="bi bi-chat-text"></i> ${a.reason}</span>
-                </c:if>
-                <c:if test="${a.amountPaid != null}">
-                  <span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span>
-                </c:if>
+                <span><i class="bi bi-calendar3"></i> ${empty a.appointmentTime ? 'Time to be confirmed' : a.appointmentTime}</span>
+                <c:choose>
+                  <c:when test="${a.reason != null && a.reason != ''}">
+                    <span><i class="bi bi-chat-text"></i> ${a.reason}</span>
+                  </c:when>
+                  <c:otherwise>
+                    <span><i class="bi bi-chat-text"></i> No reason provided</span>
+                  </c:otherwise>
+                </c:choose>
+                <c:choose>
+                  <c:when test="${a.amountPaid != null}">
+                    <span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span>
+                  </c:when>
+                  <c:otherwise>
+                    <span><i class="bi bi-wallet2"></i> Payment pending</span>
+                  </c:otherwise>
+                </c:choose>
               </div>
             </div>
-            <div class="ma-appt-right">
+            <div class="ma-appt-right" onclick="event.stopPropagation()">
               <c:choose>
                 <c:when test="${a.status == 'PENDING'}"><span class="ma-status pending">Pending</span></c:when>
                 <c:when test="${a.status == 'CONFIRMED'}"><span class="ma-status confirmed">Confirmed</span></c:when>
@@ -238,13 +280,20 @@
                 <c:when test="${a.consultationType == 'VIDEO'}">
                   <span class="ma-type-badge video"><i class="bi bi-camera-video"></i> Video</span>
                   <c:if test="${a.status == 'CONFIRMED'}">
-                    <a href="${pageContext.request.contextPath}/consultation/video/${a.id}" target="_blank" class="ma-join-btn"><i class="bi bi-camera-video-fill"></i> Join Call</a>
+                    <a href="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}" target="_blank" class="ma-join-btn"><i class="bi bi-camera-video-fill"></i> Join Call</a>
                   </c:if>
                 </c:when>
+                <c:when test="${a.consultationType == 'ONLINE'}">
+                  <span class="ma-type-badge video"><i class="bi bi-chat-dots"></i> Online</span>
+                </c:when>
                 <c:otherwise>
-                  <span class="ma-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span>
+                  <span class="ma-type-badge clinic"><i class="bi bi-hospital"></i> Clinic visit</span>
                 </c:otherwise>
               </c:choose>
+
+              <c:if test="${a.status == 'CONFIRMED' || a.status == 'COMPLETED'}">
+                <a href="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}" class="ma-join-btn" style="background:#F43F5E;text-decoration:none;"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+              </c:if>
               
               <c:if test="${not empty a.prescriptionText}">
                 <textarea id="rx-data-${a.id}" style="display:none;" 
@@ -254,13 +303,13 @@
                   data-address="<c:out value='${a.doctor.clinicAddress}'/>"
                   data-date="<c:out value='${a.appointmentTime}'/>"
                   data-patient-name="<c:out value='${a.user.fullName}'/>"><c:out value="${a.prescriptionText}" /></textarea>
-                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view" class="ma-join-btn" style="background:#312e81;text-decoration:none;">
+                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view" class="ma-join-btn" style="background:#0F172A;text-decoration:none;">
                   <i class="bi bi-eye"></i> View Rx
                 </a>
-                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/download" class="ma-join-btn" style="background:#0d9668;text-decoration:none;">
+                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/download" class="ma-join-btn" style="background:#16A34A;text-decoration:none;">
                   <i class="bi bi-download"></i> Download
                 </a>
-                <button type="button" class="ma-join-btn" style="background:#1e1b4b;" onclick="viewPrescription('${a.id}')">
+                <button type="button" class="ma-join-btn" style="background:#1E293B;" onclick="viewPrescription('${a.id}')">
                   <i class="bi bi-printer"></i> Print Preview
                 </button>
               </c:if>
@@ -288,7 +337,7 @@
   <div style="background:#fff;border-radius:8px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
     <!-- Actions -->
     <div style="position:sticky;top:0;background:#f8f9fa;padding:12px 20px;border-bottom:1px solid #ddd;display:flex;justify-content:flex-end;gap:10px;z-index:10;">
-      <button onclick="downloadPDF()" style="padding:6px 12px;border:1px solid #312e81;background:#312e81;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-download"></i> Download PDF</button>
+      <button onclick="downloadPDF()" style="padding:6px 12px;border:1px solid #F43F5E;background:#F43F5E;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-download"></i> Download PDF</button>
       <button onclick="window.print()" style="padding:6px 12px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-printer"></i> Print</button>
       <button onclick="document.getElementById('rxModal').style.display='none'" style="padding:6px 12px;border:none;background:var(--ma-coral);color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-x-lg"></i> Close</button>
     </div>
@@ -457,7 +506,96 @@ function downloadPDF() {
     };
     html2pdf().set(opt).from(element).save();
 }
+
+function openUserApptPreview(el) {
+  var overlay = document.getElementById('userApptModal');
+  if (!overlay || !el) return;
+  var doctor = el.getAttribute('data-doctor') || 'Doctor';
+  var spec = el.getAttribute('data-spec') || 'General consultation';
+  var hospital = el.getAttribute('data-hospital') || '';
+  var time = el.getAttribute('data-time') || 'Time to be confirmed';
+  var reason = el.getAttribute('data-reason') || '';
+  var type = el.getAttribute('data-type') || 'CLINIC';
+  var status = (el.getAttribute('data-status') || 'PENDING').toUpperCase();
+  var payment = el.getAttribute('data-payment') || '';
+  var amount = el.getAttribute('data-amount') || '';
+  var receipt = el.getAttribute('data-receipt') || '';
+  var chatUrl = el.getAttribute('data-chat-url') || '';
+  var videoUrl = el.getAttribute('data-video-url') || '';
+  var callUrl = el.getAttribute('data-call-url') || '';
+  var profileUrl = el.getAttribute('data-profile-url') || '';
+  var rxUrl = el.getAttribute('data-rx-url') || '';
+  var typeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
+  document.getElementById('uaAvatar').textContent = doctor.charAt(0).toUpperCase();
+  document.getElementById('uaName').textContent = 'Dr. ' + doctor;
+  document.getElementById('uaSpec').textContent = spec + (hospital ? ' · ' + hospital : '');
+  document.getElementById('uaTime').textContent = time;
+  document.getElementById('uaType').textContent = typeLabel;
+  document.getElementById('uaReason').textContent = reason || 'Not provided';
+  document.getElementById('uaStatus').textContent = status;
+  document.getElementById('uaStatus').className = 'doc-status ' + status.toLowerCase();
+  document.getElementById('uaPayment').textContent = amount ? ((payment || 'Paid') + ' · ₹' + amount) : (payment || 'Payment pending');
+  document.getElementById('uaReceipt').textContent = receipt || 'Not issued';
+  var chatBtn = document.getElementById('uaChatBtn');
+  var videoBtn = document.getElementById('uaVideoBtn');
+  var callBtn = document.getElementById('uaCallBtn');
+  var profileBtn = document.getElementById('uaProfileBtn');
+  var rxBtn = document.getElementById('uaRxBtn');
+  var canChat = status === 'CONFIRMED' || status === 'COMPLETED';
+  var canJoin = status === 'CONFIRMED' && (type === 'VIDEO' || type === 'ONLINE');
+  if (chatUrl && canChat) { chatBtn.href = chatUrl; chatBtn.style.display = 'inline-flex'; } else { chatBtn.style.display = 'none'; }
+  if (videoUrl && canJoin) { videoBtn.href = videoUrl; videoBtn.style.display = 'inline-flex'; } else { videoBtn.style.display = 'none'; }
+  if (callUrl && canJoin) { callBtn.href = callUrl; callBtn.style.display = 'inline-flex'; } else { callBtn.style.display = 'none'; }
+  if (profileUrl) { profileBtn.href = profileUrl; profileBtn.style.display = 'inline-flex'; } else { profileBtn.style.display = 'none'; }
+  if (rxUrl) { rxBtn.href = rxUrl; rxBtn.style.display = 'inline-flex'; } else { rxBtn.style.display = 'none'; }
+  overlay.classList.add('open');
+}
+function closeUserApptPreview() {
+  var overlay = document.getElementById('userApptModal');
+  if (overlay) overlay.classList.remove('open');
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeUserApptPreview();
+});
 </script>
+
+<div id="userApptModal" class="doc-modal-overlay" onclick="if(event.target===this)closeUserApptPreview()">
+  <div class="doc-modal" role="dialog" aria-modal="true" aria-labelledby="uaName">
+    <div class="doc-modal-header">
+      <div class="doc-appt-avatar" id="uaAvatar">D</div>
+      <div>
+        <h3 id="uaName">Doctor</h3>
+        <p id="uaSpec">Appointment details</p>
+      </div>
+      <button type="button" class="doc-modal-close" onclick="closeUserApptPreview()" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="doc-modal-body">
+      <div class="doc-review-block">
+        <h4 class="doc-review-title"><span class="ri">1</span> Appointment</h4>
+        <div class="doc-modal-row"><span class="k">Date &amp; time</span><span class="v" id="uaTime">—</span></div>
+        <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="uaType">—</span></div>
+        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span id="uaStatus" class="doc-status pending">Pending</span></span></div>
+      </div>
+      <div class="doc-review-block">
+        <h4 class="doc-review-title"><span class="ri">2</span> Reason</h4>
+        <div class="doc-modal-row"><span class="k">You provided</span><span class="v" id="uaReason">Not provided</span></div>
+      </div>
+      <div class="doc-review-block">
+        <h4 class="doc-review-title"><span class="ri">3</span> Payment</h4>
+        <div class="doc-modal-row"><span class="k">Payment</span><span class="v" id="uaPayment">—</span></div>
+        <div class="doc-modal-row"><span class="k">Receipt</span><span class="v" id="uaReceipt">Not issued</span></div>
+      </div>
+    </div>
+    <div class="doc-modal-footer">
+      <a id="uaChatBtn" class="doc-modal-btn primary" href="#" style="display:none"><i class="bi bi-chat-dots-fill"></i> Chat</a>
+      <a id="uaCallBtn" class="doc-modal-btn success" href="#" target="_blank" style="display:none"><i class="bi bi-telephone-fill"></i> Call</a>
+      <a id="uaVideoBtn" class="doc-modal-btn success" href="#" target="_blank" style="display:none"><i class="bi bi-camera-video-fill"></i> Join video</a>
+      <a id="uaRxBtn" class="doc-modal-btn secondary" href="#" style="display:none"><i class="bi bi-file-earmark-medical"></i> Prescription</a>
+      <a id="uaProfileBtn" class="doc-modal-btn secondary" href="#"><i class="bi bi-person"></i> Doctor profile</a>
+      <button type="button" class="doc-modal-btn secondary" onclick="closeUserApptPreview()">Close</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 

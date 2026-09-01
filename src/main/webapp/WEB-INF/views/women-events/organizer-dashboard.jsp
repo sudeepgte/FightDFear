@@ -167,7 +167,7 @@
                                                     <div class="event-thumb"><i class="bi bi-calendar-heart"></i></div>
                                                     <div>
                                                         <div class="event-name-main"><c:out value="${ev.name}"/></div>
-                                                        <div class="event-name-sub"><c:out value="${ev.category != null ? ev.category.displayName : '—'}"/></div>
+                                                        <div class="event-name-sub"><c:out value="${ev.category != null ? ev.category.displayName : 'Not provided'}"/></div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -178,6 +178,7 @@
                                             <td>
                                                 <div class="action-btns">
                                                     <a href="${pageContext.request.contextPath}/women-events/${ev.id}" class="action-btn" title="View"><i class="bi bi-eye"></i></a>
+                                                    <a href="${pageContext.request.contextPath}/women-events/organizer/${ev.id}/attendees" class="action-btn" title="Attendees"><i class="bi bi-people"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -189,11 +190,25 @@
                     <c:otherwise>
                         <div class="org-empty">
                             <i class="bi bi-calendar-x"></i>
-                            <h5 style="font-weight:700;margin-bottom:8px;">No events yet</h5>
-                            <p style="margin-bottom:12px;">Create your first event when your profile is approved.</p>
-                            <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="org-btn-primary">
-                                <i class="bi bi-person-check"></i> Complete Profile
-                            </a>
+                            <h5 style="font-weight:700;margin-bottom:8px;">No events created yet</h5>
+                            <p style="margin-bottom:12px;">
+                                <c:choose>
+                                    <c:when test="${hostApproved}">Create your first event to start receiving registrations.</c:when>
+                                    <c:otherwise>Create your first event when your profile is approved.</c:otherwise>
+                                </c:choose>
+                            </p>
+                            <c:choose>
+                                <c:when test="${hostApproved}">
+                                    <a href="${pageContext.request.contextPath}/women-events/organizer/create" class="org-btn-primary">
+                                        <i class="bi bi-plus-lg"></i> Create Event
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="org-btn-primary">
+                                        <i class="bi bi-person-check"></i> Complete Profile
+                                    </a>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </c:otherwise>
                 </c:choose>

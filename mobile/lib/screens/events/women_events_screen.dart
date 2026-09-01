@@ -265,55 +265,67 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
 
   void _showTicketDetails(Map<String, dynamic> r) {
     final event = r['event'] is Map ? Map<String, dynamic>.from(r['event'] as Map) : <String, dynamic>{};
+    final venue = [event['venue'], event['city']]
+        .where((e) => e != null && '$e'.trim().isNotEmpty)
+        .join(', ');
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(event['name']?.toString() ?? 'Event',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 10),
-            Text('Ticket: ${r['ticketCode'] ?? '—'}', style: const TextStyle(fontWeight: FontWeight.w700)),
-            Text('Status: ${r['status'] ?? '—'}'),
-            Text('Paid: ${r['paid'] == true ? 'Yes' : 'No'}'),
-            if (event['eventDate'] != null) Text('Date: ${event['eventDate']} ${event['eventTime'] ?? ''}'),
-            if (event['venue'] != null) Text('Venue: ${event['venue']}, ${event['city'] ?? ''}'),
-            const SizedBox(height: 12),
-            if (r['canCancel'] == true)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _cancelRegistration(r);
-                  },
-                  child: const Text('Cancel registration'),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(event['name']?.toString() ?? 'Event',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+              const SizedBox(height: 12),
+              Text('Ticket: ${r['ticketCode'] ?? 'Not provided'}',
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+              Text('Status: ${r['status'] ?? 'Not provided'}'),
+              Text('Role: ${r['role'] ?? 'ATTENDEE'}'),
+              Text('Paid: ${r['paid'] == true ? 'Yes' : 'No'}'),
+              if (r['amountPaid'] != null) Text('Amount paid: ₹${r['amountPaid']}'),
+              Text('Organizer: ${event['organizerName'] ?? 'Not provided'}'),
+              Text('Date: ${event['eventDate'] ?? 'Not provided'} ${event['eventTime'] ?? ''}'),
+              Text(venue.isEmpty ? 'Venue not provided' : 'Venue: $venue'),
+              Text('Checked in: ${r['checkedIn'] == true ? 'Yes' : 'No'}'),
+              const SizedBox(height: 12),
+              if (r['canCancel'] == true)
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _cancelRegistration(r);
+                    },
+                    child: const Text('Cancel registration'),
+                  ),
                 ),
-              ),
-            if (r['canReview'] == true)
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _rateRegistration(r);
-                  },
-                  child: const Text('Leave a review'),
+              if (r['canReview'] == true)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _rateRegistration(r);
+                    },
+                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+                    child: const Text('Leave a review'),
+                  ),
                 ),
-              ),
-            if (r['cancelPolicy'] != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '${r['cancelPolicy']}',
-                  style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray),
+              if (r['cancelPolicy'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${r['cancelPolicy']}',
+                    style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -326,7 +338,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
       appBar: AppBar(
         title: const Text('Women Events'),
         backgroundColor: Colors.white,
-        foregroundColor: ModuleTheme.navy,
+        foregroundColor: const Color(0xFF0F172A),
         bottom: TabBar(
           controller: _tabs,
           labelColor: ModuleTheme.primary,
@@ -474,8 +486,8 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                     DetailTag(
                       label: isFree ? 'Free' : '₹${e['entryFee'] ?? 0}',
                       icon: Icons.currency_rupee,
-                      background: const Color(0xFFE0E7FF),
-                      foreground: const Color(0xFF3730A3),
+                      background: const Color(0xFFFFF1F2),
+                      foreground: const Color(0xFFE11D48),
                     ),
                     if (e['eventDate'] != null)
                       DetailTag(label: '${e['eventDate']}', icon: Icons.event),
@@ -498,7 +510,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                       ),
                     if (e['rating'] != null && (e['rating'] is num) && (e['rating'] as num) > 0)
                       DetailTag(
-                        label: '${(e['rating'] as num).toStringAsFixed(1)}',
+                        label: (e['rating'] as num).toStringAsFixed(1),
                         icon: Icons.star,
                       ),
                   ],

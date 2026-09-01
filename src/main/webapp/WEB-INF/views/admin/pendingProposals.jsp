@@ -1,997 +1,498 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investment Platform Management — Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --navy-dark: #1e1b4b;
-            --navy-light: #312e81;
-            --primary: #f43f5e;
-            --bg-light: #f4f6fa;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-light);
-            color: #0f172a;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin-top: 40px;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
-            margin-bottom: 30px;
-        }
-
-        .nav-tabs {
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .nav-link {
-            font-weight: 600;
-            color: #64748b;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 0;
-            transition: all 0.3s;
-        }
-
-        .nav-link.active {
-            color: var(--primary) !important;
-            border-bottom: 3px solid var(--primary) !important;
-            background-color: transparent !important;
-        }
-
-        .btn-approve {
-            background-color: #16a34a;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 18px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-        }
-
-        .btn-approve:hover {
-            background-color: #15803d;
-            transform: translateY(-1px);
-        }
-
-        .btn-reject {
-            background-color: #dc2626;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 6px 18px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-        }
-
-        .btn-reject:hover {
-            background-color: #b91c1c;
-            transform: translateY(-1px);
-        }
-
-        /* Admin layout */
-        .topbar {
-            background: var(--navy-dark);
-            color: #fff;
-            padding: 0 20px;
-            height: 58px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 3px 16px rgba(30, 27, 75, 0.28);
-        }
-        .topbar .brand { font-size: 1.1rem; font-weight: 700; }
-        .topbar .btn-logout {
-            background: rgba(255,255,255,0.15);
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 7px;
-            padding: 5px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .layout { display: flex; min-height: calc(100vh - 58px); }
-        .sidebar {
-            width: 272px;
-            background: #fff;
-            border-right: 1px solid rgba(30, 27, 75, 0.12);
-            position: sticky;
-            top: 58px;
-            height: calc(100vh - 58px);
-            padding: 14px 12px;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        .brand { font-size: 0.9rem; font-weight: 700; color: var(--navy-dark); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
-        .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
-        .navlink {
-            display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
-            color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
-        }
-        .navlink i { width: 20px; text-align: center; color: var(--navy-dark); font-size: 1rem; }
-        .navlink:hover { background: #f8fafc; color: var(--navy-dark); padding-left: 20px; }
-        .navlink.active { background: var(--navy-dark); color: #fff; font-weight: 600; }
-        .navlink.active i { color: #fff; }
-        .main { flex: 1; min-width: 0; padding: 28px 20px 48px; }
-        .mainInner { max-width: 1200px; margin: 0 auto; }
-        @media (max-width: 992px) {
-            .layout { flex-direction: column; }
-            .sidebar { width: 100%; position: relative; top: 0; height: auto; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proposal Verification - Fight D Fear Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
+  <style>
+    body.ap-page { margin: 0; }
+    .topbar { display: none !important; }
+    .layout { display: flex; min-height: 100vh; }
+    .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    .dv-actions { display: flex; gap: 6px; align-items: center; }
+    .dv-more {
+      width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--ap-border);
+      background: #fff; color: var(--ap-muted); display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .dv-more:hover { color: var(--ap-accent); border-color: #FDA4AF; }
+    .dv-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 992px) { .dv-bottom-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
-<body>
+<body class="ap-page">
 
-<div class="topbar">
-    <span class="brand"><i class="bi bi-shield-check me-2"></i>Fight D Fear Admin</span>
-    <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
-        <i class="bi bi-box-arrow-right"></i> Logout
-    </a>
-</div>
+<c:set var="activeFilter" value="${empty filter ? 'pending' : filter}"/>
+<c:set var="totalEntrepreneurs" value="${pendingCount + reverificationCount + changesRequestedCount + approvedCount + rejectedCount}"/>
 
 <div class="layout">
-    <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
+  <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
 
-    <main class="main">
-        <div class="mainInner">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold" style="color: var(--navy-dark);"><i class="bi bi-shield-check-fill text-primary"></i> Platform Verification Desk</h2>
-            <p class="text-muted">Review pending business projects, entrepreneur verifications, and investor profiles.</p>
+  <main class="main">
+    <div class="ap-topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:360px;">
+          <i class="fas fa-search"></i>
+          <input type="search" id="apHeaderSearch" placeholder="Search anything..." aria-label="Search">
+          <span class="ap-kbd">Ctrl + K</span>
         </div>
-        <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="btn btn-outline-secondary rounded-pill btn-sm">
-            <i class="bi bi-chevron-left"></i> Admin Dashboard
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
         </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${admin.id}">
+          <span class="ap-avatar">
+            <c:choose>
+              <c:when test="${not empty admin.profilePhoto}">
+                <img src="${pageContext.request.contextPath}${admin.profilePhoto}" alt="">
+              </c:when>
+              <c:otherwise>${fn:substring(admin.name,0,1)}</c:otherwise>
+            </c:choose>
+          </span>
+          <span>
+            <div class="name"><c:out value="${admin.name}"/></div>
+            <div class="role">Super Admin</div>
+          </span>
+        </a>
+      </div>
     </div>
 
-    <c:if test="${not empty message}">
-        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
-            <i class="bi bi-check-circle-fill"></i> ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    </c:if>
-    <c:if test="${not empty error}">
-        <div class="alert alert-danger alert-dismissible fade show rounded-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill"></i> ${error}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    </c:if>
+    <div class="ap-main-inner">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <a href="${pageContext.request.contextPath}/admin/pending-proposals">Proposal Verification</a>
+        <span class="sep">&gt;</span>
+        <span>
+          <c:choose>
+            <c:when test="${activeFilter == 'reverification'}">Re-verification</c:when>
+            <c:when test="${activeFilter == 'changes_requested'}">Changes Requested</c:when>
+            <c:when test="${activeFilter == 'approved'}">Approved Entrepreneurs</c:when>
+            <c:when test="${activeFilter == 'rejected'}">Rejected Entrepreneurs</c:when>
+            <c:when test="${not empty q}">Search Results</c:when>
+            <c:otherwise>Pending Entrepreneurs</c:otherwise>
+          </c:choose>
+        </span>
+      </nav>
 
-    <!-- Summary Stats Bar -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4 col-sm-6">
-            <div class="d-flex align-items-center p-3" style="background:white; border-radius:15px; border:1px solid rgba(0,0,0,0.04); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary fs-3 me-3" style="width:50px; height:50px;">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <div>
-                    <h5 class="fw-bold m-0">${allEntrepreneurs.size()}</h5>
-                    <span class="text-muted small">Total Entrepreneurs</span>
-                </div>
+      <div class="ap-page-head">
+        <div class="ap-page-ico"><i class="fas fa-user-check"></i></div>
+        <div>
+          <h1>Proposal Verification</h1>
+          <p>Review and verify business proposals before they appear on the platform</p>
+        </div>
+      </div>
+
+      <c:if test="${not empty message}">
+        <div class="alert alert-info mb-3" style="border-radius:12px;"><i class="fas fa-info-circle me-1"></i><c:out value="${message}"/></div>
+      </c:if>
+
+      <div class="ap-stats">
+        <div class="ap-stat amber">
+          <div class="ico"><i class="fas fa-clock"></i></div>
+          <div class="val">${pendingCount}</div>
+          <div class="lbl">Pending</div>
+          <div class="sub">Requires review</div>
+        </div>
+        <div class="ap-stat blue">
+          <div class="ico"><i class="fas fa-sync"></i></div>
+          <div class="val">${reverificationCount}</div>
+          <div class="lbl">Re-verification</div>
+          <div class="sub">Needs attention</div>
+        </div>
+        <div class="ap-stat purple">
+          <div class="ico"><i class="fas fa-edit"></i></div>
+          <div class="val">${changesRequestedCount}</div>
+          <div class="lbl">Changes Requested</div>
+          <div class="sub">Awaiting response</div>
+        </div>
+        <div class="ap-stat green">
+          <div class="ico"><i class="fas fa-check-circle"></i></div>
+          <div class="val">${approvedCount}</div>
+          <div class="lbl">Approved</div>
+          <div class="sub">Verified entrepreneurs</div>
+        </div>
+        <div class="ap-stat rose">
+          <div class="ico"><i class="fas fa-times-circle"></i></div>
+          <div class="val">${rejectedCount}</div>
+          <div class="lbl">Rejected</div>
+          <div class="sub">Not approved</div>
+        </div>
+        <div class="ap-stat neutral">
+          <div class="ico"><i class="fas fa-user-md"></i></div>
+          <div class="val">${totalEntrepreneurs}</div>
+          <div class="lbl">Total Proposals</div>
+          <div class="sub">Across queues</div>
+        </div>
+      </div>
+
+      <form method="get" action="${pageContext.request.contextPath}/admin/pending-proposals" class="ap-filter-row" id="proposalFilterForm">
+        <div class="grow">
+          <input type="text" id="proposalSearchInput" name="q" class="ap-input"
+                 placeholder="Search by name, email, phone, specialization or location..."
+                 value="${not empty q ? q : ''}">
+        </div>
+        <div style="min-width:180px;">
+          <select id="specClientFilter" class="ap-select" aria-label="Specialization filter">
+            <option value="">All Specializations</option>
+          </select>
+        </div>
+        <div style="min-width:180px;">
+          <select name="filter" class="ap-select">
+            <option value="pending" ${activeFilter == 'pending' ? 'selected' : ''}>Pending queue</option>
+            <option value="reverification" ${activeFilter == 'reverification' ? 'selected' : ''}>Re-verification</option>
+            <option value="changes_requested" ${activeFilter == 'changes_requested' ? 'selected' : ''}>Changes Requested</option>
+            <option value="approved" ${activeFilter == 'approved' ? 'selected' : ''}>Approved</option>
+            <option value="rejected" ${activeFilter == 'rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="all" ${activeFilter == 'all' ? 'selected' : ''}>All (search scope)</option>
+          </select>
+        </div>
+        <button type="submit" class="ap-btn ap-btn-primary"><i class="fas fa-filter"></i> Search / Filter</button>
+        <c:if test="${not empty q}">
+          <a href="${pageContext.request.contextPath}/admin/pending-proposals" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
+        </c:if>
+      </form>
+
+      <div class="ap-split">
+        <section class="ap-panel">
+          <div class="ap-tabs">
+            <a class="ap-tab ${activeFilter == 'pending' && empty q ? 'active' : ''}" href="?filter=pending">Pending (${pendingCount})</a>
+            <a class="ap-tab ${activeFilter == 'reverification' && empty q ? 'active' : ''}" href="?filter=reverification">Re-verification (${reverificationCount})</a>
+            <a class="ap-tab ${activeFilter == 'changes_requested' && empty q ? 'active' : ''}" href="?filter=changes_requested">Changes Requested (${changesRequestedCount})</a>
+            <a class="ap-tab ${activeFilter == 'approved' && empty q ? 'active' : ''}" href="?filter=approved">Approved (${approvedCount})</a>
+            <a class="ap-tab ${activeFilter == 'rejected' && empty q ? 'active' : ''}" href="?filter=rejected">Rejected (${rejectedCount})</a>
+          </div>
+
+          <c:if test="${not empty q}">
+            <div style="padding:12px 16px;background:#F8FAFC;border-bottom:1px solid var(--ap-border);font-size:0.86rem;color:var(--ap-muted);">
+              Showing results for "<strong><c:out value="${q}"/></strong>"
+              <c:choose>
+                <c:when test="${not empty searchResults}"> - ${fn:length(searchResults)} entrepreneur(s)</c:when>
+                <c:otherwise> - No entrepreneurs found</c:otherwise>
+              </c:choose>
             </div>
-        </div>
-        <div class="col-md-4 col-sm-6">
-            <div class="d-flex align-items-center p-3" style="background:white; border-radius:15px; border:1px solid rgba(0,0,0,0.04); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center bg-info-subtle text-info fs-3 me-3" style="width:50px; height:50px;">
-                    <i class="bi bi-person-badge-fill"></i>
-                </div>
-                <div>
-                    <h5 class="fw-bold m-0">${allInvestors.size()}</h5>
-                    <span class="text-muted small">Total Investors</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 col-sm-12">
-            <div class="d-flex align-items-center p-3" style="background:white; border-radius:15px; border:1px solid rgba(0,0,0,0.04); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
-                <div class="rounded-circle d-flex align-items-center justify-content-center bg-success-subtle text-success fs-3 me-3" style="width:50px; height:50px;">
-                    <i class="bi bi-file-post"></i>
-                </div>
-                <div>
-                    <h5 class="fw-bold m-0">${allProposals.size()}</h5>
-                    <span class="text-muted small">Total Proposals Pitch</span>
-                </div>
-            </div>
-        </div>
-    </div>
+          </c:if>
 
-    <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
-        <li class="nav-item">
-            <button class="nav-link active" id="proposals-tab" data-bs-toggle="tab" data-bs-target="#proposals" type="button" role="tab">
-                Proposals Directory (${allProposals.size()})
-                <c:if test="${pendingProposalsCount > 0}">
-                    <span class="badge bg-warning text-dark rounded-pill ms-1">${pendingProposalsCount}</span>
-                </c:if>
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="entrepreneurs-tab" data-bs-toggle="tab" data-bs-target="#entrepreneurs" type="button" role="tab">
-                Entrepreneurs Directory (${allEntrepreneurs.size()})
-                <c:if test="${pendingEntCount > 0}">
-                    <span class="badge bg-warning text-dark rounded-pill ms-1">${pendingEntCount}</span>
-                </c:if>
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="investors-tab" data-bs-toggle="tab" data-bs-target="#investors" type="button" role="tab">
-                Investors Directory (${allInvestors.size()})
-                <c:if test="${pendingInvCount > 0}">
-                    <span class="badge bg-warning text-dark rounded-pill ms-1">${pendingInvCount}</span>
-                </c:if>
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="meetings-tab" data-bs-toggle="tab" data-bs-target="#meetings" type="button" role="tab">
-                Meetings Log (${allMeetings.size()})
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="investments-tab" data-bs-toggle="tab" data-bs-target="#investments" type="button" role="tab">
-                Investment Ledger (${allInvestments.size()})
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="qna-tab" data-bs-toggle="tab" data-bs-target="#qna" type="button" role="tab">
-                Investor Q&As (${allQuestions.size()})
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link" id="chats-tab" data-bs-toggle="tab" data-bs-target="#chats" type="button" role="tab">
-                Chat Transcripts (${allChats.size()})
-            </button>
-        </li>
-    </ul>
-
-    <!-- Tab Contents -->
-    <div class="tab-content" id="adminTabsContent">
-        
-        <!-- Tab 1: Proposals Directory -->
-        <div class="tab-pane fade show active" id="proposals" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Proposal</th>
-                                <th>Entrepreneur</th>
-                                <th>Funding Goal</th>
-                                <th>Upgrade</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="p" items="${allProposals}">
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-navy">${p.title}</div>
-                                        <div class="text-muted small">${p.category} | ${p.location}</div>
-                                    </td>
-                                    <td>${p.entrepreneur.fullName}</td>
-                                    <td>
-                                        <strong>₹${p.fundingNeeded}</strong>
-                                        <div class="text-muted small">₹${p.amountRaised} raised</div>
-                                    </td>
-                                    <td>
-                                        <c:if test="${p.premium}">
-                                            <span class="badge bg-warning text-dark small"><i class="bi bi-award-fill"></i> Premium</span>
-                                        </c:if>
-                                        <c:if test="${p.featured}">
-                                            <span class="badge bg-info text-dark small"><i class="bi bi-star-fill"></i> Featured</span>
-                                        </c:if>
-                                        <c:if test="${not p.premium and not p.featured}">
-                                            <span class="text-muted small">Standard</span>
-                                        </c:if>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${p.status == 'VERIFIED'}">
-                                                <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-check-circle"></i> Verified</span>
-                                            </c:when>
-                                            <c:when test="${p.status == 'PENDING'}">
-                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-hourglass-split"></i> Pending</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-danger rounded-pill px-2 py-1"><i class="bi bi-x-circle"></i> Rejected</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <a href="${pageContext.request.contextPath}/entrepreneurs/about/${p.entrepreneur.id}" class="btn btn-outline-primary btn-sm rounded-pill">
-                                                <i class="bi bi-person-badge"></i> Profile
-                                            </a>
-                                            <c:choose>
-                                                <c:when test="${p.status == 'PENDING'}">
-                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/approve" method="post" class="m-0">
-                                                        <button type="submit" class="btn btn-approve btn-sm">Approve</button>
-                                                    </form>
-                                                    <form action="${pageContext.request.contextPath}/admin/proposals/${p.id}/reject" method="post" class="m-0">
-                                                        <button type="submit" class="btn btn-reject btn-sm">Reject</button>
-                                                    </form>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="text-muted small">Processed</span>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allProposals}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No proposals submitted yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 2: Entrepreneurs Directory -->
-        <div class="tab-pane fade" id="entrepreneurs" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Name / Email</th>
-                                <th>Aadhaar Number</th>
-                                <th>Experience</th>
-                                <th>Verification Fee</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="e" items="${allEntrepreneurs}">
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-navy">${e.fullName}</div>
-                                        <div class="text-muted small">${e.email} | ${e.phone}</div>
-                                    </td>
-                                    <td>
-                                        ${e.aadhaarNumber}
-                                        <c:if test="${not empty e.aadhaarDocPath}">
-                                            <div class="mt-1">
-                                                <a href="${pageContext.request.contextPath}${e.aadhaarDocPath}" target="_blank" class="btn btn-outline-secondary btn-xs rounded-pill px-2 py-0" style="font-size:0.75rem;">
-                                                    <i class="bi bi-file-earmark-arrow-down"></i> View ID Document
-                                                </a>
-                                            </div>
-                                        </c:if>
-                                    </td>
-                                    <td>${e.businessExperience} Years</td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${e.verificationFeePaid}">
-                                                 <span class="badge bg-success-subtle text-success px-2 py-1"><i class="bi bi-credit-card-fill"></i> Paid (₹499)</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Unpaid</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${e.verificationStatus == 'VERIFIED'}">
-                                                <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-check-circle"></i> Verified</span>
-                                            </c:when>
-                                            <c:when test="${e.verificationStatus == 'PENDING'}">
-                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-hourglass-split"></i> Pending</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-danger rounded-pill px-2 py-1"><i class="bi bi-x-circle"></i> Rejected</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column gap-2">
-                                            <a href="${pageContext.request.contextPath}/entrepreneurs/about/${e.id}" class="btn btn-outline-primary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;">
-                                                <i class="bi bi-person-badge"></i> View Profile
-                                            </a>
-                                            <c:if test="${e.verificationStatus == 'PENDING'}">
-                                                <div class="d-flex gap-1">
-                                                    <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${e.id}/approve" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-approve btn-xs" style="font-size:0.75rem; padding: 3px 10px;">Verify</button>
-                                                    </form>
-                                                    <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${e.id}/reject" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-reject btn-xs" style="font-size:0.75rem; padding: 3px 10px;">Reject</button>
-                                                    </form>
-                                                </div>
-                                            </c:if>
-                                            <button class="btn btn-outline-secondary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;" data-bs-toggle="modal" data-bs-target="#activityModalEnt-${e.id}">
-                                                <i class="bi bi-activity"></i> View Activity
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allEntrepreneurs}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No entrepreneurs registered yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 3: Investors Directory -->
-        <div class="tab-pane fade" id="investors" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Name / Company</th>
-                                <th>Email / Phone</th>
-                                <th>Budget Range</th>
-                                <th>Subscription</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="i" items="${allInvestors}">
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-navy">${i.fullName}</div>
-                                        <div class="text-muted small">${i.companyName}</div>
-                                    </td>
-                                    <td>
-                                        ${i.email} | ${i.phone}
-                                        <c:if test="${not empty i.verificationDocuments}">
-                                            <div class="mt-1">
-                                                <a href="${pageContext.request.contextPath}${i.verificationDocuments}" target="_blank" class="btn btn-outline-secondary btn-xs rounded-pill px-2 py-0" style="font-size:0.75rem;">
-                                                    <i class="bi bi-file-earmark-arrow-down"></i> View Doc
-                                                </a>
-                                            </div>
-                                        </c:if>
-                                    </td>
-                                    <td>${i.budgetRange}</td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${i.subscribed}">
-                                                 <span class="badge bg-success-subtle text-success px-2 py-1"><i class="bi bi-gem"></i> Premium (₹1999)</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Basic</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${i.verificationStatus == 'VERIFIED'}">
-                                                <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-check-circle"></i> Verified</span>
-                                            </c:when>
-                                            <c:when test="${i.verificationStatus == 'PENDING'}">
-                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-hourglass-split"></i> Pending</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-danger rounded-pill px-2 py-1"><i class="bi bi-x-circle"></i> Rejected</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column gap-2">
-                                            <c:if test="${i.verificationStatus == 'PENDING'}">
-                                                <div class="d-flex gap-1">
-                                                    <form action="${pageContext.request.contextPath}/admin/investors/${i.id}/approve" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-approve btn-xs" style="font-size:0.75rem; padding: 3px 10px;">Verify</button>
-                                                    </form>
-                                                    <form action="${pageContext.request.contextPath}/admin/investors/${i.id}/reject" method="post" class="d-inline">
-                                                        <button type="submit" class="btn btn-reject btn-xs" style="font-size:0.75rem; padding: 3px 10px;">Reject</button>
-                                                    </form>
-                                                </div>
-                                            </c:if>
-                                            <button class="btn btn-outline-primary btn-xs rounded-pill w-100" style="font-size:0.75rem; padding: 3px 10px;" data-bs-toggle="modal" data-bs-target="#activityModalInv-${i.id}">
-                                                <i class="bi bi-activity"></i> View Activity
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allInvestors}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No investors registered yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 4: Meetings Log -->
-        <div class="tab-pane fade" id="meetings" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Proposal Title</th>
-                                <th>Entrepreneur</th>
-                                <th>Investor</th>
-                                <th>Meeting Time</th>
-                                <th>Location / Link</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="m" items="${allMeetings}">
-                                <tr>
-                                    <td><div class="fw-bold text-navy">${m.proposal.title}</div></td>
-                                    <td>${m.proposal.entrepreneur.fullName}</td>
-                                    <td>${m.investor.fullName} (${m.investor.companyName})</td>
-                                    <td><strong>${m.meetingTime}</strong></td>
-                                    <td><span class="text-truncate d-inline-block" style="max-width:180px;" title="${m.location}">${m.location}</span></td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${m.status == 'ACCEPTED'}">
-                                                <span class="badge bg-success rounded-pill px-2 py-1"><i class="bi bi-calendar-check"></i> Accepted</span>
-                                            </c:when>
-                                            <c:when test="${m.status == 'REJECTED'}">
-                                                <span class="badge bg-danger rounded-pill px-2 py-1"><i class="bi bi-calendar-x"></i> Declined</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-warning text-dark rounded-pill px-2 py-1"><i class="bi bi-calendar-range"></i> Pending Reply</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allMeetings}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No consultation meetings requested yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 5: Investment Ledger -->
-        <div class="tab-pane fade" id="investments" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Date / ID</th>
-                                <th>Proposal Title</th>
-                                <th>Entrepreneur</th>
-                                <th>Investor</th>
-                                <th>Funding Amount</th>
-                                <th>Platform Commission</th>
-                                <th>Status / Gateway Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="inv" items="${allInvestments}">
-                                <tr>
-                                    <td>
-                                        <span class="text-muted small">#${inv.id}</span>
-                                    </td>
-                                    <td><div class="fw-bold text-navy">${inv.proposal.title}</div></td>
-                                    <td>${inv.proposal.entrepreneur.fullName}</td>
-                                    <td>${inv.investor.fullName} (${inv.investor.companyName})</td>
-                                    <td><strong class="text-success">₹${inv.amount}</strong></td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${inv.commissionPaid}">
-                                                <span class="badge bg-success-subtle text-success px-2 py-1"><i class="bi bi-check-circle-fill"></i> Paid (₹${(inv.releasedAmount != null ? inv.releasedAmount : inv.amount) * 0.02})</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-danger-subtle text-danger px-2 py-1"><i class="bi bi-exclamation-circle-fill"></i> Pending (₹${(inv.releasedAmount != null ? inv.releasedAmount : inv.amount) * 0.02})</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${inv.status == 'PENDING'}">
-                                                <span class="badge bg-warning text-dark mb-1 d-block text-center" style="max-width: 140px;"><i class="bi bi-hourglass-split"></i> Held in Gateway</span>
-                                                <form action="${pageContext.request.contextPath}/admin/investments/${inv.id}/release" method="post" class="d-flex flex-column gap-1 align-items-center">
-                                                    <div class="input-group input-group-sm" style="max-width: 140px;">
-                                                        <span class="input-group-text px-2" style="font-size:0.75rem; padding: 2px 5px;">₹</span>
-                                                        <input type="number" name="releasedAmount" class="form-control px-2" value="${inv.amount}" min="0" max="${inv.amount}" step="1" required style="font-size:0.75rem; height: 26px; padding: 2px 5px;">
-                                                    </div>
-                                                    <button type="submit" class="btn btn-approve btn-xs w-100" style="font-size:0.75rem; padding: 3px 10px; max-width: 140px;">Release Transfer</button>
-                                                </form>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-success text-white d-block text-center mb-1" style="max-width: 140px;"><i class="bi bi-check-circle-fill"></i> Released</span>
-                                                <div class="small text-muted" style="font-size:0.7rem; line-height: 1.2; text-align: left; max-width: 140px; margin: 0 auto;">
-                                                    Released: <strong>₹${inv.releasedAmount != null ? inv.releasedAmount : inv.amount}</strong><br>
-                                                    <c:if test="${inv.adminAmount != null && inv.adminAmount > 0}">
-                                                        Retained: <strong class="text-danger">₹${inv.adminAmount}</strong>
-                                                    </c:if>
-                                                </div>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allInvestments}">
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted py-4">No funding transactions completed yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 6: Investor Q&As -->
-        <div class="tab-pane fade" id="qna" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Proposal</th>
-                                <th>Investor</th>
-                                <th>Question</th>
-                                <th>Entrepreneur Reply</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="q" items="${allQuestions}">
-                                <tr>
-                                    <td><div class="fw-bold text-navy">${q.proposal.title}</div></td>
-                                    <td>${q.investor.fullName} (${q.investor.companyName})</td>
-                                    <td><span class="text-secondary">"${q.question}"</span></td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${not empty q.answer}">
-                                                <span class="text-success fw-semibold">"${q.answer}"</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <em class="text-muted">Awaiting response...</em>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${not empty q.answer}">
-                                                <span class="badge bg-success rounded-pill px-2">Replied</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-warning text-dark rounded-pill px-2">Unanswered</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allQuestions}">
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">No Q&A interactions logged.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab 7: Chat Transcripts -->
-        <div class="tab-pane fade" id="chats" role="tabpanel">
-            <div class="panel">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                            <tr>
-                                <th>Time / Date</th>
-                                <th>Conversation</th>
-                                <th>Sender</th>
-                                <th>Message</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="chat" items="${allChats}">
-                                <tr>
-                                    <td class="small text-muted" style="white-space:nowrap;">
-                                        ${chat.timestamp}
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold text-navy" style="font-size:0.85rem;">
-                                            👩‍💼 ${chat.proposal.entrepreneur.fullName} (Pitch: "${chat.proposal.title}")
-                                        </div>
-                                        <div class="text-secondary small">
-                                            💼 Investor: ${chat.investor.fullName} (${chat.investor.companyName})
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${chat.senderRole == 'INVESTOR'}">
-                                                <span class="badge bg-info text-dark rounded-pill px-2">Investor</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge bg-primary rounded-pill px-2">Entrepreneur</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-                                    <td>
-                                        <div style="font-size:0.9rem; max-width:400px; word-wrap: break-word;">"${chat.message}"</div>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty allChats}">
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No chat messages exchanged yet.</td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Entrepreneur Activity Modals -->
-    <c:forEach var="e" items="${allEntrepreneurs}">
-        <div class="modal fade" id="activityModalEnt-${e.id}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content border-0 shadow-lg" style="border-radius:20px;">
-                    <div class="modal-header bg-dark text-white border-0 py-3" style="border-top-left-radius:20px; border-top-right-radius:20px;">
-                        <h5 class="modal-title fw-bold"><i class="bi bi-activity"></i> Activity Audit Feed — ${e.fullName}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-4">
-                        
-                        <!-- Section 1: Proposals -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-file-earmark-post-fill"></i> Submitted Business Proposals</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasProposals" value="false" />
-                            <c:forEach var="p" items="${allProposals}">
-                                <c:if test="${p.entrepreneur.id == e.id}">
-                                    <c:set var="hasProposals" value="true" />
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 border-0 border-bottom">
-                                        <div>
-                                            <strong class="text-navy">${p.title}</strong>
-                                            <div class="text-muted small">${p.category} | ${p.location}</div>
-                                        </div>
-                                        <div>
-                                            <span class="badge bg-secondary-subtle text-secondary small">Goal: ₹${p.fundingNeeded}</span>
-                                            <span class="badge bg-success-subtle text-success small">Raised: ₹${p.amountRaised}</span>
-                                        </div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasProposals}">
-                                <li class="list-group-item text-center text-muted small py-3">No proposals submitted.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 2: Meetings -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-calendar-check-fill"></i> Consultation & Interview Meetings</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasMeetings" value="false" />
-                            <c:forEach var="m" items="${allMeetings}">
-                                <c:if test="${m.proposal.entrepreneur.id == e.id}">
-                                    <c:set var="hasMeetings" value="true" />
-                                    <li class="list-group-item py-2 border-0 border-bottom">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>Meeting with Investor ${m.investor.fullName}</strong>
-                                            <span class="badge bg-info-subtle text-info">${m.status}</span>
-                                        </div>
-                                        <div class="text-secondary small">Time: ${m.meetingTime} | Location: ${m.location}</div>
-                                        <div class="text-muted small">Notes: "${m.notes}"</div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasMeetings}">
-                                <li class="list-group-item text-center text-muted small py-3">No meetings scheduled.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 3: Q&A Questions -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-question-square-fill"></i> Questions & Inquiries</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasQuestions" value="false" />
-                            <c:forEach var="q" items="${allQuestions}">
-                                <c:if test="${q.proposal.entrepreneur.id == e.id}">
-                                    <c:set var="hasQuestions" value="true" />
-                                    <li class="list-group-item py-2 border-0 border-bottom">
-                                        <div class="fw-bold text-navy small">Question by ${q.investor.fullName} (Pitch: "${q.proposal.title}"):</div>
-                                        <div class="text-secondary small mb-1">"${q.question}"</div>
-                                        <div class="ps-2 border-start border-success">
-                                            <span class="text-success small fw-semibold">Answer:</span>
-                                            <span class="text-secondary small">
-                                                <c:choose>
-                                                    <c:when test="${not empty q.answer}">"${q.answer}"</c:when>
-                                                    <c:otherwise><em>Awaiting response...</em></c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                        </div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasQuestions}">
-                                <li class="list-group-item text-center text-muted small py-3">No questions asked.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 4: Chat messages -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-chat-dots-fill"></i> Direct Chat History Logs</h6>
-                        <div style="max-height: 250px; overflow-y: auto; background:#f8f9fa; padding:15px; border-radius:10px;">
-                            <c:set var="hasChats" value="false" />
-                            <c:forEach var="chat" items="${allChats}">
-                                <c:if test="${chat.proposal.entrepreneur.id == e.id}">
-                                    <c:set var="hasChats" value="true" />
-                                    <div class="mb-2 p-2 rounded" style="background:${chat.senderRole == 'INVESTOR' ? '#e2f0d9' : '#fff'}; border: 1px solid rgba(0,0,0,0.05); font-size:0.8rem;">
-                                        <div class="d-flex justify-content-between small text-muted mb-1">
-                                            <span><strong>${chat.senderRole == 'INVESTOR' ? 'Investor' : 'Entrepreneur'}</strong> (${chat.senderRole == 'INVESTOR' ? chat.investor.fullName : e.fullName})</span>
-                                            <span>${chat.timestamp}</span>
-                                        </div>
-                                        <div class="text-dark">"${chat.message}"</div>
-                                        <div class="text-muted small mt-1" style="font-size:0.7rem;">Topic: "${chat.proposal.title}"</div>
-                                    </div>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasChats}">
-                                <div class="text-center text-muted small py-3">No chat messages sent.</div>
-                            </c:if>
+          <div class="ap-table-wrap">
+            <table class="ap-table" id="proposalQueueTable">
+              <thead>
+                <tr>
+                  <th>Proposal</th>
+                  <th>Entrepreneur</th>
+                  <th>Location</th>
+                  <th>Funding Needed</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              <c:choose>
+                <c:when test="${not empty activeList}">
+                  <c:forEach var="p" items="${activeList}" varStatus="st">
+                    <c:set var="stKey" value="${p.verificationStatus}"/>
+                    <c:set var="photo" value="${p.profilePhoto}"/>
+                    <c:set var="pitch" value="${p.documentsPath}"/>
+                    <c:set var="bizPhotos" value="${p.photosPath}"/>
+                    <c:set var="pct" value="${p.profileCompletionPct != null ? p.profileCompletionPct : 0}"/>
+                    <tr class="proposal-row ${st.first ? 'selected' : ''}"
+                        data-id="${p.id}"
+                        data-name="<c:out value='${p.businessName}'/>"
+                        data-email="<c:out value='${p.email}'/>"
+                        data-phone="<c:out value='${p.phone}'/>"
+                        data-spec="<c:out value='${p.fullName}'/>"
+                        data-loc="<c:out value='${p.city}'/>"
+                        data-status="<c:out value='${stKey}'/>"
+                        data-pct="${pct}"
+                        data-photo="<c:out value='${photo}'/>"
+                        data-gov="${not empty pitch ? '1' : '0'}"
+                        data-deg="${not empty bizPhotos ? '1' : '0'}"
+                        data-photo-ok="${not empty photo ? '1' : '0'}">
+                      <td>
+                        <div class="ap-doc">
+                          <span class="av">
+                            <c:choose>
+                              <c:when test="${not empty photo}">
+                                <img src="${fn:startsWith(photo,'http') ? photo : pageContext.request.contextPath.concat(photo)}" alt="">
+                              </c:when>
+                              <c:otherwise>${not empty p.businessName ? fn:substring(p.businessName,0,1).toUpperCase() : '-'}</c:otherwise>
+                            </c:choose>
+                          </span>
+                          <span style="min-width:0;">
+                            <div class="nm" title="<c:out value='${p.businessName}'/>"><c:out value="${p.businessName}"/></div>
+                            <div class="em"><c:out value="${p.businessCategory}"/></div>
+                          </span>
                         </div>
-
-                    </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </c:forEach>
-
-    <!-- Investor Activity Modals -->
-    <c:forEach var="i" items="${allInvestors}">
-        <div class="modal fade" id="activityModalInv-${i.id}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content border-0 shadow-lg" style="border-radius:20px;">
-                    <div class="modal-header bg-dark text-white border-0 py-3" style="border-top-left-radius:20px; border-top-right-radius:20px;">
-                        <h5 class="modal-title fw-bold"><i class="bi bi-activity"></i> Activity Audit Feed — ${i.fullName}</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-4">
-                        
-                        <!-- Section 1: Investments -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-cash-stack"></i> Investments Ledger</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasInvestments" value="false" />
-                            <c:forEach var="inv" items="${allInvestments}">
-                                <c:if test="${inv.investor.id == i.id}">
-                                    <c:set var="hasInvestments" value="true" />
-                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2 border-0 border-bottom">
-                                        <div>
-                                            <strong class="text-success">Invested ₹${inv.amount}</strong>
-                                            <div class="text-muted small">In Pitch: "${inv.proposal.title}" (Entrepreneur: ${inv.proposal.entrepreneur.fullName})</div>
-                                        </div>
-                                        <div>
-                                            <span class="badge bg-secondary-subtle text-secondary small">Status: ${inv.status}</span>
-                                            <span class="badge ${inv.commissionPaid ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'} small">
-                                                Commission: ${inv.commissionPaid ? 'Paid' : 'Pending'}
-                                            </span>
-                                        </div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasInvestments}">
-                                <li class="list-group-item text-center text-muted small py-3">No investments completed.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 2: Meetings -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-calendar-check-fill"></i> Requested Meetings Log</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasMeetings" value="false" />
-                            <c:forEach var="m" items="${allMeetings}">
-                                <c:if test="${m.investor.id == i.id}">
-                                    <c:set var="hasMeetings" value="true" />
-                                    <li class="list-group-item py-2 border-0 border-bottom">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>Meeting with Entrepreneur ${m.proposal.entrepreneur.fullName}</strong>
-                                            <span class="badge bg-info-subtle text-info">${m.status}</span>
-                                        </div>
-                                        <div class="text-secondary small">Time: ${m.meetingTime} | Location: ${m.location}</div>
-                                        <div class="text-muted small">Notes: "${m.notes}"</div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasMeetings}">
-                                <li class="list-group-item text-center text-muted small py-3">No meetings scheduled.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 3: Q&A Questions -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-question-square-fill"></i> Submitted Inquiries (Q&A)</h6>
-                        <ul class="list-group mb-4">
-                            <c:set var="hasQuestions" value="false" />
-                            <c:forEach var="q" items="${allQuestions}">
-                                <c:if test="${q.investor.id == i.id}">
-                                    <c:set var="hasQuestions" value="true" />
-                                    <li class="list-group-item py-2 border-0 border-bottom">
-                                        <div class="fw-bold text-navy small">Question on Pitch "${q.proposal.title}" (Entrepreneur: ${q.proposal.entrepreneur.fullName}):</div>
-                                        <div class="text-secondary small mb-1">"${q.question}"</div>
-                                        <div class="ps-2 border-start border-success">
-                                            <span class="text-success small fw-semibold">Answer:</span>
-                                            <span class="text-secondary small">
-                                                <c:choose>
-                                                    <c:when test="${not empty q.answer}">"${q.answer}"</c:when>
-                                                    <c:otherwise><em>Awaiting response...</em></c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                        </div>
-                                    </li>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasQuestions}">
-                                <li class="list-group-item text-center text-muted small py-3">No questions asked.</li>
-                            </c:if>
-                        </ul>
-
-                        <!-- Section 4: Chat messages -->
-                        <h6 class="fw-bold border-bottom pb-2 mb-3" style="color:var(--navy-dark);"><i class="bi bi-chat-dots-fill"></i> Direct Chat History Logs</h6>
-                        <div style="max-height: 250px; overflow-y: auto; background:#f8f9fa; padding:15px; border-radius:10px;">
-                            <c:set var="hasChats" value="false" />
-                            <c:forEach var="chat" items="${allChats}">
-                                <c:if test="${chat.investor.id == i.id}">
-                                    <c:set var="hasChats" value="true" />
-                                    <div class="mb-2 p-2 rounded" style="background:${chat.senderRole == 'INVESTOR' ? '#e2f0d9' : '#fff'}; border: 1px solid rgba(0,0,0,0.05); font-size:0.8rem;">
-                                        <div class="d-flex justify-content-between small text-muted mb-1">
-                                            <span><strong>${chat.senderRole == 'INVESTOR' ? 'Investor' : 'Entrepreneur'}</strong> (${chat.senderRole == 'INVESTOR' ? i.fullName : chat.proposal.entrepreneur.fullName})</span>
-                                            <span>${chat.timestamp}</span>
-                                        </div>
-                                        <div class="text-dark">"${chat.message}"</div>
-                                        <div class="text-muted small mt-1" style="font-size:0.7rem;">Topic: "${chat.proposal.title}"</div>
-                                    </div>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasChats}">
-                                <div class="text-center text-muted small py-3">No chat messages sent.</div>
-                            </c:if>
+                      </td>
+                      <td>
+                        <span class="ap-clip" title="<c:out value='${p.fullName}'/>"><c:out value="${p.fullName}"/></span>
+                      </td>
+                      <td><c:out value="${not empty p.city ? p.city : (not empty p.state ? p.state : '-')}"/></td>
+                      <td><c:out value="${p.investmentNeeded > 0 ? 'â‚¹'.concat(p.investmentNeeded) : 'N/A'}"/></td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${stKey == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
+                          <c:when test="${stKey == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:when test="${stKey == 'CHANGES_REQUESTED'}"><span class="ap-badge ap-badge-changes">CHANGES_REQUESTED</span></c:when>
+                          <c:when test="${stKey == 'RE_VERIFICATION'}"><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending"><c:out value="${stKey}"/></span></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td onclick="event.stopPropagation();">
+                        <div class="dv-actions">
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${p.id}"><i class="fas fa-eye"></i> View</a>
                         </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:when>
+                <c:otherwise>
+                  <tr>
+                    <td colspan="6"><div class="ap-empty"><i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.35;"></i>No entrepreneurs in this queue.</div></td>
+                  </tr>
+                </c:otherwise>
+              </c:choose>
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-                    </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-                    </div>
+        <aside class="ap-panel ap-preview" id="entrepreneurPreview">
+          <div class="ap-panel-bd">
+            <div id="previewEmpty" class="ap-empty" style="display:none;">Select an entrepreneur to preview</div>
+            <div id="previewBody">
+              <div class="hero">
+                <span class="av" id="pvAv">D</span>
+                <div style="min-width:0;">
+                  <h3 id="pvName">-</h3>
+                  <div style="margin:6px 0;"><span class="ap-badge ap-badge-pending" id="pvStatus">PENDING</span></div>
+                  <div class="line" id="pvEmail">-</div>
+                  <div class="line" id="pvPhone">-</div>
+                  <div class="line" id="pvSpec">-</div>
                 </div>
-            </div>
-        </div>
-    </c:forEach>
+              </div>
 
-        </div>
-    </main>
+              <div class="ap-progress-label">
+                <span>Profile Completion</span>
+                <span id="pvPctLabel">0%</span>
+              </div>
+              <div class="ap-progress"><span id="pvPctBar" style="width:0%"></span></div>
+
+              <div style="font-size:0.78rem;font-weight:700;margin-bottom:8px;color:var(--ap-muted);">DOCUMENTS</div>
+              <div class="ap-doc-list">
+                <div class="ap-doc-item"><span>Profile Photo</span><span id="pvDocPhoto" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Pitch Deck</span><span id="pvDocGov" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Business Photos</span><span id="pvDocDeg" class="st-miss">Not uploaded</span></div>
+              </div>
+
+              <a id="pvReview" class="ap-btn ap-btn-primary" style="width:100%;justify-content:center;" href="#">
+                Review Application <i class="fas fa-arrow-right"></i>
+              </a>
+              <a id="pvViewAll" class="ap-btn ap-btn-ghost" style="width:100%;justify-content:center;margin-top:8px;" href="#">
+                View full profile
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="dv-bottom-grid">
+        <section class="ap-panel">
+          <div class="ap-panel-hd">
+            <h2>Changes Requested (${changesRequestedCount})</h2>
+            <a href="?filter=changes_requested" style="color:var(--ap-accent);font-size:0.82rem;font-weight:700;text-decoration:none;">View all</a>
+          </div>
+          <div class="ap-table-wrap">
+            <table class="ap-table" style="min-width:520px;">
+              <thead>
+                <tr><th>Proposal</th><th>Reason</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <c:choose>
+                  <c:when test="${not empty changesRequested}">
+                    <c:forEach var="p" items="${changesRequested}" end="4">
+                      <tr>
+                        <td>
+                          <div class="nm" style="font-weight:700;"><c:out value="${p.businessName}"/></div>
+                          <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${p.email}"/></div>
+                        </td>
+                        <td><span class="ap-clip" style="max-width:220px;" title="<c:out value='${p.changesRequestedNote}'/>"><c:out value="${not empty p.changesRequestedNote ? p.changesRequestedNote : '-'}"/></span></td>
+                        <td><a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${p.id}">Review</a></td>
+                      </tr>
+                    </c:forEach>
+                  </c:when>
+                  <c:otherwise>
+                    <tr><td colspan="3"><div class="ap-empty">No changes requested.</div></td></tr>
+                  </c:otherwise>
+                </c:choose>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="ap-panel">
+          <div class="ap-panel-hd">
+            <h2>Pending Re-verification (${reverificationCount})</h2>
+            <a href="?filter=reverification" style="color:var(--ap-accent);font-size:0.82rem;font-weight:700;text-decoration:none;">View all</a>
+          </div>
+          <div class="ap-table-wrap">
+            <table class="ap-table" style="min-width:520px;">
+              <thead>
+                <tr><th>Proposal</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <c:choose>
+                  <c:when test="${not empty reverification}">
+                    <c:forEach var="p" items="${reverification}" end="4">
+                      <tr>
+                        <td>
+                          <div style="font-weight:700;"><c:out value="${p.businessName}"/></div>
+                          <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${p.fullName}"/></div>
+                        </td>
+                        <td><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></td>
+                        <td><a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${p.id}">Review</a></td>
+                      </tr>
+                    </c:forEach>
+                  </c:when>
+                  <c:otherwise>
+                    <tr><td colspan="3"><div class="ap-empty">No re-verification requests.</div></td></tr>
+                  </c:otherwise>
+                </c:choose>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
 </div>
 
-<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  var ctx = '${pageContext.request.contextPath}';
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.proposal-row'));
+  var specSelect = document.getElementById('specClientFilter');
+  var specs = {};
+  rows.forEach(function (r) {
+    var s = (r.getAttribute('data-spec') || '').trim();
+    if (s) specs[s] = true;
+  });
+  Object.keys(specs).sort().forEach(function (s) {
+    var opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    specSelect.appendChild(opt);
+  });
+
+  function setDoc(el, ok) {
+    el.textContent = ok ? 'Uploaded' : 'Not uploaded';
+    el.className = ok ? 'st-ok' : 'st-miss';
+  }
+
+  function badgeClass(status) {
+    if (status === 'APPROVED') return 'ap-badge ap-badge-approved';
+    if (status === 'REJECTED') return 'ap-badge ap-badge-rejected';
+    if (status === 'CHANGES_REQUESTED') return 'ap-badge ap-badge-changes';
+    if (status === 'PROFILE_INCOMPLETE') return 'ap-badge ap-badge-incomplete';
+    if (status === 'RE-VERIFY') return 'ap-badge ap-badge-reverify';
+    return 'ap-badge ap-badge-pending';
+  }
+
+  function fillPreview(row) {
+    if (!row) {
+      document.getElementById('previewBody').style.display = 'none';
+      document.getElementById('previewEmpty').style.display = 'block';
+      return;
+    }
+    document.getElementById('previewBody').style.display = 'block';
+    document.getElementById('previewEmpty').style.display = 'none';
+
+    var name = row.getAttribute('data-name') || '-';
+    var email = row.getAttribute('data-email') || '-';
+    var phone = row.getAttribute('data-phone') || '-';
+    var spec = row.getAttribute('data-spec') || '-';
+    var exp = row.getAttribute('data-exp');
+    var status = row.getAttribute('data-status') || 'PENDING';
+    var pct = parseInt(row.getAttribute('data-pct') || '0', 10) || 0;
+    var photo = row.getAttribute('data-photo') || '';
+    var id = row.getAttribute('data-id');
+    var photoOk = row.getAttribute('data-photo-ok') === '1';
+
+    document.getElementById('pvName').textContent = name;
+    document.getElementById('pvEmail').textContent = email;
+    document.getElementById('pvPhone').textContent = phone || '-';
+    document.getElementById('pvSpec').textContent = spec + (exp ? (' Ã¢â‚¬Â¢ ' + exp + ' yrs exp.') : '');
+    var st = document.getElementById('pvStatus');
+    st.textContent = status;
+    st.className = badgeClass(status);
+    document.getElementById('pvPctLabel').textContent = pct + '%';
+    document.getElementById('pvPctBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
+
+    var av = document.getElementById('pvAv');
+    if (photoOk && photo) {
+      var src = photo.indexOf('http') === 0 ? photo : (ctx + photo);
+      av.innerHTML = '<img src="' + src + '" alt="">';
+    } else {
+      av.textContent = (name || 'D').charAt(0).toUpperCase();
+    }
+
+    setDoc(document.getElementById('pvDocPhoto'), photoOk);
+    setDoc(document.getElementById('pvDocGov'), row.getAttribute('data-gov') === '1');
+    setDoc(document.getElementById('pvDocDeg'), row.getAttribute('data-deg') === '1');
+
+    var href = ctx + '/entrepreneurs/about/' + id;
+    document.getElementById('pvReview').href = href;
+    document.getElementById('pvViewAll').href = href;
+  }
+
+  rows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      rows.forEach(function (r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+      fillPreview(row);
+    });
+  });
+
+  if (rows.length) fillPreview(rows[0]);
+  else fillPreview(null);
+
+  specSelect.addEventListener('change', function () {
+    var val = (specSelect.value || '').toLowerCase();
+    rows.forEach(function (r) {
+      var s = (r.getAttribute('data-spec') || '').toLowerCase();
+      r.style.display = (!val || s === val) ? '' : 'none';
+    });
+  });
+
+  var hs = document.getElementById('apHeaderSearch');
+  if (hs) {
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        hs.focus();
+      }
+    });
+    hs.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var q = hs.value.trim();
+        if (q) window.location.href = ctx + '/admin/pending-proposals?q=' + encodeURIComponent(q);
+      }
+    });
+  }
+})();
+</script>
 </body>
 </html>
+
+

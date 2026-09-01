@@ -13,7 +13,7 @@
         :root {
             --primary: #F43F5E;
             --primary-hover: #E11D48;
-            --navy: #1E1B4B;
+            --navy: #0F172A;
             --text-gray: #64748B;
             --bg-page: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -274,6 +274,51 @@
             display: none;
         }
 
+        .we-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .we-modal-overlay.open { display: flex; }
+        .we-modal {
+            background: #fff;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 24px 64px rgba(15, 23, 42, 0.2);
+        }
+        .we-modal-header {
+            padding: 20px 22px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .we-modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--navy); }
+        .we-modal-header p { margin: 6px 0 0; font-size: 0.82rem; color: var(--text-gray); }
+        .we-modal-body { padding: 16px 22px 8px; }
+        .preview-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.88rem;
+        }
+        .preview-row span { color: var(--text-gray); }
+        .preview-row strong { color: var(--navy); text-align: right; word-break: break-word; }
+        .we-modal-actions {
+            display: flex;
+            gap: 10px;
+            padding: 16px 22px 22px;
+            flex-wrap: wrap;
+        }
+        .we-modal-actions button { flex: 1; min-width: 140px; }
+
         .login-footer {
             text-align: center;
             margin-top: 20px;
@@ -506,6 +551,26 @@
             </div>
         </div>
     </main>
+
+    <div class="we-modal-overlay" id="registerPreviewOverlay" role="dialog" aria-modal="true" aria-labelledby="regPreviewTitle">
+        <div class="we-modal">
+            <div class="we-modal-header">
+                <h3 id="regPreviewTitle">Review your registration</h3>
+                <p>Confirm these details before creating your Event Host account. You will complete organization, bio, and documents after sign-in.</p>
+            </div>
+            <div class="we-modal-body">
+                <div class="preview-row"><span>Full name</span><strong id="pvName">—</strong></div>
+                <div class="preview-row"><span>Email</span><strong id="pvEmail">—</strong></div>
+                <div class="preview-row"><span>Phone</span><strong id="pvPhone">—</strong></div>
+                <div class="preview-row"><span>Email OTP</span><strong>Verified</strong></div>
+                <div class="preview-row"><span>Terms</span><strong>Accepted</strong></div>
+            </div>
+            <div class="we-modal-actions">
+                <button type="button" class="btn-submit" style="background:#fff;color:var(--navy);border:1px solid var(--border-color);box-shadow:none;" onclick="closeRegisterPreview()">Edit details</button>
+                <button type="button" class="btn-submit" id="btnConfirmRegister" onclick="submitRegistration()">Confirm &amp; create account</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         let isEmailVerified = false;
@@ -917,309 +982,3 @@
     </script>
 </body>
 </html>
-<!--
-</body>
-</html>
-<!--
-            const el = document.getElementById('fullName');
-            const err = document.getElementById('error-fullName');
-            const val = el.value.trim();
-            if (!val) {
-                showFieldInvalid(el, err, 'Full Name is required.');
-                return false;
-            }
-            if (val.length < 2) {
-                showFieldInvalid(el, err, 'Full Name must be at least 2 characters.');
-                return false;
-            }
-            if (!/^[a-zA-Z\s]+$/.test(val)) {
-                showFieldInvalid(el, err, 'Full Name must contain only letters and spaces.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validateEmail() {
-            const el = document.getElementById('email');
-            const err = document.getElementById('error-email');
-            const val = el.value.trim();
-            if (!val) {
-                showFieldInvalid(el, err, 'Email Address is required.');
-                return false;
-            }
-            const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            if (!regex.test(val)) {
-                showFieldInvalid(el, err, 'Please enter a valid email address.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validateOtp() {
-            const el = document.getElementById('emailOtp');
-            const err = document.getElementById('error-emailOtp');
-            const val = el.value.trim();
-            if (!val) {
-                showFieldInvalid(el, err, 'OTP code is required.');
-                return false;
-            }
-            if (!/^\d{6}$/.test(val)) {
-                showFieldInvalid(el, err, 'OTP must be a 6-digit number.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validatePhone() {
-            const el = document.getElementById('phone');
-            const err = document.getElementById('error-phone');
-            const val = el.value.trim();
-            if (!val) {
-                showFieldInvalid(el, err, 'Phone Number is required.');
-                return false;
-            }
-            if (!/^\d{10}$/.test(val)) {
-                showFieldInvalid(el, err, 'Phone Number must be exactly 10 digits.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validatePassword() {
-            const el = document.getElementById('password');
-            const err = document.getElementById('error-password');
-            const val = el.value;
-            if (!val) {
-                showFieldInvalid(el, err, 'Password is required.');
-                return false;
-            }
-            if (val.length < 6) {
-                showFieldInvalid(el, err, 'Password must be at least 6 characters.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validateConfirmPassword() {
-            const el = document.getElementById('confirmPassword');
-            const err = document.getElementById('error-confirmPassword');
-            const val = el.value;
-            const pass = document.getElementById('password').value;
-            if (!val) {
-                showFieldInvalid(el, err, 'Please confirm your password.');
-                return false;
-            }
-            if (val !== pass) {
-                showFieldInvalid(el, err, 'Passwords do not match.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function validateTerms() {
-            const el = document.getElementById('acceptedTerms');
-            const err = document.getElementById('error-acceptedTerms');
-            if (!el.checked) {
-                showFieldInvalid(el, err, 'You must accept the Terms & Safety Policies.');
-                return false;
-            }
-            showFieldValid(el, err);
-            return true;
-        }
-
-        function showFieldInvalid(el, err, msg) {
-            el.classList.add('is-invalid');
-            el.classList.remove('is-valid');
-            err.innerText = msg;
-            err.style.display = 'block';
-        }
-
-        function showFieldValid(el, err) {
-            el.classList.remove('is-invalid');
-            el.classList.add('is-valid');
-            err.innerText = '';
-            err.style.display = 'none';
-        }
-
-        function showAlert(msg, isSuccess = false) {
-            const box = document.getElementById('statusAlert');
-            const text = document.getElementById('alertText');
-            box.className = 'alert-box ' + (isSuccess ? 'alert-success' : 'alert-error');
-            box.querySelector('i').className = 'bi ' + (isSuccess ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill');
-            text.innerText = msg;
-            box.style.display = 'flex';
-        }
-
-        function hideAlert() {
-            document.getElementById('statusAlert').style.display = 'none';
-        }
-
-        function togglePassVisibility(id, btn) {
-            const input = document.getElementById(id);
-            const icon = btn.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'bi bi-eye-slash';
-            } else {
-                input.type = 'password';
-                icon.className = 'bi bi-eye';
-            }
-        }
-
-        async function sendOtp() {
-            hideAlert();
-            if (!validateEmail()) {
-                showAlert('Please enter a valid email address first.');
-                return;
-            }
-            const email = document.getElementById('email').value.trim();
-
-            const btn = document.getElementById('btnSendOtp');
-            btn.disabled = true;
-            document.getElementById('sendOtpText').innerText = 'Sending...';
-
-            try {
-                const res = await fetch(contextPath + '/api/women-events/host/otp/send-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showAlert('OTP sent to ' + email + '. Check your inbox!', true);
-                    document.getElementById('otpSection').style.display = 'block';
-                    document.getElementById('sendOtpText').innerText = 'Resend OTP';
-                } else {
-                    showAlert(data.error || 'Failed to send OTP.');
-                    document.getElementById('sendOtpText').innerText = 'Send Email OTP';
-                }
-            } catch (e) {
-                showAlert('Network error while sending OTP.');
-                document.getElementById('sendOtpText').innerText = 'Send Email OTP';
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        async function verifyOtp() {
-            hideAlert();
-            const email = document.getElementById('email').value.trim();
-            if (!validateOtp()) {
-                showAlert('Please enter the 6-digit OTP code.');
-                return;
-            }
-            const otp = document.getElementById('emailOtp').value.trim();
-
-            const btn = document.getElementById('btnVerifyOtp');
-            btn.disabled = true;
-            btn.innerText = 'Verifying...';
-
-            try {
-                const res = await fetch(contextPath + '/api/women-events/host/otp/verify-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, otp: otp })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    isEmailVerified = true;
-                    document.getElementById('verifiedBadge').style.display = 'inline-flex';
-                    document.getElementById('btnSubmitAccount').disabled = false;
-                    document.getElementById('email').readOnly = true;
-                    document.getElementById('emailOtp').readOnly = true;
-                    document.getElementById('otpSection').style.display = 'none';
-                    document.getElementById('btnSendOtp').style.display = 'none';
-                    showAlert('Email verified successfully! Review your details, then create the account.', true);
-                    document.getElementById('previewName').innerText = document.getElementById('fullName').value.trim();
-                    document.getElementById('previewEmail').innerText = email;
-                    document.getElementById('previewCard').style.display = 'block';
-                    document.getElementById('btnSubmitAccount').disabled = false;
-                } else {
-                    showAlert(data.error || 'Invalid OTP code.');
-                }
-            } catch (e) {
-                showAlert('Network error verifying OTP.');
-            } finally {
-                btn.disabled = false;
-                if (!isEmailVerified) btn.innerText = 'Verify OTP';
-            }
-        }
-
-        function editPreview() {
-            document.getElementById('previewCard').style.display = 'none';
-            document.getElementById('fullName').focus();
-        }
-
-        async function handleRegistration(e) {
-            e.preventDefault();
-            hideAlert();
-
-            const isNameElValid = validateFullName();
-            const isEmailElValid = validateEmail();
-            const isPhoneElValid = validatePhone();
-            const isPassElValid = validatePassword();
-            const isConfirmElValid = validateConfirmPassword();
-            const isTermsElValid = validateTerms();
-
-            if (!isNameElValid || !isEmailElValid || !isPhoneElValid || !isPassElValid || !isConfirmElValid || !isTermsElValid) {
-                const firstInvalid = document.querySelector('.form-input.is-invalid, input[type="checkbox"].is-invalid');
-                if (firstInvalid) firstInvalid.focus();
-                showAlert('Please resolve the errors below before submitting.');
-                return;
-            }
-
-            if (!isEmailVerified) {
-                showAlert('Please verify your email via OTP before submitting.');
-                return;
-            }
-
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const otp = document.getElementById('emailOtp').value.trim();
-            const acceptedTerms = document.getElementById('acceptedTerms').checked;
-
-            const btnSubmit = document.getElementById('btnSubmitAccount');
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Registering...';
-
-            try {
-                const res = await fetch(contextPath + '/api/women-events/host/register-quick', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fullName: fullName,
-                        email: email,
-                        phone: phone,
-                        password: password,
-                        confirmPassword: confirmPassword,
-                        emailOtp: otp,
-                        acceptedTerms: acceptedTerms
-                    })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    window.location.href = contextPath + '/women-events/host/login?registered=true';
-                } else {
-                    showAlert(data.error || 'Registration failed.');
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = '<i class="bi bi-person-plus-fill"></i> Create Host Account';
-                }
-            } catch (e) {
-                showAlert('Server connection error during registration.');
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = '<i class="bi bi-person-plus-fill"></i> Create Host Account';
-            }
-        }
-    </script>
-</body>
-</html>
--->

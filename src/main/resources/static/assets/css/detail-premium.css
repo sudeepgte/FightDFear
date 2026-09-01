@@ -16,6 +16,7 @@
   --color-accent: #F43F5E;
   --color-accent-hover: #E11D48;
   
+
   /* TEXT — plum, not navy/blue */
   --text-primary: #2D142C;
   --text-secondary: #6B3A4A;
@@ -24,6 +25,16 @@
   --shadow-sm: 0 4px 12px rgba(45, 20, 44, 0.04);
   --shadow-md: 0 12px 30px rgba(45, 20, 44, 0.07);
   --shadow-lg: 0 20px 48px rgba(45, 20, 44, 0.1);
+
+  /* TEXT */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+
+  /* SHADOWS + CORNERS */
+  --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.03);
+  --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.1);
+
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 24px;
@@ -67,7 +78,11 @@ body {
 .hero-overlay {
   position: absolute;
   inset: 0;
+
   background: linear-gradient(to top, rgba(45, 20, 44, 0.95) 0%, rgba(45, 20, 44, 0.5) 60%, transparent 100%);
+
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.5) 60%, transparent 100%);
+
   z-index: 1;
 }
 
@@ -576,7 +591,11 @@ body {
 .gallery-overlay-effect {
   position: absolute;
   inset: 0;
+
   background: rgba(45, 20, 44, 0.35);
+
+  background: rgba(15, 23, 42, 0.4);
+
   opacity: 0;
   display: flex;
   align-items: center;

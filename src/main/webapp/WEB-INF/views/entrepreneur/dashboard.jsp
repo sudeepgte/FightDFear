@@ -476,9 +476,18 @@
             <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
                 <i class="bi bi-chat-left-dots-fill"></i> Chat
             </a>
-            <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="sidebar-link">
-                <i class="bi bi-plus-square-fill"></i> Create Proposal
-            </a>
+            <c:choose>
+                <c:when test="${entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED'}">
+                    <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="sidebar-link">
+                        <i class="bi bi-plus-square-fill"></i> Create Proposal
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a href="#" class="sidebar-link" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('You cannot create a proposal until your profile is verified by the admin.'); return false;" title="Profile verification pending">
+                        <i class="bi bi-plus-square-fill"></i> Create Proposal <i class="bi bi-lock-fill ms-2"></i>
+                    </a>
+                </c:otherwise>
+            </c:choose>
             <a href="${pageContext.request.contextPath}/entrepreneur/bookings" class="sidebar-link">
                 <i class="bi bi-calendar-event-fill"></i> My Bookings
             </a>
@@ -601,7 +610,14 @@
                             <div>
                                 <span class="pink-vertical-line"></span>My Business Proposals
                             </div>
-                            <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="view-all-link">View All &rarr;</a>
+                            <c:choose>
+                                <c:when test="${entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED'}">
+                                    <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="view-all-link">Create Proposal &rarr;</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="#" onclick="alert('You cannot create a proposal until your profile is verified by the admin.'); return false;" class="view-all-link" style="opacity: 0.6; cursor: not-allowed;">Create Proposal <i class="bi bi-lock-fill ms-1"></i></a>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
                         <div class="table-responsive">
@@ -722,9 +738,18 @@
                                     </div>
                                     <h6 class="fw-bold" style="color: var(--text-plum);">No interested investors yet.</h6>
                                     <p class="text-muted small mb-3">Your proposals will attract partners once verified!</p>
-                                    <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="btn-upgrade-pill px-4 py-2 text-decoration-none d-inline-block">
-                                        Explore Investors
-                                    </a>
+                                    <c:choose>
+                                        <c:when test="${entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED'}">
+                                            <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="btn-upgrade-pill px-4 py-2 text-decoration-none d-inline-block">
+                                                Explore Investors
+                                            </a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="#" onclick="alert('You cannot create a proposal until your profile is verified by the admin.'); return false;" class="btn-upgrade-pill px-4 py-2 text-decoration-none d-inline-block" style="opacity: 0.6; cursor: not-allowed;">
+                                                Explore Investors <i class="bi bi-lock-fill ms-2"></i>
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </c:otherwise>
                         </c:choose>

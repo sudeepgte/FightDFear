@@ -240,13 +240,83 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
     return _computeFieldErrors().isEmpty;
   }
 
+  /// Live format checks while editing — never block the whole form with
+  /// submit-only errors (OTP / terms / password) until the user tries Submit.
   void _refreshValidation() {
-    if (!_touched && !_register) return;
+    if (!_touched) {
+      setState(() {
+        // Keep only format errors for fields the user already typed into.
+        final next = <String, String>{};
+        final emailErr = RegValidators.emailError(_email.text);
+        if (_email.text.trim().isNotEmpty && emailErr != null) {
+          next['email'] = emailErr;
+        }
+        for (final f in widget.registerFields) {
+          if (!_register || f.type == RegInputType.section) continue;
+          final v = _valueOf(f);
+          if (v.isEmpty) continue;
+          if (f.type == RegInputType.phone || f.key.toLowerCase().contains('phone')) {
+            final err = RegValidators.phoneError(v, label: f.label);
+            if (err != null) next[f.key] = err;
+          }
+        }
+        if (_register && _password.text.isNotEmpty) {
+          final passErr = RegValidators.passwordError(_password.text);
+          if (passErr != null) next['password'] = passErr;
+        }
+        if (_register && _confirmPassword.text.isNotEmpty) {
+          final confirmErr =
+              RegValidators.confirmPasswordError(_password.text, _confirmPassword.text);
+          if (confirmErr != null) next['confirmPassword'] = confirmErr;
+        }
+        _fieldErrors
+          ..clear()
+          ..addAll(next);
+      });
+      return;
+    }
     setState(() {
       _fieldErrors
         ..clear()
         ..addAll(_computeFieldErrors());
     });
+  }
+
+  /// Validate prerequisites for Send OTP and surface errors next to fields.
+  bool _validateBeforeSendEmailOtp() {
+    final email = _email.text.trim();
+    final emailErr = RegValidators.emailError(email);
+    String? phoneErr;
+    for (final f in widget.registerFields) {
+      if (f.type == RegInputType.phone || f.key.toLowerCase().contains('phone')) {
+        phoneErr = RegValidators.phoneError(_valueOf(f), label: f.label);
+        break;
+      }
+    }
+    setState(() {
+      if (emailErr != null) {
+        _fieldErrors['email'] = emailErr;
+      } else {
+        _fieldErrors.remove('email');
+      }
+      if (phoneErr != null) {
+        final phoneKey = widget.registerFields
+            .firstWhere(
+              (f) => f.type == RegInputType.phone || f.key.toLowerCase().contains('phone'),
+              orElse: () => const RegFieldDef(key: 'phone', label: 'Phone'),
+            )
+            .key;
+        _fieldErrors[phoneKey] = phoneErr;
+      }
+      _error = emailErr ?? phoneErr;
+    });
+    if (emailErr != null || phoneErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(emailErr ?? phoneErr!)),
+      );
+      return false;
+    }
+    return true;
   }
 
   InputDecoration _fieldDecoration({
@@ -672,9 +742,11 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
+          child: Align(
+            alignment: Alignment.topCenter,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: _register ? _buildRegisterForm(canSubmit) : _buildLoginCard(canSubmit),
@@ -886,44 +958,70 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         ),
         if (widget.requireEmailOtp) ...[
           OtpVerifyRow(
+            key: const ValueKey('portal-email-otp'),
             label: 'Email',
             verified: _emailOtpOk,
             onVerified: () {
-              setState(() => _emailOtpOk = true);
+              setState(() {
+                _emailOtpOk = true;
+                _fieldErrors.remove('emailOtp');
+                _error = null;
+              });
               _refreshValidation();
             },
             onSend: widget.onSendEmailOtp == null
                 ? null
                 : () async {
-                    final email = _email.text.trim();
-                    final err = RegValidators.emailError(email);
-                    if (err != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                    FocusScope.of(context).unfocus();
+                    if (!_validateBeforeSendEmailOtp()) return false;
+                    try {
+                      final res = await widget.onSendEmailOtp!(_email.text.trim());
+                      if (res['success'] == true) {
+                        if (mounted) {
+                          setState(() {
+                            _fieldErrors.remove('emailOtp');
+                            _error = null;
+                          });
+                        }
+                        return true;
+                      }
+                      final err = res['error']?.toString() ?? 'Failed to send OTP';
+                      if (mounted) {
+                        setState(() => _error = err);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      }
+                      return false;
+                    } catch (e) {
+                      final err = e.toString().contains('TimeoutException')
+                          ? 'Server timed out sending OTP. Check backend on port 8084 and try again.'
+                          : 'Failed to send OTP: $e';
+                      if (mounted) {
+                        setState(() => _error = err);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      }
                       return false;
                     }
-                    final res = await widget.onSendEmailOtp!(email);
-                    if (res['success'] == true) return true;
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(res['error']?.toString() ?? 'Failed to send OTP'),
-                        ),
-                      );
-                    }
-                    return false;
                   },
             onVerify: widget.onVerifyEmailOtp == null
                 ? null
                 : (otp) async {
+                    FocusScope.of(context).unfocus();
+                    final code = otp.trim();
+                    if (code.isEmpty) return 'Enter the OTP code';
+                    if (code.length < 4 || code.length > 8) {
+                      return 'Enter a valid OTP code';
+                    }
                     try {
                       final res = await widget.onVerifyEmailOtp!(
                         email: _email.text.trim(),
-                        otp: otp,
+                        otp: code,
                       );
                       if (res['success'] == true) return null;
                       return res['error']?.toString() ?? 'Invalid or expired OTP';
                     } catch (e) {
-                      return 'Verification failed: $e';
+                      return e.toString().contains('TimeoutException')
+                          ? 'Server timed out verifying OTP. Try again.'
+                          : 'Verification failed: $e';
                     }
                   },
           ),
@@ -1010,11 +1108,11 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                 : const Text('Submit Registration'),
           ),
         ),
-        if (!canSubmit)
+        if (!canSubmit && _touched)
           const Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
-              'Complete all required fields, OTPs (demo: 123456), and Terms to enable submit.',
+              'Fix the highlighted fields above to enable registration.',
               style: TextStyle(fontSize: 12, color: Colors.black54),
               textAlign: TextAlign.center,
             ),

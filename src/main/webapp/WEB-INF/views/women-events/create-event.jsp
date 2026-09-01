@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
+    <style>
+      .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+      .we-modal-overlay.open { display:flex; }
+    </style>
     <style>
         .progress-steps {
             display: flex; align-items: center; gap: 0; margin-bottom: 24px;
@@ -395,6 +401,9 @@
                         </div>
                         <button type="submit" class="submit-btn" name="saveDraft" value="false"><i class="bi bi-send"></i> Submit for Approval</button>
                         <button type="submit" class="cancel-btn" name="saveDraft" value="true" style="cursor:pointer;">Save Draft</button>
+                        <button type="button" class="submit-btn" onclick="openCreatePreview()"><i class="bi bi-eye"></i> Review event</button>
+                        <button type="submit" id="createEventSubmitHidden" style="display:none;">Submit</button>
+                        <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="cancel-btn">Cancel</a>
                     </div>
 
                     <div class="form-card">
@@ -424,6 +433,23 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div id="createPreviewOverlay" class="we-modal-overlay" onclick="if(event.target===this)closeCreatePreview()">
+    <div class="we-modal" role="dialog">
+        <div class="we-modal-header">
+            <div>
+                <h3>Preview event</h3>
+                <p>This is what you are submitting for admin approval.</p>
+            </div>
+            <button type="button" class="we-modal-close" onclick="closeCreatePreview()" aria-label="Close">&times;</button>
+        </div>
+        <div class="we-modal-body" id="createPreviewBody"></div>
+        <div class="we-modal-footer">
+            <button type="button" class="we-modal-btn secondary" onclick="closeCreatePreview()">Edit</button>
+            <button type="button" class="we-modal-btn primary" id="createPreviewSubmitBtn" onclick="submitCreateAfterPreview()">Submit for approval</button>
+        </div>
     </div>
 </div>
 
@@ -461,18 +487,68 @@ document.querySelectorAll('input, select, textarea').forEach(el => el.addEventLi
 updateChecklist();
 
 document.getElementById('createEventForm')?.addEventListener('submit', function(e) {
+    if (this.dataset.confirmed === '1') return;
+    e.preventDefault();
+    openCreatePreview();
+});
+
+function fv(name) {
+    const el = document.querySelector('[name="' + name + '"]');
+    return el && el.value ? el.value.trim() : '';
+}
+function openCreatePreview() {
+    const form = document.getElementById('createEventForm');
+    if (!form.checkValidity()) { form.reportValidity(); return; }
     const dateInp = document.querySelector('[name="eventDate"]');
     if (dateInp && dateInp.value) {
         const selected = new Date(dateInp.value);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (selected < today) {
-            e.preventDefault();
             alert('Event date cannot be in the past.');
             dateInp.focus();
+            return;
         }
     }
-});
+    const catSel = document.querySelector('[name="category"]');
+    const catLabel = catSel && catSel.selectedOptions[0] ? catSel.selectedOptions[0].text : fv('category');
+    const isFree = document.querySelector('[name="isFree"]:checked')?.value === 'true';
+    const isVirtual = document.querySelector('[name="virtual"]')?.checked;
+    const rows = [
+        ['Event name', fv('name')],
+        ['Category', catLabel],
+        ['Organizer type', fv('organizerType')],
+        ['Organizer name', fv('organizerName')],
+        ['Description', fv('description')],
+        ['Date', fv('eventDate') || 'Not provided'],
+        ['Time', fv('eventTime') || 'Not provided'],
+        ['Mode', isVirtual ? 'Online' : 'In person'],
+        ['Stream link', fv('streamLink') || 'Not provided'],
+        ['Venue', fv('venue') || 'Not provided'],
+        ['City', fv('city') || 'Not provided'],
+        ['Maps / address', fv('mapsLocation') || 'Not provided'],
+        ['Entry', isFree ? 'Free' : ('₹' + (fv('entryFee') || '0'))],
+        ['Booth fee', fv('boothFee') || '0'],
+        ['Capacity', fv('maxParticipants') || 'Not limited'],
+        ['Contact', fv('contactInfo') || 'Not provided'],
+        ['Banner', document.getElementById('bannerFile')?.files?.[0]?.name || 'Not uploaded']
+    ];
+    document.getElementById('createPreviewBody').innerHTML = rows.map(function(r) {
+        return '<div class="we-modal-row"><span class="k">' + r[0] + '</span><span class="v">' +
+            (r[1] ? r[1].replace(/</g,'&lt;') : 'Not provided') + '</span></div>';
+    }).join('');
+    document.getElementById('createPreviewOverlay').classList.add('open');
+}
+function closeCreatePreview() {
+    document.getElementById('createPreviewOverlay').classList.remove('open');
+}
+function submitCreateAfterPreview() {
+    const form = document.getElementById('createEventForm');
+    const btn = document.getElementById('createPreviewSubmitBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+    form.dataset.confirmed = '1';
+    form.submit();
+}
 
 function toggleFee(isFree) {
     const feeInput = document.getElementById('feeInput');

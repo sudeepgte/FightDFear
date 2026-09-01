@@ -10,18 +10,403 @@
     <!-- Icons & Fonts -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Theme files -->
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/fdf-6010-pages.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/doctor-list-theme.css" rel="stylesheet">
-</head>
-<body class="fdf-page-shell fdf-page-doctors ${viewerIsDoctor ? 'fdf-no-sidebar' : ''}">
+    <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #F43F5E;
+            --rose-soft: #FFF1F2;
+            --bg-page: #F8FAFC;
+            --navy: #0F172A;
+            --navy-soft: #1E293B;
+            --border: #E2E8F0;
+            --glow-bg: var(--bg-page);
+            --card-bg: #ffffff;
+            --shadow-sm: 0 4px 20px rgba(0,0,0,0.03);
+            --shadow-md: 0 8px 24px rgba(244, 63, 94, 0.08);
+            --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+            --text-gray: #64748B;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--glow-bg);
+            color: var(--navy-soft);
+            overflow-x: hidden;
+        }
 
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+        /* Soft atmosphere (muted — 60% surface) */
+        .glow-bg-layer {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .blob {
+            position: absolute;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.07;
+            animation: floatBlob 20s infinite alternate;
+        }
+        .blob-1 { top: -100px; right: -100px; background: var(--primary); }
+        .blob-2 { bottom: -150px; left: -150px; background: #94a3b8; animation-delay: -5s; }
+        
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(40px, 30px) scale(1.15); }
+        }
+
+        /* Clean Minimal Header */
+        .glow-header {
+            padding: 60px 20px 40px;
+            text-align: center;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .brand-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--rose-soft);
+            border: 1px solid #fecdd3;
+            border-radius: 999px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+        }
+        .brand-row img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .brand-row span {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 14px;
+        }
+        .glow-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+        .glow-header p {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Top Bar navigation */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 30px;
+            position: absolute;
+            top: 0; right: 0;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .top-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid var(--border);
+            color: var(--navy-soft);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        .top-btn:hover {
+            background: var(--rose-soft);
+            color: var(--primary);
+            border-color: #fecdd3;
+        }
+
+        /* Search wrapper */
+        .search-container {
+            max-width: 500px;
+            margin: 24px auto 0;
+            position: relative;
+            width: 100%;
+            padding: 0 8px;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 15px 8px 16px;
+            box-shadow: var(--shadow-sm);
+        }
+        .search-box i {
+            color: var(--primary);
+            margin-right: 10px;
+        }
+        .search-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 14px;
+            color: var(--navy-soft);
+            font-family: inherit;
+        }
+
+        /* Category Scroll Bar */
+        .cat-scroll-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 8px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+        .cat-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        .btn-cat-pill {
+            padding: 8px 18px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid var(--border);
+            color: var(--navy-soft);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+        .btn-cat-pill:hover, .btn-cat-pill.active {
+            background: var(--rose-soft);
+            color: var(--primary);
+            border-color: #fecdd3;
+        }
+
+        /* Doctors Grid */
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .doctor-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .doctor-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: #fecdd3;
+        }
+        .doctor-card-top {
+            padding: 20px;
+            display: flex;
+            gap: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .doctor-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--rose-soft);
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            flex-shrink: 0;
+            border: 1px solid #fecdd3;
+        }
+        .doctor-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .doctor-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .doctor-spec {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 4px;
+        }
+        .doctor-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin: 2px 0 6px;
+            word-break: break-word;
+        }
+        .doctor-loc {
+            font-size: 12px;
+            color: var(--text-gray);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .doctor-loc i {
+            color: var(--primary);
+        }
+        .doctor-tags {
+            padding: 14px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex-grow: 1;
+        }
+        .doctor-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #475569;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .doctor-tag.rating {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .doctor-tag.exp {
+            background: #f1f5f9;
+            color: var(--navy-soft);
+        }
+        .doctor-tag.online {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .doctor-tag.emergency {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .doctor-actions {
+            padding: 16px 20px 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .btn-doc-media {
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            text-align: center;
+            text-decoration: none;
+            color: var(--navy-soft);
+            background: #fff;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-doc-media:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: transparent;
+        }
+        .btn-doc-book {
+            grid-column: span 3;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            background: var(--primary);
+            transition: all 0.2s;
+        }
+        .btn-doc-book:hover {
+            filter: brightness(1.1);
+            color: #fff;
+        }
+
+        .empty-doctors {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--fdf-muted);
+        }
+
+        @media (max-width: 768px) {
+            .glow-header { padding-top: 30px; padding-bottom: 20px; }
+            .top-bar {
+                position: relative;
+                justify-content: center;
+                padding: 10px;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+            .top-btn {
+                padding: 8px 14px;
+                font-size: 12px;
+                margin-right: 0 !important;
+            }
+            .glow-header h1 { font-size: 28px; }
+            .cat-scroll-container {
+                justify-content: flex-start;
+                padding: 10px 15px;
+            }
+            .doctors-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px 15px;
+            }
+            .doctor-card-top { padding: 15px; }
+            .doctor-tags { padding: 10px 15px; }
+            .doctor-actions { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+
 
 <div id="wrapper">
     <!-- Sidebar: user navigation only (doctors stay in portal chrome) -->
@@ -64,8 +449,16 @@
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
                 <span>Fight D Fear</span>
             </div>
-            <h1>Find Your Doctor</h1>
-            <p>Connect securely with verified, expert female doctors, gynecologists, and psychologists dedicated to women's physical and mental healthcare.</p>
+            <c:choose>
+                <c:when test="${viewerIsDoctor}">
+                    <h1>Doctor Directory</h1>
+                    <p>Browse other verified doctors on Fight D Fear. This is a peer directory preview — patients see a similar listing when booking care.</p>
+                </c:when>
+                <c:otherwise>
+                    <h1>Find Your Doctor</h1>
+                    <p>Connect securely with verified, expert female doctors, gynecologists, and psychologists dedicated to women's physical and mental healthcare.</p>
+                </c:otherwise>
+            </c:choose>
             
             <!-- Search bar -->
             <div class="search-container">
@@ -110,8 +503,8 @@
         </c:if>
 
         <!-- Showing count status -->
-        <div class="dl-count-bar">
-            <i class="bi bi-info-circle me-1"></i> Showing <span id="visibleCount" class="count-num">...</span> verified medical experts
+        <div class="container mt-4 px-4 text-muted small">
+            <i class="bi bi-info-circle me-1"></i> Showing <span id="visibleCount" class="fw-bold text-dark">...</span> verified medical experts
         </div>
 
         <!-- Doctors Grid -->
@@ -187,6 +580,9 @@
                 </div>
             </c:if>
         </div>
+
+        <!-- Footer -->
+        
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

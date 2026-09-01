@@ -2000,7 +2000,7 @@
         </ul>
 
         <div class="nav-actions">
-            <a href="/women-events/host/register" class="nav-events" style="text-decoration:none;">Events</a>
+            <a href="${pageContext.request.contextPath}/women-events" class="nav-events" style="text-decoration:none;">Events</a>
             <div class="nav-item nav-auth-wrap">
                 <span class="nav-auth-btn nav-auth-btn--login">
                     <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -2342,7 +2342,7 @@
                     <div style="font-size:2rem; margin-bottom:1rem;">👩‍⚕️</div>
                     <h3>Women Doctors</h3>
                     <p>Find healthcare professionals and trusted resources for women's health.</p>
-                    <a href="/doctors/register" class="btn-primary" style="align-self: flex-start; background: var(--white); color: var(--brand-plum);">Find a Doctor &rarr;</a>
+                    <a href="${pageContext.request.contextPath}/doctors/list" class="btn-primary" style="align-self: flex-start; background: var(--white); color: var(--brand-plum);">Find a Doctor &rarr;</a>
                 </div>
             </div>
             
@@ -2759,7 +2759,7 @@
                 <div class="footer-col">
                     <h4>Wellness</h4>
                     <ul>
-                        <li><a href="/doctors/register">Women Doctors</a></li>
+                        <li><a href="${pageContext.request.contextPath}/doctors/list">Women Doctors</a></li>
                         <li><a href="/fitness/trainer/register">Fitness</a></li>
                         <li><a href="/centres/registerCentre">Wellness Centres</a></li>
                         <li><a href="/salons/register">Beauty & Self Care</a></li>

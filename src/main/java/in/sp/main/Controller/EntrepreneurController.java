@@ -244,11 +244,11 @@ public class EntrepreneurController {
         try {
             Entrepreneur refreshed = entrepreneurRepository.findById(e.getId()).orElse(e);
 
-            if (fullName != null && !fullName.isBlank())
+            if (fullName != null)
                 refreshed.setFullName(fullName);
-            if (phone != null && !phone.isBlank())
+            if (phone != null)
                 refreshed.setPhone(phone);
-            if (dob != null && !dob.isBlank())
+            if (dob != null)
                 refreshed.setDob(dob);
             if (gender != null && !gender.isBlank()) {
                 try {
@@ -256,36 +256,36 @@ public class EntrepreneurController {
                 } catch (Exception ignored) {
                 }
             }
-            if (aadhaarNumber != null && !aadhaarNumber.isBlank())
+            if (aadhaarNumber != null)
                 refreshed.setAadhaarNumber(aadhaarNumber);
 
-            if (businessName != null && !businessName.isBlank())
+            if (businessName != null)
                 refreshed.setBusinessName(businessName);
-            if (businessCategory != null && !businessCategory.isBlank())
+            if (businessCategory != null)
                 refreshed.setBusinessCategory(businessCategory);
-            if (businessLocation != null && !businessLocation.isBlank())
+            if (businessLocation != null)
                 refreshed.setBusinessLocation(businessLocation);
-            if (city != null && !city.isBlank())
+            if (city != null)
                 refreshed.setCity(city);
-            if (state != null && !state.isBlank())
+            if (state != null)
                 refreshed.setState(state);
-            if (pincode != null && !pincode.isBlank())
+            if (pincode != null)
                 refreshed.setPincode(pincode);
-            if (whatsappNumber != null && !whatsappNumber.isBlank())
+            if (whatsappNumber != null)
                 refreshed.setWhatsappNumber(whatsappNumber);
 
             if (businessExperience != null)
                 refreshed.setBusinessExperience(businessExperience);
-            if (businessDescription != null && !businessDescription.isBlank())
+            if (businessDescription != null)
                 refreshed.setBusinessDescription(businessDescription);
             if (investmentNeeded != null)
                 refreshed.setInvestmentNeeded(investmentNeeded);
             if (expectedMonthlyIncome != null)
                 refreshed.setExpectedMonthlyIncome(expectedMonthlyIncome);
 
-            if (upiId != null && !upiId.isBlank())
+            if (upiId != null)
                 refreshed.setUpiId(upiId);
-            if (bankDetails != null && !bankDetails.isBlank())
+            if (bankDetails != null)
                 refreshed.setBankDetails(bankDetails);
 
             // Handle file uploads
@@ -324,35 +324,29 @@ public class EntrepreneurController {
         if (e == null)
             return 0;
         int pct = 0;
-        if (e.getFullName() != null && !e.getFullName().isBlank())
-            pct += 7;
-        if (e.getEmail() != null && !e.getEmail().isBlank())
-            pct += 7;
-        if (e.getPhone() != null && !e.getPhone().isBlank())
-            pct += 6;
 
-        if (e.getBusinessName() != null && !e.getBusinessName().isBlank())
-            pct += 7;
-        if (e.getBusinessCategory() != null && !e.getBusinessCategory().isBlank())
-            pct += 7;
-        if (e.getBusinessLocation() != null && !e.getBusinessLocation().isBlank())
-            pct += 6;
+        if (e.getFullName() != null && !e.getFullName().isBlank()) pct += 5;
+        if (e.getEmail() != null && !e.getEmail().isBlank()) pct += 5;
+        if (e.getPhone() != null && !e.getPhone().isBlank()) pct += 5;
 
-        if (e.getInvestmentNeeded() != null && e.getInvestmentNeeded() > 0)
-            pct += 7;
-        if (e.getExpectedMonthlyIncome() != null && e.getExpectedMonthlyIncome() > 0)
-            pct += 7;
-        if (e.getBusinessExperience() != null)
-            pct += 6;
+        if (e.getBusinessName() != null && !e.getBusinessName().isBlank() && !e.getBusinessName().equals("Pending Profile Completion")) pct += 5;
+        if (e.getBusinessCategory() != null && !e.getBusinessCategory().isBlank()) pct += 5;
+        if (e.getBusinessLocation() != null && !e.getBusinessLocation().isBlank() && !e.getBusinessLocation().equals("Pending")) pct += 5;
 
-        if (e.getAadhaarNumber() != null && !e.getAadhaarNumber().isBlank())
-            pct += 20;
+        if (e.getInvestmentNeeded() != null && e.getInvestmentNeeded() > 0) pct += 5;
+        if (e.getExpectedMonthlyIncome() != null && e.getExpectedMonthlyIncome() > 0) pct += 5;
+        if (e.getBusinessExperience() != null) pct += 5;
 
-        if (e.getBusinessDescription() != null && !e.getBusinessDescription().isBlank())
-            pct += 10;
+        if (e.getAadhaarNumber() != null && !e.getAadhaarNumber().isBlank()) pct += 10;
+
+        if (e.getBusinessDescription() != null && !e.getBusinessDescription().isBlank() && !e.getBusinessDescription().equals("Profile pending completion by entrepreneur.")) pct += 10;
+
         if ((e.getUpiId() != null && !e.getUpiId().isBlank())
-                || (e.getBankDetails() != null && !e.getBankDetails().isBlank()))
-            pct += 10;
+                || (e.getBankDetails() != null && !e.getBankDetails().isBlank())) pct += 5;
+
+        if (e.getProfilePhoto() != null && !e.getProfilePhoto().isBlank()) pct += 10;
+        if (e.getDocumentsPath() != null && !e.getDocumentsPath().isBlank()) pct += 10;
+        if (e.getPhotosPath() != null && !e.getPhotosPath().isBlank()) pct += 10;
 
         return Math.min(100, pct);
     }
@@ -365,6 +359,11 @@ public class EntrepreneurController {
 
         try {
             Entrepreneur refreshed = entrepreneurRepository.findById(e.getId()).orElse(e);
+            
+            if (calculateEntrepreneurCompletionPct(refreshed) < 100) {
+                redirectAttributes.addFlashAttribute("error", "Please complete all required profile fields before submitting.");
+                return "redirect:/entrepreneur/profile-completion";
+            }
 
             refreshed.setPartnerProfileStatus(PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
             refreshed.setVerificationStatus(VerificationStatus.PENDING);
@@ -431,11 +430,7 @@ public class EntrepreneurController {
         final Entrepreneur refreshedEnt = entrepreneurRepository.findById(e.getId()).get();
         session.setAttribute("loggedEntrepreneur", refreshedEnt);
 
-        // Strict Dashboard Access Gating
-        if (refreshedEnt.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED
-                && refreshedEnt.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return "redirect:/entrepreneur/profile-completion";
-        }
+        // Strict Dashboard Access Gating removed to allow skipping profile completion
 
         List<BusinessProposal> proposals = businessProposalRepository.findByEntrepreneur(refreshedEnt);
 
@@ -481,10 +476,18 @@ public class EntrepreneurController {
     // --- Create Business Proposal ---
 
     @GetMapping("/proposal/create")
-    public String showCreateProposal(HttpSession session) {
+    public String showCreateProposal(HttpSession session, RedirectAttributes redirectAttributes) {
         Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
         if (e == null)
             return "redirect:/entrepreneur/login";
+            
+        Entrepreneur refreshedEnt = entrepreneurRepository.findById(e.getId()).get();
+        if (refreshedEnt.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED
+                && refreshedEnt.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            redirectAttributes.addFlashAttribute("error", "You cannot create a proposal until your profile is verified by the admin.");
+            return "redirect:/entrepreneur/dashboard";
+        }
+            
         return "entrepreneur/createProposal";
     }
 
@@ -505,6 +508,13 @@ public class EntrepreneurController {
         Entrepreneur e = (Entrepreneur) session.getAttribute("loggedEntrepreneur");
         if (e == null)
             return "redirect:/entrepreneur/login";
+            
+        Entrepreneur refreshedEnt = entrepreneurRepository.findById(e.getId()).get();
+        if (refreshedEnt.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED
+                && refreshedEnt.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            redirectAttributes.addFlashAttribute("error", "You cannot create a proposal until your profile is verified by the admin.");
+            return "redirect:/entrepreneur/dashboard";
+        }
 
         try {
             BusinessProposal p = new BusinessProposal();

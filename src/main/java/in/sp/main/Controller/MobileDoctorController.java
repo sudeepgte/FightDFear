@@ -733,8 +733,7 @@ public class MobileDoctorController {
         m.put("isOnline", Boolean.TRUE.equals(d.getIsOnline()));
         m.put("lastSeenAt", d.getLastSeenAt() == null ? null : d.getLastSeenAt().toString());
         m.put("instantAvailable", Boolean.TRUE.equals(d.getIsOnline()) && Boolean.TRUE.equals(d.getEmergencyAvailable()));
-        m.put("phone", d.getPhone());
-        m.put("email", d.getEmail());
+        // Contact details are not exposed on patient browse/detail list DTOs.
         m.put("availableDays", d.getAvailableDays());
         m.put("startTime", d.getStartTime());
         m.put("endTime", d.getEndTime());

@@ -4,12 +4,16 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.EventHostProfileService;
+<<<<<<< HEAD
 import in.sp.main.Service.EventsCareService;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.EventCoinPolicy;
 import in.sp.main.Service.WomenEventBookingService;
 import in.sp.main.Service.WomenEventLifecycleService;
 import in.sp.main.Service.WomenEventSupport;
+=======
+import in.sp.main.Service.PartnerLifecycleSupport;
+>>>>>>> 977a3c5eb51e653e2654f1498f4a15377a662a29
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -91,6 +95,7 @@ public class WomenEventController {
      * Browse all approved events with optional city/category filters.
      */
     @GetMapping
+    @Transactional(readOnly = true)
     public String browse(@RequestParam(required = false) String city,
                          @RequestParam(required = false) WomenEventCategory category,
                          @RequestParam(required = false) String query,
@@ -434,6 +439,15 @@ public class WomenEventController {
             ra.addFlashAttribute("error", message);
         }
         if (PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus())) {
+    /** Matches Flutter Event Host login: incomplete / changes-requested hosts complete profile first. */
+    private boolean hostNeedsProfileCompletion(EventHost host) {
+        if (host == null) return false;
+        PartnerProfileStatus status = host.getPartnerProfileStatus();
+        return status == null || PartnerLifecycleSupport.needsProfileCompletion(status);
+    }
+
+    private String redirectAfterHostLogin(EventHost host) {
+        if (hostNeedsProfileCompletion(host)) {
             return "redirect:/women-events/organizer/profile-completion";
         }
         return "redirect:/women-events/organizer/dashboard";
@@ -552,6 +566,7 @@ public class WomenEventController {
             return "redirect:/women-events/organizer/profile-completion";
         }
         return "redirect:/women-events/organizer/dashboard";
+        return redirectAfterHostLogin(host);
     }
 
     @GetMapping("/host/logout")
@@ -581,6 +596,9 @@ public class WomenEventController {
         }
         String incomplete = redirectIfProfileIncomplete(host);
         if (incomplete != null) return incomplete;
+        if (hostNeedsProfileCompletion(host)) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
         populateOrganizerDashboardModel(host, session, model, "dashboard");
         return "women-events/organizer-dashboard";
     }
@@ -593,6 +611,10 @@ public class WomenEventController {
         if (host == null) return "redirect:/women-events/host/login";
         String incomplete = redirectIfProfileIncomplete(host);
         if (incomplete != null) return incomplete;
+        if (hostNeedsProfileCompletion(host)) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+
         populateOrganizerDashboardModel(host, session, model, "events");
         return "women-events/organizer-dashboard";
     }

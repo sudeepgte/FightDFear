@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,9 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #faf7fb; }
-        .page-header { background: linear-gradient(135deg, #1a1a2e 0%, #1e1b4b 100%);
+      .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+      .we-modal-overlay.open { display:flex; }
+    </style>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #F8FAFC; }
+        .page-header { background: #0F172A;
             padding: 40px 20px; color: white; }
         .container-main { max-width: 1300px; margin: 0 auto; padding: 36px 20px 60px; }
 
@@ -26,18 +33,18 @@
         .filter-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-tab { border-radius: 20px; padding: 8px 18px; font-size: 0.85rem; font-weight: 600;
             cursor: pointer; text-decoration: none; border: 2px solid transparent; transition: all 0.2s; }
-        .filter-tab.active-all    { background: #1e1b4b; color: white; }
+        .filter-tab.active-all    { background: #0F172A; color: white; }
         .filter-tab.active-pending { background: #f59e0b; color: white; }
         .filter-tab:not(.active-all):not(.active-pending) { background: white; color: #555; border-color: #e5e7eb; }
-        .filter-tab:hover { border-color: #1e1b4b; }
+        .filter-tab:hover { border-color: #0F172A; }
 
         /* Table panel */
         .panel { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; }
-        thead tr { background: #faf7fb; }
+        thead tr { background: #F8FAFC; }
         th { padding: 12px 16px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { padding: 12px 16px; border-top: 1px solid #f5f0f8; font-size: 0.88rem; vertical-align: middle; }
-        tr:hover td { background: #fdf5ff; }
+        td { padding: 12px 16px; border-top: 1px solid #E2E8F0; font-size: 0.88rem; vertical-align: middle; }
+        tr:hover td { background: #FFF1F2; }
 
         .status-pill { border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .s-PENDING  { background: #fef9c3; color: #854d0e; }
@@ -56,15 +63,17 @@
         .btn-delete { background: #fee2e2; color: #991b1b; border: 1.5px solid #991b1b; border-radius: 20px;
             padding: 5px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: 'Outfit', sans-serif; transition: all 0.2s; }
         .btn-delete:hover { background: #991b1b; color: white; }
+        .btn-review { background: #fff1f2; color: #be123c; border: 1.5px solid #fda4af; border-radius: 20px;
+            padding: 5px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; }
 
         .flash-alert { position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 380px;
             border-radius: 14px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); animation: slideIn 0.4s ease; }
         @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
         .nav-pills .nav-link.active {
-            background-color: #1e1b4b !important;
+            background-color: #0F172A !important;
             color: white !important;
-            border-color: #1e1b4b !important;
+            border-color: #0F172A !important;
         }
         .nav-pills .nav-link:not(.active) {
             background-color: white;
@@ -108,7 +117,7 @@
     <!-- Stats Row -->
     <div class="stat-row">
         <div class="stat-card">
-            <div class="stat-num" style="color:#1e1b4b;">${allEvents.size()}</div>
+            <div class="stat-num" style="color:#0F172A;">${allEvents.size()}</div>
             <div class="stat-label">Total Events</div>
         </div>
         <div class="stat-card">
@@ -173,7 +182,7 @@
         <div class="tab-pane fade show active" id="events-content" role="tabpanel">
             <div class="panel">
                 <div style="padding: 20px 20px 10px; border-bottom: 1px solid #f5f0f8;">
-                    <h6 style="color:#1e1b4b; font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
+                    <h6 style="color:#0F172A; font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
                         <i class="bi bi-table"></i>All Events
                     </h6>
                 </div>
@@ -199,7 +208,7 @@
                                         <div style="font-weight:700; max-width:180px;">${ev.name}</div>
                                         <div style="font-size:0.75rem; color:#888;">ID: ${ev.id}</div>
                                     </td>
-                                    <td><span style="font-size:0.78rem; color:#1e1b4b; font-weight:600;">${ev.category.displayName}</span></td>
+                                    <td><span style="font-size:0.78rem; color:#0F172A; font-weight:600;">${ev.category.displayName}</span></td>
                                     <td style="white-space:nowrap; font-size:0.82rem;">${ev.eventDate}</td>
                                     <td>${ev.city}</td>
                                     <td>
@@ -221,7 +230,23 @@
                                     <td><span class="status-pill s-${ev.status}">${ev.status}</span></td>
                                     <td>
                                         <div class="d-flex gap-1 flex-wrap">
-                                            <a href="${pageContext.request.contextPath}/women-events/${ev.id}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill" style="font-size:0.75rem;">View</a>
+                                            <button type="button" class="btn-review"
+                                                data-name="${fn:escapeXml(ev.name)}"
+                                                data-category="${ev.category.displayName}"
+                                                data-status="${ev.status}"
+                                                data-date="${ev.eventDate}"
+                                                data-time="${ev.eventTime}"
+                                                data-venue="${fn:escapeXml(ev.venue)}"
+                                                data-city="${fn:escapeXml(ev.city)}"
+                                                data-organizer="${fn:escapeXml(ev.organizerName)}"
+                                                data-orgtype="${fn:escapeXml(ev.organizerType)}"
+                                                data-fee="${ev.free ? 'Free' : ev.entryFee}"
+                                                data-capacity="${ev.maxParticipants}"
+                                                data-contact="${fn:escapeXml(ev.contactInfo)}"
+                                                data-desc="${fn:escapeXml(ev.description)}"
+                                                data-id="${ev.id}"
+                                                onclick="openAdminEventPreview(this)">Review</button>
+                                            <a href="${pageContext.request.contextPath}/women-events/${ev.id}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill" style="font-size:0.75rem;">Public page</a>
 
                                             <c:if test="${ev.status == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/approve" method="post" style="display:inline;">
@@ -271,7 +296,7 @@
         <div class="tab-pane fade" id="hosts-content" role="tabpanel">
             <div class="panel">
                 <div style="padding: 20px 20px 10px; border-bottom: 1px solid #f5f0f8;">
-                    <h6 style="color:#1e1b4b; font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
+                    <h6 style="color:#0F172A; font-weight:700; display:flex; align-items:center; gap:8px; margin:0;">
                         <i class="bi bi-people-fill"></i>Event Host Applications
                     </h6>
                 </div>
@@ -296,7 +321,7 @@
                                         <div style="font-size:0.75rem; color:#888;">Host ID: ${host.id}</div>
                                     </td>
                                     <td><strong>${host.organizerName}</strong></td>
-                                    <td><span style="font-size:0.78rem; color:#1e1b4b; font-weight:600;">${host.organizerType}</span></td>
+                                    <td><span style="font-size:0.78rem; color:#0F172A; font-weight:600;">${host.organizerType}</span></td>
                                     <td>${host.hostContact}</td>
                                     <td>
                                         <div style="max-width: 250px; font-size: 0.82rem; color: #555; white-space: normal; word-break: break-word;">
@@ -306,6 +331,7 @@
                                     <td><span class="status-pill s-${host.verificationStatus}">${host.verificationStatus}</span></td>
                                     <td>
                                         <div class="d-flex gap-1 flex-wrap">
+                                            <a href="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/profile" class="btn-review">Review profile</a>
                                             <c:if test="${host.verificationStatus == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/host/${host.id}/approve" method="post" style="display:inline;">
                                                     <button type="submit" class="btn-approve">✓ Approve</button>
@@ -330,6 +356,22 @@
 </div>
 
 <jsp:include page="/WEB-INF/views/fragments/footer.jsp"/>
+<div id="adminEventOverlay" class="we-modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="we-modal" role="dialog">
+        <div class="we-modal-header">
+            <div>
+                <h3 id="aeName">Event review</h3>
+                <p id="aeStatus"></p>
+            </div>
+            <button type="button" class="we-modal-close" onclick="document.getElementById('adminEventOverlay').classList.remove('open')" aria-label="Close">&times;</button>
+        </div>
+        <div class="we-modal-body" id="aeBody"></div>
+        <div class="we-modal-footer">
+            <a id="aePublic" href="#" target="_blank" class="we-modal-btn secondary">Public page</a>
+            <button type="button" class="we-modal-btn primary" onclick="document.getElementById('adminEventOverlay').classList.remove('open')">Close</button>
+        </div>
+    </div>
+</div>
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
     setTimeout(() => {
@@ -338,6 +380,27 @@
             setTimeout(()=>el.remove(),500);
         });
     }, 4000);
+    function aeVal(v) { return (v && String(v).trim() && String(v) !== 'null') ? v : 'Not provided'; }
+    function openAdminEventPreview(btn) {
+        document.getElementById('aeName').textContent = aeVal(btn.dataset.name);
+        document.getElementById('aeStatus').textContent = (btn.dataset.status || '') + ' · ' + aeVal(btn.dataset.category);
+        document.getElementById('aeBody').innerHTML =
+            aeRow('Date', aeVal(btn.dataset.date)) +
+            aeRow('Time', aeVal(btn.dataset.time)) +
+            aeRow('Venue', aeVal(btn.dataset.venue)) +
+            aeRow('City', aeVal(btn.dataset.city)) +
+            aeRow('Organizer', aeVal(btn.dataset.organizer)) +
+            aeRow('Organizer type', aeVal(btn.dataset.orgtype)) +
+            aeRow('Entry', btn.dataset.fee === 'Free' ? 'Free' : ('₹' + aeVal(btn.dataset.fee))) +
+            aeRow('Capacity', aeVal(btn.dataset.capacity)) +
+            aeRow('Contact', aeVal(btn.dataset.contact)) +
+            aeRow('Description', aeVal(btn.dataset.desc));
+        document.getElementById('aePublic').href = '${pageContext.request.contextPath}/women-events/' + btn.dataset.id;
+        document.getElementById('adminEventOverlay').classList.add('open');
+    }
+    function aeRow(k, v) {
+        return '<div class="we-modal-row"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
+    }
 </script>
 </body>
 </html>

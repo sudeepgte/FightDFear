@@ -1,18 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Montserrat:wght@800;900&display=swap');
+@import url('doctor-tokens.css');
 
 :root {
-    --dl-purple: #2D0B2E;
-    --dl-purple-mid: #4A1E38;
-    --dl-crimson: #f43f5e;
-    --dl-crimson-light: #F472B6;
-    --dl-bg: #fffcfd;
-    --dl-text: #2D0B2E;
-    --dl-muted: #6B7280;
     --dl-glass: rgba(255, 255, 255, 0.7);
-    --dl-glass-border: rgba(30, 27, 75, 0.1);
-    --dl-gradient: linear-gradient(135deg, #2D0B2E 0%, #4A1E38 50%, #f43f5e 100%);
-    --dl-shadow: 0 20px 40px rgba(45, 11, 46, 0.08);
-    --dl-radius: 24px;
+    --dl-glass-border: rgba(15, 23, 42, 0.08);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -256,7 +247,7 @@ body.dl-page {
 }
 
 .dl-tag.online { background: #f0fdf4; color: #16a34a; border-color: rgba(22, 163, 74, 0.1); }
-.dl-tag.exp { background: #eff6ff; color: #2563eb; border-color: rgba(37, 99, 235, 0.1); }
+.dl-tag.exp { background: #FFF1F2; color: #BE123C; border-color: rgba(244, 63, 94, 0.15); }
 .dl-tag.emg { background: #fef2f2; color: #dc2626; border-color: rgba(220, 38, 38, 0.1); }
 
 /* Actions */
@@ -288,8 +279,8 @@ body.dl-page {
 .dl-act-btn.call { background: #f0fdf4; color: #16a34a; }
 .dl-act-btn.call:hover { background: #16a34a; color: white; }
 
-.dl-act-btn.video { background: #eff6ff; color: #2563eb; }
-.dl-act-btn.video:hover { background: #2563eb; color: white; }
+.dl-act-btn.video { background: #FFF1F2; color: #BE123C; }
+.dl-act-btn.video:hover { background: #F43F5E; color: white; }
 
 .dl-act-btn.book {
     grid-column: span 2;

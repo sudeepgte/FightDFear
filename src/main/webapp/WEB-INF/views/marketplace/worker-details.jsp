@@ -174,7 +174,7 @@
                     </div>
 
                     <c:choose>
-                        <c:when test="${workerApp.user.id == sessionScope.user.id}">
+                        <c:when test="${ownWorkerProfile}">
                             <div class="alert alert-info mt-4">
                                 <i class="fas fa-info-circle"></i> This is your own worker profile. You cannot book your own services.
                             </div>

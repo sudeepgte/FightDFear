@@ -18,18 +18,20 @@
     <link href="${pageContext.request.contextPath}/assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css" rel="stylesheet">
+    <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     
     <style>
         :root {
             /* 60% Primary Surfaces */
-            --bg-primary: #FFF1F2;
-            --glow-bg: #FFF1F2;
+            --bg-primary: #F8FAFC;
+            --glow-bg: #F8FAFC;
             --card-bg: #FFFFFF;
 
             /* 30% Secondary Structure */
-            --bg-secondary: #FFF1F2;
+            --bg-secondary: #F8FAFC;
             --fdf-border: #E2E8F0;
-            --border-secondary: #FDA4AF;
+            --border-secondary: #E2E8F0;
 
             /* 10% Accent */
             --brand-pink: #F43F5E;
@@ -612,7 +614,7 @@
                     <div class="stat-label">Categories</div>
                 </div>
                 <div class="col-6 col-md-3 stat-item">
-                    <div class="stat-num">${cities.size() > 0 ? cities.size() : 2}</div>
+                    <div class="stat-num">${cities.size()}</div>
                     <div class="stat-label">Cities Active</div>
                 </div>
                 <div class="col-6 col-md-3 stat-item">
@@ -855,9 +857,9 @@
                                                 <div class="card-cat">${ev.category.displayName}</div>
                                                 <h4 class="card-title">${ev.name}</h4>
                                                 <div class="card-meta">
-                                                    <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
-                                                    <span><i class="bi bi-geo-alt"></i> ${ev.venue}, ${ev.city}</span>
-                                                    <span><i class="bi bi-person"></i> ${ev.organizerName} <small class="text-muted">(${ev.organizerType})</small></span>
+                                                    <span><i class="bi bi-calendar3"></i> ${not empty ev.eventDate ? ev.eventDate : 'Date not provided'}</span>
+                                                    <span><i class="bi bi-geo-alt"></i> ${not empty ev.venue ? ev.venue : 'Venue not provided'}<c:if test="${not empty ev.city}">, ${ev.city}</c:if></span>
+                                                    <span><i class="bi bi-person"></i> ${not empty ev.organizerName ? ev.organizerName : 'Organizer not provided'}</span>
                                                 </div>
                                                 <div class="card-footer-row">
                                                     <span class="fee-badge ${ev.free ? 'free' : ''}">
