@@ -242,47 +242,6 @@
             background-color: var(--bg-page);
         }
 
-        /* Verification Alert Banner */
-        .alert-unverified-card {
-            background: #FFFFFF;
-            border: 1px solid #FDE68A;
-            border-radius: 16px;
-            padding: 20px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 28px;
-            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.05);
-        }
-
-        .alert-unverified-title {
-            color: #B45309;
-            font-weight: 700;
-            font-size: 1.05rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-        }
-
-        .btn-verify-now {
-            background: #F59E0B;
-            color: #1E1B4B;
-            font-weight: 800;
-            border: none;
-            border-radius: 50px;
-            padding: 10px 24px;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
-            white-space: nowrap;
-        }
-
-        .btn-verify-now:hover {
-            background: #D97706;
-            color: #FFFFFF;
-            transform: translateY(-2px);
-        }
 
         /* Stat Cards */
         .stat-card-box {
@@ -540,25 +499,6 @@
                 </div>
             </c:if>
 
-            <!-- Verification Gold Banner (Exact from Mockup) -->
-            <c:if test="${not entrepreneur.verificationFeePaid}">
-                <div class="alert-unverified-card">
-                    <div class="d-flex align-items-start gap-3">
-                        <div class="p-2 rounded-circle bg-warning-subtle text-warning fs-4 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
-                            <i class="bi bi-shield-exclamation"></i>
-                        </div>
-                        <div>
-                            <div class="alert-unverified-title">Business Profile Unverified</div>
-                            <p class="text-secondary m-0" style="font-size:0.88rem;">
-                                Pay the one-time <strong>Business Verification Fee of ₹499</strong> to get verified by the FightDFire Admin.<br class="d-none d-md-block"> Verified profiles get 5x more visibility from banks, angels, and NGOs.
-                            </p>
-                        </div>
-                    </div>
-                    <button class="btn-verify-now ms-3" onclick="triggerCheckout('verification', null, 499.00, '${pageContext.request.contextPath}/entrepreneur/pay-verification')">
-                        Verify Now (₹499)
-                    </button>
-                </div>
-            </c:if>
 
             <!-- 4 Stat Cards Row (Exact 4 Columns from Mockup) -->
             <div class="row g-3 mb-4">
@@ -627,7 +567,6 @@
                                         <th class="ps-0">Proposal Details</th>
                                         <th>Goal / Raised</th>
                                         <th>Status</th>
-                                        <th class="text-end pe-0">Upgrade</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -651,16 +590,6 @@
                                                     &bull; Live
                                                 </span>
                                             </td>
-                                            <td class="text-end pe-0 py-3">
-                                                <div class="d-flex gap-2 justify-content-end">
-                                                    <button class="btn-upgrade-pill" onclick="triggerCheckout('premium', ${proposal.id}, 999.00, '${pageContext.request.contextPath}/entrepreneur/proposal/premium/${proposal.id}')">
-                                                        Premium (₹999)
-                                                    </button>
-                                                    <button class="btn-upgrade-pill" onclick="triggerCheckout('featured', ${proposal.id}, 999.00, '${pageContext.request.contextPath}/entrepreneur/proposal/featured/${proposal.id}')">
-                                                        Feature (₹999)
-                                                    </button>
-                                                </div>
-                                            </td>
                                         </tr>
                                     </c:forEach>
                                     <c:if test="${empty proposals}">
@@ -682,16 +611,6 @@
                                                 <span class="badge bg-soft-pink text-brand-pink rounded-pill px-3 py-1" style="font-size:0.75rem; font-weight:700;">
                                                     &bull; Live
                                                 </span>
-                                            </td>
-                                            <td class="text-end pe-0 py-3">
-                                                <div class="d-flex gap-2 justify-content-end">
-                                                    <button class="btn-upgrade-pill" onclick="triggerCheckout('premium', 1, 999.00, '#')">
-                                                        Premium (₹999)
-                                                    </button>
-                                                    <button class="btn-upgrade-pill" onclick="triggerCheckout('featured', 1, 999.00, '#')">
-                                                        Feature (₹999)
-                                                    </button>
-                                                </div>
                                             </td>
                                         </tr>
                                     </c:if>
@@ -750,6 +669,62 @@
                                             </a>
                                         </c:otherwise>
                                     </c:choose>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+
+                    <!-- Discover Approved Investors Panel -->
+                    <div class="content-panel mt-4 mb-4">
+                        <div class="panel-header-title">
+                            <div>
+                                <i class="bi bi-search text-brand-pink me-2"></i>Discover Active Investors
+                            </div>
+                        </div>
+
+                        <c:choose>
+                            <c:when test="${not empty approvedInvestors}">
+                                <div class="row g-3">
+                                    <c:forEach var="inv" items="${approvedInvestors}">
+                                        <div class="col-md-6">
+                                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 12px; background: #fff;">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="rounded-circle bg-soft-pink text-brand-pink d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                                                                <i class="bi bi-person-fill"></i>
+                                                            </div>
+                                                            <div class="fw-bold" style="color: var(--text-plum); font-size: 0.95rem;">${inv.fullName}</div>
+                                                        </div>
+                                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1" style="font-size: 0.7rem;"><i class="bi bi-check-circle-fill me-1"></i>Verified</span>
+                                                    </div>
+                                                    <div class="small text-muted mb-2">
+                                                        <i class="bi bi-envelope-fill me-1"></i> ${inv.email}
+                                                    </div>
+                                                    <c:if test="${not empty inv.companyName}">
+                                                        <div class="small text-dark fw-medium mb-1">
+                                                            <i class="bi bi-building me-1 text-muted"></i> ${inv.companyName}
+                                                        </div>
+                                                    </c:if>
+                                                    <c:if test="${not empty inv.investmentInterests}">
+                                                        <div class="small text-muted text-truncate" title="${inv.investmentInterests}">
+                                                            <i class="bi bi-briefcase me-1"></i> ${inv.investmentInterests}
+                                                        </div>
+                                                    </c:if>
+                                                    <div class="mt-3">
+                                                        <a href="${pageContext.request.contextPath}/entrepreneur/chat/${inv.id}" class="btn btn-sm w-100 btn-outline-brand-pink rounded-pill" style="font-size:0.8rem; font-weight:600; color: var(--brand-pink); border-color: var(--brand-pink);">
+                                                            <i class="bi bi-chat-dots-fill me-1"></i> Send Pitch / Message
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </c:forEach>
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-3">
+                                    <p class="text-muted small m-0">No active verified investors available at the moment.</p>
                                 </div>
                             </c:otherwise>
                         </c:choose>

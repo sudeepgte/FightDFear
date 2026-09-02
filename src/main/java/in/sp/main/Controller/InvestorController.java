@@ -85,7 +85,7 @@ public class InvestorController {
                     fullName, email, phone, password, confirmPassword, emailOtp, acceptedTerms);
 
             redirectAttributes.addFlashAttribute("success", "Registration successful! You will be able to log in once verified by Admin.");
-            return "redirect:/investor/login";
+            return "redirect:/admin/pending-proposals";
 
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getReason());

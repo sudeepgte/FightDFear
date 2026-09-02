@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -259,6 +259,131 @@
                 <c:otherwise>
                   <tr>
                     <td colspan="6"><div class="ap-empty"><i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.35;"></i>No entrepreneurs in this queue.</div></td>
+                  </tr>
+                </c:otherwise>
+              </c:choose>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="ap-panel" style="margin-top:20px;">
+          <div class="ap-panel-hd">
+            <h2>Business Proposals in Queue</h2>
+          </div>
+          <div class="ap-table-wrap">
+            <table class="ap-table">
+              <thead>
+                <tr>
+                  <th>Proposal Title</th>
+                  <th>Entrepreneur</th>
+                  <th>Category</th>
+                  <th>Funding Needed</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              <c:choose>
+                <c:when test="${not empty activeProposalList}">
+                  <c:forEach var="prop" items="${activeProposalList}">
+                    <tr>
+                      <td>
+                        <div class="nm"><c:out value="${prop.title}"/></div>
+                        <div class="em"><c:out value="${prop.location}"/></div>
+                      </td>
+                      <td><c:out value="${prop.entrepreneur.fullName}"/></td>
+                      <td><c:out value="${prop.category}"/></td>
+                      <td><c:out value="${prop.fundingNeeded > 0 ? '₹'.concat(prop.fundingNeeded) : 'N/A'}"/></td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${prop.status == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
+                          <c:when test="${prop.status == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:when test="${prop.status == 'CHANGES_REQUESTED'}"><span class="ap-badge ap-badge-changes">CHANGES_REQUESTED</span></c:when>
+                          <c:when test="${prop.status == 'RE_VERIFICATION'}"><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending"><c:out value="${prop.status}"/></span></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td>
+                        <div class="dv-actions">
+                          <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/approve" style="display:inline;">
+                             <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
+                          </form>
+                          <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/reject" style="display:inline;">
+                             <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
+                          </form>
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${prop.entrepreneur.id}"><i class="fas fa-eye"></i> View Profile</a>
+                        </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:when>
+                <c:otherwise>
+                  <tr>
+                    <td colspan="6"><div class="ap-empty">No business proposals in this queue.</div></td>
+                  </tr>
+                </c:otherwise>
+              </c:choose>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="ap-panel" style="margin-top:20px;">
+          <div class="ap-panel-hd">
+            <h2>Investors in Queue</h2>
+          </div>
+          <div class="ap-table-wrap">
+            <table class="ap-table">
+              <thead>
+                <tr>
+                  <th>Investor</th>
+                  <th>Company</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+              <c:choose>
+                <c:when test="${not empty activeInvestorList}">
+                  <c:forEach var="inv" items="${activeInvestorList}">
+                    <tr>
+                      <td>
+                        <div class="ap-doc">
+                          <span style="min-width:0;">
+                            <div class="nm"><c:out value="${inv.fullName}"/></div>
+                            <div class="em"><c:out value="${inv.email}"/></div>
+                          </span>
+                        </div>
+                      </td>
+                      <td><c:out value="${not empty inv.companyName ? inv.companyName : '-'}"/></td>
+                      <td><c:out value="${not empty inv.city ? inv.city : '-'}"/></td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${inv.verificationStatus == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
+                          <c:when test="${inv.verificationStatus == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:when test="${inv.verificationStatus == 'CHANGES_REQUESTED'}"><span class="ap-badge ap-badge-changes">CHANGES_REQUESTED</span></c:when>
+                          <c:when test="${inv.verificationStatus == 'RE_VERIFICATION'}"><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending"><c:out value="${inv.verificationStatus}"/></span></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td>
+                        <div class="dv-actions">
+                          <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/approve" style="display:inline;">
+                             <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
+                          </form>
+                          <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/reject" style="display:inline;">
+                             <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:when>
+                <c:otherwise>
+                  <tr>
+                    <td colspan="5"><div class="ap-empty">No investors in this queue.</div></td>
                   </tr>
                 </c:otherwise>
               </c:choose>

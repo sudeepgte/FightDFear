@@ -2244,6 +2244,42 @@ public class AdminController {
             else if ("all".equals(filter)) activeList.add(e);
         }
 
+        List<Investor> allInvestors = investorRepository.findAll();
+        List<Investor> activeInvestorList = new ArrayList<>();
+        for (Investor inv : allInvestors) {
+            boolean matchesSearch = query.isEmpty() || 
+                (inv.getFullName() != null && inv.getFullName().toLowerCase().contains(query)) ||
+                (inv.getEmail() != null && inv.getEmail().toLowerCase().contains(query)) ||
+                (inv.getCompanyName() != null && inv.getCompanyName().toLowerCase().contains(query));
+                
+            if (!matchesSearch) continue;
+
+            if ("pending".equals(filter) && inv.getVerificationStatus() == VerificationStatus.PENDING) activeInvestorList.add(inv);
+            else if ("reverification".equals(filter) && inv.getVerificationStatus() == VerificationStatus.RE_VERIFICATION) activeInvestorList.add(inv);
+            else if ("changes_requested".equals(filter) && inv.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) activeInvestorList.add(inv);
+            else if ("approved".equals(filter) && inv.getVerificationStatus() == VerificationStatus.VERIFIED) activeInvestorList.add(inv);
+            else if ("rejected".equals(filter) && inv.getVerificationStatus() == VerificationStatus.REJECTED) activeInvestorList.add(inv);
+            else if ("all".equals(filter)) activeInvestorList.add(inv);
+        }
+
+        List<BusinessProposal> allBusinessProposals = businessProposalRepository.findAll();
+        List<BusinessProposal> activeProposalList = new ArrayList<>();
+        for (BusinessProposal p : allBusinessProposals) {
+            boolean matchesSearch = query.isEmpty() ||
+                (p.getTitle() != null && p.getTitle().toLowerCase().contains(query)) ||
+                (p.getCategory() != null && p.getCategory().toLowerCase().contains(query)) ||
+                (p.getEntrepreneur() != null && p.getEntrepreneur().getFullName() != null && p.getEntrepreneur().getFullName().toLowerCase().contains(query));
+                
+            if (!matchesSearch) continue;
+
+            if ("pending".equals(filter) && p.getStatus() == VerificationStatus.PENDING) activeProposalList.add(p);
+            else if ("reverification".equals(filter) && p.getStatus() == VerificationStatus.RE_VERIFICATION) activeProposalList.add(p);
+            else if ("changes_requested".equals(filter) && p.getStatus() == VerificationStatus.CHANGES_REQUESTED) activeProposalList.add(p);
+            else if ("approved".equals(filter) && p.getStatus() == VerificationStatus.VERIFIED) activeProposalList.add(p);
+            else if ("rejected".equals(filter) && p.getStatus() == VerificationStatus.REJECTED) activeProposalList.add(p);
+            else if ("all".equals(filter)) activeProposalList.add(p);
+        }
+
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("reverificationCount", reverificationCount);
         model.addAttribute("changesRequestedCount", changesRequestedCount);
@@ -2254,6 +2290,8 @@ public class AdminController {
         model.addAttribute("activeFilter", filter);
         model.addAttribute("q", q);
         model.addAttribute("activeList", activeList);
+        model.addAttribute("activeInvestorList", activeInvestorList);
+        model.addAttribute("activeProposalList", activeProposalList);
         model.addAttribute("changesRequested", changesList);
         model.addAttribute("reverification", reverifyList);
         

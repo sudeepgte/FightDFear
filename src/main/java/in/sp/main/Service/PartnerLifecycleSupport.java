@@ -40,7 +40,7 @@ public final class PartnerLifecycleSupport {
         return switch (status) {
             case VERIFIED -> PartnerProfileStatus.APPROVED;
             case REJECTED, CANCELLED -> PartnerProfileStatus.REJECTED;
-            case PENDING -> PartnerProfileStatus.PENDING_ADMIN_APPROVAL;
+            case PENDING, CHANGES_REQUESTED, RE_VERIFICATION -> PartnerProfileStatus.PENDING_ADMIN_APPROVAL;
         };
     }
 
