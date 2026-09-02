@@ -599,8 +599,8 @@
             <div class="info-field-label">Government ID</div>
             <c:choose>
               <c:when test="${empty govIdPath}"><div class="empty-text">Not uploaded</div></c:when>
-              <c:when test="${govIdPath == 'mobile-pending' or fn:startsWith(govIdPath, 'mobile:')}">
-                <div class="warn-mobile">Placeholder only — doctor must re-upload from mobile app.</div>
+              <c:when test="${govIdPath == 'mobile-pending' or govIdPath == 'web-pending' or fn:startsWith(govIdPath, 'mobile:')}">
+                <div class="warn-mobile">Placeholder only - doctor must upload valid document.</div>
               </c:when>
               <c:otherwise>
                 <a class="doc-link" href="${fn:startsWith(govIdPath, 'http') ? govIdPath : pageContext.request.contextPath.concat(govIdPath)}" target="_blank" rel="noopener">

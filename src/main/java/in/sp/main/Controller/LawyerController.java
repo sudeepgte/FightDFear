@@ -120,6 +120,7 @@ public class LawyerController {
         providerRepo.save(p);
         
         redirectAttributes.addFlashAttribute("success", "Registration successful. Please login.");
+        redirectAttributes.addFlashAttribute("registeredEmail", email);
         return "redirect:/lawyer/login";
     }
 
@@ -366,6 +367,8 @@ public class LawyerController {
                                       @RequestParam(required = false) String serviceMode,
                                       @RequestParam(required = false) Integer experienceYears,
                                       @RequestParam(required = false) String languages,
+                                      @RequestParam(required = false) org.springframework.web.multipart.MultipartFile profilePhoto,
+                                      @RequestParam(required = false) org.springframework.web.multipart.MultipartFile chamberPhoto,
                                       HttpSession session, RedirectAttributes ra) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
         if (p == null) return "redirect:/lawyer/login";
@@ -395,8 +398,34 @@ public class LawyerController {
             existing.setLanguages(languages != null ? languages.trim() : "");
             
             existing.setLocationText(city != null ? city.trim() : "");
+            
+            try {
+                if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                    String originalFilename = profilePhoto.getOriginalFilename();
+                    if (originalFilename != null) {
+                        String lower = originalFilename.toLowerCase();
+                        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp")) {
+                            existing.setProfilePhoto(fileUploadService.saveFile(profilePhoto));
+                        }
+                    }
+                }
+                if (chamberPhoto != null && !chamberPhoto.isEmpty()) {
+                    String originalFilename = chamberPhoto.getOriginalFilename();
+                    if (originalFilename != null) {
+                        String lower = originalFilename.toLowerCase();
+                        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".webp")) {
+                            existing.setGalleryPhotos(fileUploadService.saveFile(chamberPhoto));
+                        }
+                    }
+                }
+            } catch (java.io.IOException e) {
+                // Ignore or log
+            }
+            
             existing.setProfileCompletionPct(100);
-            existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            if (existing.getPartnerProfileStatus() != in.sp.main.Entities.PartnerProfileStatus.APPROVED) {
+                existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            }
             
             providerRepo.save(existing);
             session.setAttribute("loggedLawyer", existing);

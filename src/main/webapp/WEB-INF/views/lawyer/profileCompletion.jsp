@@ -94,6 +94,23 @@
             .container { grid-template-columns: 1fr; }
             .preview-section { display: none; }
         }
+        
+        /* ==========================================
+           WOMEN LAWYER MOBILE RESPONSIVE
+           ========================================== */
+        @media (max-width: 768px) {
+            body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+            .topbar { padding: 12px 16px; flex-direction: column; gap: 12px; align-items: stretch; width: 100%; box-sizing: border-box; }
+            .topbar-actions { width: 100%; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+            .btn-skip, .btn-save { flex: 1; text-align: center; justify-content: center; padding: 10px 0; min-width: 120px; }
+            .container { margin: 16px auto; padding: 0 16px; width: 100%; max-width: 100%; box-sizing: border-box; display: block; }
+            .form-section { padding: 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
+            .form-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+            input.form-input, select.form-select, textarea.form-input { width: 100%; box-sizing: border-box; }
+            .progress-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .progress-header h2 { font-size: 1rem; word-break: break-word; white-space: normal; margin: 0; }
+            .progress-text { word-break: break-word; white-space: normal; }
+        }
     </style>
 </head>
 <body>
@@ -101,8 +118,9 @@
     <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save" method="post" enctype="multipart/form-data">
         <!-- Top Bar -->
         <header class="topbar">
-            <a href="${pageContext.request.contextPath}/" class="brand">
-                <i class="bi bi-shield-check"></i> Fight D Fear
+            <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none; display: flex; align-items: center; gap: 10px;">
+                <img src="${pageContext.request.contextPath}/images/logo.png" alt="FightDFear Logo" style="height:45px; width:auto; filter:drop-shadow(0 2px 8px rgba(243, 63, 94, 0.15));">
+                <span style="font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0; padding: 0;">Fight D Fear</span>
             </a>
             <div class="topbar-actions">
                 <a href="${pageContext.request.contextPath}/lawyer/dashboard" class="btn-skip">Skip for now</a>

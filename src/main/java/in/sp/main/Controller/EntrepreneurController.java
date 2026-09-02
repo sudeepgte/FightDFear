@@ -365,8 +365,10 @@ public class EntrepreneurController {
                 return "redirect:/entrepreneur/profile-completion";
             }
 
-            refreshed.setPartnerProfileStatus(PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
-            refreshed.setVerificationStatus(VerificationStatus.PENDING);
+            if (refreshed.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+                refreshed.setPartnerProfileStatus(PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+                refreshed.setVerificationStatus(VerificationStatus.PENDING);
+            }
             refreshed.setProfileCompletionPct(100);
             entrepreneurRepository.save(refreshed);
 

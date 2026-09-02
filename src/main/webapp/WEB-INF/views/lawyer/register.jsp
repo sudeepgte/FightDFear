@@ -461,15 +461,41 @@
             justify-content: center;
             gap: 6px;
         }
+
+        /* ==========================================
+           WOMEN LAWYER MOBILE RESPONSIVE
+           ========================================== */
+        @media (max-width: 480px) {
+            body { overflow-x: hidden; width: 100%; }
+            .app-header { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
+            .main-container { padding: 0 16px; margin: 16px auto; }
+            .form-card { padding: 16px; width: 100%; }
+            .info-banner { padding: 16px; width: 100%; }
+            .otp-row { flex-direction: column; align-items: stretch; }
+            .btn-otp { width: 100%; justify-content: center; }
+            .modal-card { width: 95%; margin: 10px auto; padding: 16px; }
+            .modal-actions { flex-direction: column-reverse; }
+            .btn-modal-cancel, .btn-modal-confirm { width: 100%; }
+            .review-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+            .review-row .value { text-align: left; }
+            .btn-submit { width: 100%; }
+            input.form-input { width: 100%; }
+            .mobile-back-btn { display: inline-flex !important; }
+        }
     </style>
 </head>
 <body>
 
     <!-- App Header -->
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
-        </a>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <a href="javascript:history.back()" style="color: var(--navy); text-decoration: none; font-size: 1.2rem; display: none;" class="mobile-back-btn">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <a href="${pageContext.request.contextPath}/" class="header-brand">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+            </a>
+        </div>
         <div class="header-links">
             <a href="${pageContext.request.contextPath}/lawyer/login">Sign in</a>
         </div>

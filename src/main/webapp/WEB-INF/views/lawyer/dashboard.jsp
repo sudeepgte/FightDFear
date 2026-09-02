@@ -173,13 +173,40 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; width: 100%; }
             .menu-toggle { display: block; }
             .stats-grid { grid-template-columns: 1fr; }
             .welcome-bar { flex-direction: column; align-items: flex-start; gap: 16px; }
             .action-banner { flex-direction: column; text-align: center; gap: 16px; }
             .action-content { margin-left: 0; }
+            .profile-header-card { flex-direction: column; text-align: center; }
+            .profile-header-stats { flex-wrap: wrap; justify-content: center; }
+        }
+        
+        /* ==========================================
+           WOMEN LAWYER MOBILE RESPONSIVE
+           ========================================== */
+        @media (max-width: 480px) {
+            body { overflow-x: hidden; width: 100%; }
+            .main-content { width: 100vw; overflow-x: hidden; }
+            .content-area { padding: 16px; overflow-x: hidden; width: 100%; }
+            .card { padding: 16px; width: 100%; }
+            .stats-grid { gap: 12px; }
+            .stat-card { padding: 16px; flex-direction: column; text-align: center; }
+            .apt-item { flex-direction: column; text-align: center; }
+            .apt-info { width: 100%; }
+            .table-responsive { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+            table { width: 100%; min-width: 500px; }
+            .welcome-text h1 { font-size: 1.4rem; flex-wrap: wrap; }
+            .btn-primary { padding: 10px 16px; font-size: 0.85rem; width: 100%; justify-content: center; }
+            .card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .top-header { padding: 12px 16px; }
+            .profile-header-card { padding: 16px; }
+            .profile-card { padding: 16px; }
+            input, select, textarea { max-width: 100%; }
+            .modal-content { width: 95%; margin: 10px auto; }
         }
     </style>
 </head>
@@ -190,9 +217,13 @@
     <c:set var="activeCasesCount" value="0" />
     <c:set var="upcomingAptCount" value="0" />
     <c:set var="consultsCount" value="0" />
+    <c:set var="pendingReqCount" value="0" />
     <c:set var="earnings" value="0.0" />
     
     <c:forEach var="b" items="${bookings}">
+        <c:if test="${b.status == 'PENDING'}">
+            <c:set var="pendingReqCount" value="${pendingReqCount + 1}" />
+        </c:if>
         <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
             <c:set var="activeCasesCount" value="${activeCasesCount + 1}" />
         </c:if>
@@ -207,12 +238,11 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="brand">
-            <i class="bi bi-shield-check"></i>
-            <div>
-                Women Safety
-                <span>Legal Support</span>
-            </div>
+        <div class="brand" style="padding: 16px 24px;">
+            <a href="${pageContext.request.contextPath}/" style="text-decoration:none; display: flex; align-items: center; gap: 10px;">
+                <img src="${pageContext.request.contextPath}/images/logo.png" alt="FightDFear Logo" style="height:45px; width:auto; filter:drop-shadow(0 2px 8px rgba(243, 63, 94, 0.15));">
+                <span style="font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0; padding: 0;">Fight D Fear</span>
+            </a>
         </div>
         <div class="nav-items" style="overflow-y: auto; overflow-x: hidden;">
             <div class="nav-item active" onclick="switchTab('dashboard', this)">
@@ -221,36 +251,38 @@
             <div class="nav-item" onclick="switchTab('profile', this)">
                 <i class="bi bi-person"></i> My Profile
             </div>
-            <div class="nav-item" onclick="switchTab('appointments', this)">
-                <i class="bi bi-calendar-event"></i> Appointments
-            </div>
-            <div class="nav-item" onclick="switchTab('consultations', this)">
-                <i class="bi bi-chat-dots"></i> Consultations
-            </div>
-            <div class="nav-item" onclick="switchTab('clients', this)">
-                <i class="bi bi-people"></i> My Clients
-            </div>
-            <div class="nav-item" onclick="switchTab('earnings', this)">
-                <i class="bi bi-wallet2"></i> Earnings
-            </div>
-            <div class="nav-item" onclick="switchTab('reviews', this)">
-                <i class="bi bi-star"></i> Reviews
-            </div>
-            <div class="nav-item" onclick="switchTab('documents', this)">
-                <i class="bi bi-file-earmark-text"></i> Documents
-            </div>
-            <div class="nav-item" onclick="switchTab('availability', this)">
-                <i class="bi bi-clock"></i> Availability
-            </div>
-            <div class="nav-item" onclick="switchTab('gallery', this)">
-                <i class="bi bi-images"></i> Gallery
-            </div>
-            <div class="nav-item" onclick="switchTab('bank', this)">
-                <i class="bi bi-bank"></i> Bank & Payments
-            </div>
-            <div class="nav-item" onclick="switchTab('settings', this)">
-                <i class="bi bi-gear"></i> Settings
-            </div>
+            <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
+                <div class="nav-item" onclick="switchTab('appointments', this)">
+                    <i class="bi bi-calendar-event"></i> Appointments
+                </div>
+                <div class="nav-item" onclick="switchTab('consultations', this)">
+                    <i class="bi bi-chat-dots"></i> Consultations
+                </div>
+                <div class="nav-item" onclick="switchTab('clients', this)">
+                    <i class="bi bi-people"></i> My Clients
+                </div>
+                <div class="nav-item" onclick="switchTab('earnings', this)">
+                    <i class="bi bi-wallet2"></i> Earnings
+                </div>
+                <div class="nav-item" onclick="switchTab('reviews', this)">
+                    <i class="bi bi-star"></i> Reviews
+                </div>
+                <div class="nav-item" onclick="switchTab('documents', this)">
+                    <i class="bi bi-file-earmark-text"></i> Documents
+                </div>
+                <div class="nav-item" onclick="switchTab('availability', this)">
+                    <i class="bi bi-clock"></i> Availability
+                </div>
+                <div class="nav-item" onclick="switchTab('gallery', this)">
+                    <i class="bi bi-images"></i> Gallery
+                </div>
+                <div class="nav-item" onclick="switchTab('bank', this)">
+                    <i class="bi bi-bank"></i> Bank & Payments
+                </div>
+                <div class="nav-item" onclick="switchTab('settings', this)">
+                    <i class="bi bi-gear"></i> Settings
+                </div>
+            </c:if>
         </div>
 
         
@@ -265,9 +297,11 @@
             <i class="bi bi-list menu-toggle" onclick="toggleSidebar()"></i>
             <div style="flex: 1"></div>
             <div class="header-right">
-                <div class="notify-btn">
+                <div class="notify-btn" onclick="switchTab('appointments')">
                     <i class="bi bi-bell"></i>
-                    <span style="position: absolute; top: -5px; right: -8px; background: var(--primary); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 10px; font-weight: 700;">3</span>
+                    <c:if test="${pendingReqCount > 0}">
+                        <span style="position: absolute; top: -5px; right: -8px; background: var(--primary); color: white; font-size: 0.6rem; padding: 2px 5px; border-radius: 10px; font-weight: 700;">${pendingReqCount}</span>
+                    </c:if>
                 </div>
                 <div class="user-profile">
                     <c:choose>
@@ -321,9 +355,11 @@
                         <h1>Welcome back, <span class="name">${lawyer.fullName}</span> <c:if test="${isVerified}"><i class="bi bi-patch-check-fill"></i></c:if></h1>
                         <p>Here's what's happening with your legal practice today.</p>
                     </div>
-                    <button class="btn-primary" onclick="openAvailabilityModal()">
-                        <i class="bi bi-plus-lg"></i> Add Availability
-                    </button>
+                    <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
+                        <button class="btn-primary" onclick="openAvailabilityModal()">
+                            <i class="bi bi-plus-lg"></i> Add Availability
+                        </button>
+                    </c:if>
                 </div>
 
                 <c:choose>
@@ -655,8 +691,8 @@
                             <div style="flex:1;">
                                 <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Chamber Photo</label>
                                 <c:choose>
-                                    <c:when test="${not empty lawyer.identityDocumentPath}">
-                                        <c:set var="cUrl" value="${lawyer.identityDocumentPath}" />
+                                    <c:when test="${not empty lawyer.galleryPhotos}">
+                                        <c:set var="cUrl" value="${lawyer.galleryPhotos}" />
                                         <c:choose>
                                             <c:when test="${fn:startsWith(cUrl, 'http')}"></c:when>
                                             <c:when test="${fn:startsWith(cUrl, '/')}"><c:set var="cUrl" value="${pageContext.request.contextPath}${cUrl}" /></c:when>
@@ -702,6 +738,7 @@
                     <div class="card-header">
                         <h3>My Clients</h3>
                     </div>
+                    <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
@@ -733,6 +770,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -742,6 +780,7 @@
                     <div class="card-header">
                         <h3>All Appointments</h3>
                     </div>
+                    <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
@@ -758,7 +797,6 @@
                                 <tr>
                                     <td>#${b.id}</td>
                                     <td>${fn:replace(b.requestedTime, 'T', ' ')}</td>
-                                    <td>#${b.id}</td>
                                     <td>${not empty b.user ? b.user.fullName : 'Client'}</td>
                                     <td><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</td>
                                     <td><span class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : (b.status == 'PENDING' ? 'badge-upcoming' : 'badge-cancelled')}">${b.status}</span></td>
@@ -775,6 +813,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -784,6 +823,7 @@
                     <div class="card-header">
                         <h3>Consultations History</h3>
                     </div>
+                    <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
@@ -804,6 +844,7 @@
                             </c:forEach>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -929,8 +970,8 @@
                         <div style="flex:1;">
                             <label style="display:block; font-size:0.75rem; font-weight:600; color:var(--secondary); margin-bottom:8px;">Chamber Photo</label>
                             <c:choose>
-                                <c:when test="${not empty lawyer.identityDocumentPath}">
-                                    <c:set var="cUrl" value="${lawyer.identityDocumentPath}" />
+                                <c:when test="${not empty lawyer.galleryPhotos}">
+                                    <c:set var="cUrl" value="${lawyer.galleryPhotos}" />
                                     <c:choose>
                                         <c:when test="${fn:startsWith(cUrl, 'http')}"></c:when>
                                         <c:when test="${fn:startsWith(cUrl, '/')}"><c:set var="cUrl" value="${pageContext.request.contextPath}${cUrl}" /></c:when>

@@ -36,10 +36,6 @@
             background: var(--page-bg);
             color: var(--text-dark);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
         }
 
         .booking-card-white {
@@ -197,7 +193,16 @@
 </head>
 <body>
 
-    <div class="booking-card-white">
+<!-- Header -->
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+
+<div id="wrapper">
+    <!-- Sidebar -->
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    
+    <!-- Content wrapper -->
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
+        <div class="booking-card-white">
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">
             <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : (type == 'PACKAGE' ? 'Salon Package' : (type == 'MEMBERSHIP' ? 'Premium Membership' : 'Special Deal & Offer')))}</span>
@@ -303,6 +308,8 @@
             </form>
         </div>
     </div>
+    </div>
+</div>
 
     <script>
         const bookingType = document.getElementById("bookingType");

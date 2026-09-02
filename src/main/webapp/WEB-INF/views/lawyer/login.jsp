@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -206,14 +206,32 @@
             border: 1px solid #BBF7D0;
             color: var(--success);
         }
+        /* ==========================================
+           WOMEN LAWYER MOBILE RESPONSIVE
+           ========================================== */
+        @media (max-width: 480px) {
+            body { overflow-x: hidden; width: 100%; }
+            .app-header { padding: 12px 16px; flex-direction: column; gap: 10px; align-items: flex-start; }
+            .main-container { padding: 0 16px; margin: 20px auto; width: 100%; }
+            .form-card { padding: 24px 16px; width: 100%; }
+            .card-header h2 { font-size: 1.25rem; }
+            .btn-submit { width: 100%; }
+            input.form-input { width: 100%; }
+            .mobile-back-btn { display: inline-flex !important; }
+        }
     </style>
 </head>
 <body>
 
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
-        </a>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <a href="javascript:history.back()" style="color: var(--navy); text-decoration: none; font-size: 1.2rem; display: none;" class="mobile-back-btn">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <a href="${pageContext.request.contextPath}/" class="header-brand">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+            </a>
+        </div>
     </header>
 
     <main class="main-container">

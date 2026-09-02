@@ -188,25 +188,16 @@
 </head>
 <body>
 
-    <!-- Sticky Navbar -->
-    <nav class="reviews-navbar">
-        <a class="brand" href="${pageContext.request.contextPath}/users/dashboard" style="color:#1e1b4b !important;">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 2px;"> Fight D Fear
-        </a>
-        <div class="nav-links">
-            <a href="${pageContext.request.contextPath}/user/salons" class="nav-btn">
-                <i class="fas fa-store me-1"></i>Salons
-            </a>
-            <a href="${pageContext.request.contextPath}/user/salon/view?id=${salon.id}" class="nav-btn">
-                <i class="fas fa-arrow-left me-1"></i>Back to Salon
-            </a>
-            <a href="${pageContext.request.contextPath}/users/dashboard" class="nav-btn">
-                <i class="fas fa-th-large me-1"></i>Dashboard
-            </a>
-        </div>
-    </nav>
+<!-- Header -->
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-    <div class="reviews-page">
+<div id="wrapper">
+    <!-- Sidebar -->
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    
+    <!-- Content wrapper -->
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;" data-skip-global-back="true">
+    <div class="reviews-page" style="padding-top: 0;">
 
         <!-- Reviews Card -->
         <div class="review-card">
@@ -312,6 +303,8 @@
         </div>
 
     </div><!-- /reviews-page -->
+    </div><!-- /page-content-wrapper -->
+</div><!-- /wrapper -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>

@@ -37,18 +37,26 @@
         }
 
         .hero-section {
-            background: linear-gradient(90deg, #b892d1 0%, #f9d4d5 100%);
+            background: #FFFFFF !important;
             padding: 80px 0;
-            color: #FFFFFF;
             margin-bottom: -60px;
             position: relative;
             z-index: 1;
             border-bottom: none;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
+
+        .hero-section::before {
+            display: none !important;
+        }
         
+        .hero-section h1 {
+            color: var(--accent-10) !important;
+            text-shadow: none !important;
+        }
+
         .hero-section p {
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--accent-10) !important;
         }
 
         .booking-card {

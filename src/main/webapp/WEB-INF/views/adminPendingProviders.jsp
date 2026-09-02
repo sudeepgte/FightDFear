@@ -27,10 +27,11 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
   
   <style>
+    * { box-sizing: border-box; }
     body.ap-page { margin: 0; }
     .topbar { display: none !important; }
-    .layout { display: flex; min-height: 100vh; }
-    .main { flex: 1; min-width: 0; background: var(--ap-bg, #F8FAFC); }
+    .layout { display: flex; min-height: 100vh; overflow: hidden; width: 100vw; max-width: 100%; }
+    .main { flex: 1; min-width: 0; background: var(--ap-bg, #F8FAFC); overflow-x: hidden; }
     .dv-actions { display: flex; gap: 6px; align-items: center; }
     .dv-more {
       width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--ap-border, #E2E8F0);
@@ -111,6 +112,37 @@
       margin-bottom: 8px;
       word-break: break-word;
     }
+
+    /* Global Layout Fixes */
+    .ap-split, .dv-bottom-grid { width: 100%; box-sizing: border-box; }
+    .ap-panel { width: 100%; box-sizing: border-box; }
+    .ap-table-wrap, .table-responsive { width: 100%; overflow-x: auto; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
+    .table, .ap-table { min-width: 600px; }
+
+    /* ==========================================
+       TABLET & MOBILE RESPONSIVE
+       ========================================== */
+    @media (max-width: 992px) {
+      .ap-main-inner { padding: 16px; width: 100%; box-sizing: border-box; overflow-x: hidden; }
+      .ap-filter-row { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; padding: 12px; box-sizing: border-box; }
+      .ap-filter-row .grow { flex: 1 1 100%; min-width: 100% !important; }
+      .ap-filter-row > div:not(.grow) { flex: 1 1 45%; min-width: 0 !important; max-width: 50%; overflow: hidden; }
+      .ap-filter-row .ap-input, .ap-filter-row .ap-select { width: 100%; max-width: 100%; box-sizing: border-box; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+      .ap-filter-row .ap-btn { flex: 1 1 auto; width: auto; justify-content: center; }
+      .mobile-back-btn { display: inline-flex !important; }
+      .ap-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+    }
+
+    @media (max-width: 480px) {
+      body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+      .ap-topbar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
+      .ap-search { width: 100%; max-width: none !important; }
+      .ap-page-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .dv-bottom-grid { display: flex; flex-direction: column; }
+      .fl-mobile-card { width: 100%; padding: 12px; }
+      .dv-actions { flex-direction: column; width: 100%; gap: 8px; }
+      .dv-actions .btn-approve-sm, .dv-actions .btn-reject-sm, .dv-actions .btn-view-doc { width: 100%; text-align: center; justify-content: center; }
+    }
   </style>
 </head>
 <body class="ap-page">
@@ -183,6 +215,9 @@
     <div class="ap-main-inner">
       <!-- Breadcrumbs -->
       <nav class="ap-crumb">
+        <a href="javascript:history.back()" class="mobile-back-btn d-md-none" style="display: none; color: var(--ap-accent, #F43F5E); font-weight: bold; margin-right: 8px;">
+          <i class="fas fa-arrow-left"></i>
+        </a>
         <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
         <span class="sep">&gt;</span>
         <a href="${pageContext.request.contextPath}/admin/pending-providers?category=WOMEN_LAWYER">Service Partners</a>
@@ -396,7 +431,7 @@
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0 p-0">
                             <button class="btn-reject-sm" type="submit" title="Reject"><i class="fas fa-times"></i></button>
                           </form>
-                          <c:if test="${not empty p.identityDocumentPath}">
+                          <c:if test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
                             <a class="btn-view-doc" href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank" title="View Document"><i class="fas fa-id-card"></i> ID</a>
                           </c:if>
                         </div>
@@ -470,7 +505,7 @@
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top gap-2">
                       <div>
                         <c:choose>
-                            <c:when test="${not empty p.identityDocumentPath}">
+                            <c:when test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
                                 <a href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank" class="btn-view-doc py-1 px-3">
                                   <i class="fas fa-id-card me-1"></i> View ID
                                 </a>
@@ -575,7 +610,7 @@
                         </td>
                         <td><span class="ap-badge ap-badge-approved">VERIFIED</span></td>
                         <td>
-                          <c:if test="${not empty p.identityDocumentPath}">
+                          <c:if test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
                             <a class="btn-view-doc py-1 px-2 fs-7" href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank">
                               <i class="fas fa-id-card"></i> Doc
                             </a>
@@ -694,7 +729,7 @@
     document.getElementById('pvAv').textContent = (name || 'L').charAt(0).toUpperCase();
 
     var docBtn = document.getElementById('pvIdDocBtn');
-    if (iddoc && iddoc !== '') {
+    if (iddoc && iddoc !== '' && iddoc !== 'web-pending') {
       docBtn.style.display = 'inline-flex';
       docBtn.href = ctx + iddoc;
     } else {

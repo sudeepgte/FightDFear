@@ -89,7 +89,6 @@
         .hero p {
             color: var(--primary);
             font-size: 0.9rem;
- HEAD
             margin-bottom: 20px;
         }
 
@@ -627,7 +626,7 @@
                         </c:when>
                         <c:otherwise>
                             <div class="lawyer-photo" style="display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem; font-weight:700;">
-                                ${fn:substring(lawyer.fullName, 0, 1)}
+                                ${fn:substring(not empty lawyer.fullName ? lawyer.fullName : 'L', 0, 1)}
                             </div>
                         </c:otherwise>
                     </c:choose>
@@ -648,7 +647,15 @@
                             </c:if>
                         </div>
                         <div class="lawyer-meta" style="margin-top:2px;">
-                            <i class="bi bi-geo-alt"></i> ${not empty lawyer.city ? lawyer.city.concat(', ').concat(lawyer.state) : lawyer.locationText}
+                            <i class="bi bi-geo-alt"></i> 
+                            <c:choose>
+                                <c:when test="${not empty lawyer.city}">
+                                    ${lawyer.city}<c:if test="${not empty lawyer.state}">, ${lawyer.state}</c:if>
+                                </c:when>
+                                <c:otherwise>
+                                    ${lawyer.locationText}
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
                     
@@ -730,7 +737,8 @@
 
                 lawyerCards.forEach(card => {
                     const text = card.textContent.toLowerCase();
-                    const city = card.getAttribute('data-city').toLowerCase();
+                    const cityAttr = card.getAttribute('data-city');
+                    const city = cityAttr ? cityAttr.toLowerCase() : '';
                     
                     const matchesSearch = text.includes(query);
                     const matchesLocation = selectedLocation === 'all' || city.includes(selectedLocation);
