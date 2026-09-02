@@ -277,19 +277,7 @@
             </c:if>
             <c:if test="${param.registered}">
                 <div class="alert-box alert-success">
-
                     <i class="bi bi-check-circle-fill"></i> Account created! Sign in to complete your host profile. Email and password are filled from registration.
-
-                    <i class="bi bi-check-circle-fill"></i> Account created. Sign in with the email you just registered.
-                </div>
-                <div class="next-steps-card">
-                    <h3>What happens next</h3>
-                    <ol>
-                        <li><strong>Sign in</strong> with this email and password.</li>
-                        <li><strong>Complete your organizer profile</strong> — organization, location, categories, bio, and documents.</li>
-                        <li><strong>Review the preview card</strong> on the profile page, then submit for admin verification.</li>
-                        <li>You can create events only after an admin <strong>approves</strong> your profile.</li>
-                    </ol>
                 </div>
             </c:if>
             <c:if test="${not empty success}">
