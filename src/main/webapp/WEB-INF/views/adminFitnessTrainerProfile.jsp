@@ -17,11 +17,11 @@
 
     <style>
         :root {
-            --navy-dark: #0f0d26;
-            --navy-primary: #1e1b4b;
-            --navy-light: #312e81;
-            --coral-primary: #f43f5e;
-            --coral-light: #ffe4e6;
+            --navy-dark: #E11D48;
+            --navy-primary: #F43F5E;
+            --navy-light: #E11D48;
+            --coral-primary: #F43F5E;
+            --coral-light: #FFE4E6;
             --success-color: #059669;
             --warning-color: #d97706;
             --danger-color: #dc2626;
@@ -100,7 +100,7 @@
             border-radius: 20px;
             padding: 32px;
             color: white;
-            box-shadow: 0 12px 30px rgba(30, 27, 75, 0.15);
+            box-shadow: 0 12px 30px rgba(244, 63, 94, 0.18);
             margin-bottom: 24px;
             position: relative;
             overflow: hidden;
@@ -197,7 +197,7 @@
         .section-header h3 {
             font-size: 1.15rem;
             font-weight: 700;
-            color: var(--navy-primary);
+            color: var(--text-dark);
             margin: 0;
         }
 
@@ -231,7 +231,7 @@
         .tag-pill {
             display: inline-block;
             background: #f1f5f9;
-            color: var(--navy-primary);
+            color: var(--text-dark);
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.82rem;
@@ -279,7 +279,7 @@
         .action-dock {
             position: sticky;
             bottom: 20px;
-            background: rgba(30, 27, 75, 0.94);
+            background: rgba(244, 63, 94, 0.94);
             backdrop-filter: blur(10px);
             padding: 16px 24px;
             border-radius: 16px;

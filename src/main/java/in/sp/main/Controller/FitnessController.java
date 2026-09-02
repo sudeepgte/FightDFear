@@ -902,7 +902,7 @@ public class FitnessController {
             @RequestParam Integer experience,
             @RequestParam Double sessionFees,
             @RequestParam String availableTimings,
-            @RequestParam List<String> specializations,
+            @RequestParam(required = false) List<String> specializations,
             @RequestParam(required = false) String bio,
             @RequestParam(required = false) MultipartFile profilePhoto,
             HttpSession session, RedirectAttributes redirectAttributes) {
@@ -916,7 +916,9 @@ public class FitnessController {
         trainer.setBio(bio);
         trainer.setSessionFees(sessionFees);
         trainer.setAvailableTimings(availableTimings.trim());
-        trainer.setSpecializations(String.join(",", specializations));
+        if (specializations != null && !specializations.isEmpty()) {
+            trainer.setSpecializations(String.join(",", specializations));
+        }
 
         if (profilePhoto != null && !profilePhoto.isEmpty()) {
             try {
