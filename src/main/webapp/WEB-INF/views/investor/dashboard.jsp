@@ -227,6 +227,9 @@
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link active">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
+            <a href="${pageContext.request.contextPath}/investor/chat/2?proposalId=1" class="sidebar-link">
+                <i class="bi bi-chat-dots"></i> Chat
+            </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
@@ -275,22 +278,6 @@
                 </div>
             </c:if>
 
-            <!-- Investor Subscription Premium Offer (Revenue Model) -->
-            <c:if test="${not investor.subscribed}">
-                <div class="card border-primary mb-4 shadow-sm" style="border-radius:15px; background-color:#f8faff;">
-                    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center p-4">
-                        <div>
-                            <h5 class="fw-bold text-rose-emphasis"><i class="bi bi-star-fill text-warning"></i> Access Premium Investment Flows</h5>
-                            <p class="text-secondary mb-md-0" style="font-size:0.95rem;">
-                                Subscribe to our **Premium Investor Plan for ₹1999/yr** to unlock direct meeting scheduling, Q&A boards, and chat with entrepreneurs.
-                            </p>
-                        </div>
-                        <button class="btn btn-rose fw-bold px-4 py-2 mt-3 mt-md-0 rounded-pill shadow-sm" onclick="triggerCheckout('subscription', null, 1999.00, '${pageContext.request.contextPath}/investor/subscribe')">
-                            Subscribe Now (₹1999)
-                        </button>
-                    </div>
-                </div>
-            </c:if>
 
             <!-- Stats grid -->
             <div class="row g-3 mb-4">
@@ -422,11 +409,9 @@
                                             <a href="${pageContext.request.contextPath}/investor/proposal/${inv.proposal.id}" class="btn btn-outline-rose btn-sm rounded-pill px-3" style="font-size: 0.78rem;">
                                                 Progress
                                             </a>
-                                            <c:if test="${investor.subscribed}">
-                                                <a href="${pageContext.request.contextPath}/investor/chat/${inv.proposal.entrepreneur.id}?proposalId=${inv.proposal.id}" class="btn btn-rose btn-sm rounded-pill px-3" style="font-size: 0.78rem;">
-                                                    Chat
-                                                </a>
-                                            </c:if>
+                                            <a href="${pageContext.request.contextPath}/investor/chat/${inv.proposal.entrepreneur.id}?proposalId=${inv.proposal.id}" class="btn btn-rose btn-sm rounded-pill px-3" style="font-size: 0.78rem;">
+                                                Chat
+                                            </a>
                                         </div>
 
                                         <c:if test="${inv.status == 'COMPLETED' && empty inv.rating}">

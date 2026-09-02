@@ -462,6 +462,10 @@ public class EntrepreneurController {
                 interestedInvestors.add(inv);
         });
 
+        List<Investor> approvedInvestors = investorRepository.findAll().stream()
+                .filter(inv -> inv.getVerificationStatus() == VerificationStatus.VERIFIED || inv.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED)
+                .collect(Collectors.toList());
+
         model.addAttribute("entrepreneur", refreshedEnt);
         model.addAttribute("proposals", proposals);
         model.addAttribute("totalRequested", totalRequested);
@@ -471,6 +475,7 @@ public class EntrepreneurController {
         model.addAttribute("meetings", meetings);
         model.addAttribute("questions", questions);
         model.addAttribute("interestedInvestors", interestedInvestors);
+        model.addAttribute("approvedInvestors", approvedInvestors);
 
         return "entrepreneur/dashboard";
     }
