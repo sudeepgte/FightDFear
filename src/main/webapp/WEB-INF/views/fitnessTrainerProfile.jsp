@@ -39,13 +39,13 @@
             overflow-x: hidden;
         }
 
-        /* 60/30/10 Clean Hero Header */
+        /* 60/30/10: light page, pink hero (Martial Arts #F43F5E / #E11D48) */
         .trainer-hero {
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+            background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
             color: #FFFFFF;
             padding: 48px 0 40px;
             border-radius: 0 0 28px 28px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+            box-shadow: 0 10px 30px rgba(244, 63, 94, 0.22);
             position: relative;
         }
 

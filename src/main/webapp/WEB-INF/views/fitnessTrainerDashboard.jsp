@@ -267,6 +267,28 @@
             border-color: var(--fitness-rose); 
             box-shadow: 0 0 0 3px rgba(244,63,94,0.12); 
         }
+        .client-combo { position: relative; }
+        .client-suggest {
+            display: none;
+            position: absolute;
+            left: 0; right: 0; top: calc(100% + 4px);
+            z-index: 1080;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1.5px solid var(--fitness-rose);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(244, 63, 94, 0.12);
+        }
+        .client-suggest button {
+            display: block; width: 100%; text-align: left;
+            border: 0; background: #fff; padding: 10px 14px;
+            font-size: 0.9rem; color: var(--fitness-text); cursor: pointer;
+        }
+        .client-suggest button:hover, .client-suggest button.active {
+            background: var(--fitness-rose-soft); color: var(--fitness-rose-dark);
+        }
+        #logProgressModal .modal-content, #logProgressModal .modal-body { overflow: visible; }
         .btn-submit { 
             background: var(--fitness-rose); 
             color: white; 
@@ -1367,7 +1389,7 @@
                             <!-- Specializations -->
                             <div class="col-12">
                                 <label class="form-label">Specializations *</label>
-                                <select name="specializations" class="form-select" multiple style="height:130px;">
+                                <select name="specializations" class="form-select" multiple required style="height:130px;">
                                     <c:forEach var="cat" items="${categories}">
                                         <option value="${cat}" ${trainer.specializations != null and trainer.specializations.contains(cat) ? 'selected' : ''}>${cat}</option>
                                     </c:forEach>
@@ -1804,16 +1826,44 @@
         <h5 class="modal-title fw-bold text-dark"><i class="bi bi-activity me-2" style="color: var(--fitness-rose);"></i> Log Client Fitness Metric &amp; Progress</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form action="${pageContext.request.contextPath}/fitness/trainer/progress/log" method="POST">
+      <form action="${pageContext.request.contextPath}/fitness/trainer/progress/log" method="POST" id="logProgressForm">
           <div class="modal-body p-4">
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Select Client *</label>
-                    <select name="userId" class="form-select" required>
-                        <c:forEach var="b" items="${activeBookings}">
-                            <option value="${b.user.id}">${b.user.fullName} (${b.category})</option>
+                    <div class="client-combo">
+                        <input type="text" id="clientSearchInput" class="form-control" placeholder="Type or click to choose a client" autocomplete="off">
+                        <input type="hidden" name="userId" id="progressUserId">
+                        <div id="clientSuggest" class="client-suggest" role="listbox"></div>
+                    </div>
+                    <div id="progressClientData" style="display:none;">
+                        <c:forEach var="u" items="${chatUsers}">
+                            <c:if test="${u != null && u.id != null}">
+                                <span data-id="${u.id}" data-name="${u.fullName}"></span>
+                            </c:if>
                         </c:forEach>
-                    </select>
+                        <c:forEach var="b" items="${activeBookings}">
+                            <c:if test="${b.user != null && b.user.id != null}">
+                                <span data-id="${b.user.id}" data-name="${b.user.fullName}"></span>
+                            </c:if>
+                        </c:forEach>
+                        <c:forEach var="b" items="${completed}">
+                            <c:if test="${b.user != null && b.user.id != null}">
+                                <span data-id="${b.user.id}" data-name="${b.user.fullName}"></span>
+                            </c:if>
+                        </c:forEach>
+                        <c:forEach var="b" items="${requests}">
+                            <c:if test="${b.user != null && b.user.id != null}">
+                                <span data-id="${b.user.id}" data-name="${b.user.fullName}"></span>
+                            </c:if>
+                        </c:forEach>
+                        <c:forEach var="log" items="${progressLogs}">
+                            <c:if test="${log.user != null && log.user.id != null}">
+                                <span data-id="${log.user.id}" data-name="${log.user.fullName}"></span>
+                            </c:if>
+                        </c:forEach>
+                    </div>
+                    <div class="form-text" id="clientPickerHint"></div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Current Weight (kg)</label>
@@ -1877,6 +1927,78 @@
 
 
 <script>
+    (function initClientPicker() {
+        var input = document.getElementById('clientSearchInput');
+        var hidden = document.getElementById('progressUserId');
+        var box = document.getElementById('clientSuggest');
+        var hint = document.getElementById('clientPickerHint');
+        var form = document.getElementById('logProgressForm');
+        if (!input || !hidden || !box) return;
+
+        var seen = {};
+        var clients = [];
+        document.querySelectorAll('#progressClientData span[data-id]').forEach(function (el) {
+            var id = el.getAttribute('data-id');
+            if (!id || seen[id]) return;
+            seen[id] = true;
+            clients.push({ id: id, name: (el.getAttribute('data-name') || '').trim() });
+        });
+        if (hint) {
+            hint.textContent = clients.length
+                ? 'Type a name or click the field to pick a client.'
+                : 'No clients yet. A client appears here after they book you.';
+        }
+
+        function render(filter) {
+            var q = (filter || '').toLowerCase();
+            var matches = clients.filter(function (c) {
+                return !q || c.name.toLowerCase().indexOf(q) !== -1;
+            });
+            box.innerHTML = '';
+            if (!matches.length) {
+                var empty = document.createElement('button');
+                empty.type = 'button';
+                empty.textContent = clients.length ? 'No matching client' : 'No clients to select yet';
+                empty.disabled = true;
+                box.appendChild(empty);
+            } else {
+                matches.forEach(function (c) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.textContent = c.name || ('Client #' + c.id);
+                    btn.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        hidden.value = c.id;
+                        input.value = c.name;
+                        box.style.display = 'none';
+                    });
+                    box.appendChild(btn);
+                });
+            }
+            box.style.display = 'block';
+        }
+
+        input.addEventListener('focus', function () { render(input.value); });
+        input.addEventListener('click', function () { render(input.value); });
+        input.addEventListener('input', function () {
+            hidden.value = '';
+            render(input.value);
+        });
+        input.addEventListener('blur', function () {
+            setTimeout(function () { box.style.display = 'none'; }, 150);
+        });
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (!hidden.value) {
+                    e.preventDefault();
+                    input.focus();
+                    render(input.value);
+                    alert(clients.length ? 'Please select a client from the list.' : 'No clients yet. Wait until a user books a session.');
+                }
+            });
+        }
+    })();
+
     function openRescheduleModal(bookingId, clientName, currentDate, currentTime) {
         document.getElementById('rescheduleBookingId').value = bookingId;
         document.getElementById('rescheduleClientName').value = clientName;

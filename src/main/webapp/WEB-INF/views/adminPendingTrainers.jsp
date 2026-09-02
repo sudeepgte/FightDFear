@@ -16,7 +16,9 @@
     .btn-reject { background: #dc2626; color: #fff; border: 0; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; }
     .btn-changes { background: #d97706; color: #fff; border: 0; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; }
     
-    .topbar { background: #1e1b4b; color: white; padding: 14px 18px; font-weight: 600; position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; height: 58px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .topbar { background: #F43F5E; color: white; padding: 14px 18px; font-weight: 600; position: sticky; top: 0; z-index: 1000; display: flex; align-items: center; height: 58px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .btn-profile { background: #fff; color: #F43F5E; border: 1px solid #F43F5E; border-radius: 8px; padding: .35rem .75rem; font-size: .85rem; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn-profile:hover { background: #FFE4E6; color: #E11D48; }
     .topbar .wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .layout { display: flex; min-height: calc(100vh - 58px); }
     .main { flex: 1; padding: 24px 20px 40px; background: #f8fafc; min-width: 0; }
@@ -44,7 +46,7 @@
             <div class="mainInner">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
-                        <h1 class="h4 mb-1" style="color: #1e1b4b; font-weight: 700;">Pending Fitness Trainers</h1>
+                        <h1 class="h4 mb-1" style="color: #F43F5E; font-weight: 700;">Pending Fitness Trainers</h1>
                         <p class="text-muted mb-0 small">Review two-step registration submissions (${pendingCount})</p>
                     </div>
                 </div>
@@ -104,7 +106,7 @@
                 <td class="small">${empty t.phone ? '—' : t.phone}</td>
                 <td>
                   <div class="d-flex flex-wrap gap-2 align-items-center">
-                    <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" class="btn btn-sm btn-outline-primary" style="border-radius:8px; font-size:.85rem;">
+                    <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" class="btn-profile">
                       <i class="fas fa-user me-1"></i>Profile
                     </a>
                     <form action="${pageContext.request.contextPath}/admin/trainers/${t.id}/approve" method="post" class="m-0">
