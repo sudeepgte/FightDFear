@@ -113,6 +113,14 @@
                 <div class="org-stat-icon"><i class="bi bi-people"></i></div>
                 <div><div class="org-stat-label">Registrations</div><div class="org-stat-num">${totalRegistrations}</div></div>
             </div>
+            <div class="org-stat-card">
+                <div class="org-stat-icon"><i class="bi bi-file-earmark"></i></div>
+                <div><div class="org-stat-label">Drafts</div><div class="org-stat-num">${empty draftCount ? 0 : draftCount}</div></div>
+            </div>
+            <div class="org-stat-card">
+                <div class="org-stat-icon"><i class="bi bi-currency-rupee"></i></div>
+                <div><div class="org-stat-label">Net earnings</div><div class="org-stat-num">₹${empty netEarnings ? 0 : netEarnings}</div></div>
+            </div>
         </div>
 
         <div class="org-content-grid">
@@ -129,9 +137,11 @@
                         </div>
                         <select class="org-filter-select" id="statusFilter" onchange="filterEvents()">
                             <option value="">All Status</option>
+                            <option value="DRAFT">Draft</option>
                             <option value="APPROVED">Approved</option>
                             <option value="PENDING">Pending</option>
                             <option value="REJECTED">Rejected</option>
+                            <option value="CANCELLED">Cancelled</option>
                         </select>
                     </div>
                 </c:if>

@@ -262,9 +262,6 @@
                 <a href="${pageContext.request.contextPath}/users/wallet" class="sidebar-list-group-item ${fn:contains(currentUri,'/wallet') ? 'active' : ''}">
                     <i class="bi bi-wallet2"></i> My Wallet
                 </a>
-                <a href="${pageContext.request.contextPath}/buddy" class="sidebar-list-group-item ${fn:contains(currentUri,'/buddy') ? 'active' : ''}">
-                    <i class="bi bi-person-walking"></i> Buddy Mode
-                </a>
                 <a href="${pageContext.request.contextPath}/doctors/list" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors') ? 'active' : ''}">
                     <i class="bi bi-heart-pulse"></i> Women Doctors
                 </a>
@@ -298,12 +295,6 @@
                 </a>
                 <a href="${pageContext.request.contextPath}/women-products" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-products') ? 'active' : ''}">
                     <i class="bi bi-bag-heart"></i> Women Products
-                </a>
-                <a href="${pageContext.request.contextPath}/journey" class="sidebar-list-group-item ${fn:contains(currentUri,'/journey') ? 'active' : ''}">
-                    <i class="bi bi-pin-map"></i> Journey Safety Tracker
-                </a>
-                <a href="${pageContext.request.contextPath}/reminders" class="sidebar-list-group-item ${fn:contains(currentUri,'/reminders') ? 'active' : ''}">
-                    <i class="bi bi-alarm"></i> Routine Reminders
                 </a>
                 <a href="${pageContext.request.contextPath}/logout" class="sidebar-list-group-item sidebar-logout-item">
                     <i class="bi bi-box-arrow-right"></i> Logout

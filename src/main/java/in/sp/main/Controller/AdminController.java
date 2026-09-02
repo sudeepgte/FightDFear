@@ -1837,39 +1837,108 @@ public class AdminController {
         return "redirect:/admin/pending-sellers";
     }
 
-    // Purpose: Event Host / Event Organizer verification for mobile + web registrations.
+    // Purpose: Event Host / Event Organizer verification — same queue layout as doctor verification.
     @GetMapping("/pending-event-hosts")
-    public String viewPendingEventHosts(Model model, HttpSession session) {
-        try {
-            if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+    public String viewPendingEventHosts(@RequestParam(value = "q", required = false) String q,
+                                        @RequestParam(value = "filter", required = false) String filter,
+                                        Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
-            Map<Long, EventHost> pendingById = new LinkedHashMap<>();
-            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIn(
-                    PartnerLifecycleSupport.pendingQueueStatuses())) {
-                pendingById.put(h.getId(), h);
-            }
-            for (EventHost h : eventHostRepository.findByPartnerProfileStatusIsNull()) {
-                if (h.getVerificationStatus() == null) {
-                    h.setVerificationStatus(VerificationStatus.PENDING);
-                    eventHostRepository.save(h);
-                }
-                pendingById.putIfAbsent(h.getId(), h);
-            }
-            List<EventHost> pending = new ArrayList<>(pendingById.values());
-            pending.sort(Comparator
-                    .comparingInt((EventHost h) -> PartnerLifecycleSupport.pendingPriority(h.getPartnerProfileStatus()))
-                    .thenComparing(EventHost::getId, Comparator.nullsLast(Long::compareTo)));
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(Locale.ROOT);
+        model.addAttribute("filter", activeFilter);
+        model.addAttribute("q", q == null ? "" : q.trim());
 
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", eventHostRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", eventHostRepository.findByVerificationStatus(VerificationStatus.REJECTED));
-            model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
-            model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
-            return "adminPendingEventHosts";
-        } catch (Exception e) {
-            model.addAttribute("error", "Exception in viewPendingEventHosts: " + e.getMessage());
-            return "adminPendingEventHosts";
+        List<EventHost> pending = new ArrayList<>();
+        List<EventHost> ready = new ArrayList<>();
+        List<EventHost> changesRequested = new ArrayList<>();
+        List<EventHost> approved = new ArrayList<>();
+        List<EventHost> rejected = new ArrayList<>();
+
+        for (EventHost h : eventHostRepository.findAll()) {
+            PartnerProfileStatus status = resolvedHostStatus(h);
+            if (status == PartnerProfileStatus.APPROVED) {
+                approved.add(h);
+            } else if (status == PartnerProfileStatus.REJECTED || status == PartnerProfileStatus.SUSPENDED) {
+                rejected.add(h);
+            } else if (status == PartnerProfileStatus.CHANGES_REQUESTED) {
+                changesRequested.add(h);
+            } else if (status == PartnerProfileStatus.READY_FOR_VERIFICATION) {
+                ready.add(h);
+                pending.add(h);
+            } else {
+                pending.add(h);
+            }
         }
+
+        Comparator<EventHost> byPriority = Comparator
+                .comparingInt((EventHost h) -> PartnerLifecycleSupport.pendingPriority(resolvedHostStatus(h)))
+                .thenComparing(EventHost::getId, Comparator.nullsLast(Long::compareTo));
+        pending.sort(byPriority);
+        ready.sort(byPriority);
+        changesRequested.sort(byPriority);
+
+        model.addAttribute("pending", pending);
+        model.addAttribute("ready", ready);
+        model.addAttribute("changesRequested", changesRequested);
+        model.addAttribute("approved", approved);
+        model.addAttribute("verified", approved);
+        model.addAttribute("rejected", rejected);
+        model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("readyCount", ready.size());
+        model.addAttribute("changesRequestedCount", changesRequested.size());
+        model.addAttribute("approvedCount", approved.size());
+        model.addAttribute("rejectedCount", rejected.size());
+        model.addAttribute("pendingEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("PENDING"));
+        model.addAttribute("approvedEvents", womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED"));
+
+        if (q != null && !q.trim().isEmpty()) {
+            String keyword = q.trim().toLowerCase(Locale.ROOT);
+            List<EventHost> searchResults = eventHostRepository.findAll().stream()
+                    .filter(h -> hostMatchesKeyword(h, keyword))
+                    .filter(h -> "all".equals(activeFilter) || matchesEventHostFilter(h, activeFilter))
+                    .sorted(byPriority)
+                    .toList();
+            model.addAttribute("searchResults", searchResults);
+        }
+
+        return "adminPendingEventHosts";
+    }
+
+    private PartnerProfileStatus resolvedHostStatus(EventHost h) {
+        if (h.getPartnerProfileStatus() != null) return h.getPartnerProfileStatus();
+        return PartnerLifecycleSupport.fromVerificationStatus(h.getVerificationStatus());
+    }
+
+    private boolean matchesEventHostFilter(EventHost h, String filter) {
+        PartnerProfileStatus status = resolvedHostStatus(h);
+        return switch (filter) {
+            case "approved" -> status == PartnerProfileStatus.APPROVED;
+            case "rejected" -> status == PartnerProfileStatus.REJECTED || status == PartnerProfileStatus.SUSPENDED;
+            case "changes_requested", "changes-requested" -> status == PartnerProfileStatus.CHANGES_REQUESTED;
+            case "ready" -> status == PartnerProfileStatus.READY_FOR_VERIFICATION;
+            case "all" -> true;
+            default -> status == PartnerProfileStatus.PENDING_ADMIN_APPROVAL
+                    || status == PartnerProfileStatus.READY_FOR_VERIFICATION
+                    || status == PartnerProfileStatus.PROFILE_INCOMPLETE
+                    || status == PartnerProfileStatus.REGISTERED
+                    || status == null;
+        };
+    }
+
+    private boolean hostMatchesKeyword(EventHost h, String keyword) {
+        return containsIgnoreCase(h.getFullName(), keyword)
+                || containsIgnoreCase(h.getEmail(), keyword)
+                || containsIgnoreCase(h.getPhone(), keyword)
+                || containsIgnoreCase(h.getHostContact(), keyword)
+                || containsIgnoreCase(h.getOrganizerName(), keyword)
+                || containsIgnoreCase(h.getOrganizerType(), keyword)
+                || containsIgnoreCase(h.getCity(), keyword)
+                || containsIgnoreCase(h.getState(), keyword)
+                || containsIgnoreCase(h.getEventCategories(), keyword);
+    }
+
+    private boolean containsIgnoreCase(String value, String keyword) {
+        return value != null && value.toLowerCase(Locale.ROOT).contains(keyword);
     }
 
     @GetMapping("/event-hosts/{id}/profile")
@@ -2062,10 +2131,59 @@ public class AdminController {
     }
 
     @RequestMapping(value = "/salons", method = GET)
-    public String showSalons(Model model, HttpSession session) {
+    public String showSalons(@RequestParam(value = "filter", required = false) String filter, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        model.addAttribute("pendingSalons", salonRepository.findByApproved(false));
-        model.addAttribute("approvedSalons", salonRepository.findByApproved(true));
+        
+        List<Salon> allSalons = salonRepository.findAll();
+        List<Stylist> allStylists = stylistRepository.findAll();
+        
+        List<Salon> pendingSalons = new java.util.ArrayList<>();
+        List<Stylist> pendingStylists = new java.util.ArrayList<>();
+        List<Salon> approvedSalons = new java.util.ArrayList<>();
+        List<Stylist> approvedStylists = new java.util.ArrayList<>();
+        List<Salon> rejectedSalons = new java.util.ArrayList<>();
+        List<Stylist> rejectedStylists = new java.util.ArrayList<>();
+        List<Salon> changesSalons = new java.util.ArrayList<>();
+        List<Stylist> changesStylists = new java.util.ArrayList<>();
+        
+        for (Salon s : allSalons) {
+            in.sp.main.Entities.PartnerProfileStatus st = s.getPartnerProfileStatus();
+            if (st == in.sp.main.Entities.PartnerProfileStatus.APPROVED || s.isApproved()) approvedSalons.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.REJECTED) rejectedSalons.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.CHANGES_REQUESTED) changesSalons.add(s);
+            else pendingSalons.add(s);
+        }
+        for (Stylist s : allStylists) {
+            in.sp.main.Entities.PartnerProfileStatus st = s.getPartnerProfileStatus();
+            if (st == in.sp.main.Entities.PartnerProfileStatus.APPROVED || s.isApproved()) approvedStylists.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.REJECTED) rejectedStylists.add(s);
+            else if (st == in.sp.main.Entities.PartnerProfileStatus.CHANGES_REQUESTED) changesStylists.add(s);
+            else pendingStylists.add(s);
+        }
+        
+        model.addAttribute("pendingCount", pendingSalons.size() + pendingStylists.size());
+        model.addAttribute("approvedCount", approvedSalons.size() + approvedStylists.size());
+        model.addAttribute("rejectedCount", rejectedSalons.size() + rejectedStylists.size());
+        model.addAttribute("changesRequestedCount", changesSalons.size() + changesStylists.size());
+        model.addAttribute("reverificationCount", 0);
+        model.addAttribute("totalCount", allSalons.size() + allStylists.size());
+        
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(java.util.Locale.ROOT);
+        
+        List<Salon> activeSalons;
+        List<Stylist> activeStylists;
+        
+        switch (activeFilter) {
+            case "approved": activeSalons = approvedSalons; activeStylists = approvedStylists; break;
+            case "rejected": activeSalons = rejectedSalons; activeStylists = rejectedStylists; break;
+            case "changes_requested": activeSalons = changesSalons; activeStylists = changesStylists; break;
+            default: activeSalons = pendingSalons; activeStylists = pendingStylists; activeFilter = "pending"; break;
+        }
+
+        model.addAttribute("activeFilter", activeFilter);
+        model.addAttribute("activeSalons", activeSalons);
+        model.addAttribute("activeStylists", activeStylists);
+        
         return "adminSalons";
     }
 

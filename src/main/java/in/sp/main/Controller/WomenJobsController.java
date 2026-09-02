@@ -17,6 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -46,6 +51,9 @@ public class WomenJobsController {
 
     @Autowired
     private in.sp.main.Service.OtpVerificationService otpVerificationService;
+
+    @Autowired
+    private in.sp.main.Service.JobWorkerProfileService jobWorkerProfileService;
 
     @Autowired
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
@@ -397,8 +405,10 @@ public class WomenJobsController {
     }
 
     @PostMapping("/profile")
-    public String updateWorkerProfile(@RequestParam(required=false) String designation,
-                                      @RequestParam(required=false) Integer yearsExperience,
+    public String updateWorkerProfile(@RequestParam(required=false) String fullName,
+                                      @RequestParam(required=false) String phone,
+                                      @RequestParam(required=false) String designation,
+                                      @RequestParam(required=false) String yearsExperience,
                                       @RequestParam(required=false) String bio,
                                       @RequestParam(required=false) String whatsappNumber,
                                       @RequestParam(required=false) String skills,
@@ -407,9 +417,30 @@ public class WomenJobsController {
                                       @RequestParam(required=false) String city,
                                       @RequestParam(required=false) String state,
                                       @RequestParam(required=false) String pincode,
-                                      @RequestParam(required=false) Double hourlyRate,
+                                      @RequestParam(required=false) String latitude,
+                                      @RequestParam(required=false) String longitude,
+                                      @RequestParam(required=false) String categoriesOffered,
+                                      @RequestParam(required=false) String jobCategory,
+                                      @RequestParam(required=false) String jobSubCategory,
+                                      @RequestParam(required=false) String audience,
+                                      @RequestParam(required=false) String doorService,
+                                      @RequestParam(required=false) String facilities,
+                                      @RequestParam(required=false) String openDays,
+                                      @RequestParam(required=false) String openTime,
+                                      @RequestParam(required=false) String closeTime,
+                                      @RequestParam(required=false) String breakStart,
+                                      @RequestParam(required=false) String breakEnd,
+                                      @RequestParam(required=false) String blockedDates,
+                                      @RequestParam(required=false) String hourlyRate,
+                                      @RequestParam(required=false) String durationMinutes,
+                                      @RequestParam(required=false) String bufferMinutes,
+                                      @RequestParam(required=false) String serviceMode,
+                                      @RequestParam(required=false) String workType,
                                       @RequestParam(required=false) String bankDetails,
                                       @RequestParam(required=false) String upiId,
+                                      @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+                                      @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument,
+                                      @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
                                       HttpSession session,
                                       RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -434,25 +465,70 @@ public class WomenJobsController {
             return "redirect:/women-jobs/profile";
         }
 
-        if (designation != null) app.setDesignation(designation);
-        if (yearsExperience != null) app.setYearsExperience(yearsExperience);
-        if (bio != null) app.setBio(bio);
-        if (whatsappNumber != null) app.setWhatsappNumber(whatsappNumber);
-        if (skills != null) app.setSkills(skills);
-        if (languages != null) app.setLanguages(languages);
-        if (address != null) {
-            app.setAddress(address);
-            u.setHomeAddress(address);
-            userRepository.save(u);
-        }
-        if (city != null) app.setCity(city);
-        if (state != null) app.setState(state);
-        if (pincode != null) app.setPincode(pincode);
-        if (hourlyRate != null) app.setHourlyRate(hourlyRate);
-        if (bankDetails != null) app.setBankDetails(bankDetails);
-        if (upiId != null) app.setUpiId(upiId);
+        Map<String, Object> body = new HashMap<>();
+        body.put("fullName", fullName);
+        body.put("phone", phone);
+        body.put("designation", designation);
+        body.put("yearsExperience", yearsExperience);
+        body.put("bio", bio);
+        body.put("whatsappNumber", whatsappNumber);
+        body.put("skills", skills);
+        body.put("languages", languages);
+        body.put("address", address);
+        body.put("city", city);
+        body.put("state", state);
+        body.put("pincode", pincode);
+        body.put("latitude", latitude);
+        body.put("longitude", longitude);
+        body.put("categoriesOffered", categoriesOffered);
+        body.put("jobCategory", jobCategory);
+        body.put("jobSubCategory", jobSubCategory);
+        body.put("audience", audience);
+        body.put("doorService", doorService);
+        body.put("facilities", facilities);
+        body.put("openDays", openDays);
+        body.put("openTime", openTime);
+        body.put("closeTime", closeTime);
+        body.put("breakStart", breakStart);
+        body.put("breakEnd", breakEnd);
+        body.put("blockedDates", blockedDates);
+        body.put("hourlyRate", hourlyRate);
+        body.put("durationMinutes", durationMinutes);
+        body.put("bufferMinutes", bufferMinutes);
+        body.put("serviceMode", serviceMode);
+        body.put("workType", workType);
+        body.put("bankDetails", bankDetails);
+        body.put("upiId", upiId);
+        jobWorkerProfileService.applyFields(u, body);
 
-        jobAppRepo.save(app);
+        u = userRepository.findById(u.getId()).orElse(u);
+        session.setAttribute("user", u);
+        app = jobWorkerProfileService.latestFor(u);
+        try {
+            if (profileImage != null && !profileImage.isEmpty()) {
+                app.setProfileImageUrl(fileUploadService.saveFile(profileImage));
+            }
+            if (proofDocument != null && !proofDocument.isEmpty()) {
+                app.setDocumentPath(fileUploadService.saveFile(proofDocument));
+            }
+            if (galleryPhotos != null) {
+                List<String> existing = new ArrayList<>();
+                if (app.getGalleryPhotos() != null && !app.getGalleryPhotos().isBlank()) {
+                    existing.addAll(Arrays.asList(app.getGalleryPhotos().split(",")));
+                }
+                for (MultipartFile photo : galleryPhotos) {
+                    if (photo != null && !photo.isEmpty()) {
+                        existing.add(fileUploadService.saveFile(photo));
+                    }
+                }
+                app.setGalleryPhotos(String.join(",", existing.stream().map(String::trim).filter(s -> !s.isEmpty()).toList()));
+            }
+            jobAppRepo.save(app);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Profile saved, but a file upload failed. Please try the photo/document again.");
+            return "redirect:/women-jobs/profile";
+        }
+
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
         return "redirect:/women-jobs/dashboard";
     }

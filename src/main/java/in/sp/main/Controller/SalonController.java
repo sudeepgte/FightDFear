@@ -97,7 +97,7 @@ public class SalonController {
             @RequestParam(value = "hygieneCertificate", required = false) MultipartFile hygieneCertificate,
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
-            Model model) {
+            Model model, RedirectAttributes redirectAttributes) {
 
         String cleanedName = name == null ? "" : name.trim();
         String cleanedUsername = username == null ? "" : username.trim();
@@ -168,6 +168,8 @@ public class SalonController {
             salonProfileService.setLifecycleStatus(salon, PartnerProfileStatus.PROFILE_INCOMPLETE);
             salonProfileService.refreshCompletion(salon);
 
+            redirectAttributes.addFlashAttribute("registeredEmail", cleanedEmail);
+            redirectAttributes.addFlashAttribute("message", "Account created successfully! Please sign in to complete your profile and submit for verification.");
             return "redirect:/salons/login"; // redirect to login page
 
         } catch (IOException e) {
@@ -187,25 +189,21 @@ public class SalonController {
     }
     @PostMapping("/salons/login")
     public String loginSalon(
-            @RequestParam("username") String username,
+            @RequestParam("email") String email,
             @RequestParam("password") String password,
             HttpSession session,
             jakarta.servlet.http.HttpServletResponse response,
             Model model) {
 
-        Optional<Salon> salonOpt = salonRepository.findByUsername(username);
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        Salon salon = salonRepository.findByEmail(normalizedEmail);
 
-        if (salonOpt.isPresent()) {
-            Salon salon = salonOpt.get();
+        if (salon != null) {
 
             if (passwordService.matchesAndUpgrade(password, salon.getPassword(), hashed -> {
                 salon.setPassword(hashed);
                 salonRepository.save(salon);
             })) {
-                if (!salon.isApproved()) {
-                    model.addAttribute("error", "Your account is pending admin approval. Please wait for the physical business audit.");
-                    return "salon/salon-login";
-                }
                 // Clear user/other portals so contact/header "My Dashboard" routes to salon correctly
                 session.removeAttribute("user");
                 session.removeAttribute("loggedDoctor");
@@ -230,7 +228,7 @@ public class SalonController {
                 return "salon/salon-login";
             }
         } else {
-            model.addAttribute("error", "Salon not found with this username");
+            model.addAttribute("error", "Salon not found with this email");
             return "salon/salon-login";
         }
     }

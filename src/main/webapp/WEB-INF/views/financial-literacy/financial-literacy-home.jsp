@@ -20,7 +20,7 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
+            --glow-bg: #F8FAFC;
             --card-bg: #ffffff;
         }
         
@@ -149,12 +149,15 @@
         /* Category pills scroll */
         .category-pills {
             display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
             gap: 8px;
             overflow-x: auto;
             scrollbar-width: none;
             margin-bottom: 20px;
             padding-bottom: 4px;
-            width: 100%;
+            max-width: 100%;
+            white-space: nowrap;
         }
         .category-pills::-webkit-scrollbar {
             display: none;
@@ -171,11 +174,16 @@
             transition: all 0.2s;
             white-space: nowrap;
         }
-        .category-pill:hover, .category-pill.active {
-            background: #0B1736;
-            color: white;
-            border-color: transparent;
-            box-shadow: 0 4px 10px rgba(11, 23, 54, 0.2);
+        .category-pill:hover {
+            color: #FF3B5C;
+            border-color: #FF3B5C;
+            background: #FFF1F3;
+        }
+        .category-pill.active {
+            background: #FF3B5C !important;
+            color: white !important;
+            border-color: #FF3B5C !important;
+            box-shadow: 0 4px 12px rgba(255, 59, 92, 0.35);
         }
 
         /* Responsive Module Card Grid */
@@ -267,11 +275,71 @@
             background-color: #0B1736 !important;
         }
 
+        /* 📱 Mobile Responsiveness Overrides */
+        html, body {
+            width: 100% !important;
+            max-width: 100vw !important;
+            overflow-x: hidden !important;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box !important;
+        }
+
+        #wrapper, #page-content-wrapper, .fl-container {
+            width: 100% !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+        }
+
         @media (max-width: 768px) {
-            .glow-header { padding: 20px 14px 16px; }
-            .glow-header h1 { font-size: 24px; }
-            .fl-container { padding: 0 12px; margin-top: 16px; }
-            .section-card { padding: 16px; }
+            .glow-header {
+                padding: 16px 14px 14px !important;
+                border-radius: 16px !important;
+                margin: 0 8px !important;
+                width: calc(100% - 16px) !important;
+                box-sizing: border-box !important;
+            }
+            .glow-header h1 {
+                font-size: 1.4rem !important;
+                word-break: break-word !important;
+            }
+            .glow-header p {
+                font-size: 0.82rem !important;
+                line-height: 1.45 !important;
+            }
+            .fl-container {
+                padding: 0 8px !important;
+                margin-top: 12px !important;
+                margin-bottom: 20px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .section-card {
+                padding: 16px 12px !important;
+                border-radius: 16px !important;
+                margin-bottom: 16px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            .section-header h2 {
+                font-size: 1.15rem !important;
+                word-break: break-word !important;
+            }
+            .hub-thumbnail {
+                width: 52px !important;
+                height: 52px !important;
+                font-size: 1.4rem !important;
+            }
+            .hub-title {
+                font-size: 0.95rem !important;
+                word-break: break-word !important;
+            }
+            .hub-desc {
+                font-size: 0.82rem !important;
+            }
+            .category-pills {
+                margin-bottom: 0 !important;
+            }
         }
     </style>
 </head>
@@ -280,7 +348,7 @@
 <!-- Header -->
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-<div id="wrapper" style="padding-top: 70px;">
+<div id="wrapper">
     <!-- Sidebar -->
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
@@ -319,11 +387,11 @@
                 </div>
 
                 <!-- Category Filtering Bar -->
-                <div class="d-flex align-items-center mb-3">
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle me-2" onclick="scrollCatLeft(this)">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="scrollCatLeft(this)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
-                    <div class="category-pills flex-grow-1" id="videoCategories" style="margin-bottom: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
+                    <div class="category-pills" id="videoCategories" style="margin-bottom: 0 !important; overflow-x: auto; scroll-behavior: smooth;">
                         <span class="category-pill active" data-category="all">All</span>
                         <span class="category-pill" data-category="Saving">Saving</span>
                         <span class="category-pill" data-category="Investing">Investing</span>
@@ -333,7 +401,7 @@
                         <span class="category-pill" data-category="Government Schemes">Government Schemes</span>
                         <span class="category-pill" data-category="Others">Others</span>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary rounded-circle ms-2" onclick="scrollCatRight(this)">
+                    <button class="btn btn-sm btn-outline-secondary rounded-circle" style="width: 32px; height: 32px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="scrollCatRight(this)">
                         <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>

@@ -4,7 +4,12 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.EventHostProfileService;
+import in.sp.main.Service.EventsCareService;
 import in.sp.main.Service.PartnerLifecycleSupport;
+import in.sp.main.Service.EventCoinPolicy;
+import in.sp.main.Service.WomenEventBookingService;
+import in.sp.main.Service.WomenEventLifecycleService;
+import in.sp.main.Service.WomenEventSupport;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -54,6 +59,30 @@ public class WomenEventController {
     @Autowired
     private EventHostProfileService eventHostProfileService;
 
+    @Autowired
+    private EventsCareService eventsCareService;
+
+    @Autowired
+    private WomenEventBookingService womenEventBookingService;
+
+    @Autowired
+    private WomenEventLifecycleService womenEventLifecycleService;
+
+    @Autowired
+    private EventTicketTypeRepository eventTicketTypeRepository;
+
+    @Autowired
+    private EventSpeakerRepository eventSpeakerRepository;
+
+    @Autowired
+    private EventAgendaItemRepository eventAgendaItemRepository;
+
+    @Autowired
+    private EventFavoriteRepository eventFavoriteRepository;
+
+    @Autowired
+    private EventCoinPolicy eventCoinPolicy;
+
     // =========================================================
     // PUBLIC ROUTES — Browse & Discovery
     // =========================================================
@@ -75,8 +104,13 @@ public class WomenEventController {
                     category
             );
         } else {
-            events = womenEventRepository.findByStatusOrderByCreatedAtDesc("APPROVED");
+            events = womenEventRepository.findListedEvents();
         }
+
+        events = events.stream()
+                .filter(WomenEventSupport::isPubliclyListed)
+                .filter(e -> e.getOrganizer() == null || EventHostProfileService.isApproved(e.getOrganizer()))
+                .collect(Collectors.toList());
 
         // If text query provided, further filter by name/description
         if (query != null && !query.trim().isEmpty()) {
@@ -137,10 +171,13 @@ public class WomenEventController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model, HttpSession session) {
         Optional<WomenEvent> opt = womenEventRepository.findById(id);
-        if (opt.isEmpty() || !"APPROVED".equals(opt.get().getStatus())) {
+        if (opt.isEmpty() || !WomenEventSupport.isPubliclyListed(opt.get())) {
             return "redirect:/women-events";
         }
         WomenEvent event = opt.get();
+        if (event.getOrganizer() != null && !EventHostProfileService.isApproved(event.getOrganizer())) {
+            return "redirect:/women-events";
+        }
         User loggedUser = (User) session.getAttribute("user");
 
         List<WomenEventReview> reviews = womenEventReviewRepository.findByEventOrderByCreatedAtDesc(event);
@@ -149,7 +186,7 @@ public class WomenEventController {
         long registrationCount = womenEventRegistrationRepository.countByEvent(event);
         
         boolean alreadyRegistered = loggedUser != null &&
-                womenEventRegistrationRepository.existsByEventAndUser(event, loggedUser);
+                womenEventRegistrationRepository.existsActiveByEventAndUser(event, loggedUser);
         boolean alreadyVolunteer = loggedUser != null &&
                 womenEventRegistrationRepository.existsByEventAndUserAndRole(event, loggedUser, "VOLUNTEER");
         boolean alreadyReviewed = loggedUser != null &&
@@ -185,6 +222,23 @@ public class WomenEventController {
         model.addAttribute("attendeeDirectory", attendeeDirectory);
         model.addAttribute("loggedUser", loggedUser);
         model.addAttribute("user", loggedUser);
+        model.addAttribute("speakers", eventSpeakerRepository.findByEventOrderBySortOrderAscIdAsc(event));
+        model.addAttribute("agenda", eventAgendaItemRepository.findByEventOrderBySortOrderAscStartTimeAsc(event));
+        model.addAttribute("ticketTypes", eventTicketTypeRepository.findByEventOrderByIdAsc(event));
+        model.addAttribute("soldOut", womenEventBookingService.isSoldOut(event));
+        model.addAttribute("registrationOpen", WomenEventSupport.registrationWindowOpen(event, java.time.LocalDateTime.now()));
+        model.addAttribute("savedEvent", loggedUser != null && eventFavoriteRepository.existsByEventAndUser(event, loggedUser));
+        boolean eligibleAccess = alreadyRegistered;
+        if (loggedUser != null) {
+            eligibleAccess = womenEventRegistrationRepository.findActiveByEventAndUser(event, loggedUser)
+                    .map(r -> r.isPaid() || event.isFree() || womenEventBookingService.payableOf(r) <= 0)
+                    .orElse(false);
+        }
+        model.addAttribute("streamLink", WomenEventSupport.hideAccessIfUnauthorized(event, eligibleAccess));
+        if (loggedUser != null) {
+            double fee = event.getEntryFee() == null ? 0 : event.getEntryFee();
+            model.addAttribute("coinQuote", womenEventBookingService.quoteCoins(loggedUser, fee, Integer.MAX_VALUE));
+        }
         return "women-events/detail";
     }
 
@@ -196,47 +250,28 @@ public class WomenEventController {
      * Register the logged-in user for an event.
      */
     @PostMapping("/{id}/register")
-    public String register(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String register(@PathVariable Long id,
+                           @RequestParam(required = false) Long ticketTypeId,
+                           @RequestParam(defaultValue = "1") int quantity,
+                           @RequestParam(defaultValue = "0") int coins,
+                           HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
 
-        Optional<WomenEvent> opt = womenEventRepository.findById(id);
-        if (opt.isEmpty()) { ra.addFlashAttribute("error", "Event not found."); return "redirect:/women-events"; }
-
-        WomenEvent event = opt.get();
-        if (!"APPROVED".equals(event.getStatus())) {
-            ra.addFlashAttribute("error", "This event is not available for registration.");
-            return "redirect:/women-events/" + id;
-        }
-
-        if (womenEventRegistrationRepository.existsByEventAndUser(event, loggedUser)) {
-            ra.addFlashAttribute("error", "You are already registered for this event.");
-            return "redirect:/women-events/" + id;
-        }
-
-        if (event.getMaxParticipants() != null) {
-            long count = womenEventRegistrationRepository.countByEvent(event);
-            if (count >= event.getMaxParticipants()) {
-                ra.addFlashAttribute("error", "Sorry, this event is full.");
-                return "redirect:/women-events/" + id;
+        try {
+            WomenEventRegistration reg = womenEventBookingService.book(loggedUser, id, ticketTypeId, quantity, coins);
+            session.setAttribute("user", loggedUser);
+            if (reg.isPaid() || womenEventBookingService.payableOf(reg) <= 0) {
+                ra.addFlashAttribute("success", "You're registered! Ticket: " + reg.getTicketCode());
+                return "redirect:/women-events/tickets/" + reg.getId();
             }
+            ra.addFlashAttribute("success", "Seat reserved. Complete payment to confirm your ticket.");
+            ra.addFlashAttribute("pendingPaymentId", reg.getId());
+            return "redirect:/women-events/" + id;
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason());
+            return "redirect:/women-events/" + id;
         }
-
-        WomenEventRegistration reg = new WomenEventRegistration();
-        reg.setEvent(event);
-        reg.setUser(loggedUser);
-        reg.setRole("ATTENDEE");
-        if (event.isFree()) {
-            reg.setPaid(true);
-            reg.setAmountPaid(0.0);
-        } else {
-            reg.setPaid(true);
-            reg.setAmountPaid(event.getEntryFee());
-        }
-        womenEventRegistrationRepository.save(reg);
-
-        ra.addFlashAttribute("success", "🎉 You're registered! Your ticket code: " + reg.getTicketCode());
-        return "redirect:/women-events/my-registrations";
     }
 
     /**
@@ -300,11 +335,13 @@ public class WomenEventController {
         if (event == null) { ra.addFlashAttribute("error", "Event not found."); return "redirect:/women-events/my-registrations"; }
 
         womenEventRegistrationRepository.findByEventAndUser(event, loggedUser).ifPresent(reg -> {
-            reg.setStatus("CANCELLED");
-            womenEventRegistrationRepository.save(reg);
+            try {
+                eventsCareService.cancel(reg);
+                ra.addFlashAttribute("success", "Registration cancelled. Eligible coins were restored.");
+            } catch (org.springframework.web.server.ResponseStatusException ex) {
+                ra.addFlashAttribute("error", ex.getReason());
+            }
         });
-
-        ra.addFlashAttribute("success", "Registration cancelled.");
         return "redirect:/women-events/my-registrations";
     }
 
@@ -377,8 +414,30 @@ public class WomenEventController {
         if (host == null) return null;
         EventHost refreshed = eventHostRepository.findById(host.getId()).orElse(host);
         session.setAttribute("loggedHost", refreshed);
-        // Allow access regardless of verification status
         return refreshed;
+    }
+
+    /** Incomplete hosts must finish profile before organizer features. */
+    private String redirectIfProfileIncomplete(EventHost host) {
+        if (host == null) return "redirect:/women-events/host/login";
+        if (EventHostProfileService.isApproved(host)) return null;
+        if (PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus())) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        return null;
+    }
+
+    /** Create / publish / check-in stay locked until admin approval. */
+    private String redirectIfFeaturesLocked(EventHost host, RedirectAttributes ra, String message) {
+        if (host == null) return "redirect:/women-events/host/login";
+        if (EventHostProfileService.isApproved(host)) return null;
+        if (ra != null && message != null) {
+            ra.addFlashAttribute("error", message);
+        }
+        if (PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus())) {
+            return "redirect:/women-events/organizer/profile-completion";
+        }
+        return "redirect:/women-events/organizer/dashboard";
     }
 
     /** Matches Flutter Event Host login: incomplete / changes-requested hosts complete profile first. */
@@ -436,7 +495,16 @@ public class WomenEventController {
     }
 
     @GetMapping("/host/login")
-    public String showHostLoginForm() {
+    public String showHostLoginForm(HttpSession session, Model model,
+                                    @RequestParam(value = "email", required = false) String email) {
+        Object pending = session.getAttribute("pendingHostLoginEmail");
+        String pendingEmail = (pending instanceof String) ? ((String) pending).trim() : "";
+        if (!pendingEmail.isEmpty()) {
+            model.addAttribute("registeredEmail", pendingEmail);
+            session.removeAttribute("pendingHostLoginEmail");
+        } else if (email != null && !email.trim().isEmpty()) {
+            model.addAttribute("registeredEmail", email.trim().toLowerCase());
+        }
         return "women-events/host-login";
     }
 
@@ -446,7 +514,9 @@ public class WomenEventController {
                             HttpSession session,
                             jakarta.servlet.http.HttpServletResponse response,
                             Model model) {
-        Optional<EventHost> hostOpt = eventHostRepository.findByEmail(email.trim().toLowerCase());
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        model.addAttribute("registeredEmail", normalizedEmail);
+        Optional<EventHost> hostOpt = eventHostRepository.findByEmail(normalizedEmail);
         if (hostOpt.isEmpty()) {
             model.addAttribute("error", "Event Host not found.");
             return "women-events/host-login";
@@ -460,10 +530,7 @@ public class WomenEventController {
             model.addAttribute("error", "Invalid password.");
             return "women-events/host-login";
         }
-        // Allow login for incomplete & pending profile hosts so they can complete profile or view pending status
-        session.setAttribute("loggedHost", host);
 
-        // Handle profile lifecycle status routing matching mobile app flow
         PartnerProfileStatus partnerStatus = host.getPartnerProfileStatus();
         VerificationStatus verStatus = host.getVerificationStatus();
 
@@ -472,7 +539,19 @@ public class WomenEventController {
             return "women-events/host-login";
         }
 
-        // Generate JWT token
+        if (partnerStatus == null) {
+            if (verStatus == VerificationStatus.VERIFIED) {
+                eventHostProfileService.setLifecycleStatus(host, PartnerProfileStatus.APPROVED);
+            } else {
+                eventHostProfileService.setLifecycleStatus(host, PartnerProfileStatus.PROFILE_INCOMPLETE);
+            }
+            eventHostProfileService.refreshCompletion(host);
+        } else {
+            eventHostProfileService.refreshCompletion(host);
+        }
+
+        session.setAttribute("loggedHost", host);
+
         try {
             String token = jwtUtil.generateToken(host.getEmail(), "HOST");
             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
@@ -512,6 +591,8 @@ public class WomenEventController {
         if (host == null) {
             return "redirect:/women-events/host/login";
         }
+        String incomplete = redirectIfProfileIncomplete(host);
+        if (incomplete != null) return incomplete;
         if (hostNeedsProfileCompletion(host)) {
             return "redirect:/women-events/organizer/profile-completion";
         }
@@ -525,9 +606,12 @@ public class WomenEventController {
     public String myEvents(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        String incomplete = redirectIfProfileIncomplete(host);
+        if (incomplete != null) return incomplete;
         if (hostNeedsProfileCompletion(host)) {
             return "redirect:/women-events/organizer/profile-completion";
         }
+
         populateOrganizerDashboardModel(host, session, model, "events");
         return "women-events/organizer-dashboard";
     }
@@ -544,8 +628,20 @@ public class WomenEventController {
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
         long totalRegistrations = myEvents.stream()
                 .mapToLong(e -> womenEventRegistrationRepository.countByEvent(e)).sum();
-        long approvedCount = myEvents.stream().filter(e -> "APPROVED".equals(e.getStatus())).count();
-        long pendingCount = myEvents.stream().filter(e -> "PENDING".equals(e.getStatus())).count();
+        long approvedCount = myEvents.stream().filter(e -> "APPROVED".equals(e.getStatus()) || "PUBLISHED".equals(e.getStatus())).count();
+        long pendingCount = myEvents.stream().filter(e -> "PENDING".equals(e.getStatus()) || "SUBMITTED".equals(e.getStatus())).count();
+        long draftCount = myEvents.stream().filter(e -> "DRAFT".equals(e.getStatus())).count();
+        long publishedCount = approvedCount;
+        long upcomingCount = myEvents.stream().filter(e -> {
+            java.time.LocalDateTime start = WomenEventSupport.eventStart(e);
+            return start != null && start.isAfter(java.time.LocalDateTime.now())
+                    && WomenEventSupport.isPubliclyListed(e);
+        }).count();
+        double grossRevenue = myEvents.stream()
+                .flatMap(e -> womenEventRegistrationRepository.findByEvent(e).stream())
+                .filter(r -> r.isPaid() && !"CANCELLED".equalsIgnoreCase(r.getStatus()))
+                .mapToDouble(r -> r.getAmountPaid() == null ? 0 : r.getAmountPaid())
+                .sum();
 
         List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
                 ? List.of()
@@ -573,6 +669,13 @@ public class WomenEventController {
         model.addAttribute("totalRegistrations", totalRegistrations);
         model.addAttribute("approvedCount", approvedCount);
         model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("draftCount", draftCount);
+        model.addAttribute("publishedCount", publishedCount);
+        model.addAttribute("upcomingCount", upcomingCount);
+        model.addAttribute("grossRevenue", grossRevenue);
+        model.addAttribute("netEarnings", Math.max(0, grossRevenue - eventCoinPolicy.platformFee(grossRevenue)));
+        model.addAttribute("platformFeePercent", eventCoinPolicy.platformFeePercent());
+        model.addAttribute("avgRating", host.getRating());
         model.addAttribute("commissionsDue", commissionsDue);
         model.addAttribute("recentRegistrations", recentRegistrations);
         model.addAttribute("allRegistrations", allRegistrations);
@@ -587,6 +690,8 @@ public class WomenEventController {
     public String organizerRegistrations(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        String incomplete = redirectIfProfileIncomplete(host);
+        if (incomplete != null) return incomplete;
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
         List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
                 ? List.of()
@@ -606,6 +711,7 @@ public class WomenEventController {
         model.addAttribute("user", host);
         model.addAttribute("organizerNavActive", "registrations");
         model.addAttribute("newNotifCount", newNotifCount);
+        model.addAttribute("hostApproved", EventHostProfileService.isApproved(host));
         return "women-events/organizer-registrations";
     }
 
@@ -615,6 +721,8 @@ public class WomenEventController {
     public String organizerNotifications(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        String incomplete = redirectIfProfileIncomplete(host);
+        if (incomplete != null) return incomplete;
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
         List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
                 ? List.of()
@@ -636,6 +744,7 @@ public class WomenEventController {
         model.addAttribute("user", host);
         model.addAttribute("organizerNavActive", "notifications");
         model.addAttribute("newNotifCount", newNotifCount);
+        model.addAttribute("hostApproved", EventHostProfileService.isApproved(host));
         return "women-events/organizer-notifications";
     }
 
@@ -657,6 +766,7 @@ public class WomenEventController {
         model.addAttribute("canSubmitForVerification", profilePayload.get("canSubmitForVerification"));
         model.addAttribute("organizerNavActive", "profile");
         model.addAttribute("newNotifCount", 0L);
+        model.addAttribute("hostApproved", EventHostProfileService.isApproved(host));
         if (Boolean.TRUE.equals(submitted)) {
             model.addAttribute("success", "Profile submitted for admin verification. You can keep updating details while we review.");
         }
@@ -702,6 +812,8 @@ public class WomenEventController {
     public String settingsForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        String incomplete = redirectIfProfileIncomplete(host);
+        if (incomplete != null) return incomplete;
         List<WomenEvent> myEvents = womenEventRepository.findByOrganizerOrderByCreatedAtDesc(host);
         List<WomenEventRegistration> allRegistrations = myEvents.isEmpty()
                 ? List.of()
@@ -715,6 +827,7 @@ public class WomenEventController {
         model.addAttribute("user", host);
         model.addAttribute("organizerNavActive", "settings");
         model.addAttribute("newNotifCount", newNotifCount);
+        model.addAttribute("hostApproved", EventHostProfileService.isApproved(host));
         return "women-events/organizer-settings";
     }
 
@@ -749,8 +862,8 @@ public class WomenEventController {
     public String createEventForm(HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
-        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            return "redirect:/women-events/organizer/profile-completion";
+        if (!EventHostProfileService.isApproved(host)) {
+            return redirectIfFeaturesLocked(host, null, null);
         }
         model.addAttribute("categories", WomenEventCategory.values());
         model.addAttribute("host", host);
@@ -770,6 +883,9 @@ public class WomenEventController {
                                @RequestParam String description,
                                @RequestParam String eventDate,
                                @RequestParam(required = false) String eventTime,
+                               @RequestParam(required = false) String endDate,
+                               @RequestParam(required = false) String endTime,
+                               @RequestParam(required = false) String registrationCloses,
                                @RequestParam String venue,
                                @RequestParam String city,
                                @RequestParam(defaultValue = "0") Double entryFee,
@@ -779,15 +895,23 @@ public class WomenEventController {
                                @RequestParam String organizerName,
                                @RequestParam String organizerType,
                                @RequestParam(defaultValue = "false") boolean virtual,
+                               @RequestParam(required = false) String eventFormat,
                                @RequestParam(required = false) String streamLink,
+                               @RequestParam(required = false) String meetingPlatform,
+                               @RequestParam(required = false) String shortDescription,
+                               @RequestParam(required = false) String cancellationPolicy,
+                               @RequestParam(required = false) String refundPolicy,
+                               @RequestParam(required = false) String ageRestriction,
+                               @RequestParam(required = false) String participantRequirements,
+                               @RequestParam(required = false) String whatToBring,
                                @RequestParam(defaultValue = "0") Double boothFee,
                                @RequestParam(required = false) MultipartFile bannerImage,
+                               @RequestParam(defaultValue = "false") boolean saveDraft,
                                HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
-        if (host.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && host.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            ra.addFlashAttribute("error", "Event creation is locked until Admin profile approval.");
-            return "redirect:/women-events/organizer/profile-completion";
+        if (!EventHostProfileService.isApproved(host)) {
+            return redirectIfFeaturesLocked(host, ra, "Event creation is locked until admin profile approval.");
         }
 
         WomenEvent event = new WomenEvent();
@@ -810,7 +934,42 @@ public class WomenEventController {
         event.setVirtual(virtual);
         event.setStreamLink(streamLink);
         event.setBoothFee(boothFee);
-        event.setStatus("PENDING");
+        event.setShortDescription(shortDescription);
+        event.setMeetingPlatform(meetingPlatform);
+        event.setCancellationPolicy(cancellationPolicy);
+        event.setRefundPolicy(refundPolicy);
+        event.setAgeRestriction(ageRestriction);
+        event.setParticipantRequirements(participantRequirements);
+        event.setWhatToBring(whatToBring);
+        event.setTimezone("Asia/Kolkata");
+        event.setEventFormat(EventFormat.fromFlexible(eventFormat != null ? eventFormat : (virtual ? "ONLINE" : "OFFLINE")));
+        event.setVirtual(event.getEventFormat() == EventFormat.ONLINE || event.getEventFormat() == EventFormat.HYBRID);
+        if (event.getEventDate() != null) {
+            LocalTime st = event.getEventTime() == null ? LocalTime.of(10, 0) : event.getEventTime();
+            event.setStartsAt(java.time.LocalDateTime.of(event.getEventDate(), st));
+            if (endDate != null && !endDate.isBlank()) {
+                LocalDate ed = LocalDate.parse(endDate);
+                LocalTime et = (endTime != null && !endTime.isBlank()) ? LocalTime.parse(endTime) : st.plusHours(2);
+                event.setEndsAt(java.time.LocalDateTime.of(ed, et));
+            }
+            if (registrationCloses != null && !registrationCloses.isBlank()) {
+                try {
+                    String raw = registrationCloses.trim();
+                    if (raw.length() == 16) raw = raw + ":00";
+                    event.setRegistrationClosesAt(java.time.LocalDateTime.parse(raw.replace(" ", "T")));
+                } catch (Exception ignored) {
+                    event.setRegistrationClosesAt(event.getStartsAt());
+                }
+            } else {
+                event.setRegistrationClosesAt(event.getStartsAt());
+            }
+            if (event.getStartsAt() != null && event.getEndsAt() != null
+                    && event.getEndsAt().isBefore(event.getStartsAt())) {
+                ra.addFlashAttribute("error", "End date/time cannot be before start.");
+                return "redirect:/women-events/organizer/create";
+            }
+        }
+        womenEventLifecycleService.applyCreateStatus(event, saveDraft);
 
         if (bannerImage != null && !bannerImage.isEmpty()) {
             try {
@@ -821,8 +980,18 @@ public class WomenEventController {
             }
         }
 
-        womenEventRepository.save(event);
-        ra.addFlashAttribute("success", "Event submitted for admin approval!");
+        try {
+            womenEventRepository.save(event);
+        } catch (org.springframework.dao.DataAccessException ex) {
+            ra.addFlashAttribute("error", "Could not save the event. Check category and required fields, then try again.");
+            return "redirect:/women-events/organizer/create";
+        }
+        womenEventLifecycleService.transition(event,
+                saveDraft ? EventLifecycleStatus.DRAFT : EventLifecycleStatus.SUBMITTED,
+                "EVENT_HOST", host.getId(), host.getEmail(), saveDraft ? "Saved as draft" : "Submitted for approval");
+        ra.addFlashAttribute("success", saveDraft
+                ? "Draft saved. Complete and submit for admin approval when ready."
+                : "Event submitted for admin approval!");
         return "redirect:/women-events/organizer/dashboard";
     }
 
@@ -830,6 +999,9 @@ public class WomenEventController {
     public String viewAttendees(@PathVariable Long id, HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (!EventHostProfileService.isApproved(host)) {
+            return redirectIfFeaturesLocked(host, null, null);
+        }
 
         WomenEvent event = womenEventRepository.findById(id).orElse(null);
         if (event == null || !event.getOrganizer().getId().equals(host.getId())) {
@@ -850,29 +1022,21 @@ public class WomenEventController {
     public String checkIn(@PathVariable Long id, @RequestParam String ticketCode, HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
+        if (!EventHostProfileService.isApproved(host)) {
+            return redirectIfFeaturesLocked(host, ra, "Check-in is locked until admin profile approval.");
+        }
 
         WomenEvent event = womenEventRepository.findById(id).orElse(null);
         if (event == null || !event.getOrganizer().getId().equals(host.getId())) {
             return "redirect:/women-events/organizer/dashboard";
         }
 
-        Optional<WomenEventRegistration> regOpt = womenEventRegistrationRepository.findByTicketCode(ticketCode.trim().toUpperCase());
-        if (regOpt.isEmpty() || !regOpt.get().getEvent().getId().equals(event.getId())) {
-            ra.addFlashAttribute("error", "Ticket code not found for this event.");
-            return "redirect:/women-events/organizer/" + id + "/attendees";
+        try {
+            womenEventBookingService.checkIn(event, ticketCode.trim());
+            ra.addFlashAttribute("success", "Ticket verified and attendee checked in.");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason());
         }
-
-        WomenEventRegistration reg = regOpt.get();
-        if ("CANCELLED".equals(reg.getStatus())) {
-            ra.addFlashAttribute("error", "This ticket is cancelled and cannot be verified.");
-            return "redirect:/women-events/organizer/" + id + "/attendees";
-        }
-
-        reg.setCheckedIn(true);
-        reg.setStatus("ATTENDED");
-        womenEventRegistrationRepository.save(reg);
-
-        ra.addFlashAttribute("success", "Ticket verified successfully! " + reg.getUser().getFullName() + " checked in.");
         return "redirect:/women-events/organizer/" + id + "/attendees";
     }
 
@@ -895,7 +1059,7 @@ public class WomenEventController {
     public String approveHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         eventHostRepository.findById(id).ifPresent(h -> {
-            h.setVerificationStatus(VerificationStatus.VERIFIED);
+            eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.APPROVED);
             eventHostRepository.save(h);
         });
         ra.addFlashAttribute("success", "Event host approved!");
@@ -906,7 +1070,7 @@ public class WomenEventController {
     public String rejectHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         eventHostRepository.findById(id).ifPresent(h -> {
-            h.setVerificationStatus(VerificationStatus.REJECTED);
+            eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.REJECTED);
             eventHostRepository.save(h);
         });
         ra.addFlashAttribute("success", "Event host application rejected.");
@@ -917,8 +1081,10 @@ public class WomenEventController {
     public String approveEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
-            e.setStatus("APPROVED");
-            womenEventRepository.save(e);
+            womenEventLifecycleService.transition(e, EventLifecycleStatus.APPROVED,
+                    "ADMIN", null, "admin", "Approved");
+            womenEventLifecycleService.transition(e, EventLifecycleStatus.PUBLISHED,
+                    "ADMIN", null, "admin", "Published after approval");
         });
         ra.addFlashAttribute("success", "Event approved!");
         return "redirect:/women-events/admin/list";
@@ -928,8 +1094,8 @@ public class WomenEventController {
     public String rejectEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
-            e.setStatus("REJECTED");
-            womenEventRepository.save(e);
+            womenEventLifecycleService.transition(e, EventLifecycleStatus.REJECTED,
+                    "ADMIN", null, "admin", "Rejected");
         });
         ra.addFlashAttribute("success", "Event rejected.");
         return "redirect:/women-events/admin/list";
@@ -952,5 +1118,100 @@ public class WomenEventController {
         womenEventRepository.deleteById(id);
         ra.addFlashAttribute("success", "Event deleted.");
         return "redirect:/women-events/admin/list";
+    }
+
+    @PostMapping("/admin/{id}/request-changes")
+    public String requestEventChanges(@PathVariable Long id,
+                                      @RequestParam String reason,
+                                      HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        if (reason == null || reason.isBlank()) {
+            ra.addFlashAttribute("error", "A reason is required when requesting changes.");
+            return "redirect:/women-events/admin/list";
+        }
+        womenEventRepository.findById(id).ifPresent(e ->
+                womenEventLifecycleService.transition(e, EventLifecycleStatus.CHANGES_REQUESTED,
+                        "ADMIN", null, "admin", reason.trim()));
+        ra.addFlashAttribute("success", "Changes requested. The host can update and resubmit.");
+        return "redirect:/women-events/admin/list";
+    }
+
+    @PostMapping("/admin/{id}/unpublish")
+    public String unpublishEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        womenEventRepository.findById(id).ifPresent(e -> {
+            e.setStatus("UNPUBLISHED");
+            e.setLifecycleStatus(EventLifecycleStatus.APPROVED);
+            womenEventRepository.save(e);
+        });
+        ra.addFlashAttribute("success", "Event unpublished.");
+        return "redirect:/women-events/admin/list";
+    }
+
+    @PostMapping("/admin/{id}/cancel")
+    public String adminCancelEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        womenEventRepository.findById(id).ifPresent(e ->
+                womenEventLifecycleService.transition(e, EventLifecycleStatus.CANCELLED,
+                        "ADMIN", null, "admin", "Cancelled by admin"));
+        ra.addFlashAttribute("success", "Event cancelled.");
+        return "redirect:/women-events/admin/list";
+    }
+
+    @GetMapping("/tickets/{id}")
+    public String digitalTicket(@PathVariable Long id, HttpSession session, Model model) {
+        User loggedUser = (User) session.getAttribute("user");
+        if (loggedUser == null) return "redirect:/login";
+        WomenEventRegistration reg = womenEventRegistrationRepository.findById(id).orElse(null);
+        if (reg == null || reg.getUser() == null || !reg.getUser().getId().equals(loggedUser.getId())) {
+            return "redirect:/women-events/my-registrations";
+        }
+        model.addAttribute("reg", reg);
+        model.addAttribute("event", reg.getEvent());
+        model.addAttribute("loggedUser", loggedUser);
+        model.addAttribute("user", loggedUser);
+        boolean showAccess = reg.isPaid() || (reg.getEvent() != null && reg.getEvent().isFree())
+                || womenEventBookingService.payableOf(reg) <= 0;
+        model.addAttribute("streamLink",
+                WomenEventSupport.hideAccessIfUnauthorized(reg.getEvent(), showAccess && !"CANCELLED".equalsIgnoreCase(reg.getStatus())));
+        return "women-events/ticket";
+    }
+
+    @PostMapping("/{id}/save")
+    public String toggleSave(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        User loggedUser = (User) session.getAttribute("user");
+        if (loggedUser == null) return "redirect:/login";
+        WomenEvent event = womenEventRepository.findById(id).orElse(null);
+        if (event == null) return "redirect:/women-events";
+        eventFavoriteRepository.findByEventAndUser(event, loggedUser).ifPresentOrElse(
+                fav -> {
+                    eventFavoriteRepository.delete(fav);
+                    ra.addFlashAttribute("success", "Removed from saved events.");
+                },
+                () -> {
+                    EventFavorite fav = new EventFavorite();
+                    fav.setEvent(event);
+                    fav.setUser(loggedUser);
+                    eventFavoriteRepository.save(fav);
+                    ra.addFlashAttribute("success", "Event saved.");
+                });
+        return "redirect:/women-events/" + id;
+    }
+
+    @PostMapping("/organizer/{id}/submit")
+    public String hostSubmitEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        EventHost host = checkAndGetHost(session);
+        if (host == null) return "redirect:/women-events/host/login";
+        if (!EventHostProfileService.isApproved(host)) {
+            return redirectIfFeaturesLocked(host, ra, "Event features stay locked until admin profile approval.");
+        }
+        WomenEvent event = womenEventRepository.findById(id).orElse(null);
+        if (event == null || event.getOrganizer() == null || !event.getOrganizer().getId().equals(host.getId())) {
+            return "redirect:/women-events/organizer/dashboard";
+        }
+        womenEventLifecycleService.transition(event, EventLifecycleStatus.SUBMITTED,
+                "EVENT_HOST", host.getId(), host.getEmail(), "Submitted for approval");
+        ra.addFlashAttribute("success", "Event submitted for admin approval.");
+        return "redirect:/women-events/organizer/dashboard";
     }
 }

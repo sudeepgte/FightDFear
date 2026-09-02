@@ -66,24 +66,26 @@ public class MobileWomenProductsSellerAuthController {
     private WomenProductOrderLifecycleService orderLifecycle;
 
     @PostMapping("/otp/send-email")
-    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody(required = false) Map<String, Object> body) {
         try {
-            sellerRegistrationService.sendRegistrationOtp(body == null ? null : body.get("email"));
+            sellerRegistrationService.sendRegistrationOtp(str(body, "email"));
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "OTP sent to your email");
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error(ex.getMessage()));
         }
     }
 
     @PostMapping("/otp/verify-email")
-    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody Map<String, String> body) {
+    public ResponseEntity<Map<String, Object>> verifyEmailOtp(@RequestBody(required = false) Map<String, Object> body) {
         try {
             sellerRegistrationService.verifyRegistrationOtp(
-                    body == null ? null : body.get("email"),
-                    body == null ? null : body.get("otp"));
+                    str(body, "email"),
+                    str(body, "otp").replaceAll("\\D", ""));
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Email verified");

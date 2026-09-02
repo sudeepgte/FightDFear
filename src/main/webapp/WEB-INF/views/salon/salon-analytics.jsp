@@ -182,6 +182,10 @@
     <div class="main-content">
         <div class="container-fluid">
             
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            </div>
+            
             <div class="mb-5">
                 <h2 class="page-title m-0">Business Intelligence</h2>
                 <p class="page-subtitle mt-1 mb-0">Lifetime aggregated performance overview.</p>

@@ -152,6 +152,42 @@
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full-width, .section-label { grid-column: span 1; }
         }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px;
+        }
+        .modal-card {
+            background: #FFFFFF; border-radius: 20px; max-width: 460px; width: 100%; padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .modal-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .modal-header .icon-wrap {
+            width: 40px; height: 40px; border-radius: 10px; background: var(--rose-soft); color: var(--primary);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+        }
+        .modal-header h3 { font-size: 1.15rem; font-weight: 800; color: var(--navy); margin: 0; }
+        .modal-body {
+            background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 14px; margin-bottom: 20px;
+        }
+        .review-row {
+            display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color); font-size: 0.85rem;
+        }
+        .review-row:last-child { border-bottom: none; }
+        .review-row .label { color: var(--text-gray); font-weight: 500; }
+        .review-row .value { color: var(--navy); font-weight: 700; text-align: right; word-break: break-word; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-cancel {
+            flex: 1; padding: 12px; background: #FFFFFF; border: 1px solid var(--border-color);
+            color: var(--navy); border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit;
+        }
+        .btn-modal-confirm {
+            flex: 1.5; padding: 12px; background: var(--primary); border: none; color: #FFFFFF;
+            border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;
+        }
     </style>
 </head>
 <body>
@@ -307,6 +343,30 @@
         </div>
     </div>
 
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap"><i class="bi bi-shield-lock-fill"></i></div>
+                <div>
+                    <h3>Confirm Details</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-gray); margin: 0;">Review your information before account creation</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-row"><span class="label">Full Name:</span><span class="value" id="revName">—</span></div>
+                <div class="review-row"><span class="label">Mobile Number:</span><span class="value" id="revPhone">—</span></div>
+                <div class="review-row"><span class="label">Email:</span><span class="value" id="revEmail">—</span></div>
+                <div class="review-row"><span class="label">Job Category:</span><span class="value" id="revCategory">—</span></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" id="btnConfirmBack">Back / Edit</button>
+                <button type="button" class="btn-modal-confirm" id="btnConfirmRegister">
+                    Confirm &amp; Register <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const categories = {
             "Caregiver": ["Elderly Caregiver", "Patient Care Assistant", "Child Caregiver", "Home Care Assistant"],
@@ -360,6 +420,7 @@
         }
 
         let isEmailVerified = false;
+        let wjConfirmReady = false;
 
         document.getElementById('btn-send-otp').addEventListener('click', function() {
             const emailInput = document.getElementById('email');
@@ -387,6 +448,7 @@
                     otpMsg.textContent = 'OTP sent successfully! Please check your email inbox.';
                     otpMsg.style.color = '#10b981';
                     sendBtn.textContent = 'Resend OTP';
+                    alert('OTP sent to your email (' + email + ')! Please check your inbox or spam folder.');
                 } else {
                     otpMsg.textContent = 'Error: ' + data.message;
                     otpMsg.style.color = '#f43f5e';
@@ -429,6 +491,7 @@
                     document.getElementById('btn-send-otp').style.display = 'none';
                     verifyBtn.style.display = 'none';
                     document.getElementById('otp').disabled = true;
+                    alert('Email verified successfully! You can now complete registration.');
                 } else {
                     otpMsg.textContent = data.message || 'Invalid or expired OTP.';
                     otpMsg.style.color = '#f43f5e';
@@ -551,11 +614,30 @@
                 return;
             }
 
+            if (!wjConfirmReady) {
+                event.preventDefault();
+                document.getElementById('revName').textContent = fullName;
+                document.getElementById('revPhone').textContent = phone;
+                document.getElementById('revEmail').textContent = email;
+                document.getElementById('revCategory').textContent = this.jobCategory.value + ' / ' + this.jobSubCategory.value;
+                document.getElementById('confirmModal').style.display = 'flex';
+            }
+
             function showError(message) {
                 errorMsg.textContent = message;
                 errorAlert.style.display = 'flex';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
+        });
+
+        document.getElementById('btnConfirmBack').addEventListener('click', function () {
+            document.getElementById('confirmModal').style.display = 'none';
+            wjConfirmReady = false;
+        });
+        document.getElementById('btnConfirmRegister').addEventListener('click', function () {
+            wjConfirmReady = true;
+            document.getElementById('confirmModal').style.display = 'none';
+            document.getElementById('registerForm').requestSubmit();
         });
     </script>
 </body>

@@ -203,7 +203,7 @@
         }
 
         .btn-add-new {
-            background: var(--brand-purple);
+            background: linear-gradient(90deg, #2b1055 0%, #F43F5E 100%); border: none;
             color: white;
             padding: 10px 24px;
             border-radius: 50px;
@@ -217,7 +217,7 @@
         }
 
         .btn-add-new:hover {
-            background: var(--brand-purple-darker);
+            background: linear-gradient(90deg, #1e0940 0%, #e11d48 100%); border: none;
             color: white;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(106, 13, 173, 0.3);
@@ -276,6 +276,9 @@
     <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid">
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            </div>
             
             <div class="page-header">
                 <h2>Our Stylists</h2>

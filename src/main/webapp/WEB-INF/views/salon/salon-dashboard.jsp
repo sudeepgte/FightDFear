@@ -22,17 +22,25 @@
     <style>
         :root {
             --sidebar-width: 280px;
-            --dashboard-bg: #f8f9fc;
-            --fdf-burgundy: #2d0b20;
-            --fdf-burgundy-dark: #1f0615;
-            --fdf-pink: #db2777;
-            --fdf-pink-light: #fbcfe8;
-            --fdf-rose: #f43f5e;
-            --fdf-lavender: #f3e8ff;
-            --fdf-text-dark: #1e1b4b;
-            --fdf-text-muted: #64748b;
-            --fdf-border: #f1e9f0;
-            --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
+            --dashboard-bg: #F8FAFC;
+            --fdf-burgundy: #1E293B; /* Slate Gray Dark */
+            --fdf-burgundy-dark: #0F172A; /* Slate Gray Darker */
+            --fdf-pink: #F43F5E; /* Coral/Rose */
+            --fdf-pink-light: #FFE4E6; /* Light Coral */
+            --fdf-rose: #E11D48; /* Dark Coral */
+            --fdf-lavender: #F1F5F9; /* Slate Light */
+            --fdf-text-dark: #1E293B; /* Slate Gray Dark */
+            --fdf-text-muted: #64748B; /* Slate Gray */
+            --fdf-border: #E2E8F0; /* Slate Border */
+            --card-shadow: 0 10px 30px rgba(30, 41, 59, 0.04);
+            
+            /* Status Colors */
+            --status-success-bg: #F0FDF4;
+            --status-success-text: #16A34A;
+            --status-warning-bg: #FFF7ED;
+            --status-warning-text: #C2410C;
+            --status-error-bg: #FEF2F2;
+            --status-error-text: #DC2626;
         }
 
         body {
@@ -40,7 +48,14 @@
             background-color: var(--dashboard-bg);
             color: var(--fdf-text-dark);
             margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100vw;
             overflow-x: hidden;
+        }
+        
+        * {
+            box-sizing: border-box;
         }
 
         /* Scrollbar styling */
@@ -369,7 +384,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #10b981;
+            background: var(--status-success-text);
         }
 
         /* KPI Cards */
@@ -419,11 +434,11 @@
         .kpi-trend.down { color: #ef4444; }
 
         /* Premium Colors for KPIs */
-        .kpi-pink { background-color: #fdf2f8; color: var(--fdf-pink); }
-        .kpi-green { background-color: #ecfdf5; color: #10b981; }
-        .kpi-orange { background-color: #fff7ed; color: #f97316; }
-        .kpi-purple { background-color: #faf5ff; color: #a855f7; }
-        .kpi-blue { background-color: #eff6ff; color: #3b82f6; }
+        .kpi-pink { background-color: var(--fdf-pink-light); color: var(--fdf-pink); }
+        .kpi-green { background-color: var(--status-success-bg); color: var(--status-success-text); }
+        .kpi-orange { background-color: var(--status-warning-bg); color: var(--status-warning-text); }
+        .kpi-purple { background-color: var(--fdf-lavender); color: var(--fdf-text-muted); }
+        .kpi-blue { background-color: var(--fdf-lavender); color: var(--fdf-text-muted); }
 
         /* Dashboard Sections Layout */
         .premium-card {
@@ -1029,7 +1044,8 @@
         }
         .completion-banner-left {
             flex: 1;
-            min-width: 260px;
+            min-width: 0;
+            width: 100%;
         }
         .completion-header {
             display: flex;
@@ -1051,15 +1067,112 @@
             background: linear-gradient(90deg, #F43F5E, #FB7185);
             border-radius: 4px;
         }
+        
+        /* Mobile Responsive Adjustments */
+        @media (max-width: 991px) {
+            .main-content {
+                padding: 12px;
+                width: 100%;
+                overflow-x: hidden;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .header-title-box {
+                width: 100%;
+            }
+            .header-title-box h2 {
+                font-size: 1.3rem;
+                word-wrap: break-word;
+                white-space: normal;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .btn-pink-gradient {
+                white-space: normal;
+                text-align: center;
+                justify-content: center;
+                width: 100%;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+            }
+            .salon-card {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+            .salon-card-left {
+                width: 100%;
+            }
+            .salon-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+            .ag-left {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .anti-gravity-banner {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px;
+            }
+        }
+        @media (max-width: 767px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header-title-box h2 {
+                font-size: 1.25rem;
+            }
+            .salon-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            .salon-info h2 {
+                font-size: 1.1rem;
+            }
+            .salon-card-left {
+                gap: 12px;
+            }
+        }
+        @media (max-width: 575px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-item {
+                border-right: none;
+                border-bottom: 1px solid var(--fdf-border);
+                padding-right: 0;
+                padding-bottom: 15px;
+            }
+            .summary-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
     <!-- Mobile Header -->
-    <div class="mobile-header d-lg-none shadow-sm">
-        <h4 class="m-0 fw-bold d-flex align-items-center gap-2" style="font-family:'Montserrat';"><i class="bi bi-gender-female"></i> Fight D Fear</h4>
-        <button class="btn btn-link text-white p-0 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
-            <i class="bi bi-list" style="font-size: 1.8rem;"></i>
+    <div class="mobile-header d-lg-none shadow-sm" style="flex-wrap: nowrap; overflow: hidden;">
+        <h4 class="m-0 fw-bold d-flex align-items-center gap-2 text-truncate" style="font-family:'Montserrat'; font-size: 1.1rem; flex: 1;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 24px; width: 24px; border-radius: 6px; object-fit: cover; flex-shrink: 0;"> 
+            <span class="text-truncate">Fight D Fear</span>
+        </h4>
+        <button class="btn btn-link text-white p-0 border-0 flex-shrink-0 ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
+            <i class="bi bi-list" style="font-size: 1.6rem;"></i>
         </button>
     </div>
 
@@ -1085,7 +1198,7 @@
                 </div>
 
                 <div class="header-actions">
-                    <button class="btn-pink-gradient" onclick="location.href='${pageContext.request.contextPath}/booking/list'">
+                    <button class="btn-pink-gradient" onclick="if(checkApproval(event, ${sessionScope.loggedSalon.approved})) location.href='${pageContext.request.contextPath}/booking/list'">
                         <i class="bi bi-plus-circle-fill"></i>
                         <span>New Appointment</span>
                     </button>
@@ -1117,6 +1230,16 @@
                     </div>
                 </div>
             </div>
+
+            <c:if test="${!sessionScope.loggedSalon.approved}">
+                <div class="alert-box alert-error" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(220,38,38,0.08);">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.4rem;"></i>
+                    <div>
+                        <div style="font-size: 1.05rem;">Your account is pending admin approval.</div>
+                        <div style="font-size: 0.85rem; font-weight: 500; margin-top: 2px;">Please wait for the physical business audit before you can manage appointments and settings.</div>
+                    </div>
+                </div>
+            </c:if>
 
                           <!-- Subheader Details Row -->
               
@@ -1470,7 +1593,7 @@
                 <c:when test="${not empty salonOffers}">
                     <div class="d-flex align-items-center justify-content-between mb-3 mt-4">
                         <h5 class="fw-bold mb-0" style="font-family:'Montserrat'; font-size:1.05rem;">Special Offers</h5>
-                        <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="btn-add-new px-3 py-1" style="font-size:0.85rem; border-radius: 8px;">
+                        <a href="${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}" class="btn-add-new px-3 py-1" style="font-size:0.85rem; border-radius: 8px;" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                             <i class="bi bi-plus-lg"></i> Create Offer
                         </a>
                     </div>
@@ -1548,7 +1671,7 @@
                             <div class="ag-content">
                                 <h4 style="color: var(--fdf-text-dark);">SPECIAL OFFERS <span style="background: var(--fdf-pink); color: white;">Boost Your Sales!</span></h4>
                                 <p style="color: var(--fdf-text-muted);">Create and promote exclusive packages and discounts. Salons with active offers see a 34% increase in online bookings.</p>
-                                <button class="btn-pink-gradient py-2 px-4" style="box-shadow:none; font-size:0.82rem;" onclick="location.href='${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}'">Create New Offer</button>
+                                <button class="btn-pink-gradient py-2 px-4" style="box-shadow:none; font-size:0.82rem;" onclick="if(checkApproval(event, ${sessionScope.loggedSalon.approved})) location.href='${pageContext.request.contextPath}/salon/addOffer?salonId=${salon.id}'">Create New Offer</button>
                             </div>
                         </div>
                         <div class="ag-right">
@@ -1565,7 +1688,7 @@
             <!-- Quick Actions -->
             <h5 class="fw-bold mb-3" style="font-family:'Montserrat'; font-size:1.05rem;">Quick Actions</h5>
             <div class="qa-row">
-                <a href="${pageContext.request.contextPath}/booking/list" class="qa-btn">
+                <a href="${pageContext.request.contextPath}/booking/list" class="qa-btn" onclick="return checkApproval(event, ${sessionScope.loggedSalon.approved})">
                     <i class="bi bi-plus-circle"></i> Add Appointment
                 </a>
                 <a href="#addWalkin" class="qa-btn" onclick="alert('Initializing Walk-in booking modal...')">

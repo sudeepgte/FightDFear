@@ -221,11 +221,11 @@
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            flex-grow: 1;
         }
         .btn-salon-action {
             display: block;
             width: 100%;
+            margin-top: auto;
             padding: 10px 20px;
             border-radius: 12px;
             font-size: 13px;
@@ -285,7 +285,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;" data-skip-global-back="true">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -298,9 +298,6 @@
             <div class="top-bar">
                 <a href="${pageContext.request.contextPath}/users/dashboard" class="top-btn" style="margin-right: auto;">
                     <i class="bi bi-house-door"></i> Home
-                </a>
-                <a href="${pageContext.request.contextPath}/contact" class="top-btn">
-                    <i class="bi bi-envelope"></i> Get in Touch
                 </a>
             </div>
             
@@ -366,8 +363,6 @@
             </c:if>
         </div>
 
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->

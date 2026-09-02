@@ -1,22 +1,34 @@
 :root {
-  --primary-purple: #7C2D5E;
-  --primary-purple-light: #a64281;
-  --primary-pink: #DB2777;
-  --primary-coral: #DB2777;
+  --primary-purple: #1E1B4B;
+  --primary-purple-light: #312E81;
+  --primary-pink: #FB7185;
+  --primary-coral: #F43F5E;
   --primary-gold: #ffd700;
-  --dark-bg: #0f0f1a;
-  --light-bg: #fffcfd;
-  --light-gray: #f8fafc;
+  --dark-bg: #1E1B4B;
+  --light-bg: #F8FAFC;
+  --light-gray: #F8FAFC;
+
+  --fl-primary: #1E1B4B;
+  --fl-secondary: #312E81;
+  --fl-accent: #F43F5E;
+  --fl-accent-light: #FB7185;
+  --fl-background: #F8FAFC;
+  --fl-white: #FFFFFF;
+  --fl-text: #1E1B4B;
+  --fl-muted: #64748B;
+  --fl-gold: #FFD700;
+  --fl-border: rgba(30, 27, 75, 0.12);
 }
 
 body {
   font-family: 'Poppins', sans-serif;
   margin: 0;
   background: var(--light-bg);
+  color: var(--fl-text);
 }
 
 .topbar {
-  background: var(--primary-purple);
+  background: #1E1B4B;
   color: white;
   padding: 14px 18px;
   font-weight: 600;
@@ -46,7 +58,7 @@ body {
 .sidebar {
   width: 272px;
   background: #fff;
-  border-right: 1px solid rgba(124, 45, 94, 0.18);
+  border-right: 1px solid var(--fl-border);
   padding: 14px 12px;
   height: calc(100vh - 56px);
   position: sticky;
@@ -61,7 +73,7 @@ body {
   gap: 12px;
   padding: 10px 15px;
   border-radius: 12px;
-  color: #4b5563;
+  color: #64748B;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.9rem;
@@ -70,18 +82,18 @@ body {
 }
 
 .navlink:hover {
-  background: rgba(124, 45, 94, 0.1);
+  background: rgba(30, 27, 75, 0.08);
   color: var(--primary-purple);
 }
 
 .navlink.active {
-  background: var(--primary-purple);
+  background: var(--primary-coral);
   color: white;
 }
 
 .sidebar-section-title {
   font-weight: 700;
-  color: #666;
+  color: #64748B;
   font-size: 0.8rem;
   margin: 0 0 8px;
 }
@@ -113,7 +125,8 @@ body {
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(124, 45, 94, 0.1);
+  box-shadow: 0 10px 30px rgba(30, 27, 75, 0.08);
+  border: 1px solid var(--fl-border);
   margin-bottom: 24px;
 }
 
@@ -130,7 +143,7 @@ body {
 }
 
 .btn-purple {
-  background: var(--primary-purple);
+  background: var(--primary-coral);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -140,7 +153,7 @@ body {
 }
 
 .btn-purple:hover {
-  background: var(--primary-purple-light);
+  background: #E02B4C;
   transform: translateY(-2px);
   color: white;
 }
@@ -175,7 +188,7 @@ body {
     height: auto;
     position: static;
     border-right: none;
-    border-bottom: 1px solid rgba(124, 45, 94, 0.18);
+    border-bottom: 1px solid var(--fl-border);
   }
   .topbar .wrap {
     flex-wrap: wrap;

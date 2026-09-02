@@ -255,7 +255,7 @@
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
-        <i class="fa-solid fa-fire" style="font-size:24px; color:#F43F5E;"></i><h1 style="margin:0; font-size:20px !important; color:#F43F5E !important;">Fight D Fear</h1>
+        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#1e1b4b !important;">Fight D Fear</h1>
     </a>
     <nav id="navmenu" class="navmenu">
       <ul>

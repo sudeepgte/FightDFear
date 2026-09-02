@@ -15,7 +15,14 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
     <style>
-        :root { --sidebar-width: 280px; --dashboard-bg: #f8f5ff; }
+        :root { 
+            --sidebar-width: 280px; 
+            --dashboard-bg: #F8FAFC; 
+            --brand-purple: #F43F5E; 
+            --brand-purple-darker: #1E293B; 
+            --gradient-dark: linear-gradient(135deg, #1E293B 0%, #64748B 100%);
+            --fdf-border: #cbd5e1;
+        }
         body { font-family: 'Poppins', sans-serif; background-color: var(--dashboard-bg); color: var(--brand-purple-darker); overflow-x: hidden; }
         
         .sidebar { background: var(--gradient-dark); color: white; }
@@ -38,8 +45,13 @@
         .table-custom th { background: #f8f9fa; color: var(--brand-purple-darker); font-weight: 700; border-bottom: 2px solid #eee; text-transform: uppercase; font-size: 0.85rem; }
         .table-custom td { vertical-align: middle; border-bottom: 1px solid #eee; color: #4a5568; }
 
-        .btn-action { background: var(--gradient-primary); color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; transition: all 0.3s ease; }
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-action { background: #F43F5E !important; color: white !important; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-action:hover { background: #e11d48 !important; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(244, 63, 94, 0.3); }
+
+        .text-purple { color: var(--brand-purple-darker) !important; }
+        td .text-purple { color: var(--brand-purple) !important; }
+        
+        .modal-title.text-purple { color: var(--brand-purple-darker) !important; }
 
         .row-low-stock { background-color: rgba(255, 193, 7, 0.05) !important; }
         .row-out-of-stock { background-color: rgba(220, 53, 69, 0.05) !important; }
@@ -53,6 +65,9 @@
 
     <div class="main-content">
         <div class="container-fluid">
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            </div>
             
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>

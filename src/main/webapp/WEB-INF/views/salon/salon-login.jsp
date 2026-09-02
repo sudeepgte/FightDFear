@@ -260,9 +260,9 @@
 
             <form action="${pageContext.request.contextPath}/salons/login" method="post">
                 <div class="form-group">
-                    <label for="username">Username or Email</label>
-                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter your credentials" 
-                           value="<c:out value='${not empty param.username ? param.username : ""}'/>" required autofocus>
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" 
+                           value="<c:out value='${not empty registeredEmail ? registeredEmail : (not empty param.email ? param.email : "")}'/>" required autofocus>
                 </div>
 
                 <div class="form-group">

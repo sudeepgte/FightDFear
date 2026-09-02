@@ -9,41 +9,54 @@
  * =================================================================== */
 :root {
   /* ===============================
-     BRAND COLORS — Primary identity
+     STRICT 60/30/10 BRAND COLORS
      =============================== */
-  --brand-purple: #1e1b4b;         /* Mulberry plum — Headlines, buttons, links */
-  --brand-purple-dark: #1e1b4b;    /* Deeper plum — Hover/Active states */
-  --brand-purple-darker: #3F1430;  /* Dark plum — Deep accents, navigation, footer */
-  --brand-pink: #f43f5e;           /* Hot rose — Women-empowerment accents */
-  --brand-pink-light: #FB7185;     /* Soft rose — Highlights, gradients */
+  --color-primary-surface: #FFFFFF;
+  --color-page-background: #F8FAFC;
+  --color-secondary-surface: #FFF1F3;
+  --color-secondary-rose: #FFE4E8;
+  --color-accent: #F43F5E;
+  --color-accent-hover: #E11D48;
+  --color-text-primary: #1E1B4B;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
 
-  /* Primary palette mappings */
-  --primary-purple: var(--brand-purple);
-  --primary-purple-light: #312e81; 
-  --primary-coral: var(--brand-pink);
-  --primary-coral-dark: var(--brand-purple-dark);
+  /* Legacy mappings to preserve structure */
+  --brand-purple: var(--color-text-primary);         
+  --brand-purple-dark: var(--color-text-primary);    
+  --brand-purple-darker: var(--color-text-primary);  
+  --brand-pink: var(--color-accent);           
+  --brand-pink-light: var(--color-secondary-surface);     
+
+  --primary-purple: var(--color-text-primary);
+  --primary-purple-light: var(--color-text-secondary); 
+  --primary-coral: var(--color-accent);
+  --primary-coral-dark: var(--color-accent-hover);
   --primary-teal: #20c997;
   --primary-gold: #ffd700;
-  --dark-bg: var(--brand-purple-darker);
-  --light-bg: #fffcfd;
-  --gradient-primary: linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-purple-dark) 50%, var(--brand-pink) 100%);
-  --gradient-dark: linear-gradient(135deg, var(--brand-purple-darker) 0%, var(--brand-purple-dark) 40%, var(--brand-purple) 100%);
-  --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 20px 40px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.15);
+  
+  --dark-bg: var(--color-primary-surface);
+  --light-bg: var(--color-page-background);
+  
+  --gradient-primary: var(--color-accent);
+  --gradient-dark: var(--color-page-background);
+  
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
 
-  /* FDF system tokens mapped to brand identity */
-  --fdf-primary: var(--brand-purple);
-  --fdf-primary-2: var(--brand-purple-dark);
-  --fdf-bg: var(--light-bg);
-  --fdf-card: #ffffff;
-  --fdf-text: #111827;
-  --fdf-muted: #6b7280;
-  --fdf-border: rgba(30, 27, 75, 0.12);
+  /* FDF system tokens */
+  --fdf-primary: var(--color-accent);
+  --fdf-primary-2: var(--color-accent-hover);
+  --fdf-bg: var(--color-page-background);
+  --fdf-card: var(--color-primary-surface);
+  --fdf-text: var(--color-text-primary);
+  --fdf-muted: var(--color-text-secondary);
+  --fdf-border: var(--color-border);
   --fdf-shadow: var(--shadow-sm);
 
-  /* Accent color for main.css integration */
-  --accent-color: var(--brand-purple);
+  --accent-color: var(--color-accent);
 }
 
 /* ===================================================================
@@ -83,16 +96,16 @@
  * 4. BUTTONS
  * =================================================================== */
 .btn-fdf {
-  background: var(--gradient-primary);
-  color: #fff;
+  background: var(--color-accent) !important;
+  color: #FFFFFF !important;
   border: none;
   font-weight: 700;
   border-radius: 999px;
-  transition: filter 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 .btn-fdf:hover {
-  filter: brightness(1.08);
-  color: #fff;
+  background: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
   transform: translateY(-1px);
 }
 
@@ -114,37 +127,40 @@
   border-radius: 999px;
   font-weight: 800;
   padding: 10px 24px;
-  background: var(--gradient-primary);
+  background: var(--color-accent) !important;
   border: none;
-  color: #fff;
+  color: #FFFFFF !important;
   letter-spacing: .3px;
-  transition: filter 0.2s, transform 0.2s;
+  transition: all 0.2s;
 }
 .btn.btn-watch-video:hover {
-  filter: brightness(1.08);
-  color: #fff;
+  background: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
   transform: translateY(-2px);
 }
 
 /* Bootstrap .btn-primary override for consistency */
 .btn-primary {
-  background: var(--primary-purple-light) !important;
-  border-color: var(--primary-purple-light) !important;
+  background: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+  color: #FFFFFF !important;
 }
 .btn-primary:hover,
 .btn-primary:focus {
-  background: var(--primary-purple) !important;
-  border-color: var(--primary-purple) !important;
+  background: var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
 }
 
-/* Bootstrap .btn-outline-primary */
+/* Secondary Button equivalent */
 .btn-outline-primary {
-  color: var(--primary-purple-light) !important;
-  border-color: var(--primary-purple-light) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+  background: var(--color-primary-surface) !important;
 }
 .btn-outline-primary:hover {
-  background: var(--primary-purple-light) !important;
-  color: #fff !important;
+  background: var(--color-secondary-surface) !important;
+  color: var(--color-text-primary) !important;
 }
 
 .fdf-pill {
@@ -198,10 +214,7 @@
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: linear-gradient(135deg,
-    rgba(74, 14, 120, 0.55) 0%,
-    rgba(123, 44, 191, 0.40) 50%,
-    rgba(255, 107, 107, 0.30) 100%) !important;
+  background: rgba(244, 63, 94, 0.05) !important;
   z-index: 1;
 }
 
@@ -213,18 +226,17 @@
 
 .hero-section h1,
 .hero-wrap h1 {
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  color: var(--color-text-primary);
 }
 
 .hero-section h2,
 .hero-wrap h2 {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-text-secondary);
 }
 
 .hero-section p,
 .hero-wrap p {
-  color: #f8f9fa;
+  color: var(--color-text-secondary);
 }
 
 /* ===================================================================
@@ -396,10 +408,10 @@ section h2 {
  * 14. USER PROFILE PAGE
  * =================================================================== */
 .user-details-side {
-  background: linear-gradient(160deg, #f8f5ff 0%, #fff 100%);
+  background: var(--color-page-background);
 }
 .user-bg-left {
-  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-light) 100%);
+  background: var(--color-primary-surface);
 }
 .coin-box {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.08));

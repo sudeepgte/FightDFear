@@ -33,12 +33,7 @@ public class BuddyController {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
 
-        // Purpose: show current state + pending requests in the UI.
-        model.addAttribute("user", user);
-        model.addAttribute("activeAvailability", buddyService.getActiveAvailability(user));
-        model.addAttribute("incoming", buddyService.incomingPending(user));
-        model.addAttribute("outgoing", buddyService.outgoingPending(user));
-        return "buddy";
+        return "redirect:/users/dashboard";
     }
 
     @PostMapping("/availability/start")

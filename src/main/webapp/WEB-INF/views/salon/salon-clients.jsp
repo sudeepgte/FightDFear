@@ -294,6 +294,9 @@
     <!-- Main Content -->
     <div class="main-content">
         <div class="container-fluid">
+            <div class="mb-3">
+                <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn btn-sm" style="border: 1px solid #F43F5E; color: #F43F5E; font-weight: 600; border-radius: 8px;"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            </div>
             
             <div class="page-header">
                 <h2>Clients Dashboard</h2>

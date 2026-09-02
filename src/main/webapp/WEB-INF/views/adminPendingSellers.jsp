@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,205 +9,128 @@
   <title>Women Product Sellers Verification — Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-products.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-  :root {
-    --maroon:        #0F172A;
-    --maroon-light:  #F43F5E;
-    --maroon-dark:   #0F172A;
-    --maroon-pale:   #f8fafc;
-    --maroon-border: rgba(30, 27, 75, 0.12);
-    --shadow-sm: 0 6px 20px rgba(125,42,90,0.10);
-    --sidebar-w: 272px;
+  body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
+  body.wp-admin-wp .layout { display: flex; min-height: 100vh; }
+  body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg); padding: 0 !important; }
+  body.wp-admin-wp .mainInner { max-width: 1400px; margin: 0 auto; padding: 22px 24px 48px; }
+  body.wp-admin-wp .card-table {
+    background: var(--ap-card); border-radius: var(--ap-radius); overflow: hidden;
+    border: 1px solid var(--ap-border); box-shadow: var(--ap-shadow); margin-bottom: 16px;
   }
-  * { box-sizing: border-box; }
-  body { font-family:'Poppins',sans-serif; margin:0; background:var(--maroon-pale); color:#1a1a2e; }
-
-  /* ── TOPBAR ── */
-  .topbar {
-    background: var(--maroon); color:#fff;
-    padding: 0 20px; height: 58px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 1000;
-    box-shadow: 0 3px 16px rgba(125,42,90,0.28);
+  body.wp-admin-wp .card-table-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--ap-border);
+    font-weight: 800; color: var(--ap-text); display: flex; align-items: center; gap: 8px; background: #fff;
   }
-  .topbar .brand { font-size:1.1rem; font-weight:700; }
-  .topbar .btn-logout {
-    background:rgba(255,255,255,0.15); color:#fff;
-    border:1px solid rgba(255,255,255,0.3); border-radius:7px;
-    padding:5px 16px; font-size:0.85rem; font-weight:600;
-    text-decoration:none; transition:background 0.2s;
+  body.wp-admin-wp .badge-count {
+    background: var(--ap-accent); color: #fff; border-radius: 999px; padding: 2px 10px;
+    font-size: 0.72rem; font-weight: 700; margin-left: auto;
   }
-
-  /* ── LAYOUT ── */
-  .layout { display:flex; min-height:calc(100vh - 58px); }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    width: var(--sidebar-w); background:#fff;
-    border-right:1px solid var(--maroon-border);
-    position:sticky; top:58px; height:calc(100vh - 58px);
-    padding:14px 12px; overflow-y:auto; flex-shrink:0;
-    transition: all 0.3s ease;
+  body.wp-admin-wp .table { margin-bottom: 0; min-width: 720px; }
+  body.wp-admin-wp .table thead th {
+    text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 14px;
+    border-bottom: 1px solid var(--ap-border); background: #FCFCFD;
   }
-  .brand { font-size: 0.9rem; font-weight: 700; color: var(--maroon); padding: 10px 15px; text-transform: uppercase; letter-spacing: 1px; }
-  .sectionTitle { font-size: 0.7rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin: 20px 15px 8px; }
-  .navlink {
-    display: flex; align-items: center; gap: 12px; padding: 10px 15px; border-radius: 12px;
-    color: #4b5563; text-decoration: none; font-weight: 500; font-size: 0.9rem; transition: all 0.2s; margin-bottom: 2px;
+  body.wp-admin-wp .table tbody td {
+    padding: 14px; vertical-align: middle; border-bottom: 1px solid #F1F5F9; font-size: 0.86rem;
   }
-  .navlink i { width: 20px; text-align: center; color: var(--maroon); font-size: 1rem; }
-  .navlink:hover { background: var(--maroon-pale); color: var(--maroon); padding-left: 20px; }
-  .navlink.active { background: var(--maroon); color: #fff; font-weight: 600; box-shadow: 0 4px 12px rgba(125,42,90,0.2); }
-  .navlink.active i { color: #fff; }
-
-  /* ── MAIN ── */
-  .main { flex:1; min-width:0; padding:28px 20px 48px; }
-  .mainInner { max-width:1200px; margin:0 auto; animation:fadeUp 0.35s ease-out; }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-
-  /* ── PAGE HEADER ── */
-  .pg-header {
-    background: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 55%, #c04b7a 100%);
-    border-radius:16px; padding:22px 28px; margin-bottom:28px;
-    box-shadow:0 8px 28px rgba(125,42,90,0.22);
-    display:flex; align-items:center; justify-content:space-between;
+  body.wp-admin-wp .table tbody tr:hover { background: #FFF7F8; }
+  body.wp-admin-wp .badge-status { padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+  body.wp-admin-wp .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
+  body.wp-admin-wp .status-PENDING { background: #FEF3C7; color: #B45309; }
+  body.wp-admin-wp .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  body.wp-admin-wp .status-PLACED { background: #FEF3C7; color: #854d0e; }
+  body.wp-admin-wp .status-CONFIRMED { background: var(--ap-info-bg); color: var(--ap-info); }
+  body.wp-admin-wp .status-SHIPPED { background: var(--ap-info-bg); color: var(--ap-info); }
+  body.wp-admin-wp .status-DELIVERED { background: var(--ap-success-bg); color: var(--ap-success); }
+  body.wp-admin-wp .status-CANCELLED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  body.wp-admin-wp .status-IN-STOCK { background: var(--ap-success-bg); color: var(--ap-success); }
+  body.wp-admin-wp .status-LOW-STOCK { background: #FEF3C7; color: #854d0e; }
+  body.wp-admin-wp .status-OUT-OF-STOCK { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  body.wp-admin-wp .btn-approve { background: var(--ap-success); color: #fff; padding: 7px 12px; border: 0; border-radius: 9px; font-size: 0.8rem; font-weight: 700; }
+  body.wp-admin-wp .btn-reject { background: var(--ap-danger); color: #fff; padding: 7px 12px; border: 0; border-radius: 9px; font-size: 0.8rem; font-weight: 700; }
+  body.wp-admin-wp .btn-view-media, body.wp-admin-wp .btn-view-seller {
+    display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--ap-text);
+    border: 1px solid var(--ap-border); padding: 7px 12px; border-radius: 9px; font-size: 0.8rem; font-weight: 600;
+    text-decoration: none;
   }
-  .pg-header h4 { color:#fff; font-weight:700; font-size:1.2rem; margin:0; }
-  .pg-header p { color:rgba(255,255,255,0.7); margin:4px 0 0; font-size:0.85rem; }
-
-  /* ── TABLE CARDS ── */
-  .card-table {
-    background:#fff; border-radius:16px; overflow:hidden;
-    border:1px solid var(--maroon-border); box-shadow:var(--shadow-sm);
-    margin-bottom: 28px;
-  }
-  .card-table-header {
-    background: var(--maroon-pale);
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--maroon-border);
-    font-weight: 700;
-    color: var(--maroon-dark);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .badge-count {
-      background: var(--maroon-light);
-      color: #fff;
-      border-radius: 20px;
-      padding: 2px 10px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      margin-left: auto;
-  }
-  
-  .table { margin-bottom:0; }
-  .table thead th {
-    background: rgba(125,42,90,0.03); color:var(--maroon-dark);
-    font-size:0.75rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:0.05em; padding:16px; border:none; border-bottom:1px solid var(--maroon-border); text-align:center;
-  }
-  .table tbody td {
-    padding:16px; vertical-align:middle; border-bottom:1px solid var(--maroon-border);
-    font-size:0.9rem; text-align:center;
-  }
-  .table tbody tr:last-child td { border-bottom: none; }
-  .table tbody tr:hover { background:rgba(125,42,90,0.02); }
-
-  /* ── BADGES & BUTTONS ── */
-  .badge-status {
-    padding:6px 12px; border-radius:999px; font-size:0.75rem; font-weight:700;
-    display:inline-block; border:1px solid transparent;
-  }
-  .status-VERIFIED { background:#dcfce7; color:#166534; border-color:#bbf7d0; }
-  .status-PENDING { background:#fef9c3; color:#854d0e; border-color:#fef08a; }
-  .status-REJECTED { background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-  
-  .btn-approve {
-    background-color: #059669;
-    color: white;
-    padding: 6px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    transition: all 0.2s;
-  }
-  .btn-approve:hover { background-color: #047857; transform: translateY(-1px); color: white; }
-
-  .btn-reject {
-    background-color: #dc2626;
-    color: white;
-    padding: 6px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    transition: all 0.2s;
-  }
-  .btn-reject:hover { background-color: #b91c1c; transform: translateY(-1px); color: white; }
-
-  .btn-view-media {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: var(--maroon-pale); 
-    color: var(--maroon); 
-    border: 1px solid var(--maroon-border);
-    padding: 6px 14px; 
-    border-radius: 8px; 
-    font-size: 0.82rem; 
-    font-weight: 700;
-    text-decoration: none; 
-    transition: all 0.2s ease;
-    white-space: nowrap;
-  }
-  .btn-view-media:hover { 
-    background: var(--maroon); 
-    color: #fff; 
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(125,42,90,0.15);
-  }
-
-  .seller-meta {
-      font-size: 0.8rem;
-      color: #6b7280;
-      margin-top: 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      align-items: center;
-  }
-
-  @media(max-width:992px){
-    .layout{flex-direction:column;}
-    .sidebar{width:100%;position:relative;top:0;height:auto;border-right:none;border-bottom:1px solid var(--maroon-border);}
+  body.wp-admin-wp .btn-view-media:hover, body.wp-admin-wp .btn-view-seller:hover { border-color: #FDA4AF; color: var(--ap-accent); }
+  body.wp-admin-wp .d-flex.gap-1 { gap: 8px !important; }
+  body.wp-admin-wp .seller-meta { font-size: 0.78rem; color: var(--ap-muted); display: flex; flex-direction: column; gap: 2px; }
+  body.wp-admin-wp .product-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
+  body.wp-admin-wp .meta-text { font-size: 0.78rem; color: var(--ap-muted); }
+  @media (max-width: 700px) {
+    body.wp-admin-wp .mainInner { padding: 16px 14px 40px; }
+    body.wp-admin-wp .ap-stats { grid-template-columns: 1fr !important; }
   }
 </style>
 </head>
-<body class="wp-admin-wp">
-
-<div class="topbar">
-  <span class="brand">&#x1F6E1;&#xFE0F; Fight D Fear Admin</span>
-  <a href="${pageContext.request.contextPath}/admin/logout" class="btn-logout">
-    <i class="fas fa-sign-out-alt"></i> Logout
-  </a>
-</div>
+<body class="ap-page wp-admin-wp">
+<c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
 
 <div class="layout">
   <%@ include file="globalAdminMenu.jsp" %>
 
   <main class="main">
+    <div class="ap-topbar topbar">
+      <div class="ap-topbar-left">
+        <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+        <div class="ap-search" style="max-width:360px;">
+          <i class="fas fa-search"></i>
+          <input type="search" id="apHeaderSearch" placeholder="Search anything..." aria-label="Search">
+          <span class="ap-kbd">Ctrl + K</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+        </a>
+        <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${apAdmin.id}">
+          <span class="ap-avatar">
+            <c:choose>
+              <c:when test="${not empty apAdmin.profilePhoto}"><img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt=""></c:when>
+              <c:otherwise>${fn:substring(apAdmin.name,0,1)}</c:otherwise>
+            </c:choose>
+          </span>
+          <span><div class="name"><c:out value="${apAdmin.name}"/></div><div class="role">Super Admin</div></span>
+        </a>
+      </div>
+    </div>
     <div class="mainInner">
-      
-      <!-- Header -->
-      <div class="pg-header">
+      <nav class="ap-crumb">
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+        <span class="sep">&gt;</span>
+        <span>Product Sellers</span>
+      </nav>
+      <div class="ap-page-head">
+        <div class="ap-page-ico"><i class="fas fa-shopping-bag"></i></div>
         <div>
-          <h4><i class="fas fa-shopping-bag me-2"></i>Women Product Sellers</h4>
+          <h1>Women Product Sellers</h1>
           <p>Review and verify sellers offering safety and women's products</p>
+        </div>
+      </div>
+      <div class="ap-stats" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+        <div class="ap-stat amber">
+          <div class="ico"><i class="fas fa-clock"></i></div>
+          <div class="val">${not empty pending ? pending.size() : 0}</div>
+          <div class="lbl">Pending</div>
+          <div class="sub">Awaiting review</div>
+        </div>
+        <div class="ap-stat green">
+          <div class="ico"><i class="fas fa-check-circle"></i></div>
+          <div class="val">${not empty verified ? verified.size() : 0}</div>
+          <div class="lbl">Verified</div>
+          <div class="sub">Live on shop</div>
+        </div>
+        <div class="ap-stat rose">
+          <div class="ico"><i class="fas fa-times-circle"></i></div>
+          <div class="val">${not empty rejected ? rejected.size() : 0}</div>
+          <div class="lbl">Rejected</div>
+          <div class="sub">Not listed</div>
         </div>
       </div>
 
