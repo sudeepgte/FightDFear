@@ -11,17 +11,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --navy-dark: #0f172a; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519; /* kept for text */ --primary-rose: #f43f5e; --primary-rose-hover: #e11d48; --primary-plum: #4c0519;
-            --navy-light: #4c0519;
-            --primary: #f43f5e;
-            --coral: #f43f5e;
-            --bg-light: #f8fafc; --rose-bg-light: #ffe4e6; --rose-bg-light: #ffe4e6;
+            --primary-rose: #f43f5e;
+            --primary-rose-hover: #e11d48;
+            --navy-dark: #2E1B33; /* Dark plum header from image */
+            --bg-light: #fcf9f9; /* Very light pinkish-white background */
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-light);
             color: #0f172a;
+            margin: 0;
+            padding: 0;
         }
 
         #wrapper {
@@ -29,151 +30,247 @@
             width: 100%;
         }
 
+        /* Sidebar Styling */
         #sidebar-wrapper {
-            min-width: 260px;
-            max-width: 260px;
+            min-width: 250px;
+            max-width: 250px;
             background: #ffffff;
-            color: white;
             min-height: 100vh;
-            border-top-right-radius: 40px;
+            border-right: 1px solid #f1f5f9;
             padding-top: 30px;
-            box-shadow: 10px 0 20px rgba(0,0,0,0.05);
         }
 
         .sidebar-heading {
-            padding: 10px 25px 25px;
-            font-size: 1.2rem;
+            padding: 10px 25px 30px;
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid #ffe4e6;
+            color: var(--navy-dark);
+        }
+
+        .sidebar-heading i {
+            color: var(--primary-rose);
         }
 
         .sidebar-link {
             background: transparent;
-            color: #64748b;
+            color: #475569;
             padding: 14px 25px;
             font-size: 0.95rem;
-            font-weight: 500;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 15px;
             text-decoration: none;
             transition: all 0.3s;
-            border-left: 4px solid transparent;
+            margin: 5px 15px;
+            border-radius: 12px;
         }
 
-        .sidebar-link:hover, .sidebar-link.active {
-            color: white;
+        .sidebar-link i {
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link:hover {
+            color: var(--primary-rose);
             background: #fff1f2;
-            border-left-color: #f43f5e;
+        }
+
+        .sidebar-link.active {
+            color: var(--primary-rose);
+            background: #fff1f2;
         }
 
         #page-content-wrapper {
             flex: 1;
-            padding: 40px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 80px);
+            height: 100vh;
+            background-color: var(--bg-light);
         }
 
+        /* Chat Container exactly like Image */
         .chat-container {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
-            border: 1px solid rgba(0,0,0,0.03);
+            border-radius: 15px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.03);
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            max-width: 800px;
-            margin: 0 auto;
             width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
+        /* Dark Plum Header */
         .chat-header {
-            background: #ffffff;
+            background: var(--navy-dark);
             color: white;
-            padding: 20px;
+            padding: 20px 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
+        
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .btn-back {
+            color: white;
+            font-size: 1.4rem;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-back:hover {
+            opacity: 0.8;
+            color: white;
+        }
 
+        .chat-header h6 {
+            color: white;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .chat-header .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            display: block;
+        }
+
+        .badge-channel {
+            background-color: var(--primary-rose);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Messages Area */
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
             overflow-y: auto;
-            background: #f1f5f9;
+            background: white; /* Image shows white chat area */
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
         .message {
-            max-width: 70%;
+            max-width: 60%;
             padding: 12px 18px;
-            border-radius: 16px;
+            border-radius: 12px;
             font-size: 0.95rem;
             position: relative;
             line-height: 1.4;
         }
 
+        /* Own messages (like image: Red background, white text) */
         .message.sent {
-            background-color: #f43f5e;
+            background-color: var(--primary-rose);
             color: white;
             align-self: flex-end;
-            border-bottom-right-radius: 2px;
+            border-top-right-radius: 4px;
         }
 
+        /* Other person's messages */
         .message.received {
-            background-color: white;
+            background-color: #f1f5f9;
             color: #1e293b;
             align-self: flex-start;
-            border-bottom-left-radius: 2px;
-            border: 1px solid #e2e8f0;
+            border-top-left-radius: 4px;
         }
 
         .msg-time {
             font-size: 0.7rem;
-            opacity: 0.8;
-            margin-top: 5px;
-            text-align: right;
+            opacity: 0.85;
+            margin-top: 6px;
+        }
+        .sent .msg-time { text-align: right; }
+        .received .msg-time { text-align: left; }
+
+        /* Footer / Input matching image */
+        .chat-footer {
+            padding: 20px 30px;
+            background: var(--bg-light); /* Slightly off-white matching the page background */
         }
 
-        .chat-footer {
-            padding: 20px;
+        .chat-input-wrapper {
+            display: flex;
             background: white;
-            border-top: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
-    
-        .bg-rose { background-color: #f43f5e !important; color: white !important; }
-        .text-rose { color: #f43f5e !important; }
-        .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
-</style>
+
+        .chat-input-wrapper input {
+            flex: 1;
+            border: none;
+            padding: 15px 20px;
+            font-size: 0.95rem;
+            outline: none;
+            color: #333;
+        }
+
+        .chat-input-wrapper button {
+            background-color: var(--primary-rose);
+            color: white;
+            border: none;
+            width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-input-wrapper button:hover {
+            background-color: var(--primary-rose-hover);
+        }
+    </style>
 </head>
 <body>
-
-<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
         <div class="sidebar-heading">
-            <i class="bi bi-wallet2"></i> Investor Panel
+            <i class="bi bi-briefcase-fill"></i> Investor Panel
         </div>
         <div class="mt-3">
-            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link active">
+            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
+                <i class="bi bi-house"></i> Home
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
                 <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/chat/2?proposalId=1" class="sidebar-link active">
+                <i class="bi bi-chat-dots"></i> Chat
             </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link">
                 <i class="bi bi-shop"></i> Marketplace
             </a>
-            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
-                <i class="bi bi-shield-check"></i> Safety Hub Home
+            <a href="${pageContext.request.contextPath}/investor/dashboard#bookings-section" class="sidebar-link">
+                <i class="bi bi-calendar2-check"></i> My Bookings
             </a>
-            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-5">
+            <a href="${pageContext.request.contextPath}/investor/dashboard#portfolio-section" class="sidebar-link">
+                <i class="bi bi-wallet2"></i> Wallet
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/complete-profile" class="sidebar-link">
+                <i class="bi bi-person"></i> Profile
+            </a>
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-4">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -182,18 +279,18 @@
     <!-- Page Content -->
     <div id="page-content-wrapper">
         <div class="chat-container">
-            <!-- Header -->
+            <!-- Header (Dark Plum like image) -->
             <div class="chat-header">
-                <div class="d-flex align-items-center gap-3">
-                    <a href="${pageContext.request.contextPath}/investor/dashboard" class="text-white text-decoration-none fs-4">
+                <div class="chat-header-left">
+                    <a href="${pageContext.request.contextPath}/investor/dashboard" class="btn-back text-decoration-none">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                     <div>
-                        <h6 class="fw-bold m-0">${entrepreneur.fullName}</h6>
-                        <span class="small text-white-50">${proposal.title}</span>
+                        <h6 class="fw-bold">${entrepreneur.fullName}</h6>
+                        <span class="subtitle">${proposal.title}</span>
                     </div>
                 </div>
-                <span class="badge bg-rose rounded-pill px-3">Direct Channel</span>
+                <span class="badge-channel">Direct Channel</span>
             </div>
 
             <!-- Messages Area -->
@@ -206,19 +303,19 @@
                 </c:forEach>
                 <c:if test="${empty chatHistory}">
                     <div class="text-center text-muted my-auto py-5">
-                        <i class="bi bi-chat-heart" style="font-size: 3rem; color: var(--primary);"></i>
-                        <p class="mt-3 small">Connection initialized. Send a message to start collaborating!</p>
+                        <i class="bi bi-chat-heart" style="font-size: 3.5rem; color: #f43f5e; opacity: 0.3;"></i>
+                        <p class="mt-3">No messages yet.<br>Say hello to start the conversation!</p>
                     </div>
                 </c:if>
             </div>
 
-            <!-- Footer / Input Form -->
+            <!-- Footer / Input Form (White box, red button like image) -->
             <div class="chat-footer">
                 <form action="${pageContext.request.contextPath}/investor/chat/${entrepreneur.id}" method="post" id="chatForm">
                     <input type="hidden" name="proposalId" value="${proposal.id}">
-                    <div class="input-group">
-                        <input type="text" name="message" class="form-control rounded-pill-start py-3 px-4 border-end-0" placeholder="Type a message..." required autocomplete="off">
-                        <button class="btn btn-primary rounded-pill-end px-4" type="submit" style="background-color: #f43f5e; border: none;">
+                    <div class="chat-input-wrapper">
+                        <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
+                        <button type="submit">
                             <i class="bi bi-send-fill"></i>
                         </button>
                     </div>
@@ -229,10 +326,9 @@
 </div>
 
 <script>
-    // Keep scroll at bottom of chat messages
     document.addEventListener("DOMContentLoaded", function() {
         const area = document.getElementById("messageArea");
-        area.scrollTop = area.scrollHeight;
+        if(area) area.scrollTop = area.scrollHeight;
     });
 </script>
 </body>

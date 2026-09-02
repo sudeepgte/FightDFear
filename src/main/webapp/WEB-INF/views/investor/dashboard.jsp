@@ -227,6 +227,9 @@
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link active">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
+            <a href="${pageContext.request.contextPath}/investor/chat/2?proposalId=1" class="sidebar-link">
+                <i class="bi bi-chat-dots"></i> Chat
+            </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link">
                 <i class="bi bi-shop"></i> Marketplace
             </a>

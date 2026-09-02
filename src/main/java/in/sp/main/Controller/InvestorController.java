@@ -413,12 +413,6 @@ public class InvestorController {
         Investor inv = (Investor) session.getAttribute("loggedInvestor");
         if (inv == null) return "redirect:/investor/login";
 
-        // Check subscription
-        if (!inv.isSubscribed()) {
-            redirectAttributes.addFlashAttribute("error", "Please purchase the Investor Subscription to unlock investments.");
-            return "redirect:/investor/proposal/" + id;
-        }
-
         Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
         if (opt.isPresent()) {
             BusinessProposal proposal = opt.get();
@@ -531,18 +525,13 @@ public class InvestorController {
     public String requestMeeting(
             @PathVariable("id") Long id,
             @RequestParam("meetingTime") String meetingTimeStr,
-            @RequestParam("location") String location,
+            @RequestParam(value = "location", defaultValue = "Virtual Link Provided by Entrepreneur") String location,
             @RequestParam("notes") String notes,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
         Investor inv = (Investor) session.getAttribute("loggedInvestor");
         if (inv == null) return "redirect:/investor/login";
-
-        if (!inv.isSubscribed()) {
-            redirectAttributes.addFlashAttribute("error", "Please purchase the Investor Subscription to request meetings.");
-            return "redirect:/investor/proposal/" + id;
-        }
 
         Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
         if (opt.isPresent()) {
@@ -571,11 +560,6 @@ public class InvestorController {
 
         Investor inv = (Investor) session.getAttribute("loggedInvestor");
         if (inv == null) return "redirect:/investor/login";
-
-        if (!inv.isSubscribed()) {
-            redirectAttributes.addFlashAttribute("error", "Please purchase the Investor Subscription to ask questions.");
-            return "redirect:/investor/proposal/" + id;
-        }
 
         Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
         if (opt.isPresent() && !question.trim().isEmpty()) {

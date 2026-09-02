@@ -312,11 +312,9 @@
             <div class="proposal-title-block">
                 <h3>${proposal.title}</h3>
                 <p>${proposal.category} <i class="bi bi-dot"></i> <i class="bi bi-geo-alt"></i> ${proposal.location}</p>
-                <c:if test="${investor.subscribed}">
                     <a href="${pageContext.request.contextPath}/investor/chat/${proposal.entrepreneur.id}?proposalId=${proposal.id}" class="btn btn-rose rounded-pill px-4 mt-2" style="background-color: #f43f5e; border: none; font-size:0.85rem;">
                         <i class="bi bi-chat-dots-fill"></i> Chat with Entrepreneur
                     </a>
-                </c:if>
             </div>
 
             <!-- Funding Progress Bar -->
@@ -378,8 +376,6 @@
                 <div class="col-lg-4">
                     <!-- Entrepreneur Profile Card -->
                     <div class="card border-0 shadow-sm p-4 position-relative mb-4" style="border-radius:16px; background-color:#fafaff; border: 1px solid rgba(0,0,0,0.03);">
-                        <c:choose>
-                            <c:when test="${investor.subscribed}">
                                 <!-- Unmasked Profile -->
                                 <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-person-fill-check"></i> Entrepreneur Profile</h5>
                                 <div class="text-center mb-3">
@@ -396,49 +392,11 @@
                                     <strong>Account:</strong> ${proposal.entrepreneur.accountNumber}<br>
                                     <strong>UPI ID:</strong> ${proposal.entrepreneur.upiId}
                                 </div>
-                            </c:when>
-                            <c:otherwise>
-                                <!-- Masked Profile & Pay Banner -->
-                                <div class="premium-overlay-card p-4 text-center">
-                                    <i class="bi bi-lock-fill text-warning fs-1"></i>
-                                    <h6 class="fw-bold mt-2">Unlock Profile Details</h6>
-                                    <p class="text-muted small mb-3">Reveal identity documents, direct contacts, bank details, schedule meetings and invest.</p>
-                                    <button class="btn btn-warning fw-bold btn-sm rounded-pill px-4" onclick="triggerCheckout('subscription', null, 1999.00, '${pageContext.request.contextPath}/investor/subscribe')">
-                                        Subscribe for ₹1999
-                                    </button>
-                                </div>
-                                <div class="masked-blur">
-                                    <h5 class="fw-bold mb-3"><i class="bi bi-person-fill"></i> Profile Details</h5>
-                                    <div class="text-center mb-3">
-                                        <div class="rounded-circle border mx-auto" style="width:75px; height:75px; background-color:#ccc;"></div>
-                                        <h6 class="fw-bold mt-2 mb-0">Jane Doe</h6>
-                                        <span class="text-muted small">5 Years Experience</span>
-                                    </div>
-                                    <div class="small text-secondary">
-                                        <strong>Email:</strong> jane.doe@example.com<br>
-                                        <strong>Phone:</strong> 555-019-2831<br>
-                                        <strong>Aadhaar:</strong> 000000000000<br>
-                                        <strong>Expected Profit:</strong> ₹500<br>
-                                        <strong>Bank Name:</strong> Sandbox Bank
-                                    </div>
-                                </div>
-                            </c:otherwise>
-                        </c:choose>
                     </div>
 
                     <!-- Funding Selector Card -->
                     <div class="card border-0 shadow-sm p-4 position-relative mb-4" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.03);">
-                        <c:if test="${not investor.subscribed}">
-                            <div class="premium-overlay-card p-3 text-center">
-                                <i class="bi bi-lock-fill text-warning fs-3"></i>
-                                <h6 class="fw-bold mt-1" style="font-size:0.9rem;">Unlock Investments</h6>
-                                <p class="text-muted small mb-2" style="font-size:0.75rem;">Purchase subscription to invest.</p>
-                                <button class="btn btn-warning fw-bold btn-xs rounded-pill px-3 py-1" style="font-size:0.75rem;" onclick="triggerCheckout('subscription', null, 1999.00, '${pageContext.request.contextPath}/investor/subscribe')">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </c:if>
-                        <div class="${not investor.subscribed ? 'masked-blur' : ''}">
+                        <div>
                             <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-cash-stack"></i> Funding Selector</h5>
                             
                             <c:choose>
@@ -470,19 +428,9 @@
                         </div>
                     </div>
 
-                    <!-- Meetings Scheduling Card (Restricted if not Premium) -->
+                    <!-- Meetings Scheduling Card -->
                     <div class="card border-0 shadow-sm p-4 position-relative mb-4" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.03);">
-                        <c:if test="${not investor.subscribed}">
-                            <div class="premium-overlay-card p-3 text-center">
-                                <i class="bi bi-lock-fill text-warning fs-3"></i>
-                                <h6 class="fw-bold mt-1" style="font-size:0.9rem;">Unlock Meetings</h6>
-                                <p class="text-muted small mb-2" style="font-size:0.75rem;">Schedule meetings to ask details.</p>
-                                <button class="btn btn-warning fw-bold btn-xs rounded-pill px-3 py-1" style="font-size:0.75rem;" onclick="triggerCheckout('subscription', null, 1999.00, '${pageContext.request.contextPath}/investor/subscribe')">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </c:if>
-                        <div class="${not investor.subscribed ? 'masked-blur' : ''}">
+                        <div>
                             <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-calendar-check-fill"></i> Schedule Meeting</h5>
                             <p class="mb-3" style="font-size:0.78rem; background:#f0f9ff; border-left:3px solid #0284c7; padding:8px 10px; border-radius:6px; color:#0369a1;">
                                 <i class="bi bi-info-circle me-1"></i>
@@ -503,19 +451,9 @@
                         </div>
                     </div>
 
-                    <!-- Q&A Section Card (Restricted if not Premium) -->
+                    <!-- Q&A Section Card -->
                     <div class="card border-0 shadow-sm p-4 position-relative" style="border-radius: 16px; border: 1px solid rgba(0,0,0,0.03);">
-                        <c:if test="${not investor.subscribed}">
-                            <div class="premium-overlay-card p-3 text-center">
-                                <i class="bi bi-lock-fill text-warning fs-3"></i>
-                                <h6 class="fw-bold mt-1" style="font-size:0.9rem;">Unlock Q&A Board</h6>
-                                <p class="text-muted small mb-2" style="font-size:0.75rem;">Submit questions regarding project.</p>
-                                <button class="btn btn-warning fw-bold btn-xs rounded-pill px-3 py-1" style="font-size:0.75rem;" onclick="triggerCheckout('subscription', null, 1999.00, '${pageContext.request.contextPath}/investor/subscribe')">
-                                    Subscribe
-                                </button>
-                            </div>
-                        </c:if>
-                        <div class="${not investor.subscribed ? 'masked-blur' : ''}">
+                        <div>
                             <h5 class="fw-bold mb-3" style="color: #0f172a;"><i class="bi bi-question-square-fill"></i> Q&A Board</h5>
                             
                             <!-- Ask Box -->
