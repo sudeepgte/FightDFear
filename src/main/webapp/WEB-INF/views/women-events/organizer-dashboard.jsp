@@ -178,7 +178,6 @@
                                             <td>
                                                 <div class="action-btns">
                                                     <a href="${pageContext.request.contextPath}/women-events/${ev.id}" class="action-btn" title="View"><i class="bi bi-eye"></i></a>
-                                                    <a href="${pageContext.request.contextPath}/women-events/organizer/${ev.id}/attendees" class="action-btn" title="Attendees"><i class="bi bi-people"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -277,14 +276,7 @@
                     </div>
                 </div>
             </div>
-            <div class="org-card">
-                <div class="org-card-header">
-                    <div class="org-card-title"><i class="bi bi-bar-chart-line"></i> Registrations Overview</div>
-                </div>
-                <div class="org-chart-wrap">
-                    <canvas id="regChart" height="130"></canvas>
-                </div>
-            </div>
+
         </div>
     </div>
 </div>
@@ -300,35 +292,6 @@ function filterEvents() {
         const nameMatch = !q || (r.dataset.name || '').includes(q);
         const statusMatch = !status || r.dataset.status === status;
         r.style.display = (nameMatch && statusMatch) ? '' : 'none';
-    });
-}
-
-const ctx = document.getElementById('regChart');
-if (ctx && typeof Chart !== 'undefined') {
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Week 1','Week 2','Week 3','Week 4'],
-            datasets: [{
-                label: 'Registrations',
-                data: [0, ${totalRegistrations > 4 ? totalRegistrations - 3 : 0}, ${totalRegistrations > 2 ? totalRegistrations - 1 : totalRegistrations}, ${totalRegistrations}],
-                borderColor: '#F43F5E',
-                backgroundColor: 'rgba(244,63,94,0.08)',
-                borderWidth: 2.5,
-                pointRadius: 4,
-                pointBackgroundColor: '#F43F5E',
-                fill: true,
-                tension: 0.35
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
-                x: { grid: { display: false } }
-            }
-        }
     });
 }
 </script>

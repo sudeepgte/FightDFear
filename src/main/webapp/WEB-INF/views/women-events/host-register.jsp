@@ -415,6 +415,11 @@
         .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
 
         .btn-row .btn-submit { flex: 1; width: auto; }
+        
+        @keyframes fadeScaleIn {
+            0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -516,7 +521,7 @@
                 <div class="error-feedback" id="error-acceptedTerms" style="margin-top: -12px; margin-bottom: 12px;"></div>
 
                 <button type="button" id="btnReview" class="btn-submit" disabled onclick="showPreview()">
-                    <i class="bi bi-eye-fill"></i> Review &amp; Continue
+                    <i class=""></i> Create Account
                 </button>
             </form>
 
@@ -525,49 +530,47 @@
             </div>
         </div>
 
-        <div class="preview-card" id="previewPanel" style="display:none;">
-            <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">Event Host Registration Review</h2>
-            <p style="color:var(--text-gray);font-size:0.9rem;margin-bottom:8px;">Confirm your details before creating your account.</p>
+    </main>
 
-            <div class="section-title">Personal Information</div>
-            <div class="preview-row"><span class="k">Full Name</span><span class="v" id="pvName">—</span></div>
-            <div class="preview-row"><span class="k">Email</span><span class="v" id="pvEmail">—</span></div>
-            <div class="preview-row"><span class="k">Phone</span><span class="v" id="pvPhone">—</span></div>
+    <div class="we-modal-overlay" id="registerPreviewOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(30,41,59,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; width:90%; max-width:550px; border-radius:20px; padding:32px; box-shadow:0 20px 40px rgba(0,0,0,0.15); animation: fadeScaleIn 0.3s ease;">
+            <!-- Header -->
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+                <div style="width:48px; height:48px; background-color:#ffe4e6; color:#f43f5e; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0; font-size:1.3rem; font-weight:800; color:#0f172a;">Confirm Details</h3>
+                    <p style="margin:0; font-size:0.85rem; color:#64748b; margin-top:2px;">Review your information before account creation</p>
+                </div>
+            </div>
 
-            <div class="section-title">Account</div>
-            <div class="preview-row"><span class="k">Email</span><span class="v" style="color:var(--success);">Verified</span></div>
-            <div class="preview-row"><span class="k">Password</span><span class="v">••••••••</span></div>
-
-            <div class="section-title">Terms</div>
-            <div class="preview-row"><span class="k">Terms &amp; Safety Policies</span><span class="v" style="color:var(--success);">Accepted</span></div>
+            <!-- Body Details -->
+            <div style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:8px 24px;">
+                <div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px dashed #cbd5e1;">
+                    <span style="color:#64748b; font-size:0.9rem;">Name:</span>
+                    <strong style="color:#0f172a; font-size:0.95rem; font-weight:700;" id="pvName">—</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px dashed #cbd5e1;">
+                    <span style="color:#64748b; font-size:0.9rem;">Mobile Number:</span>
+                    <strong style="color:#0f172a; font-size:0.95rem; font-weight:700;" id="pvPhone">—</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:16px 0;">
+                    <span style="color:#64748b; font-size:0.9rem;">Email:</span>
+                    <strong style="color:#0f172a; font-size:0.95rem; font-weight:700;" id="pvEmail">—</strong>
+                </div>
+            </div>
 
             <div id="previewAlert" class="alert-box alert-error" style="display:none;margin-top:16px;">
                 <i class="bi bi-exclamation-circle-fill"></i> <span id="previewAlertText"></span>
             </div>
 
-            <div class="btn-row">
-                <button type="button" class="btn-ghost" id="editBtn" onclick="editPreview()">Edit</button>
-                <button type="button" class="btn-submit" id="btnConfirmSubmit" onclick="submitRegistration()">Confirm &amp; Submit</button>
-            </div>
-        </div>
-    </main>
-
-    <div class="we-modal-overlay" id="registerPreviewOverlay" role="dialog" aria-modal="true" aria-labelledby="regPreviewTitle">
-        <div class="we-modal">
-            <div class="we-modal-header">
-                <h3 id="regPreviewTitle">Review your registration</h3>
-                <p>Confirm these details before creating your Event Host account. You will complete organization, bio, and documents after sign-in.</p>
-            </div>
-            <div class="we-modal-body">
-                <div class="preview-row"><span>Full name</span><strong id="pvName">—</strong></div>
-                <div class="preview-row"><span>Email</span><strong id="pvEmail">—</strong></div>
-                <div class="preview-row"><span>Phone</span><strong id="pvPhone">—</strong></div>
-                <div class="preview-row"><span>Email OTP</span><strong>Verified</strong></div>
-                <div class="preview-row"><span>Terms</span><strong>Accepted</strong></div>
-            </div>
-            <div class="we-modal-actions">
-                <button type="button" class="btn-submit" style="background:#fff;color:var(--navy);border:1px solid var(--border-color);box-shadow:none;" onclick="closeRegisterPreview()">Edit details</button>
-                <button type="button" class="btn-submit" id="btnConfirmRegister" onclick="submitRegistration()">Confirm &amp; create account</button>
+            <!-- Footer Actions -->
+            <div style="display:flex; gap:16px; margin-top:32px;">
+                <button type="button" onclick="editPreview()" style="flex:1; background:#ffffff; color:#0f172a; border:1px solid #e2e8f0; border-radius:12px; padding:14px; font-weight:600; font-size:0.95rem; cursor:pointer; transition:all 0.2s;">Back / Edit</button>
+                <button type="button" id="btnConfirmSubmit" onclick="submitRegistration()" style="flex:1; background:#f43f5e; color:#ffffff; border:none; border-radius:12px; padding:14px; font-weight:600; font-size:0.95rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    Confirm &amp; Register <i class="bi bi-check-circle"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -902,19 +905,18 @@
             document.getElementById('pvName').innerText = document.getElementById('fullName').value.trim();
             document.getElementById('pvEmail').innerText = document.getElementById('email').value.trim();
             document.getElementById('pvPhone').innerText = document.getElementById('phone').value.trim();
-            document.getElementById('formPanel').style.display = 'none';
-            document.getElementById('previewPanel').style.display = 'block';
+            
+            // Show modal instead of switching panels
+            document.getElementById('registerPreviewOverlay').style.display = 'flex';
             document.getElementById('previewAlert').style.display = 'none';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function editPreview() {
-            document.getElementById('previewPanel').style.display = 'none';
-            document.getElementById('formPanel').style.display = 'block';
+            document.getElementById('registerPreviewOverlay').style.display = 'none';
             submitting = false;
             const btn = document.getElementById('btnConfirmSubmit');
             btn.disabled = false;
-            btn.innerHTML = 'Confirm &amp; Submit';
+            btn.innerHTML = 'Confirm &amp; Register <i class="bi bi-check-circle"></i>';
             document.getElementById('fullName').focus();
         }
 
@@ -969,14 +971,14 @@
                     document.getElementById('previewAlert').style.display = 'flex';
                     submitting = false;
                     btnSubmit.disabled = false;
-                    btnSubmit.innerHTML = 'Confirm &amp; Submit';
+                    btnSubmit.innerHTML = 'Confirm & Register <i class="bi bi-check-circle"></i>';
                 }
             } catch (e) {
                 document.getElementById('previewAlertText').innerText = 'Server connection error during registration.';
                 document.getElementById('previewAlert').style.display = 'flex';
                 submitting = false;
                 btnSubmit.disabled = false;
-                btnSubmit.innerHTML = 'Confirm & Submit';
+                btnSubmit.innerHTML = 'Confirm & Register <i class="bi bi-check-circle"></i>';
             }
         }
     </script>

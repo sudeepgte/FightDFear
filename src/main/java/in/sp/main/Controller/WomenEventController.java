@@ -228,6 +228,11 @@ public class WomenEventController {
         model.addAttribute("soldOut", womenEventBookingService.isSoldOut(event));
         model.addAttribute("registrationOpen", WomenEventSupport.registrationWindowOpen(event, java.time.LocalDateTime.now()));
         model.addAttribute("savedEvent", loggedUser != null && eventFavoriteRepository.existsByEventAndUser(event, loggedUser));
+        
+        EventHost loggedHost = (EventHost) session.getAttribute("loggedHost");
+        boolean isOrganizerView = loggedHost != null && event.getOrganizer() != null && event.getOrganizer().getId().equals(loggedHost.getId());
+        model.addAttribute("isOrganizerView", isOrganizerView);
+
         boolean eligibleAccess = alreadyRegistered;
         if (loggedUser != null) {
             eligibleAccess = womenEventRegistrationRepository.findActiveByEventAndUser(event, loggedUser)

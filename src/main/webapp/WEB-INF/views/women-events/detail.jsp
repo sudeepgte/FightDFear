@@ -109,10 +109,10 @@
             font-weight: 700;
             text-decoration: none;
         }
-        .btn-share-outline {
-            background: transparent;
-            color: #2D142C !important;
-            border: 1px solid #FDA4AF;
+        #page-content-wrapper .btn-share-outline {
+            background: transparent !important;
+            color: #F43F5E !important;
+            border: 1px solid #FDA4AF !important;
         }
         @media (max-width: 991px) {
             .detail-grid { padding-bottom: 40px !important; }
@@ -138,7 +138,10 @@
     <!-- Sidebar Component -->
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;" data-skip-global-back="true">
+        <div id="global-back-btn" style="padding: 20px 20px 0;">
+            <a href="${pageContext.request.contextPath}/women-events" class="btn btn-sm" style="background: white; border: 1px solid #ddd; color: #1e1b4b; font-weight: 600; padding: 6px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><i class="bi bi-arrow-left"></i> Go Back</a>
+        </div>
 
         <!-- Alert Banners -->
         <c:if test="${not empty success}">
@@ -434,6 +437,15 @@
                         <!-- Action Buttons -->
                         <div class="sidebar-action-button-layer">
                             <c:choose>
+                                <c:when test="${isOrganizerView}">
+                                    <div class="registered-badge-box" style="background-color: var(--bg-neutral); border-color: var(--border-neutral);">
+                                        <i class="bi bi-person-badge text-muted"></i>
+                                        <h5 class="text-muted">Organizer View</h5>
+                                        <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ticket-link text-muted" style="border-color: var(--border-neutral);">
+                                            <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+                                        </a>
+                                    </div>
+                                </c:when>
                                 <c:when test="${empty loggedUser}">
                                     <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
                                         <i class="bi bi-person-circle"></i> Login to Register
@@ -445,8 +457,6 @@
                                         <h5>Registration Active</h5>
                                         <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="ticket-link">
                                             <i class="bi bi-ticket-perforated-fill"></i> View My Ticket
-                                        <a href="${pageContext.request.contextPath}/women-events/my-registrations" class="btn btn-sm btn-link text-success fw-bold text-decoration-none mt-1">
-                                            <i class="bi bi-ticket-perforated-fill"></i> View my ticket
                                         </a>
                                     </div>
                                 </c:when>
@@ -466,26 +476,6 @@
                                     </button>
                                 </c:when>
                                 <c:otherwise>
-                                    <c:choose>
-                                        <c:when test="${event.free}">
-                                            <form action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="width: 100%;">
-                                                <c:if test="${not empty coinQuote}">
-                                                    <p class="small text-muted mb-2">Coins available: ${coinQuote.availableCoins}. Max redeemable: ${coinQuote.maxRedeemableCoins}.</p>
-                                                    <input type="number" name="coins" min="0" max="${coinQuote.maxRedeemableCoins}" value="0" class="form-control mb-2" placeholder="Coins to apply"/>
-                                                </c:if>
-                                                <button type="submit" class="btn-premium-cta">
-                                                    <i class="bi bi-ticket-perforated-fill"></i> Claim Free Ticket
-                                                </button>
-                                            </form>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <button type="button" class="btn-premium-cta" onclick="openEventCheckoutModal()">
-                                                <i class="bi bi-ticket-perforated-fill"></i> Secure Claim — ₹${event.entryFee}
-                                            </button>
-                                            <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
-                                        </c:otherwise>
-                                    </c:choose>
-=======
                                     <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
                                         <i class="bi bi-ticket-perforated-fill"></i>
                                         <c:choose>
@@ -529,6 +519,11 @@
                 <h3>Register for ${event.name}</h3>
                 <p>Review your booking details, then confirm. A ticket code is issued after registration.</p>
                 <c:choose>
+                    <c:when test="${isOrganizerView}">
+                        <div class="reserved-pill" style="background-color: var(--bg-neutral); color: var(--fdf-text-muted);">
+                            <i class="bi bi-person-badge"></i> You are the Organizer
+                        </div>
+                    </c:when>
                     <c:when test="${empty loggedUser}">
                         <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
                             <i class="bi bi-person-circle"></i> Login and register
@@ -562,6 +557,9 @@
                     <span class="mobile-price-lbl">Entry</span>
                 </div>
                 <c:choose>
+                    <c:when test="${isOrganizerView}">
+                        <span class="reserved-pill compact" style="background-color: transparent; color: var(--fdf-text-muted);"><i class="bi bi-person-badge me-1"></i> Organizer</span>
+                    </c:when>
                     <c:when test="${empty loggedUser}">
                         <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">
                             <i class="bi bi-person-circle"></i> Login

@@ -225,7 +225,7 @@
               <c:choose>
                 <c:when test="${not empty activeList}">
                   <c:forEach var="h" items="${activeList}" varStatus="st">
-                    <c:set var="stKey" value="${h.partnerProfileStatus != null ? h.partnerProfileStatus : h.verificationStatus}"/>
+                    <c:set var="stKey" value="${h.partnerProfileStatus != null ? h.partnerProfileStatus.name() : (h.verificationStatus != null ? h.verificationStatus.name() : 'PENDING')}"/>
                     <c:set var="logo" value="${h.logoPath}"/>
                     <c:set var="pct" value="${h.profileCompletionPct != null ? h.profileCompletionPct : 0}"/>
                     <c:set var="locText" value=""/>
@@ -300,8 +300,15 @@
                         </c:choose>
                       </td>
                       <td onclick="event.stopPropagation();">
-                        <div class="eh-actions">
+                        <div class="eh-actions eh-inline-forms">
                           <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile"><i class="fas fa-eye"></i> View</a>
+                          <c:if test="${stKey != 'APPROVED' && stKey != 'VERIFIED'}">
+                            <form action="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/approve" method="post">
+                              <button type="submit" class="ap-btn-view" style="color: #15803D !important; border-color: #BBF7D0; background: #F0FDF4; cursor: pointer;">
+                                <i class="fas fa-check"></i> Approve
+                              </button>
+                            </form>
+                          </c:if>
                           <a class="eh-more" href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile" title="Review"><i class="fas fa-ellipsis-v"></i></a>
                         </div>
                       </td>

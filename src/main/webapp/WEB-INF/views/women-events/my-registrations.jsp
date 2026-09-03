@@ -67,8 +67,10 @@
 
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip; background: var(--we-bg);">
-
+<div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip; background: var(--we-bg);" data-skip-global-back="true">
+    <div id="global-back-btn" style="padding: 20px 20px 0;">
+        <a href="${pageContext.request.contextPath}/women-events/1" class="btn btn-sm" style="background: white; border: 1px solid #ddd; color: #1e1b4b; font-weight: 600; padding: 6px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><i class="bi bi-arrow-left"></i> Go Back</a>
+    </div>
 <c:if test="${not empty success}">
     <div class="container-main" style="padding-bottom:0;">
         <div class="we-confirm-banner">
@@ -166,9 +168,7 @@
                     </div>
 
                     <div class="ticket-actions" onclick="event.stopPropagation()">
-                        <a href="${pageContext.request.contextPath}/women-events/${reg.event.id}" class="action-btn action-btn-primary">
-                            <i class="bi bi-eye-fill"></i> Event details
-                        </a>
+
                         <button type="button" class="action-btn action-btn-outline" onclick="openTicketPreview(this.closest('.ticket'))">
                             <i class="bi bi-ticket-detailed"></i> Ticket preview
                         </button>
@@ -209,7 +209,7 @@
         </div>
         <div class="we-modal-body" id="tpBody"></div>
         <div class="we-modal-footer">
-            <a id="tpEventLink" href="#" class="we-modal-btn secondary">Event details</a>
+
             <form id="tpCancelForm" method="post" style="display:none;"
                   onsubmit="return confirm('Cancel your registration for this event?')">
                 <button type="submit" class="we-modal-btn secondary">Cancel registration</button>
@@ -233,8 +233,7 @@ function openTicketPreview(el) {
         row('Amount paid', el.dataset.amount ? '₹' + el.dataset.amount : '—') +
         row('Checked in', el.dataset.checked === 'true' ? 'Yes' : 'No') +
         row('Registered at', valOr(el.dataset.registered));
-    var link = document.getElementById('tpEventLink');
-    link.href = '${pageContext.request.contextPath}/women-events/' + el.dataset.eventId;
+
     var cancel = document.getElementById('tpCancelForm');
     if (el.dataset.canCancel === 'true') {
         cancel.style.display = 'inline';
