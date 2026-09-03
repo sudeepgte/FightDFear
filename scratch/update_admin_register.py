@@ -1,4 +1,7 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+import os
+
+# 2. GENERATE ADMIN REGISTER
+admin_register_content = """<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -303,3 +306,9 @@
 </script>
 </body>
 </html>
+"""
+
+with open('src/main/webapp/WEB-INF/views/adminRegister.jsp', 'w', encoding='utf-8') as f:
+    f.write(admin_register_content)
+
+print("adminRegister.jsp updated")
