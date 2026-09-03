@@ -1,8 +1,11 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
+import re
+
+with open('src/main/webapp/WEB-INF/views/adminUserManagement.jsp', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Replace head
+head_end = content.find('</head>')
+new_head = """<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>User Management - Fight D Fear Admin</title>
@@ -37,13 +40,9 @@
     .btn-cancel-delete:hover { background: #e5e7eb; }
     @keyframes slideUpFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   </style>
-</head>
-<body class="ap-page">
+</head>"""
 
-<c:set var="pendingCount" value="${not empty pendingUsers ? pendingUsers.size() : 0}"/>
-<c:set var="verifiedCount" value="${not empty verifiedUsers ? verifiedUsers.size() : 0}"/>
-<c:set var="bannedCount" value="${not empty bannedUsers ? bannedUsers.size() : 0}"/>
-<c:set var="totalUsers" value="${pendingCount + verifiedCount + bannedCount}"/>
+new_body_start = """<body class="ap-page">
 
 <div class="layout">
   <%@ include file="globalAdminMenu.jsp" %>
@@ -84,7 +83,7 @@
       <nav class="ap-crumb">
         <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
         <span class="sep">&gt;</span>
-        <span>User Management</span>
+        <a href="${pageContext.request.contextPath}/admin/users">User Management</a>
       </nav>
 
       <div class="ap-page-head">
@@ -102,52 +101,31 @@
         <div class="alert alert-danger mb-3" style="border-radius:12px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;"><i class="fas fa-exclamation-circle me-1"></i> <c:out value="${error}"/></div>
       </c:if>
 
-      <div class="ap-stats">
-        <div class="ap-stat amber">
-          <div class="ico"><i class="fas fa-clock"></i></div>
-          <div class="val">${pendingCount}</div>
-          <div class="lbl">Pending Verifications</div>
-          <div class="sub">Requires review</div>
-        </div>
-        <div class="ap-stat green">
-          <div class="ico"><i class="fas fa-check-circle"></i></div>
-          <div class="val">${verifiedCount}</div>
-          <div class="lbl">Verified Users</div>
-          <div class="sub">Verified users</div>
-        </div>
-        <div class="ap-stat rose">
-          <div class="ico"><i class="fas fa-ban"></i></div>
-          <div class="val">${bannedCount}</div>
-          <div class="lbl">Banned Users</div>
-          <div class="sub">Restricted users</div>
-        </div>
-        <div class="ap-stat neutral">
-          <div class="ico"><i class="fas fa-users"></i></div>
-          <div class="val">${totalUsers}</div>
-          <div class="lbl">Total Users</div>
-          <div class="sub">Across all users</div>
-        </div>
-      </div>
-
       <form method="get" action="${pageContext.request.contextPath}/admin/users" class="ap-filter-row">
         <div class="grow">
           <input type="text" id="userMgmtSearch" name="q" class="ap-input" placeholder="Search by name, email or phone..." value="${not empty q ? q : ''}">
         </div>
-        <button type="submit" class="ap-btn ap-btn-primary"><i class="fas fa-search"></i> Search / Filter</button>
+        <button type="submit" class="ap-btn ap-btn-primary"><i class="fas fa-search"></i> Search</button>
         <c:if test="${not empty q}">
           <a href="${pageContext.request.contextPath}/admin/users" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
         </c:if>
       </form>
+"""
 
+search_results = """
       <!-- ── Search Results ── -->
       <c:if test="${not empty q}">
+          <div style="padding:12px 16px;background:#F8FAFC;border:1px solid var(--ap-border);border-radius:var(--ap-radius);margin-bottom:16px;font-size:0.86rem;color:var(--ap-muted);">
+            Showing results for "<strong><c:out value="${q}"/></strong>"
+            <c:choose>
+                <c:when test="${not empty searchResults}"> - ${searchResults.size()} user(s) found</c:when>
+                <c:otherwise> - No users found</c:otherwise>
+            </c:choose>
+          </div>
+
           <section class="ap-panel mb-4">
-            <div style="padding:12px 16px;background:#F8FAFC;border-bottom:1px solid var(--ap-border);font-size:0.86rem;color:var(--ap-muted);">
-              Showing results for "<strong><c:out value="${q}"/></strong>"
-              <c:choose>
-                  <c:when test="${not empty searchResults}"> - ${searchResults.size()} user(s) found</c:when>
-                  <c:otherwise> - No users found</c:otherwise>
-              </c:choose>
+            <div class="ap-panel-hd">
+              <h2 style="display:flex;align-items:center;gap:8px;"><i class="fas fa-search" style="color:var(--ap-info);"></i> Search Results</h2>
             </div>
             <div class="ap-table-wrap">
               <table class="ap-table">
@@ -211,18 +189,17 @@
             </div>
           </section>
       </c:if>
+"""
 
-      <!-- ── Normal View (Tabs) ── -->
+normal_view = """
+      <!-- ── Normal View (Active + Banned sections) ── -->
       <c:if test="${empty q}">
-        <section class="ap-panel">
-          <div class="ap-tabs">
-            <a class="ap-tab active" href="javascript:void(0)" onclick="switchTab('pending')" id="tab-btn-pending">Pending Verifications (${pendingCount})</a>
-            <a class="ap-tab" href="javascript:void(0)" onclick="switchTab('verified')" id="tab-btn-verified">Verified Users (${verifiedCount})</a>
-            <a class="ap-tab" href="javascript:void(0)" onclick="switchTab('banned')" id="tab-btn-banned">Banned Users (${bannedCount})</a>
-          </div>
 
           <!-- Pending Verifications Table -->
-          <div id="tab-pane-pending" class="tab-pane">
+          <section class="ap-panel" style="margin-bottom: 24px;">
+            <div class="ap-panel-hd">
+              <h2 style="display:flex;align-items:center;gap:8px;"><i class="fas fa-clock text-warning"></i> Pending Verifications <span class="ap-badge ap-badge-pending" style="font-size:0.75rem;padding:2px 8px;">${not empty pendingUsers ? pendingUsers.size() : 0}</span></h2>
+            </div>
             <div class="ap-table-wrap">
               <table class="ap-table">
                   <thead>
@@ -262,16 +239,19 @@
                           </c:forEach>
                       </c:when>
                       <c:otherwise>
-                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-users fa-2x mb-2 d-block" style="opacity:.35;"></i>No users in this queue.</div></td></tr>
+                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.35;"></i>No pending verifications at the moment.</div></td></tr>
                       </c:otherwise>
                   </c:choose>
                   </tbody>
               </table>
             </div>
-          </div>
+          </section>
 
           <!-- Verified Users Table -->
-          <div id="tab-pane-verified" class="tab-pane" style="display:none;">
+          <section class="ap-panel" style="margin-bottom: 24px;">
+            <div class="ap-panel-hd">
+              <h2 style="display:flex;align-items:center;gap:8px;"><i class="fas fa-user-check" style="color:var(--ap-success);"></i> Verified Users <span class="ap-badge ap-badge-approved" style="font-size:0.75rem;padding:2px 8px;">${not empty verifiedUsers ? verifiedUsers.size() : 0}</span></h2>
+            </div>
             <div class="ap-table-wrap">
               <table class="ap-table">
                   <thead>
@@ -307,16 +287,19 @@
                           </c:forEach>
                       </c:when>
                       <c:otherwise>
-                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-users fa-2x mb-2 d-block" style="opacity:.35;"></i>No users in this queue.</div></td></tr>
+                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-users fa-2x mb-2 d-block" style="opacity:.35;"></i>No verified users found.</div></td></tr>
                       </c:otherwise>
                   </c:choose>
                   </tbody>
               </table>
             </div>
-          </div>
+          </section>
 
           <!-- Banned Users Table -->
-          <div id="tab-pane-banned" class="tab-pane" style="display:none;">
+          <section class="ap-panel" style="margin-bottom: 24px;">
+            <div class="ap-panel-hd">
+              <h2 style="display:flex;align-items:center;gap:8px;"><i class="fas fa-user-slash" style="color:var(--ap-danger);"></i> Banned Users <span class="ap-badge ap-badge-rejected" style="font-size:0.75rem;padding:2px 8px;">${not empty bannedUsers ? bannedUsers.size() : 0}</span></h2>
+            </div>
             <div class="ap-table-wrap">
               <table class="ap-table">
                   <thead>
@@ -350,14 +333,14 @@
                           </c:forEach>
                       </c:when>
                       <c:otherwise>
-                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-users fa-2x mb-2 d-block" style="opacity:.35;"></i>No users in this queue.</div></td></tr>
+                          <tr><td colspan="6"><div class="ap-empty"><i class="fas fa-user-slash fa-2x mb-2 d-block" style="opacity:.35;"></i>No banned users.</div></td></tr>
                       </c:otherwise>
                   </c:choose>
                   </tbody>
               </table>
             </div>
-          </div>
-        </section>
+          </section>
+
       </c:if>
 
     </div>
@@ -380,13 +363,6 @@
 </div>
 
 <script>
-function switchTab(tabId) {
-    document.querySelectorAll('.ap-tab').forEach(function(t) { t.classList.remove('active'); });
-    document.getElementById('tab-btn-' + tabId).classList.add('active');
-    document.querySelectorAll('.tab-pane').forEach(function(p) { p.style.display = 'none'; });
-    document.getElementById('tab-pane-' + tabId).style.display = 'block';
-}
-
 function confirmDelete(id, name) {
     document.getElementById('deleteUserName').textContent = name;
     document.getElementById('deleteForm').action =
@@ -421,3 +397,9 @@ if (hs) {
 
 </body>
 </html>
+"""
+
+final_content = content[:content.find('<!DOCTYPE html>')] + "<!DOCTYPE html>\n<html lang=\"en\">\n" + new_head + "\n" + new_body_start + search_results + normal_view
+
+with open('src/main/webapp/WEB-INF/views/adminUserManagement.jsp', 'w', encoding='utf-8') as f:
+    f.write(final_content)

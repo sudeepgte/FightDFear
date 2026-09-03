@@ -376,7 +376,42 @@
             <a href="${pageContext.request.contextPath}/chat/users" class="chat-back" title="Back to chats">
                 <i class="bi bi-arrow-left"></i>
             </a>
-            <img src="${pageContext.request.contextPath}${not empty receiver.profilePhoto ? receiver.profilePhoto : '/assets/img/default-profile.png'}"
+            <c:set var="pp" value="${receiver.profilePhoto}" />
+            <c:if test="${empty pp}">
+                <%
+                    in.sp.main.Entities.User rec = (in.sp.main.Entities.User) request.getAttribute("receiver");
+                    if (rec != null) {
+                        try {
+                            org.springframework.context.ApplicationContext ctx = org.springframework.web.context.support.WebApplicationContextUtils.getWebApplicationContext(application);
+                            javax.sql.DataSource ds = ctx.getBean(javax.sql.DataSource.class);
+                            try (java.sql.Connection conn = ds.getConnection();
+                                 java.sql.PreparedStatement ps = conn.prepareStatement(
+                                     "SELECT COALESCE(" +
+                                     "(SELECT profile_image_url FROM job_application WHERE user_id = ? AND profile_image_url IS NOT NULL ORDER BY applied_at DESC LIMIT 1), " +
+                                     "(SELECT profile_photo FROM service_providers WHERE user_id = ? AND profile_photo IS NOT NULL LIMIT 1)" +
+                                     ") AS resolved_photo")) {
+                                ps.setLong(1, rec.getId());
+                                ps.setLong(2, rec.getId());
+                                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                                    if (rs.next()) {
+                                        String found = rs.getString("resolved_photo");
+                                        if (found != null && !found.trim().isEmpty()) {
+                                            pageContext.setAttribute("pp", found);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch(Exception e) {}
+                    }
+                %>
+            </c:if>
+            <c:if test="${empty pp}">
+                <c:set var="pp" value="/assets/img/logo.png" />
+            </c:if>
+            <c:if test="${not empty pp and not pp.startsWith('/') and not pp.startsWith('http')}">
+                <c:set var="pp" value="/${pp}" />
+            </c:if>
+            <img src="${pageContext.request.contextPath}${pp}"
                  alt="" class="chat-peer-avatar">
             <div class="chat-peer-info">
                 <h4>
@@ -385,16 +420,6 @@
                 </h4>
                 <span>Secure chat</span>
             </div>
-        </div>
-        <div class="call-actions">
-            <a href="${pageContext.request.contextPath}/chat/call/${receiver.id}?notify=true"
-               class="btn-call" title="Voice call" target="_blank">
-                <i class="bi bi-telephone-fill"></i>
-            </a>
-            <a href="${pageContext.request.contextPath}/chat/video-call/${receiver.id}?notify=true"
-               class="btn-call" title="Video call" target="_blank">
-                <i class="bi bi-camera-video-fill"></i>
-            </a>
         </div>
     </div>
 

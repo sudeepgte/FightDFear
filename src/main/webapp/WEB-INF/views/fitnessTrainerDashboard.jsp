@@ -312,14 +312,14 @@
             #sidebar-wrapper {
                 min-width: 100%;
                 max-width: 100%;
-                height: auto;
-                min-height: auto;
+                height: auto !important;
+                min-height: 0 !important;
                 position: relative;
                 top: 0;
                 left: 0;
                 border-right: none;
                 border-bottom: 1px solid var(--fitness-border);
-                padding-bottom: 12px;
+                padding-bottom: 8px;
             }
             #studioTab {
                 flex-direction: row !important;
@@ -358,23 +358,30 @@
                 display: none;
             }
             #sidebar-wrapper.show-mobile {
-                display: block !important;
+                display: flex !important;
+                flex-direction: column;
+                align-items: stretch;
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 280px !important;
                 max-width: 85vw !important;
-                height: 100vh !important;
+                height: auto !important;
+                max-height: 100vh !important;
+                min-height: 0 !important;
                 z-index: 1050;
                 background: #ffffff;
                 box-shadow: 6px 0 30px rgba(0,0,0,0.18);
                 overflow-y: auto;
                 border-right: 1px solid var(--fitness-border);
+                padding-bottom: 8px !important;
             }
             #sidebar-wrapper.show-mobile #studioTab {
                 flex-direction: column !important;
                 flex-wrap: nowrap;
-                padding: 10px 8px;
+                flex: 0 0 auto;
+                padding: 8px 8px 4px;
+                margin-bottom: 0;
             }
             #sidebar-wrapper.show-mobile #studioTab .list-group-item {
                 width: 100% !important;
@@ -394,9 +401,8 @@
         }
 
         .header-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
+            width: 100%;
+            justify-content: flex-end;
         }
         @media (max-width: 768px) {
             .tab-pane#messagesContent .row {

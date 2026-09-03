@@ -36,7 +36,11 @@ public class DoctorNotificationService {
         notificationRepository.save(n);
 
         if (sendEmail && doctor.getEmail() != null && !doctor.getEmail().isBlank()) {
-            emailService.sendEmail(doctor.getEmail(), title, message);
+            try {
+                emailService.sendEmail(doctor.getEmail(), title, message);
+            } catch (Exception ex) {
+                // Booking / workflow must not fail if mail is not configured.
+            }
         }
     }
 

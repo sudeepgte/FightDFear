@@ -20,8 +20,8 @@
 <div class="wj-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
 <aside class="wj-sidebar" id="sidebar">
-  <a class="wj-sidebar-brand" href="${pageContext.request.contextPath}/women-jobs/dashboard">
-    <i class="bi bi-briefcase-fill"></i>
+  <a class="wj-sidebar-brand" href="${pageContext.request.contextPath}/women-jobs/dashboard" style="display:flex; align-items:center; gap:10px;">
+    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain;">
     <span>Fight D Fear<small>Worker Portal</small></span>
   </a>
   <div class="wj-sidebar-profile">
@@ -72,115 +72,136 @@
     <c:if test="${not empty error}">
       <div class="wj-alert wj-alert-err"><i class="bi bi-exclamation-circle"></i> ${error}</div>
     </c:if>
-
-    <div class="wj-stats">
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Revenue</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-receipt-cutoff"></i></div><div><h3>${paidBookingsCount}</h3><p>Paid Bookings</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-cash-stack"></i></div><div><h3>&#8377;${workerApp.hourlyRate}</h3><p>Hourly Rate</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><h3>&#8377;${pendingRevenue}</h3><p>Pending Revenue</p></div></div>
-    </div>
-
-    <div class="wj-card" id="feeBreakdownView">
-      <div class="wj-card-h">
-        <h2><i class="bi bi-wallet2"></i> Fee &amp; Payout Settings</h2>
-        <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownView').style.display='none';document.getElementById('feeBreakdownEdit').style.display='block';">
-          <i class="bi bi-pencil-square"></i> Edit
-        </button>
-      </div>
-      <div class="wj-card-b padded">
-        <div class="wj-edit-grid">
-          <div><span class="wj-label">Hourly Rate</span><div style="font-weight:800;color:#059669;">&#8377; ${workerApp.hourlyRate} / hr</div></div>
-          <div><span class="wj-label">UPI ID for Payouts</span><div style="font-weight:600;">${not empty workerApp.upiId ? workerApp.upiId : '—'}</div></div>
-          <div style="grid-column: 1 / -1;"><span class="wj-label">Bank Account / IFSC Details</span><div style="font-weight:600;">${not empty workerApp.bankDetails ? workerApp.bankDetails : '—'}</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="wj-card" id="feeBreakdownEdit" style="display:none">
-      <div class="wj-card-h">
-        <h2><i class="bi bi-pencil-square"></i> Edit Payout Settings</h2>
-        <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';">
-          <i class="bi bi-x-lg"></i> Cancel
-        </button>
-      </div>
-      <div class="wj-card-b padded">
-        <form id="earningsUpdateForm" action="${pageContext.request.contextPath}/women-jobs/earnings/update" method="post">
-          <div class="wj-edit-grid">
-            <div>
-              <label class="wj-label">Hourly Rate (₹)</label>
-              <input class="wj-input" type="number" name="hourlyRate" min="1" step="0.01" value="${workerApp.hourlyRate}" required>
+    <c:choose>
+        <c:when test="${workerApp.status == 'PENDING'}">
+            <div class="wj-card" style="text-align:center; padding:50px 20px; margin-top:20px;">
+                <div style="font-size:3rem; color:#F43F5E; margin-bottom:15px;"><i class="bi bi-lock-fill"></i></div>
+                <h3 style="color:#1E1B4B; margin-bottom:10px;">Your worker application is pending admin verification</h3>
+                <p style="color:#64748B; margin-bottom:25px;">You will be able to access the earnings page and payout settings once approved by our admin team.</p>
+                <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-btn wj-btn-rose" style="display:inline-block; padding:12px 24px;">Update Profile in the meantime</a>
             </div>
-            <div>
-              <label class="wj-label">UPI ID for Payouts</label>
-              <input class="wj-input" type="text" name="upiId" placeholder="e.g. handle@bank" value="${workerApp.upiId}">
+        </c:when>
+        <c:otherwise>
+            <div class="wj-stats">
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Revenue</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-receipt-cutoff"></i></div><div><h3>${paidBookingsCount}</h3><p>Paid Bookings</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-cash-stack"></i></div><div><h3>&#8377;${workerApp.hourlyRate}</h3><p>Hourly Rate</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><h3>&#8377;${pendingRevenue}</h3><p>Pending Revenue</p></div></div>
             </div>
-            <div style="grid-column: 1 / -1;">
-              <label class="wj-label">Bank Account / IFSC Details</label>
-              <textarea class="wj-textarea" name="bankDetails" rows="3" placeholder="Bank Name, A/C No, IFSC Code">${workerApp.bankDetails}</textarea>
+
+            <div class="wj-card" id="feeBreakdownView">
+              <div class="wj-card-h">
+                <h2><i class="bi bi-wallet2"></i> Fee &amp; Payout Settings</h2>
+                <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownView').style.display='none';document.getElementById('feeBreakdownEdit').style.display='block';">
+                  <i class="bi bi-pencil-square"></i> Edit
+                </button>
+              </div>
+              <div class="wj-card-b padded">
+                <div class="wj-edit-grid">
+                  <div>
+                    <label class="wj-label" style="margin:0;color:#64748B;">Hourly Rate (₹)</label>
+                    <div style="font-size:1.05rem;font-weight:700;color:#1E1B4B;margin-top:4px;">${workerApp.hourlyRate}</div>
+                  </div>
+                  <div>
+                    <label class="wj-label" style="margin:0;color:#64748B;">UPI ID</label>
+                    <div style="font-size:0.95rem;font-weight:600;color:#1E1B4B;margin-top:4px;">${not empty workerApp.upiId ? workerApp.upiId : 'Not Set'}</div>
+                  </div>
+                  <div style="grid-column: 1 / -1;">
+                    <label class="wj-label" style="margin:0;color:#64748B;">Bank Details</label>
+                    <div style="font-size:0.9rem;color:#1E1B4B;margin-top:4px;white-space:pre-wrap;">${not empty workerApp.bankDetails ? workerApp.bankDetails : 'Not Set'}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div style="margin-top:20px;display:flex;gap:10px">
-            <button type="submit" class="wj-btn wj-btn-rose"><i class="bi bi-check-circle"></i> Save Settings</button>
-            <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
 
-    <div class="wj-card">
-      <div class="wj-card-h"><h2><i class="bi bi-credit-card-2-front"></i> Completed &amp; Paid Bookings Log</h2></div>
-      <div class="wj-card-b">
-        <c:set var="hasCompletedOrPaid" value="false" />
-        <c:forEach var="b" items="${bookings}">
-          <c:if test="${b.status == 'COMPLETED' || b.status == 'PAID'}">
-            <c:set var="hasCompletedOrPaid" value="true" />
-          </c:if>
-        </c:forEach>
+            <div class="wj-card" id="feeBreakdownEdit" style="display:none">
+              <div class="wj-card-h">
+                <h2><i class="bi bi-pencil-square"></i> Edit Payout Settings</h2>
+                <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';">
+                  <i class="bi bi-x-lg"></i> Cancel
+                </button>
+              </div>
+              <div class="wj-card-b padded">
+                <form id="earningsUpdateForm" action="${pageContext.request.contextPath}/women-jobs/earnings/update" method="post">
+                  <div class="wj-edit-grid">
+                    <div>
+                      <label class="wj-label">Hourly Rate (₹)</label>
+                      <input class="wj-input" type="number" name="hourlyRate" min="1" step="0.01" value="${workerApp.hourlyRate}" required>
+                    </div>
+                    <div>
+                      <label class="wj-label">UPI ID for Payouts</label>
+                      <input class="wj-input" type="text" name="upiId" placeholder="e.g. handle@bank" value="${workerApp.upiId}">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                      <label class="wj-label">Bank Account / IFSC Details</label>
+                      <textarea class="wj-textarea" name="bankDetails" rows="3" placeholder="Bank Name, A/C No, IFSC Code">${workerApp.bankDetails}</textarea>
+                    </div>
+                  </div>
+                  <div style="margin-top:20px;display:flex;gap:10px">
+                    <button type="submit" class="wj-btn wj-btn-rose"><i class="bi bi-check-circle"></i> Save Settings</button>
+                    <button type="button" class="wj-btn wj-btn-ghost" onclick="document.getElementById('feeBreakdownEdit').style.display='none';document.getElementById('feeBreakdownView').style.display='block';">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
 
-        <c:if test="${!hasCompletedOrPaid}">
-          <div class="wj-empty"><i class="bi bi-receipt"></i><p>No completed or paid jobs found.</p></div>
-        </c:if>
-        <c:if test="${hasCompletedOrPaid}">
-          <div style="overflow-x:auto">
-            <table class="wj-table">
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Hours</th>
-                  <th>Earnings</th>
-                  <th>Booking Date</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <c:forEach var="b" items="${bookings}">
-                  <c:if test="${b.status == 'COMPLETED' || b.status == 'PAID'}">
-                    <tr>
-                      <td>
-                        <div class="wj-user-cell">
-                          <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
-                          <span>${b.client.fullName}</span>
-                        </div>
-                      </td>
-                      <td>${b.hours} hrs</td>
-                      <td style="color:#059669; font-weight:700">&#8377; ${b.totalAmount}</td>
-                      <td>${b.bookingDate}</td>
-                      <td>
-                        <c:choose>
-                          <c:when test="${b.status == 'PAID'}"><span class="wj-badge wj-badge-paid"><span class="dot"></span> Paid</span></c:when>
-                          <c:otherwise><span class="wj-badge wj-badge-done"><span class="dot"></span> Completed</span></c:otherwise>
-                        </c:choose>
-                      </td>
-                    </tr>
-                  </c:if>
-                </c:forEach>
-              </tbody>
-            </table>
-          </div>
-        </c:if>
-      </div>
-    </div>
+            <div class="wj-card">
+              <div class="wj-card-h"><h2><i class="bi bi-file-earmark-spreadsheet"></i> Earnings History</h2></div>
+              <div class="wj-card-b">
+                <c:set var="hasCompletedOrPaid" value="false"/>
+                <c:if test="${not empty bookings}">
+                  <c:forEach var="b" items="${bookings}">
+                    <c:if test="${b.status == 'COMPLETED' || b.status == 'PAID'}">
+                      <c:set var="hasCompletedOrPaid" value="true"/>
+                    </c:if>
+                  </c:forEach>
+                </c:if>
 
+                <c:if test="${not hasCompletedOrPaid}">
+                  <div class="wj-empty"><i class="bi bi-receipt"></i><p>No completed or paid jobs found.</p></div>
+                </c:if>
+                <c:if test="${hasCompletedOrPaid}">
+                  <div style="overflow-x:auto">
+                    <table class="wj-table">
+                      <thead>
+                        <tr>
+                          <th>Client</th>
+                          <th>Hours</th>
+                          <th>Earnings</th>
+                          <th>Booking Date</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <c:forEach var="b" items="${bookings}">
+                          <c:if test="${b.status == 'COMPLETED' || b.status == 'PAID'}">
+                            <tr>
+                              <td>
+                                <div class="wj-user-cell">
+                                  <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
+                                  <span>${b.client.fullName}</span>
+                                </div>
+                              </td>
+                              <td>${b.hours} hrs</td>
+                              <td style="color:#059669; font-weight:700">&#8377; ${b.totalAmount}</td>
+                              <td>${b.bookingDate}</td>
+                              <td>
+                                <c:choose>
+                                  <c:when test="${b.status == 'PAID'}"><span class="wj-badge wj-badge-paid"><span class="dot"></span> Paid</span></c:when>
+                                  <c:when test="${b.status == 'COMPLETED'}"><span class="wj-badge wj-badge-done"><span class="dot"></span> Completed</span></c:when>
+                                </c:choose>
+                              </td>
+                            </tr>
+                          </c:if>
+                        </c:forEach>
+                      </tbody>
+                    </table>
+                  </div>
+                </c:if>
+              </div>
+            </div>
+        </c:otherwise>
+    </c:choose>
   </div>
 </main>
 
