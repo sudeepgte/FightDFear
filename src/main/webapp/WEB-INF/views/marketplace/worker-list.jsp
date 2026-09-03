@@ -14,39 +14,105 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <style>
         body.mp-list-page {
-            --m-navy: #1E1B4B;
-            --m-navy-mid: #312E81;
-            --m-rose: #F43F5E;
-            --m-rose-mid: #C04B7A;
-            --m-bg: #F8FAFC;
+            --bg-neutral: #F8FAFC;
+            --surface-white: #FFFFFF;
+            
+            --struct-rose-light: #FFF1F2; /* 30% soft rose */
+            --struct-border: #E2E8F0;
+            
+            --accent-rose: #F43F5E; /* 10% accent */
+            --accent-hover: #E11D48;
+            
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
         }
+        
         body.mp-list-page #page-content-wrapper {
             font-family: 'Poppins', sans-serif;
-            background: var(--m-bg);
+            background: var(--bg-neutral);
+            color: var(--text-primary);
         }
+
         body.mp-list-page .hero-section {
-            background: linear-gradient(135deg, var(--m-navy) 0%, var(--m-navy-mid) 48%, var(--m-rose-mid) 100%);
-            padding: 60px 0; color: #fff; text-align: center;
-            box-shadow: 0 8px 28px rgba(125, 42, 90, 0.18);
+            background: var(--struct-rose-light);
+            padding: 60px 0; 
+            color: var(--text-primary); 
+            text-align: center;
+            border-bottom: 1px solid var(--struct-border);
+            position: relative;
         }
+
+        body.mp-list-page .hero-section h2 {
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        body.mp-list-page .hero-section p {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
         body.mp-list-page .worker-card {
-            background: #fff; border-radius: 20px; padding: 30px; text-align: center;
-            box-shadow: 0 6px 20px rgba(125, 42, 90, 0.08);
-            border: 1px solid rgba(30, 27, 75, 0.12); transition: 0.3s;
+            background: var(--surface-white); 
+            border-radius: 20px; 
+            padding: 30px; 
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid var(--struct-border); 
+            transition: 0.3s;
         }
-        body.mp-list-page .worker-card:hover { transform: translateY(-10px); border-color: var(--m-rose); }
+
+        body.mp-list-page .worker-card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--accent-rose);
+            box-shadow: 0 10px 20px rgba(244, 63, 94, 0.08);
+        }
+
         body.mp-list-page .worker-avatar {
             width: 100px; height: 100px; border-radius: 50%; object-fit: cover;
-            margin: 0 auto 20px; border: 4px solid var(--m-rose);
+            margin: 0 auto 20px; 
+            border: 3px solid var(--struct-rose-light);
         }
+
         body.mp-list-page .btn-primary {
-            background: var(--m-navy) !important;
+            background: var(--accent-rose) !important;
+            color: white !important;
             border: none !important;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 10px 20px;
         }
-        body.mp-list-page .btn-primary:hover { background: var(--m-rose) !important; }
-        body.mp-list-page h4 { color: var(--m-navy); }
+
+        body.mp-list-page .btn-primary:hover { 
+            background: var(--accent-hover) !important; 
+        }
+
+        body.mp-list-page .btn-back {
+            background: var(--surface-white);
+            color: var(--text-primary);
+            border: 1px solid var(--struct-border);
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 6px 16px;
+            transition: 0.2s;
+        }
+        body.mp-list-page .btn-back:hover {
+            background: var(--struct-rose-light);
+            color: var(--accent-rose);
+            border-color: var(--accent-rose);
+        }
+
+        body.mp-list-page h4 { color: var(--text-primary); font-weight: 700; }
+        body.mp-list-page .text-muted { color: var(--text-secondary) !important; }
+        
+        body.mp-list-page .card-icon {
+            color: var(--accent-rose);
+            width: 20px;
+            text-align: center;
+            margin-right: 6px;
+        }
+        
         @media (max-width: 768px) {
-            body.mp-list-page .hero-section { padding: 36px 16px; }
+            body.mp-list-page .hero-section { padding: 48px 16px 36px; }
         }
     </style>
 </head>
@@ -56,7 +122,7 @@
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper" style="min-height: 100vh;">
             <div class="hero-section">
-                <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-sm btn-light position-absolute" style="top:20px; left:20px;"><i class="bi bi-arrow-left"></i> Back</a>
+                <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-back position-absolute" style="top:20px; left:20px;"><i class="bi bi-arrow-left"></i> Back</a>
                 <h2>Verified Workers: ${category}</h2>
                 <p>Hire skilled and verified women professionals</p>
             </div>
@@ -65,10 +131,24 @@
                     <c:forEach var="app" items="${workers}">
                         <div class="col-md-6 col-lg-4">
                             <div class="worker-card">
-                                <img src="${pageContext.request.contextPath}${not empty app.user.profilePhoto ? app.user.profilePhoto : '/assets/img/hero-carousel/3.jpg'}" class="worker-avatar" alt="Avatar">
+                                <img src="${pageContext.request.contextPath}${not empty app.profileImageUrl ? app.profileImageUrl : (not empty app.user.profilePhoto ? app.user.profilePhoto : '/assets/img/hero-carousel/3.jpg')}" class="worker-avatar" alt="Avatar">
                                 <h4>${app.user.fullName}</h4>
-                                <p class="text-muted mb-2"><i class="fas fa-briefcase"></i> ${app.jobSubCategory}</p>
-                                <p class="text-muted mb-3"><i class="fas fa-map-marker-alt"></i> ${app.user.homeAddress}</p>
+                                <p class="text-muted mb-2">
+                                    <i class="fas fa-briefcase card-icon"></i> ${not empty app.jobSubCategory ? app.jobSubCategory : app.jobCategory}
+                                    <c:if test="${not empty app.yearsExperience}">
+                                        &bull; ${app.yearsExperience} yrs exp
+                                    </c:if>
+                                </p>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-map-marker-alt card-icon"></i> 
+                                    <c:choose>
+                                        <c:when test="${not empty app.city}">${app.city}</c:when>
+                                        <c:when test="${not empty app.user.city}">${app.user.city}</c:when>
+                                        <c:when test="${not empty app.address}">${app.address}</c:when>
+                                        <c:when test="${not empty app.user.homeAddress}">${app.user.homeAddress}</c:when>
+                                        <c:otherwise>Location not provided</c:otherwise>
+                                    </c:choose>
+                                </p>
                                 <a href="${pageContext.request.contextPath}/marketplace/worker/${app.id}" class="btn btn-primary w-100 mb-2">View Profile & Book</a>
                             </div>
                         </div>

@@ -104,22 +104,9 @@ public class WomenJobsController {
         cookie.setMaxAge(365 * 24 * 60 * 60);
         response.addCookie(cookie);
 
-        // Check if the user has a verified job application
-        Optional<JobApplication> appOpt = jobAppRepo
-                .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(user.getId(), VerificationStatus.VERIFIED);
-        
-        if (appOpt.isPresent()) {
+        List<in.sp.main.Entities.JobApplication> apps = jobAppRepo.findByUser_Id(user.getId());
+        if (!apps.isEmpty()) {
             return "redirect:/women-jobs/profile";
-        }
-
-        // Check if there is a pending application
-        Optional<JobApplication> pendingOpt = jobAppRepo
-                .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(user.getId(), VerificationStatus.PENDING);
-        if (pendingOpt.isPresent()) {
-            model.addAttribute("error", "Your worker application is pending admin verification. You will be able to access the dashboard once approved.");
-            // Log them out of session so they don't stay half logged-in
-            session.removeAttribute("user");
-            return "marketplace/women-jobs-login";
         }
 
         // If no application exists, redirect to the application page (they are registered but haven't applied)
@@ -238,7 +225,13 @@ public class WomenJobsController {
                 .orElse(null);
 
         if (app == null) {
-            redirectAttributes.addFlashAttribute("error", "Job Bookings are available only for verified workers.");
+            app = jobAppRepo
+                .findFirstByUser_IdAndStatusOrderByAppliedAtDesc(u.getId(), VerificationStatus.PENDING)
+                .orElse(null);
+        }
+
+        if (app == null) {
+            redirectAttributes.addFlashAttribute("error", "Job Bookings are available only for registered workers.");
             return "redirect:/marketplace";
         }
 
@@ -458,11 +451,6 @@ public class WomenJobsController {
         if (app == null) {
             redirectAttributes.addFlashAttribute("error", "Job Profile not found.");
             return "redirect:/marketplace";
-        }
-
-        if (!otpVerificationService.consumeVerifiedOtp(u.getEmail(), in.sp.main.Entities.OtpPurpose.JOB_WORKER_PROFILE_UPDATE, 10)) {
-            redirectAttributes.addFlashAttribute("error", "Security check failed. Please verify your profile update with the OTP sent to your email.");
-            return "redirect:/women-jobs/profile";
         }
 
         Map<String, Object> body = new HashMap<>();
