@@ -120,7 +120,7 @@
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-        <div id="page-content-wrapper" style="min-height: 100vh;">
+        <div id="page-content-wrapper" style="min-height: 100vh; padding: 0 !important;" data-skip-global-back="true">
             <div class="hero-section">
                 <a href="${pageContext.request.contextPath}/marketplace" class="btn btn-back position-absolute" style="top:20px; left:20px;"><i class="bi bi-arrow-left"></i> Back</a>
                 <h2>Verified Workers: ${category}</h2>

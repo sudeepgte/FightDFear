@@ -319,7 +319,7 @@
             </c:otherwise>
         </c:choose>
       </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      <!-- Removed mobile-nav-toggle per user request -->
     </nav>
         <c:choose>
             <c:when test="${not empty sessionScope.loggedTrainer}">
@@ -341,10 +341,10 @@
             <a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}" class="ms-3">
                 <c:choose>
                     <c:when test="${not empty user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${user.profilePhoto}" alt="Profile" class="header-profile-img">
+                        <img src="${pageContext.request.contextPath}${user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:when test="${not empty sessionScope.user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" alt="Profile" class="header-profile-img">
+                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:otherwise>
                         <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
@@ -561,4 +561,7 @@
       }
   });
 </script>
+
+
+
 

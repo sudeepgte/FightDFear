@@ -372,8 +372,17 @@
                 messagesDiv.innerHTML = '';
                 if(data.success && data.messages && data.messages.length > 0) {
                     data.messages.forEach(m => {
-                        var isMe = m.senderId != clientId;
-                        var msgHtml = '<div style="align-self: ' + (isMe ? 'flex-end' : 'flex-start') + '; background: ' + (isMe ? '#F43F5E' : '#e2e8f0') + '; color: ' + (isMe ? 'white' : '#1e293b') + '; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem;">' + m.message + '</div>';
+                        var isMe = (m.sender && m.sender.id != clientId);
+                        var timeStr = "";
+                        if(m.timestamp) {
+                            var d = new Date(m.timestamp);
+                            timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        }
+                        var align = isMe ? 'flex-end' : 'flex-start';
+                        var bg = isMe ? '#F43F5E' : '#e2e8f0';
+                        var textCol = isMe ? 'white' : '#1e293b';
+                        var timeHtml = timeStr ? '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: ' + (isMe ? 'right' : 'left') + ';">' + timeStr + '</div>' : '';
+                        var msgHtml = '<div style="align-self: ' + align + '; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: ' + bg + '; color: ' + textCol + '; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + m.message + '</div>' + timeHtml + '</div>';
                         messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
                     });
                 } else {
@@ -397,7 +406,9 @@
             emptyState.remove();
         }
         
-        var msgHtml = '<div style="align-self: flex-end; background: #F43F5E; color: white; padding: 8px 12px; border-radius: 12px 12px 0 12px; max-width: 80%; font-size: 0.9rem;">' + msg + '</div>';
+        var timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        var timeHtml = '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: right;">' + timeStr + '</div>';
+        var msgHtml = '<div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: #F43F5E; color: white; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + msg + '</div>' + timeHtml + '</div>';
         messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
         
