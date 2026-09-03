@@ -168,6 +168,9 @@ public class MobileDoctorController {
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
+        if (user.getId() != null) {
+            user = userRepo.findById(user.getId()).orElse(user);
+        }
         Doctor d = doctorRepo.findById(id).orElse(null);
         try {
             String reason = trim(body == null ? null : body.get("reason"));
@@ -184,16 +187,19 @@ public class MobileDoctorController {
                 } catch (Exception ignored) {
                 }
             }
-            DoctorAppointment appt = bookingService.createRequestBooking(d, user, apptTime, cType, reason, false, followUpOf);
+            DoctorAppointment appt = bookingService.createRequestBooking(d, user, apptTime, cType, reason, true, followUpOf);
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("message", "Appointment requested");
             data.put("appointmentId", appt.getId());
-            data.put("status", appt.getStatus().name());
+            data.put("status", appt.getStatus() == null ? "PENDING" : appt.getStatus().name());
             data.put("meetingRoomId", appt.getMeetingRoomId());
             return ResponseEntity.ok(ok(data));
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode())
                     .body(Map.of("success", false, "error", ex.getReason() == null ? "Booking failed" : ex.getReason()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "error", ex.getMessage() == null ? "Unable to book appointment" : ex.getMessage()));
         }
     }
 

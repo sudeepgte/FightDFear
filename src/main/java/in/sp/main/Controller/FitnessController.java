@@ -557,7 +557,10 @@ public class FitnessController {
 
     // TRAINER LOGIN GET
     @GetMapping("/trainer/login")
-    public String loginTrainerForm() {
+    public String loginTrainerForm(HttpSession session) {
+        if (getSessionTrainer(session) != null) {
+            return "redirect:/fitness/trainer/profile-completion";
+        }
         return "fitnessTrainerLogin";
     }
 
@@ -584,6 +587,7 @@ public class FitnessController {
 
                 trainerProfileService.refreshCompletion(trainer);
                 session.setAttribute("loggedTrainer", trainer);
+                session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
 
                 // Generate JWT and add to response
                 String token = jwtUtil.generateToken(trainer.getEmail(), "TRAINER");
@@ -593,15 +597,7 @@ public class FitnessController {
                 cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
                 response.addCookie(cookie);
 
-                boolean needsCompletion = in.sp.main.Service.PartnerLifecycleSupport.needsProfileCompletion(trainer.getPartnerProfileStatus())
-                        || !trainerProfileService.isReadyForVerification(trainer);
-
-                if (needsCompletion) {
-                    redirectAttributes.addFlashAttribute("info", "Please complete your coach profile to submit for verification.");
-                    return "redirect:/fitness/trainer/profile-completion";
-                }
-
-                return "redirect:/fitness/trainer/dashboard";
+                return "redirect:/fitness/trainer/profile-completion";
             }
         }
 
@@ -614,6 +610,7 @@ public class FitnessController {
     public String showTrainerProfileCompletion(HttpSession session, Model model) {
         FitnessTrainer sessionTrainer = (FitnessTrainer) session.getAttribute("loggedTrainer");
         if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+        session.removeAttribute("postLoginOpenProfile");
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
         trainerProfileService.refreshCompletion(trainer);
@@ -766,6 +763,9 @@ public class FitnessController {
     public String showTrainerDashboard(HttpSession session, Model model) {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
+        if (Boolean.TRUE.equals(session.getAttribute("postLoginOpenProfile"))) {
+            return "redirect:/fitness/trainer/profile-completion";
+        }
 
         trainer = trainerProfileService.refreshCompletion(trainer);
         model.addAttribute("missingItems", trainerProfileService.missingItems(trainer));

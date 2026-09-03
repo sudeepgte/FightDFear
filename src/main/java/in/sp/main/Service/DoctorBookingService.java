@@ -247,18 +247,21 @@ public class DoctorBookingService {
             appt.setMeetingPassword(doctorPaymentService.generateMeetingPassword());
         }
         DoctorAppointment saved = appointmentRepository.save(appt);
-        notificationService.notifyDoctor(
-                doctor,
-                "NEW_BOOKING",
-                "New appointment request",
-                (user.getFullName() != null ? user.getFullName() : "A patient")
-                        + " requested an appointment (#" + saved.getId() + ").",
-                true);
-        pushNotificationService.notifyDoctor(
-                doctor,
-                "New appointment request",
-                "A patient requested appointment #" + saved.getId(),
-                Map.of("type", "NEW_BOOKING", "appointmentId", String.valueOf(saved.getId())));
+        try {
+            notificationService.notifyDoctor(
+                    doctor,
+                    "NEW_BOOKING",
+                    "New appointment request",
+                    (user.getFullName() != null ? user.getFullName() : "A patient")
+                            + " requested an appointment (#" + saved.getId() + ").",
+                    true);
+            pushNotificationService.notifyDoctor(
+                    doctor,
+                    "New appointment request",
+                    "A patient requested appointment #" + saved.getId(),
+                    Map.of("type", "NEW_BOOKING", "appointmentId", String.valueOf(saved.getId())));
+        } catch (Exception ignored) {
+        }
         return saved;
     }
 
