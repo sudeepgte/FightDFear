@@ -159,7 +159,9 @@
                                 }
 
                                 try (java.sql.PreparedStatement ps = conn.prepareStatement(
-                                    "SELECT DISTINCT u.* FROM user u INNER JOIN chat_message m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
+                                    "SELECT DISTINCT u.*, " +
+                                    "COALESCE(u.profile_photo, (SELECT profile_image_url FROM job_application ja WHERE ja.user_id = u.id AND profile_image_url IS NOT NULL ORDER BY applied_at DESC LIMIT 1), (SELECT profile_photo FROM service_providers sp WHERE sp.user_id = u.id AND profile_photo IS NOT NULL LIMIT 1)) AS resolved_photo " +
+                                    "FROM user u INNER JOIN chat_message m ON (u.id = m.sender_id OR u.id = m.receiver_id) WHERE (m.sender_id = ? OR m.receiver_id = ?) AND u.id != ?")) {
                                     ps.setLong(1, currentUser.getId());
                                     ps.setLong(2, currentUser.getId());
                                     ps.setLong(3, currentUser.getId());
@@ -169,7 +171,7 @@
                                             u.setId(rs.getLong("id"));
                                             u.setFullName(rs.getString("full_name"));
                                             u.setEmail(rs.getString("email"));
-                                            u.setProfilePhoto(rs.getString("profile_photo"));
+                                            u.setProfilePhoto(rs.getString("resolved_photo"));
                                             usersList.add(u);
                                         }
                                     }
@@ -186,8 +188,15 @@
                 <c:forEach var="doc" items="${doctors}">
                     <a href="${pageContext.request.contextPath}/doctors/chat/${doc.id}" class="friend-card" data-aos="fade-up">
                         <div class="friend-avatar">
-                            <img src="${pageContext.request.contextPath}/uploads/${doc.profilePhotoPath}"
-                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
+                            <c:set var="docPp" value="${doc.profilePhotoPath}" />
+                            <c:if test="${empty docPp}">
+                                <c:set var="docPp" value="/assets/img/logo.png" />
+                            </c:if>
+                            <c:if test="${not empty docPp and not docPp.startsWith('/') and not docPp.startsWith('http')}">
+                                <c:set var="docPp" value="/uploads/${docPp}" />
+                            </c:if>
+                            <img src="${pageContext.request.contextPath}${docPp}"
+                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/logo.png';"
                                  alt="Dr. ${doc.fullName}">
                         </div>
                         <div class="friend-role">Doctor</div>
@@ -201,8 +210,15 @@
                 <c:forEach var="chatUser" items="${users}">
                     <a href="${pageContext.request.contextPath}/chat/window/${chatUser.id}" class="friend-card" data-aos="fade-up">
                         <div class="friend-avatar">
-                            <img src="${pageContext.request.contextPath}${chatUser.profilePhoto}"
-                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/images/default-profile.png';"
+                            <c:set var="userPp" value="${chatUser.profilePhoto}" />
+                            <c:if test="${empty userPp}">
+                                <c:set var="userPp" value="/assets/img/logo.png" />
+                            </c:if>
+                            <c:if test="${not empty userPp and not userPp.startsWith('/') and not userPp.startsWith('http')}">
+                                <c:set var="userPp" value="/${userPp}" />
+                            </c:if>
+                            <img src="${pageContext.request.contextPath}${userPp}"
+                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/logo.png';"
                                  alt="${chatUser.fullName}">
                         </div>
                         <div class="friend-name">${not empty chatUser.fullName ? chatUser.fullName : chatUser.email}</div>

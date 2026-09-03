@@ -12,26 +12,37 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <style>
         :root {
-            --m-purple: #1e1b4b;
-            --m-pink: #f43f5e;
-            --m-bg: #f8f9fa;
+            --bg-neutral: #F8FAFC;
+            --surface-white: #FFFFFF;
+            
+            --struct-rose-light: #FFF1F2; /* 30% soft rose */
+            --struct-border: #E2E8F0;
+            
+            --accent-rose: #F43F5E; /* 10% accent */
+            --accent-hover: #E11D48;
+            
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
         }
-        body { font-family: 'Poppins', sans-serif; background: var(--m-bg); }
+        
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-neutral); color: var(--text-primary); }
         
         .profile-header {
-            background: linear-gradient(135deg, var(--m-purple) 0%, var(--m-pink) 100%);
+            background: var(--struct-rose-light);
             padding: 80px 0 100px;
-            color: white;
+            color: var(--text-primary);
             text-align: center;
+            border-bottom: 1px solid var(--struct-border);
         }
         
         .profile-container {
             max-width: 900px;
             margin: -60px auto 40px;
-            background: white;
+            background: var(--surface-white);
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            border: 1px solid var(--struct-border);
             position: relative;
         }
 
@@ -45,56 +56,63 @@
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            border: 5px solid white;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border: 5px solid var(--struct-rose-light);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
             object-fit: cover;
         }
 
         .badge-verified {
-            background: #198754;
+            background: #10b981; /* keep semantic success color */
             color: white;
             padding: 5px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .info-card {
-            background: #f8f9fa;
+            background: var(--bg-neutral);
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
+            border: 1px solid var(--struct-border);
         }
 
         .info-card i {
-            color: var(--m-pink);
+            color: var(--accent-rose);
             font-size: 1.2rem;
             width: 30px;
         }
+        
+        .info-card strong { color: var(--text-primary); }
+        .info-card span.text-muted { color: var(--text-secondary) !important; }
 
         .booking-section {
-            background: rgba(124, 45, 94, 0.03);
-            border: 2px dashed rgba(124, 45, 94, 0.2);
+            background: var(--struct-rose-light);
+            border: 1px solid var(--accent-rose);
             border-radius: 15px;
             padding: 30px;
             margin-top: 40px;
         }
 
         .btn-brand {
-            background: var(--m-purple);
+            background: var(--accent-rose);
             color: white;
             border: none;
             padding: 12px 25px;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             transition: 0.3s;
         }
         
         .btn-brand:hover {
-            background: var(--m-pink);
+            background: var(--accent-hover);
             color: white;
             transform: translateY(-2px);
         }
+        
+        h2, h4, h5 { color: var(--text-primary); font-weight: 700; }
+        p, span { color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -111,7 +129,7 @@
                 <div class="profile-container">
                     
                     <div class="profile-img-wrap">
-                        <img src="${pageContext.request.contextPath}${not empty workerApp.user.profilePhoto ? workerApp.user.profilePhoto : '/assets/img/hero-carousel/3.jpg'}" class="profile-img" alt="Profile">
+                        <img src="${pageContext.request.contextPath}${not empty workerApp.profileImageUrl ? workerApp.profileImageUrl : (not empty workerApp.user.profilePhoto ? workerApp.user.profilePhoto : '/assets/img/hero-carousel/3.jpg')}" class="profile-img" alt="Profile">
                     </div>
 
                     <div class="text-center mb-4">

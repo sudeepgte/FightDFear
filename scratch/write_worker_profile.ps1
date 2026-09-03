@@ -1,3 +1,4 @@
+$content = @'
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
@@ -25,7 +26,7 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--navy); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--navy); display: flex; flex-direction: column; min-height: 100vh; }
 
         .topbar { background: var(--card-bg); padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
         .brand { font-size: 1.25rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; text-decoration: none; }
@@ -55,12 +56,12 @@
         .section-title:first-of-type { margin-top: 0; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group.full { grid-column: span 2; }
         .form-label { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
-        .form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; transition: 0.3s; }
+        .form-input { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; transition: 0.3s; }
         .form-input:focus { outline: none; border-color: var(--primary); }
-        .form-select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; background: white; cursor: pointer; }
+        .form-select { padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; background: white; cursor: pointer; }
 
         .preview-section { position: sticky; top: 90px; }
         .preview-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
@@ -84,19 +85,8 @@
         .prev-desc { font-size: 0.85rem; color: var(--navy); line-height: 1.5; margin-top: 10px; }
         
         @media (max-width: 992px) {
-            .container { grid-template-columns: minmax(0, 1fr); }
+            .container { grid-template-columns: 1fr; }
             .preview-section { display: none; }
-        }
-        @media (max-width: 768px) {
-            .topbar { padding: 12px 15px; flex-wrap: wrap; gap: 12px; }
-            .brand span { font-size: 1.1rem !important; white-space: nowrap; }
-            .topbar-actions { display: flex; gap: 8px; width: 100%; justify-content: space-between; }
-            .btn-skip, .btn-save { padding: 8px 12px; font-size: 0.85rem; white-space: nowrap; flex: 1; justify-content: center; text-align: center; }
-            .form-grid { grid-template-columns: minmax(0, 1fr); }
-            .form-group.full { grid-column: span 1; }
-            .container { margin: 15px auto; padding: 0 10px; width: 100%; max-width: 100vw; box-sizing: border-box; overflow-x: hidden; }
-            .form-section { padding: 20px 15px; }
-            .form-input, .form-select { width: 100%; }
         }
     </style>
 </head>
@@ -104,7 +94,7 @@
     <form id="profileForm" action="${pageContext.request.contextPath}/women-jobs/profile" method="post" enctype="multipart/form-data">
         <header class="topbar">
             <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none;">
-                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain;">
+                <i class="bi bi-briefcase-fill"></i>
                 <span style="font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0; padding: 0;">Fight D Fear</span>
             </a>
             <div class="topbar-actions">
@@ -120,8 +110,6 @@
                         <h2>Profile Details</h2>
                         <span class="status-badge">${workerApp.status != null ? workerApp.status : 'REGISTERED'}</span>
                     </div>
-                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="pbFill"></div></div>
-                    <div class="progress-text" id="pbText">0% Completed</div>
                 </div>
 
                 <h3 class="section-title">1. Worker Identity</h3>
@@ -131,11 +119,11 @@
                         <input type="text" name="fullName" class="form-input" value="${workerApp.user.fullName}" oninput="updatePreview('prevName', this.value)">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Role type / designation</label>
+                        <label class="form-label">Designation</label>
                         <input type="text" name="designation" class="form-input" value="${workerApp.designation}" oninput="updatePreview('prevRole', this.value)" placeholder="e.g. Senior Baby Care Specialist">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Official phone</label>
+                        <label class="form-label">Phone</label>
                         <input type="text" name="phone" class="form-input" value="${workerApp.user.phoneNumber}">
                     </div>
                     <div class="form-group">
@@ -143,15 +131,48 @@
                         <input type="text" name="whatsappNumber" class="form-input" value="${workerApp.whatsappNumber}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Years of experience</label>
+                        <label class="form-label">Years of Experience</label>
                         <input type="number" name="yearsExperience" class="form-input" value="${workerApp.yearsExperience}">
                     </div>
                 </div>
 
-                <h3 class="section-title">2. Location</h3>
+                <h3 class="section-title">2. Professional Details</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Primary Category</label>
+                        <select id="jobCategory" name="jobCategory" class="form-select" onchange="updateSubCategories()">
+                            <option value="">Select Category</option>
+                            <option value="Caregiver" ${workerApp.jobCategory == 'Caregiver' ? 'selected' : ''}>Caregiver</option>
+                            <option value="Babysitting" ${workerApp.jobCategory == 'Babysitting' ? 'selected' : ''}>Babysitting</option>
+                            <option value="Housekeeping" ${workerApp.jobCategory == 'Housekeeping' ? 'selected' : ''}>Housekeeping</option>
+                            <option value="Cooking" ${workerApp.jobCategory == 'Cooking' ? 'selected' : ''}>Cooking</option>
+                            <option value="Beauty & Salon" ${workerApp.jobCategory == 'Beauty & Salon' ? 'selected' : ''}>Beauty & Salon</option>
+                            <option value="Healthcare" ${workerApp.jobCategory == 'Healthcare' ? 'selected' : ''}>Healthcare</option>
+                            <option value="Teaching" ${workerApp.jobCategory == 'Teaching' ? 'selected' : ''}>Teaching</option>
+                            <option value="Office Jobs" ${workerApp.jobCategory == 'Office Jobs' ? 'selected' : ''}>Office Jobs</option>
+                            <option value="Retail" ${workerApp.jobCategory == 'Retail' ? 'selected' : ''}>Retail</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role / Sub Category</label>
+                        <select id="jobSubCategory" name="jobSubCategory" class="form-select">
+                            <option value="${workerApp.jobSubCategory}"><c:out value="${empty workerApp.jobSubCategory ? 'Select specific job' : workerApp.jobSubCategory}"/></option>
+                        </select>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Skills</label>
+                        <input type="text" name="skills" class="form-input" value="${workerApp.skills}" oninput="updateTagsPreview('prevSkills', this.value)" placeholder="e.g. CPR, Cooking, Tutoring">
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Bio / About</label>
+                        <textarea name="bio" class="form-input" rows="4" oninput="updatePreview('prevBio', this.value)">${workerApp.bio}</textarea>
+                    </div>
+                </div>
+
+                <h3 class="section-title">3. Location & Audience</h3>
                 <div class="form-grid">
                     <div class="form-group full">
-                        <label class="form-label">Landmark / address</label>
+                        <label class="form-label">Address</label>
                         <textarea name="address" class="form-input" rows="2">${workerApp.address}</textarea>
                     </div>
                     <div class="form-group">
@@ -167,175 +188,43 @@
                         <input type="text" name="pincode" class="form-input" value="${workerApp.pincode}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Latitude</label>
-                        <input type="number" step="any" name="latitude" class="form-input" value="${workerApp.latitude}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Longitude</label>
-                        <input type="number" step="any" name="longitude" class="form-input" value="${workerApp.longitude}">
-                    </div>
-                </div>
-
-                <h3 class="section-title">3. Work categories</h3>
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label class="form-label">Categories offered</label>
-                        <textarea name="categoriesOffered" class="form-input" rows="2">${workerApp.categoriesOffered}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Primary category</label>
-                        <select id="jobCategory" name="jobCategory" class="form-select" onchange="updateSubCategories()">
-                            <option value="">Select Category</option>
-                            <option value="Caregiver" ${workerApp.jobCategory == 'Caregiver' ? 'selected' : ''}>Caregiver</option>
-                            <option value="Babysitting" ${workerApp.jobCategory == 'Babysitting' ? 'selected' : ''}>Babysitting</option>
-                            <option value="Housekeeping" ${workerApp.jobCategory == 'Housekeeping' ? 'selected' : ''}>Housekeeping</option>
-                            <option value="Cooking" ${workerApp.jobCategory == 'Cooking' ? 'selected' : ''}>Cooking</option>
-                            <option value="Beauty & Salon" ${workerApp.jobCategory == 'Beauty & Salon' ? 'selected' : ''}>Beauty & Salon</option>
-                            <option value="Healthcare" ${workerApp.jobCategory == 'Healthcare' ? 'selected' : ''}>Healthcare</option>
-                            <option value="Teaching" ${workerApp.jobCategory == 'Teaching' ? 'selected' : ''}>Teaching</option>
-                            <option value="Office Jobs" ${workerApp.jobCategory == 'Office Jobs' ? 'selected' : ''}>Office Jobs</option>
-                            <option value="Retail" ${workerApp.jobCategory == 'Retail' ? 'selected' : ''}>Retail</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Role / sub category</label>
-                        <select id="jobSubCategory" name="jobSubCategory" class="form-select">
-                            <option value="${workerApp.jobSubCategory}"><c:out value="${empty workerApp.jobSubCategory ? 'Select specific job' : workerApp.jobSubCategory}"/></option>
-                        </select>
-                    </div>
-                </div>
-
-                <h3 class="section-title">4. Who I serve</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Audience</label>
-                        <input type="text" name="audience" class="form-input" value="${workerApp.audience}">
-                    </div>
-                    <div class="form-group">
                         <label class="form-label">Door visits</label>
                         <select name="doorService" class="form-select">
                             <option value="true" ${workerApp.doorService == true ? 'selected' : ''}>Yes</option>
                             <option value="false" ${workerApp.doorService != true ? 'selected' : ''}>No</option>
                         </select>
                     </div>
-                    <div class="form-group full">
-                        <label class="form-label">Languages</label>
-                        <input type="text" name="languages" class="form-input" value="${workerApp.languages}" placeholder="e.g. English, Hindi, Tamil">
-                    </div>
-                    <div class="form-group full">
-                        <label class="form-label">Skills</label>
-                        <input type="text" name="skills" class="form-input" value="${workerApp.skills}" oninput="updateTagsPreview('prevSkills', this.value)" placeholder="e.g. CPR, Cooking, Tutoring">
-                    </div>
                 </div>
 
-                <h3 class="section-title">5. Facilities & readiness</h3>
+                <h3 class="section-title">4. Availability & Working Hours</h3>
                 <div class="form-grid">
-                    <div class="form-group full">
-                        <label class="form-label">Amenities / readiness</label>
-                        <textarea name="facilities" class="form-input" rows="2">${workerApp.facilities}</textarea>
-                    </div>
-                </div>
-
-                <h3 class="section-title">6. Hours & calendar</h3>
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label class="form-label">Open days</label>
-                        <input type="text" name="openDays" class="form-input" value="${workerApp.openDays}" placeholder="e.g. Mon-Fri">
+                    <div class="form-group">
+                        <label class="form-label">Open Days</label>
+                        <input type="text" name="openDays" class="form-input" value="${workerApp.openDays}" placeholder="Mon-Fri">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Open time</label>
+                        <label class="form-label">Service Mode</label>
+                        <input type="text" name="serviceMode" class="form-input" value="${workerApp.serviceMode}" placeholder="e.g. DOOR / CENTRE">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Open Time</label>
                         <input type="time" name="openTime" class="form-input" value="${workerApp.openTime}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Close time</label>
+                        <label class="form-label">Close Time</label>
                         <input type="time" name="closeTime" class="form-input" value="${workerApp.closeTime}">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Break start</label>
-                        <input type="time" name="breakStart" class="form-input" value="${workerApp.breakStart}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Break end</label>
-                        <input type="time" name="breakEnd" class="form-input" value="${workerApp.breakEnd}">
-                    </div>
-                    <div class="form-group full">
-                        <label class="form-label">Blocked dates</label>
-                        <textarea name="blockedDates" class="form-input" rows="2">${workerApp.blockedDates}</textarea>
-                    </div>
                 </div>
 
-                <h3 class="section-title">7. About you</h3>
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label class="form-label">About</label>
-                        <textarea name="bio" class="form-input" rows="4" oninput="updatePreview('prevBio', this.value)">${workerApp.bio}</textarea>
-                    </div>
-                </div>
-
-                <h3 class="section-title">8. First offering</h3>
+                <h3 class="section-title">5. Fees & Payment</h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label class="form-label">Hourly rate (&#8377;)</label>
+                        <label class="form-label">Hourly Rate (?)</label>
                         <input type="number" name="hourlyRate" class="form-input" value="${workerApp.hourlyRate}">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Duration (minutes)</label>
-                        <input type="number" name="durationMinutes" class="form-input" value="${workerApp.durationMinutes}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Buffer (minutes)</label>
-                        <input type="number" name="bufferMinutes" class="form-input" value="${workerApp.bufferMinutes}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Service mode</label>
-                        <input type="text" name="serviceMode" class="form-input" value="${workerApp.serviceMode}">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Work type</label>
-                        <input type="text" name="workType" class="form-input" value="${workerApp.workType}">
-                    </div>
-                </div>
-
-                <h3 class="section-title">9. Payout</h3>
-                <div class="form-grid">
-                    <div class="form-group">
                         <label class="form-label">UPI ID</label>
                         <input type="text" name="upiId" class="form-input" value="${workerApp.upiId}">
-                    </div>
-                    <div class="form-group full">
-                        <label class="form-label">Bank details</label>
-                        <textarea name="bankDetails" class="form-input" rows="2" placeholder="Bank Name, A/C No, IFSC Code">${workerApp.bankDetails}</textarea>
-                    </div>
-                </div>
-
-                <h3 class="section-title">10. Documents (optional)</h3>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Profile photo</label>
-                        <input type="file" name="profileImage" class="form-input" accept="image/*">
-                        <c:if test="${not empty workerApp.profileImageUrl}">
-                            <div style="margin-top:5px; font-size:0.8rem;">Current: ${workerApp.profileImageUrl}</div>
-                        </c:if>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Proof document</label>
-                        <input type="file" name="proofDocument" class="form-input" accept="image/*,.pdf">
-                        <c:if test="${not empty workerApp.documentPath}">
-                            <div style="margin-top:5px; font-size:0.8rem;">
-                                <a href="${pageContext.request.contextPath}${workerApp.documentPath}" target="_blank">View existing proof document</a>
-                            </div>
-                        </c:if>
-                    </div>
-                </div>
-                
-                <h3 class="section-title">11. Work photos (optional)</h3>
-                <div class="form-grid">
-                    <div class="form-group full">
-                        <label class="form-label">Gallery photos</label>
-                        <input type="file" name="galleryPhotos" class="form-input" accept="image/*" multiple>
-                        <c:if test="${not empty workerApp.galleryPhotos}">
-                            <div style="margin-top:5px; font-size:0.8rem;">Current: ${workerApp.galleryPhotos}</div>
-                        </c:if>
                     </div>
                 </div>
             </div>
@@ -355,12 +244,12 @@
 
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                             <div class="prev-box">
-                                <div class="prev-box-title">Experience</div>
-                                <div class="prev-box-val">${empty workerApp.yearsExperience ? '0' : workerApp.yearsExperience} Years</div>
+                                <div class="prev-box-title">Operating Timings</div>
+                                <div class="prev-box-val">09:00 - 18:00</div>
                             </div>
                             <div class="prev-box">
-                                <div class="prev-box-title">Hourly Rate</div>
-                                <div class="prev-box-val">&#8377; ${empty workerApp.hourlyRate ? '0' : workerApp.hourlyRate}</div>
+                                <div class="prev-box-title">Service Type</div>
+                                <div class="prev-box-val">Consultation</div>
                             </div>
                         </div>
 
@@ -436,35 +325,13 @@
             subCategorySelect.appendChild(keep);
         }
     };
-    
-    function calculateProgress() {
-        const inputs = document.querySelectorAll('.form-input, .form-select');
-        let filled = 0;
-        let total = 0;
-        inputs.forEach(input => {
-            if (input.type === 'file') return;
-            total++;
-            if (input.value && input.value.trim() !== '') {
-                filled++;
-            }
-        });
-        const percent = total === 0 ? 0 : Math.round((filled / total) * 100);
-        document.getElementById('pbFill').style.width = percent + '%';
-        document.getElementById('pbText').textContent = percent + '% Completed';
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
         updateSubCategories();
         // Initialize dynamic previews on load
         if(document.querySelector('input[name="skills"]')) updateTagsPreview('prevSkills', document.querySelector('input[name="skills"]').value);
-        
-        calculateProgress();
-        const allInputs = document.querySelectorAll('.form-input, .form-select');
-        allInputs.forEach(input => {
-            input.addEventListener('input', calculateProgress);
-            input.addEventListener('change', calculateProgress);
-        });
     });
 </script>
 </body>
 </html>
+'@
+Set-Content -Path src/main/webapp/WEB-INF/views/marketplace/worker-profile.jsp -Value $content -Encoding UTF8
