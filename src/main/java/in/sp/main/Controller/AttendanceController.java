@@ -123,8 +123,7 @@ public class AttendanceController {
     public String showTrainerAttendance(HttpSession session, Model model) {
         MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (center == null) return "redirect:/centres/login";
-        model.addAttribute("center", center);
-        return "trainerAttendance";
+        return "redirect:/centres/dashboard?tab=attendance";
     }
 
     @GetMapping("/api/attendance/sessions")

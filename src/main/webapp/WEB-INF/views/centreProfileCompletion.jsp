@@ -142,8 +142,14 @@
             overflow: hidden;
         }
 
+        .badge-soft-rose {
+            background-color: var(--rose-soft) !important;
+            color: var(--navy) !important;
+            border: 1px solid #FECDD3 !important;
+        }
+
         .preview-banner-header {
-            background: linear-gradient(135deg, #1E1B4B 0%, #2D2960 100%);
+            background: var(--navy);
             color: #FFFFFF;
             padding: 16px 20px;
             display: flex;
@@ -952,77 +958,77 @@
                             </div>
 
                             <!-- Highlights & Badges -->
-                            <div class="preview-meta-row">
-                                <i class="bi bi-shield-check"></i>
-                                <div>
-                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Training Environment</span>
-                                    <span id="previewWomenOnlyBadge" class="badge bg-light border text-dark ms-1" style="font-size: 0.68rem; ${center.womenOnlyBatches == true ? '' : 'display:none;'}">
+                            <div class="preview-meta-row align-items-center">
+                                <i class="bi bi-shield-check text-danger me-2" style="font-size: 1.1rem;"></i>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <span class="text-muted" style="font-size: 0.75rem;">Training Environment</span>
+                                    <span id="previewWomenOnlyBadge" class="badge badge-soft-rose" style="font-size: 0.68rem; padding: 4px 6px; ${center.womenOnlyBatches == true ? '' : 'display:none;'}">
                                         <i class="bi bi-gender-female text-danger me-1"></i> Women-Only Batches
                                     </span>
-                                    <span id="previewFemaleInstBadge" class="badge bg-light border text-dark ms-1" style="font-size: 0.68rem; ${center.femaleInstructor == true ? '' : 'display:none;'}">
+                                    <span id="previewFemaleInstBadge" class="badge badge-soft-rose" style="font-size: 0.68rem; padding: 4px 6px; ${center.femaleInstructor == true ? '' : 'display:none;'}">
                                         <i class="bi bi-person-check-fill text-success me-1"></i> Female Instructor
                                     </span>
                                 </div>
                             </div>
 
                             <!-- Martial Arts Programs / Styles -->
-                            <div class="mb-3">
+                            <div class="mt-3 mb-3">
                                 <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Programs &amp; Styles</span>
-                                <div id="previewStylesContainer" class="d-flex flex-wrap">
+                                <div id="previewStylesContainer" class="d-flex flex-wrap gap-2">
                                     <c:choose>
                                         <c:when test="${not empty center.stylesTaught}">
                                             <c:forEach var="st" items="${center.stylesTaught.split(',')}">
-                                                <span class="preview-chip">${st.trim()}</span>
+                                                <span class="preview-chip m-0">${st.trim()}</span>
                                             </c:forEach>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="preview-chip">Karate</span>
-                                            <span class="preview-chip">Self-Defence</span>
+                                            <span class="preview-chip m-0">Karate</span>
+                                            <span class="preview-chip m-0">Self-Defence</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
                             </div>
 
                             <!-- Target Audience -->
-                            <div class="mb-3">
+                            <div class="mt-3 mb-3">
                                 <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Who Can Join</span>
-                                <div id="previewAudienceContainer" class="d-flex flex-wrap">
+                                <div id="previewAudienceContainer" class="d-flex flex-wrap gap-2">
                                     <c:choose>
                                         <c:when test="${not empty center.audience}">
                                             <c:forEach var="aud" items="${center.audience.split(',')}">
-                                                <span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">${aud.trim()}</span>
+                                                <span class="badge badge-soft-rose m-0" style="font-size: 0.72rem; padding: 6px 10px;">${aud.trim()}</span>
                                             </c:forEach>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">Women &amp; Girls</span>
-                                            <span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">Beginners</span>
+                                            <span class="badge badge-soft-rose m-0" style="font-size: 0.72rem; padding: 6px 10px;">Women &amp; Girls</span>
+                                            <span class="badge badge-soft-rose m-0" style="font-size: 0.72rem; padding: 6px 10px;">Beginners</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
                             </div>
 
                             <!-- About / Ethos -->
-                            <div class="mb-3">
+                            <div class="mt-3 mb-3">
                                 <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">About Centre</span>
-                                <p id="previewAboutText" class="small text-muted mb-0" style="line-height: 1.4; max-height: 80px; overflow-y: auto;">
+                                <p id="previewAboutText" class="small text-muted mb-0" style="line-height: 1.5; word-break: break-word; white-space: pre-wrap;">
                                     ${not empty center.about ? center.about : 'Professional martial arts academy dedicated to self-defense empowerment, disciplined belt grading, and structured physical fitness.'}
                                 </p>
                             </div>
 
                             <!-- Facilities & Amenities -->
-                            <div id="previewFacilitiesWrap" class="mb-3" style="${not empty center.facilities ? '' : 'display:none;'}">
+                            <div id="previewFacilitiesWrap" class="mt-3 mb-3" style="${not empty center.facilities ? '' : 'display:none;'}">
                                 <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Dojo Facilities</span>
-                                <div id="previewFacilitiesContainer" class="d-flex flex-wrap">
+                                <div id="previewFacilitiesContainer" class="d-flex flex-wrap gap-2">
                                     <c:if test="${not empty center.facilities}">
                                         <c:forEach var="fac" items="${center.facilities.split(',')}">
-                                            <span class="badge bg-white border text-secondary me-1 mb-1" style="font-size: 0.7rem;"><i class="bi bi-check-circle text-success me-1"></i>${fac.trim()}</span>
+                                            <span class="badge badge-soft-rose m-0" style="font-size: 0.7rem; padding: 6px 8px;"><i class="bi bi-check-circle text-success me-1"></i>${fac.trim()}</span>
                                         </c:forEach>
                                     </c:if>
                                 </div>
                             </div>
 
                             <!-- Gallery Thumbnails Strip -->
-                            <div id="previewGalleryWrap" class="mb-2" style="${not empty center.galleryPhotos and center.galleryPhotos.size() > 0 ? '' : 'display:none;'}">
+                            <div id="previewGalleryWrap" class="mt-3 mb-2" style="${not empty center.galleryPhotos and center.galleryPhotos.size() > 0 ? '' : 'display:none;'}">
                                 <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Dojo Photos</span>
                                 <div id="previewGalleryContainer" class="d-flex flex-wrap gap-2">
                                     <c:forEach var="photo" items="${center.galleryPhotos}">
@@ -1128,11 +1134,11 @@
                     const checked = Array.from(document.querySelectorAll('.style-checkbox:checked')).map(c => c.value);
                     container.innerHTML = '';
                     if (checked.length === 0) {
-                        container.innerHTML = '<span class="preview-chip">Martial Arts</span>';
+                        container.innerHTML = '<span class="preview-chip m-0">Martial Arts</span>';
                     } else {
                         checked.forEach(function(val) {
                             const span = document.createElement('span');
-                            span.className = 'preview-chip';
+                            span.className = 'preview-chip m-0';
                             span.textContent = val;
                             container.appendChild(span);
                         });
@@ -1147,12 +1153,13 @@
                     const checked = Array.from(document.querySelectorAll('.aud-checkbox:checked')).map(c => c.value);
                     container.innerHTML = '';
                     if (checked.length === 0) {
-                        container.innerHTML = '<span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">All Students</span>';
+                        container.innerHTML = '<span class="badge badge-soft-rose m-0" style="font-size: 0.72rem; padding: 6px 10px;">All Students</span>';
                     } else {
                         checked.forEach(function(val) {
                             const span = document.createElement('span');
-                            span.className = 'badge bg-light border text-dark me-1 mb-1';
+                            span.className = 'badge badge-soft-rose m-0';
                             span.style.fontSize = '0.72rem';
+                            span.style.padding = '6px 10px';
                             span.textContent = val;
                             container.appendChild(span);
                         });
@@ -1173,8 +1180,9 @@
                         wrap.style.display = 'block';
                         checked.forEach(function(val) {
                             const span = document.createElement('span');
-                            span.className = 'badge bg-white border text-secondary me-1 mb-1';
+                            span.className = 'badge badge-soft-rose m-0';
                             span.style.fontSize = '0.7rem';
+                            span.style.padding = '6px 8px';
                             span.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>' + val;
                             container.appendChild(span);
                         });

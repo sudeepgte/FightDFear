@@ -2976,16 +2976,46 @@ public class AdminController {
     }
 
 
-    @PostMapping("/centres/{id}/approve")
+    @PostMapping({"/centres/{id}/approve", "/admin/centres/{id}/approve"})
     @Transactional
-    public String approveCentreDirect(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
-        return approveCentre(id, session, redirectAttributes);
+    public String approveCentreDirect(@PathVariable Long id,
+                                      @RequestParam(value = "notes", required = false) String notes,
+                                      HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
+        if (centre == null) {
+            ra.addFlashAttribute("error", "Centre not found.");
+            return "redirect:/admin/martialManagement";
+        }
+        centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.APPROVED);
+        centre.setApproved(true);
+        centre.setRejectionReason(null);
+        centre.setChangesRequestedNote(null);
+        centreRepository.save(centre);
+
+        try {
+            String subject = "Your Martial Arts Center is Now Approved!";
+            String text = "Dear " + centre.getName() + ",\n\n"
+                    + "We are excited to inform you that your registration as a Martial Arts Training Center has been successfully approved.\n\n"
+                    + "Your center is now visible to users, and they can start enrolling in your training sessions.\n\n"
+                    + "Please log in to your profile to manage enrollments and update training details as needed.\n\n"
+                    + "Best Regards,\nFight D Fear\n";
+            if (centre.getEmail() != null && !centre.getEmail().isBlank()) {
+                emailService.sendEmail(centre.getEmail(), subject, text);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send approval email: " + e.getMessage());
+        }
+
+        ra.addFlashAttribute("message", "Centre approved successfully! Public listing is now active.");
+        return "redirect:/centres/about/" + id;
     }
 
-    @PostMapping("/centres/{id}/reject")
+    @PostMapping({"/centres/{id}/reject", "/admin/centres/{id}/reject"})
     @Transactional
     public String rejectCentreWithReason(@PathVariable Long id,
                                          @RequestParam(value = "reason", required = false) String reason,
+                                         @RequestParam(value = "notes", required = false) String notes,
                                          HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
@@ -2994,16 +3024,20 @@ public class AdminController {
             return "redirect:/admin/martialManagement";
         }
         centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.REJECTED);
-        centre.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        String combined = (notes != null && !notes.isBlank()) ? notes.trim()
+                : (reason == null || reason.isBlank() ? null : reason.trim());
+        centre.setRejectionReason(combined);
         centreRepository.save(centre);
         ra.addFlashAttribute("message", "Centre application rejected.");
-        return "redirect:/admin/martialManagement";
+        return "redirect:/centres/about/" + id;
     }
 
-    @PostMapping("/centres/{id}/request-changes")
+    @PostMapping({"/centres/{id}/request-changes", "/admin/centres/{id}/request-changes"})
     @Transactional
     public String requestCentreChanges(@PathVariable Long id,
                                        @RequestParam(value = "note", required = false) String note,
+                                       @RequestParam(value = "notes", required = false) String notes,
+                                       @RequestParam(value = "reasons", required = false) String reasons,
                                        HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         MartialArtsCenter centre = centreRepository.findById(id).orElse(null);
@@ -3012,11 +3046,16 @@ public class AdminController {
             return "redirect:/admin/martialManagement";
         }
         centreProfileService.setLifecycleStatus(centre, CentreProfileStatus.CHANGES_REQUESTED);
-        centre.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        String combined = (notes != null && !notes.isBlank()) ? notes.trim()
+                : (note == null || note.isBlank() ? null : note.trim());
+        if (reasons != null && !reasons.isBlank()) {
+            combined = (combined == null ? "" : combined + " ") + "[" + reasons.trim() + "]";
+        }
+        centre.setChangesRequestedNote(combined == null || combined.isBlank() ? null : combined.trim());
         centre.setRejectionReason(null);
         centreRepository.save(centre);
         ra.addFlashAttribute("message", "Changes requested from centre.");
-        return "redirect:/admin/martialManagement";
+        return "redirect:/centres/about/" + id;
     }
 }
 
