@@ -65,45 +65,26 @@
             100% { transform: translate(40px, 30px) scale(1.15); }
         }
 
-        /* Clean Minimal Header */
         .glow-header {
-            padding: 60px 20px 40px;
+            padding: 56px 24px 32px;
             text-align: center;
             background: white;
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
             position: relative;
-        }
-        .brand-row {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--rose-soft);
-            border: 1px solid #fecdd3;
-            border-radius: 999px;
-            padding: 8px 14px;
-            margin-bottom: 12px;
-        }
-        .brand-row img {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-        .brand-row span {
-            font-weight: 700;
-            color: var(--navy);
-            font-size: 14px;
+            margin: 8px 20px 0;
         }
         .glow-header h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--navy);
+            font-size: 38px;
+            font-weight: 900;
+            color: var(--primary);
             margin-bottom: 10px;
-            letter-spacing: -0.3px;
+            letter-spacing: -0.4px;
         }
         .glow-header p {
             color: var(--text-gray);
-            font-size: 0.95rem;
+            font-size: 15px;
             max-width: 650px;
             margin: 0 auto;
             line-height: 1.6;
@@ -124,88 +105,113 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 18px;
-            border-radius: 10px;
+            padding: 10px 20px;
+            border-radius: 999px;
             background: #fff;
             border: 1px solid var(--border);
             color: var(--navy-soft);
             text-decoration: none;
             font-size: 13px;
             font-weight: 700;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             box-shadow: var(--shadow-sm);
         }
         .top-btn:hover {
-            background: var(--rose-soft);
-            color: var(--primary);
-            border-color: #fecdd3;
+            background: var(--primary);
+            color: #fff;
+            border-color: transparent;
+            transform: translateY(-2px);
         }
 
-        /* Search wrapper */
-        .search-container {
-            max-width: 500px;
-            margin: 24px auto 0;
-            position: relative;
-            width: 100%;
-            padding: 0 8px;
-        }
-        .search-box {
+        .category-filter-row {
             display: flex;
             align-items: center;
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 8px 15px 8px 16px;
-            box-shadow: var(--shadow-sm);
-        }
-        .search-box i {
-            color: var(--primary);
-            margin-right: 10px;
-        }
-        .search-box input {
-            border: none;
-            outline: none;
+            gap: 8px;
+            max-width: 800px;
+            margin: 24px auto 0;
+            min-width: 0;
             width: 100%;
-            font-size: 14px;
-            color: var(--navy-soft);
-            font-family: inherit;
+            padding: 0 10px;
         }
-
-        /* Category Scroll Bar */
+        .category-filter-row .cat-scroll-btn {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
         .cat-scroll-container {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            flex-wrap: nowrap;
             gap: 10px;
-            margin-top: 30px;
             overflow-x: auto;
-            white-space: nowrap;
-            padding-bottom: 8px;
-            scrollbar-width: none;
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            padding-bottom: 8px;
+            min-width: 0;
+            flex: 1 1 auto;
+            scrollbar-width: none;
+            justify-content: flex-start;
         }
-        .cat-scroll-container::-webkit-scrollbar {
-            display: none;
-        }
+        .cat-scroll-container::-webkit-scrollbar { display: none; }
         .btn-cat-pill {
-            padding: 8px 18px;
-            border-radius: 10px;
+            padding: 8px 20px;
+            border-radius: 999px;
             background: #fff;
             border: 1px solid var(--border);
-            color: var(--navy-soft);
+            color: var(--text-gray);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s;
             display: inline-flex;
             align-items: center;
             gap: 6px;
             font-family: inherit;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
         .btn-cat-pill:hover, .btn-cat-pill.active {
-            background: var(--rose-soft);
-            color: var(--primary);
-            border-color: #fecdd3;
+            background: var(--primary);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
         }
+        .filter-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .filter-card label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .filter-card input, .filter-card select {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            background: #f8fafc;
+        }
+        .btn-apply-filters {
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            border: none;
+            color: #fff;
+            background: var(--primary);
+        }
+        .btn-apply-filters:hover { filter: brightness(1.08); color: #fff; }
 
         /* Doctors Grid */
         .doctors-grid {
@@ -405,8 +411,13 @@
 </head>
 <body>
 
-<!-- Header -->
-
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<c:if test="${viewerIsDoctor}">
+<style>
+  #wrapper { margin-top: 80px; display: block; }
+  #page-content-wrapper { margin-left: 0 !important; width: 100%; }
+</style>
+</c:if>
 
 <div id="wrapper">
     <!-- Sidebar: user navigation only (doctors stay in portal chrome) -->
@@ -415,7 +426,7 @@
     </c:if>
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -445,10 +456,6 @@
 
             </div>
             
-            <div class="brand-row">
-                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-                <span>Fight D Fear</span>
-            </div>
             <c:choose>
                 <c:when test="${viewerIsDoctor}">
                     <h1>Doctor Directory</h1>
@@ -460,36 +467,35 @@
                 </c:otherwise>
             </c:choose>
             
-            <!-- Search bar -->
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search by name, specialization, or city..." oninput="filterDoctors()">
-                </div>
-            </div>
-            
-            <!-- Category Pills -->
-            <div class="cat-scroll-container">
-                <button class="btn-cat-pill active" onclick="filterCategory(this,'all')">
+            <div class="category-filter-row">
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollDoctorCat(-1)" aria-label="Scroll categories left">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="cat-scroll-container" id="doctorCatScroll">
+                <button type="button" class="btn-cat-pill active" onclick="filterCategory(this,'all')">
                     <i class="bi bi-grid-fill"></i> All Experts
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'Gynecologist')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'Gynecologist')">
                     <i class="bi bi-gender-female"></i> Gynecologist
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'Psychologist')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'Psychologist')">
                     <i class="bi bi-brain-fill"></i> Psychologist
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'General Physician')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'General Physician')">
                     <i class="bi bi-heart-pulse-fill"></i> General Physician
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'Dermatologist')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'Dermatologist')">
                     <i class="bi bi-droplet-fill"></i> Dermatologist
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'Pediatrician')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'Pediatrician')">
                     <i class="bi bi-emoji-smile-fill"></i> Pediatrician
                 </button>
-                <button class="btn-cat-pill" onclick="filterCategory(this,'Nutritionist')">
+                <button type="button" class="btn-cat-pill" onclick="filterCategory(this,'Nutritionist')">
                     <i class="bi bi-cup-straw"></i> Nutritionist
+                </button>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle cat-scroll-btn" onclick="scrollDoctorCat(1)" aria-label="Scroll categories right">
+                    <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
         </div>
@@ -501,6 +507,35 @@
                 </div>
             </div>
         </c:if>
+
+        <div class="container my-4 px-4">
+            <form id="doctorFilterForm" class="filter-card" onsubmit="return applyDoctorFilters(event)">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Search Doctor Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="searchInput" class="form-control bg-light border-0" placeholder="Doctor Name...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Maximum Consultation Fee</label>
+                        <input type="number" id="maxFeeInput" class="form-control bg-light border-0" placeholder="e.g. 500 Rs" min="0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Minimum Rating</label>
+                        <select id="minRatingInput" class="form-select bg-light border-0">
+                            <option value="">Any Rating</option>
+                            <option value="4.0">4.0+ Stars</option>
+                            <option value="4.5">4.5+ Stars</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button type="submit" class="btn btn-apply-filters py-2">Apply Filters</button>
+                    </div>
+                </div>
+            </form>
+        </div>
 
         <!-- Showing count status -->
         <div class="container mt-4 px-4 text-muted small">
@@ -515,7 +550,9 @@
                          data-name="${d.fullName}" 
                          data-spec="${d.specialization}" 
                          data-city="${d.city}" 
-                         data-loc="${d.locationText}">
+                         data-loc="${d.locationText}"
+                         data-fee="${d.consultationFee != null ? d.consultationFee : ''}"
+                         data-rating="${d.rating != null ? d.rating : ''}">
                     
                     <div class="doctor-card-top">
                         <div class="doctor-avatar">
@@ -603,6 +640,13 @@
 <script>
     let activeCategory = 'all';
 
+    function scrollDoctorCat(direction) {
+        const container = document.getElementById('doctorCatScroll');
+        if (!container) return;
+        const step = Math.max(container.clientWidth * 0.65, 180);
+        container.scrollBy({ left: direction * step, behavior: 'smooth' });
+    }
+
     function filterCategory(btn, cat) {
         document.querySelectorAll('.btn-cat-pill').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
@@ -610,8 +654,19 @@
         filterDoctors();
     }
 
+    function applyDoctorFilters(e) {
+        if (e) e.preventDefault();
+        filterDoctors();
+        return false;
+    }
+
     function filterDoctors() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
+        const searchEl = document.getElementById('searchInput');
+        const q = searchEl ? searchEl.value.toLowerCase() : '';
+        const maxFeeRaw = (document.getElementById('maxFeeInput') || {}).value;
+        const minRatingRaw = (document.getElementById('minRatingInput') || {}).value;
+        const maxFee = maxFeeRaw ? parseFloat(maxFeeRaw) : null;
+        const minRating = minRatingRaw ? parseFloat(minRatingRaw) : null;
         const cards = document.querySelectorAll('.doctor-card');
         let count = 0;
         
@@ -620,18 +675,23 @@
             const spec = (c.dataset.spec || '').toLowerCase();
             const city = (c.dataset.city || '').toLowerCase();
             const loc = (c.dataset.loc || '').toLowerCase();
+            const fee = parseFloat(c.dataset.fee);
+            const rating = parseFloat(c.dataset.rating);
             
             const matchSearch = !q || name.includes(q) || spec.includes(q) || city.includes(q) || loc.includes(q);
             const matchCat = activeCategory === 'all' || spec.includes(activeCategory.toLowerCase());
+            const matchFee = maxFee == null || isNaN(maxFee) || (!isNaN(fee) && fee <= maxFee);
+            const matchRating = minRating == null || isNaN(minRating) || (!isNaN(rating) && rating >= minRating);
             
-            if (matchSearch && matchCat) {
+            if (matchSearch && matchCat && matchFee && matchRating) {
                 c.style.display = 'flex';
                 count++;
             } else {
                 c.style.display = 'none';
             }
         });
-        document.getElementById('visibleCount').textContent = count;
+        const countEl = document.getElementById('visibleCount');
+        if (countEl) countEl.textContent = count;
     }
     
     document.addEventListener("DOMContentLoaded", function() {

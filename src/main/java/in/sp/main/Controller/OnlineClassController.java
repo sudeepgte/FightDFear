@@ -53,8 +53,7 @@ public class OnlineClassController {
         List<MartialArtsBatch> batches;
 
         if (center != null) {
-            classes = onlineClassRepository.findByCenterId(center.getId());
-            batches = batchRepository.findByCenterId(center.getId());
+            return "redirect:/centres/dashboard?tab=live";
         } else {
             classes = onlineClassRepository.findByTrainer(user);
             // Fallback for independent trainers if needed
@@ -73,13 +72,11 @@ public class OnlineClassController {
         
         if (user == null && center == null) return "redirect:/login";
 
-        List<OnlineClass> classes;
-
         if (center != null) {
-            classes = onlineClassRepository.findByCenterId(center.getId());
-        } else {
-            classes = onlineClassRepository.findByTrainer(user);
+            return "redirect:/centres/dashboard?tab=past-sessions";
         }
+        
+        List<OnlineClass> classes = onlineClassRepository.findByTrainer(user);
         
         // Filter only completed classes
         classes = classes.stream()

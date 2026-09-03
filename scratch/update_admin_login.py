@@ -1,4 +1,7 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+import os
+
+# 1. GENERATE ADMIN LOGIN
+admin_login_content = """<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -259,3 +262,9 @@
 </script>
 </body>
 </html>
+"""
+
+with open('src/main/webapp/WEB-INF/views/adminLogin.jsp', 'w', encoding='utf-8') as f:
+    f.write(admin_login_content)
+
+print("adminLogin.jsp updated")

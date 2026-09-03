@@ -32,7 +32,7 @@
         margin: 0;
         font-weight: 800;
         letter-spacing: -0.3px;
-        color: #0F172A !important;
+        color: #F43F5E !important;
         background: none !important;
         -webkit-background-clip: initial !important;
         -webkit-text-fill-color: initial !important;
@@ -57,6 +57,8 @@
     
     .header .btn-getstarted:hover {
         transform: translateY(-2px);
+        background: #E11D48 !important;
+        color: #fff !important;
         box-shadow: 0 10px 20px rgba(244, 63, 94, 0.25);
     }
 
@@ -255,7 +257,7 @@
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
-        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#1e1b4b !important;">Fight D Fear</h1>
+        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#F43F5E !important;">Fight D Fear</h1>
     </a>
     <nav id="navmenu" class="navmenu">
       <ul>

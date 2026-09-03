@@ -1,8 +1,10 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
+import os
+
+with open('src/main/webapp/WEB-INF/views/adminUserManagement.jsp', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+head_end = content.find('</head>')
+new_head = """<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>User Management - Fight D Fear Admin</title>
@@ -37,8 +39,9 @@
     .btn-cancel-delete:hover { background: #e5e7eb; }
     @keyframes slideUpFade { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
   </style>
-</head>
-<body class="ap-page">
+</head>"""
+
+new_body_start = """<body class="ap-page">
 
 <c:set var="pendingCount" value="${not empty pendingUsers ? pendingUsers.size() : 0}"/>
 <c:set var="verifiedCount" value="${not empty verifiedUsers ? verifiedUsers.size() : 0}"/>
@@ -138,7 +141,9 @@
           <a href="${pageContext.request.contextPath}/admin/users" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
         </c:if>
       </form>
+"""
 
+search_results = """
       <!-- ── Search Results ── -->
       <c:if test="${not empty q}">
           <section class="ap-panel mb-4">
@@ -211,7 +216,9 @@
             </div>
           </section>
       </c:if>
+"""
 
+normal_view = """
       <!-- ── Normal View (Tabs) ── -->
       <c:if test="${empty q}">
         <section class="ap-panel">
@@ -421,3 +428,9 @@ if (hs) {
 
 </body>
 </html>
+"""
+
+final_content = content[:content.find('<!DOCTYPE html>')] + "<!DOCTYPE html>\n<html lang=\"en\">\n" + new_head + "\n" + new_body_start + search_results + normal_view
+
+with open('src/main/webapp/WEB-INF/views/adminUserManagement.jsp', 'w', encoding='utf-8') as f:
+    f.write(final_content)

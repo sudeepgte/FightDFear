@@ -109,7 +109,11 @@
             background: var(--rose-soft); color: var(--primary);
             border: 1px solid var(--rose-border); white-space: nowrap;
         }
+        .btn-otp.btn-otp-solid {
+            background: var(--primary); color: #fff; border-color: var(--primary);
+        }
         .btn-otp:hover:not(:disabled) { background: #ffe4e6; }
+        .btn-otp.btn-otp-solid:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
         .btn-otp:disabled, .btn-submit:disabled, .btn-modal-confirm:disabled {
             opacity: 0.55; cursor: not-allowed; box-shadow: none; transform: none;
         }
@@ -301,7 +305,7 @@
                             <label for="otpInput">Email OTP *</label>
                             <div class="otp-row">
                                 <input type="text" id="otpInput" class="form-input" placeholder="6-digit code" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
-                                <button type="button" id="verifyOtpBtn" class="btn-otp" style="background:var(--navy);color:#fff;border-color:var(--navy);">Verify</button>
+                                <button type="button" id="verifyOtpBtn" class="btn-otp btn-otp-solid">Verify</button>
                             </div>
                             <div class="error-msg" id="otpError">Enter the 6-digit OTP sent to your email.</div>
                             <div class="otp-ok" id="otpSuccess"><i class="bi bi-check-circle-fill"></i> Email verified</div>

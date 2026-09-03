@@ -168,6 +168,9 @@ public class DoctorController {
 
     @GetMapping("/login")
     public String loginPage(HttpSession session, Model model) {
+        if (requireLoggedDoctor(session) != null) {
+            return "redirect:/doctors/profile-completion";
+        }
         consumeDoctorLoginPrefill(session, model);
         return "doctor/doctor-login";
     }
@@ -209,6 +212,7 @@ public class DoctorController {
         // Clear conflicting user session so doctor chat/calls use doctor role, not leftover user session
         session.removeAttribute("user");
         session.setAttribute("loggedDoctor", d);
+        session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
 
         // Generate JWT and add to response
         String token = jwtUtil.generateToken(d.getEmail(), "DOCTOR");
@@ -218,10 +222,7 @@ public class DoctorController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
 
-        if (needsProfileCompletion(d)) {
-            return "redirect:/doctors/profile-completion";
-        }
-        return "redirect:/doctors/dashboard";
+        return "redirect:/doctors/profile-completion";
     }
 
 
@@ -234,6 +235,7 @@ public class DoctorController {
         if (d == null) {
             return "redirect:/doctors/login";
         }
+        session.removeAttribute("postLoginOpenProfile");
         d = doctorRepo.findById(d.getId()).orElse(d);
         doctorProfileService.refreshCompletion(d);
         doctorRepo.save(d);
@@ -475,6 +477,9 @@ public class DoctorController {
 
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
+        if (Boolean.TRUE.equals(session.getAttribute("postLoginOpenProfile"))) {
+            return "redirect:/doctors/profile-completion";
+        }
         d = doctorRepo.findById(d.getId()).orElse(d);
 
         
@@ -875,13 +880,13 @@ public class DoctorController {
             }
             LocalDateTime when = LocalDateTime.parse(appointmentTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             double fee = doctorBookingService.resolveFee(d, cType);
+            doctorBookingService.createRequestBooking(d, u, when, cType, reason, true);
             if (fee > 0) {
                 redirectAttributes.addFlashAttribute("message",
-                        "Payment required (₹" + (int) fee + "). Please book and pay from the doctor profile page.");
-                return "redirect:/doctors/view/" + doctorId;
+                        "Appointment requested. Complete payment from My Appointments if prompted (₹" + (int) fee + ").");
+            } else {
+                redirectAttributes.addFlashAttribute("message", "Appointment requested.");
             }
-            doctorBookingService.createRequestBooking(d, u, when, cType, reason, false);
-            redirectAttributes.addFlashAttribute("message", "Appointment requested.");
             return "redirect:/doctors/myAppointments";
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             redirectAttributes.addFlashAttribute("message",

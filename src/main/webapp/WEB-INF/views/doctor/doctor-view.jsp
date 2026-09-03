@@ -33,7 +33,7 @@
       --shadow-card: 0 4px 20px rgba(0,0,0,0.03);
     }
 
-    body {
+        body {
       background-color: var(--brand-soft-bg);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--navy-soft);
@@ -41,21 +41,83 @@
     }
 
     .doctor-hero-bg {
-      background: linear-gradient(135deg, #0F172A 0%, #1E293B 70%, #F43F5E 140%);
-      height: 220px;
+      background: #F43F5E;
+      height: 4px;
       width: 100%;
-      position: absolute;
+      position: relative;
       top: 0;
       left: 0;
-      z-index: -1;
+      z-index: 1;
     }
+
+    #header.header .logo h1,
+    .header .logo h1,
+    .logo h1 {
+      color: #F43F5E !important;
+      -webkit-text-fill-color: #F43F5E !important;
+      background: none !important;
+    }
+    .nav-profile span { color: #1E293B !important; }
+    .profile-header-card { margin-top: 28px; }
+
+    .doctor-hero {
+      background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+      color: #fff;
+      padding: 28px 0 36px;
+      border-radius: 0 0 28px 28px;
+      box-shadow: 0 10px 30px rgba(244, 63, 94, 0.22);
+    }
+    .doctor-hero .hero-avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(255,255,255,0.9);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .doctor-hero .hero-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .doctor-hero h1 { color: #fff; font-weight: 800; font-size: 2rem; }
+    .doctor-hero .hero-fee {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      padding: 16px 22px;
+      text-align: center;
+      min-width: 160px;
+    }
+    .action-btn-circle.hero-action {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.15rem;
+    }
+
+    .text-primary, .bi-patch-check-fill.text-primary { color: #F43F5E !important; }
+    .action-btn-circle.bg-primary, .bg-primary { background-color: #F43F5E !important; border-color: #F43F5E !important; }
+    .text-accent { color: #F43F5E !important; }
 
     .profile-header-card {
       background: white;
       border-radius: 16px;
       padding: 28px;
       box-shadow: var(--shadow-card);
-      margin-top: 80px;
+      margin-top: 0;
       border: 1px solid var(--border);
       position: relative;
     }
@@ -238,7 +300,7 @@
       align-items: center;
       gap: 10px;
       text-decoration: none;
-      color: var(--navy);
+      color: #F43F5E;
     }
     .logo img {
       width: 32px;
@@ -250,7 +312,7 @@
       margin: 0;
       font-size: 20px;
       font-weight: 800;
-      color: var(--navy);
+      color: #F43F5E !important;
     }
     .header {
       background: #ffffff;
@@ -263,15 +325,37 @@
     .navmenu ul li a:hover {
       color: var(--primary);
     }
-    .btn-getstarted {
-      background: var(--primary);
-      color: #fff;
-      border: none;
+    .btn-getstarted,
+    #header .btn-getstarted,
+    .header .btn-getstarted,
+    .header .btn-getstarted:focus,
+    .header .btn-getstarted:hover {
+      background: #F43F5E !important;
+      background-image: none !important;
+      color: #fff !important;
+      border: none !important;
+      border-radius: 50px !important;
     }
-    .btn-getstarted:hover {
-      filter: brightness(1.06);
-      color: #fff;
+    .header .btn-getstarted:hover {
+      background: #E11D48 !important;
     }
+    #dateScroll {
+      scrollbar-width: thin;
+      scrollbar-color: #F43F5E #FFE4E6;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #F43F5E;
+    }
+    #dateScroll::-webkit-scrollbar { height: 6px; }
+    #dateScroll::-webkit-scrollbar-track { background: #FFE4E6; border-radius: 99px; }
+    #dateScroll::-webkit-scrollbar-thumb { background: #F43F5E; border-radius: 99px; }
+    body::-webkit-scrollbar { width: 8px; }
+    body::-webkit-scrollbar-track { background: #FFF1F2; }
+    body::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #F43F5E, #E11D48);
+      border-radius: 4px;
+    }
+    body::-webkit-scrollbar-thumb:hover { background: #E11D48; }
+    html { scrollbar-color: #F43F5E #FFF1F2; }
     .bg-soft-pink {
       background: var(--rose-soft) !important;
     }
@@ -279,7 +363,7 @@
       color: var(--primary) !important;
     }
     .text-accent {
-      color: var(--navy) !important;
+      color: var(--primary) !important;
     }
     .btn-outline-accent {
       border-color: var(--border);
@@ -326,70 +410,72 @@
     }
   </style>
 </head>
-  <header id="header" class="header d-flex align-items-center sticky-top">
-    <div class="container-fluid container-xl d-flex align-items-center">
-      <a href="${pageContext.request.contextPath}/users/dashboard" class="logo me-auto">
-        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-        <h1>Fight D Fear</h1>
+<body>
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+<div id="wrapper">
+  <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+  <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding: 0;" data-skip-global-back="true">
+
+  <div class="doctor-hero">
+    <div class="container-fluid px-4 px-lg-5">
+      <a href="${pageContext.request.contextPath}/doctors/list" class="btn btn-sm btn-outline-light mb-4 rounded-pill px-3">
+        <i class="bi bi-arrow-left me-1"></i> Browse Doctors
       </a>
-      <nav id="navmenu" class="navmenu">
-        <ul>
-          <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
-          <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-          <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
-          <li class="nav-profile">
-              <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="d-flex align-items-center">
-                  <img src="${pageContext.request.contextPath}${not empty user.profilePhoto ? user.profilePhoto : '/images/default-profile.png'}" 
-                       alt="Profile" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover; border: 2px solid var(--brand-pink);">
-                  <span class="ms-2 d-none d-lg-inline text-white">${user.fullName}</span>
-              </a>
-          </li>
-        </ul>
-        <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
-      </nav>
-      <a class="btn-getstarted" href="${pageContext.request.contextPath}/logout">Logout</a>
-    </div>
-  </header>
-
-  <div class="doctor-hero-bg"></div>
-
-  <div class="container py-5">
-    <!-- Profile Header Section -->
-    <div class="profile-header-card">
-      <div class="row align-items-end">
-        <div class="col-lg-auto text-center text-lg-start">
-          <div class="doctor-avatar-large mx-auto">
+      <div class="row align-items-center">
+        <div class="col-md-auto text-center mb-3 mb-md-0">
+          <div class="hero-avatar mx-auto">
             <c:choose>
               <c:when test="${not empty doctor.profilePhotoPath}">
-                <img src="${pageContext.request.contextPath}${doctor.profilePhotoPath}" class="w-100 h-100 rounded-inherit" style="object-fit: cover; border-radius: 32px;">
+                <img src="${pageContext.request.contextPath}${doctor.profilePhotoPath}" alt="${doctor.fullName}">
               </c:when>
               <c:otherwise>${doctor.fullName.charAt(0)}</c:otherwise>
             </c:choose>
           </div>
         </div>
-        <div class="col-lg mt-4 mt-lg-0">
-          <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-            <span class="badge bg-soft-pink text-pink px-3 py-2 rounded-pill fw-700">${doctor.specialization}</span>
-            <div class="text-warning"><i class="bi bi-star-fill"></i> <span class="fw-800 text-dark">${doctor.rating}</span> <span class="text-muted small">(45+ Reviews)</span></div>
+        <div class="col-md">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            <span class="badge bg-success bg-opacity-25 text-white border border-light border-opacity-50 px-3 py-1 rounded-pill" style="font-size:0.75rem;">
+              <i class="bi bi-patch-check-fill me-1"></i> Verified Doctor
+            </span>
+            <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 px-3 py-1 rounded-pill" style="font-size:0.75rem;">
+              <i class="bi bi-award me-1"></i> ${doctor.experienceYears != null ? doctor.experienceYears : 1}+ Yrs Experience
+            </span>
+            <c:if test="${not empty doctor.specialization}">
+              <span class="badge bg-white bg-opacity-10 text-white border border-white border-opacity-25 px-3 py-1 rounded-pill" style="font-size:0.75rem;">
+                ${doctor.specialization}
+              </span>
+            </c:if>
           </div>
-          <h1 class="fw-900 mb-2" style="font-family: 'Montserrat';">${doctor.fullName} <i class="bi bi-patch-check-fill text-primary fs-4"></i></h1>
-          <p class="text-muted mb-0"><i class="bi bi-geo-alt-fill text-pink me-1"></i> ${doctor.locationText}</p>
+          <h1 class="mb-1">${doctor.fullName}</h1>
+          <p class="text-white-50 mb-2 small">${not empty doctor.qualification ? doctor.qualification : 'Womens healthcare specialist'}</p>
+          <div class="d-flex flex-wrap align-items-center gap-3 text-white-50 small">
+            <span class="text-warning fw-bold"><i class="bi bi-star-fill me-1"></i> ${doctor.rating != null ? doctor.rating : '0.0'}</span>
+            <span>&bull;</span>
+            <span><i class="bi bi-geo-alt me-1"></i>
+              <c:choose>
+                <c:when test="${not empty doctor.city}">${doctor.city}<c:if test="${not empty doctor.state}">, ${doctor.state}</c:if></c:when>
+                <c:when test="${not empty doctor.locationText}">${doctor.locationText}</c:when>
+                <c:otherwise>Online / Clinic</c:otherwise>
+              </c:choose>
+            </span>
+            <span>&bull;</span>
+            <span><i class="bi bi-clock me-1"></i> ${not empty doctor.startTime ? doctor.startTime : '—'} – ${not empty doctor.endTime ? doctor.endTime : '—'}</span>
+          </div>
         </div>
-        <div class="col-lg-auto mt-4 mt-lg-0">
-          <div class="d-flex gap-3">
-            <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}" class="action-btn-circle bg-primary" title="Chat"><i class="bi bi-chat-dots-fill"></i></a>
-            <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}" class="action-btn-circle bg-success" title="Video Call"><i class="bi bi-camera-video-fill"></i></a>
-            <div class="vr mx-2"></div>
-            <div class="text-end">
-              <div class="small text-muted fw-600">CONSULTATION FEE</div>
-              <div class="fs-3 fw-900 text-accent" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</div>
-            </div>
+        <div class="col-md-auto mt-4 mt-md-0 d-flex flex-wrap align-items-center gap-3 justify-content-md-end">
+          <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}" class="action-btn-circle hero-action bg-white text-danger" title="Chat" style="color:#F43F5E !important;"><i class="bi bi-chat-dots-fill"></i></a>
+          <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}" class="action-btn-circle hero-action bg-success" title="Video Call"><i class="bi bi-camera-video-fill"></i></a>
+          <div class="hero-fee">
+            <span class="text-white-50 d-block mb-1" style="font-size:0.75rem;">Consultation</span>
+            <h2 class="fw-bold text-white mb-0" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</h2>
+            <small class="text-white-50" style="font-size:0.7rem;">per visit</small>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Main Content Tabs -->
+  <div class="container-fluid px-4 px-lg-5 py-5">
     <div class="row mt-5 g-4">
       <div class="col-lg-8">
         <ul class="nav nav-pills nav-pills-custom mb-4" id="pills-tab" role="tablist">
@@ -815,15 +901,23 @@
 
     async function bookFree(doctorId, time, type, reason) {
       const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'same-origin',
         body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
       });
-      const data = await res.json();
+      let data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (res.status === 401) {
+        alert('Please log in as a patient to book this appointment.');
+        return false;
+      }
       if (res.ok && data.success) {
         showBookingSuccess();
-      } else {
-        alert(data.error || 'Unable to book appointment');
+        return true;
       }
+      alert(data.error || 'Unable to book appointment');
+      return false;
     }
 
     async function initiatePayment() {
@@ -870,90 +964,14 @@
       }
 
       try {
-        const res = await fetch('${pageContext.request.contextPath}/payment/create-order', {
-          method: 'POST', headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            type: 'DOCTOR',
-            targetId: doctorId,
-            consultationType: type,
-            appointmentTime: time,
-            amount: amount,
-            reason: reason
-          })
-        });
-        const order = await res.json();
-        if (!res.ok || !order.orderId) {
-          alert(order.error || 'Unable to create payment order');
+        const booked = await bookFree(doctorId, time, type, reason);
+        if (!booked) {
           unlockPay();
           return;
         }
-        if (order.mock) {
-          const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({
-              razorpay_order_id: order.orderId,
-              razorpay_payment_id: 'mock_pay_' + Date.now(),
-              razorpay_signature: 'mock_sig',
-              type: 'DOCTOR',
-              targetId: doctorId,
-              amount: amount,
-              appointmentTime: time,
-              consultationType: type,
-              reason: reason
-            })
-          });
-          if (verifyRes.ok) {
-            showBookingSuccess();
-          } else {
-            alert('Payment verification failed. Booking was not confirmed.');
-            unlockPay();
-          }
-          return;
-        }
-        const options = {
-          key: order.key,
-          amount: order.amount,
-          currency: 'INR',
-          name: 'Fight D Fear Medical',
-          description: 'Consultation with Dr. ${doctor.fullName}',
-          order_id: order.orderId,
-          handler: async function(response) {
-            try {
-              const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  type: 'DOCTOR',
-                  targetId: doctorId,
-                  amount: amount,
-                  appointmentTime: time,
-                  consultationType: type,
-                  reason: reason
-                })
-              });
-              if (verifyRes.ok) {
-                showBookingSuccess();
-              } else {
-                alert('Payment verification failed. Booking was not confirmed.');
-                unlockPay();
-              }
-            } catch (err) {
-              alert('Payment verification failed. Please contact support if money was deducted.');
-              unlockPay();
-            }
-          },
-          modal: {
-            ondismiss: function() {
-              alert('Payment cancelled. Your booking was not confirmed.');
-              unlockPay();
-            }
-          }
-        };
-        new Razorpay(options).open();
+        unlockPay();
       } catch (e) {
-        alert('Payment failed. Please try again.');
+        alert('Unable to book appointment. Please try again.');
         unlockPay();
       }
     }
@@ -1050,6 +1068,8 @@
 
     });
   </script>
+  </div>
+</div>
 </body>
 </html>
 
