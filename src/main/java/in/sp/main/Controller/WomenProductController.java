@@ -205,8 +205,10 @@ public class WomenProductController {
             s.setVerificationStatus(VerificationStatus.PENDING);
             sellerRepo.save(s);
             ra.addFlashAttribute("success",
-                    "Your seller account is awaiting approval. You can sign in after admin verification.");
-            return "redirect:/women-products/seller/register";
+                    "Your seller account has been created. You can sign in now to complete your profile.");
+            ra.addFlashAttribute("registeredEmail", cleanedEmail);
+            ra.addFlashAttribute("registeredPassword", password);
+            return "redirect:/women-products/seller/login";
         } catch (IOException e) {
             model.addAttribute("error", "Registration failed: could not upload files. Please try again.");
             return "women-products/seller-register";
@@ -251,10 +253,7 @@ public class WomenProductController {
             model.addAttribute("error", "Your seller account has been suspended.");
             return "women-products/seller-login";
         }
-        if (s.getVerificationStatus() == VerificationStatus.PENDING) {
-            model.addAttribute("error", "Your seller account is awaiting approval.");
-            return "women-products/seller-login";
-        }
+        // Removed PENDING check to allow login and profile access before admin approval
         if (s.getVerificationStatus() == VerificationStatus.REJECTED) {
             model.addAttribute("error", "Your account has been rejected by admin.");
             return "women-products/seller-login";
@@ -543,6 +542,11 @@ public class WomenProductController {
                              HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
+        s = sellerRepo.findById(s.getId()).orElse(s);
+        if (s.getVerificationStatus() == VerificationStatus.PENDING) {
+            ra.addFlashAttribute("error", "You cannot add products until your account is approved by an admin.");
+            return "redirect:/women-products/seller/dashboard?section=products";
+        }
 
         String validationError = validateProductInput(name, brand, description, fullDescription, price,
                 originalPrice, offerBadge, stock, lowStockAlertLevel, sku, category, weightSize,

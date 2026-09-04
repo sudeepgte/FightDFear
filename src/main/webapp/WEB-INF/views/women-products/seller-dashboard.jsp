@@ -587,6 +587,32 @@
           </div>
         </c:if>
 
+        <c:if test="${not empty seller.changesRequestedNote}">
+          <div style="background: #fffbeb; color: #b45309; padding: 16px 24px; border-radius: 18px; font-weight: 700; margin-bottom: 32px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 4px 12px rgba(180, 83, 9, 0.1); border: 1px solid #fef3c7;">
+            <i class="bi bi-exclamation-triangle-fill" style="margin-top:2px;"></i>
+            <div>
+              <div style="font-size: 1.1rem; margin-bottom: 4px;">Action Required: Profile Changes Requested</div>
+              <div style="font-weight: 500; opacity: 0.9;">${seller.changesRequestedNote}</div>
+              <div style="margin-top: 10px; font-weight: 600;">
+                <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=profile" style="color: #92400e; text-decoration: underline;">Update Profile</a>
+              </div>
+            </div>
+          </div>
+        </c:if>
+
+        <c:if test="${not empty seller.rejectionReason}">
+          <div style="background: #fef2f2; color: #b91c1c; padding: 16px 24px; border-radius: 18px; font-weight: 700; margin-bottom: 32px; display: flex; align-items: flex-start; gap: 12px; box-shadow: 0 4px 12px rgba(185, 28, 28, 0.1); border: 1px solid #fee2e2;">
+            <i class="bi bi-x-octagon-fill" style="margin-top:2px;"></i>
+            <div>
+              <div style="font-size: 1.1rem; margin-bottom: 4px;">Application Rejected</div>
+              <div style="font-weight: 500; opacity: 0.9;">${seller.rejectionReason}</div>
+              <div style="margin-top: 10px; font-weight: 600;">
+                <a href="${pageContext.request.contextPath}/women-products/seller/dashboard?section=profile" style="color: #991b1b; text-decoration: underline;">Update Profile</a>
+              </div>
+            </div>
+          </div>
+        </c:if>
+
         <%-- ══════ OVERVIEW ══════ --%>
           <c:if test="${section == 'overview'}">
             <div class="header-info">
@@ -742,7 +768,16 @@
             <c:if test="${section == 'products'}">
               <div class="header-info">
                 <h1>Catalog Manager</h1>
-                <button type="button" class="btn-fdf-action" id="deployNewItemBtn" onclick="openAddModal(event)">
+                <button type="button" class="btn-fdf-action" id="deployNewItemBtn" 
+                  <c:choose>
+                    <c:when test="${seller.verificationStatus == 'PENDING'}">
+                      onclick="alert('Your account is pending admin approval. You cannot add products yet.');" style="opacity:0.6; cursor:not-allowed;"
+                    </c:when>
+                    <c:otherwise>
+                      onclick="openAddModal(event)"
+                    </c:otherwise>
+                  </c:choose>
+                >
                   <i class="bi bi-plus-lg"></i> Deploy New Item
                 </button>
               </div>
@@ -755,7 +790,16 @@
                         style="font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.3;"></i> Your catalog is
                       currently offline.
                       <div style="margin-top:20px;">
-                        <button type="button" class="btn-fdf-action" onclick="openAddModal(event)">Add your first product</button>
+                        <button type="button" class="btn-fdf-action" 
+                          <c:choose>
+                            <c:when test="${seller.verificationStatus == 'PENDING'}">
+                              onclick="alert('Your account is pending admin approval. You cannot add products yet.');" style="opacity:0.6; cursor:not-allowed;"
+                            </c:when>
+                            <c:otherwise>
+                              onclick="openAddModal(event)"
+                            </c:otherwise>
+                          </c:choose>
+                        >Add your first product</button>
                       </div>
                     </div>
                   </c:if>
@@ -1462,23 +1506,23 @@
 
             <fmt:formatNumber value="${completedCount * 100 / 13}" maxFractionDigits="0" var="profilePercent" />
 
-            <div class="fdf-section" style="margin-bottom: 24px; background: linear-gradient(135deg, #0F172A 0%, #F43F5E 100%); color: #fff; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="fdf-section" style="margin-bottom: 24px; background: #FFF5F7; color: #2D142C; padding: 24px; border-radius: 20px; border: 1px solid #FFE4E8;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <div>
-                  <h3 style="margin:0; font-weight:800; font-size:1.2rem; color:#fff;"><i class="bi bi-speedometer2" style="color:var(--brand-pink);"></i> Profile Completion</h3>
-                  <p style="margin:5px 0 0 0; font-size:0.85rem; opacity:0.8;">Complete all profile information to build customer trust and search visibility.</p>
+                  <h3 style="margin:0; font-weight:800; font-size:1.2rem; color:#2D142C;"><i class="bi bi-speedometer2" style="color:var(--brand-pink);"></i> Profile Completion</h3>
+                  <p style="margin:5px 0 0 0; font-size:0.85rem; opacity:0.8; color:#4B5563;">Complete all profile information to build customer trust and search visibility.</p>
                 </div>
-                <div style="background: rgba(255,255,255,0.15); padding: 8px 16px; border-radius: 12px; font-size: 1.3rem; font-weight: 900; color: #38bdf8;">
+                <div style="background: rgba(244,63,94,0.1); padding: 8px 16px; border-radius: 12px; font-size: 1.3rem; font-weight: 900; color: var(--brand-pink);">
                   ${profilePercent}%
                 </div>
               </div>
-              <div style="width: 100%; background: rgba(255,255,255,0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
+              <div style="width: 100%; background: #FFE4E8; height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 12px;">
                 <div style="width: ${profilePercent}%; background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%); height: 100%; border-radius: 6px; transition: width 0.5s ease;"></div>
               </div>
-              <div style="font-size: 0.8rem; opacity: 0.9; display: flex; gap: 15px; flex-wrap: wrap;">
-                <span><i class="bi bi-check-circle-fill" style="color:#4ade80;"></i> ${completedCount} of 13 fields completed</span>
+              <div style="font-size: 0.8rem; font-weight: 600; display: flex; gap: 15px; flex-wrap: wrap;">
+                <span style="color:#059669;"><i class="bi bi-check-circle-fill"></i> ${completedCount} of 13 fields completed</span>
                 <c:if test="${profilePercent < 100}">
-                  <span style="color: #fca5a5;"><i class="bi bi-exclamation-triangle-fill"></i> Complete remaining fields for 100% profile score</span>
+                  <span style="color: #E11D48;"><i class="bi bi-exclamation-triangle-fill"></i> Complete remaining fields for 100% profile score</span>
                 </c:if>
               </div>
             </div>

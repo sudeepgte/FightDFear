@@ -19,16 +19,16 @@
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Outfit', sans-serif; background: var(--we-bg); color: var(--we-navy); }
 
-        .page-header { background: var(--we-navy); padding: 44px 20px; color: white; text-align: center; }
-        .page-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
-        .page-header p { opacity: 0.8; margin: 0; }
+        .page-header { background: linear-gradient(to bottom, #FFF4F6 0%, #FFFFFF 100%); border-bottom: 1px solid #F3D4DC; padding: 44px 20px; color: #2D142C; text-align: center; }
+        .page-header h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; color: #2D142C; }
+        .page-header p { color: #6B3A4A; margin: 0; }
 
         .container-main { max-width: 900px; margin: 0 auto; padding: 40px 20px 60px; }
 
         .ticket { background: white; border-radius: 18px; overflow: hidden; margin-bottom: 20px;
             border: 1px solid var(--we-border); box-shadow: var(--we-shadow); cursor: pointer; }
         .ticket:hover { border-color: #FDA4AF; }
-        .ticket-header { background: var(--we-navy); color: white;
+        .ticket-header { background: #FFFFFF; color: #2D142C; border-bottom: 1px solid var(--we-border);
             padding: 18px 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
         .ticket-name { font-size: 1.15rem; font-weight: 800; }
         .ticket-cat { font-size: 0.78rem; opacity: 0.85; margin-top: 4px; }
@@ -68,7 +68,7 @@
 <div id="wrapper">
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
 <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip; background: var(--we-bg);" data-skip-global-back="true">
-    <div id="global-back-btn" style="padding: 20px 20px 0;">
+    <div id="global-back-btn" style="padding: 20px 20px 24px;">
         <a href="${pageContext.request.contextPath}/women-events/1" class="btn btn-sm" style="background: white; border: 1px solid #ddd; color: #1e1b4b; font-weight: 600; padding: 6px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><i class="bi bi-arrow-left"></i> Go Back</a>
     </div>
 <c:if test="${not empty success}">

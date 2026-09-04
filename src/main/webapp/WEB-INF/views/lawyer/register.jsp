@@ -645,7 +645,7 @@
                     <span class="value" id="revName">—</span>
                 </div>
                 <div class="review-row">
-                    <span class="label">Contact Person:</span>
+                    <span class="label">Bar Council ID :</span>
                     <span class="value" id="revBarCouncilId">—</span>
                 </div>
                 <div class="review-row">

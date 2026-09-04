@@ -126,38 +126,35 @@
         #sidebar-wrapper {
             min-width: 100% !important;
             max-width: 100% !important;
-            position: relative !important;
-            top: 0 !important;
-            bottom: auto !important;
+            position: fixed !important;
+            top: 72px !important;
+            bottom: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            border-top-right-radius: 0 !important;
-            border-bottom-left-radius: 16px !important;
-            border-bottom-right-radius: 16px !important;
-            padding: 12px 0 10px !important;
-            height: auto !important;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            z-index: 1040 !important;
+            padding: 20px 15px 100px !important;
+            overflow-y: auto !important;
+            
+            /* Fullscreen overlay hide logic */
+            transform: translateY(-150%) !important; /* Slides down from top */
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: none !important;
         }
-        .sidebar-heading {
-            padding: 8px 15px 10px !important;
-            font-size: 1rem !important;
+        #sidebar-wrapper.sidebar-open {
+            transform: translateY(0) !important;
+            opacity: 1;
+            visibility: visible;
         }
-        .sidebar-mobile-toggle {
-            display: flex;
-        }
-        #sidebar-wrapper:not(.sidebar-open) .list-group {
-            display: none !important;
-        }
-        #sidebar-wrapper.sidebar-open .list-group {
+        #sidebar-wrapper .list-group {
             display: flex !important;
             flex-direction: column !important;
-            flex-wrap: nowrap !important;
-            gap: 0 !important;
-            margin-top: 0 !important;
-            padding: 0 10px 10px !important;
-            max-height: 60vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            gap: 4px !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         .sidebar-list-group-item {
             width: 100% !important;
@@ -193,6 +190,9 @@
     @media (max-width: 430px) {
         #wrapper {
             margin-top: 68px;
+        }
+        #sidebar-wrapper {
+            top: 68px !important;
         }
         .sidebar-list-group-item {
             font-size: 13px !important;
@@ -307,16 +307,20 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         var sidebar = document.getElementById("sidebar-wrapper");
-        var toggleBtn = document.getElementById("sidebarMobileToggle");
-        var toggleIcon = document.getElementById("sidebarToggleIcon");
-
-        if (toggleBtn && sidebar) {
-            toggleBtn.addEventListener("click", function() {
+        
+        // Listen to the new global sidebar toggle in the top-left header
+        var globalToggleBtn = document.getElementById("globalSidebarToggle");
+        if (globalToggleBtn && sidebar) {
+            globalToggleBtn.addEventListener("click", function() {
                 var isOpen = sidebar.classList.toggle("sidebar-open");
-                toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-                if (toggleIcon) {
-                    toggleIcon.classList.toggle("bi-chevron-down", !isOpen);
-                    toggleIcon.classList.toggle("bi-chevron-up", isOpen);
+                
+                // Toggle the icon visually
+                if (isOpen) {
+                    globalToggleBtn.classList.remove("bi-list");
+                    globalToggleBtn.classList.add("bi-x");
+                } else {
+                    globalToggleBtn.classList.remove("bi-x");
+                    globalToggleBtn.classList.add("bi-list");
                 }
             });
         }
