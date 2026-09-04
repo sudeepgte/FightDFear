@@ -15,7 +15,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <!-- Theme CSS -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet"><link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
     <!-- Global Dashboard Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 

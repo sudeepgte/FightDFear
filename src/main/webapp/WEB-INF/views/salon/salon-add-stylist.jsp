@@ -254,47 +254,52 @@
                 <div class="alert alert-success">${message}</div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/saveStylist" method="post" enctype="multipart/form-data">
+            <form action="${pageContext.request.contextPath}/saveStylist" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <input type="hidden" name="salonId" value="${salon.id}" />
 
                 <div class="mb-3">
-                    <label for="firstName" class="form-label">First Name</label>
-                    <input type="text" class="form-control" name="firstName" id="firstName" placeholder="First Name" required>
+                    <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="firstName" id="firstName" placeholder="First Name" required minlength="2" maxlength="50">
+                    <div class="invalid-feedback">Please enter a valid first name (2-50 characters).</div>
                 </div>
 
                 <div class="mb-3">
                     <label for="lastName" class="form-label">Last Name</label>
-                    <input type="text" class="form-control" name="lastName" id="lastName" placeholder="Last Name">
+                    <input type="text" class="form-control" name="lastName" id="lastName" placeholder="Last Name" maxlength="50">
                 </div>
 
                 <div class="mb-3">
                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+                    <input type="email" class="form-control" name="email" id="email" placeholder="Email" required pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+                    <div class="invalid-feedback">Please enter a valid email address (e.g. name@domain.com).</div>
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control" name="password" id="password" placeholder="Password" required>
+                    <input type="password" class="form-control" name="password" id="password" placeholder="Password" required minlength="8" maxlength="20" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}">
+                    <div class="invalid-feedback">Password must be 8-20 characters long and include at least one uppercase letter, one lowercase letter, and one number.</div>
                 </div>
 
                 <div class="mb-3">
                     <label for="specialization" class="form-label">Specialization</label>
-                    <input type="text" class="form-control" name="specialization" id="specialization" placeholder="Haircut, Spa, Color, etc.">
+                    <input type="text" class="form-control" name="specialization" id="specialization" placeholder="Haircut, Spa, Color, etc." maxlength="100">
                 </div>
 
                 <div class="mb-3">
                     <label for="experienceInYears" class="form-label">Experience (Years)</label>
-                    <input type="number" class="form-control" name="experienceInYears" id="experienceInYears" placeholder="e.g. 5">
+                    <input type="number" class="form-control" name="experienceInYears" id="experienceInYears" placeholder="e.g. 5" min="0" max="60">
+                    <div class="invalid-feedback">Experience must be a realistic number.</div>
                 </div>
 
                 <div class="mb-3">
-                    <label for="contactNumber" class="form-label">Contact Number</label>
-                    <input type="text" class="form-control" name="contactNumber" id="contactNumber" placeholder="Phone Number">
+                    <label for="contactNumber" class="form-label">Contact Number <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="contactNumber" id="contactNumber" placeholder="10-digit Phone Number" required pattern="^[0-9]{10}$" maxlength="10" minlength="10">
+                    <div class="invalid-feedback">Please enter exactly 10 digits.</div>
                 </div>
 
                 <div class="mb-3">
                     <label for="availabilityHours" class="form-label">Availability Hours</label>
-                    <input type="text" class="form-control" name="availabilityHours" id="availabilityHours" placeholder="e.g. 10 AM - 7 PM">
+                    <input type="text" class="form-control" name="availabilityHours" id="availabilityHours" placeholder="e.g. 10 AM - 7 PM" maxlength="100">
                 </div>
 
                 <div class="mb-3">
@@ -334,8 +339,22 @@
 <script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Form validation script
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+</script>
 </body>
 </html>
-
-
-

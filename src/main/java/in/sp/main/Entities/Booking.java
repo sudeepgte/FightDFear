@@ -58,8 +58,21 @@ public class Booking {
     private String razorpayPaymentId;
     private String razorpaySignature;
 
+    private String workMode; // "In-Salon" or "Home Visit"
+    private String clientName;
+    private String clientContact;
+
     public String getPaymentMode() { return paymentMode; }
     public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
+
+    public String getWorkMode() { return workMode; }
+    public void setWorkMode(String workMode) { this.workMode = workMode; }
+
+    public String getClientName() { return clientName; }
+    public void setClientName(String clientName) { this.clientName = clientName; }
+
+    public String getClientContact() { return clientContact; }
+    public void setClientContact(String clientContact) { this.clientContact = clientContact; }
 
 	public Long getId() {
 		return id;

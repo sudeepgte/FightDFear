@@ -272,7 +272,7 @@
             
             <div class="table-card">
                 <c:choose>
-                    <c:when test="${not empty serviceBookings || not empty treatmentBookings || not empty offerBookings}">
+                    <c:when test="${not empty serviceBookings || not empty treatmentBookings || not empty offerBookings || not empty bookings}">
                         <div class="table-responsive">
                             <table class="table align-middle">
                                 <thead>
@@ -364,6 +364,42 @@
                                                 <span class="badge bg-success px-2 py-1">Booked</span>
                                             </td>
                                         </tr>
+                                    </c:forEach>
+                                    
+                                    <!-- Stylist Bookings -->
+                                    <c:forEach var="b" items="${bookings}">
+                                        <c:if test="${b.stylist ne null}">
+                                            <tr>
+                                                <td><span class="badge rounded-pill bg-warning text-dark px-3">Specialist</span></td>
+                                                <td class="fw-bold">${b.stylist.firstName} ${b.stylist.lastName}</td>
+                                                <td>${b.salon.name}</td>
+                                                <td><span class="text-capitalize text-muted small">${b.workMode}</span></td>
+                                                <td class="fw-bold text-dark">—</td>
+                                                <td>${b.clientContact}</td>
+                                                <td>
+                                                    <div class="small">${b.bookingTime}</div>
+                                                </td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${b.status eq 'CONFIRMED'}">
+                                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">Confirmed</span>
+                                                        </c:when>
+                                                        <c:when test="${b.status eq 'REJECTED'}">
+                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Rejected</span>
+                                                        </c:when>
+                                                        <c:when test="${b.status eq 'COMPLETED'}">
+                                                            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">Completed</span>
+                                                        </c:when>
+                                                        <c:when test="${b.status eq 'CANCELLED'}">
+                                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">Cancelled</span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Pending</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                            </tr>
+                                        </c:if>
                                     </c:forEach>
                                 </tbody>
                             </table>

@@ -78,51 +78,6 @@ public class BeautyServiceController {
         return "user/user-stylist-list";
     }
 
-    @GetMapping("/stylist/view")
-    public String viewStylistDetails(@RequestParam("id") Long stylistId, Model model, HttpSession session) {
-        Optional<Stylist> stylistOpt = stylistRepository.findById(stylistId);
-        if (stylistOpt.isEmpty()) return "redirect:/user/stylists";
-
-        Stylist stylist = stylistOpt.get();
-        List<StylistService> services = serviceRepository.findByStylistId(stylistId);
-        List<Review> reviews = reviewRepository.findByStylistId(stylistId);
-
-        double avgRating = reviews.isEmpty() ? 0.0 :
-                reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
-        stylist.setRating(avgRating);
-
-        // Get all confirmed booking times
-        List<Booking> confirmedBookings = bookingRepository.findByStylistIdAndStatus(stylistId, BookingStatus.CONFIRMED);
-
-        // App login stores user as session attribute "user"
-        User user = (User) session.getAttribute("user");
-        boolean isLoggedIn = user != null;
-        boolean canReview = false;
-        boolean canViewContact = false;
-
-        if (user != null) {
-            // User can review only if booking COMPLETED
-            canReview = bookingRepository.existsByUserIdAndStylistIdAndStatus(
-                user.getId(), stylistId, BookingStatus.COMPLETED
-            );
-            
-            // User can view contact only if booking CONFIRMED
-            canViewContact = bookingRepository.existsByUserIdAndStylistIdAndStatus(
-                user.getId(), stylistId, BookingStatus.CONFIRMED
-            );
-        }
-
-        model.addAttribute("confirmedBookings", confirmedBookings);
-        model.addAttribute("stylist", stylist);
-        model.addAttribute("services", services);
-        model.addAttribute("reviews", reviews);
-        model.addAttribute("avgRating", avgRating);
-        model.addAttribute("canReview", canReview);
-        model.addAttribute("canViewContact", canViewContact);
-        model.addAttribute("isLoggedIn", isLoggedIn);
-
-        return "user/user-stylist-view";
-    }
 
 
     // 4️⃣ Add Review
@@ -182,6 +137,59 @@ public class BeautyServiceController {
         return "user/user-booking-form";
     }
 
+    @GetMapping("/stylist/book")
+    public String showDirectStylistBookingForm(@RequestParam("id") Long stylistId, HttpSession session, Model model) {
+        Optional<Stylist> stylistOpt = stylistRepository.findById(stylistId);
+        if (stylistOpt.isEmpty()) {
+            return "redirect:/user/stylists";
+        }
+
+        User user = (User) session.getAttribute("session_user");
+        if (user != null) {
+            model.addAttribute("user", user);
+        }
+
+        model.addAttribute("stylist", stylistOpt.get());
+        return "user/user-stylist-booking";
+    }
+
+    @PostMapping("/stylist/book")
+    public String processDirectStylistBooking(@RequestParam("stylistId") Long stylistId,
+                                              @RequestParam("bookingTime") String bookingTimeStr,
+                                              @RequestParam("workMode") String workMode,
+                                              @RequestParam("clientName") String clientName,
+                                              @RequestParam("clientContact") String clientContact,
+                                              HttpSession session,
+                                              Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) return "redirect:/login";
+
+        Optional<Stylist> stylistOpt = stylistRepository.findById(stylistId);
+        if (stylistOpt.isEmpty()) return "redirect:/user/stylists";
+
+        Stylist stylist = stylistOpt.get();
+
+        Booking booking = new Booking();
+        booking.setUser(user);
+        booking.setStylist(stylist);
+        booking.setSalon(stylist.getSalon());
+        try {
+            booking.setBookingTime(java.time.LocalDateTime.parse(bookingTimeStr));
+        } catch (Exception e) {
+            model.addAttribute("error", "Invalid date format.");
+            model.addAttribute("stylist", stylist);
+            return "user/user-stylist-booking";
+        }
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setWorkMode(workMode);
+        booking.setClientName(clientName);
+        booking.setClientContact(clientContact);
+        booking.setPaymentMode("PAY_AT_SALON");
+        
+        bookingRepository.save(booking);
+
+        return "redirect:/user/bookings?message=Success";
+    }
 
     // 6️⃣ Confirm Booking
     @PostMapping("/book/confirm")

@@ -545,6 +545,84 @@
                 </div>
             </c:if>
 
+            <!-- Specialist Bookings -->
+            <c:if test="${not empty stylistBookings}">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4 text-purple"><i class="bi bi-person-badge me-2"></i> Specialist Appointments</h5>
+                    <div class="table-responsive">
+                        <table class="table-custom">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Specialist</th>
+                                    <th>Schedule</th>
+                                    <th>Work Mode</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="b" items="${stylistBookings}">
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold text-dark">${not empty b.clientName ? b.clientName : b.user.fullName}</div>
+                                            <div class="small text-muted">${not empty b.clientContact ? b.clientContact : b.user.phoneNumber}</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold">${b.stylist.firstName} ${b.stylist.lastName}</div>
+                                            <div class="small text-muted">${b.stylist.specialization}</div>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">${b.bookingTime}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt"></i> ${b.workMode}</span>
+                                        </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${b.status eq 'CONFIRMED'}"><span class="badge-status badge-confirmed">Confirmed</span></c:when>
+                                                <c:when test="${b.status eq 'REJECTED'}"><span class="badge-status badge-rejected">Rejected</span></c:when>
+                                                <c:when test="${b.status eq 'COMPLETED'}"><span class="badge-status badge-completed">Completed</span></c:when>
+                                                <c:when test="${b.status eq 'CANCELLED'}"><span class="badge-status badge-cancelled">Cancelled</span></c:when>
+                                                <c:otherwise><span class="badge-status badge-pending">Pending</span></c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <c:if test="${b.status eq 'PENDING'}">
+                                                    <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+                                                        <input type="hidden" name="bookingId" value="${b.id}">
+                                                        <input type="hidden" name="status" value="CONFIRMED">
+                                                        <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
+                                                    </form>
+                                                    <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+                                                        <input type="hidden" name="bookingId" value="${b.id}">
+                                                        <input type="hidden" name="status" value="REJECTED">
+                                                        <button type="submit" class="btn-action-pill btn-reject"><i class="bi bi-x-circle"></i> Reject</button>
+                                                    </form>
+                                                </c:if>
+                                                <c:if test="${b.status eq 'CONFIRMED'}">
+                                                    <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+                                                        <input type="hidden" name="bookingId" value="${b.id}">
+                                                        <input type="hidden" name="status" value="COMPLETED">
+                                                        <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
+                                                    </form>
+                                                    <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+                                                        <input type="hidden" name="bookingId" value="${b.id}">
+                                                        <input type="hidden" name="status" value="CANCELLED">
+                                                        <button type="submit" class="btn-action-pill btn-cancel"><i class="bi bi-slash-circle"></i> Cancel</button>
+                                                    </form>
+                                                </c:if>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </c:if>
+
             <!-- Offer Bookings -->
             <c:if test="${not empty offerBookings}">
                 <div class="glass-card">

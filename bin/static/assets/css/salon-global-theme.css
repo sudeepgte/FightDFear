@@ -1,0 +1,80 @@
+/* Global Color Theme Overrides for Salon Dashboard Pages */
+:root {
+    /* Dashboard Standard Colors */
+    --sidebar-width: 280px;
+    --dashboard-bg: #F8FAFC !important;
+    --fdf-burgundy: #1E1B4B !important; /* Replaced with Navy */
+    --fdf-burgundy-dark: #1E1B4B !important;
+    --fdf-pink: #F43F5E !important; /* Replaced with Coral/Rose */
+    --fdf-pink-light: #FFE4E6 !important;
+    --fdf-rose: #E11D48 !important; /* Darker red */
+    --fdf-lavender: #FFE4E6 !important;
+    --fdf-text-dark: #1E1B4B !important;
+    --fdf-text-muted: #64748B !important;
+    --fdf-border: #E2E8F0 !important;
+    --card-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
+    --card-bg: #FFFFFF !important;
+
+    /* Legacy Mappings to Force Theme Conformity */
+    --brand-purple: var(--fdf-pink) !important;
+    --brand-purple-darker: var(--fdf-text-dark) !important;
+    --gradient-dark: var(--dashboard-bg) !important; /* Sidebar should be light */
+    --fdf-primary: var(--fdf-pink) !important;
+    --primary-purple: var(--fdf-pink) !important;
+    --primary-color: var(--fdf-pink) !important;
+    --secondary-color: var(--fdf-rose) !important;
+}
+
+/* Force Sidebar to follow the light premium theme */
+.sidebar {
+    background: var(--card-bg) !important;
+    color: var(--fdf-text-dark) !important;
+    border-right: 1px solid var(--fdf-border) !important;
+}
+.sidebar-brand {
+    color: var(--fdf-text-dark) !important;
+}
+.sidebar-brand i {
+    color: var(--fdf-pink) !important;
+}
+.nav-link-custom {
+    color: var(--fdf-text-muted) !important;
+}
+.nav-link-custom:hover, .nav-link-custom.active {
+    background: var(--fdf-pink-light) !important;
+    color: var(--fdf-pink) !important;
+}
+.nav-link-custom i {
+    color: inherit !important;
+}
+
+body {
+    background-color: var(--dashboard-bg) !important;
+    color: var(--fdf-text-dark) !important;
+}
+
+/* Ensure buttons follow the new pink style */
+.btn-add-new, .btn-action-pill {
+    background: var(--fdf-pink) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
+.btn-add-new:hover, .btn-action-pill:hover {
+    background: var(--fdf-rose) !important;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25) !important;
+}
+
+/* Page headers to use the dark text color */
+.page-header h2, .header-title-box h2, h2, h3, h4, h5 {
+    color: var(--fdf-text-dark) !important;
+}
+
+/* Cards background and border */
+.glass-card, .premium-card, .stylist-card, .dashboard-card, .fdf-card, .offer-card, .client-card, .package-card {
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--fdf-border) !important;
+    box-shadow: var(--card-shadow) !important;
+    border-radius: 16px !important;
+}

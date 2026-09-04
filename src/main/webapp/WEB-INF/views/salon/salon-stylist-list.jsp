@@ -327,7 +327,7 @@
                                 <a href="${pageContext.request.contextPath}/stylist/view?id=${stylist.id}" class="btn-action-pill btn-add-new" style="background-color: var(--brand-purple); color: white;">
                                     <i class="bi bi-person-lines-fill"></i> View Profile
                                 </a>
-                                <a href="${pageContext.request.contextPath}/salons/stylist/delete?id=${stylist.id}" class="btn-action-pill btn-delete" onclick="return confirm('Are you sure you want to remove this stylist? This action cannot be undone.')">
+                                <a href="${pageContext.request.contextPath}/stylist/delete?id=${stylist.id}" class="btn-action-pill btn-delete" onclick="return confirm('Are you sure you want to remove this stylist? This action cannot be undone.')">
                                     <i class="bi bi-trash3"></i> Remove Stylist
                                 </a>
                             </div>
