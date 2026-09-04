@@ -92,7 +92,6 @@
             margin-bottom: 20px;
         }
 
-        }
         body.mp-list-page .location-tag {
             font-size: 0.85rem;
             color: var(--m-muted);
@@ -635,7 +634,7 @@
                         <div class="lawyer-name">
                             ${lawyer.fullName}
                         </div>
-                        <div class="lawyer-designation">${not empty lawyer.designation ? lawyer.designation : lawyer.category.label}</div>
+                        <div class="lawyer-designation">${not empty lawyer.designation ? lawyer.designation : lawyer.category.displayName}</div>
                         
                         <div class="lawyer-meta">
                             <c:if test="${lawyer.rating > 0}">
