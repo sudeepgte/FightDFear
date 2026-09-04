@@ -26,7 +26,7 @@
             --warning-text: #C2410C;
             --error-bg: #FEF2F2;
             --error-text: #DC2626;
-            --navy: #0F172A;
+            --navy: #1E1B4B;
             --border: #E2E8F0;
         }
 

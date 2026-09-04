@@ -17,7 +17,7 @@
             --secondary: #64748B;
             --bg: #F8FAFC;
             --card-bg: #FFFFFF;
-            --navy: #0F172A;
+            --navy: #1E1B4B;
             --border: #E2E8F0;
         }
 
@@ -31,8 +31,8 @@
         .topbar-actions { display: flex; gap: 12px; }
         .btn-skip { background: transparent; color: var(--navy); padding: 10px 20px; border: 1px solid var(--border); border-radius: 20px; font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.2s; }
         .btn-skip:hover { background: #f1f5f9; }
-        .btn-save { background: var(--navy); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; text-decoration: none;}
-        .btn-save:hover { background: #1e293b; }
+        .btn-save { background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; text-decoration: none;}
+        .btn-save:hover { background: var(--primary-hover); }
 
         /* Main Container */
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; width: 100%; }
@@ -180,7 +180,12 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Profile Photo</label>
-                        <input type="file" name="profilePhoto" class="form-file" accept="image/*">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="file" name="profilePhoto" class="form-file" accept="image/*" style="flex:1;">
+                            <c:if test="${not empty lawyer.profilePhoto}">
+                                <span style="font-size:0.75rem; color:var(--success-text); white-space:nowrap;"><i class="bi bi-check-circle-fill"></i> Uploaded</span>
+                            </c:if>
+                        </div>
                     </div>
                 </div>
 
@@ -220,7 +225,12 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Chamber Photo</label>
-                        <input type="file" name="chamberPhoto" class="form-file" accept="image/*">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="file" name="chamberPhoto" class="form-file" accept="image/*" style="flex:1;">
+                            <c:if test="${not empty lawyer.galleryPhotos}">
+                                <span style="font-size:0.75rem; color:var(--success-text); white-space:nowrap;"><i class="bi bi-check-circle-fill"></i> Uploaded</span>
+                            </c:if>
+                        </div>
                     </div>
                     <div class="form-group full">
                         <label class="form-label">Chamber Facilities</label>
