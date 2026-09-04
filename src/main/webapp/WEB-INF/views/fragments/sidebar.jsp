@@ -14,116 +14,23 @@
     }
     
     /* Premium light sidebar (Fitness / Martial Arts dashboard parity) */
-    #sidebar-wrapper {
+        #sidebar-wrapper {
         min-width: 260px;
         max-width: 260px;
-        background: #ffffff;
-        color: #0F172A;
-        transition: all 0.3s ease-in-out;
-        z-index: 1000;
-        position: fixed;
-        top: 80px; 
-        bottom: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px;
-        border-top-right-radius: 24px;
-        border-right: 1px solid #E2E8F0;
-        padding-top: 20px;
-        box-shadow: 2px 0 12px rgba(0,0,0,0.03);
-    }
-
-    #sidebar-wrapper .list-group {
-        padding-bottom: 80px;
-    }
-    
-    #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
-    #sidebar-wrapper::-webkit-scrollbar-thumb { background-color: #E2E8F0; border-radius: 10px; }
-    
-    .sidebar-heading {
-        padding: 10px 25px 25px;
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #0F172A;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .sidebar-heading i { color: #F43F5E; }
-    
-    .sidebar-list-group-item {
-        background: transparent;
-        color: #64748B;
-        border: none;
-        padding: 12px 25px;
-        font-size: 14px;
-        font-weight: 600;
-        transition: all 0.3s;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        position: relative;
-        text-decoration: none;
-        cursor: pointer;
-        pointer-events: auto;
-    }
-    .sidebar-list-group-item i { font-size: 1.1rem; width: 20px; text-align: center; color: #94A3B8; }
-    .sidebar-list-group-item:hover, .sidebar-list-group-item.active {
-        color: #F43F5E;
-        background: #FFF1F2;
-    }
-    .sidebar-list-group-item:hover i, .sidebar-list-group-item.active i { color: #F43F5E; }
-    .sidebar-list-group-item:hover::before, .sidebar-list-group-item.active::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 70%;
-        width: 4px;
-        background: #f43f5e;
-        border-radius: 0 4px 4px 0;
-    }
-
-    .sidebar-logout-item {
-        color: #f43f5e;
-        margin-top: 15px;
-        border-top: 1px solid #E2E8F0;
-    }
-
-    .sidebar-mobile-toggle {
-        display: none;
-        width: calc(100% - 30px);
-        margin: 12px 15px 12px;
-        padding: 10px 16px;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        background: #FFF1F2;
-        color: #0F172A;
-        font-size: 14px;
-        font-weight: 600;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-    }
-
-    #page-content-wrapper {
-        flex: 1;
-        margin-left: 260px;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
         padding: 25px 30px;
         background: #F8FAFC !important;
+        transition: transform 0.3s ease !important;
     }
-    
-    @media (max-width: 768px) {
+    .sidebar-mobile-toggle { display: none !important; }
+    #sidebar-wrapper .close-sidebar { display: none !important; }
+
+    @media (max-width: 1200px) {
         #wrapper {
             flex-direction: column !important;
             margin-top: 72px;
         }
         #sidebar-wrapper {
+
             min-width: 100% !important;
             max-width: 100% !important;
             position: fixed !important;
@@ -157,30 +64,96 @@
             padding: 0 !important;
         }
         .sidebar-list-group-item {
+
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 80vw !important;
+            max-width: 320px !important;
+            height: 100vh !important;
+            background: #fff !important;
+            z-index: 1050 !important;
+            padding: 20px !important;
+            transform: translateX(-100%) !important;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+            overflow-y: auto !important;
+        }
+        #sidebar-wrapper.sidebar-open { transform: translateX(0) !important; }
+        .sidebar-mobile-toggle {
+            display: flex !important;
+            width: 100%;
+            margin: 0;
+            padding: 10px 16px;
+            border: none;
+            border-bottom: 1px solid #E2E8F0;
+            border-radius: 0;
+            background: #FFF1F2;
+            color: #0F172A;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        #sidebar-wrapper .list-group { margin-top: 40px !important; }
+        #sidebar-wrapper .close-sidebar { display: block !important; position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #0F172A; }
+        #page-content-wrapper {
+            margin-left: 0 !important;
+            padding: 0 !important;
             width: 100% !important;
-            padding: 12px 14px !important;
-            border-radius: 10px !important;
+        }
+    }
+        .sidebar-heading {
+            padding: 8px 15px 10px !important;
+            font-size: 1rem !important;
+        }
+        
+        
+                .sidebar-list-group-item {
+
+            width: 100% !important;
+            padding: 14px 20px !important;
+            border-radius: 8px !important;
             background: transparent !important;
             font-size: 14px !important;
             display: flex !important;
+            align-items: center !important;
             white-space: normal !important;
-            min-height: 44px;
+            color: #64748b !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+            transition: all 0.2s ease !important;
+            position: relative !important;
+            margin-bottom: 4px !important;
+            border: none !important;
         }
-        .sidebar-list-group-item::before {
-            display: none !important;
+        .sidebar-list-group-item i {
+            margin-right: 14px !important;
+            font-size: 1.1rem !important;
+            width: 20px !important;
+            text-align: center !important;
         }
-        .sidebar-list-group-item:hover,
+        .sidebar-list-group-item:hover {
+            color: #0f172a !important;
+            background: #f1f5f9 !important;
+        }
         .sidebar-list-group-item.active {
-            background: rgba(244, 63, 94, 0.15) !important;
-            color: #fff !important;
+            color: #f43f5e !important;
+            background: #fff1f2 !important;
         }
-        .sidebar-logout-item {
-            margin-top: 8px !important;
-            padding-top: 14px !important;
+        .sidebar-list-group-item.active::before {
+            content: '' !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            height: 70% !important;
+            width: 4px !important;
+            background: #f43f5e !important;
+            border-radius: 0 4px 4px 0 !important;
+            display: block !important;
         }
+        .sidebar-logout-item { margin-top: 8px !important; color: #f43f5e !important; }
         #page-content-wrapper {
             margin-left: 0 !important;
-            padding: 14px 12px !important;
+            padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
             box-sizing: border-box !important;
@@ -198,18 +171,19 @@
             font-size: 13px !important;
             padding: 11px 12px !important;
         }
-        #page-content-wrapper {
-            padding: 12px 10px !important;
-        }
+        #page-content-wrapper { padding: 0 !important; }
     }
 </style>
 
+<!-- Sidebar Toggle (Mobile) -->
+<button type="button" class="sidebar-mobile-toggle" id="sidebarMobileToggle">
+    <span><i class="bi bi-list me-2"></i> Menu</span> <i class="bi bi-chevron-down" id="sidebarToggleIcon" style="margin-left: auto;"></i>
+</button>
+
 <!-- Sidebar -->
 <div id="sidebar-wrapper">
-    <button type="button" class="sidebar-mobile-toggle" id="sidebarMobileToggle" aria-expanded="false" aria-controls="sidebarNavList">
-        <span><i class="bi bi-list me-2"></i> Menu</span>
-        <i class="bi bi-chevron-down" id="sidebarToggleIcon"></i>
-    </button>
+<i class="bi bi-x-lg close-sidebar" style="display:none;" onclick="document.getElementById('sidebar-wrapper').classList.remove('sidebar-open')"></i>
+    
     <c:set var="isWorkerPortal" value="${isWorkerDashboard || fn:contains(currentUri, '/women-jobs/') || fn:contains(pageContext.request.requestURI, 'worker-profile') || fn:contains(pageContext.request.requestURI, 'worker-dashboard')}" />
     <div class="list-group list-group-flush mt-1" id="sidebarNavList">
         <c:choose>
@@ -307,11 +281,20 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         var sidebar = document.getElementById("sidebar-wrapper");
+
         
         // Listen to the new global sidebar toggle in the top-left header
         var globalToggleBtn = document.getElementById("globalSidebarToggle");
         if (globalToggleBtn && sidebar) {
             globalToggleBtn.addEventListener("click", function() {
+
+        var toggleBtn = document.getElementById("sidebarMobileToggle");
+        var toggleIcon = document.getElementById("sidebarToggleIcon");
+
+        if (toggleBtn && sidebar) {
+                        toggleBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+
                 var isOpen = sidebar.classList.toggle("sidebar-open");
                 
                 // Toggle the icon visually
@@ -323,7 +306,16 @@
                     globalToggleBtn.classList.add("bi-list");
                 }
             });
-        }
+            document.addEventListener("click", function(e) {
+                if (sidebar.classList.contains("sidebar-open") && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                    sidebar.classList.remove("sidebar-open");
+                    toggleBtn.setAttribute("aria-expanded", "false");
+                    if (toggleIcon) {
+                        toggleIcon.classList.add("bi-chevron-down");
+                        toggleIcon.classList.remove("bi-chevron-up");
+                    }
+                }
+            });}
 
         var content = document.getElementById("page-content-wrapper");
         if(content && !document.getElementById("global-back-btn") && content.dataset.skipGlobalBack !== "true") {
@@ -335,3 +327,23 @@
         }
     });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

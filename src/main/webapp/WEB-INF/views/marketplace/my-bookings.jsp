@@ -58,6 +58,7 @@
             padding: 25px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.02);
             border: 1px solid var(--border);
+            width: 100%;
         }
 
         .table thead th {
@@ -68,6 +69,7 @@
             font-size: 0.75rem;
             border: none;
             padding: 15px;
+            white-space: nowrap;
         }
 
         .status-pill {
@@ -293,9 +295,84 @@
             </c:if>
         </div>
 
+        <h4 class="mt-5 mb-3 fw-bold" style="color: var(--primary);"><i class="bi bi-briefcase-fill me-2"></i> Worker Job Bookings</h4>
+        <div class="booking-card">
+            <c:if test="${empty workerBookings}">
+                <div class="text-center py-4">
+                    <i class="bi bi-briefcase text-muted opacity-25" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3 text-muted">No worker jobs booked yet.</h5>
+                </div>
+            </c:if>
+
+            <c:if test="${not empty workerBookings}">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Worker Name</th>
+                                <th>Job Date</th>
+                                <th>Hours</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="wb" items="${workerBookings}">
+                                <tr>
+                                    <td>
+                                        <div class="fw-800 text-dark">
+                                            ${wb.jobApplication.user.fullName}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="small fw-600">${wb.bookingDate.toString().replace('T', ' ')}</div>
+                                    </td>
+                                    <td>${wb.hours} hrs</td>
+                                    <td>&#8377;${wb.totalAmount}</td>
+                                    <td>
+                                        <span class="status-pill status-${wb.status}">${wb.status}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info rounded-pill px-3" onclick="openSimpleChat('${wb.jobApplication.user.id}', '${wb.jobApplication.user.fullName}')">
+                                            <i class="bi bi-chat-dots-fill"></i> Chat
+                                        </button>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </c:if>
+        </div>
+
     </div>
 
-    <!-- Chat Modal -->
+    <!-- Simple Chat Modal (Worker Chat) -->
+    <div class="modal fade" id="simpleChatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-3">
+                <div class="modal-header bg-light border-bottom-0">
+                    <h5 class="modal-title fw-bold" style="color: #1e1b4b;"><i class="bi bi-chat-dots-fill text-info me-2"></i> Chat with <span id="simpleChatPartnerName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" style="background: #f8fafc;">
+                    <div id="simpleChatMessages" style="height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div id="simpleChatEmptyState" style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">
+                            Send a message to start the conversation!
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="hidden" id="simpleChatPartnerId" value="">
+                        <input type="text" id="simpleChatInput" class="form-control rounded-pill" placeholder="Type a message..." style="flex: 1;" onkeypress="if(event.key === 'Enter') sendSimpleChat()">
+                        <button type="button" class="btn btn-info rounded-pill text-white" onclick="sendSimpleChat()"><i class="bi bi-send-fill"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Provider Chat Modal -->
     <div class="modal fade comm-modal" id="chatModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content comm-content">
@@ -394,7 +471,92 @@
                     handleIncomingMessage(msg, bookingId);
                 });
                 subscribedBookingIds.add(bookingId);
+                
+                // Subscribe to simple chat messages
+                stompClient.subscribe('/topic/messages/${user.id}', function (msg) {
+                    var payload = JSON.parse(msg.body);
+                    var currentChatId = document.getElementById('simpleChatPartnerId') ? document.getElementById('simpleChatPartnerId').value : null;
+                    
+                    if (currentChatId && payload.senderId == currentChatId) {
+                        var messagesDiv = document.getElementById('simpleChatMessages');
+                        var emptyState = document.getElementById('simpleChatEmptyState');
+                        if(emptyState) emptyState.remove();
+                        
+                        var msgHtml = '<div style="align-self: flex-start; background: #e2e8f0; color: #1e293b; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem;">' + payload.message + '</div>';
+                        messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+                        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                    }
+                });
             });
+        }
+
+        function openSimpleChat(partnerId, partnerName) {
+            document.getElementById('simpleChatPartnerId').value = partnerId;
+            document.getElementById('simpleChatPartnerName').textContent = partnerName;
+            
+            var messagesDiv = document.getElementById('simpleChatMessages');
+            messagesDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            
+            var chatModal = new bootstrap.Modal(document.getElementById('simpleChatModal'));
+            chatModal.show();
+            
+            fetch('${pageContext.request.contextPath}/chat/messages-since/' + partnerId)
+                .then(res => res.json())
+                .then(data => {
+                    messagesDiv.innerHTML = '';
+                    if(data.success && data.messages && data.messages.length > 0) {
+                        data.messages.forEach(m => {
+                            var isMe = (m.sender && m.sender.id != partnerId);
+                            var timeStr = "";
+                            if(m.timestamp) {
+                                var d = new Date(m.timestamp);
+                                timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
+                            var align = isMe ? 'flex-end' : 'flex-start';
+                            var bg = isMe ? '#F43F5E' : '#e2e8f0';
+                            var textCol = isMe ? 'white' : '#1e293b';
+                            var timeHtml = timeStr ? '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: ' + (isMe ? 'right' : 'left') + ';">' + timeStr + '</div>' : '';
+                            var msgHtml = '<div style="align-self: ' + align + '; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: ' + bg + '; color: ' + textCol + '; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + m.message + '</div>' + timeHtml + '</div>';
+                            messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+                        });
+                    } else {
+                        messagesDiv.innerHTML = '<div id="simpleChatEmptyState" style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Send a message to start the conversation!</div>';
+                    }
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                })
+                .catch(err => {
+                    messagesDiv.innerHTML = '<div style="text-align: center; color: #ef4444; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Failed to load messages</div>';
+                });
+        }
+        
+        function sendSimpleChat() {
+            var input = document.getElementById('simpleChatInput');
+            var msg = input.value.trim();
+            if (!msg) return;
+            
+            var messagesDiv = document.getElementById('simpleChatMessages');
+            var emptyState = document.getElementById('simpleChatEmptyState');
+            if(emptyState) emptyState.remove();
+            
+            var timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            var timeHtml = '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: right;">' + timeStr + '</div>';
+            var msgHtml = '<div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: #F43F5E; color: white; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + msg + '</div>' + timeHtml + '</div>';
+            messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            input.value = '';
+            
+            var receiverId = document.getElementById('simpleChatPartnerId').value;
+            fetch('${pageContext.request.contextPath}/chat/send-message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({receiverId: receiverId, message: msg})
+            }).then(res => res.json()).then(data => {
+                if(!data.success) {
+                    messagesDiv.insertAdjacentHTML('beforeend', '<div style="align-self: center; background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px;">' + (data.error || 'Message could not be sent') + '</div>');
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                }
+            }).catch(err => console.error(err));
         }
 
         function initWebSocket(bookingId) {

@@ -347,8 +347,7 @@
 </head>
 <body>
 
-<!-- Header -->
-
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
 <div id="wrapper">
     <!-- Sidebar -->

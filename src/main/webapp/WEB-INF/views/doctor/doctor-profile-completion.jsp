@@ -642,18 +642,9 @@
                             <div class="actions" style="border-top:none;padding-top:12px;margin-top:8px;">
                                 <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/profile-completion/skip">Skip for now</a>
                                 <button type="button" class="btn-ghost" id="reviewBtn">Review profile</button>
-                                <c:choose>
-                                    <c:when test="${profile != null && profile.canSubmitForVerification == true}">
-                                        <button type="submit" class="btn-primary" id="submitVerifyBtn">
-                                            Save &amp; Submit for verification
-                                        </button>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <button type="button" class="btn-primary" id="submitVerifyBtn" disabled title="Complete required fields and save first">
-                                            Submit for verification
-                                        </button>
-                                    </c:otherwise>
-                                </c:choose>
+                                <button type="submit" class="btn-primary" id="submitVerifyBtn">
+                                    Save &amp; Submit for verification
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -1130,16 +1121,9 @@
 
             if (submitVerifyBtn) {
                 submitVerifyBtn.addEventListener('click', function (e) {
-                    if (submitVerifyBtn.disabled) {
-                        e.preventDefault();
-                        return;
-                    }
-                    if (saving) {
-                        e.preventDefault();
-                        return;
-                    }
+                    e.preventDefault();
+                    if (saving) return;
                     if (!validateKeyFields('verify')) {
-                        e.preventDefault();
                         previewPanel.style.display = 'none';
                         editPanel.style.display = 'block';
                         return;
@@ -1147,10 +1131,8 @@
                     var intentField = document.getElementById('profileIntent');
                     if (intentField) intentField.value = 'submitVerification';
                     saving = true;
-                    submitVerifyBtn.disabled = true;
                     submitVerifyBtn.textContent = 'Submitting...';
-                    if (confirmSaveBtn) confirmSaveBtn.disabled = true;
-                    if (headerReviewBtn) headerReviewBtn.disabled = true;
+                    form.submit();
                 });
             }
 

@@ -13,6 +13,7 @@ public class CentreInstructor {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "center_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private MartialArtsCenter center;
 
     @Column(nullable = false)

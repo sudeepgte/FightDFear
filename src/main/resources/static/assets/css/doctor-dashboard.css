@@ -18,7 +18,9 @@ body.dd-page {
   background: var(--dd-bg);
   min-height: 100vh;
   color: var(--dd-text);
-  display: flex;
+  display: block;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* ═══ SIDEBAR ═══ */
@@ -194,10 +196,12 @@ body.dd-page {
 /* ═══ MAIN CONTENT ═══ */
 .dd-main {
   margin-left: var(--sidebar-w);
-  flex: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
 }
 
 /* Top bar */
@@ -784,13 +788,14 @@ body.dd-page {
 .dd-profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px 16px;
 }
 
 .dd-profile-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
+  padding: 16px 18px;
 }
 
 .dd-profile-item .label {
@@ -799,12 +804,17 @@ body.dd-page {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--dd-muted);
+  line-height: 1.4;
+  margin: 0;
 }
 
 .dd-profile-item .value {
   font-size: 14px;
   font-weight: 500;
   color: var(--dd-text);
+  line-height: 1.5;
+  word-break: break-word;
+  margin: 0;
 }
 
 /* ═══ EMPTY STATE ═══ */
@@ -834,7 +844,8 @@ body.dd-page {
 
 @media (max-width: 768px) {
   .dd-sidebar {
-    transform: translateX(-100%);
+    position: fixed;
+    transform: translateX(-110%);
   }
 
   .dd-sidebar.open {
@@ -844,6 +855,7 @@ body.dd-page {
 
   .dd-main {
     margin-left: 0;
+    width: 100%;
   }
 
   .dd-hamburger {
@@ -856,6 +868,8 @@ body.dd-page {
 
   .dd-topbar {
     padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .dd-stats {
@@ -863,7 +877,8 @@ body.dd-page {
     gap: 12px;
   }
 
-  .dd-profile-grid {
+  .dd-profile-grid,
+  .dd-edit-grid {
     grid-template-columns: 1fr;
   }
 

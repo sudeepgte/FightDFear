@@ -140,6 +140,7 @@
 
         /* Content Container */
         .bookings-container {
+            width: 100%;
             max-width: 1100px;
             margin: 0 auto;
             padding: 40px 20px;
@@ -158,7 +159,6 @@
             color: #F43F5E;
         }
 
-        /* Modern Table Card wrapper */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--fdf-border);
@@ -167,21 +167,30 @@
             box-shadow: var(--shadow-sm);
             margin-bottom: 40px;
             overflow: hidden;
+            width: 100%;
         }
         
         .table {
             margin-bottom: 0;
         }
-        .table th {
-            font-weight: 700;
-            color: #64748B;
-            border-top: none;
-            padding: 14px 10px;
+        .table thead th {
+            font-weight: 700 !important;
+            color: #64748B !important;
+            background: #F8FAFC !important;
+            border-bottom: 2px solid var(--fdf-border) !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            padding: 14px 10px !important;
+            text-transform: uppercase;
+            font-size: 13px;
+            white-space: nowrap !important;
         }
         .table td {
             padding: 14px 10px;
             vertical-align: middle;
             font-size: 14px;
+            white-space: nowrap;
         }
         
         .empty-bookings {

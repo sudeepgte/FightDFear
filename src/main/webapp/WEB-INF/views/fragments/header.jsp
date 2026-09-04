@@ -32,7 +32,7 @@
         margin: 0;
         font-weight: 800;
         letter-spacing: -0.3px;
-        color: #0F172A !important;
+        color: #F43F5E !important;
         background: none !important;
         -webkit-background-clip: initial !important;
         -webkit-text-fill-color: initial !important;
@@ -57,6 +57,8 @@
     
     .header .btn-getstarted:hover {
         transform: translateY(-2px);
+        background: #E11D48 !important;
+        color: #fff !important;
         box-shadow: 0 10px 20px rgba(244, 63, 94, 0.25);
     }
 
@@ -274,7 +276,7 @@
     <i class="bi bi-list header-sidebar-toggle" id="globalSidebarToggle"></i>
     
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
-        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#1e1b4b !important;">Fight D Fear</h1>
+        <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#F43F5E !important;">Fight D Fear</h1>
     </a>
     <nav id="navmenu" class="navmenu">
       <ul>
@@ -338,7 +340,7 @@
             </c:otherwise>
         </c:choose>
       </ul>
-      <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
+      <!-- Removed mobile-nav-toggle per user request -->
     </nav>
         <c:choose>
             <c:when test="${not empty sessionScope.loggedTrainer}">
@@ -360,10 +362,10 @@
             <a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}" class="ms-3">
                 <c:choose>
                     <c:when test="${not empty user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${user.profilePhoto}" alt="Profile" class="header-profile-img">
+                        <img src="${pageContext.request.contextPath}${user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:when test="${not empty sessionScope.user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" alt="Profile" class="header-profile-img">
+                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
                     </c:when>
                     <c:otherwise>
                         <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
@@ -580,4 +582,7 @@
       }
   });
 </script>
+
+
+
 

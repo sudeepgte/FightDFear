@@ -71,6 +71,9 @@ public class ChatController {
         messagingTemplate.convertAndSend("/topic/calls/" + receiverId, signal);
     }
 
+    @GetMapping("/test")
+    public String testPage() { return "test"; }
+
     // Show all users to start chat
     @GetMapping("/users")
     public String showUsers(Model model, HttpSession session) {
@@ -290,6 +293,9 @@ public class ChatController {
         return ResponseEntity.ok(res);
     }
 
+    @Autowired
+    private in.sp.main.Repository.WorkerBookingRepository workerBookingRepo;
+
     private boolean canChat(User sender, User receiver) {
         if (sender == null || receiver == null) {
             return false;
@@ -299,7 +305,15 @@ public class ChatController {
         if (friends) {
             return true;
         }
-        return !chatService.getChatHistory(sender, receiver).isEmpty();
+        if (!chatService.getChatHistory(sender, receiver).isEmpty()) {
+            return true;
+        }
+        // Allow if there is a worker booking between them (sender is client, receiver is worker OR vice versa)
+        boolean hasBooking = workerBookingRepo.findAll().stream().anyMatch(b -> 
+            (b.getClient().getId().equals(sender.getId()) && b.getJobApplication().getUser().getId().equals(receiver.getId())) ||
+            (b.getClient().getId().equals(receiver.getId()) && b.getJobApplication().getUser().getId().equals(sender.getId()))
+        );
+        return hasBooking;
     }
 
 }

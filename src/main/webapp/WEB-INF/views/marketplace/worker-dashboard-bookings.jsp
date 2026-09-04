@@ -68,8 +68,8 @@
 <div class="wj-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
 <aside class="wj-sidebar" id="sidebar">
-  <a class="wj-sidebar-brand" href="${pageContext.request.contextPath}/women-jobs/dashboard">
-    <i class="bi bi-briefcase-fill"></i>
+  <a class="wj-sidebar-brand" href="${pageContext.request.contextPath}/women-jobs/dashboard" style="display:flex; align-items:center; gap:10px;">
+    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain;">
     <span>Fight D Fear<small>Worker Portal</small></span>
   </a>
   <div class="wj-sidebar-profile">
@@ -108,10 +108,44 @@
         <p>Welcome back, ${user.fullName}</p>
       </div>
     </div>
-    <div class="notif-btn" id="bellIcon" style="cursor: pointer; position: relative; color:#64748B; font-size:1.2rem;">
-      <i class="bi bi-bell"></i>
+    <div style="display:flex; align-items:center; gap: 15px;">
+      <div class="notif-btn" id="bellIcon" data-bs-toggle="modal" data-bs-target="#notificationModal" style="cursor: pointer; position: relative; color:#64748B; font-size:1.2rem;" onclick="var dot = document.getElementById('notifDot'); if(dot) dot.style.display='none';">
+        <i class="bi bi-bell"></i>
+        <c:if test="${pendingBookings > 0}">
+          <span id="notifDot" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background-color: #F43F5E; border-radius: 50%; border: 2px solid white;"></span>
+        </c:if>
+      </div>
     </div>
   </header>
+
+  <!-- Notification Modal -->
+  <div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-3">
+        <div class="modal-header bg-light border-bottom-0">
+          <h5 class="modal-title fw-bold" style="color: #1e1b4b;"><i class="bi bi-bell-fill text-warning me-2"></i> Notifications</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 text-center">
+          <c:choose>
+            <c:when test="${pendingBookings > 0}">
+              <div style="font-size: 3rem; color: #F43F5E; margin-bottom: 15px;"><i class="bi bi-calendar-check"></i></div>
+              <h5 style="color: #1E1B4B; margin-bottom: 10px;">You have ${pendingBookings} pending request(s)</h5>
+              <p class="text-muted">Please review and accept/reject them in the Recent Job Bookings table.</p>
+            </c:when>
+            <c:otherwise>
+              <div style="font-size: 3rem; color: #64748B; margin-bottom: 15px;"><i class="bi bi-check-circle"></i></div>
+              <h5 style="color: #1E1B4B; margin-bottom: 10px;">You're all caught up!</h5>
+              <p class="text-muted">No new notifications at the moment.</p>
+            </c:otherwise>
+          </c:choose>
+        </div>
+        <div class="modal-footer border-top-0 justify-content-center">
+          <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal" style="background-color: #F43F5E; border: none;">Okay</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="wj-content">
     <c:if test="${not empty success}">
@@ -120,125 +154,128 @@
     <c:if test="${not empty error}">
       <div class="wj-alert wj-alert-err"><i class="bi bi-exclamation-circle"></i> ${error}</div>
     </c:if>
+    <c:choose>
+        <c:when test="${workerApp.status == 'PENDING'}">
+            <div class="wj-card" style="text-align:center; padding:50px 20px; margin-top:20px;">
+                <div style="font-size:3rem; color:#F43F5E; margin-bottom:15px;"><i class="bi bi-lock-fill"></i></div>
+                <h3 style="color:#1E1B4B; margin-bottom:10px;">Your worker application is pending admin verification</h3>
+                <p style="color:#64748B; margin-bottom:25px;">You will be able to access the dashboard and receive job bookings once approved by our admin team.</p>
+                <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-btn wj-btn-rose" style="display:inline-block; padding:12px 24px;">Update Profile in the meantime</a>
+            </div>
+        </c:when>
+        <c:otherwise>
+            <div class="wj-cta">
+              <div>
+                <p>Keep your worker profile complete</p>
+                <span>Update skills, location and payout details so clients can find and book you.</span>
+              </div>
+              <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-btn wj-btn-rose">Update profile</a>
+            </div>
 
-    <div class="wj-cta">
-      <div>
-        <p>Keep your worker profile complete</p>
-        <span>Update skills, location and payout details so clients can find and book you.</span>
-      </div>
-      <a href="${pageContext.request.contextPath}/women-jobs/profile" class="wj-btn wj-btn-rose">Update profile</a>
-    </div>
+            <div class="wj-stats">
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-briefcase"></i></div><div><h3>${totalBookings}</h3><p>Total Bookings</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><h3>${pendingBookings}</h3><p>Pending Requests</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-check-circle"></i></div><div><h3>${completedBookings}</h3><p>Completed Jobs</p></div></div>
+              <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
+            </div>
 
-    <div class="wj-stats">
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-briefcase"></i></div><div><h3>${totalBookings}</h3><p>Total Bookings</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-hourglass-split"></i></div><div><h3>${pendingBookings}</h3><p>Pending Requests</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-check-circle"></i></div><div><h3>${completedBookings}</h3><p>Completed Jobs</p></div></div>
-      <div class="wj-stat"><div class="wj-stat-icon"><i class="bi bi-currency-rupee"></i></div><div><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
-    </div>
+            <c:if test="${not empty incomingBookings}">
+            <div class="wj-filter-bar" id="bookingFilterBar">
+              <button type="button" class="wj-filter-pill active" data-filter="ALL">All</button>
+              <button type="button" class="wj-filter-pill" data-filter="PENDING">Pending</button>
+              <button type="button" class="wj-filter-pill" data-filter="ACCEPTED">Accepted</button>
+              <button type="button" class="wj-filter-pill" data-filter="PAID">Paid</button>
+              <button type="button" class="wj-filter-pill" data-filter="COMPLETED">Completed</button>
+              <button type="button" class="wj-filter-pill" data-filter="REJECTED">Rejected</button>
+              <button type="button" class="wj-filter-pill" data-filter="CANCELLED">Cancelled</button>
+            </div>
+            </c:if>
 
-    <c:if test="${not empty incomingBookings}">
-    <div class="wj-filter-bar" id="bookingFilterBar">
-      <button type="button" class="wj-filter-pill active" data-filter="ALL">All</button>
-      <button type="button" class="wj-filter-pill" data-filter="PENDING">Pending</button>
-      <button type="button" class="wj-filter-pill" data-filter="ACCEPTED">Accepted</button>
-      <button type="button" class="wj-filter-pill" data-filter="PAID">Paid</button>
-      <button type="button" class="wj-filter-pill" data-filter="COMPLETED">Completed</button>
-      <button type="button" class="wj-filter-pill" data-filter="REJECTED">Rejected</button>
-      <button type="button" class="wj-filter-pill" data-filter="CANCELLED">Cancelled</button>
-    </div>
-    </c:if>
+            <div class="wj-card">
+              <div class="wj-card-h"><h2><i class="bi bi-calendar-check"></i> Recent Job Bookings</h2></div>
+              <div class="wj-card-b">
+                <c:if test="${empty incomingBookings}">
+                  <div class="wj-empty"><i class="bi bi-calendar-x"></i><p>No incoming job requests yet.</p></div>
+                </c:if>
+                <c:if test="${not empty incomingBookings}">
+                  <div style="overflow-x:auto">
+                    <table class="wj-table">
+                      <thead>
+                        <tr>
+                          <th>Client</th>
+                          <th>Hours</th>
+                          <th>Total Amount</th>
+                          <th>Booking Date</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <c:forEach var="b" items="${incomingBookings}">
+                          <tr class="wj-booking-row" data-status="${b.status}">
+                            <td>
+                              <div class="wj-user-cell">
+                                <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
+                                <span>${b.client.fullName}</span>
+                              </div>
+                            </td>
+                            <td>${empty b.hours ? '-' : b.hours} ${not empty b.hours ? 'hrs' : ''}</td>
+                            <td>&#8377;${b.totalAmount}</td>
+                            <td>${b.bookingDate.toString().replace('T', ' ')}</td>
+                            <td>
+                              <c:choose>
+                                <c:when test="${b.status=='PENDING'}"><span class="wj-badge wj-badge-pending"><span class="dot"></span> Pending</span></c:when>
+                                <c:when test="${b.status=='CONFIRMED' || b.status=='ACCEPTED'}"><span class="wj-badge wj-badge-accepted"><span class="dot"></span> Confirmed</span></c:when>
+                                <c:when test="${b.status=='COMPLETED'}"><span class="wj-badge wj-badge-done"><span class="dot"></span> Completed</span></c:when>
+                                <c:when test="${b.status=='PAID'}"><span class="wj-badge wj-badge-paid"><span class="dot"></span> Paid</span></c:when>
+                                <c:otherwise><span class="wj-badge wj-badge-bad"><span class="dot"></span> Cancelled</span></c:otherwise>
+                              </c:choose>
+                            </td>
+                            <td>
+                              <div style="display:flex;gap:8px;">
+                                <button type="button" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;border-radius:8px;"
+                                        onclick="showDetails('${b.client.fullName}','${b.client.email}','${b.client.phoneNumber}','${b.bookingDate}','${b.hours}','&#8377;${b.totalAmount}','${b.status}','${b.note}')">
+                                  <i class="bi bi-eye"></i>
+                                </button>
+                                  <button type="button" class="btn btn-sm btn-outline-info" style="font-size:0.75rem;border-radius:8px;" title="Chat with Client"
+                                          onclick="openSimpleChat('${b.client.id}', '${b.client.fullName}')">
+                                    <i class="bi bi-chat-dots"></i>
+                                  </button>
+                                <c:if test="${b.status == 'PENDING'}">
+                                  <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+                                    <input type="hidden" name="status" value="ACCEPTED">
+                                    <button type="submit" class="btn btn-sm btn-success" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-check-lg"></i></button>
+                                  </form>
+                                  <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+                                    <input type="hidden" name="status" value="REJECTED">
+                                    <button type="submit" class="btn btn-sm btn-danger" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-x-lg"></i></button>
+                                  </form>
+                                </c:if>
+                                <c:if test="${b.status == 'ACCEPTED' || b.status == 'PAID'}">
+                                  <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+                                    <input type="hidden" name="status" value="COMPLETED">
+                                    <button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-check-circle"></i> Complete</button>
+                                  </form>
+                                </c:if>
+                              </div>
+                            </td>
+                          </tr>
+                        </c:forEach>
+                      </tbody>
+                    </table>
+                  </div>
+                </c:if>
+              </div>
+            </div>
 
-    <div class="wj-card">
-      <div class="wj-card-h"><h2><i class="bi bi-calendar-check"></i> Recent Job Bookings</h2></div>
-      <div class="wj-card-b">
-        <c:if test="${empty incomingBookings}">
-          <div class="wj-empty"><i class="bi bi-calendar-x"></i><p>No incoming job requests yet.</p></div>
-        </c:if>
-        <c:if test="${not empty incomingBookings}">
-          <div style="overflow-x:auto">
-            <table class="wj-table">
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Hours</th>
-                  <th>Total Amount</th>
-                  <th>Booking Date</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <c:forEach var="b" items="${incomingBookings}">
-                  <tr class="wj-booking-row" data-status="${b.status}">
-                    <td>
-                      <div class="wj-user-cell">
-                        <div class="wj-avatar" style="width:32px;height:32px;font-size:0.8rem;">${b.client.fullName.charAt(0)}</div>
-                        <span>${b.client.fullName}</span>
-                      </div>
-                    </td>
-                    <td>${b.hours} hrs</td>
-                    <td>&#8377;${b.totalAmount}</td>
-                    <td>${b.bookingDate}</td>
-                    <td>
-                      <c:choose>
-                        <c:when test="${b.status=='PENDING'}"><span class="wj-badge wj-badge-pending"><span class="dot"></span> Pending</span></c:when>
-                        <c:when test="${b.status=='CONFIRMED' || b.status=='ACCEPTED'}"><span class="wj-badge wj-badge-accepted"><span class="dot"></span> Confirmed</span></c:when>
-                        <c:when test="${b.status=='COMPLETED'}"><span class="wj-badge wj-badge-done"><span class="dot"></span> Completed</span></c:when>
-                        <c:when test="${b.status=='PAID'}"><span class="wj-badge wj-badge-paid"><span class="dot"></span> Paid</span></c:when>
-                        <c:otherwise><span class="wj-badge wj-badge-bad"><span class="dot"></span> Cancelled</span></c:otherwise>
-                      </c:choose>
-                    </td>
-                    <td>
-                      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                        <button type="button" class="wj-btn wj-btn-ghost"
-                                data-bs-toggle="modal"
-                                data-bs-target="#bookingDetailsModal"
-                                data-client-name="${b.client.fullName}"
-                                data-client-phone="${b.client.phoneNumber}"
-                                data-client-email="${b.client.email}"
-                                data-booking-date="${b.bookingDate}"
-                                data-hours="${b.hours}"
-                                data-amount="${b.totalAmount}"
-                                data-status="${b.status}"
-                                data-note="${b.note}">
-                            Details
-                        </button>
-
-                        <c:if test="${b.status == 'PENDING'}">
-                          <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
-                              <input type="hidden" name="status" value="ACCEPTED">
-                              <button type="submit" class="wj-btn wj-btn-ok">Accept</button>
-                          </form>
-                          <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
-                              <input type="hidden" name="status" value="REJECTED">
-                              <button type="submit" class="wj-btn wj-btn-danger">Reject</button>
-                          </form>
-                        </c:if>
-
-                        <c:if test="${b.status == 'ACCEPTED' || b.status == 'PAID'}">
-                          <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" class="d-inline">
-                              <input type="hidden" name="status" value="COMPLETED">
-                              <button type="submit" class="wj-btn wj-btn-ok">Complete</button>
-                          </form>
-                        </c:if>
-                      </div>
-                    </td>
-                  </tr>
-                </c:forEach>
-              </tbody>
-            </table>
-          </div>
-        </c:if>
-      </div>
-    </div>
-
-    <div class="wj-card">
-      <div class="wj-card-h"><h2><i class="bi bi-graph-up"></i> Bookings Traffic Graph</h2></div>
-      <div class="wj-card-b padded">
-        <canvas id="bookingsChart" height="100"></canvas>
-      </div>
-    </div>
-
+            <div class="wj-card">
+              <div class="wj-card-h"><h2><i class="bi bi-graph-up"></i> Bookings Traffic Graph</h2></div>
+              <div class="wj-card-b" style="padding: 20px; position: relative; height: 350px; width: 100%;">
+                <canvas id="bookingsChart"></canvas>
+              </div>
+            </div>
+        </c:otherwise>
+    </c:choose>
   </div>
 </main>
 
@@ -290,11 +327,106 @@
     </div>
 </div>
 
+<!-- Simple Chat Modal -->
+<div class="modal fade" id="simpleChatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-3">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold" style="color: #1e1b4b;"><i class="bi bi-chat-dots-fill text-info me-2"></i> Chat with <span id="chatClientName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="background: #f8fafc;">
+                <div id="chatMessages" style="height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; padding: 10px; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div id="chatEmptyState" style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">
+                        Send a message to start the conversation!
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="hidden" id="chatClientId" value="">
+                    <input type="text" id="chatInput" class="form-control rounded-pill" placeholder="Type a message..." style="flex: 1;" onkeypress="if(event.key === 'Enter') sendSimpleChat()">
+                    <button type="button" class="btn btn-info rounded-pill text-white" onclick="sendSimpleChat()"><i class="bi bi-send-fill"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    function openSimpleChat(clientId, clientName) {
+        document.getElementById('chatClientId').value = clientId;
+        document.getElementById('chatClientName').textContent = clientName;
+        
+        var messagesDiv = document.getElementById('chatMessages');
+        messagesDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+        
+        var chatModal = new bootstrap.Modal(document.getElementById('simpleChatModal'));
+        chatModal.show();
+        
+        fetch('${pageContext.request.contextPath}/chat/messages-since/' + clientId)
+            .then(res => res.json())
+            .then(data => {
+                messagesDiv.innerHTML = '';
+                if(data.success && data.messages && data.messages.length > 0) {
+                    data.messages.forEach(m => {
+                        var isMe = (m.sender && m.sender.id != clientId);
+                        var timeStr = "";
+                        if(m.timestamp) {
+                            var d = new Date(m.timestamp);
+                            timeStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        }
+                        var align = isMe ? 'flex-end' : 'flex-start';
+                        var bg = isMe ? '#F43F5E' : '#e2e8f0';
+                        var textCol = isMe ? 'white' : '#1e293b';
+                        var timeHtml = timeStr ? '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: ' + (isMe ? 'right' : 'left') + ';">' + timeStr + '</div>' : '';
+                        var msgHtml = '<div style="align-self: ' + align + '; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: ' + bg + '; color: ' + textCol + '; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + m.message + '</div>' + timeHtml + '</div>';
+                        messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+                    });
+                } else {
+                    messagesDiv.innerHTML = '<div id="chatEmptyState" style="text-align: center; color: #94a3b8; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Send a message to start the conversation!</div>';
+                }
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            })
+            .catch(err => {
+                messagesDiv.innerHTML = '<div style="text-align: center; color: #ef4444; font-size: 0.85rem; margin-top: auto; margin-bottom: auto;">Failed to load messages</div>';
+            });
+    }
+    
+    function sendSimpleChat() {
+        var input = document.getElementById('chatInput');
+        var msg = input.value.trim();
+        if (!msg) return;
+        
+        var messagesDiv = document.getElementById('chatMessages');
+        var emptyState = document.getElementById('chatEmptyState');
+        if(emptyState) {
+            emptyState.remove();
+        }
+        
+        var timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        var timeHtml = '<div style="font-size: 0.65rem; margin-top: 4px; opacity: 0.8; text-align: right;">' + timeStr + '</div>';
+        var msgHtml = '<div style="align-self: flex-end; max-width: 80%; display: flex; flex-direction: column; margin-bottom: 8px;"><div style="background: #F43F5E; color: white; padding: 8px 12px; border-radius: 12px; font-size: 0.9rem;">' + msg + '</div>' + timeHtml + '</div>';
+        messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+        input.value = '';
+        
+        var receiverId = document.getElementById('chatClientId').value;
+        fetch('${pageContext.request.contextPath}/chat/send-message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({receiverId: receiverId, message: msg})
+        }).then(res => res.json()).then(data => {
+            if(!data.success) {
+                messagesDiv.insertAdjacentHTML('beforeend', '<div style="align-self: center; background: #fee2e2; color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; margin-top: 5px;">' + (data.error || 'Message could not be sent') + '</div>');
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }).catch(err => console.error(err));
+    }
+
     function toggleSidebar() {
         var sidebar = document.getElementById('sidebar');
         var overlay = document.getElementById('overlay');
@@ -341,6 +473,26 @@
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
+                }
+            });
+            
+            // Listen for incoming chat messages
+            stompClient.subscribe('/topic/messages/${user.id}', function (msg) {
+                var payload = JSON.parse(msg.body);
+                var currentChatId = document.getElementById('chatClientId') ? document.getElementById('chatClientId').value : null;
+                
+                // If it's a message from the currently open chat window person
+                if (currentChatId && payload.senderId == currentChatId) {
+                    var messagesDiv = document.getElementById('chatMessages');
+                    var emptyState = document.getElementById('chatEmptyState');
+                    if(emptyState) emptyState.remove();
+                    
+                    var msgHtml = '<div style="align-self: flex-start; background: #e2e8f0; color: #1e293b; padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 0.9rem;">' + payload.message + '</div>';
+                    messagesDiv.insertAdjacentHTML('beforeend', msgHtml);
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                    // Show a notification if from someone else
+                    showRealTimeNotification('New message from ' + payload.senderName);
                 }
             });
         });
@@ -419,6 +571,7 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         x: { title: { display: true, text: 'Time (4 Hours Format)' } },
                         y: {

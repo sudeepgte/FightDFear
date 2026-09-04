@@ -156,9 +156,9 @@
         .sidebar-illustration {
             flex: 0 1 auto;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
-            padding: 12px 16px 8px;
+            padding: 0;
             min-height: 0;
             max-height: 200px;
             overflow: hidden;
@@ -166,12 +166,13 @@
         }
 
         .sidebar-illustration img {
-            width: clamp(110px, 68%, 160px);
+            width: clamp(120px, 80%, 180px);
             height: auto;
             max-height: 180px;
-            object-fit: contain;
+            object-fit: cover;
             display: block;
             user-select: none;
+            margin-bottom: -15px; /* pull down if image has bottom padding */
         }
 
         .sidebar-footer {
@@ -266,6 +267,91 @@
             background: var(--martial-rose-dark);
             color: #FFFFFF;
             transform: translateY(-1px);
+        }
+
+        /* Mobile Responsiveness */
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: var(--martial-text);
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            z-index: 990;
+            backdrop-filter: blur(2px);
+            transition: opacity 0.3s;
+        }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 260px;
+            }
+            .sidebar.show {
+                transform: translateX(0);
+                box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+            .mobile-toggle {
+                display: block;
+            }
+            .content-container {
+                padding: 16px 16px 80px;
+            }
+            .topbar {
+                padding: 14px 16px;
+            }
+            .topbar-greeting h1 {
+                font-size: 1.15rem;
+            }
+            .topbar-greeting p {
+                display: none;
+            }
+            .sidebar-illustration {
+                display: none !important;
+            }
+            .btn-edit-profile span {
+                display: none;
+            }
+            .stat-cards-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .stat-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .centre-card {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .centre-card-left {
+                flex-direction: column;
+            }
+            .batch-actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .batch-actions-bar button {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .content-container {
@@ -549,6 +635,33 @@
             color: #FFFFFF;
         }
 
+        /* Standardized Action Button matching 10% Accent */
+        .btn-quick-add {
+            background: var(--primary);
+            color: #FFFFFF;
+            border: 1px solid var(--primary);
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+        }
+        .btn-quick-add i {
+            color: #FFFFFF;
+        }
+        .btn-quick-add:hover {
+            background: var(--primary-hover);
+            border-color: var(--primary-hover);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+
         .panel-header {
             display: flex;
             align-items: center;
@@ -790,9 +903,143 @@
             user-select: none;
         }
         .day-toggle-chip.selected {
-            background: var(--navy);
+            background: var(--primary);
             color: #FFFFFF;
-            border-color: var(--navy);
+            border-color: var(--primary);
+        }
+
+        /* —— Trainee Attendance & Session Marking —— */
+        .att-subnav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: #F1F5F9;
+            padding: 4px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+        .att-subnav-btn {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .att-subnav-btn.active {
+            background: #FFFFFF;
+            color: var(--navy);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .attendance-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+        .att-stat-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+        }
+        .att-stat-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: block;
+            color: var(--navy);
+        }
+        .att-stat-lbl {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+            display: block;
+        }
+        .btn-status-group {
+            display: inline-flex;
+            gap: 4px;
+            background: #F8FAFC;
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .btn-status {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 800;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-gray);
+        }
+        .btn-status.btn-p:hover { background: #DCFCE7; color: #166534; }
+        .btn-status.btn-a:hover { background: #FEE2E2; color: #991B1B; }
+        .btn-status.btn-l:hover { background: #FEF3C7; color: #92400E; }
+        .btn-status.btn-e:hover { background: #E0F2FE; color: #075985; }
+        .btn-status.btn-p.active { background: #16A34A; color: #FFFFFF; box-shadow: 0 2px 6px rgba(22,163,74,0.35); }
+        .btn-status.btn-a.active { background: #DC2626; color: #FFFFFF; box-shadow: 0 2px 6px rgba(220,38,38,0.35); }
+        .btn-status.btn-l.active { background: #D97706; color: #FFFFFF; box-shadow: 0 2px 6px rgba(217,119,6,0.35); }
+        .btn-status.btn-e.active { background: #0284C7; color: #FFFFFF; box-shadow: 0 2px 6px rgba(2,132,199,0.35); }
+
+        .circular-chart { display: block; margin: 0 auto; max-width: 40px; max-height: 40px; }
+        .circle-bg { fill: none; stroke: #E2E8F0; stroke-width: 3.8; }
+        .circle { fill: none; stroke-width: 3.8; stroke-linecap: round; }
+        .circle.present { stroke: #16A34A; }
+        .circle.absent { stroke: #DC2626; }
+        .percentage { fill: var(--navy); font-size: 0.5em; text-anchor: middle; font-weight: 800; font-family: inherit; }
+
+        /* —— Live Classes & Past Sessions —— */
+        .live-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .live-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s ease;
+            box-shadow: var(--shadow-card);
+        }
+        .live-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+        .live-card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .live-card-badge.upcoming { background: #DBEAFE; color: #1E40AF; }
+        .live-card-badge.live { background: #FEE2E2; color: #DC2626; animation: livePulse 2s infinite; }
+        .live-card-badge.completed { background: #DCFCE7; color: #166534; }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.75; transform: scale(1.03); }
         }
 
         /* Custom Modal Backdrop */
@@ -840,12 +1087,14 @@
         }
         .modal-header-custom {
             padding: 18px 24px;
-            background: var(--navy);
-            color: #FFFFFF;
+            background: #FFFFFF;
+            color: var(--navy);
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-shrink: 0;
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 20px 20px 0 0;
         }
         .modal-header-custom h3 {
             font-size: 1.15rem;
@@ -853,9 +1102,9 @@
             margin: 0;
         }
         .btn-modal-close {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: #FFFFFF;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            color: var(--text-gray);
             width: 32px;
             height: 32px;
             border-radius: 8px;
@@ -863,10 +1112,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
         .btn-modal-close:hover {
-            background: rgba(255,255,255,0.3);
+            background: #F1F5F9;
+            color: var(--navy);
         }
         .modal-body-custom {
             padding: 24px;
@@ -1147,10 +1397,103 @@
         }
         .btn-review-approve:hover { background: var(--navy-light); }
 
+        /* —— Responsive Grids and Media Queries —— */
+        .att-filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 220px auto;
+            gap: 16px;
+            align-items: end;
+        }
+
         @media (max-width: 991px) {
             .review-two-col { grid-template-columns: 1fr; }
+            .att-filter-grid { grid-template-columns: 1fr 1fr; }
+            .att-filter-grid > div:last-child { grid-column: 1 / -1; }
+            .att-filter-grid > div:last-child button { width: 100%; justify-content: center; }
         }
+
+        @media (max-width: 768px) {
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 14px 16px;
+            }
+            .topbar > div:last-child {
+                width: 100%;
+                justify-content: space-between;
+            }
+            .welcome-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+                text-align: left;
+            }
+            .welcome-banner .btn-quick-add {
+                width: 100%;
+                justify-content: center;
+            }
+            .quick-actions-bar {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .btn-quick-pill {
+                flex: 1 1 calc(50% - 8px);
+                justify-content: center;
+                text-align: center;
+            }
+            .stat-cards-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px;
+            }
+            .attendance-summary-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 10px;
+            }
+            .att-filter-grid {
+                grid-template-columns: 1fr;
+            }
+            .att-subnav {
+                width: 100%;
+            }
+            .att-subnav-btn {
+                flex: 1;
+                text-align: center;
+                justify-content: center;
+            }
+            .live-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            .panel-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .panel-header button,
+            .panel-header a {
+                width: 100%;
+                justify-content: center;
+            }
+            .content-panel {
+                padding: 16px;
+                border-radius: 14px;
+            }
+        }
+
         @media (max-width: 640px) {
+            .main-wrapper {
+                padding: 12px 10px;
+            }
+            .btn-quick-pill {
+                flex: 1 1 100%;
+            }
+            .stat-cards-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .attendance-summary-grid {
+                grid-template-columns: 1fr !important;
+            }
             .review-student-layout { flex-direction: column; align-items: center; text-align: left; }
             .review-field-grid,
             .review-field-grid.cols-2,
@@ -1158,15 +1501,31 @@
             .review-actions { justify-content: stretch; }
             .review-actions button { width: 100%; }
             .review-app-title { font-size: 1.3rem; }
+            .form-grid-2 { grid-template-columns: 1fr !important; }
+            .modal-window {
+                width: 95%;
+                margin: 8px;
+                max-height: 92vh;
+            }
+            .modal-header-custom,
+            .modal-body-custom,
+            .modal-footer-custom {
+                padding: 14px 16px;
+            }
+            .modal-footer-custom {
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+            .modal-footer-custom button {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .form-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-        }
-        @media (max-width: 600px) {
-            .form-grid-2 { grid-template-columns: 1fr; }
         }
         .form-group-custom {
             margin-bottom: 16px;
@@ -1186,8 +1545,9 @@
             border: 1px solid var(--border-color);
             border-radius: 10px;
             font-size: 0.9rem;
-            font-family: inherit;
+            background: #FFFFFF;
             color: var(--navy);
+            font-family: inherit;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .form-input-custom:focus {
@@ -1239,12 +1599,29 @@
             .mobile-header { display: flex; }
             .sidebar {
                 position: fixed;
-                left: -260px;
+                left: -280px;
+                width: 280px;
                 height: 100vh;
                 max-height: 100vh;
                 top: 0;
+                z-index: 1060;
+                transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            .sidebar.open { left: 0; }
+            .sidebar.show, .sidebar.open { left: 0; }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(15, 13, 38, 0.5);
+                backdrop-filter: blur(2px);
+                z-index: 1055;
+            }
+            .sidebar-overlay.show, .sidebar-overlay.open {
+                display: block;
+            }
             .sidebar-illustration img {
                 width: clamp(90px, 55%, 130px);
                 max-height: 120px;
@@ -1277,10 +1654,13 @@
         <div style="font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 28px; width: 28px; border-radius: 6px; object-fit: cover;"> Fight D Fear
         </div>
-        <button onclick="document.querySelector('.sidebar').classList.toggle('open')" style="background:transparent;border:none;color:white;font-size:1.4rem;">
+        <button onclick="toggleSidebar()" style="background:transparent;border:none;color:white;font-size:1.5rem;cursor:pointer;display:flex;align-items:center;">
             <i class="bi bi-list"></i>
         </button>
     </div>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
@@ -1299,7 +1679,7 @@
                 <i class="bi bi-people-fill"></i> Students / Trainees
             </button>
             <button class="nav-item" onclick="switchTab('attendance', this)">
-                <i class="bi bi-qr-code-scan"></i> QR Attendance
+                <i class="bi bi-clipboard-check-fill"></i> Attendance Tracking
             </button>
             <button class="nav-item" onclick="switchTab('grading', this)">
                 <i class="bi bi-award-fill"></i> Belt Grading & Skills
@@ -1308,7 +1688,10 @@
                 <i class="bi bi-person-badge-fill"></i> Instructor Staff
             </button>
             <button class="nav-item" onclick="switchTab('live', this)">
-                <i class="bi bi-camera-video-fill"></i> Live Training
+                <i class="bi bi-camera-video-fill"></i> Live Classes
+            </button>
+            <button class="nav-item" onclick="switchTab('past-sessions', this)">
+                <i class="bi bi-clock-history"></i> Past Sessions
             </button>
             <button class="nav-item" onclick="switchTab('finance', this)">
                 <i class="bi bi-wallet2"></i> Finance & Payouts
@@ -1339,23 +1722,28 @@
 
         <!-- Top Header -->
         <header class="topbar">
-            <div class="topbar-greeting">
-                <%
-                    int currentHour = java.time.LocalTime.now().getHour();
-                    String martialGreeting = "Good morning";
-                    if (currentHour >= 12 && currentHour < 17) {
-                        martialGreeting = "Good afternoon";
-                    } else if (currentHour >= 17 || currentHour < 5) {
-                        martialGreeting = "Good evening";
-                    }
-                    request.setAttribute("martialGreeting", martialGreeting);
-                %>
-                <h1>${martialGreeting}, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
-                <p>Manage your martial arts programs, batch schedules, and student progress</p>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <button class="mobile-toggle" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div class="topbar-greeting">
+                    <%
+                        int currentHour = java.time.LocalTime.now().getHour();
+                        String martialGreeting = "Good morning";
+                        if (currentHour >= 12 && currentHour < 17) {
+                            martialGreeting = "Good afternoon";
+                        } else if (currentHour >= 17 || currentHour < 5) {
+                            martialGreeting = "Good evening";
+                        }
+                        request.setAttribute("martialGreeting", martialGreeting);
+                    %>
+                    <h1>${martialGreeting}, <c:out value="${not empty loggedCentre.contactPerson ? loggedCentre.contactPerson : loggedCentre.name}"/> 👋</h1>
+                    <p>Manage your martial arts programs, batch schedules, and student progress</p>
+                </div>
             </div>
             <div class="topbar-actions">
                 <a href="${pageContext.request.contextPath}/centres/profile-completion" class="btn-edit-profile">
-                    <i class="bi bi-person-gear"></i> Complete Profile
+                    <i class="bi bi-person-gear"></i> <span>Complete Profile</span>
                 </a>
             </div>
         </header>
@@ -1451,16 +1839,19 @@
                         <i class="bi bi-plus-circle-fill"></i> Create Batch
                     </button>
                     <button type="button" class="btn-quick-pill" onclick="switchTab('attendance');">
-                        <i class="bi bi-qr-code-scan"></i> QR Attendance
+                        <i class="bi bi-clipboard-check-fill"></i> Trainee Attendance
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('live'); openCreateLiveClassModal();">
+                        <i class="bi bi-camera-video-fill"></i> Create Live Class
+                    </button>
+                    <button type="button" class="btn-quick-pill" onclick="switchTab('past-sessions');">
+                        <i class="bi bi-clock-history"></i> Past Sessions
                     </button>
                     <button type="button" class="btn-quick-pill" onclick="switchTab('students');">
                         <i class="bi bi-people-fill"></i> Manage Students
                     </button>
                     <button type="button" class="btn-quick-pill" onclick="switchTab('grading');">
                         <i class="bi bi-award-fill"></i> Belt Grading
-                    </button>
-                    <button type="button" class="btn-quick-pill" onclick="switchTab('instructors');">
-                        <i class="bi bi-person-plus-fill"></i> Add Instructor
                     </button>
                 </div>
 
@@ -1984,69 +2375,176 @@
                 </div>
             </div>
 
-            <!-- Tab 4: QR Attendance -->
+            <!-- Tab 4: Trainee Attendance Tracking -->
             <div id="tab-attendance" class="tab-section">
                 <div class="content-panel">
-                    <div class="panel-header">
-                        <div class="panel-title"><i class="bi bi-qr-code-scan text-danger"></i> Dynamic QR Attendance Engine</div>
-                        <a href="${pageContext.request.contextPath}/centres/attendance" class="btn-card-action" style="text-decoration:none;">
-                            <i class="bi bi-table me-1"></i> Open Full Roster Sheet
-                        </a>
+                    <div class="panel-header" style="flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <div class="panel-title"><i class="bi bi-clipboard-check-fill text-danger"></i> Trainee Attendance Hub</div>
+                            <p style="font-size:0.85rem; color:var(--text-gray); margin:4px 0 0 0;">Manage daily check-ins, record session attendance, and generate live QR codes.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn-quick-add" onclick="saveAttendance()" id="btnSaveAttendanceTop">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i> Save Attendance
+                            </button>
+                        </div>
                     </div>
-                    
-                    <!-- Session Generator Form -->
-                    <div style="background: var(--bg-page); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end;">
-                            <div>
-                                <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Select Training Batch *</label>
-                                <select id="qrBatchSelect" class="form-input-custom" style="background:white;">
-                                    <c:forEach var="b" items="${batches}">
-                                        <option value="${b.id}">${b.name} (${b.style} · ${b.timeSlot})</option>
-                                    </c:forEach>
-                                </select>
+
+                    <!-- Sub-Nav Pill Switcher -->
+                    <div class="att-subnav">
+                        <button type="button" class="att-subnav-btn active" id="btnSubnavRoster" onclick="switchAttendanceView('roster', this)">
+                            <i class="bi bi-person-check-fill me-1"></i> Daily Roster & Marking
+                        </button>
+                        <button type="button" class="att-subnav-btn" id="btnSubnavQr" onclick="switchAttendanceView('qr', this)">
+                            <i class="bi bi-qr-code-scan me-1"></i> Dynamic QR Engine
+                        </button>
+                    </div>
+
+                    <!-- Sub-View 1: Daily Roster & Marking -->
+                    <div id="attViewRoster">
+                        <!-- Session & Date Filter Bar -->
+                        <div style="background: var(--bg-page); padding: 18px 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+                            <div class="att-filter-grid">
+                                <div>
+                                    <label style="display:block; font-size: 0.8rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; text-transform:uppercase;">Select Batch / Online Session *</label>
+                                    <select id="attSessionSelect" class="form-input-custom" onchange="loadAttendanceTrainees()" style="background:white;">
+                                        <option value="">Choose a batch or session...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size: 0.8rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; text-transform:uppercase;">Attendance Date</label>
+                                    <input type="date" id="attDateInput" class="form-input-custom" value="<%= java.time.LocalDate.now() %>" onchange="loadAttendanceSessions()" style="background:white;">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn-card-action" onclick="loadAttendanceSessions()" style="height: 42px; padding: 0 16px;">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Validity Window</label>
-                                <select id="qrDurationSelect" class="form-input-custom" style="background:white;">
-                                    <option value="15">15 Minutes (Standard Class Start)</option>
-                                    <option value="30">30 Minutes</option>
-                                    <option value="60">60 Minutes (Full Class Duration)</option>
-                                </select>
+                        </div>
+
+                        <!-- Active Attendance Workspace (Shown when session selected) -->
+                        <div id="attActiveWorkspace" style="display:none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                                <div id="attModeDisplay"></div>
+                                <div style="font-size: 0.85rem; color: var(--text-gray); font-weight: 600;">
+                                    <span class="badge" style="background:#DCFCE7; color:#166534; font-weight:700;">P = Present</span>
+                                    <span class="badge" style="background:#FEE2E2; color:#991B1B; font-weight:700;">A = Absent</span>
+                                    <span class="badge" style="background:#FEF3C7; color:#92400E; font-weight:700;">L = Late</span>
+                                    <span class="badge" style="background:#E0F2FE; color:#075985; font-weight:700;">E = Excused</span>
+                                </div>
                             </div>
-                            <div>
-                                <button type="button" class="btn-quick-add" onclick="generateQrSession()" style="width: 100%; justify-content: center;">
-                                    <i class="bi bi-qr-code"></i> Generate Active Session QR
+
+                            <!-- 4 Summary Stats -->
+                            <div class="attendance-summary-grid">
+                                <div class="att-stat-card">
+                                    <span class="att-stat-val" id="attTotalTrainees">0</span>
+                                    <span class="att-stat-lbl">Total Trainees</span>
+                                </div>
+                                <div class="att-stat-card">
+                                    <span class="att-stat-val text-success" id="attPresentCount">0</span>
+                                    <span class="att-stat-lbl" style="color:#16A34A;">Present</span>
+                                </div>
+                                <div class="att-stat-card">
+                                    <span class="att-stat-val text-danger" id="attAbsentCount">0</span>
+                                    <span class="att-stat-lbl" style="color:#DC2626;">Absent</span>
+                                </div>
+                                <div class="att-stat-card">
+                                    <span class="att-stat-val text-warning" id="attLateCount">0</span>
+                                    <span class="att-stat-lbl" style="color:#D97706;">Late / Excused</span>
+                                </div>
+                            </div>
+
+                            <!-- Trainee Table -->
+                            <div class="table-responsive-custom">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Trainee Details</th>
+                                            <th>Attendance Rate</th>
+                                            <th>Status Marking</th>
+                                            <th>Trainer Notes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attTraineeListBody">
+                                        <!-- Loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Bottom Save Bar -->
+                            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                                <button type="button" class="btn-quick-add" onclick="saveAttendance()">
+                                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Save Attendance Records
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- No Session Selected Placeholder -->
+                        <div id="attNoSessionState" class="empty-box">
+                            <i class="bi bi-calendar2-week"></i>
+                            <h4>Select a Session to Start Marking Attendance</h4>
+                            <p>Pick an offline batch or live online class from the dropdown above to view student rosters and mark attendance.</p>
+                        </div>
+                    </div>
+
+                    <!-- Sub-View 2: Dynamic QR Engine -->
+                    <div id="attViewQr" style="display:none;">
+                        <!-- Generator Form -->
+                        <div style="background: var(--bg-page); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; align-items: end;">
+                                <div>
+                                    <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Select Training Batch *</label>
+                                    <select id="qrBatchSelect" class="form-input-custom" style="background:white;">
+                                        <c:forEach var="b" items="${batches}">
+                                            <option value="${b.id}">${b.name} (${b.style} · ${b.timeSlot})</option>
+                                        </c:forEach>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size: 0.85rem; font-weight: 700; color: var(--navy); margin-bottom: 6px;">Validity Window</label>
+                                    <select id="qrDurationSelect" class="form-input-custom" style="background:white;">
+                                        <option value="15">15 Minutes (Standard Class Start)</option>
+                                        <option value="30">30 Minutes</option>
+                                        <option value="60">60 Minutes (Full Class Duration)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="button" class="btn-quick-add" onclick="generateQrSession()" style="width: 100%; justify-content: center;">
+                                        <i class="bi bi-qr-code"></i> Generate Active Session QR
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active QR Display Area -->
+                        <div id="activeQrContainer" style="display: none; background: #FFFFFF; border: 2px solid var(--primary); border-radius: 20px; padding: 32px 24px; text-align: center; max-width: 520px; margin: 0 auto; box-shadow: 0 10px 30px rgba(244,63,94,0.1);">
+                            <span class="badge-custom badge-approved" style="margin-bottom: 12px; display: inline-block;">
+                                <i class="bi bi-broadcast me-1"></i> Live QR Session Active
+                            </span>
+                            <h3 id="qrBatchName" style="font-size: 1.2rem; font-weight: 800; color: var(--navy); margin-bottom: 4px;"></h3>
+                            <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 20px;">Students can scan this QR code using the Fight D Fear mobile app or enter the code to mark attendance.</p>
+                            
+                            <div style="background: #FFFFFF; padding: 16px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-bottom: 16px;">
+                                <img id="qrCodeImage" src="" alt="Session QR Code" style="width: 200px; height: 200px; display: block;">
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase;">Session Check-in Code:</span>
+                                <div id="qrTokenDisplay" style="font-family: monospace; font-size: 1.3rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin-top: 4px;"></div>
+                            </div>
+
+                            <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
+                                <button type="button" class="btn-card-action" onclick="generateQrSession()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh QR
+                                </button>
+                                <button type="button" class="btn-card-action danger" onclick="closeActiveQrSession()" style="background:#DC2626;color:white;">
+                                    <i class="bi bi-stop-circle me-1"></i> End Session
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Active QR Display Area -->
-                    <div id="activeQrContainer" style="display: none; background: #FFFFFF; border: 2px solid var(--primary); border-radius: 20px; padding: 32px 24px; text-align: center; max-width: 520px; margin: 0 auto; box-shadow: 0 10px 30px rgba(244,63,94,0.1);">
-                        <span class="badge-custom badge-approved" style="margin-bottom: 12px; display: inline-block;">
-                            <i class="bi bi-broadcast me-1"></i> Live QR Session Active
-                        </span>
-                        <h3 id="qrBatchName" style="font-size: 1.2rem; font-weight: 800; color: var(--navy); margin-bottom: 4px;"></h3>
-                        <p style="font-size: 0.85rem; color: var(--text-gray); margin-bottom: 20px;">Students can scan this QR code using the Fight D Fear mobile app or enter the code to mark attendance.</p>
-                        
-                        <div style="background: #FFFFFF; padding: 16px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid var(--border-color); margin-bottom: 16px;">
-                            <img id="qrCodeImage" src="" alt="Session QR Code" style="width: 200px; height: 200px; display: block;">
-                        </div>
-
-                        <div style="margin-bottom: 20px;">
-                            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-gray); text-transform: uppercase;">Session Check-in Code:</span>
-                            <div id="qrTokenDisplay" style="font-family: monospace; font-size: 1.3rem; font-weight: 800; color: var(--primary); letter-spacing: 2px; margin-top: 4px;"></div>
-                        </div>
-
-                        <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
-                            <button type="button" class="btn-card-action" onclick="generateQrSession()">
-                                <i class="bi bi-arrow-clockwise me-1"></i> Refresh QR
-                            </button>
-                            <button type="button" class="btn-card-action danger" onclick="closeActiveQrSession()" style="background:#DC2626;color:white;">
-                                <i class="bi bi-stop-circle me-1"></i> End Session
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -2106,9 +2604,141 @@
             <div id="tab-live" class="tab-section">
                 <div class="content-panel">
                     <div class="panel-header">
-                        <div class="panel-title"><i class="bi bi-camera-video-fill text-danger"></i> Online Self-Defense Classes</div>
+                        <div>
+                            <div class="panel-title"><i class="bi bi-camera-video-fill text-danger"></i> Virtual Dojo — Live Classes</div>
+                            <p style="font-size:0.85rem; color:var(--text-gray); margin:4px 0 0 0;">Schedule, host, and conduct live remote martial arts and self-defense sessions.</p>
+                        </div>
+                        <button type="button" class="btn-quick-add" onclick="openCreateLiveClassModal()">
+                            <i class="bi bi-plus-circle-fill me-1"></i> Schedule Live Class
+                        </button>
                     </div>
-                    <p style="color: var(--text-gray); font-size: 0.9rem;">Host live interactive webinars and virtual training sessions for women safety and self-defense education.</p>
+
+                    <!-- Live Classes Grid -->
+                    <div class="live-cards-grid" id="liveClassesGridContainer">
+                        <c:set var="hasLiveClasses" value="false" />
+                        <c:forEach var="oc" items="${onlineClasses}">
+                            <c:if test="${oc.status == 'UPCOMING' || oc.status == 'LIVE'}">
+                                <c:set var="hasLiveClasses" value="true" />
+                                <div class="live-card">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                        <span class="live-card-badge ${oc.status == 'LIVE' ? 'live' : 'upcoming'}">
+                                            <i class="bi ${oc.status == 'LIVE' ? 'bi-broadcast' : 'bi-clock-history'}"></i> ${oc.status}
+                                        </span>
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <span style="font-size:0.8rem; font-weight:700; color:var(--text-gray);">${oc.date}</span>
+                                            <button type="button" class="btn-card-action danger" onclick="deleteLiveClass(${oc.id})" title="Delete Class" style="padding:4px 8px;">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <h4 style="font-size:1.1rem; font-weight:800; color:var(--navy); margin:0 0 4px;">${oc.title}</h4>
+                                    <div style="font-size:0.82rem; color:var(--primary); font-weight:700; margin-bottom:12px;">
+                                        ${oc.martialArtType} · <c:out value="${oc.batch != null ? oc.batch.name : 'All Batches'}"/>
+                                    </div>
+                                    
+                                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; font-size:0.85rem; color:var(--text-gray);">
+                                        <div><i class="bi bi-clock me-2 text-danger"></i> ${oc.startTime} - ${oc.endTime}</div>
+                                        <div><i class="bi bi-tag me-2 text-muted"></i> ${not empty oc.sessionType ? oc.sessionType : 'Group Session'}</div>
+                                        <div><i class="bi bi-people me-2 text-muted"></i> Max Trainees: ${oc.maxStudents}</div>
+                                    </div>
+
+                                    <c:if test="${not empty oc.notes}">
+                                        <div style="background:#F8FAFC; border:1px solid var(--border-color); border-radius:10px; padding:10px; font-size:0.8rem; color:var(--text-gray); margin-bottom:16px;">
+                                            <i class="bi bi-info-circle text-primary me-1"></i> ${oc.notes}
+                                        </div>
+                                    </c:if>
+
+                                    <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
+                                        <c:if test="${oc.status == 'UPCOMING'}">
+                                            <button type="button" class="btn-quick-add" onclick="startLiveClass(${oc.id})" style="width:100%; justify-content:center;">
+                                                <i class="bi bi-play-circle-fill me-1"></i> Start Live Class
+                                            </button>
+                                        </c:if>
+                                        <c:if test="${oc.status == 'LIVE'}">
+                                            <a href="${oc.meetingLink}" target="_blank" class="btn-card-action primary" style="width:100%; justify-content:center; padding:10px; font-size:0.88rem;">
+                                                <i class="bi bi-box-arrow-up-right me-1"></i> Join Meeting Room
+                                            </a>
+                                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                                <button type="button" class="btn-card-action" onclick="openLiveControlPanel(${oc.id}, '${oc.title}')" style="justify-content:center;">
+                                                    <i class="bi bi-people-fill me-1"></i> Control Room
+                                                </button>
+                                                <button type="button" class="btn-card-action danger" onclick="endLiveClass(${oc.id})" style="justify-content:center;">
+                                                    <i class="bi bi-stop-circle-fill me-1"></i> End Session
+                                                </button>
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:forEach>
+                    </div>
+
+                    <c:if test="${not hasLiveClasses}">
+                        <div class="empty-box" style="margin-top:20px;">
+                            <i class="bi bi-camera-video"></i>
+                            <h4>No Live Classes Scheduled</h4>
+                            <p>Host online training sessions for women safety and remote martial arts education.</p>
+                            <button type="button" class="btn-quick-add" onclick="openCreateLiveClassModal()">
+                                <i class="bi bi-plus-circle-fill me-1"></i> Schedule Your First Class
+                            </button>
+                        </div>
+                    </c:if>
+                </div>
+            </div>
+
+            <!-- Tab 8: Past Sessions & Recordings -->
+            <div id="tab-past-sessions" class="tab-section">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title"><i class="bi bi-clock-history text-danger"></i> Past Sessions & Recordings</div>
+                            <p style="font-size:0.85rem; color:var(--text-gray); margin:4px 0 0 0;">View completed training sessions, attendance records, and upload video links for students.</p>
+                        </div>
+                    </div>
+
+                    <!-- Past Sessions Grid -->
+                    <div class="live-cards-grid" id="pastSessionsGridContainer">
+                        <c:set var="hasCompletedClasses" value="false" />
+                        <c:forEach var="oc" items="${onlineClasses}">
+                            <c:if test="${oc.status == 'COMPLETED'}">
+                                <c:set var="hasCompletedClasses" value="true" />
+                                <div class="live-card">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                                        <span class="live-card-badge completed">
+                                            <i class="bi bi-check-circle-fill"></i> Completed
+                                        </span>
+                                        <span style="font-size:0.8rem; font-weight:700; color:var(--text-gray);">${oc.date}</span>
+                                    </div>
+                                    <h4 style="font-size:1.1rem; font-weight:800; color:var(--navy); margin:0 0 4px;">${oc.title}</h4>
+                                    <div style="font-size:0.82rem; color:var(--primary); font-weight:700; margin-bottom:12px;">
+                                        ${oc.martialArtType} · <c:out value="${oc.batch != null ? oc.batch.name : 'Batch Session'}"/>
+                                    </div>
+
+                                    <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:16px; font-size:0.85rem; color:var(--text-gray);">
+                                        <div><i class="bi bi-clock me-2 text-muted"></i> ${oc.startTime} - ${oc.endTime}</div>
+                                        <div><i class="bi bi-people me-2 text-muted"></i> Max Students: ${oc.maxStudents}</div>
+                                        <c:if test="${not empty oc.recordingLink}">
+                                            <div><i class="bi bi-link-45deg me-2 text-success"></i> <a href="${oc.recordingLink}" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">View Recording URL &rarr;</a></div>
+                                        </c:if>
+                                    </div>
+
+                                    <div style="margin-top:auto; display:flex; gap:8px;">
+                                        <button type="button" class="btn-card-action primary" onclick="openUploadRecordingModal(${oc.id}, '${oc.recordingLink}')" style="width:100%; justify-content:center; padding:10px;">
+                                            <i class="bi bi-cloud-upload-fill me-1"></i> ${empty oc.recordingLink ? 'Upload Recording Link' : 'Update Recording Link'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:forEach>
+                    </div>
+
+                    <c:if test="${not hasCompletedClasses}">
+                        <div class="empty-box" style="margin-top:20px;">
+                            <i class="bi bi-journal-check"></i>
+                            <h4>No Completed Sessions Recorded Yet</h4>
+                            <p>When you finish live classes or sessions, they will automatically appear here with student attendance history and video recordings.</p>
+                        </div>
+                    </c:if>
                 </div>
             </div>
 
@@ -2262,11 +2892,10 @@
                         <div class="form-group-custom">
                             <label class="form-label-custom">Target Age Group</label>
                             <select id="batchAgeGroup" name="ageGroup" class="form-input-custom">
-                                <option value="All Ages">All Ages</option>
-                                <option value="Kids (5-12)">Kids (5-12)</option>
-                                <option value="Teens (13-18)">Teens (13-18)</option>
-                                <option value="Adults (18+)">Adults (18+)</option>
-                                <option value="Women Only">Women Only</option>
+                                <option value="Women Only (All Ages)">Women Only (All Ages)</option>
+                                <option value="Girls (5-12)">Girls (5-12)</option>
+                                <option value="Teen Girls (13-18)">Teen Girls (13-18)</option>
+                                <option value="Adult Women (18+)">Adult Women (18+)</option>
                             </select>
                         </div>
                         <div class="form-group-custom">
@@ -2329,7 +2958,7 @@
                 <!-- Dynamically injected details -->
             </div>
             <div class="modal-footer-custom">
-                <button type="button" class="btn-card-action primary" onclick="closeBatchDetailsModal()">Close</button>
+                <button type="button" class="btn-quick-add" onclick="closeBatchDetailsModal()">Close</button>
             </div>
         </div>
     </div>
@@ -2528,11 +3157,173 @@
     </div>
 
     <!-- ========================================================================= -->
+    <!-- SCHEDULE LIVE CLASS MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="createLiveClassModalOverlay">
+        <div class="modal-window" style="max-width: 620px;">
+            <div class="modal-header-custom">
+                <h3><i class="bi bi-camera-video me-2"></i> Schedule Live Training Session</h3>
+                <button type="button" class="btn-modal-close" onclick="closeCreateLiveClassModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="createLiveClassForm" onsubmit="handleCreateLiveClassSubmit(event)">
+                <div class="modal-body-custom">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Class Title *</label>
+                        <input type="text" id="liveTitle" class="form-input-custom" placeholder="e.g. Morning Kickboxing Essentials" required>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Associated Batch *</label>
+                            <select id="liveBatchSelect" class="form-input-custom" required>
+                                <c:forEach var="b" items="${batches}">
+                                    <option value="${b.id}">${b.name} (${b.style})</option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Session Type *</label>
+                            <select id="liveSessionType" class="form-input-custom" required>
+                                <option value="Group Session">Group Session</option>
+                                <option value="Personal 1-to-1 Session">Personal 1-to-1 Session</option>
+                                <option value="Webinar / Workshop">Webinar / Workshop</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Martial Art Type *</label>
+                            <input type="text" id="liveMartialArtType" class="form-input-custom" placeholder="e.g. Karate / Self-Defense" value="Karate" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Session Date *</label>
+                            <input type="date" id="liveDate" class="form-input-custom" value="<%= java.time.LocalDate.now() %>" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Start Time *</label>
+                            <input type="time" id="liveStartTime" class="form-input-custom" value="18:00" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">End Time *</label>
+                            <input type="time" id="liveEndTime" class="form-input-custom" value="19:00" required>
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Jitsi / Meeting Link *</label>
+                            <input type="url" id="liveMeetingLink" class="form-input-custom" placeholder="https://meet.jit.si/..." value="https://meet.jit.si/FightDFear-Live-<%= System.currentTimeMillis() %>" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Max Trainees *</label>
+                            <input type="number" id="liveMaxStudents" class="form-input-custom" value="20" min="1" max="100" required>
+                        </div>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Session Notes (Equipment, Dress Code etc.)</label>
+                        <textarea id="liveNotes" class="form-input-custom" rows="2" placeholder="e.g. Please bring your hand wraps and water bottle."></textarea>
+                    </div>
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Description</label>
+                        <textarea id="liveDescription" class="form-input-custom" rows="2" placeholder="Provide overview or workout plan for trainees..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-card-action" onclick="closeCreateLiveClassModal()">Cancel</button>
+                    <button type="submit" id="btnSubmitLiveClass" class="btn-quick-add">
+                        <i class="bi bi-broadcast me-1"></i> Schedule Live Session
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- LIVE SESSION CONTROL ROOM MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="liveControlPanelOverlay">
+        <div class="modal-window" style="max-width: 600px;">
+            <div class="modal-header-custom">
+                <h3><i class="bi bi-sliders me-2"></i> Live Control Room: <span id="ctrlSessionTitle" style="color:var(--primary);"></span></h3>
+                <button type="button" class="btn-modal-close" onclick="closeLiveControlPanel()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body-custom">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-weight:700; font-size:0.9rem; color:var(--navy);">Connected Trainees</span>
+                    <span id="ctrlTraineeCountBadge" class="badge" style="background:#DCFCE7; color:#166534; font-weight:700;">0 Online</span>
+                </div>
+                <div id="ctrlJoinedTraineeList" style="max-height: 280px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; padding: 8px; background: #F8FAFC; margin-bottom: 20px;">
+                    <div style="text-align: center; padding: 24px; color: var(--text-gray);">Checking live trainees...</div>
+                </div>
+
+                <div style="background:#FFFFFF; border:1px solid var(--border-color); border-radius:12px; padding:16px;">
+                    <span style="font-weight:700; font-size:0.85rem; color:var(--navy); display:block; margin-bottom:10px;">Quick Session Actions</span>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <button type="button" class="btn-card-action" onclick="alert('All remote student audio muted.');">
+                            <i class="bi bi-mic-mute-fill text-danger me-1"></i> Mute All
+                        </button>
+                        <button type="button" class="btn-card-action" onclick="alert('Session recording started.');">
+                            <i class="bi bi-record-circle-fill text-danger me-1"></i> Start Recording
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <button type="button" class="btn-card-action" onclick="closeLiveControlPanel()">Close Window</button>
+                <button type="button" id="ctrlEndSessionBtn" class="btn-card-action danger" style="background:#DC2626; color:white;">
+                    <i class="bi bi-stop-circle-fill me-1"></i> End Live Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- UPLOAD SESSION RECORDING MODAL -->
+    <!-- ========================================================================= -->
+    <div class="modal-overlay" id="uploadRecordingOverlay">
+        <div class="modal-window" style="max-width: 480px;">
+            <div class="modal-header-custom">
+                <h3><i class="bi bi-cloud-arrow-up me-2"></i> Session Recording URL</h3>
+                <button type="button" class="btn-modal-close" onclick="closeUploadRecordingModal()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <form id="uploadRecordingForm" onsubmit="handleUploadRecordingSubmit(event)">
+                <div class="modal-body-custom">
+                    <input type="hidden" id="recClassId">
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Recording URL (YouTube / Google Drive / Vimeo) *</label>
+                        <input type="url" id="recLinkInput" class="form-input-custom" placeholder="https://youtube.com/watch?v=... or https://drive.google.com/..." required>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-gray); margin-bottom:0;">
+                        Trainees who were enrolled or missed the session will be able to watch this recorded class on their martial arts portal.
+                    </p>
+                </div>
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn-card-action" onclick="closeUploadRecordingModal()">Cancel</button>
+                    <button type="submit" id="btnSubmitRec" class="btn-quick-add">
+                        <i class="bi bi-check-circle-fill me-1"></i> Save Recording
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
     <!-- JAVASCRIPT: TAB, QR, BELT GRADING & STAFF CONTROLLERS -->
     <!-- ========================================================================= -->
     <script>
         const contextPath = '${pageContext.request.contextPath}';
         const batchesData = ${not empty batchesJson ? batchesJson : '[]'};
+
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('show');
+            document.querySelector('.sidebar-overlay').classList.toggle('show');
+        }
 
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-section').forEach(el => el.classList.remove('active'));
@@ -2551,7 +3342,16 @@
                 if (matchingNav) matchingNav.classList.add('active');
             }
 
-            if (tabId === 'grading') {
+            if (window.innerWidth <= 900) {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                if (sidebar) sidebar.classList.remove('show', 'open');
+                if (overlay) overlay.classList.remove('show', 'open');
+            }
+
+            if (tabId === 'attendance') {
+                loadAttendanceSessions();
+            } else if (tabId === 'grading') {
                 loadGradingAssessments();
             } else if (tabId === 'instructors') {
                 loadInstructors();
@@ -3119,7 +3919,7 @@
                         return;
                     }
                     const b = res.batch;
-                    document.getElementById('detailBatchName').innerHTML = '<i class="bi bi-shield-fill text-danger me-2"></i> ' + (b.name || 'Batch Details');
+                    document.getElementById('detailBatchName').innerHTML = '<i class="bi bi-shield-fill me-2" style="color: var(--primary);"></i> ' + (b.name || 'Batch Details');
                     
                     let html = '<div class="info-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">' +
                         '<div><span style="font-size:0.75rem; color:var(--text-gray); font-weight:700; display:block;">DISCIPLINE / STYLE</span><strong>' + b.style + '</strong></div>' +
@@ -3170,6 +3970,455 @@
                     }
                 })
                 .catch(err => alert('Request failed: ' + err));
+        });
+
+        // ==========================================
+        // TRAINEE ATTENDANCE ENGINE (PARITY WITH ATTENDANCE MODULE)
+        // ==========================================
+        let currentAttendanceTrainees = [];
+        let currentSessionData = {};
+
+        function switchAttendanceView(view, btn) {
+            document.querySelectorAll('.att-subnav-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            
+            const rosterView = document.getElementById('attViewRoster');
+            const qrView = document.getElementById('attViewQr');
+            const saveBtnTop = document.getElementById('btnSaveAttendanceTop');
+
+            if (view === 'roster') {
+                rosterView.style.display = 'block';
+                qrView.style.display = 'none';
+                if (saveBtnTop) saveBtnTop.style.display = 'inline-flex';
+                loadAttendanceSessions();
+            } else {
+                rosterView.style.display = 'none';
+                qrView.style.display = 'block';
+                if (saveBtnTop) saveBtnTop.style.display = 'none';
+            }
+        }
+
+        async function loadAttendanceSessions() {
+            const dateInput = document.getElementById('attDateInput');
+            const date = dateInput ? dateInput.value : '<%= java.time.LocalDate.now() %>';
+            const select = document.getElementById('attSessionSelect');
+            if (!select) return;
+            const currentValue = select.value;
+
+            try {
+                const res = await fetch(contextPath + '/api/attendance/sessions?date=' + date);
+                const data = await res.json();
+
+                select.innerHTML = '<option value="">Choose a batch or session...</option>';
+
+                // 1. Add Batches
+                if (data.batches && data.batches.length > 0) {
+                    const group = document.createElement('optgroup');
+                    group.label = "OFFLINE DOJO BATCHES";
+                    data.batches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = 'BATCH:' + b.id;
+                        opt.textContent = b.name + ' (' + b.time + ')';
+                        group.appendChild(opt);
+                    });
+                    select.appendChild(group);
+                }
+
+                // 2. Add Online Classes
+                if (data.classes && data.classes.length > 0) {
+                    const group = document.createElement('optgroup');
+                    group.label = "ONLINE LIVE CLASSES";
+                    data.classes.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = 'ONLINE:' + c.id;
+                        opt.textContent = c.name + ' (' + c.time + ')';
+                        group.appendChild(opt);
+                    });
+                    select.appendChild(group);
+                }
+
+                if (currentValue) {
+                    select.value = currentValue;
+                }
+                loadAttendanceTrainees();
+            } catch (err) {
+                console.error('Failed to load attendance sessions:', err);
+            }
+        }
+
+        async function loadAttendanceTrainees() {
+            const sessionSelect = document.getElementById('attSessionSelect');
+            if (!sessionSelect) return;
+            const sessionVal = sessionSelect.value;
+            const dateInput = document.getElementById('attDateInput');
+            const date = dateInput ? dateInput.value : '<%= java.time.LocalDate.now() %>';
+
+            const activeWs = document.getElementById('attActiveWorkspace');
+            const noSessionState = document.getElementById('attNoSessionState');
+
+            if (!sessionVal) {
+                if (activeWs) activeWs.style.display = 'none';
+                if (noSessionState) noSessionState.style.display = 'block';
+                return;
+            }
+
+            const [type, id] = sessionVal.split(':');
+            currentSessionData = { type, id, date };
+
+            if (activeWs) activeWs.style.display = 'block';
+            if (noSessionState) noSessionState.style.display = 'none';
+
+            const modeDisplay = document.getElementById('attModeDisplay');
+            if (modeDisplay) {
+                const isOnline = type === 'ONLINE';
+                modeDisplay.innerHTML = '<span class="badge-custom ' + (isOnline ? 'badge-approved' : 'badge-completed') + '" style="font-size:0.82rem; font-weight:800;">' +
+                    '<i class="bi ' + (isOnline ? 'bi-camera-video-fill' : 'bi-building-fill') + ' me-1"></i> ' + type + ' SESSION ATTENDANCE' +
+                    '</span>';
+            }
+
+            try {
+                const res = await fetch(contextPath + '/api/attendance/trainees?type=' + type + '&id=' + id + '&date=' + date);
+                currentAttendanceTrainees = await res.json();
+                renderAttendanceTrainees();
+            } catch (err) {
+                console.error('Failed to load attendance trainees:', err);
+            }
+        }
+
+        function renderAttendanceTrainees() {
+            const listBody = document.getElementById('attTraineeListBody');
+            if (!listBody) return;
+            listBody.innerHTML = '';
+
+            let p = 0, a = 0, l = 0;
+
+            if (currentAttendanceTrainees.length === 0) {
+                listBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-gray);"><i class="bi bi-people me-2"></i>No trainees currently registered in this session.</td></tr>';
+                document.getElementById('attTotalTrainees').textContent = '0';
+                document.getElementById('attPresentCount').textContent = '0';
+                document.getElementById('attAbsentCount').textContent = '0';
+                document.getElementById('attLateCount').textContent = '0';
+                return;
+            }
+
+            currentAttendanceTrainees.forEach(t => {
+                if (t.status === 'PRESENT') p++;
+                else if (t.status === 'ABSENT') a++;
+                else if (t.status === 'LATE' || t.status === 'EXCUSED') l++;
+
+                const row = document.createElement('tr');
+                const pct = t.percentage != null ? t.percentage : 0;
+                const strokeDash = pct + ', 100';
+                const initial = (t.name && t.name.length > 0) ? t.name.charAt(0).toUpperCase() : 'T';
+
+                row.innerHTML = 
+                    '<td>' +
+                        '<div style="display:flex; align-items:center; gap:12px;">' +
+                            '<div style="width:38px; height:38px; border-radius:10px; background:var(--martial-rose-soft); color:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; flex-shrink:0;">' + initial + '</div>' +
+                            '<div>' +
+                                '<div style="font-weight:700; color:var(--navy); font-size:0.92rem;">' + (t.name || 'Trainee') + '</div>' +
+                                '<div style="color:var(--text-gray); font-size:0.75rem;">' + (t.email || '') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td>' +
+                        '<div style="display:flex; align-items:center; gap:10px;">' +
+                            '<div style="width:36px; height:36px; position:relative;">' +
+                                '<svg viewBox="0 0 36 36" class="circular-chart">' +
+                                    '<path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />' +
+                                    '<path class="circle present" stroke-dasharray="' + strokeDash + '" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />' +
+                                    '<text x="18" y="20.35" class="percentage">' + pct + '%</text>' +
+                                '</svg>' +
+                            '</div>' +
+                            '<span style="font-size:0.8rem; font-weight:700; color:var(--text-gray);">' + pct + '% Rate</span>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td>' +
+                        '<div class="btn-status-group">' +
+                            '<button type="button" class="btn-status btn-p ' + (t.status === 'PRESENT' ? 'active' : '') + '" onclick="setAttendanceStatus(' + t.id + ', \'PRESENT\')" title="Mark Present">P</button>' +
+                            '<button type="button" class="btn-status btn-a ' + (t.status === 'ABSENT' ? 'active' : '') + '" onclick="setAttendanceStatus(' + t.id + ', \'ABSENT\')" title="Mark Absent">A</button>' +
+                            '<button type="button" class="btn-status btn-l ' + (t.status === 'LATE' ? 'active' : '') + '" onclick="setAttendanceStatus(' + t.id + ', \'LATE\')" title="Mark Late">L</button>' +
+                            '<button type="button" class="btn-status btn-e ' + (t.status === 'EXCUSED' ? 'active' : '') + '" onclick="setAttendanceStatus(' + t.id + ', \'EXCUSED\')" title="Mark Excused">E</button>' +
+                        '</div>' +
+                    '</td>' +
+                    '<td>' +
+                        '<input type="text" class="form-input-custom" style="padding:6px 10px; font-size:0.82rem;" placeholder="Remarks (optional)..." value="' + (t.notes || '') + '" onchange="setAttendanceNotes(' + t.id + ', this.value)">' +
+                    '</td>';
+
+                listBody.appendChild(row);
+            });
+
+            document.getElementById('attTotalTrainees').textContent = currentAttendanceTrainees.length;
+            document.getElementById('attPresentCount').textContent = p;
+            document.getElementById('attAbsentCount').textContent = a;
+            document.getElementById('attLateCount').textContent = l;
+        }
+
+        function setAttendanceStatus(traineeId, status) {
+            const trainee = currentAttendanceTrainees.find(t => t.id === traineeId);
+            if (trainee) {
+                trainee.status = status;
+                renderAttendanceTrainees();
+            }
+        }
+
+        function setAttendanceNotes(traineeId, notes) {
+            const trainee = currentAttendanceTrainees.find(t => t.id === traineeId);
+            if (trainee) {
+                trainee.notes = notes;
+            }
+        }
+
+        async function saveAttendance() {
+            if (!currentSessionData.id) {
+                alert('Please select a session or batch first.');
+                return;
+            }
+
+            const payload = {
+                type: currentSessionData.type,
+                id: currentSessionData.id,
+                date: currentSessionData.date,
+                trainees: currentAttendanceTrainees.map(t => ({
+                    userId: t.id,
+                    status: (t.status === 'PENDING' || !t.status) ? 'ABSENT' : t.status,
+                    notes: t.notes || ''
+                }))
+            };
+
+            const btn = document.getElementById('btnSaveAttendanceTop');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+            }
+
+            try {
+                const res = await fetch(contextPath + '/api/attendance/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('Attendance marked and saved successfully!');
+                    loadAttendanceTrainees();
+                } else {
+                    const err = await res.text();
+                    alert('Error saving attendance: ' + err);
+                }
+            } catch (err) {
+                console.error('Save attendance error:', err);
+                alert('Connection error. Please try again.');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1"></i> Save Attendance';
+                }
+            }
+        }
+
+        // ==========================================
+        // VIRTUAL DOJO & LIVE CLASSES WORKSPACE
+        // ==========================================
+        function openCreateLiveClassModal() {
+            document.getElementById('createLiveClassModalOverlay').classList.add('open');
+        }
+
+        function closeCreateLiveClassModal() {
+            document.getElementById('createLiveClassModalOverlay').classList.remove('open');
+            document.getElementById('createLiveClassForm').reset();
+        }
+
+        async function handleCreateLiveClassSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitLiveClass');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Scheduling...';
+
+            const payload = {
+                title: document.getElementById('liveTitle').value,
+                batchId: document.getElementById('liveBatchSelect').value,
+                sessionType: document.getElementById('liveSessionType').value,
+                martialArtType: document.getElementById('liveMartialArtType').value,
+                date: document.getElementById('liveDate').value,
+                startTime: document.getElementById('liveStartTime').value,
+                endTime: document.getElementById('liveEndTime').value,
+                meetingLink: document.getElementById('liveMeetingLink').value,
+                maxStudents: parseInt(document.getElementById('liveMaxStudents').value) || 25,
+                notes: document.getElementById('liveNotes').value,
+                description: document.getElementById('liveDescription').value
+            };
+
+            try {
+                const res = await fetch(contextPath + '/online-class/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('Live class scheduled successfully!');
+                    closeCreateLiveClassModal();
+                    window.location.reload();
+                } else {
+                    const err = await res.json();
+                    alert(err.message || 'Error creating live class');
+                }
+            } catch (err) {
+                alert('Request failed: ' + err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-broadcast me-1"></i> Schedule Live Session';
+            }
+        }
+
+        async function startLiveClass(id) {
+            if (!confirm('Start this class and go live now? Trainees will be able to join the room.')) return;
+            try {
+                const res = await fetch(contextPath + '/online-class/start/' + id, { method: 'POST' });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.meetingLink) window.open(data.meetingLink, '_blank');
+                    window.location.reload();
+                } else {
+                    alert('Could not start live class.');
+                }
+            } catch (err) {
+                alert('Connection error: ' + err);
+            }
+        }
+
+        async function endLiveClass(id) {
+            if (!confirm('End this live session? Attendance will be automatically recorded for all joined trainees.')) return;
+            try {
+                const res = await fetch(contextPath + '/online-class/end/' + id, { method: 'POST' });
+                if (res.ok) {
+                    alert('Session ended and attendance finalized!');
+                    window.location.reload();
+                } else {
+                    alert('Error ending session.');
+                }
+            } catch (err) {
+                alert('Connection error: ' + err);
+            }
+        }
+
+        async function deleteLiveClass(id) {
+            if (!confirm('Are you sure you want to delete this live class? This cannot be undone.')) return;
+            try {
+                const res = await fetch(contextPath + '/online-class/delete/' + id, { method: 'DELETE' });
+                if (res.ok) {
+                    alert('Class deleted successfully.');
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || 'Error deleting class.');
+                }
+            } catch (err) {
+                alert('Network error: ' + err);
+            }
+        }
+
+        let liveControlPollInterval = null;
+        function openLiveControlPanel(classId, title) {
+            document.getElementById('ctrlSessionTitle').innerText = title;
+            document.getElementById('ctrlEndSessionBtn').onclick = () => endLiveClass(classId);
+            document.getElementById('liveControlPanelOverlay').classList.add('open');
+
+            fetchJoinedTrainees(classId);
+            liveControlPollInterval = setInterval(() => fetchJoinedTrainees(classId), 5000);
+        }
+
+        function closeLiveControlPanel() {
+            document.getElementById('liveControlPanelOverlay').classList.remove('open');
+            if (liveControlPollInterval) {
+                clearInterval(liveControlPollInterval);
+                liveControlPollInterval = null;
+            }
+        }
+
+        async function fetchJoinedTrainees(classId) {
+            try {
+                const res = await fetch(contextPath + '/online-class/' + classId + '/joined-trainees');
+                const joined = await res.json();
+
+                const listDiv = document.getElementById('ctrlJoinedTraineeList');
+                const countBadge = document.getElementById('ctrlTraineeCountBadge');
+
+                if (countBadge) countBadge.innerText = (joined ? joined.length : 0) + ' Online';
+
+                if (!joined || joined.length === 0) {
+                    listDiv.innerHTML = '<div style="padding:24px; text-align:center; color:var(--text-gray);"><i class="bi bi-person-x me-2"></i>No trainees have joined the live room yet.</div>';
+                    return;
+                }
+
+                listDiv.innerHTML = joined.map(t => 
+                    '<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#fff; border-radius:10px; margin-bottom:8px; border:1px solid var(--border-color);">' +
+                        '<div style="display:flex; align-items:center; gap:10px;">' +
+                            '<span style="width:10px; height:10px; border-radius:50%; background:#16A34A; display:inline-block;"></span>' +
+                            '<div><strong style="font-size:0.88rem; color:var(--navy);">' + (t.fullName || 'Trainee #' + t.traineeId) + '</strong></div>' +
+                        '</div>' +
+                        '<span class="badge" style="background:#DCFCE7; color:#166534; font-weight:700; font-size:0.75rem;">CONNECTED</span>' +
+                    '</div>'
+                ).join('');
+            } catch (err) {
+                console.error('Fetch joined trainees error:', err);
+            }
+        }
+
+        // ==========================================
+        // PAST SESSIONS & RECORDINGS
+        // ==========================================
+        function openUploadRecordingModal(classId, currentLink) {
+            document.getElementById('recClassId').value = classId;
+            document.getElementById('recLinkInput').value = (currentLink && currentLink !== 'null') ? currentLink : '';
+            document.getElementById('uploadRecordingOverlay').classList.add('open');
+        }
+
+        function closeUploadRecordingModal() {
+            document.getElementById('uploadRecordingOverlay').classList.remove('open');
+        }
+
+        async function handleUploadRecordingSubmit(e) {
+            e.preventDefault();
+            const classId = document.getElementById('recClassId').value;
+            const link = document.getElementById('recLinkInput').value;
+            const btn = document.getElementById('btnSubmitRec');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+
+            try {
+                const res = await fetch(contextPath + '/online-class/upload-recording/' + classId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ recordingLink: link })
+                });
+
+                if (res.ok) {
+                    alert('Session recording link saved successfully!');
+                    closeUploadRecordingModal();
+                    window.location.reload();
+                } else {
+                    alert('Error saving recording link');
+                }
+            } catch (err) {
+                alert('Request failed: ' + err);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Save Recording';
+            }
+        }
+
+        // ==========================================
+        // AUTO-ROUTER ON PAGE LOAD (Tab from URL or param)
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab') || '${currentTab}';
+            if (tabParam && tabParam !== 'dashboard' && tabParam !== 'overview') {
+                const normalizedTab = tabParam === 'live-classes' ? 'live' : tabParam;
+                switchTab(normalizedTab);
+            }
         });
     </script>
 </body>

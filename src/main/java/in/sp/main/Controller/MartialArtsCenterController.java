@@ -734,8 +734,8 @@ public class MartialArtsCenterController {
     public String centerDashboardTab(@PathVariable String tab,
                                      HttpSession session, Model model, HttpServletResponse response) {
         Set<String> validTabs = new HashSet<>(Arrays.asList(
-                "dashboard", "batches", "live-classes", "students",
-                "bookings", "class-types", "attendance", "reports", "settings",
+                "dashboard", "batches", "live-classes", "live", "past-sessions", "students",
+                "bookings", "class-types", "attendance", "grading", "instructors", "reports", "settings",
                 "create-batch", "notifications", "dashboard1"
         ));
         if (!validTabs.contains(tab)) {
@@ -779,6 +779,8 @@ public class MartialArtsCenterController {
         model.addAttribute("enrolledUsersCount", enrollments.size());
         model.addAttribute("enrolledCountByBatch", enrolledCountByBatch);
         model.addAttribute("batches", batches);
+        model.addAttribute("onlineClasses", onlineClasses);
+        model.addAttribute("classes", onlineClasses);
         model.addAttribute("totalEarnings", totalEarnings);
         model.addAttribute("trainingStatuses", TrainingStatus.values());
 
@@ -1067,7 +1069,7 @@ public class MartialArtsCenterController {
 
     // ---------- ABOUT PAGE ----------
     @RequestMapping(value = "/about/{id}", method = RequestMethod.GET)
-    public String showCenterProfile(@PathVariable Long id, Model model) {
+    public String showCenterProfile(@PathVariable Long id, Model model, HttpSession session) {
         MartialArtsCenter center = centreService.getCenterById(id);
         if (center == null) return "errorPage";
         List<MartialArtsType> types = centreService.getMartialArtsTypes(id);
@@ -1077,10 +1079,26 @@ public class MartialArtsCenterController {
             sortedDays.addAll(center.getAvailableDays());
             sortedDays.sort((d1, d2) -> d1.ordinal() - d2.ordinal());
         }
-        
+
+        model.addAttribute("admin", session != null ? session.getAttribute("admin") : null);
         model.addAttribute("center", center);
         model.addAttribute("sortedAvailableDays", sortedDays);
         model.addAttribute("types", types);
+        model.addAttribute("batches", batchRepository.findByCenterId(id));
+
+        String statusKey = center.getCentreProfileStatus() != null ? center.getCentreProfileStatus().name()
+                : (center.isApproved() ? "APPROVED" : "PENDING");
+        String statusLabel = in.sp.main.Service.CentreProfileService.statusLabel(center.getCentreProfileStatus());
+        if (statusLabel == null || statusLabel.isBlank()) {
+            statusLabel = center.isApproved() ? "Approved & Verified" : "Pending Verification";
+        }
+        model.addAttribute("statusKey", statusKey);
+        model.addAttribute("statusLabel", statusLabel);
+        model.addAttribute("missingItems", centreProfileService.missingItems(center));
+        int pct = center.getProfileCompletionPct() != null ? center.getProfileCompletionPct()
+                : centreProfileService.calculateCompletionPct(center);
+        model.addAttribute("pct", pct);
+
         return "aboutCentre";
     }
 

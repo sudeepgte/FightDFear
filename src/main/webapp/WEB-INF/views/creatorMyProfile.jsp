@@ -41,14 +41,13 @@
 
         /* ── TOP NAV ── */
         .top-nav {
-            position: sticky; top: 0; z-index: 200;
+            position: sticky; top: 80px; z-index: 200;
             background: var(--card);
             border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 24px; height: 60px;
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
         }
-        .top-nav .brand { font-size: 17px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-        .top-nav .nav-actions { display: flex; align-items: center; gap: 14px; }
+        .top-nav .brand { font-size: 17px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .top-nav .nav-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
         .icon-btn {
             width: 38px; height: 38px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
@@ -69,13 +68,26 @@
             max-width: 1536px; /* Use full space */
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 240px 1fr 340px;
+            grid-template-columns: 1fr 340px;
             gap: 32px;
             padding: 24px 40px;
         }
         @media (max-width: 1200px) {
-            .page-wrapper { grid-template-columns: 220px 1fr; padding: 20px; }
+            .page-wrapper { grid-template-columns: 1fr; padding: 20px; }
             .right-sidebar { display: none; }
+        }
+                @media (max-width: 1200px) { .top-nav {
+                justify-content: flex-start;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 0 16px;
+                gap: 15px;
+                scrollbar-width: none;
+            }
+            .top-nav::-webkit-scrollbar { display: none; }
+            .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
+            .top-nav .nav-actions { flex-shrink: 0; gap: 8px; }
+            .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; }
         }
         @media (max-width: 768px) {
             .page-wrapper { grid-template-columns: 1fr; padding: 12px 12px 90px; gap: 14px; }
@@ -445,11 +457,15 @@
     </style>
 </head>
 <body>
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
 
 <!-- ══════════════════ TOP NAV ══════════════════ -->
 <nav class="top-nav">
-    <a href="${pageContext.request.contextPath}/" class="brand">
-        <i class="fa-solid fa-fire"></i> Fight D Fear
+    <a href="${pageContext.request.contextPath}/creator-hub" class="brand">
+        <i class="fa-solid fa-clapperboard"></i> Creator Hub
     </a>
     
     <!-- Search Bar -->
@@ -459,29 +475,30 @@
         <span style="position:absolute; right:16px; top:50%; transform:translateY(-50%); color:var(--sub); font-size:12px; background:#fff; padding:2px 6px; border-radius:6px; border:1px solid var(--border);">⌘K</span>
     </div>
 
-    <div class="nav-actions">
-        <a href="${pageContext.request.contextPath}/creator-hub/feed" class="icon-btn" title="Feed">
-            <i class="fa-solid fa-house"></i>
+    <div class="nav-actions" style="gap: 8px;">
+        <a href="${pageContext.request.contextPath}/creator-hub/profile" class="icon-btn" title="Profile" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
+            <i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span>
         </a>
-        <!-- Notification Bell -->
-        <div class="icon-btn" id="notifToggleBtn" onclick="toggleNotifPanel()" title="Notifications" style="position:relative;">
-            <i class="fa-regular fa-bell"></i>
+        <a href="${pageContext.request.contextPath}/creator-hub/feed" class="icon-btn" title="CreatorHub" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
+            <i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/creator-hub/chat" class="icon-btn" title="Chat" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
+            <i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/creator-hub/coins" class="icon-btn" title="Coins" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
+            <i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span>
+        </a>
+        <div class="icon-btn" id="notifToggleBtn" onclick="toggleNotifPanel()" title="Notifications" >
+            <i class="fa-regular fa-bell"></i> 
             <c:if test="${unreadNotifCount > 0}">
                 <span class="notif-badge">${unreadNotifCount}</span>
             </c:if>
         </div>
-        <!-- Chat -->
-        <div class="icon-btn" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/chat'" title="Chat">
-            <i class="fa-regular fa-comment-dots"></i>
-            
-        </div>
-        <!-- Settings -->
-        <a href="${pageContext.request.contextPath}/creator-hub/dashboard" class="icon-btn" title="Settings">
-            <i class="fa-solid fa-gear"></i>
+        <a href="${pageContext.request.contextPath}/creator-hub/dashboard" class="icon-btn" title="Settings" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
+            <i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span>
         </a>
-        <!-- Avatar Profile -->
-        <a href="${pageContext.request.contextPath}/creator-hub/profile" style="width:38px;height:38px;border-radius:50%;border:2px solid var(--border);overflow:hidden;">
-            <img src="${not empty currentUser.profilePhoto ? currentUser.profilePhoto : pageContext.request.contextPath += '/assets/img/default-avatar.png'}" style="width:100%;height:100%;object-fit:cover;">
+        <a href="${pageContext.request.contextPath}/logout" class="icon-btn" title="Logout" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px; color:var(--accent); border-color:var(--accent);">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span>
         </a>
     </div>
 </nav>
@@ -539,7 +556,7 @@
 <div class="page-wrapper">
 
     <!-- ━━━━━━━━━ LEFT SIDEBAR ━━━━━━━━━ -->
-    <div class="left-sidebar desktop-sidebar">
+    <div class="left-sidebar desktop-sidebar" style="display:none;">
         <a href="${pageContext.request.contextPath}/creator-hub/profile" class="ls-item active">
             <i class="fa-regular fa-user"></i> Profile
         </a>
@@ -580,7 +597,7 @@
                          title="${not empty myStories ? 'View your stories' : 'Change profile photo'}" style="cursor:pointer;">
                         <c:choose>
                             <c:when test="${not empty currentUser.profilePhoto}">
-                                <img src="${currentUser.profilePhoto}" class="avatar-img" alt="Avatar" id="avatarImg">
+                                <img src="${currentUser.profilePhoto}" class="avatar-img" alt="Avatar" id="avatarImg" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
                             </c:when>
                             <c:otherwise>
                                 <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="avatar-img" alt="Avatar" id="avatarImg">
@@ -900,7 +917,7 @@
                         <div class="suggest-item">
                             <c:choose>
                                 <c:when test="${not empty su.profilePhoto}">
-                                    <img src="${su.profilePhoto}" class="suggest-avatar" alt="${su.fullName}">
+                                    <img src="${su.profilePhoto}" class="suggest-avatar" alt="${su.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
                                 </c:when>
                                 <c:otherwise>
                                     <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${su.fullName}">
@@ -938,7 +955,7 @@
                 <div class="suggest-item">
                     <c:choose>
                         <c:when test="${not empty friend.profilePhoto}">
-                            <img src="${friend.profilePhoto}" class="suggest-avatar" alt="${friend.fullName}">
+                            <img src="${friend.profilePhoto}" class="suggest-avatar" alt="${friend.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
                         </c:when>
                         <c:otherwise>
                             <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${friend.fullName}">
@@ -1365,9 +1382,13 @@
     }
 
     // ── Notification Panel ───────────────────────────
-    function toggleNotifPanel() {
-        document.getElementById('notifPanel').classList.toggle('open');
-    }
+          function toggleNotifPanel() {
+          const panel = document.getElementById('notifPanel');
+          panel.classList.toggle('open');
+          if (panel.classList.contains('open')) {
+              markAllRead();
+          }
+      }
     function markAllRead() {
         fetch('${pageContext.request.contextPath}/creator-hub/notifications/mark-all-read', { method: 'POST' })
             .then(() => {
@@ -1394,8 +1415,23 @@
     function sendMessage() {}
 </script>
 
+        </div>
+    </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

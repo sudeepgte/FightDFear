@@ -37,11 +37,15 @@
       --dd-text: #0f172a;
       --dd-coral: #f43f5e;
     }
-    body.dd-page, .dd-page {
+    html, body.dd-page, .dd-page {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
       background: var(--martial-bg) !important;
       color: var(--martial-text) !important;
       overflow-x: hidden;
+      max-width: 100%;
+    }
+    body.dd-page {
+      display: block !important;
     }
     .dd-mobile-header {
       display: none;
@@ -74,6 +78,10 @@
       box-shadow: 2px 0 12px rgba(0,0,0,0.02) !important;
       display: flex;
       flex-direction: column;
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      height: 100vh;
       min-height: 100vh;
       max-height: 100vh;
       overflow: hidden;
@@ -151,6 +159,26 @@
       border-radius: 16px !important;
       box-shadow: var(--shadow-card) !important;
       color: var(--martial-text);
+    }
+    .dd-profile-grid {
+      gap: 14px 16px !important;
+    }
+    .dd-profile-item {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      padding: 16px 18px !important;
+    }
+    .dd-profile-item .label {
+      display: block;
+      margin: 0 !important;
+      line-height: 1.4 !important;
+    }
+    .dd-profile-item .value {
+      display: block;
+      margin: 0 !important;
+      line-height: 1.5 !important;
+      word-break: break-word;
     }
     .dd-stat-card {
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -316,15 +344,33 @@
     @media (max-width: 900px) {
       .dd-mobile-header { display: flex; }
       .dd-sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        width: min(280px, 86vw) !important;
         transform: translateX(-110%) !important;
         transition: transform 0.3s ease;
         max-height: 100vh;
       }
       .dd-sidebar.open { transform: translateX(0) !important; }
-      .dd-main { margin-left: 0 !important; }
+      .dd-main {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
       .dd-hamburger { display: none !important; }
-      .dd-content { padding: 18px 16px 40px; }
-      .dd-topbar { padding: 14px 16px !important; }
+      .dd-content { padding: 16px 12px 40px !important; max-width: 100% !important; }
+      .dd-topbar {
+        padding: 14px 16px !important;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .dd-topbar-left { min-width: 0; flex: 1; }
+      .dd-topbar-left h1 { font-size: 1.05rem !important; line-height: 1.35; word-break: break-word; }
+      .dd-profile-grid, .dd-edit-grid { grid-template-columns: 1fr !important; }
+      .dd-section-header { flex-wrap: wrap; gap: 10px; }
+      .dd-stats { min-width: 0; }
+      .dd-stat-card { min-width: 0; }
     }
     @media (max-width: 991px) {
       .dd-chat-wrapper { flex-direction: column; height: auto !important; min-height: 0 !important; }

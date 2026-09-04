@@ -234,24 +234,17 @@
     </header>
 
     <main class="main-container">
-        <c:if test="${not empty success}">
-            <div class="confirm-card" id="registrationConfirm">
-                <div class="confirm-icon"><i class="bi bi-check-lg"></i></div>
-                <h2>Registration Successful</h2>
-                <ul class="confirm-list">
-                    <li><i class="bi bi-check-circle-fill"></i> Account and application created successfully</li>
-                    <li><i class="bi bi-check-circle-fill"></i> ${success}</li>
-                </ul>
-                <div class="confirm-next">Sign in with the email you registered. After admin verification you can complete your profile and manage bookings from your worker portal.</div>
-                <a href="#workerLoginCard" class="btn-confirm" id="btnContinueLogin">Continue to Login <i class="bi bi-arrow-right"></i></a>
-            </div>
-        </c:if>
-
-        <div class="form-card" id="workerLoginCard"<c:if test="${not empty success and empty error}"> style="display:none;"</c:if>>
+        <div class="form-card" id="workerLoginCard">
             <div class="card-header">
                 <h2>Women Jobs Sign In</h2>
                 <p>Enter your credentials to access your worker portal</p>
             </div>
+            
+            <c:if test="${not empty success}">
+                <div class="alert-box" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A;">
+                    <i class="bi bi-check-circle-fill"></i> ${success}
+                </div>
+            </c:if>
 
             <c:if test="${not empty error}">
                 <div class="error-alert alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>

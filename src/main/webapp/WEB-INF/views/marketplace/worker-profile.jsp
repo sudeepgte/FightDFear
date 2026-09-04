@@ -4,757 +4,411 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>My Job Profile | Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Complete Worker Profile | Fight D Fear</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-jobs-portal.css">
+    
     <style>
-        /* Profile-page only — does not load on dashboard/earnings */
-        body.wj-profile-page {
-            background: #F8FAFC;
-            display: block;
+        :root {
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --secondary: #64748B;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --navy: #0F172A;
+            --border: #E2E8F0;
+            --warning-bg: #fff7ed;
+            --warning-text: #c2410c;
+            --success-text: #10b981;
         }
-        body.wj-profile-page .wj-main { margin-left: 0; }
-        body.wj-profile-page .wj-topbar {
-            background: #FFFFFF;
-            border-bottom: 1px solid #E2E8F0;
-            padding: 20px 32px;
-            box-shadow: 0 1px 0 rgba(30, 27, 75, 0.04);
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--navy); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+
+        .topbar { background: var(--card-bg); padding: 14px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
+        .brand { font-size: 1.25rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 8px; text-decoration: none; }
+        .brand i { color: var(--primary); font-size: 1.5rem; }
+        .topbar-actions { display: flex; gap: 12px; }
+        .btn-skip { background: transparent; color: var(--navy); padding: 10px 20px; border: 1px solid var(--border); border-radius: 20px; font-weight: 600; cursor: pointer; text-decoration: none; transition: 0.2s; }
+        .btn-skip:hover { background: #f1f5f9; }
+        .btn-save { background: var(--navy); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: 600; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; text-decoration: none;}
+        .btn-save:hover { background: #1e293b; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; width: 100%; }
+
+        .form-section { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 1px solid var(--border); }
+        .progress-box { margin-bottom: 24px; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .progress-header h2 { font-size: 1.15rem; font-weight: 800; }
+        .status-badge { background: #e2e8f0; color: var(--secondary); font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; }
+        
+        .progress-bar-bg { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
+        .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.3s; }
+        .progress-text { font-size: 0.85rem; color: var(--secondary); margin-bottom: 12px; }
+        
+        .btn-submit-admin { width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 30px; }
+        .btn-submit-admin:hover { background: var(--primary-hover); }
+
+        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-top: 30px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .section-title:first-of-type { margin-top: 0; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .form-group.full { grid-column: span 2; }
+        .form-label { font-size: 0.85rem; font-weight: 600; color: var(--navy); }
+        .form-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; transition: 0.3s; }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        .form-select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; background: white; cursor: pointer; }
+
+        .preview-section { position: sticky; top: 90px; }
+        .preview-card { background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
+        .preview-header { background: var(--navy); padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .live-badge { background: var(--primary); color: white; font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
+        .preview-header span { color: white; font-size: 0.75rem; font-weight: 600; letter-spacing: 1px; }
+        
+        .preview-body { padding: 24px; }
+        .prev-avatar { width: 70px; height: 70px; border-radius: 16px; background: #ffe4e6; color: var(--primary); font-size: 2rem; font-weight: 800; display: flex; justify-content: center; align-items: center; margin-bottom: 16px; }
+        .prev-name { font-size: 1.25rem; font-weight: 800; color: var(--navy); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .prev-role { font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+        .prev-location { font-size: 0.8rem; color: var(--secondary); display: flex; align-items: center; gap: 4px; margin-bottom: 20px; }
+        
+        .prev-box { background: var(--bg); border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+        .prev-box-title { font-size: 0.7rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; margin-bottom: 4px; }
+        .prev-box-val { font-size: 0.9rem; font-weight: 600; color: var(--navy); }
+        
+        .prev-section-title { font-size: 0.8rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; margin-top: 20px; margin-bottom: 8px; }
+        .prev-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .prev-tag { background: #ffe4e6; color: var(--primary); padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .prev-desc { font-size: 0.85rem; color: var(--navy); line-height: 1.5; margin-top: 10px; }
+        
+        @media (max-width: 992px) {
+            .container { grid-template-columns: minmax(0, 1fr); }
+            .preview-section { display: none; }
         }
-        body.wj-profile-page .wj-topbar h1 {
-            font-size: 1.45rem;
-            font-weight: 800;
-            color: #1E1B4B;
-            letter-spacing: -0.4px;
-        }
-        body.wj-profile-page .wj-topbar p {
-            font-size: 0.9rem;
-            color: #64748B;
-            margin-top: 4px;
-        }
-        body.wj-profile-page .btn-skip {
-            padding: 10px 18px;
-            border: 1px solid #E2E8F0;
-            background: #FFFFFF;
-            color: #1E1B4B;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 42px;
-            white-space: nowrap;
-        }
-        body.wj-profile-page .btn-skip:hover { background: #F8FAFC; color: #F43F5E; border-color: #F43F5E; }
-        body.wj-profile-page .wj-content {
-            max-width: 920px;
-            margin: 0 auto;
-            padding: 28px 24px 56px;
-            width: 100%;
-        }
-        body.wj-profile-page .wj-card {
-            border-radius: 20px;
-            border: 1px solid #E2E8F0;
-            box-shadow: 0 10px 32px rgba(30, 27, 75, 0.06);
-        }
-        body.wj-profile-page .wj-card-b.padded { padding: 28px 32px 32px; }
-        body.wj-profile-page .wj-progress { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
-        body.wj-profile-page .wj-progress span {
-            flex: 1 1 calc(8.33% - 6px); min-width: 18px; height: 8px; border-radius: 99px; background: #E2E8F0;
-        }
-        body.wj-profile-page .wj-progress span.on { background: #F43F5E; }
-        body.wj-profile-page .wj-step-title {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #1E1B4B;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-        body.wj-profile-page .wj-step-desc {
-            font-size: 0.88rem;
-            color: #64748B;
-            margin: 0 0 18px;
-            font-weight: 500;
-            text-transform: none;
-            letter-spacing: 0;
-        }
-        body.wj-profile-page .wj-readonly {
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 0.9rem;
-            color: #1E1B4B;
-            margin-bottom: 12px;
-        }
-        body.wj-profile-page .wj-readonly span { display: block; font-size: 0.72rem; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-        body.wj-profile-page .wj-field-err {
-            display: none;
-            color: #DC2626;
-            font-size: 0.78rem;
-            font-weight: 600;
-            margin-top: 6px;
-        }
-        body.wj-profile-page .wj-field-err.on { display: block; }
-        body.wj-profile-page .wj-hint {
-            font-size: 0.82rem;
-            color: #64748B;
-            background: #FFF1F2;
-            border: 1px solid #FFE4E6;
-            border-radius: 10px;
-            padding: 10px 12px;
-            margin-bottom: 16px;
-        }
-        body.wj-profile-page .wj-mobile-tag {
-            display: inline-block;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #9F1239;
-            background: #FFE4E6;
-            border-radius: 6px;
-            padding: 2px 8px;
-            margin-left: 6px;
-            vertical-align: middle;
-        }
-        body.wj-profile-page .wj-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; }
-        body.wj-profile-page .wj-row .full { grid-column: 1 / -1; }
-        body.wj-profile-page .wj-field { margin-bottom: 0; }
-        body.wj-profile-page .wj-label { margin-bottom: 8px; font-weight: 600; }
-        body.wj-profile-page .wj-input,
-        body.wj-profile-page .wj-textarea {
-            border-radius: 12px;
-            border: 1px solid #E2E8F0;
-            padding: 13px 14px;
-        }
-        body.wj-profile-page .wj-textarea { min-height: 108px; resize: vertical; }
-        body.wj-profile-page .wj-nav-btns {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-top: 28px;
-            flex-wrap: wrap;
-        }
-        body.wj-profile-page .wj-btn,
-        body.wj-profile-page .btn-save {
-            height: 44px;
-            min-width: 120px;
-            padding: 0 22px;
-            border-radius: 12px;
-            font-weight: 700;
-        }
-        body.wj-profile-page #btnProfileNext {
-            background: #F43F5E;
-            color: #fff;
-            border: none;
-        }
-        body.wj-profile-page #btnProfileNext:hover { background: #E11D48; color: #fff; }
-        body.wj-profile-page #btnProfileBack {
-            background: #FFFFFF;
-            color: #1E1B4B;
-            border: 1px solid #E2E8F0;
-        }
-        body.wj-profile-page .btn-save {
-            background-color: #F43F5E;
-            color: white;
-            border: none;
-            font-family: inherit;
-        }
-        body.wj-profile-page .btn-save:hover { background-color: #E11D48; color: white; }
-        @media (max-width: 640px) {
-            body.wj-profile-page .wj-row { grid-template-columns: 1fr; }
-            body.wj-profile-page .wj-topbar { padding: 16px; flex-wrap: wrap; }
-            body.wj-profile-page .wj-card-b.padded { padding: 20px 16px 24px; }
-            body.wj-profile-page .wj-nav-btns { flex-direction: column; align-items: stretch; }
-            body.wj-profile-page .wj-nav-btns > div { margin-left: 0 !important; width: 100%; }
-            body.wj-profile-page .wj-nav-btns .wj-btn,
-            body.wj-profile-page .wj-nav-btns .btn-save,
-            body.wj-profile-page .wj-nav-btns .btn-skip { width: 100%; justify-content: center; }
+        @media (max-width: 768px) {
+            .topbar { padding: 12px 15px; flex-wrap: wrap; gap: 12px; }
+            .brand span { font-size: 1.1rem !important; white-space: nowrap; }
+            .topbar-actions { display: flex; gap: 8px; width: 100%; justify-content: space-between; }
+            .btn-skip, .btn-save { padding: 8px 12px; font-size: 0.85rem; white-space: nowrap; flex: 1; justify-content: center; text-align: center; }
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
+            .form-group.full { grid-column: span 1; }
+            .container { margin: 15px auto; padding: 0 10px; width: 100%; max-width: 100vw; box-sizing: border-box; overflow-x: hidden; }
+            .form-section { padding: 20px 15px; }
+            .form-input, .form-select { width: 100%; }
         }
     </style>
 </head>
-<body class="wj-page wj-profile-page">
-<main class="wj-main">
-  <header class="wj-topbar">
-    <div>
-        <h1>Complete your profile</h1>
-        <p>Add professional details so clients can book you with confidence</p>
-    </div>
-    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="btn-skip">Skip for now</a>
-  </header>
-
-  <div class="wj-content">
-    <c:if test="${not empty success}">
-        <div class="wj-alert wj-alert-ok"><i class="fas fa-check-circle"></i> ${success}</div>
-    </c:if>
-    <c:if test="${not empty error}">
-        <div class="wj-alert wj-alert-err"><i class="fas fa-exclamation-circle"></i> ${error}</div>
-    </c:if>
-    <div id="js-profile-error" class="wj-alert wj-alert-err" style="display:none;">
-        <i class="fas fa-exclamation-circle"></i> <span id="js-profile-error-msg"></span>
-    </div>
-
-    <div class="wj-card">
-        <div class="wj-card-b padded">
-            <div class="wj-progress" id="profileProgress">
-                <span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+<body>
+    <form id="profileForm" action="${pageContext.request.contextPath}/women-jobs/profile" method="post" enctype="multipart/form-data">
+        <header class="topbar">
+            <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none;">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain;">
+                <span style="font-size: 1.25rem; font-weight: 800; color: #1a1a2e; margin: 0; padding: 0;">Fight D Fear</span>
+            </a>
+            <div class="topbar-actions">
+                <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="btn-skip">Skip for now</a>
+                <button type="submit" class="btn-save">Save Profile</button>
             </div>
-            <p class="wj-step-title" id="stepLabel">Step 1 of 11 — Worker identity</p>
-            <p class="wj-step-desc" id="stepDesc">Your name, role, phone and experience.</p>
+        </header>
 
-            <form action="${pageContext.request.contextPath}/women-jobs/profile" method="post" id="workerProfileForm" enctype="multipart/form-data">
+        <div class="container">
+            <div class="form-section">
+                <div class="progress-box">
+                    <div class="progress-header">
+                        <h2>Profile Details</h2>
+                        <span class="status-badge">${workerApp.status != null ? workerApp.status : 'REGISTERED'}</span>
+                    </div>
+                    <div class="progress-bar-bg"><div class="progress-bar-fill" id="pbFill"></div></div>
+                    <div class="progress-text" id="pbText">0% Completed</div>
+                </div>
 
-                <div class="wj-step" data-step="1">
-                    <div class="wj-row">
-                        <div class="wj-field">
-                            <label class="wj-label">1.1 Full name</label>
-                            <input type="text" name="fullName" class="wj-input" maxlength="120" value="${workerApp.user.fullName}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">Email <span class="wj-mobile-tag">Login identity — not changed here</span></label>
-                            <div class="wj-readonly"><c:out value="${workerApp.user.email}"/></div>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">1.2 Role type / designation</label>
-                            <input type="text" name="designation" class="wj-input" maxlength="120" placeholder="e.g. Senior Baby Care Specialist" value="${workerApp.designation}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">1.5 Official phone</label>
-                            <input type="text" name="phone" class="wj-input" maxlength="10" inputmode="numeric" value="${workerApp.user.phoneNumber}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">1.6 WhatsApp</label>
-                            <input type="text" name="whatsappNumber" id="whatsappNumber" class="wj-input" maxlength="10" inputmode="numeric" placeholder="e.g. 9876543210" value="${workerApp.whatsappNumber}">
-                            <small class="wj-field-err" id="err-whatsappNumber"></small>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">1.7 Years of experience</label>
-                            <input type="number" name="yearsExperience" id="yearsExperience" class="wj-input" min="0" max="50" placeholder="e.g. 5" value="${workerApp.yearsExperience}">
-                            <small class="wj-field-err" id="err-yearsExperience"></small>
-                        </div>
+                <h3 class="section-title">1. Worker Identity</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full name</label>
+                        <input type="text" name="fullName" class="form-input" value="${workerApp.user.fullName}" oninput="updatePreview('prevName', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role type / designation</label>
+                        <input type="text" name="designation" class="form-input" value="${workerApp.designation}" oninput="updatePreview('prevRole', this.value)" placeholder="e.g. Senior Baby Care Specialist">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Official phone</label>
+                        <input type="text" name="phone" class="form-input" value="${workerApp.user.phoneNumber}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">WhatsApp Number</label>
+                        <input type="text" name="whatsappNumber" class="form-input" value="${workerApp.whatsappNumber}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Years of experience</label>
+                        <input type="number" name="yearsExperience" class="form-input" value="${workerApp.yearsExperience}">
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="2" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">2.1 Landmark / address</label>
-                            <input type="text" name="address" class="wj-input" maxlength="255" placeholder="Flat, Street, Area info" value="${workerApp.address}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">2.3 City</label>
-                            <input type="text" name="city" class="wj-input" maxlength="80" placeholder="City" value="${workerApp.city}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">2.4 State</label>
-                            <input type="text" name="state" class="wj-input" maxlength="80" placeholder="State" value="${workerApp.state}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">2.5 Pincode</label>
-                            <input type="text" name="pincode" id="pincode" class="wj-input" maxlength="6" inputmode="numeric" placeholder="6-digit Pincode" value="${workerApp.pincode}">
-                            <small class="wj-field-err" id="err-pincode"></small>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">2.6 Latitude</label>
-                            <input type="text" name="latitude" class="wj-input" placeholder="e.g. 12.9716" value="${workerApp.latitude}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">2.7 Longitude</label>
-                            <input type="text" name="longitude" class="wj-input" placeholder="e.g. 77.5946" value="${workerApp.longitude}">
-                        </div>
+                <h3 class="section-title">2. Location</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Landmark / address</label>
+                        <textarea name="address" class="form-input" rows="2">${workerApp.address}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" name="city" class="form-input" value="${workerApp.city}" oninput="updatePreview('prevCity', this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        <input type="text" name="state" class="form-input" value="${workerApp.state}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" name="pincode" class="form-input" value="${workerApp.pincode}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input type="number" step="any" name="latitude" class="form-input" value="${workerApp.latitude}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input type="number" step="any" name="longitude" class="form-input" value="${workerApp.longitude}">
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="3" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">3.1 Categories offered</label>
-                            <input type="text" name="categoriesOffered" class="wj-input" maxlength="255" placeholder="e.g. Teaching, Tutoring" value="${workerApp.categoriesOffered}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">Primary category</label>
-                            <select id="jobCategory" name="jobCategory" class="wj-input" onchange="updateSubCategories()">
-                                <option value="">Select Category</option>
-                                <option value="Caregiver" ${workerApp.jobCategory == 'Caregiver' ? 'selected' : ''}>Caregiver</option>
-                                <option value="Babysitting" ${workerApp.jobCategory == 'Babysitting' ? 'selected' : ''}>Babysitting</option>
-                                <option value="Housekeeping" ${workerApp.jobCategory == 'Housekeeping' ? 'selected' : ''}>Housekeeping</option>
-                                <option value="Cooking" ${workerApp.jobCategory == 'Cooking' ? 'selected' : ''}>Cooking</option>
-                                <option value="Beauty & Salon" ${workerApp.jobCategory == 'Beauty & Salon' ? 'selected' : ''}>Beauty &amp; Salon</option>
-                                <option value="Healthcare" ${workerApp.jobCategory == 'Healthcare' ? 'selected' : ''}>Healthcare</option>
-                                <option value="Teaching" ${workerApp.jobCategory == 'Teaching' ? 'selected' : ''}>Teaching</option>
-                                <option value="Office Jobs" ${workerApp.jobCategory == 'Office Jobs' ? 'selected' : ''}>Office Jobs</option>
-                                <option value="Retail" ${workerApp.jobCategory == 'Retail' ? 'selected' : ''}>Retail</option>
-                                <option value="Hospitality" ${workerApp.jobCategory == 'Hospitality' ? 'selected' : ''}>Hospitality</option>
-                                <option value="Customer Support" ${workerApp.jobCategory == 'Customer Support' ? 'selected' : ''}>Customer Support</option>
-                                <option value="Delivery & Logistics" ${workerApp.jobCategory == 'Delivery & Logistics' ? 'selected' : ''}>Delivery &amp; Logistics</option>
-                                <option value="Domestic Help" ${workerApp.jobCategory == 'Domestic Help' ? 'selected' : ''}>Domestic Help</option>
-                                <option value="Tailoring & Fashion" ${workerApp.jobCategory == 'Tailoring & Fashion' ? 'selected' : ''}>Tailoring &amp; Fashion</option>
-                                <option value="Digital Jobs" ${workerApp.jobCategory == 'Digital Jobs' ? 'selected' : ''}>Digital Jobs</option>
-                                <option value="Freelancing" ${workerApp.jobCategory == 'Freelancing' ? 'selected' : ''}>Freelancing</option>
-                                <option value="Entrepreneurship" ${workerApp.jobCategory == 'Entrepreneurship' ? 'selected' : ''}>Entrepreneurship</option>
-                            </select>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">Role / sub category</label>
-                            <select id="jobSubCategory" name="jobSubCategory" class="wj-input">
-                                <option value="${workerApp.jobSubCategory}"><c:out value="${empty workerApp.jobSubCategory ? 'Select specific job' : workerApp.jobSubCategory}"/></option>
-                            </select>
-                        </div>
+                <h3 class="section-title">3. Work categories</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Categories offered</label>
+                        <textarea name="categoriesOffered" class="form-input" rows="2">${workerApp.categoriesOffered}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Primary category</label>
+                        <select id="jobCategory" name="jobCategory" class="form-select" onchange="updateSubCategories()">
+                            <option value="">Select Category</option>
+                            <option value="Caregiver" ${workerApp.jobCategory == 'Caregiver' ? 'selected' : ''}>Caregiver</option>
+                            <option value="Babysitting" ${workerApp.jobCategory == 'Babysitting' ? 'selected' : ''}>Babysitting</option>
+                            <option value="Housekeeping" ${workerApp.jobCategory == 'Housekeeping' ? 'selected' : ''}>Housekeeping</option>
+                            <option value="Cooking" ${workerApp.jobCategory == 'Cooking' ? 'selected' : ''}>Cooking</option>
+                            <option value="Beauty & Salon" ${workerApp.jobCategory == 'Beauty & Salon' ? 'selected' : ''}>Beauty & Salon</option>
+                            <option value="Healthcare" ${workerApp.jobCategory == 'Healthcare' ? 'selected' : ''}>Healthcare</option>
+                            <option value="Teaching" ${workerApp.jobCategory == 'Teaching' ? 'selected' : ''}>Teaching</option>
+                            <option value="Office Jobs" ${workerApp.jobCategory == 'Office Jobs' ? 'selected' : ''}>Office Jobs</option>
+                            <option value="Retail" ${workerApp.jobCategory == 'Retail' ? 'selected' : ''}>Retail</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role / sub category</label>
+                        <select id="jobSubCategory" name="jobSubCategory" class="form-select">
+                            <option value="${workerApp.jobSubCategory}"><c:out value="${empty workerApp.jobSubCategory ? 'Select specific job' : workerApp.jobSubCategory}"/></option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="4" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">4.1 Audience</label>
-                            <input type="text" name="audience" class="wj-input" maxlength="255" placeholder="e.g. Families, Seniors" value="${workerApp.audience}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">4.2 Door visits</label>
-                            <select name="doorService" class="wj-input">
-                                <option value="true" ${workerApp.doorService == true ? 'selected' : ''}>Yes</option>
-                                <option value="false" ${workerApp.doorService != true ? 'selected' : ''}>No</option>
-                            </select>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">4.3 Languages</label>
-                            <input type="text" name="languages" class="wj-input" maxlength="200" placeholder="e.g. English, Hindi, Punjabi" value="${workerApp.languages}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">4.4 Skills</label>
-                            <input type="text" name="skills" class="wj-input" maxlength="255" placeholder="e.g. CPR, Newborn Care, Cooking, Tutoring" value="${workerApp.skills}">
-                        </div>
+                <h3 class="section-title">4. Who I serve</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Audience</label>
+                        <input type="text" name="audience" class="form-input" value="${workerApp.audience}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Door visits</label>
+                        <select name="doorService" class="form-select">
+                            <option value="true" ${workerApp.doorService == true ? 'selected' : ''}>Yes</option>
+                            <option value="false" ${workerApp.doorService != true ? 'selected' : ''}>No</option>
+                        </select>
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Languages</label>
+                        <input type="text" name="languages" class="form-input" value="${workerApp.languages}" placeholder="e.g. English, Hindi, Tamil">
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Skills</label>
+                        <input type="text" name="skills" class="form-input" value="${workerApp.skills}" oninput="updateTagsPreview('prevSkills', this.value)" placeholder="e.g. CPR, Cooking, Tutoring">
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="5" style="display:none;">
-                    <div class="wj-field">
-                        <label class="wj-label">5.1 Amenities / readiness</label>
-                        <input type="text" name="facilities" class="wj-input" maxlength="500" placeholder="e.g. First-aid kit, Own transport" value="${workerApp.facilities}">
+                <h3 class="section-title">5. Facilities & readiness</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Amenities / readiness</label>
+                        <textarea name="facilities" class="form-input" rows="2">${workerApp.facilities}</textarea>
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="6" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">6.1 Open days</label>
-                            <input type="text" name="openDays" class="wj-input" placeholder="Mon,Tue,Wed,Thu,Fri" value="${workerApp.openDays}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">6.2 Open time</label>
-                            <input type="time" name="openTime" class="wj-input" value="${workerApp.openTime}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">6.3 Close time</label>
-                            <input type="time" name="closeTime" class="wj-input" value="${workerApp.closeTime}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">6.4 Break start</label>
-                            <input type="time" name="breakStart" class="wj-input" value="${workerApp.breakStart}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">6.5 Break end</label>
-                            <input type="time" name="breakEnd" class="wj-input" value="${workerApp.breakEnd}">
-                        </div>
-                        <div class="wj-field full">
-                            <label class="wj-label">6.6 Blocked dates</label>
-                            <input type="text" name="blockedDates" class="wj-input" placeholder="YYYY-MM-DD, YYYY-MM-DD" value="${workerApp.blockedDates}">
-                        </div>
+                <h3 class="section-title">6. Hours & calendar</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Open days</label>
+                        <input type="text" name="openDays" class="form-input" value="${workerApp.openDays}" placeholder="e.g. Mon-Fri">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Open time</label>
+                        <input type="time" name="openTime" class="form-input" value="${workerApp.openTime}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Close time</label>
+                        <input type="time" name="closeTime" class="form-input" value="${workerApp.closeTime}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Break start</label>
+                        <input type="time" name="breakStart" class="form-input" value="${workerApp.breakStart}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Break end</label>
+                        <input type="time" name="breakEnd" class="form-input" value="${workerApp.breakEnd}">
+                    </div>
+                    <div class="form-group full">
+                        <label class="form-label">Blocked dates</label>
+                        <textarea name="blockedDates" class="form-input" rows="2">${workerApp.blockedDates}</textarea>
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="7" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field full">
-                            <label class="wj-label">7.1 About</label>
-                            <textarea name="bio" class="wj-textarea" rows="4" maxlength="2000" placeholder="Tell clients about your work style, background, or child-care philosophy...">${workerApp.bio}</textarea>
-                        </div>
+                <h3 class="section-title">7. About you</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">About</label>
+                        <textarea name="bio" class="form-input" rows="4" oninput="updatePreview('prevBio', this.value)">${workerApp.bio}</textarea>
                     </div>
                 </div>
 
-                <div class="wj-step" data-step="8" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field">
-                            <label class="wj-label">8.5 Hourly rate (₹)</label>
-                            <input type="number" name="hourlyRate" id="hourlyRate" class="wj-input" min="1" step="0.01" value="${workerApp.hourlyRate}">
-                            <small class="wj-field-err" id="err-hourlyRate"></small>
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">8.3 Duration (minutes)</label>
-                            <input type="number" name="durationMinutes" class="wj-input" min="1" value="${workerApp.durationMinutes}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">8.4 Buffer (minutes)</label>
-                            <input type="number" name="bufferMinutes" class="wj-input" min="0" value="${workerApp.bufferMinutes}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">8.6 Service mode</label>
-                            <input type="text" name="serviceMode" class="wj-input" placeholder="e.g. DOOR / CENTRE" value="${workerApp.serviceMode}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">8.7 Work type</label>
-                            <input type="text" name="workType" class="wj-input" placeholder="e.g. Full-time, Part-time" value="${workerApp.workType}">
-                        </div>
+                <h3 class="section-title">8. First offering</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Hourly rate (&#8377;)</label>
+                        <input type="number" name="hourlyRate" class="form-input" value="${workerApp.hourlyRate}">
                     </div>
-                    <p class="wj-step-desc">Primary category and role are saved in Step 3.</p>
+                    <div class="form-group">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" name="durationMinutes" class="form-input" value="${workerApp.durationMinutes}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Buffer (minutes)</label>
+                        <input type="number" name="bufferMinutes" class="form-input" value="${workerApp.bufferMinutes}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Service mode</label>
+                        <input type="text" name="serviceMode" class="form-input" value="${workerApp.serviceMode}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Work type</label>
+                        <input type="text" name="workType" class="form-input" value="${workerApp.workType}">
+                    </div>
                 </div>
 
-                <div class="wj-step" data-step="9" style="display:none;">
-                    <div class="wj-row">
-                        <div class="wj-field">
-                            <label class="wj-label">9.1 UPI ID</label>
-                            <input type="text" name="upiId" class="wj-input" placeholder="e.g. upi-handle@bank" value="${workerApp.upiId}">
-                        </div>
-                        <div class="wj-field">
-                            <label class="wj-label">9.2 Bank details</label>
-                            <input type="text" name="bankDetails" class="wj-input" placeholder="Bank Name, A/C No, IFSC" value="${workerApp.bankDetails}">
-                        </div>
+                <h3 class="section-title">9. Payout</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">UPI ID</label>
+                        <input type="text" name="upiId" class="form-input" value="${workerApp.upiId}">
                     </div>
-                    <p class="wj-step-desc" style="margin-top:8px;">UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.</p>
+                    <div class="form-group full">
+                        <label class="form-label">Bank details</label>
+                        <textarea name="bankDetails" class="form-input" rows="2" placeholder="Bank Name, A/C No, IFSC Code">${workerApp.bankDetails}</textarea>
+                    </div>
                 </div>
 
-                <div class="wj-step" data-step="10" style="display:none;">
-                    <div class="wj-field">
-                        <label class="wj-label">10.1 Profile photo</label>
-                        <input type="file" name="profileImage" class="wj-input" accept="image/*">
+                <h3 class="section-title">10. Documents (optional)</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Profile photo</label>
+                        <input type="file" name="profileImage" class="form-input" accept="image/*">
                         <c:if test="${not empty workerApp.profileImageUrl}">
-                            <div class="wj-readonly" style="margin-top:8px;">Current: <c:out value="${workerApp.profileImageUrl}"/></div>
+                            <div style="margin-top:5px; font-size:0.8rem;">Current: ${workerApp.profileImageUrl}</div>
                         </c:if>
                     </div>
-                    <div class="wj-field" style="margin-top:12px;">
-                        <label class="wj-label">Proof document</label>
-                        <input type="file" name="proofDocument" class="wj-input" accept="image/*,.pdf">
+                    <div class="form-group">
+                        <label class="form-label">Proof document</label>
+                        <input type="file" name="proofDocument" class="form-input" accept="image/*,.pdf">
                         <c:if test="${not empty workerApp.documentPath}">
-                            <div class="wj-readonly" style="margin-top:8px;">
+                            <div style="margin-top:5px; font-size:0.8rem;">
                                 <a href="${pageContext.request.contextPath}${workerApp.documentPath}" target="_blank">View existing proof document</a>
                             </div>
                         </c:if>
                     </div>
                 </div>
-
-                <div class="wj-step" data-step="11" style="display:none;">
-                    <div class="wj-field">
-                        <label class="wj-label">11.1 Gallery photos</label>
-                        <input type="file" name="galleryPhotos" class="wj-input" accept="image/*" multiple>
+                
+                <h3 class="section-title">11. Work photos (optional)</h3>
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label class="form-label">Gallery photos</label>
+                        <input type="file" name="galleryPhotos" class="form-input" accept="image/*" multiple>
                         <c:if test="${not empty workerApp.galleryPhotos}">
-                            <div class="wj-readonly" style="margin-top:8px;"><c:out value="${workerApp.galleryPhotos}"/></div>
+                            <div style="margin-top:5px; font-size:0.8rem;">Current: ${workerApp.galleryPhotos}</div>
                         </c:if>
                     </div>
-                    <p class="wj-step-desc" style="margin-top:12px;">Save Profile still uses the existing email OTP, then stores all fields above.</p>
                 </div>
+            </div>
 
-                <div class="wj-nav-btns">
-                    <a href="${pageContext.request.contextPath}/women-jobs/dashboard" class="btn-skip">Skip for now</a>
-                    <button type="button" class="wj-btn wj-btn-ghost" id="btnProfileBack" style="display:none;">Back</button>
-                    <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
-                        <button type="button" class="wj-btn wj-btn-navy" id="btnProfileNext">Next</button>
-                        <button type="submit" class="btn btn-save" id="btnProfileSave" style="display:none;"><i class="fas fa-save me-2"></i> Save Profile Details</button>
+            <!-- Right Preview -->
+            <div class="preview-section">
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <div class="live-badge"><i class="bi bi-broadcast"></i> LIVE PREVIEW</div>
+                        <span>WORKER PROFILE</span>
+                    </div>
+                    <div class="preview-body">
+                        <div class="prev-avatar">${workerApp.user != null && workerApp.user.fullName != null && workerApp.user.fullName.length() > 0 ? workerApp.user.fullName.substring(0,1).toUpperCase() : 'W'}</div>
+                        <div class="prev-name"><span id="prevName">${empty workerApp.user.fullName ? 'Your Name' : workerApp.user.fullName}</span> <i class="bi bi-check-circle-fill"></i></div>
+                        <div class="prev-role" id="prevRole">${empty workerApp.designation ? 'Worker Role' : workerApp.designation}</div>
+                        <div class="prev-location"><i class="bi bi-geo-alt-fill"></i> <span id="prevCity">${empty workerApp.city ? 'City' : workerApp.city}</span></div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            <div class="prev-box">
+                                <div class="prev-box-title">Experience</div>
+                                <div class="prev-box-val">${empty workerApp.yearsExperience ? '0' : workerApp.yearsExperience} Years</div>
+                            </div>
+                            <div class="prev-box">
+                                <div class="prev-box-title">Hourly Rate</div>
+                                <div class="prev-box-val">&#8377; ${empty workerApp.hourlyRate ? '0' : workerApp.hourlyRate}</div>
+                            </div>
+                        </div>
+
+                        <div class="prev-section-title">Skills</div>
+                        <div class="prev-tags" id="prevSkills">
+                            <div class="prev-tag">Skill 1</div>
+                        </div>
+
+                        <div class="prev-section-title">ABOUT WORKER</div>
+                        <div class="prev-desc" id="prevBio">
+                            ${empty workerApp.bio ? 'Professional worker ready to serve.' : workerApp.bio}
+                        </div>
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
-  </div>
-</main>
-
-<div class="modal fade" id="otpConfirmModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="otpConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 15px;">
-            <div class="modal-header bg-light" style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
-                <h5 class="modal-title fw-bold" id="otpConfirmModalLabel" style="color: #1E1B4B;"><i class="fas fa-user-shield me-2"></i> Security Verification</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <p class="text-muted small mb-4">
-                    To save your profile changes, please verify your identity. A 6-digit OTP code has been sent to your registered email: <strong>${workerApp.user.email}</strong>
-                </p>
-                <div class="mb-3">
-                    <input type="text" id="confirmOtpCode" class="form-control text-center fs-4 fw-bold letter-spacing-lg" placeholder="000000" maxlength="6" style="letter-spacing: 5px;" required>
-                    <div id="otpModalError" class="text-danger small mt-2 d-none"></div>
-                    <div id="otpModalSuccess" class="text-success small mt-2 d-none"></div>
-                </div>
-                <div class="mt-3">
-                    <p class="text-muted small mb-0">
-                        Didn't receive the OTP? <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fw-bold" id="resendOtpBtn" style="color: #F43F5E;">Resend OTP</button>
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-save rounded-pill px-4" id="btnVerifyAndSubmit">Verify & Save</button>
             </div>
         </div>
-    </div>
-</div>
+    </form>
 
-<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const profileForm = document.querySelector('form[action$="/profile"]');
-    let isProfileOtpVerified = false;
-    let otpModalInstance = null;
-
-    if (profileForm) {
-        profileForm.addEventListener('submit', function(e) {
-            var errBox = document.getElementById('js-profile-error');
-            var errMsg = document.getElementById('js-profile-error-msg');
-            errBox.style.display = 'none';
-            var years = (profileForm.yearsExperience.value || '').trim();
-            if (years !== '') {
-                var y = parseInt(years, 10);
-                if (isNaN(y) || y < 0 || y > 50) {
-                    e.preventDefault();
-                    errMsg.textContent = 'Years of Experience must be between 0 and 50.';
-                    errBox.style.display = 'flex';
-                    return;
-                }
-            }
-            var rate = (profileForm.hourlyRate.value || '').trim();
-            if (rate !== '') {
-                var r = parseFloat(rate);
-                if (isNaN(r) || r <= 0) {
-                    e.preventDefault();
-                    errMsg.textContent = 'Hourly rate must be greater than zero.';
-                    errBox.style.display = 'flex';
-                    return;
-                }
-            }
-            var wa = (profileForm.whatsappNumber.value || '').trim();
-            if (wa !== '' && !/^\d{10}$/.test(wa)) {
-                e.preventDefault();
-                errMsg.textContent = 'WhatsApp number must be exactly 10 digits.';
-                errBox.style.display = 'flex';
-                return;
-            }
-            var pin = (profileForm.pincode.value || '').trim();
-            if (pin !== '' && !/^\d{6}$/.test(pin)) {
-                e.preventDefault();
-                errMsg.textContent = 'Pincode must be exactly 6 digits.';
-                errBox.style.display = 'flex';
-                return;
-            }
-            if (!isProfileOtpVerified) {
-                e.preventDefault();
-                sendProfileOtp();
-                if (!otpModalInstance) {
-                    otpModalInstance = new bootstrap.Modal(document.getElementById('otpConfirmModal'));
-                }
-                otpModalInstance.show();
-            }
+    function updatePreview(id, value) {
+        document.getElementById(id).textContent = value || (id.replace('prev',''));
+    }
+    function updateTagsPreview(id, value) {
+        let container = document.getElementById(id);
+        if(!value) { container.innerHTML = '<div class="prev-tag">Skill</div>'; return; }
+        let html = '';
+        value.split(',').forEach(function(item){
+            if(item.trim()) html += '<div class="prev-tag">' + item.trim() + '</div>';
         });
+        container.innerHTML = html;
     }
-
-    function sendProfileOtp() {
-        const errorDiv = document.getElementById('otpModalError');
-        const successDiv = document.getElementById('otpModalSuccess');
-        errorDiv.classList.add('d-none');
-        successDiv.classList.add('d-none');
-
-        const formData = new FormData();
-        fetch('${pageContext.request.contextPath}/women-jobs/profile/send-otp', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                successDiv.innerText = "A new OTP code has been sent.";
-                successDiv.classList.remove('d-none');
-            } else {
-                errorDiv.innerText = "Error sending OTP: " + data.message;
-                errorDiv.classList.remove('d-none');
-            }
-        })
-        .catch(err => {
-            errorDiv.innerText = "Network error. Please try again.";
-            errorDiv.classList.remove('d-none');
-        });
-    }
-
-    document.getElementById('resendOtpBtn').addEventListener('click', function(e) {
-        e.preventDefault();
-        sendProfileOtp();
-    });
-
-    document.getElementById('btnVerifyAndSubmit').addEventListener('click', function() {
-        const otpCode = document.getElementById('confirmOtpCode').value.trim();
-        const errorDiv = document.getElementById('otpModalError');
-        const successDiv = document.getElementById('otpModalSuccess');
-
-        errorDiv.classList.add('d-none');
-        successDiv.classList.add('d-none');
-
-        if (otpCode.length !== 6 || !/^\d+$/.test(otpCode)) {
-            errorDiv.innerText = "Please enter a valid 6-digit OTP code.";
-            errorDiv.classList.remove('d-none');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('otp', otpCode);
-
-        fetch('${pageContext.request.contextPath}/women-jobs/profile/verify-otp', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                isProfileOtpVerified = true;
-                if (otpModalInstance) {
-                    otpModalInstance.hide();
-                }
-                profileForm.submit();
-            } else {
-                errorDiv.innerText = data.message || "Invalid or expired OTP.";
-                errorDiv.classList.remove('d-none');
-            }
-        })
-        .catch(err => {
-            errorDiv.innerText = "Verification failed. Please try again.";
-            errorDiv.classList.remove('d-none');
-        });
-    });
-
-    var labels = [
-        'Step 1 of 11 — Worker identity',
-        'Step 2 of 11 — Location',
-        'Step 3 of 11 — Work categories',
-        'Step 4 of 11 — Who I serve',
-        'Step 5 of 11 — Facilities & readiness',
-        'Step 6 of 11 — Hours & calendar',
-        'Step 7 of 11 — About you',
-        'Step 8 of 11 — First offering',
-        'Step 9 of 11 — Payout',
-        'Step 10 of 11 — Documents (optional)',
-        'Step 11 of 11 — Work photos (optional)'
-    ];
-    var descs = [
-        'Your name, role, phone and experience.',
-        'Address clients will use to find you.',
-        'Categories you offer, plus primary category and role.',
-        'Audience, door visits, languages and skills.',
-        'Amenities and readiness.',
-        'Open days, hours, breaks and blocked dates.',
-        'Tell clients about your work.',
-        'Hourly rate, duration, buffer, mode and work type.',
-        'How you receive payouts.',
-        'Upload a profile photo or proof document (optional).',
-        'Add work photos (optional). Save using the existing profile OTP.'
-    ];
-    var step = 1;
-    var totalSteps = 11;
-    function fieldError(id, text) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = text || '';
-        el.classList.toggle('on', !!text);
-    }
-    function clearFieldErrors() {
-        document.querySelectorAll('.wj-field-err').forEach(function(el) {
-            el.textContent = '';
-            el.classList.remove('on');
-        });
-    }
-    function showProfileError(text) {
-        var errBox = document.getElementById('js-profile-error');
-        var errMsg = document.getElementById('js-profile-error-msg');
-        errMsg.textContent = text;
-        errBox.style.display = 'flex';
-    }
-    function validateCurrentStep() {
-        var errBox = document.getElementById('js-profile-error');
-        errBox.style.display = 'none';
-        clearFieldErrors();
-        if (step === 1) {
-            var phone = (profileForm.phone.value || '').trim();
-            if (phone !== '' && !/^\d{10}$/.test(phone)) {
-                showProfileError('Phone number must be exactly 10 digits.');
-                return false;
-            }
-            var years = (profileForm.yearsExperience.value || '').trim();
-            if (years !== '') {
-                var y = parseInt(years, 10);
-                if (isNaN(y) || y < 0 || y > 50) {
-                    fieldError('err-yearsExperience', 'Years of Experience must be between 0 and 50.');
-                    showProfileError('Years of Experience must be between 0 and 50.');
-                    return false;
-                }
-            }
-            var wa = (profileForm.whatsappNumber.value || '').trim();
-            if (wa !== '' && !/^\d{10}$/.test(wa)) {
-                fieldError('err-whatsappNumber', 'WhatsApp number must be exactly 10 digits.');
-                showProfileError('WhatsApp number must be exactly 10 digits.');
-                return false;
-            }
-        }
-        if (step === 2) {
-            var pin = (profileForm.pincode.value || '').trim();
-            if (pin !== '' && !/^\d{6}$/.test(pin)) {
-                fieldError('err-pincode', 'Pincode must be exactly 6 digits.');
-                showProfileError('Pincode must be exactly 6 digits.');
-                return false;
-            }
-        }
-        if (step === 8) {
-            var rate = (profileForm.hourlyRate.value || '').trim();
-            if (rate !== '') {
-                var r = parseFloat(rate);
-                if (isNaN(r) || r <= 0) {
-                    fieldError('err-hourlyRate', 'Hourly rate must be greater than zero.');
-                    showProfileError('Hourly rate must be greater than zero.');
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    function renderStep() {
-        document.querySelectorAll('.wj-step').forEach(function(el) {
-            el.style.display = String(el.getAttribute('data-step')) === String(step) ? 'block' : 'none';
-        });
-        document.querySelectorAll('#profileProgress span').forEach(function(el, i) {
-            el.classList.toggle('on', i < step);
-        });
-        document.getElementById('stepLabel').textContent = labels[step - 1];
-        document.getElementById('stepDesc').textContent = descs[step - 1];
-        document.getElementById('btnProfileBack').style.display = step === 1 ? 'none' : 'inline-flex';
-        document.getElementById('btnProfileNext').style.display = step === totalSteps ? 'none' : 'inline-flex';
-        document.getElementById('btnProfileSave').style.display = step === totalSteps ? 'inline-flex' : 'none';
-    }
-    document.getElementById('btnProfileNext').addEventListener('click', function() {
-        if (!validateCurrentStep()) return;
-        if (step < totalSteps) { step++; renderStep(); }
-    });
-    document.getElementById('btnProfileBack').addEventListener('click', function() {
-        if (step > 1) { step--; renderStep(); }
-    });
-    renderStep();
 
     var categories = {
-        "Caregiver": ["Elderly Caregiver", "Patient Care Assistant", "Child Caregiver", "Home Care Assistant"],
-        "Babysitting": ["Babysitter", "Nanny", "Daycare Assistant"],
-        "Housekeeping": ["House Maid", "Housekeeper", "Cleaner"],
-        "Cooking": ["Home Cook", "Personal Cook", "Kitchen Assistant"],
-        "Beauty & Salon": ["Beautician", "Hair Stylist", "Makeup Artist", "Nail Technician"],
-        "Healthcare": ["Nurse", "Care Assistant", "Receptionist", "Lab Assistant"],
-        "Teaching": ["Tutor", "School Teacher", "Preschool Teacher"],
-        "Office Jobs": ["Receptionist", "Office Assistant", "Data Entry Operator"],
-        "Retail": ["Cashier", "Sales Executive", "Store Assistant"],
-        "Hospitality": ["Hotel Receptionist", "Housekeeping Staff", "Waitress"],
-        "Customer Support": ["Call Center Executive", "Customer Care Representative"],
-        "Delivery & Logistics": ["Parcel Coordinator", "Delivery Executive (where applicable)"],
-        "Domestic Help": ["Laundry Assistant", "Home Helper"],
-        "Tailoring & Fashion": ["Tailor", "Boutique Assistant", "Fashion Designer"],
-        "Digital Jobs": ["Content Writer", "Graphic Designer", "Social Media Executive"],
+        "Caregiver": ["Baby Care", "Elderly Care", "Patient Care", "Nanny", "Special Needs Care"],
+        "Babysitting": ["Full-time Babysitter", "Part-time Babysitter", "Night Nanny"],
+        "Housekeeping": ["Maid", "Deep Cleaning", "Laundry Service", "Organizing"],
+        "Cooking": ["Chef", "Home Cook", "Baking", "Dietary Special Meals"],
+        "Beauty & Salon": ["Beautician", "Makeup Artist", "Hair Stylist", "Mehendi Artist", "Massage Therapist"],
+        "Healthcare": ["Nurse", "Physiotherapist", "Midwife", "Yoga Instructor", "Dietician"],
+        "Teaching": ["Tutor", "Preschool Teacher", "Music Teacher", "Art Instructor", "Language Tutor"],
+        "Office Jobs": ["Receptionist", "Data Entry", "Accountant", "HR Assistant", "Telecaller"],
+        "Retail": ["Salesgirl", "Cashier", "Store Manager", "Customer Service Agent"],
+        "Hospitality": ["Waitress", "Event Coordinator", "Hostess", "Hotel Housekeeping"],
+        "Customer Support": ["BPO Executive", "Chat Support", "Tech Support"],
+        "Delivery & Logistics": ["Delivery Executive", "Packer", "Driver"],
+        "Domestic Help": ["Japa Maid", "Pet Sitter", "Gardener"],
+        "Tailoring & Fashion": ["Tailor", "Boutique Assistant", "Fashion Designer", "Knitting & Stitching"],
+        "Digital Jobs": ["Graphic Designer", "Content Writer", "Social Media Manager", "Video Editor"],
         "Freelancing": ["Virtual Assistant", "Translator", "Online Tutor"],
         "Entrepreneurship": ["Sell Handmade Products", "Home Bakery", "Boutique Owner"]
     };
@@ -782,8 +436,35 @@ document.addEventListener('DOMContentLoaded', function() {
             subCategorySelect.appendChild(keep);
         }
     };
-    updateSubCategories();
-});
+    
+    function calculateProgress() {
+        const inputs = document.querySelectorAll('.form-input, .form-select');
+        let filled = 0;
+        let total = 0;
+        inputs.forEach(input => {
+            if (input.type === 'file') return;
+            total++;
+            if (input.value && input.value.trim() !== '') {
+                filled++;
+            }
+        });
+        const percent = total === 0 ? 0 : Math.round((filled / total) * 100);
+        document.getElementById('pbFill').style.width = percent + '%';
+        document.getElementById('pbText').textContent = percent + '% Completed';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSubCategories();
+        // Initialize dynamic previews on load
+        if(document.querySelector('input[name="skills"]')) updateTagsPreview('prevSkills', document.querySelector('input[name="skills"]').value);
+        
+        calculateProgress();
+        const allInputs = document.querySelectorAll('.form-input, .form-select');
+        allInputs.forEach(input => {
+            input.addEventListener('input', calculateProgress);
+            input.addEventListener('change', calculateProgress);
+        });
+    });
 </script>
 </body>
 </html>

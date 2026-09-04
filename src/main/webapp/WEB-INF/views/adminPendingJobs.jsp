@@ -58,11 +58,16 @@
     body.wj-admin-jobs .btn-danger { background: var(--ap-danger); border: 0; border-radius: 9px; font-weight: 700; color: #fff; }
     body.wj-admin-jobs .btn-info { background: #fff; color: var(--ap-text); border: 1px solid var(--ap-border); border-radius: 9px; font-weight: 600; }
     body.wj-admin-jobs .btn-info:hover { border-color: #FDA4AF; color: var(--ap-accent); background: #fff; }
-    body.wj-admin-jobs .wj-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+    body.wj-admin-jobs .ap-filter-row { display: flex; flex-direction: row; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    body.wj-admin-jobs .ap-filter-row .grow { flex: 1; min-width: 250px; }
+    body.wj-admin-jobs .ap-filter-row .ap-input { margin-bottom: 0; width: 100%; height: 40px; }
+    body.wj-admin-jobs .ap-filter-row .ap-btn { height: 40px; display: inline-flex; align-items: center; }
+    body.wj-admin-jobs .wj-actions { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
     body.wj-admin-jobs .wj-actions form { display: inline-flex; margin: 0; }
-    body.wj-admin-jobs .wj-actions .btn { height: 36px; padding: 7px 12px; font-size: 0.8rem; }
+    body.wj-admin-jobs .wj-actions .btn { height: 32px; padding: 4px 10px; font-size: 0.8rem; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
+    body.wj-admin-jobs .table td.action-td { white-space: nowrap; }
     body.wj-admin-jobs .btn-outline-primary {
-        background: #fff; color: var(--ap-text); border: 1px solid var(--ap-border); border-radius: 9px; font-weight: 600;
+        background: #fff; color: var(--ap-text); border: 1px solid var(--ap-border); border-radius: 9px; font-weight: 600; white-space: nowrap;
     }
     body.wj-admin-jobs .btn-outline-primary:hover { border-color: #FDA4AF; color: var(--ap-accent); background: #fff; }
     body.wj-admin-jobs .modal-header { background: #fff; color: var(--ap-text); border-bottom: 1px solid var(--ap-border); }
@@ -215,7 +220,7 @@
                                                     </c:choose>
                                                 </td>
                                                 <td>${app.appliedAt.toLocalDate()}</td>
-                                                <td>
+                                                <td class="action-td">
                                                     <div class="wj-actions">
                                                     <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal${app.id}">
                                                         <i class="bi bi-eye"></i> View
@@ -299,7 +304,7 @@
                                                 <td>${app.jobCategory}</td>
                                                 <td>${app.jobSubCategory}</td>
                                                 <td><span class="badge badge-approved">Approved</span></td>
-                                                <td>
+                                                <td class="action-td">
                                                     <div class="wj-actions">
                                                     <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModalApproved${app.id}">
                                                         <i class="bi bi-eye"></i> View
@@ -380,7 +385,7 @@
                                                 <td>${app.jobCategory}</td>
                                                 <td>${app.jobSubCategory}</td>
                                                 <td><span class="badge badge-rejected">Rejected</span></td>
-                                                <td>
+                                                <td class="action-td">
                                                     <div class="wj-actions">
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
                                                         <button type="submit" class="btn btn-sm btn-success">Approve</button>
