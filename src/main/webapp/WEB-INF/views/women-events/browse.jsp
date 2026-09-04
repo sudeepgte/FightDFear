@@ -670,7 +670,7 @@
                                 <div class="card-img-wrap">
                                     <c:choose>
                                         <c:when test="${not empty ev.bannerImage}">
-                                            <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}"/>
+                                            <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}" onerror="this.outerHTML='<div class=\'card-banner-placeholder\'>🌸</div>';"/>
                                         </c:when>
                                         <c:otherwise>
                                             <div class="card-banner-placeholder">🌸</div>
@@ -713,7 +713,7 @@
                                 <div class="card-img-wrap">
                                     <c:choose>
                                         <c:when test="${not empty ev.bannerImage}">
-                                            <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}"/>
+                                            <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}" onerror="this.outerHTML='<div class=\'card-banner-placeholder\'>🌸</div>';"/>
                                         </c:when>
                                         <c:otherwise>
                                             <div class="card-banner-placeholder">🌸</div>
@@ -834,7 +834,7 @@
                                             <div class="card-img-wrap">
                                                 <c:choose>
                                                     <c:when test="${not empty ev.bannerImage}">
-                                                        <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}"/>
+                                                        <img src="${pageContext.request.contextPath}/uploads/${ev.bannerImage}" class="card-banner" alt="${ev.name}" onerror="this.outerHTML='<div class=\'card-banner-placeholder\'>🌸</div>';"/>
                                                     </c:when>
                                                     <c:otherwise>
                                                         <div class="card-banner-placeholder">

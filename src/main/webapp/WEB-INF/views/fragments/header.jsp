@@ -249,6 +249,22 @@
             font-size: 24px !important;
         }
     }
+    .header-sidebar-toggle {
+        display: none;
+        color: #0F172A;
+        font-size: 28px;
+        cursor: pointer;
+        margin-right: 15px;
+        line-height: 1;
+    }
+    @media (max-width: 768px) {
+        .header-sidebar-toggle {
+            display: block;
+        }
+        .mobile-nav-toggle {
+            display: none !important; /* Hide original redundant top-right nav toggle on mobile */
+        }
+    }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -256,6 +272,9 @@
 <!-- ======= Header ======= -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
+    <!-- Left Side Top Sidebar Toggle -->
+    <i class="bi bi-list header-sidebar-toggle" id="globalSidebarToggle"></i>
+    
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
         <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#F43F5E !important;">Fight D Fear</h1>
     </a>

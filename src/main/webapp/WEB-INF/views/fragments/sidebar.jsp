@@ -30,6 +30,41 @@
             margin-top: 72px;
         }
         #sidebar-wrapper {
+
+            min-width: 100% !important;
+            max-width: 100% !important;
+            position: fixed !important;
+            top: 72px !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            z-index: 1040 !important;
+            padding: 20px 15px 100px !important;
+            overflow-y: auto !important;
+            
+            /* Fullscreen overlay hide logic */
+            transform: translateY(-150%) !important; /* Slides down from top */
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: none !important;
+        }
+        #sidebar-wrapper.sidebar-open {
+            transform: translateY(0) !important;
+            opacity: 1;
+            visibility: visible;
+        }
+        #sidebar-wrapper .list-group {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 4px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .sidebar-list-group-item {
+
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
@@ -72,6 +107,7 @@
         
         
                 .sidebar-list-group-item {
+
             width: 100% !important;
             padding: 14px 20px !important;
             border-radius: 8px !important;
@@ -127,6 +163,9 @@
     @media (max-width: 430px) {
         #wrapper {
             margin-top: 68px;
+        }
+        #sidebar-wrapper {
+            top: 68px !important;
         }
         .sidebar-list-group-item {
             font-size: 13px !important;
@@ -242,17 +281,29 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         var sidebar = document.getElementById("sidebar-wrapper");
+
+        
+        // Listen to the new global sidebar toggle in the top-left header
+        var globalToggleBtn = document.getElementById("globalSidebarToggle");
+        if (globalToggleBtn && sidebar) {
+            globalToggleBtn.addEventListener("click", function() {
+
         var toggleBtn = document.getElementById("sidebarMobileToggle");
         var toggleIcon = document.getElementById("sidebarToggleIcon");
 
         if (toggleBtn && sidebar) {
                         toggleBtn.addEventListener("click", function(e) {
                 e.stopPropagation();
+
                 var isOpen = sidebar.classList.toggle("sidebar-open");
-                toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
-                if (toggleIcon) {
-                    toggleIcon.classList.toggle("bi-chevron-down", !isOpen);
-                    toggleIcon.classList.toggle("bi-chevron-up", isOpen);
+                
+                // Toggle the icon visually
+                if (isOpen) {
+                    globalToggleBtn.classList.remove("bi-list");
+                    globalToggleBtn.classList.add("bi-x");
+                } else {
+                    globalToggleBtn.classList.remove("bi-x");
+                    globalToggleBtn.classList.add("bi-list");
                 }
             });
             document.addEventListener("click", function(e) {
