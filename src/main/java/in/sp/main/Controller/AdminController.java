@@ -2648,6 +2648,20 @@ public class AdminController {
         return "redirect:/admin/adminDashboard#fitnessOversightTabs";
     }
 
+    @GetMapping("/test-pending")
+    public String testPending(Model model) {
+        List<FitnessTrainer> pending = fitnessTrainerRepository.findByPartnerProfileStatusIn(Arrays.asList(
+                PartnerProfileStatus.PENDING_ADMIN_APPROVAL,
+                PartnerProfileStatus.READY_FOR_VERIFICATION,
+                PartnerProfileStatus.PROFILE_INCOMPLETE,
+                PartnerProfileStatus.CHANGES_REQUESTED,
+                PartnerProfileStatus.REGISTERED
+        ));
+        model.addAttribute("pendingTrainers", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingTrainers";
+    }
+
     @GetMapping("/pending-trainers")
     public String viewPendingTrainers(Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
@@ -2667,8 +2681,13 @@ public class AdminController {
                 .comparingInt((FitnessTrainer t) -> PartnerLifecycleSupport.pendingPriority(t.getPartnerProfileStatus()))
                 .thenComparing(FitnessTrainer::getId, Comparator.nullsLast(Long::compareTo)));
 
+        List<FitnessTrainer> approved = fitnessTrainerRepository.findByPartnerProfileStatusIn(
+                List.of(in.sp.main.Entities.PartnerProfileStatus.APPROVED));
+
         model.addAttribute("pendingTrainers", pending);
         model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("approvedTrainers", approved);
+        model.addAttribute("approvedCount", approved.size());
         return "adminPendingTrainers";
     }
 

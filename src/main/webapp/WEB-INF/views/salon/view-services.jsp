@@ -16,7 +16,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <!-- Theme CSS -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/Fight D Fear-theme.css">
+    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet"><link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
     <!-- Global Dashboard Theme -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/salon-global-theme.css">
 
@@ -356,7 +356,7 @@
         .btn-delete-icon:hover { background: #dc3545; color: white; }
 
         .btn-add-service {
-            background: linear-gradient(90deg, #1e1b4b 0%, #f43f5e 100%);
+            background: var(--color-accent);
             color: white;
             border: none;
             padding: 12px 25px;
@@ -371,6 +371,7 @@
             transform: translateY(-2px);
             box-shadow: 0 15px 30px rgba(244, 63, 94, 0.3);
             color: white;
+            background: var(--color-accent-hover);
         }
 
         /* Responsive */

@@ -572,7 +572,7 @@
                     <label for="emailOtp">Email OTP *</label>
                     <div class="otp-row">
                         <input type="text" id="emailOtp" name="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" style="letter-spacing: 2px; font-weight: 700;">
-                        <button type="button" id="btnVerifyOtp" class="btn-otp" style="background: var(--navy);" onclick="handleVerifyOtp()">
+                        <button type="button" id="btnVerifyOtp" class="btn-otp" onclick="handleVerifyOtp()">
                             Verify
                         </button>
                     </div>
@@ -645,7 +645,7 @@
                     <span class="value" id="revName">—</span>
                 </div>
                 <div class="review-row">
-                    <span class="label">Contact Person:</span>
+                    <span class="label">Bar Council ID :</span>
                     <span class="value" id="revBarCouncilId">—</span>
                 </div>
                 <div class="review-row">

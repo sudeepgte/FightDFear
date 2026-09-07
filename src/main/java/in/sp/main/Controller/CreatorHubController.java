@@ -20,6 +20,22 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/creator-hub")
 public class CreatorHubController {
+    @PostMapping("/notifications/mark-all-read")
+    @ResponseBody
+    @Transactional
+    public String markAllNotificationsRead(HttpSession session) {
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) return "error";
+        List<CreatorNotification> notifications = creatorNotificationRepository.findByUser_IdOrderByCreatedAtDesc(currentUser.getId());
+        for (CreatorNotification n : notifications) {
+            if (!n.isRead()) {
+                n.setRead(true);
+            }
+        }
+        creatorNotificationRepository.saveAll(notifications);
+        return "success";
+    }
+
 
     @Autowired
     private UserRepository userRepository;
@@ -1640,4 +1656,5 @@ public class CreatorHubController {
         return "creatorHubCoins";
     }
 }
+
 

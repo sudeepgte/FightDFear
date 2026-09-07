@@ -35,17 +35,28 @@
             background-color: #FFF4F6 !important;
             color: #2D142C !important;
         }
-        .event-hero { background: #2D142C !important; }
+        .event-hero { 
+            background: #FFFFFF !important;
+            height: 340px !important; 
+        }
         .hero-overlay {
-            background: linear-gradient(to top, rgba(45, 20, 44, 0.95) 0%, rgba(45, 20, 44, 0.5) 60%, transparent 100%) !important;
+            background: linear-gradient(to bottom, #FFF4F6 0%, #FFFFFF 100%) !important;
+            opacity: 0.8;
         }
         .block-title, .event-title, .sidebar-price, .feature-card h4, .timeline-content h4,
         .facilitator-info h4, .expect-item h5, .avg-rating-value, .reviewer-title-name,
         .breadcrumb-container .breadcrumb-item.active, .sidebar-meta-item .meta-value {
             color: #2D142C !important;
         }
-        .register-sidebar,
-        .mobile-sticky-action-bar {
+        .hero-meta span {
+            color: #2D142C !important;
+        }
+        .hero-cat-badge {
+            background-color: #FFF1F2 !important;
+            border: 1px solid #FDA4AF !important;
+            color: #F43F5E !important;
+        }
+        .register-sidebar {
             position: static !important;
             top: auto !important;
         }
@@ -71,7 +82,24 @@
         }
         .avg-rating-stars, .review-stars-metric { background-color: transparent !important; }
         .bottom-registration-cta {
-            background: linear-gradient(135deg, #2D142C 0%, #4A1A3A 70%, #F43F5E 100%) !important;
+            background: linear-gradient(to bottom, #FFF4F6 0%, #FFFFFF 100%) !important;
+            border: 1px solid #F3D4DC !important;
+            color: #2D142C !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .bottom-registration-cta h3 {
+            color: #2D142C !important;
+            margin-bottom: 0 !important;
+        }
+        .bottom-registration-cta p {
+            color: #6B3A4A !important;
+            margin-bottom: 4px !important;
+        }
+        .bottom-registration-cta .btn-premium-cta {
+            max-width: 320px;
         }
         #page-content-wrapper .text-primary,
         #page-content-wrapper .text-success,
@@ -114,9 +142,27 @@
             color: #F43F5E !important;
             border: 1px solid #FDA4AF !important;
         }
+        .mobile-sticky-action-bar { display: none; }
         @media (max-width: 991px) {
-            .detail-grid { padding-bottom: 40px !important; }
-            .mobile-sticky-action-bar { display: block; position: static !important; }
+            .detail-grid { 
+                grid-template-columns: 1fr !important; 
+                gap: 24px !important;
+                padding-bottom: 40px !important; 
+            }
+            .sidebar-column { margin-top: 10px; }
+            .mobile-sticky-action-bar { display: none !important; }
+            .event-hero { height: auto !important; min-height: 260px !important; padding-bottom: 24px; }
+            .hero-content { padding: 32px 16px 16px !important; }
+        }
+        @media (max-width: 575px) {
+            .event-title { font-size: 2.2rem !important; }
+            .we-fact-grid { display: flex !important; flex-direction: column !important; gap: 12px !important; }
+            .we-fact { display: flex; justify-content: space-between; border-bottom: 1px solid #F3D4DC; padding-bottom: 8px; }
+            .bottom-registration-cta { padding: 32px 16px !important; }
+            .bottom-registration-cta h3 { font-size: 1.6rem !important; }
+            .hero-meta { flex-direction: column; gap: 10px; }
+            .reviews-summary-box { grid-template-columns: 1fr !important; text-align: center; gap: 16px; }
+            .card-block { padding: 24px 16px !important; }
         }
     </style>
     <!-- Custom Theme & Detail Stylesheets -->
@@ -127,7 +173,6 @@
       .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
       .we-modal-overlay.open { display:flex; }
     </style>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css"/>
 </head>
 <body>
 
@@ -139,7 +184,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;" data-skip-global-back="true">
-        <div id="global-back-btn" style="padding: 20px 20px 0;">
+        <div id="global-back-btn" style="padding: 20px 20px 24px;">
             <a href="${pageContext.request.contextPath}/women-events" class="btn btn-sm" style="background: white; border: 1px solid #ddd; color: #1e1b4b; font-weight: 600; padding: 6px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><i class="bi bi-arrow-left"></i> Go Back</a>
         </div>
 
@@ -161,12 +206,12 @@
         <div class="event-hero">
             <c:choose>
                 <c:when test="${not empty event.bannerImage}">
-                    <img src="${pageContext.request.contextPath}/uploads/${event.bannerImage}" alt="${event.name}"/>
+                    <img src="${pageContext.request.contextPath}/uploads/${event.bannerImage}" alt="${event.name}" onerror="this.style.display='none';"/>
                 </c:when>
                 <c:otherwise>
                     <!-- Fallback abstract premium background pattern if banner is missing -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #2D142C 0%, #4A1A3A 55%, #F43F5E 100%);"></div>
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #F43F5E 140%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #FFF4F6 0%, #FFFFFF 55%, #FFF1F2 100%);"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #FFFFFF 0%, #FFF4F6 60%, #FDA4AF 140%); opacity: 0.5;"></div>
                 </c:otherwise>
             </c:choose>
             <div class="hero-overlay"></div>

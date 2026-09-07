@@ -167,7 +167,8 @@
         .otp-box { background:#F8FAFC; border:1px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:18px; }
         .otp-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
         .otp-row input { flex:1; min-width:120px; }
-        .btn-otp { padding:10px 14px; border:none; border-radius:10px; background:var(--navy); color:#fff; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-otp { padding:10px 14px; border:none; border-radius:10px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer; font-family:inherit; transition: background 0.3s; }
+        .btn-otp:hover:not(:disabled) { background:var(--primary-hover); }
         .btn-otp:disabled { opacity:0.5; cursor:not-allowed; }
         .otp-msg { font-size:0.82rem; margin-top:8px; font-weight:600; }
         .otp-msg.ok { color:var(--success); }
@@ -254,7 +255,7 @@
                     <li><i class="bi bi-check-circle-fill"></i> Seller account / application created</li>
                     <li><i class="bi bi-check-circle-fill"></i> ${success}</li>
                 </ul>
-                <div class="confirm-next">Next step: sign in after admin verification, then complete your shop profile.</div>
+                <div class="confirm-next">Next step: sign in now to complete your shop profile.</div>
                 <a class="btn-confirm" href="${pageContext.request.contextPath}/women-products/seller/login">Continue to Seller Login <i class="bi bi-arrow-right"></i></a>
             </div>
         </c:if>
@@ -268,13 +269,13 @@
                 <div class="row-2">
                     <div class="form-group">
                         <label for="fullName">Owner / contact name *</label>
-                        <input class="form-input" type="text" name="fullName" id="fullName" maxlength="80" required
-                               pattern="[A-Za-z][A-Za-z .'-]{1,79}" placeholder="Your full name">
+                        <input class="form-input" type="text" name="fullName" id="fullName" minlength="2" maxlength="50" required
+                               pattern="^[A-Za-z ]+$" placeholder="Your full name">
                     </div>
                     <div class="form-group">
                         <label for="businessName">Shop / business name *</label>
-                        <input class="form-input" type="text" name="businessName" id="businessName" maxlength="100" required
-                               pattern="[A-Za-z0-9][A-Za-z0-9 &amp;.,'()\-]{1,99}" placeholder="Shop name">
+                        <input class="form-input" type="text" name="businessName" id="businessName" minlength="2" maxlength="100" required
+                               placeholder="Shop name">
                     </div>
                 </div>
                 <div class="row-2">
@@ -285,14 +286,14 @@
                     <div class="form-group">
                         <label for="phone">Mobile number *</label>
                         <input class="form-input" type="tel" name="phone" id="phone" required maxlength="10" inputmode="numeric"
-                               placeholder="10-digit mobile" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                               pattern="^[6-9][0-9]{9}$" placeholder="10-digit mobile" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                     </div>
                 </div>
                 <div class="otp-box">
                     <label>Email OTP *</label>
                     <div class="otp-row" style="margin-top:8px;">
                         <button type="button" class="btn-otp" id="btnSendOtp">Send OTP</button>
-                        <input class="form-input" type="text" id="sellerOtp" maxlength="6" inputmode="numeric" placeholder="6-digit OTP" autocomplete="one-time-code">
+                        <input class="form-input" type="text" id="sellerOtp" maxlength="6" inputmode="numeric" placeholder="6-digit OTP" autocomplete="one-time-code" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                         <button type="button" class="btn-otp" id="btnVerifyOtp">Verify OTP</button>
                     </div>
                     <div class="otp-msg" id="otpMsg"></div>
@@ -301,7 +302,7 @@
                     <div class="form-group">
                         <label for="password">Password *</label>
                         <div class="input-wrapper password-field">
-                            <input class="form-input" type="password" name="password" id="password" required placeholder="Create a password">
+                            <input class="form-input" type="password" name="password" id="password" required minlength="6" placeholder="Create a password">
                             <button type="button" class="password-toggle-btn" data-target="password" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
                         </div>
                         <div class="hint">At least 6 characters, with a number and a special character.</div>
@@ -309,27 +310,27 @@
                     <div class="form-group">
                         <label for="confirmPassword">Confirm password *</label>
                         <div class="input-wrapper password-field">
-                            <input class="form-input" type="password" name="confirmPassword" id="confirmPassword" required placeholder="Re-enter password">
+                            <input class="form-input" type="password" name="confirmPassword" id="confirmPassword" required minlength="6" placeholder="Re-enter password">
                             <button type="button" class="password-toggle-btn" data-target="confirmPassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="address">Address *</label>
-                    <input class="form-input" type="text" name="address" id="address" required minlength="10" maxlength="1000" placeholder="Shop / warehouse address">
+                    <input class="form-input" type="text" name="address" id="address" required minlength="10" maxlength="250" placeholder="Shop / warehouse address">
                 </div>
                 <div class="form-group">
                     <label for="city">City</label>
-                    <input class="form-input" type="text" name="city" id="city" maxlength="80" placeholder="City (optional)">
+                    <input class="form-input" type="text" name="city" id="city" minlength="2" maxlength="50" pattern="^[A-Za-z \-]+$" placeholder="City (optional)">
                 </div>
                 <div class="row-2">
                     <div class="form-group">
                         <label for="profilePhoto">Profile photo *</label>
-                        <input class="form-input file-input" type="file" name="profilePhoto" id="profilePhoto" accept="image/*" required>
+                        <input class="form-input file-input" type="file" name="profilePhoto" id="profilePhoto" accept=".jpg,.jpeg,.png" required>
                     </div>
                     <div class="form-group">
                         <label for="identityDoc">ID / document *</label>
-                        <input class="form-input file-input" type="file" name="identityDoc" id="identityDoc" accept="image/*,.pdf" required>
+                        <input class="form-input file-input" type="file" name="identityDoc" id="identityDoc" accept=".pdf,.jpg,.jpeg,.png" required>
                     </div>
                 </div>
                 <label class="terms-row">
@@ -378,18 +379,41 @@
         var otpVerified = false;
         var wpConfirmReady = false;
         var ctx = '${pageContext.request.contextPath}';
+        var otpTimerInterval = null;
+
         function setOtpMsg(text, ok) {
             var el = document.getElementById('otpMsg');
             el.textContent = text;
             el.className = 'otp-msg ' + (ok ? 'ok' : 'err');
         }
+
+        function startOtpTimer(btn) {
+            var timeLeft = 60;
+            btn.disabled = true;
+            btn.textContent = 'Resend in ' + timeLeft + 's';
+            if (otpTimerInterval) clearInterval(otpTimerInterval);
+            otpTimerInterval = setInterval(function() {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(otpTimerInterval);
+                    btn.disabled = false;
+                    btn.textContent = 'Resend OTP';
+                } else {
+                    btn.textContent = 'Resend in ' + timeLeft + 's';
+                }
+            }, 1000);
+        }
+
         document.getElementById('btnSendOtp').addEventListener('click', function () {
             var email = document.getElementById('email').value.trim().toLowerCase();
             if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-                setOtpMsg('Enter a valid email first.', false);
+                setOtpMsg('Please enter a valid email address.', false);
                 return;
             }
             otpVerified = false;
+            var btn = this;
+            startOtpTimer(btn);
+            
             fetch(ctx + '/women-products/seller/send-otp?email=' + encodeURIComponent(email), {
                 method: 'POST'
             }).then(function (r) { return r.json(); })
@@ -397,15 +421,28 @@
                   var ok = !!data.success;
                   setOtpMsg(data.message || data.error || (ok ? 'OTP sent' : 'Could not send OTP'), ok);
                   if (ok) {
-                      alert('OTP sent to your email (' + email + ')! Please check your inbox or spam folder.');
+                      // alert('OTP sent to your email (' + email + ')! Please check your inbox or spam folder.');
+                  } else {
+                      clearInterval(otpTimerInterval);
+                      btn.disabled = false;
+                      btn.textContent = 'Send OTP';
+                      if (data.error && data.error.toLowerCase().includes('already')) {
+                          setOtpMsg('This email is already registered.', false);
+                      }
                   }
-              }).catch(function () { setOtpMsg('Could not send OTP.', false); });
+              }).catch(function () { 
+                  clearInterval(otpTimerInterval);
+                  btn.disabled = false;
+                  btn.textContent = 'Send OTP';
+                  setOtpMsg('Could not send OTP.', false); 
+              });
         });
+
         document.getElementById('btnVerifyOtp').addEventListener('click', function () {
             var email = document.getElementById('email').value.trim().toLowerCase();
             var otp = document.getElementById('sellerOtp').value.replace(/\D/g, '');
             if (otp.length !== 6) {
-                setOtpMsg('Enter the 6-digit OTP from your email.', false);
+                setOtpMsg('Please enter the 6-digit OTP.', false);
                 return;
             }
             fetch(ctx + '/women-products/seller/verify-otp?email=' + encodeURIComponent(email) + '&otp=' + encodeURIComponent(otp), {
@@ -413,13 +450,24 @@
             }).then(function (r) { return r.json(); })
               .then(function (data) {
                   otpVerified = !!data.success;
-                  setOtpMsg(data.message || data.error || (otpVerified ? 'OTP verified' : 'Invalid OTP'), otpVerified);
                   if (otpVerified) {
-                      alert('Email verified successfully! You can now complete registration.');
+                      setOtpMsg('✓ Email verified', true);
+                      clearInterval(otpTimerInterval);
+                      document.getElementById('btnSendOtp').disabled = true;
+                      document.getElementById('btnSendOtp').textContent = 'Verified';
+                  } else {
+                      var errMsg = data.message || data.error || 'Invalid OTP.';
+                      if (errMsg.toLowerCase().includes('expire')) {
+                          errMsg = 'OTP has expired. Please request a new OTP.';
+                      } else if (!data.message && !data.error) {
+                          errMsg = 'Invalid OTP.';
+                      }
+                      setOtpMsg(errMsg, false);
                   }
               }).catch(function () { otpVerified = false; setOtpMsg('Verification failed.', false); });
         });
         document.getElementById('email').addEventListener('change', function () { otpVerified = false; });
+        
         document.getElementById('sellerForm').addEventListener('submit', function (e) {
             var fullName = document.getElementById('fullName').value.trim();
             var businessName = document.getElementById('businessName').value.trim();
@@ -428,78 +476,80 @@
             var pass = document.getElementById('password').value;
             var confirm = document.getElementById('confirmPassword').value;
             var address = document.getElementById('address').value.trim();
+            var city = document.getElementById('city').value.trim();
             var photo = document.getElementById('profilePhoto');
             var identity = document.getElementById('identityDoc');
             var terms = this.querySelector('[name="acceptedTerms"]');
 
-            if (!otpVerified) {
-                e.preventDefault();
-                alert('Please verify the email OTP before creating the account.');
-                return;
+            if (!/^[A-Za-z ]{2,50}$/.test(fullName)) {
+                e.preventDefault(); alert('Please enter a valid owner name.'); return;
             }
-            if (!/^[A-Za-z][A-Za-z .'-]{1,79}$/.test(fullName)) {
-                e.preventDefault();
-                alert('Full Name must be 2–80 letters only (spaces, apostrophes, periods, and hyphens allowed; no numbers).');
-                return;
-            }
-            if (!/^[A-Za-z0-9][A-Za-z0-9 &.,'()\-]{1,99}$/.test(businessName) || businessName.length < 2) {
-                e.preventDefault();
-                alert('Business Name must be 2–100 characters, start with a letter or number, and may include spaces and & . , \' ( ) - only.');
-                return;
+            if (businessName.length < 2 || businessName.length > 100) {
+                e.preventDefault(); alert('Please enter your shop or business name.'); return;
             }
             if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-                e.preventDefault();
-                alert('Enter a valid email address.');
-                return;
+                e.preventDefault(); alert('Please enter a valid email address.'); return;
             }
             if (!/^[6-9]\d{9}$/.test(phone)) {
-                e.preventDefault();
-                alert('Enter a valid 10-digit Indian mobile number.');
-                return;
+                e.preventDefault(); alert('Please enter a valid 10-digit mobile number.'); return;
             }
-            if (!/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/.test(pass)) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters and include a number and special character.');
-                return;
+            if (!otpVerified) {
+                e.preventDefault(); alert('Please verify the email OTP before creating the account.'); return;
+            }
+            if (!/^(?=.*[0-9])(?=.*[^a-zA-Z0-9]).{6,}$/.test(pass)) {
+                e.preventDefault(); alert('Password must contain at least 6 characters, 1 number and 1 special character.'); return;
             }
             if (pass !== confirm) {
-                e.preventDefault();
-                alert('Passwords do not match.');
-                return;
+                e.preventDefault(); alert('Passwords do not match.'); return;
             }
-            if (address.length < 10 || address.length > 1000) {
-                e.preventDefault();
-                alert('Please enter a complete address (at least 10 characters).');
-                return;
+            if (address.length < 10 || address.length > 250) {
+                e.preventDefault(); alert('Please enter a valid shop / warehouse address.'); return;
             }
-            if (!photo.files || !photo.files.length) {
-                e.preventDefault();
-                alert('Profile photo is required.');
-                return;
+            if (city.length > 0 && !/^[A-Za-z \-]{2,50}$/.test(city)) {
+                e.preventDefault(); alert('Please enter a valid city name.'); return;
             }
-            if (!identity.files || !identity.files.length) {
-                e.preventDefault();
-                alert('ID / document is required.');
-                return;
+            if (!photo.files || photo.files.length === 0) {
+                e.preventDefault(); alert('Profile photo is required.'); return;
+            } else {
+                var pExt = photo.files[0].name.split('.').pop().toLowerCase();
+                if (!['jpg', 'jpeg', 'png'].includes(pExt)) {
+                    e.preventDefault(); alert('Only JPG, JPEG and PNG files are allowed.'); return;
+                }
+                if (photo.files[0].size > 5 * 1024 * 1024) {
+                    e.preventDefault(); alert('Profile photo must be less than 5 MB.'); return;
+                }
+            }
+            if (!identity.files || identity.files.length === 0) {
+                e.preventDefault(); alert('ID / document is required.'); return;
+            } else {
+                var iExt = identity.files[0].name.split('.').pop().toLowerCase();
+                if (!['pdf', 'jpg', 'jpeg', 'png'].includes(iExt)) {
+                    e.preventDefault(); alert('Unsupported file format.'); return;
+                }
+                if (identity.files[0].size > 10 * 1024 * 1024) {
+                    e.preventDefault(); alert('Document must be less than 10 MB.'); return;
+                }
             }
             if (!terms || !terms.checked) {
-                e.preventDefault();
-                alert('Please accept the Terms and Privacy Policy.');
-                return;
+                e.preventDefault(); alert('Please accept the Terms and Privacy Policy.'); return;
             }
+
             document.getElementById('fullName').value = fullName;
             document.getElementById('businessName').value = businessName;
             document.getElementById('email').value = email;
             document.getElementById('phone').value = phone;
             document.getElementById('address').value = address;
+            document.getElementById('city').value = city;
+
             if (!wpConfirmReady) {
-                e.preventDefault();
+                e.preventDefault(); // Stop submission to show confirmation modal
                 document.getElementById('revShop').textContent = businessName;
                 document.getElementById('revName').textContent = fullName;
                 document.getElementById('revPhone').textContent = phone;
                 document.getElementById('revEmail').textContent = email;
                 document.getElementById('confirmModal').style.display = 'flex';
             }
+            // If wpConfirmReady is true, we do NOT preventDefault, letting the form submit normally!
         });
         document.getElementById('btnConfirmBack').addEventListener('click', function () {
             document.getElementById('confirmModal').style.display = 'none';

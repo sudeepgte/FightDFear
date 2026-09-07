@@ -5,7 +5,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creator Hub - Feed</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -26,17 +28,14 @@
             --shadow:      0 2px 12px rgba(0,0,0,.06);
         }
         * { box-sizing: border-box; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); overflow-y: scroll; }
+        body { background: var(--bg); color: var(--text); overflow-y: scroll; overflow-x: hidden; width: 100%; }
         a { text-decoration: none; color: inherit; }
 
-        .page-wrapper {
+        @media (max-width: 768px) { .page-wrapper { padding: 10px 0 !important; gap: 10px !important; } } .page-wrapper {
             max-width: 1536px;
             margin: 0 auto;
-            padding: 80px 20px 40px;
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            gap: 20px;
-            align-items: start;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;
         }
 
         /* ── LEFT SIDEBAR ── */
@@ -152,24 +151,44 @@
         
         .empty-feed { text-align: center; padding: 40px 20px; color: var(--sub); }
         .empty-feed i { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
-    </style>
+    @media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
 </head>
 <body>
-    
-    <!-- Header -->
-    <header style="position:fixed; top:0; width:100%; height:60px; background:#fff; border-bottom:1px solid var(--border); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
-        <div style="font-weight:700; font-size:20px; color:var(--accent);">
-            <i class="fa-solid fa-fire"></i> Fight D Fear
-        </div>
-        <div style="display:flex; align-items:center; gap:20px;">
-            <a href="${pageContext.request.contextPath}/"><i class="fa-solid fa-house" style="font-size:18px; color:var(--text);"></i></a>
-            <img src="${not empty currentUser.profilePhoto ? currentUser.profilePhoto : pageContext.request.contextPath += '/assets/img/default-avatar.png'}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
+<!-- Header -->
+    <style>
+@media (max-width: 1200px) {
+    .ch-sub-header {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        gap: 15px !important;
+        padding: 0 16px !important;
+        scrollbar-width: none;
+    }
+    .ch-sub-header::-webkit-scrollbar { display: none; }
+    .ch-sub-header > div { flex-shrink: 0 !important; }
+    .desktop-only { display: none !important; }
+}
+@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        <header class="ch-sub-header" style="position:sticky; top:80px; width:100%; height:60px; background:#fff; border-bottom:1px solid var(--border); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+        <div style="font-weight:700; font-size:20px; color:var(--accent); display:flex; align-items:center; gap:12px;"><span><i class="fa-solid fa-clapperboard"></i> Creator Hub</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+            <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
+            <a href="${pageContext.request.contextPath}/logout" title="Logout" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--accent); text-decoration:none;"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span></a>
         </div>
     </header>
 
     <div class="page-wrapper">
         <!-- LEFT SIDEBAR -->
-        <div class="left-sidebar desktop-sidebar">
+        <div class="left-sidebar desktop-sidebar" style="display:none;">
             <a href="${pageContext.request.contextPath}/creator-hub/profile" class="ls-item">
                 <i class="fa-regular fa-user"></i> Profile
             </a>
@@ -427,7 +446,27 @@
             </div>
         </div>
     </div>
-    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }</style>
+    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        </div>
+    </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

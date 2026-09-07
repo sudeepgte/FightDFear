@@ -1,0 +1,511 @@
+/**
+ * Fight D Fear theme layer
+ * Keeps app UI consistent across JSP pages.
+ * Color palette from user dashboard: purple → coral → gold
+ */
+
+/* ===================================================================
+ * 1. ROOT VARIABLES — master color palette
+ * =================================================================== */
+:root {
+  /* ===============================
+     STRICT 60/30/10 BRAND COLORS
+     =============================== */
+  --color-primary-surface: #FFFFFF;
+  --color-page-background: #F8FAFC;
+  --color-secondary-surface: #FFF1F3;
+  --color-secondary-rose: #FFE4E8;
+  --color-accent: #F43F5E;
+  --color-accent-hover: #E11D48;
+  --color-text-primary: #1E1B4B;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+
+  /* Legacy mappings to preserve structure */
+  --brand-purple: var(--color-text-primary);         
+  --brand-purple-dark: var(--color-text-primary);    
+  --brand-purple-darker: var(--color-text-primary);  
+  --brand-pink: var(--color-accent);           
+  --brand-pink-light: var(--color-secondary-surface);     
+
+  --primary-purple: var(--color-text-primary);
+  --primary-purple-light: var(--color-text-secondary); 
+  --primary-coral: var(--color-accent);
+  --primary-coral-dark: var(--color-accent-hover);
+  --primary-teal: #20c997;
+  --primary-gold: #ffd700;
+  
+  --dark-bg: var(--color-primary-surface);
+  --light-bg: var(--color-page-background);
+  
+  --gradient-primary: var(--color-accent);
+  --gradient-dark: var(--color-page-background);
+  
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
+
+  /* FDF system tokens */
+  --fdf-primary: var(--color-accent);
+  --fdf-primary-2: var(--color-accent-hover);
+  --fdf-bg: var(--color-page-background);
+  --fdf-card: var(--color-primary-surface);
+  --fdf-text: var(--color-text-primary);
+  --fdf-muted: var(--color-text-secondary);
+  --fdf-border: var(--color-border);
+  --fdf-shadow: var(--shadow-sm);
+
+  --accent-color: var(--color-accent);
+}
+
+/* ===================================================================
+ * 2. PAGE + LAYOUT SHELLS
+ * =================================================================== */
+.fdf-page {
+  background: linear-gradient(180deg, var(--fdf-bg) 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.fdf-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+/* ===================================================================
+ * 3. CARDS
+ * =================================================================== */
+.fdf-card {
+  background: var(--fdf-card);
+  border: 1px solid var(--fdf-border);
+  border-radius: 16px;
+  box-shadow: var(--fdf-shadow);
+}
+
+.fdf-card-soft {
+  background: var(--fdf-card);
+  border: 1px solid var(--fdf-border);
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(74, 14, 120, 0.10);
+}
+
+.fdf-muted { color: var(--fdf-muted); }
+
+/* ===================================================================
+ * 4. BUTTONS
+ * =================================================================== */
+.btn-fdf {
+  background: var(--color-accent) !important;
+  color: #FFFFFF !important;
+  border: none;
+  font-weight: 700;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+.btn-fdf:hover {
+  background: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-1px);
+}
+
+.btn-fdf-outline {
+  border: 2px solid var(--primary-purple-light);
+  color: var(--primary-purple-light);
+  font-weight: 700;
+  background: #fff;
+  border-radius: 999px;
+  transition: all 0.25s ease;
+}
+.btn-fdf-outline:hover {
+  background: var(--primary-purple-light);
+  color: #fff;
+}
+
+/* Primary action button (used across all pages) */
+.btn.btn-watch-video {
+  border-radius: 999px;
+  font-weight: 800;
+  padding: 10px 24px;
+  background: var(--color-accent) !important;
+  border: none;
+  color: #FFFFFF !important;
+  letter-spacing: .3px;
+  transition: all 0.2s;
+}
+.btn.btn-watch-video:hover {
+  background: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
+  transform: translateY(-2px);
+}
+
+/* Bootstrap .btn-primary override for consistency */
+.btn-primary {
+  background: var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+  color: #FFFFFF !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+  color: #FFFFFF !important;
+}
+
+/* Secondary Button equivalent */
+.btn-outline-primary {
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+  background: var(--color-primary-surface) !important;
+}
+.btn-outline-primary:hover {
+  background: var(--color-secondary-surface) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.fdf-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--primary-purple);
+  color: #fff;
+  font-size: 13px;
+}
+.fdf-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--primary-coral);
+  animation: fdfPulse 1.2s infinite;
+}
+@keyframes fdfPulse { 0%{opacity:.35} 50%{opacity:1} 100%{opacity:.35} }
+
+/* ===================================================================
+ * 5. HEADER / NAVBAR THEMING
+ * =================================================================== */
+.header {
+  background: rgba(255,255,255,0.97) !important;
+  border-bottom: 2px solid rgba(30, 27, 75, 0.08);
+  backdrop-filter: blur(8px);
+}
+.header .logo h1 {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.header .btn-getstarted {
+  background: var(--gradient-primary) !important;
+  border: none !important;
+  color: #fff !important;
+}
+.header .btn-qna {
+  background: var(--primary-coral) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+/* ===================================================================
+ * 6. HERO SECTION OVERLAYS
+ * =================================================================== */
+.hero-section::before,
+.hero-wrap .overlay {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(244, 63, 94, 0.05) !important;
+  z-index: 1;
+}
+
+.hero-section .container,
+.hero-wrap .container {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-section h1,
+.hero-wrap h1 {
+  color: var(--color-text-primary);
+}
+
+.hero-section h2,
+.hero-wrap h2 {
+  color: var(--color-text-secondary);
+}
+
+.hero-section p,
+.hero-wrap p {
+  color: var(--color-text-secondary);
+}
+
+/* ===================================================================
+ * 7. DASHBOARD CARDS
+ * =================================================================== */
+.dashboard-card {
+  border: 1px solid var(--fdf-border);
+  border-radius: 16px;
+  background: var(--fdf-card);
+  box-shadow: var(--shadow-sm);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(123, 44, 191, 0.30);
+}
+.dashboard-card img {
+  border-radius: 12px;
+}
+.dashboard-card h4 {
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: var(--primary-purple);
+}
+.dashboard-card p {
+  color: var(--fdf-muted);
+}
+
+/* Ensure buttons inside flex-column dashboard cards are pushed to the bottom */
+.dashboard-card.d-flex.flex-column > a.btn,
+.dashboard-card.d-flex.flex-column > .d-grid,
+.dashboard-card.d-flex.flex-column > a.btn-watch-video {
+  margin-top: auto !important;
+}
+
+/* ===================================================================
+ * 8. SECTION HEADINGS
+ * =================================================================== */
+.services.section h2,
+.ftco-section h2,
+section h2 {
+  color: var(--primary-purple);
+}
+
+.services.section p,
+.ftco-section .text-muted {
+  color: var(--fdf-muted);
+}
+
+/* ===================================================================
+ * 9. FORMS + TABLES
+ * =================================================================== */
+.form-control, .form-select {
+  border-radius: 12px;
+  border-color: rgba(74, 14, 120, 0.18);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-purple-light);
+  box-shadow: 0 0 0 .2rem rgba(123, 44, 191, 0.15);
+}
+
+.table {
+  border-color: rgba(30, 27, 75, 0.12);
+}
+.table thead {
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-light) 100%);
+  color: #fff;
+}
+.table thead th {
+  color: #fff;
+  border-color: rgba(255,255,255,0.15);
+}
+.table tbody tr:hover {
+  background: rgba(123, 44, 191, 0.04);
+}
+
+/* ===================================================================
+ * 10. CHAT WINDOW THEMING
+ * =================================================================== */
+.message-sent {
+  background: var(--gradient-primary) !important;
+  color: #fff;
+}
+.message-received {
+  background: #f0eaf7 !important;
+  color: #333;
+}
+.chat-container {
+  border: 1px solid var(--fdf-border);
+}
+
+/* ===================================================================
+ * 11. BADGES + ALERTS
+ * =================================================================== */
+.badge.bg-primary {
+  background: var(--primary-purple-light) !important;
+}
+.badge.bg-danger {
+  background: var(--primary-coral) !important;
+}
+.badge.bg-success {
+  background: var(--primary-teal) !important;
+}
+.badge.bg-warning {
+  background: var(--primary-gold) !important;
+  color: #333 !important;
+}
+
+/* ===================================================================
+ * 12. FOOTER THEMING
+ * =================================================================== */
+.footer {
+  background: var(--brand-purple-darker) !important;
+  color: rgba(255,255,255,0.85);
+}
+.footer h4 {
+  color: var(--primary-gold) !important;
+}
+.footer a {
+  color: rgba(255,255,255,0.7) !important;
+  transition: color 0.2s;
+}
+.footer a:hover {
+  color: var(--primary-gold) !important;
+}
+.footer .social-links a {
+  background: rgba(255,255,255,0.12);
+  color: #fff !important;
+}
+.footer .social-links a:hover {
+  background: var(--primary-coral);
+  color: #fff !important;
+}
+.footer .sitename {
+  color: var(--primary-gold) !important;
+}
+.footer .copyright {
+  color: rgba(255,255,255,0.6);
+}
+.footer .copyright strong {
+  color: var(--primary-gold);
+}
+
+/* Old beauty template footer override */
+.ftco-footer {
+  background: var(--primary-purple) !important;
+}
+.ftco-footer h2.ftco-heading-2 {
+  color: var(--primary-gold) !important;
+}
+.ftco-footer a {
+  color: rgba(255,255,255,0.7) !important;
+}
+.ftco-footer a:hover {
+  color: var(--primary-gold) !important;
+}
+
+/* ===================================================================
+ * 13. PROGRESS BARS
+ * =================================================================== */
+.progress-bar.bg-primary,
+.progress-bar {
+  background: var(--gradient-primary) !important;
+}
+
+/* ===================================================================
+ * 14. USER PROFILE PAGE
+ * =================================================================== */
+.user-details-side {
+  background: var(--color-page-background);
+}
+.user-bg-left {
+  background: var(--color-primary-surface);
+}
+.coin-box {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.08));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* ===================================================================
+ * 15. USER SEARCH / CONNECT CARDS
+ * =================================================================== */
+.user-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid var(--fdf-border);
+  border-radius: 16px;
+}
+.user-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(123, 44, 191, 0.25);
+}
+
+/* ===================================================================
+ * 16. ENROLLMENT PAGE
+ * =================================================================== */
+.table-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+}
+
+/* ===================================================================
+ * 17. TEXT UTILITIES (themed)
+ * =================================================================== */
+.text-primary {
+  color: var(--primary-purple-light) !important;
+}
+a.text-primary:hover {
+  color: var(--primary-purple) !important;
+}
+
+/* ===================================================================
+ * 18. SCROLLBAR THEMING
+ * =================================================================== */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f8f5ff; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-purple-light), var(--primary-coral));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple);
+}
+
+/* ===================================================================
+ * 19. MOBILE IMPROVEMENTS
+ * =================================================================== */
+/* ===================================================================
+ * 20. DASHBOARD BUTTON IN NAV
+ * =================================================================== */
+.navmenu ul li a.btn-dashboard {
+  background: var(--gradient-primary);
+  color: #fff !important;
+  padding: 8px 18px !important;
+  border-radius: 999px;
+  margin-left: 15px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(124, 45, 94, 0.2);
+  transition: all 0.3s ease;
+}
+.navmenu ul li a.btn-dashboard:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(124, 45, 94, 0.3);
+  color: #fff !important;
+}
+.navmenu ul li a.btn-dashboard::after {
+  display: none !important;
+}
+.navmenu ul li a.btn-dashboard i {
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+/* Explicit typography mapping for Our Values in footer */
+.footer-about .pt-3, 
+.footer-about .pt-3 p {
+  font-family: 'Raleway', 'Poppins', sans-serif !important;
+}
+
+

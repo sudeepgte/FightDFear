@@ -161,35 +161,162 @@
               </c:choose>
           </div>
 
-          <!-- Business Information -->
-          <div class="section-title"><i class="fas fa-briefcase"></i> Business Details</div>
+          <!-- 1. Personal Information -->
+          <div class="section-title"><i class="fas fa-user-circle"></i> 1. Personal Information</div>
           <div class="info-grid">
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-user"></i> Seller Name</div>
-                  <div class="info-value">${seller.fullName}</div>
+                  <div class="info-label"><i class="fas fa-user"></i> Full Name</div>
+                  <div class="info-value">${not empty seller.fullName ? seller.fullName : '-'}</div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-building"></i> Business Name</div>
-                  <div class="info-value">${seller.businessName}</div>
+                  <div class="info-label"><i class="fas fa-envelope"></i> Email</div>
+                  <div class="info-value">${not empty seller.email ? seller.email : '-'}</div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-envelope"></i> Business Email</div>
-                  <div class="info-value">${seller.email}</div>
+                  <div class="info-label"><i class="fas fa-phone"></i> Mobile Number</div>
+                  <div class="info-value">${not empty seller.phone ? seller.phone : '-'}</div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-phone"></i> Contact Phone</div>
-                  <div class="info-value">${seller.phone}</div>
+                  <div class="info-label"><i class="fab fa-whatsapp"></i> Whatsapp Number</div>
+                  <div class="info-value">${not empty seller.whatsappNumber ? seller.whatsappNumber : '-'}</div>
               </div>
-              <div class="info-item" style="grid-column: 1 / -1;">
-                  <div class="info-label"><i class="fas fa-map-marker-alt"></i> Business Address</div>
-                  <div class="info-value">${seller.address}</div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-id-badge"></i> Designation</div>
+                  <div class="info-value">${not empty seller.designation ? seller.designation : '-'}</div>
               </div>
           </div>
 
-          <!-- Identity Document -->
-          <div class="section-title"><i class="fas fa-file-alt"></i> Identity Verification</div>
+          <!-- 2. Business & Brand Details -->
+          <div class="section-title"><i class="fas fa-briefcase"></i> 2. Business & Brand Details</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-building"></i> Business Name</div>
+                  <div class="info-value">${not empty seller.businessName ? seller.businessName : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-tag"></i> Brand Type</div>
+                  <div class="info-value">${not empty seller.brandType ? seller.brandType : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-file-invoice-dollar"></i> GSTIN</div>
+                  <div class="info-value">${not empty seller.gstin ? seller.gstin : '-'}</div>
+              </div>
+              <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label"><i class="fas fa-align-left"></i> Business Description</div>
+                  <div class="info-value">${not empty seller.description ? seller.description : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 3. Address & Location -->
+          <div class="section-title"><i class="fas fa-map-marker-alt"></i> 3. Address & Location</div>
+          <div class="info-grid">
+              <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label"><i class="fas fa-map"></i> Address</div>
+                  <div class="info-value">${not empty seller.address ? seller.address : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-city"></i> City</div>
+                  <div class="info-value">${not empty seller.city ? seller.city : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-map-pin"></i> State & Pincode</div>
+                  <div class="info-value">${not empty seller.state ? seller.state : '-'} ${not empty seller.pincode ? '- '.concat(seller.pincode) : ''}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-route"></i> Service Area</div>
+                  <div class="info-value">${not empty seller.serviceArea ? seller.serviceArea : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 4. Categories & Audience -->
+          <div class="section-title"><i class="fas fa-list"></i> 4. Categories & Audience</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-layer-group"></i> Category</div>
+                  <div class="info-value">${not empty seller.category ? seller.category : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-star"></i> Primary Category</div>
+                  <div class="info-value">${not empty seller.primaryCategory ? seller.primaryCategory : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-th-list"></i> Categories Offered</div>
+                  <div class="info-value">${not empty seller.categoriesOffered ? seller.categoriesOffered : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-users"></i> Target Audience</div>
+                  <div class="info-value">${not empty seller.audience ? seller.audience : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 5. Experience & Qualifications -->
+          <div class="section-title"><i class="fas fa-graduation-cap"></i> 5. Experience & Qualifications</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-certificate"></i> Qualification</div>
+                  <div class="info-value">${not empty seller.qualification ? seller.qualification : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-history"></i> Experience</div>
+                  <div class="info-value">${not empty seller.experience ? seller.experience : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-language"></i> Languages Spoken</div>
+                  <div class="info-value">${not empty seller.languagesSpoken ? seller.languagesSpoken : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 6. Operating Hours -->
+          <div class="section-title"><i class="fas fa-clock"></i> 6. Operating Hours</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-calendar-alt"></i> Available Days</div>
+                  <div class="info-value">${not empty seller.availableDays ? seller.availableDays : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-hourglass-half"></i> Working Hours</div>
+                  <div class="info-value">${not empty seller.workingHoursFrom ? seller.workingHoursFrom : '-'} to ${not empty seller.workingHoursTo ? seller.workingHoursTo : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-door-open"></i> Open Days</div>
+                  <div class="info-value">${not empty seller.openDays ? seller.openDays : '-'}</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-calendar-times"></i> Blocked Dates</div>
+                  <div class="info-value">${not empty seller.blockedDates ? seller.blockedDates : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 7. Facilities & Bio -->
+          <div class="section-title"><i class="fas fa-info-circle"></i> 7. Facilities & Bio</div>
+          <div class="info-grid">
+              <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label"><i class="fas fa-concierge-bell"></i> Facilities</div>
+                  <div class="info-value">${not empty seller.facilities ? seller.facilities : '-'}</div>
+              </div>
+              <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label"><i class="fas fa-book-open"></i> Bio</div>
+                  <div class="info-value">${not empty seller.bio ? seller.bio : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 8. Bank & Payment Details -->
+          <div class="section-title"><i class="fas fa-money-check-alt"></i> 8. Bank & Payment Details</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-mobile-alt"></i> UPI ID</div>
+                  <div class="info-value">${not empty seller.upiId ? seller.upiId : '-'}</div>
+              </div>
+              <div class="info-item" style="grid-column: span 2;">
+                  <div class="info-label"><i class="fas fa-university"></i> Bank Details</div>
+                  <div class="info-value">${not empty seller.bankDetails ? seller.bankDetails : '-'}</div>
+              </div>
+          </div>
+
+          <!-- 9. Identity Verification -->
+          <div class="section-title"><i class="fas fa-id-card"></i> 9. Identity Verification</div>
           <div class="doc-box">
-              <div class="doc-box-icon"><i class="fas fa-id-card"></i></div>
+              <div class="doc-box-icon"><i class="fas fa-file-contract"></i></div>
               <div class="doc-box-content">
                   <c:choose>
                       <c:when test="${not empty seller.identityDocPath}">
@@ -205,23 +332,90 @@
               </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="action-bar">
-              <c:if test="${seller.verificationStatus != 'VERIFIED'}">
-                  <form action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/verify" method="post" class="m-0 p-0">
-                      <button type="submit" class="btn-verify">
-                          <i class="fas fa-check-circle"></i> Verify & Approve Seller
-                      </button>
-                  </form>
-              </c:if>
+          <!-- 10. Profile Photo -->
+          <div class="section-title"><i class="fas fa-camera"></i> 10. Profile Photo</div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-image"></i></div>
+              <div class="doc-box-content">
+                  <c:choose>
+                      <c:when test="${not empty seller.profilePhotoPath}">
+                          <div class="label">Seller Profile Photo</div>
+                          <a href="${pageContext.request.contextPath}${seller.profilePhotoPath}" target="_blank" class="doc-link">
+                              <i class="fas fa-external-link-alt"></i> View Image
+                          </a>
+                      </c:when>
+                      <c:otherwise>
+                          <div class="text-muted">No profile photo uploaded.</div>
+                      </c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
 
-              <c:if test="${seller.verificationStatus != 'REJECTED'}">
-                  <form action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/reject" method="post" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this seller?')">
-                      <button type="submit" class="btn-reject">
-                          <i class="fas fa-times-circle"></i> Reject Application
+          <!-- 11. Gallery & Portfolio -->
+          <div class="section-title"><i class="fas fa-images"></i> 11. Gallery & Portfolio</div>
+          <div class="doc-box">
+              <div class="doc-box-icon"><i class="fas fa-photo-video"></i></div>
+              <div class="doc-box-content">
+                  <c:choose>
+                      <c:when test="${not empty seller.galleryPhotos}">
+                          <div class="label">Gallery Photos</div>
+                          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                              <c:forEach var="photoPath" items="${fn:split(seller.galleryPhotos, ',')}">
+                                  <a href="${pageContext.request.contextPath}${photoPath}" target="_blank" class="doc-link" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-size:0.8rem;">
+                                      <i class="fas fa-external-link-alt"></i> View
+                                  </a>
+                              </c:forEach>
+                          </div>
+                      </c:when>
+                      <c:otherwise>
+                          <div class="text-muted">No gallery photos uploaded.</div>
+                      </c:otherwise>
+                  </c:choose>
+              </div>
+          </div>
+
+          <!-- Decision Panel -->
+          <div class="section-title mt-4"><i class="fas fa-gavel"></i> Administrator Decision</div>
+          <div class="doc-box" style="display:block;">
+              <c:if test="${not empty seller.changesRequestedNote}">
+                  <div class="alert alert-warning py-2 small mb-3"><strong>Previous Changes Requested:</strong> ${seller.changesRequestedNote}</div>
+              </c:if>
+              <c:if test="${not empty seller.rejectionReason}">
+                  <div class="alert alert-danger py-2 small mb-3"><strong>Previous Rejection Reason:</strong> ${seller.rejectionReason}</div>
+              </c:if>
+              
+              <div class="mb-3">
+                  <label class="form-label fw-semibold" style="font-size:0.9rem; color:var(--ap-text);">Decision notes / comments</label>
+                  <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the seller (required for reject / request changes)"></textarea>
+              </div>
+
+              <div class="action-bar" style="border-top:none; padding-top:10px; justify-content:flex-start;">
+                  <c:if test="${seller.verificationStatus != 'VERIFIED'}">
+                      <form id="approveForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/verify" method="post" class="m-0 p-0">
+                          <button type="submit" class="btn-verify">
+                              <i class="fas fa-check-circle"></i> Approve Seller
+                          </button>
+                      </form>
+                  </c:if>
+
+                  <form id="changesForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/request-changes" method="post" class="m-0 p-0"
+                        onsubmit="var n = document.getElementById('decisionNotes').value.trim(); if(!n){alert('Please provide notes to request changes.'); return false;} document.getElementById('changesNote').value=n;">
+                      <input type="hidden" name="note" id="changesNote">
+                      <button type="submit" class="btn-changes" style="background:#F59E0B; color:#fff; border:none; border-radius:9px; padding:10px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                          <i class="fas fa-edit"></i> Request Changes
                       </button>
                   </form>
-              </c:if>
+
+                  <c:if test="${seller.verificationStatus != 'REJECTED'}">
+                      <form id="rejectForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/reject" method="post" class="m-0 p-0" 
+                            onsubmit="var r = document.getElementById('decisionNotes').value.trim(); if(!r){alert('Please provide a reason to reject the seller.'); return false;} document.getElementById('rejectReason').value=r; return confirm('Are you sure you want to reject this seller?')">
+                          <input type="hidden" name="reason" id="rejectReason">
+                          <button type="submit" class="btn-reject">
+                              <i class="fas fa-times-circle"></i> Reject Application
+                          </button>
+                      </form>
+                  </c:if>
+              </div>
           </div>
 
       </div>

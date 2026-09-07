@@ -6,76 +6,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Women Product Sellers Verification — Admin</title>
+  <title>Women Product Sellers Verification - Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
-<style>
-  body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
-  body.wp-admin-wp .layout { display: flex; min-height: 100vh; }
-  body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg); padding: 0 !important; }
-  body.wp-admin-wp .mainInner { max-width: 1400px; margin: 0 auto; padding: 22px 24px 48px; }
-  body.wp-admin-wp .card-table {
-    background: var(--ap-card); border-radius: var(--ap-radius); overflow: hidden;
-    border: 1px solid var(--ap-border); box-shadow: var(--ap-shadow); margin-bottom: 16px;
-  }
-  body.wp-admin-wp .card-table-header {
-    padding: 14px 16px; border-bottom: 1px solid var(--ap-border);
-    font-weight: 800; color: var(--ap-text); display: flex; align-items: center; gap: 8px; background: #fff;
-  }
-  body.wp-admin-wp .badge-count {
-    background: var(--ap-accent); color: #fff; border-radius: 999px; padding: 2px 10px;
-    font-size: 0.72rem; font-weight: 700; margin-left: auto;
-  }
-  body.wp-admin-wp .table { margin-bottom: 0; min-width: 720px; }
-  body.wp-admin-wp .table thead th {
-    text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
-    text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 14px;
-    border-bottom: 1px solid var(--ap-border); background: #FCFCFD;
-  }
-  body.wp-admin-wp .table tbody td {
-    padding: 14px; vertical-align: middle; border-bottom: 1px solid #F1F5F9; font-size: 0.86rem;
-  }
-  body.wp-admin-wp .table tbody tr:hover { background: #FFF7F8; }
-  body.wp-admin-wp .badge-status { padding: 4px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
-  body.wp-admin-wp .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
-  body.wp-admin-wp .status-PENDING { background: #FEF3C7; color: #B45309; }
-  body.wp-admin-wp .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
-  body.wp-admin-wp .status-PLACED { background: #FEF3C7; color: #854d0e; }
-  body.wp-admin-wp .status-CONFIRMED { background: var(--ap-info-bg); color: var(--ap-info); }
-  body.wp-admin-wp .status-SHIPPED { background: var(--ap-info-bg); color: var(--ap-info); }
-  body.wp-admin-wp .status-DELIVERED { background: var(--ap-success-bg); color: var(--ap-success); }
-  body.wp-admin-wp .status-CANCELLED { background: var(--ap-danger-bg); color: var(--ap-danger); }
-  body.wp-admin-wp .status-IN-STOCK { background: var(--ap-success-bg); color: var(--ap-success); }
-  body.wp-admin-wp .status-LOW-STOCK { background: #FEF3C7; color: #854d0e; }
-  body.wp-admin-wp .status-OUT-OF-STOCK { background: var(--ap-danger-bg); color: var(--ap-danger); }
-  body.wp-admin-wp .btn-approve { background: var(--ap-success); color: #fff; padding: 7px 12px; border: 0; border-radius: 9px; font-size: 0.8rem; font-weight: 700; }
-  body.wp-admin-wp .btn-reject { background: var(--ap-danger); color: #fff; padding: 7px 12px; border: 0; border-radius: 9px; font-size: 0.8rem; font-weight: 700; }
-  body.wp-admin-wp .btn-view-media, body.wp-admin-wp .btn-view-seller {
-    display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--ap-text);
-    border: 1px solid var(--ap-border); padding: 7px 12px; border-radius: 9px; font-size: 0.8rem; font-weight: 600;
-    text-decoration: none;
-  }
-  body.wp-admin-wp .btn-view-media:hover, body.wp-admin-wp .btn-view-seller:hover { border-color: #FDA4AF; color: var(--ap-accent); }
-  body.wp-admin-wp .d-flex.gap-1 { gap: 8px !important; }
-  body.wp-admin-wp .seller-meta { font-size: 0.78rem; color: var(--ap-muted); display: flex; flex-direction: column; gap: 2px; }
-  body.wp-admin-wp .product-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 50%; }
-  body.wp-admin-wp .meta-text { font-size: 0.78rem; color: var(--ap-muted); }
-  @media (max-width: 700px) {
-    body.wp-admin-wp .mainInner { padding: 16px 14px 40px; }
-    body.wp-admin-wp .ap-stats { grid-template-columns: 1fr !important; }
-  }
-</style>
+  <style>
+    body.ap-page { margin: 0; }
+    .topbar { display: none !important; }
+    .layout { display: flex; min-height: 100vh; }
+    .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    .dv-actions { display: flex; gap: 6px; align-items: center; }
+    .dv-more {
+      width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--ap-border);
+      background: #fff; color: var(--ap-muted); display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .dv-more:hover { color: var(--ap-accent); border-color: #FDA4AF; }
+    .dv-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    @media (max-width: 992px) { .dv-bottom-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
-<body class="ap-page wp-admin-wp">
-<c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
+<body class="ap-page">
+
+<c:set var="activeFilter" value="${empty param.filter ? 'pending' : param.filter}"/>
+<c:set var="q" value="${param.q}"/>
+
+<c:choose>
+  <c:when test="${activeFilter == 'verified'}">
+    <c:set var="activeList" value="${verified}"/>
+    <c:set var="activeMpList" value="${verifiedMarketplace}"/>
+  </c:when>
+  <c:when test="${activeFilter == 'rejected'}">
+    <c:set var="activeList" value="${rejected}"/>
+    <c:set var="activeMpList" value="${rejectedMarketplace}"/>
+  </c:when>
+  <c:otherwise>
+    <c:set var="activeList" value="${pending}"/>
+    <c:set var="activeMpList" value="${pendingMarketplace}"/>
+  </c:otherwise>
+</c:choose>
 
 <div class="layout">
   <%@ include file="globalAdminMenu.jsp" %>
 
   <main class="main">
-    <div class="ap-topbar topbar">
+    <div class="ap-topbar">
       <div class="ap-topbar-left">
         <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
         <div class="ap-search" style="max-width:360px;">
@@ -89,23 +65,40 @@
           <i class="fas fa-bell"></i>
           <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
         </a>
+        <c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
         <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${apAdmin.id}">
           <span class="ap-avatar">
             <c:choose>
-              <c:when test="${not empty apAdmin.profilePhoto}"><img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt=""></c:when>
+              <c:when test="${not empty apAdmin.profilePhoto}">
+                <img src="${pageContext.request.contextPath}${apAdmin.profilePhoto}" alt="">
+              </c:when>
               <c:otherwise>${fn:substring(apAdmin.name,0,1)}</c:otherwise>
             </c:choose>
           </span>
-          <span><div class="name"><c:out value="${apAdmin.name}"/></div><div class="role">Super Admin</div></span>
+          <span>
+            <div class="name"><c:out value="${apAdmin.name}"/></div>
+            <div class="role">Super Admin</div>
+          </span>
         </a>
       </div>
     </div>
-    <div class="mainInner">
+
+    <div class="ap-main-inner">
       <nav class="ap-crumb">
         <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
         <span class="sep">&gt;</span>
-        <span>Product Sellers</span>
+        <a href="${pageContext.request.contextPath}/admin/pending-sellers">Seller Verification</a>
+        <span class="sep">&gt;</span>
+        <span>
+          <c:choose>
+            <c:when test="${activeFilter == 'verified'}">Verified Sellers</c:when>
+            <c:when test="${activeFilter == 'rejected'}">Rejected Sellers</c:when>
+            <c:when test="${not empty q}">Search Results</c:when>
+            <c:otherwise>Pending Sellers</c:otherwise>
+          </c:choose>
+        </span>
       </nav>
+
       <div class="ap-page-head">
         <div class="ap-page-ico"><i class="fas fa-shopping-bag"></i></div>
         <div>
@@ -113,361 +106,365 @@
           <p>Review and verify sellers offering safety and women's products</p>
         </div>
       </div>
-      <div class="ap-stats" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+
+      <c:if test="${not empty message}">
+        <div class="alert alert-info mb-3" style="border-radius:12px;"><i class="fas fa-info-circle me-1"></i><c:out value="${message}"/></div>
+      </c:if>
+      <c:if test="${not empty error}">
+        <div class="alert alert-danger mb-3" style="border-radius:12px;"><i class="fas fa-exclamation-circle me-1"></i><c:out value="${error}"/></div>
+      </c:if>
+
+      <div class="ap-stats">
         <div class="ap-stat amber">
           <div class="ico"><i class="fas fa-clock"></i></div>
-          <div class="val">${not empty pending ? pending.size() : 0}</div>
+          <div class="val">${(not empty pending ? pending.size() : 0) + (not empty pendingMarketplace ? pendingMarketplace.size() : 0)}</div>
           <div class="lbl">Pending</div>
-          <div class="sub">Awaiting review</div>
+          <div class="sub">Requires review</div>
         </div>
         <div class="ap-stat green">
           <div class="ico"><i class="fas fa-check-circle"></i></div>
-          <div class="val">${not empty verified ? verified.size() : 0}</div>
+          <div class="val">${(not empty verified ? verified.size() : 0) + (not empty verifiedMarketplace ? verifiedMarketplace.size() : 0)}</div>
           <div class="lbl">Verified</div>
           <div class="sub">Live on shop</div>
         </div>
         <div class="ap-stat rose">
           <div class="ico"><i class="fas fa-times-circle"></i></div>
-          <div class="val">${not empty rejected ? rejected.size() : 0}</div>
+          <div class="val">${(not empty rejected ? rejected.size() : 0) + (not empty rejectedMarketplace ? rejectedMarketplace.size() : 0)}</div>
           <div class="lbl">Rejected</div>
           <div class="sub">Not listed</div>
         </div>
       </div>
 
-      <c:if test="${not empty message}">
-          <div class="alert alert-success mb-4" style="border-radius:10px;"><i class="fas fa-check-circle me-1"></i> ${message}</div>
-      </c:if>
-      <c:if test="${not empty error}">
-          <div class="alert alert-danger mb-4" style="border-radius:10px;"><i class="fas fa-exclamation-circle me-1"></i> ${error}</div>
-      </c:if>
-
-      <!-- Pending Sellers Table -->
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-clock text-warning"></i> Pending Sellers
-          <span class="badge-count">${not empty pending ? pending.size() : 0}</span>
+      <form method="get" action="${pageContext.request.contextPath}/admin/pending-sellers" class="ap-filter-row" id="sellerFilterForm">
+        <div class="grow">
+          <input type="text" id="sellerSearchInput" name="q" class="ap-input"
+                 placeholder="Search by name, email, business name or location..."
+                 value="${not empty q ? q : ''}">
         </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
+        <div style="min-width:180px;">
+          <select name="filter" class="ap-select" onchange="this.form.submit()">
+            <option value="pending" ${activeFilter == 'pending' ? 'selected' : ''}>Pending queue</option>
+            <option value="verified" ${activeFilter == 'verified' ? 'selected' : ''}>Verified</option>
+            <option value="rejected" ${activeFilter == 'rejected' ? 'selected' : ''}>Rejected</option>
+          </select>
+        </div>
+        <button type="submit" class="ap-btn ap-btn-primary"><i class="fas fa-filter"></i> Search / Filter</button>
+        <c:if test="${not empty q}">
+          <a href="${pageContext.request.contextPath}/admin/pending-sellers" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
+        </c:if>
+      </form>
+
+      <div class="ap-split">
+        <section class="ap-panel">
+          <div class="ap-tabs">
+            <a class="ap-tab ${activeFilter == 'pending' && empty q ? 'active' : ''}" href="?filter=pending">Pending</a>
+            <a class="ap-tab ${activeFilter == 'verified' && empty q ? 'active' : ''}" href="?filter=verified">Verified</a>
+            <a class="ap-tab ${activeFilter == 'rejected' && empty q ? 'active' : ''}" href="?filter=rejected">Rejected</a>
+          </div>
+
+          <c:if test="${not empty q}">
+            <div style="padding:12px 16px;background:#F8FAFC;border-bottom:1px solid var(--ap-border);font-size:0.86rem;color:var(--ap-muted);">
+              Showing results for "<strong><c:out value="${q}"/></strong>"
+            </div>
+          </c:if>
+
+          <div class="ap-table-wrap">
+            <table class="ap-table" id="sellerQueueTable">
               <thead>
-                  <tr>
-                      <th>Seller Details</th>
-                      <th>Contact Info</th>
-                      <th>Business Address</th>
-                      <th>Identity Doc</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                  </tr>
+                <tr>
+                  <th>Seller / Provider</th>
+                  <th>Business Info</th>
+                  <th>Location</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
               </thead>
               <tbody>
-              <c:choose>
-                  <c:when test="${not empty pending}">
-                      <c:forEach var="s" items="${pending}">
-                          <tr>
-                              <td>
-                                  <div class="fw-bold text-dark">${s.fullName}</div>
-                                  <div class="text-muted small"><i class="fas fa-store me-1"></i> ${s.businessName}</div>
-                              </td>
-                              <td>
-                                  <div class="seller-meta">
-                                      <span><i class="fas fa-envelope text-muted me-1"></i> ${s.email}</span>
-                                      <span><i class="fas fa-phone text-muted me-1"></i> ${s.phone}</span>
-                                  </div>
-                              </td>
-                              <td>
-                                  <div class="seller-meta">
-                                      <span><i class="fas fa-map-marker-alt text-muted me-1"></i> ${s.address}</span>
-                                  </div>
-                              </td>
-                              <td>
-                                  <c:choose>
-                                      <c:when test="${not empty s.identityDocPath}">
-                                          <a href="${pageContext.request.contextPath}${s.identityDocPath}" target="_blank" class="btn-view-media">
-                                            <i class="fas fa-id-card me-1"></i> View ID
-                                          </a>
-                                      </c:when>
-                                      <c:otherwise><span class="text-muted">—</span></c:otherwise>
-                                  </c:choose>
-                              </td>
-                              <td><span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> PENDING</span></td>
-                              <td>
-                                  <div class="d-flex justify-content-center align-items-center gap-1">
-                                    <a href="${pageContext.request.contextPath}/admin/sellers/${s.id}/profile" class="btn-view-media px-2" title="View Profile">
-                                        <i class="fas fa-user"></i>
-                                    </a>
-                                    <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/verify" method="post" class="m-0 p-0">
-                                        <button class="btn-approve" type="submit" title="Verify"><i class="fas fa-check"></i></button>
-                                    </form>
-                                    <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/reject" method="post" class="m-0 p-0"
-                                          onsubmit="var r=prompt('Enter rejection reason (required):'); if(!r||!r.trim()){alert('Rejection reason is required.'); return false;} this.querySelector('[name=reason]').value=r.trim();">
-                                        <input type="hidden" name="reason" value="">
-                                        <button class="btn-reject" type="submit" title="Reject"><i class="fas fa-times"></i></button>
-                                    </form>
-                                  </div>
-                              </td>
-                          </tr>
-                      </c:forEach>
-                  </c:when>
-                  <c:otherwise>
-                      <tr>
-                          <td colspan="6" class="py-4 text-center text-muted"><i class="fas fa-check-circle fa-2x mb-2 d-block text-success" style="opacity:0.4;"></i>No pending sellers.</td>
-                      </tr>
-                  </c:otherwise>
-              </c:choose>
-              </tbody>
-          </table>
-        </div>
-      </div>
+                <c:set var="hasItems" value="false" />
+                
+                <c:if test="${not empty activeList}">
+                  <c:forEach var="s" items="${activeList}" varStatus="st">
+                    <c:set var="hasItems" value="true" />
+                    <c:set var="locText" value="${not empty s.city ? s.city : s.address}"/>
+                    <c:if test="${not empty s.city && not empty s.state}"><c:set var="locText" value="${s.city}, ${s.state}"/></c:if>
+                    
+                    <tr class="seller-row ${st.first ? 'selected' : ''}"
+                        data-id="${s.id}"
+                        data-type="seller"
+                        data-name="<c:out value='${s.fullName}'/>"
+                        data-email="<c:out value='${s.email}'/>"
+                        data-phone="<c:out value='${s.phone}'/>"
+                        data-biz="<c:out value='${s.businessName}'/>"
+                        data-cat="<c:out value='${s.category}'/>"
+                        data-loc="<c:out value='${locText}'/>"
+                        data-status="<c:out value='${s.verificationStatus}'/>"
+                        data-photo="<c:out value='${s.profilePhotoPath}'/>"
+                        data-doc="${not empty s.identityDocPath ? '1' : '0'}"
+                        data-photo-ok="${not empty s.profilePhotoPath ? '1' : '0'}">
+                      <td>
+                        <div class="ap-doc">
+                          <span class="av">
+                            <c:choose>
+                              <c:when test="${not empty s.profilePhotoPath}">
+                                <img src="${fn:startsWith(s.profilePhotoPath,'http') ? s.profilePhotoPath : pageContext.request.contextPath.concat(s.profilePhotoPath)}" alt="">
+                              </c:when>
+                              <c:otherwise>${fn:substring(s.fullName,0,1)}</c:otherwise>
+                            </c:choose>
+                          </span>
+                          <span style="min-width:0;">
+                            <div class="nm" title="<c:out value='${s.fullName}'/>"><c:out value="${s.fullName}"/></div>
+                            <div class="meta" title="<c:out value='${s.email}'/>"><c:out value="${s.email}"/></div>
+                            <div class="meta"><c:out value="${not empty s.phone ? s.phone : '-'}"/></div>
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="ap-clip fw-bold" title="<c:out value='${s.businessName}'/>"><c:out value="${not empty s.businessName ? s.businessName : '-'}"/></span>
+                        <div class="ap-muted" style="font-size:0.78rem;">
+                          <c:out value="${not empty s.category ? s.category : '-'}"/>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="ap-clip" title="<c:out value='${locText}'/>">
+                          <c:choose>
+                            <c:when test="${not empty locText}"><c:out value="${locText}"/></c:when>
+                            <c:otherwise>-</c:otherwise>
+                          </c:choose>
+                        </span>
+                      </td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${s.verificationStatus == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
+                          <c:when test="${s.verificationStatus == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending">PENDING</span></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td onclick="event.stopPropagation();">
+                        <div class="dv-actions">
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/sellers/${s.id}/profile"><i class="fas fa-eye"></i> View</a>
+                          <a class="dv-more" href="${pageContext.request.contextPath}/admin/sellers/${s.id}/profile" title="Review"><i class="fas fa-ellipsis-v"></i></a>
+                        </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:if>
 
-      <!-- Marketplace women's product partners (alternate registration path) -->
-      <c:if test="${not empty pendingMarketplace}">
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-store text-warning"></i> Pending — Marketplace Women's Products
-          <span class="badge-count">${pendingMarketplace.size()}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>Provider</th>
-                <th>Contact</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <c:forEach var="p" items="${pendingMarketplace}">
-                <tr>
-                  <td>
-                    <div class="fw-bold text-dark">${p.fullName}</div>
-                    <div class="text-muted small">${p.description}</div>
-                  </td>
-                  <td>
-                    <div class="seller-meta">
-                      <span><i class="fas fa-envelope text-muted me-1"></i> ${p.email}</span>
-                      <span><i class="fas fa-phone text-muted me-1"></i> ${p.phone}</span>
-                    </div>
-                  </td>
-                  <td>${p.locationText}</td>
-                  <td><span class="badge-status status-PENDING">PENDING</span></td>
-                  <td>
-                    <div class="d-flex justify-content-center gap-1">
-                      <a href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" class="btn-view-media px-2" title="View"><i class="fas fa-user"></i></a>
-                      <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0"><button class="btn-approve" type="submit"><i class="fas fa-check"></i></button></form>
-                      <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0"><button class="btn-reject" type="submit"><i class="fas fa-times"></i></button></form>
-                    </div>
-                  </td>
-                </tr>
-              </c:forEach>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </c:if>
+                <c:if test="${not empty activeMpList}">
+                  <c:forEach var="p" items="${activeMpList}" varStatus="st">
+                    <c:set var="hasItems" value="true" />
+                    <tr class="seller-row"
+                        data-id="${p.id}"
+                        data-type="provider"
+                        data-name="<c:out value='${p.fullName}'/>"
+                        data-email="<c:out value='${p.email}'/>"
+                        data-phone="<c:out value='${p.phone}'/>"
+                        data-biz="Marketplace Provider"
+                        data-cat="<c:out value='${p.category}'/>"
+                        data-loc="<c:out value='${p.locationText}'/>"
+                        data-status="<c:out value='${p.verificationStatus}'/>"
+                        data-photo="<c:out value='${p.profilePhotoPath}'/>"
+                        data-doc="${not empty p.identityDocumentPath ? '1' : '0'}"
+                        data-photo-ok="${not empty p.profilePhotoPath ? '1' : '0'}">
+                      <td>
+                        <div class="ap-doc">
+                          <span class="av">
+                            <c:choose>
+                              <c:when test="${not empty p.profilePhotoPath}">
+                                <img src="${fn:startsWith(p.profilePhotoPath,'http') ? p.profilePhotoPath : pageContext.request.contextPath.concat(p.profilePhotoPath)}" alt="">
+                              </c:when>
+                              <c:otherwise>${fn:substring(p.fullName,0,1)}</c:otherwise>
+                            </c:choose>
+                          </span>
+                          <span style="min-width:0;">
+                            <div class="nm" title="<c:out value='${p.fullName}'/>"><c:out value="${p.fullName}"/> <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">MP</span></div>
+                            <div class="meta" title="<c:out value='${p.email}'/>"><c:out value="${p.email}"/></div>
+                            <div class="meta"><c:out value="${not empty p.phone ? p.phone : '-'}"/></div>
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="ap-clip fw-bold">Marketplace Provider</span>
+                        <div class="ap-muted" style="font-size:0.78rem;">
+                          <c:out value="${not empty p.category ? p.category : '-'}"/>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="ap-clip" title="<c:out value='${p.locationText}'/>">
+                          <c:choose>
+                            <c:when test="${not empty p.locationText}"><c:out value="${p.locationText}"/></c:when>
+                            <c:otherwise>-</c:otherwise>
+                          </c:choose>
+                        </span>
+                      </td>
+                      <td>
+                        <c:choose>
+                          <c:when test="${p.verificationStatus == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
+                          <c:when test="${p.verificationStatus == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending">PENDING</span></c:otherwise>
+                        </c:choose>
+                      </td>
+                      <td onclick="event.stopPropagation();">
+                        <div class="dv-actions">
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile"><i class="fas fa-eye"></i> View</a>
+                          <a class="dv-more" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="Review"><i class="fas fa-ellipsis-v"></i></a>
+                        </div>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </c:if>
 
-      <!-- Verified Sellers Table -->
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-store text-success"></i> Verified Sellers
-          <span class="badge-count" style="background:#166534;">${not empty verified ? verified.size() : 0}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-              <thead>
+                <c:if test="${not hasItems}">
                   <tr>
-                      <th>Seller Details</th>
-                      <th>Contact Info</th>
-                      <th>Business Address</th>
-                      <th>Status</th>
-                      <th>Action</th>
+                    <td colspan="5"><div class="ap-empty"><i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.35;"></i>No sellers in this queue.</div></td>
                   </tr>
-              </thead>
-              <tbody>
-              <c:choose>
-                  <c:when test="${not empty verified}">
-                      <c:forEach var="s" items="${verified}">
-                          <tr>
-                              <td>
-                                  <div class="fw-bold text-dark">${s.fullName}</div>
-                                  <div class="text-muted small"><i class="fas fa-store me-1"></i> ${s.businessName}</div>
-                              </td>
-                              <td>
-                                  <div class="seller-meta">
-                                      <span><i class="fas fa-envelope text-muted me-1"></i> ${s.email}</span>
-                                      <span><i class="fas fa-phone text-muted me-1"></i> ${s.phone}</span>
-                                  </div>
-                              </td>
-                              <td>
-                                  <div class="seller-meta">
-                                      <span><i class="fas fa-map-marker-alt text-muted me-1"></i> ${s.address}</span>
-                                  </div>
-                              </td>
-                              <td><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span></td>
-                              <td>
-                                  <a href="${pageContext.request.contextPath}/admin/sellers/${s.id}/profile" class="btn-view-media px-3" title="View Profile">
-                                      <i class="fas fa-user me-1"></i> View Profile
-                                  </a>
-                              </td>
-                          </tr>
-                      </c:forEach>
-                  </c:when>
-                  <c:otherwise>
-                      <tr>
-                          <td colspan="5" class="py-4 text-center text-muted">No verified sellers yet.</td>
-                      </tr>
-                  </c:otherwise>
-              </c:choose>
+                </c:if>
               </tbody>
-          </table>
-        </div>
-      </div>
+            </table>
+          </div>
+        </section>
 
-      <!-- Marketplace verified women's product partners -->
-      <c:if test="${not empty verifiedMarketplace}">
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-store text-success"></i> Verified — Marketplace Women's Products
-          <span class="badge-count" style="background:#166534;">${verifiedMarketplace.size()}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>Provider</th>
-                <th>Contact</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <c:forEach var="p" items="${verifiedMarketplace}">
-                <tr>
-                  <td>
-                    <div class="fw-bold text-dark">${p.fullName}</div>
-                    <div class="text-muted small">${p.description}</div>
-                  </td>
-                  <td>
-                    <div class="seller-meta">
-                      <span><i class="fas fa-envelope text-muted me-1"></i> ${p.email}</span>
-                      <span><i class="fas fa-phone text-muted me-1"></i> ${p.phone}</span>
-                    </div>
-                  </td>
-                  <td>${p.locationText}</td>
-                  <td><span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span></td>
-                  <td>
-                    <a href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" class="btn-view-media px-3" title="View"><i class="fas fa-user me-1"></i> View Profile</a>
-                  </td>
-                </tr>
-              </c:forEach>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </c:if>
+        <aside class="ap-panel ap-preview" id="sellerPreview">
+          <div class="ap-panel-bd">
+            <div id="previewEmpty" class="ap-empty" style="display:none;">Select a seller to preview</div>
+            <div id="previewBody">
+              <div class="hero">
+                <span class="av" id="pvAv">S</span>
+                <div style="min-width:0;">
+                  <h3 id="pvName">-</h3>
+                  <div style="margin:6px 0;"><span class="ap-badge ap-badge-pending" id="pvStatus">PENDING</span></div>
+                  <div class="line fw-bold" id="pvBiz" style="color:var(--ap-accent);">-</div>
+                  <div class="line" id="pvEmail">-</div>
+                  <div class="line" id="pvPhone">-</div>
+                  <div class="line" id="pvCat">-</div>
+                </div>
+              </div>
 
-      <!-- Rejected Sellers Table -->
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-store-alt-slash text-danger"></i> Rejected Sellers
-          <span class="badge-count" style="background:#991b1b;">${not empty rejected ? rejected.size() : 0}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-              <thead>
-                  <tr>
-                      <th>Seller Details</th>
-                      <th>Email</th>
-                      <th>Status</th>
-                      <th>Action</th>
-                  </tr>
-              </thead>
-              <tbody>
-              <c:choose>
-                  <c:when test="${not empty rejected}">
-                      <c:forEach var="s" items="${rejected}">
-                          <tr>
-                              <td>
-                                  <div class="fw-bold text-dark">${s.fullName}</div>
-                                  <div class="text-muted small"><i class="fas fa-store me-1"></i> ${s.businessName}</div>
-                              </td>
-                              <td>${s.email}</td>
-                              <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span></td>
-                              <td>
-                                  <div class="d-flex gap-1">
-                                      <a href="${pageContext.request.contextPath}/admin/sellers/${s.id}/profile" class="btn-view-media px-2" title="View Profile">
-                                          <i class="fas fa-user"></i>
-                                      </a>
-                                      <form action="${pageContext.request.contextPath}/admin/sellers/${s.id}/verify" method="post" class="m-0 p-0">
-                                          <button class="btn-approve px-3" type="submit" title="Re-verify"><i class="fas fa-undo me-1"></i> Re-verify</button>
-                                      </form>
-                                  </div>
-                              </td>
-                          </tr>
-                      </c:forEach>
-                  </c:when>
-                  <c:otherwise>
-                      <tr>
-                          <td colspan="4" class="py-4 text-center text-muted">No rejected sellers.</td>
-                      </tr>
-                  </c:otherwise>
-              </c:choose>
-              </tbody>
-          </table>
-        </div>
-      </div>
+              <div style="font-size:0.78rem;font-weight:700;margin-top:20px;margin-bottom:8px;color:var(--ap-muted);">DOCUMENTS</div>
+              <div class="ap-doc-list">
+                <div class="ap-doc-item"><span>Profile Photo</span><span id="pvDocPhoto" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Identity Proof</span><span id="pvDocId" class="st-miss">Not uploaded</span></div>
+              </div>
 
-      <!-- Marketplace rejected women's product partners -->
-      <c:if test="${not empty rejectedMarketplace}">
-      <div class="card-table">
-        <div class="card-table-header">
-          <i class="fas fa-store-alt-slash text-danger"></i> Rejected — Marketplace Women's Products
-          <span class="badge-count" style="background:#991b1b;">${rejectedMarketplace.size()}</span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>Provider</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <c:forEach var="p" items="${rejectedMarketplace}">
-                <tr>
-                  <td>
-                    <div class="fw-bold text-dark">${p.fullName}</div>
-                    <div class="text-muted small">${p.description}</div>
-                  </td>
-                  <td>
-                    <div class="seller-meta">
-                      <span><i class="fas fa-envelope text-muted me-1"></i> ${p.email}</span>
-                      <span><i class="fas fa-phone text-muted me-1"></i> ${p.phone}</span>
-                    </div>
-                  </td>
-                  <td><span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span></td>
-                  <td>
-                    <div class="d-flex gap-1">
-                      <a href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" class="btn-view-media px-2" title="View"><i class="fas fa-user"></i></a>
-                      <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0"><button class="btn-approve px-3" type="submit"><i class="fas fa-undo me-1"></i> Re-verify</button></form>
-                    </div>
-                  </td>
-                </tr>
-              </c:forEach>
-            </tbody>
-          </table>
-        </div>
+              <a id="pvReview" class="ap-btn ap-btn-primary" style="width:100%;justify-content:center;margin-top:20px;" href="#">
+                Review Application <i class="fas fa-arrow-right"></i>
+              </a>
+              <a id="pvViewAll" class="ap-btn ap-btn-ghost" style="width:100%;justify-content:center;margin-top:8px;" href="#">
+                View full profile
+              </a>
+            </div>
+          </div>
+        </aside>
       </div>
-      </c:if>
-
+      
     </div>
   </main>
 </div>
 
+<script>
+(function () {
+  var ctx = '${pageContext.request.contextPath}';
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.seller-row'));
+  
+  var qParam = '${q}';
+  if (qParam) {
+     var ql = qParam.toLowerCase();
+     rows.forEach(function(r) {
+         var txt = (r.getAttribute('data-name') + ' ' + r.getAttribute('data-email') + ' ' + r.getAttribute('data-biz') + ' ' + r.getAttribute('data-loc')).toLowerCase();
+         if (txt.indexOf(ql) === -1) {
+             r.style.display = 'none';
+         }
+     });
+  }
+
+  function setDoc(el, ok) {
+    el.textContent = ok ? 'Uploaded' : 'Not uploaded';
+    el.className = ok ? 'st-ok' : 'st-miss';
+  }
+
+  function badgeClass(status) {
+    if (status === 'VERIFIED') return 'ap-badge ap-badge-approved';
+    if (status === 'REJECTED') return 'ap-badge ap-badge-rejected';
+    return 'ap-badge ap-badge-pending';
+  }
+
+  function fillPreview(row) {
+    if (!row || row.style.display === 'none') {
+      var visibleRows = rows.filter(function(r) { return r.style.display !== 'none'; });
+      if (visibleRows.length > 0 && !row) {
+          row = visibleRows[0];
+          row.classList.add('selected');
+      } else {
+          document.getElementById('previewBody').style.display = 'none';
+          document.getElementById('previewEmpty').style.display = 'block';
+          return;
+      }
+    }
+    
+    document.getElementById('previewBody').style.display = 'block';
+    document.getElementById('previewEmpty').style.display = 'none';
+
+    var type = row.getAttribute('data-type');
+    var name = row.getAttribute('data-name') || '-';
+    var email = row.getAttribute('data-email') || '-';
+    var phone = row.getAttribute('data-phone') || '-';
+    var biz = row.getAttribute('data-biz') || '-';
+    var cat = row.getAttribute('data-cat') || '-';
+    var status = row.getAttribute('data-status') || 'PENDING';
+    var photo = row.getAttribute('data-photo') || '';
+    var id = row.getAttribute('data-id');
+    var photoOk = row.getAttribute('data-photo-ok') === '1';
+
+    document.getElementById('pvName').textContent = name;
+    document.getElementById('pvEmail').textContent = email;
+    document.getElementById('pvPhone').textContent = phone || '-';
+    document.getElementById('pvBiz').textContent = biz;
+    document.getElementById('pvCat').textContent = cat;
+    
+    var st = document.getElementById('pvStatus');
+    st.textContent = status;
+    st.className = badgeClass(status);
+
+    var av = document.getElementById('pvAv');
+    if (photoOk && photo) {
+      var src = photo.indexOf('http') === 0 ? photo : (ctx + photo);
+      av.innerHTML = '<img src="' + src + '" alt="">';
+    } else {
+      av.textContent = (name || 'S').charAt(0).toUpperCase();
+    }
+
+    setDoc(document.getElementById('pvDocPhoto'), photoOk);
+    setDoc(document.getElementById('pvDocId'), row.getAttribute('data-doc') === '1');
+
+    var href = ctx + (type === 'provider' ? '/admin/providers/' : '/admin/sellers/') + id + '/profile';
+    document.getElementById('pvReview').href = href;
+    document.getElementById('pvViewAll').href = href;
+  }
+
+  rows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      rows.forEach(function (r) { r.classList.remove('selected'); });
+      row.classList.add('selected');
+      fillPreview(row);
+    });
+  });
+
+  if (rows.length) fillPreview(rows.find(r => r.style.display !== 'none') || rows[0]);
+  else fillPreview(null);
+
+  var hs = document.getElementById('sellerSearchInput');
+  if (hs) {
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        hs.focus();
+      }
+    });
+    hs.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+      }
+    });
+  }
+})();
+</script>
 </body>
 </html>
-

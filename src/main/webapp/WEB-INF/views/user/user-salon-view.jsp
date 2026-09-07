@@ -313,13 +313,14 @@
 
         /* ===== OFFER CARDS ===== */
         .offer-card {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-            color: #ffffff;
+            background: #ffffff;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
             border-radius: 24px;
             padding: 30px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(30, 27, 75, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -330,7 +331,7 @@
             top: 20px;
             right: 20px;
             background: var(--brand-primary);
-            color: #white;
+            color: #ffffff;
             font-weight: 900;
             font-size: 0.9rem;
             padding: 6px 14px;
@@ -342,9 +343,10 @@
             font-weight: 800;
             font-size: 1.35rem;
             margin-bottom: 10px;
+            color: var(--brand-dark, #1e1b4b);
         }
         .offer-desc {
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text-muted);
             font-size: 0.9rem;
             margin-bottom: 20px;
             line-height: 1.6;
@@ -659,12 +661,12 @@
 
                                 <div>
                                     <div class="mb-3">
-                                        <span class="fs-4 fw-bold text-warning">₹<fmt:formatNumber value="${offer.discountedPrice > 0 ? offer.discountedPrice : offer.originalPrice}" maxFractionDigits="0"/></span>
+                                        <span class="fs-4 fw-bold text-rose">₹<fmt:formatNumber value="${offer.discountedPrice > 0 ? offer.discountedPrice : offer.originalPrice}" maxFractionDigits="0"/></span>
                                         <c:if test="${offer.originalPrice > 0}">
-                                            <span class="text-white-50 text-decoration-line-through ms-2">₹<fmt:formatNumber value="${offer.originalPrice}" maxFractionDigits="0"/></span>
+                                            <span class="text-muted text-decoration-line-through ms-2">₹<fmt:formatNumber value="${offer.originalPrice}" maxFractionDigits="0"/></span>
                                         </c:if>
                                     </div>
-                                    <a href="${pageContext.request.contextPath}/salon/book?offerId=${offer.id}" class="btn btn-light rounded-pill w-100 fw-bold py-2 text-dark">
+                                    <a href="${pageContext.request.contextPath}/salon/book?offerId=${offer.id}" class="btn btn-outline-danger rounded-pill w-100 fw-bold py-2">
                                         Claim & Book Offer
                                     </a>
                                 </div>
@@ -685,10 +687,10 @@
                     <c:forEach var="pkg" items="${packages}">
                         <c:if test="${pkg.isActive}">
                             <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 border-0 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
+                                <div class="card h-100 border-0 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);">
                                     <div class="card-body p-4 d-flex flex-column">
                                         <h3 class="fw-bold mb-1 text-dark fs-4">${pkg.packageName}</h3>
-                                        <div class="fs-3 fw-bold text-primary mb-3">₹${pkg.price}</div>
+                                        <div class="fs-3 fw-bold text-rose mb-3">₹${pkg.price}</div>
                                         <p class="text-muted small mb-4">${pkg.description}</p>
                                         
                                         <c:if test="${not empty pkg.includedServices}">
@@ -725,19 +727,19 @@
                     <c:forEach var="mem" items="${memberships}">
                         <c:if test="${mem.isActive}">
                             <div class="col-md-6 col-lg-4">
-                                <div class="card h-100 border-0 rounded-4 shadow-sm text-white" style="background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);">
+                                <div class="card h-100 rounded-4 shadow-sm" style="background: #ffffff; border: 1px solid var(--border-color); color: var(--text-dark);">
                                     <div class="card-body p-4 d-flex flex-column">
                                         <div class="d-flex align-items-center mb-2">
-                                            <i class="bi bi-award-fill text-warning fs-3 me-2"></i>
-                                            <h3 class="fw-bold mb-0 fs-4">${mem.membershipName}</h3>
+                                            <i class="bi bi-award-fill text-rose fs-3 me-2"></i>
+                                            <h3 class="fw-bold mb-0 fs-4 text-dark">${mem.membershipName}</h3>
                                         </div>
-                                        <div class="fs-2 fw-bold text-warning mb-2">₹${mem.price}</div>
-                                        <div class="badge bg-light text-dark mb-3 w-50" style="font-size: 0.85rem;"><i class="bi bi-calendar-check me-1"></i> Valid for ${mem.durationInMonths} Month(s)</div>
+                                        <div class="fs-2 fw-bold text-rose mb-2">₹${mem.price}</div>
+                                        <div class="badge bg-light text-dark mb-3 w-50" style="font-size: 0.85rem; border: 1px solid var(--border-color);"><i class="bi bi-calendar-check me-1"></i> Valid for ${mem.durationInMonths} Month(s)</div>
                                         
-                                        <div class="text-light opacity-75 small mb-4" style="white-space: pre-line;">${mem.benefits}</div>
+                                        <div class="text-muted small mb-4" style="white-space: pre-line;">${mem.benefits}</div>
                                         
                                         <div class="mt-auto">
-                                            <a href="${pageContext.request.contextPath}/booking/new?membershipId=${mem.id}" class="btn btn-warning rounded-pill w-100 py-2 fw-bold text-dark">
+                                            <a href="${pageContext.request.contextPath}/booking/new?membershipId=${mem.id}" class="btn btn-outline-danger rounded-pill w-100 py-2 fw-bold">
                                                 Join Membership
                                             </a>
                                         </div>
@@ -789,13 +791,48 @@
                                     <c:if test="${stylist.rating != null && stylist.rating > 0}">
                                         <span><i class="bi bi-star-fill text-warning me-1"></i> <fmt:formatNumber value="${stylist.rating}" maxFractionDigits="1"/></span>
                                     </c:if>
+                                <div class="d-flex flex-column gap-2 mt-3">
+                                    <button class="btn btn-outline-dark btn-sm rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#viewStylistModal${stylist.id}">
+                                        View Profile
+                                    </button>
+                                    <a href="${pageContext.request.contextPath}/user/stylist/book?id=${stylist.id}" class="btn btn-primary btn-sm rounded-pill w-100 fw-bold shadow-sm" style="background: var(--brand-pink); border-color: var(--brand-pink);">
+                                        Book Now
+                                    </a>
                                 </div>
-
-                                <a href="${pageContext.request.contextPath}/user/stylist/view?id=${stylist.id}" class="btn btn-outline-danger btn-sm rounded-pill px-4 w-100">
-                                    View Profile & Schedule
-                                </a>
-                            </div>
-                        </div>
+                                
+                                <!-- Stylist Quick View Modal -->
+                                <div class="modal fade" id="viewStylistModal${stylist.id}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 rounded-4 shadow-lg text-start">
+                                            <div class="modal-header border-0 pb-0">
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body pt-0 px-4 pb-4">
+                                                <div class="text-center mb-3">
+                                                    <c:choose>
+                                                        <c:when test="${not empty stylist.profileImage}">
+                                                            <img src="${pageContext.request.contextPath}${stylist.profileImage}" class="stylist-avatar mb-3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 3px solid var(--brand-pink);" alt="<c:out value='${stylist.firstName}'/>">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" alt="<c:out value='${stylist.firstName}'/>" class="stylist-avatar mb-3" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 3px solid var(--brand-pink);">
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                    <h3 class="fw-bold text-dark">${stylist.firstName} ${stylist.lastName}</h3>
+                                                    <p class="text-rose font-weight-bold">${stylist.specialization}</p>
+                                                </div>
+                                                <hr>
+                                                <p><strong><i class="bi bi-briefcase text-primary me-2"></i> Experience:</strong> ${stylist.experienceInYears} Years</p>
+                                                <p><strong><i class="bi bi-person-lines-fill text-success me-2"></i> About:</strong> <span class="text-muted">${not empty stylist.bio ? stylist.bio : 'A talented specialist ready to provide excellent service.'}</span></p>
+                                                
+                                                <div class="mt-4">
+                                                    <a href="${pageContext.request.contextPath}/user/stylist/book?id=${stylist.id}" class="btn btn-primary w-100 rounded-pill fw-bold" style="background: var(--brand-pink); border-color: var(--brand-pink);">
+                                                        Book Appointment
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                     </c:forEach>
                 </div>
             </section>

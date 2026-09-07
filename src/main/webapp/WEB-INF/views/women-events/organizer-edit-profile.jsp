@@ -10,7 +10,7 @@
     <!-- Google Fonts & Bootstrap Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css?v=2">
     <style>
         :root {
             --primary: #F43F5E;
@@ -358,8 +358,15 @@
 <div class="org-main-wrapper">
     <div class="org-topbar">
         <div class="org-topbar-left">
-            <h2>Complete Host Profile</h2>
-            <p>Fill each section — save anytime, submit when ready for admin review.</p>
+            <div class="org-topbar-header-wrap">
+                <button class="org-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h2>Complete Host Profile</h2>
+                    <p>Fill each section — save anytime, submit when ready for admin review.</p>
+                </div>
+            </div>
         </div>
         <div class="org-topbar-right">
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="org-btn-secondary">Dashboard</a>

@@ -4,7 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Creator Studio Dashboard — Fight D Fear</title>
     
@@ -20,6 +21,7 @@
     <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
     
     <style>
+* { box-sizing: border-box; } html, body { overflow-x: hidden; width: 100%; }
         :root {
             --glow-bg: #F8FAFC;
             --card-bg: #FFFFFF;
@@ -121,7 +123,7 @@
         }
 
         /* Studio Container */
-        .studio-container {
+        .studio-container { width: 100%; overflow: hidden;
             max-width: 1100px;
             margin: 0 auto 60px;
             padding: 0 15px;
@@ -246,7 +248,7 @@
             padding: 16px 24px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) {
             .glow-header { padding-top: 30px; padding-bottom: 20px; }
             .top-bar {
                 position: relative;
@@ -275,25 +277,40 @@
 </head>
 <body>
 
-<header class="header d-flex align-items-center fixed-top" style="background: #ffffff; border-bottom: 1px solid #E2E8F0; height: 60px; padding: 0 20px; z-index: 1050; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);">
-  <div class="container-fluid container-xl d-flex align-items-center justify-content-between p-0">
-    <a href="${pageContext.request.contextPath}/" style="text-decoration: none; font-weight:700; font-size:20px; color:#F43F5E !important; display:flex; align-items:center; gap:8px;">
-        <i class="fa-solid fa-fire"></i> Fight D Fear
-    </a>
-    <nav class="navmenu d-flex gap-4 align-items-center">
-        <a href="${pageContext.request.contextPath}/" style="color: #0F172A; text-decoration: none; font-size: 18px;" title="Home">
-            <i class="fa-solid fa-house"></i>
-        </a>
-        <a href="${pageContext.request.contextPath}/users/profile/${user.id}" style="text-decoration: none;" title="Profile">
-            <img src="${not empty user.profilePhoto ? user.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
-        </a>
-    </nav>
-  </div>
-</header>
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-<div id="wrapper" style="margin-top: 75px;">
+<div id="wrapper">
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; width: 100%;">
+    <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+    <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--glow-bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
+        <!-- Sub Header -->
+        <style>
+* { box-sizing: border-box; } html, body { overflow-x: hidden; width: 100%; }
+@media (max-width: 1200px) {
+    .ch-sub-header {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        gap: 15px !important;
+        padding: 0 16px !important;
+        scrollbar-width: none;
+    }
+    .ch-sub-header::-webkit-scrollbar { display: none; }
+    .ch-sub-header > div { flex-shrink: 0 !important; }
+    .desktop-only { display: none !important; }
+}
+</style>
+        <header class="ch-sub-header" style="position:sticky; top:80px; width:100%; height:60px; background:#fff; border-bottom:1px solid #E2E8F0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+            <div style="font-weight:700; font-size:20px; color:var(--accent-pink); display:flex; align-items:center; gap:12px;"><span><i class="fa-solid fa-clapperboard"></i> Creator Hub</span></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>
+                <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span></a>
+                <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
+                <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
+                <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
+                <a href="${pageContext.request.contextPath}/logout" title="Logout" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--accent-pink); text-decoration:none;"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span></a>
+            </div>
+        </header>
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -303,11 +320,7 @@
 
         <!-- Dashboard Header -->
         <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/creator-hub" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-arrow-left"></i> Back to Hub
-                </a>
-            </div>
+            
             
             <h1>Creator Studio</h1>
             <p>Welcome back, ${user.fullName}. Manage your digital uploads, request ad revenue, redeem safety program points, or settings.</p>
@@ -983,3 +996,17 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

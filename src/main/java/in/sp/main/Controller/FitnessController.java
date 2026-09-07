@@ -958,6 +958,11 @@ public class FitnessController {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
 
+        if (trainer.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && trainer.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            redirectAttributes.addFlashAttribute("error", "Your profile must be approved before you can create classes.");
+            return "redirect:/fitness/trainer/dashboard";
+        }
+
         int maxCapVal;
         double priceVal;
         try {
@@ -1215,6 +1220,11 @@ public class FitnessController {
 
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        if (trainer.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED && trainer.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            redirectAttributes.addFlashAttribute("error", "Your profile must be approved before you can create packages.");
+            return "redirect:/fitness/trainer/dashboard";
+        }
 
         try {
             fitnessService.createOrUpdatePackage(trainer, packageId, packageName, category, description,

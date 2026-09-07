@@ -185,7 +185,7 @@
                 <div class="confirm-card" style="background:#fff;border:1px solid #BBF7D0;border-radius:16px;padding:24px;text-align:center;margin-bottom:20px;">
                     <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Registration successful</h2>
                     <p style="color:#64748B;font-size:0.9rem;margin-bottom:14px;">${success}</p>
-                    <p style="background:#FFE4E6;border-radius:12px;padding:10px;font-weight:600;font-size:0.85rem;">Next: sign in after admin verification, then complete your shop profile.</p>
+                    <p style="background:#FFE4E6;border-radius:12px;padding:10px;font-weight:600;font-size:0.85rem;">Next: sign in now to complete your shop profile.</p>
                 </div>
             </c:if>
 
@@ -193,12 +193,12 @@
             <form id="sellerLoginForm" action="${pageContext.request.contextPath}/women-products/seller/login" method="post">
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input class="form-input" type="email" name="email" id="email" required placeholder="Enter your email">
+                    <input class="form-input" type="email" name="email" id="email" required placeholder="Enter your email" value="${registeredEmail}">
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrapper password-field">
-                        <input class="form-input" type="password" name="password" id="password" required placeholder="Enter your password">
+                        <input class="form-input" type="password" name="password" id="password" required placeholder="Enter your password" value="${registeredPassword}">
                         <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
                     </div>
                 </div>
