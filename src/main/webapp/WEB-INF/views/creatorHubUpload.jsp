@@ -71,63 +71,24 @@
             100% { transform: translate(40px, 30px) scale(1.15); }
         }
 
-        /* Clean Minimal Header */
-        .glow-header {
-            padding: 60px 20px 40px;
-            text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--fdf-border);
-            position: relative;
-            margin-bottom: 40px;
-        }
-        .glow-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 38px;
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .glow-header p {
-            color: var(--fdf-muted);
-            font-size: 15px;
-            max-width: 650px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* Top Bar navigation */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 16px 30px;
-            position: absolute;
-            top: 0; right: 0;
+        /* ── TOP NAV ── */
+        .top-nav {
             width: 100%;
+            position: sticky; top: 80px; z-index: 200;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--fdf-border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
         }
-        .top-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--accent-purple);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+        .top-nav .brand { font-size: 17px; font-weight: 700; color: var(--accent-pink); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .top-nav .nav-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+        .icon-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--glow-bg); color: var(--fdf-text);
+            border: 1px solid var(--fdf-border); cursor: pointer;
+            font-size: 15px; transition: all .2s; position: relative;
         }
-        .top-btn:hover {
-            background: var(--accent-purple);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
+        .icon-btn:hover { background: rgba(244,63,94,.08); border-color: var(--accent-pink); color: var(--accent-pink); }
 
         /* Form Layout */
         .upload-container {
@@ -263,7 +224,7 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; padding: 0;" data-skip-global-back="true">
         
         <!-- Blobs overlay -->
         <div class="glow-bg-layer">
@@ -271,17 +232,18 @@
             <div class="blob blob-2"></div>
         </div>
 
-        <!-- Dashboard Header -->
-        <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/creator-hub" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-arrow-left"></i> Back to Hub
+        <!-- TOP NAV -->
+        <nav class="top-nav">
+            <div class="brand">Upload Creation</div>
+            <div class="nav-actions">
+                <a href="${pageContext.request.contextPath}/creator-hub" class="icon-btn" title="Back to Hub">
+                    <i class="fa-solid fa-arrow-left"></i>
                 </a>
             </div>
-            
-            <h1>Upload Creation</h1>
-            <p>Share reels, long videos, stories, or images. Choose monetization structures, refer items, and trigger AI Moderation checks before publishing.</p>
-        </div>
+        </nav>
+
+        <div class="page-wrapper" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 24px 40px;">
+            <p class="text-muted mb-4 text-center">Share reels, long videos, stories, or images. Choose monetization structures, refer items, and trigger AI Moderation checks before publishing.</p>
 
         <div class="upload-container">
             <div class="glass-card" data-aos="fade-up">
