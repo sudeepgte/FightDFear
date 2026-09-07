@@ -464,9 +464,33 @@ body.org-hub {
 }
 
 @media (max-width: 768px) {
-    .org-sidebar { width: 64px; min-width: 64px; }
-    .org-sidebar-brand span, .org-nav-item span, .org-nav-item .nav-badge, .org-user-info, .org-nav-label { display: none; }
-    .org-sidebar-brand { padding: 16px 12px; justify-content: center; }
-    .org-nav-item { justify-content: center; }
-    .org-main-wrapper { margin-left: 64px; }
+    .org-sidebar { 
+        transform: translateX(-100%);
+        width: 240px; 
+        min-width: 240px; 
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1); 
+        z-index: 1000;
+    }
+    
+    .org-main-wrapper { margin-left: 0; }
+    
+    .org-topbar { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px 16px; }
+    .org-page-content { padding: 16px; }
+    .org-topbar-right { width: 100%; justify-content: space-between; }
+
+    body.sidebar-open .org-sidebar { transform: translateX(0); }
+}
+
+@media (max-width: 480px) {
+    .org-stats-grid { grid-template-columns: 1fr; }
+}
+
+.org-sidebar-toggle {
+    background: none; border: none; font-size: 1.5rem; color: var(--fdf-navy);
+    cursor: pointer; display: none; padding: 0;
+}
+@media (max-width: 768px) {
+    .org-sidebar-toggle { display: inline-block; }
+    .org-topbar-header-wrap { display: flex; align-items: center; gap: 12px; }
 }

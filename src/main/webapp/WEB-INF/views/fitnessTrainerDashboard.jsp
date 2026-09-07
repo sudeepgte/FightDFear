@@ -364,16 +364,16 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 280px !important;
-                max-width: 85vw !important;
-                height: auto !important;
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: 100vh !important;
                 max-height: 100vh !important;
-                min-height: 0 !important;
+                min-height: 100vh !important;
                 z-index: 1050;
                 background: #ffffff;
-                box-shadow: 6px 0 30px rgba(0,0,0,0.18);
+                box-shadow: none;
                 overflow-y: auto;
-                border-right: 1px solid var(--fitness-border);
+                border-right: none;
                 padding-bottom: 8px !important;
             }
             #sidebar-wrapper.show-mobile #studioTab {
@@ -431,11 +431,14 @@
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
         <div class="sidebar-heading" style="flex-direction:column; align-items:flex-start; gap:4px; padding:18px 16px 14px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <div style="width:28px; height:28px; border-radius:8px; background:var(--fitness-rose-light); color:var(--fitness-rose); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem;">
-                    <i class="bi bi-heart-pulse-fill"></i>
+            <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:28px; height:28px; border-radius:8px; background:var(--fitness-rose-light); color:var(--fitness-rose); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.9rem;">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <span style="font-size:0.95rem; font-weight:800; color:var(--fitness-text);">Coach Studio</span>
                 </div>
-                <span style="font-size:0.95rem; font-weight:800; color:var(--fitness-text);">Coach Studio</span>
+                <button type="button" class="btn-close d-xl-none" aria-label="Close" onclick="toggleMobileSidebar()" style="font-size: 0.8rem;"></button>
             </div>
             <div style="font-size:0.75rem; color:var(--fitness-muted); padding-left:36px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;">${trainer.fullName}</div>
         </div>
@@ -563,12 +566,12 @@
 
             <%-- State 3: Submitted & Pending Admin Verification --%>
             <c:when test="${trainer.verificationStatus != 'VERIFIED' && trainer.partnerProfileStatus != 'APPROVED'}">
-                <div class="alert alert-info d-flex align-items-center justify-content-between p-4 mb-4 rounded-4 shadow-sm" style="background: #f0f9ff; border: 1.5px solid #bae6fd;">
+                <div class="alert d-flex align-items-center justify-content-between p-4 mb-4 rounded-4 shadow-sm" style="background: #FFF5F5; border: 1.5px solid #FECDD3;">
                     <div>
-                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-clock-history text-primary me-2"></i> Profile Submitted for Verification</h5>
+                        <h5 class="fw-bold text-dark mb-1"><i class="bi bi-clock-history text-danger me-2"></i> Profile Submitted for Verification</h5>
                         <p class="mb-0 text-muted small">Status: <strong>Pending Admin Approval</strong>. Your profile is under review by our admin team.</p>
                     </div>
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-semibold">Under Review</span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill fw-semibold">Under Review</span>
                 </div>
             </c:when>
 
@@ -816,7 +819,14 @@
                 <div class="tab-section" id="classesContent" style="display:none;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h4 class="fw-bold text-dark mb-0">Scheduled Group Classes</h4>
-                        <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-lg"></i> New Class</button>
+                        <c:choose>
+                            <c:when test="${trainer.partnerProfileStatus == 'APPROVED' || trainer.verificationStatus == 'VERIFIED'}">
+                                <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-plus-lg"></i> New Class</button>
+                            </c:when>
+                            <c:otherwise>
+                                <button class="btn btn-secondary btn-sm px-3 opacity-50" disabled title="Profile must be approved to create classes"><i class="bi bi-plus-lg"></i> New Class</button>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                     
                     <c:choose>
@@ -915,9 +925,18 @@
                             <h4 class="fw-bold text-dark mb-1">Fitness Packages &amp; Membership Plans</h4>
                             <p class="text-muted small mb-0">Create recurring class passes and multi-session membership tiers for your clients.</p>
                         </div>
-                        <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createPackageModal">
-                            <i class="bi bi-plus-lg me-1"></i> New Package
-                        </button>
+                        <c:choose>
+                            <c:when test="${trainer.partnerProfileStatus == 'APPROVED' || trainer.verificationStatus == 'VERIFIED'}">
+                                <button class="btn btn-submit btn-sm px-3" data-bs-toggle="modal" data-bs-target="#createPackageModal">
+                                    <i class="bi bi-plus-lg me-1"></i> New Package
+                                </button>
+                            </c:when>
+                            <c:otherwise>
+                                <button class="btn btn-secondary btn-sm px-3 opacity-50" disabled title="Profile must be approved to create packages">
+                                    <i class="bi bi-plus-lg me-1"></i> New Package
+                                </button>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
 
                     <c:choose>

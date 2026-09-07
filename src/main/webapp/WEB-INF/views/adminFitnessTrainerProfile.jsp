@@ -14,19 +14,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 
-    <style>
-        :root {
+    <style>        :root {
             --navy-dark: #E11D48;
-            --navy-primary: #F43F5E;
-            --navy-light: #E11D48;
+            --navy-primary: #FFF5F5;
+            --navy-light: #FFF5F5;
             --coral-primary: #F43F5E;
             --coral-light: #FFE4E6;
             --success-color: #059669;
             --warning-color: #d97706;
             --danger-color: #dc2626;
             --card-bg: #ffffff;
-            --page-bg: #f8fafc;
+            --page-bg: #ffffff;
             --border-color: #e2e8f0;
             --text-dark: #1e293b;
             --text-muted: #64748b;
@@ -43,7 +43,7 @@
         /* Topbar */
         .admin-topbar {
             background: var(--navy-primary);
-            color: white;
+            color: var(--text-dark);
             padding: 14px 24px;
             font-weight: 600;
             position: sticky;
@@ -52,11 +52,11 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .admin-topbar .brand {
-            color: white;
+            color: var(--text-dark);
             text-decoration: none;
             display: flex;
             align-items: center;
@@ -91,16 +91,17 @@
         }
 
         .back-nav:hover {
-            color: var(--navy-primary);
+            color: var(--coral-primary);
         }
 
         /* Provider Header Card */
         .header-card {
-            background: linear-gradient(135deg, var(--navy-primary) 0%, var(--navy-light) 100%);
+            background: var(--navy-primary);
+            border: 1px solid var(--border-color);
             border-radius: 20px;
             padding: 32px;
-            color: white;
-            box-shadow: 0 12px 30px rgba(244, 63, 94, 0.18);
+            color: var(--text-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             margin-bottom: 24px;
             position: relative;
             overflow: hidden;
@@ -113,7 +114,7 @@
             top: -60px;
             width: 220px;
             height: 220px;
-            background: rgba(244, 63, 94, 0.12);
+            background: rgba(244, 63, 94, 0.05);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -122,10 +123,10 @@
             width: 120px;
             height: 120px;
             border-radius: 20px;
-            border: 4px solid rgba(255,255,255,0.25);
+            border: 4px solid #fff;
             overflow: hidden;
             background: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             flex-shrink: 0;
         }
 
@@ -148,50 +149,69 @@
         }
 
         .status-APPROVED, .status-VERIFIED { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .status-PENDING_ADMIN_APPROVAL, .status-PENDING { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .status-READY_FOR_VERIFICATION { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
-        .status-CHANGES_REQUESTED { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
-        .status-PROFILE_INCOMPLETE, .status-REGISTERED { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-        .status-REJECTED, .status-SUSPENDED { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-PENDING_ADMIN_APPROVAL, .status-READY_FOR_VERIFICATION { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .status-CHANGES_REQUESTED { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .status-REJECTED, .status-SUSPENDED { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
 
-        /* Progress Bar */
-        .progress-wrap {
-            background: rgba(255,255,255,0.15);
-            border-radius: 50px;
-            height: 10px;
+        .header-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .header-meta i {
+            color: var(--coral-primary);
+            opacity: 0.9;
+        }
+
+        .pct-bar-bg {
+            background: rgba(0,0,0,0.1);
+            height: 8px;
+            border-radius: 4px;
             overflow: hidden;
-            margin-top: 8px;
+            margin-top: 10px;
         }
 
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #f43f5e, #10b981);
+        .pct-bar-fill {
+            background: var(--success-color);
             height: 100%;
-            border-radius: 50px;
-            transition: width 0.6s ease;
+            border-radius: 4px;
         }
 
-        /* Review Section Cards */
+        /* Content Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 992px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .header-card { padding: 24px; }
+            .header-card .d-flex { flex-direction: column; text-align: center; }
+            .header-meta { justify-content: center; }
+        }
+
         .review-card {
-            background: white;
-            border-radius: 16px;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-            padding: 24px 28px;
+            border-radius: 16px;
+            padding: 24px;
             margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
         }
 
         .section-header {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             margin-bottom: 20px;
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .section-header i {
-            color: var(--coral-primary);
-            font-size: 1.25rem;
+            border-bottom: 2px solid var(--page-bg);
         }
 
         .section-header h3 {
@@ -199,36 +219,76 @@
             font-weight: 700;
             color: var(--text-dark);
             margin: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .section-header i {
+            color: var(--coral-primary);
+            font-size: 1.2rem;
         }
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
         }
 
         .info-field {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            background: var(--page-bg);
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
         }
 
         .info-field-label {
-            font-size: 0.76rem;
-            font-weight: 700;
+            display: block;
+            font-size: 0.78rem;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            font-weight: 600;
             color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
         }
 
         .info-field-value {
-            font-size: 0.95rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 500;
             color: var(--text-dark);
             word-break: break-word;
         }
 
-        .tag-pill {
+        .empty-text {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .program-badge {
+            background: var(--coral-light);
+            color: var(--navy-dark);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin: 0 6px 6px 0;
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+
+        /* Action Dock */
+        .action-dock {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--navy-primary);
+            border-top: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        }.tag-pill {
             display: inline-block;
             background: #f1f5f9;
             color: var(--text-dark);
@@ -279,7 +339,7 @@
         .action-dock {
             position: sticky;
             bottom: 20px;
-            background: rgba(244, 63, 94, 0.94);
+            background: var(--navy-primary);
             backdrop-filter: blur(10px);
             padding: 16px 24px;
             border-radius: 16px;
@@ -288,9 +348,10 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 16px;
-            color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            color: var(--text-dark);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             z-index: 900;
+            border: 1px solid var(--border-color);
         }
 
         .btn-action-approve {
@@ -345,23 +406,39 @@
         }
     </style>
 </head>
-<body>
-
-    <!-- Topbar -->
-    <header class="admin-topbar">
-        <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-            <span>Fight D Fear Admin Portal</span>
-        </a>
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge bg-light text-dark fw-bold px-3 py-2">Coach Profile Review</span>
-            <a href="${pageContext.request.contextPath}/admin/logout" class="btn btn-sm btn-outline-light">
-                <i class="bi bi-box-arrow-right"></i> Sign Out
-            </a>
+  <body class="ap-page">
+  <div class="layout">
+    <%@ include file="globalAdminMenu.jsp" %>
+    <main class="main">
+      <div class="ap-topbar">
+        <div class="ap-topbar-left">
+          <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
+          <div class="ap-search" style="max-width:360px;">
+            <i class="fas fa-search"></i>
+            <input type="search" id="apHeaderSearch" placeholder="Search anything..." aria-label="Search">
+            <span class="ap-kbd">Ctrl + K</span>
+          </div>
         </div>
-    </header>
-
-    <div class="review-container">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <a class="ap-bell" href="${pageContext.request.contextPath}/admin/contact-messages" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="dot ${side_unreadContactMessages > 0 ? 'show' : ''}">${side_unreadContactMessages}</span>
+          </a>
+          <a class="ap-profile" href="${pageContext.request.contextPath}/admin/profile/${admin.id}">
+            <span class="ap-avatar">
+              <c:choose>
+                <c:when test="${not empty admin.profilePhoto}">
+                  <img src="${pageContext.request.contextPath}${admin.profilePhoto}" alt="">
+                </c:when>
+                <c:otherwise>${fn:substring(admin.name,0,1)}</c:otherwise>
+              </c:choose>
+            </span>
+            <div class="name"><c:out value="${admin.name}"/></div>
+            <i class="fas fa-chevron-down ms-1" style="font-size:0.7rem;color:var(--ap-muted);"></i>
+          </a>
+        </div>
+      </div>
+<div class="review-container">
 
         <!-- Flash messages -->
         <c:if test="${not empty message}">
@@ -383,23 +460,21 @@
 
         <!-- PROVIDER HEADER CARD -->
         <div class="header-card">
-            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-4">
+            <div class="d-flex align-items-center gap-4">
                 <div class="avatar-box">
                     <c:choose>
                         <c:when test="${not empty trainer.profilePhotoPath}">
-                            <img src="${trainer.profilePhotoPath.startsWith('http') ? trainer.profilePhotoPath : pageContext.request.contextPath.concat(trainer.profilePhotoPath)}" alt="${trainer.fullName}">
+                            <img src="${trainer.profilePhotoPath.startsWith('http') ? trainer.profilePhotoPath : pageContext.request.contextPath.concat(trainer.profilePhotoPath)}" alt="Profile Photo">
                         </c:when>
                         <c:otherwise>
-                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light text-muted">
-                                <i class="bi bi-person-fill" style="font-size: 3.5rem; color: #94a3b8;"></i>
-                            </div>
+                            <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" alt="Default Avatar">
                         </c:otherwise>
                     </c:choose>
                 </div>
 
                 <div class="flex-grow-1">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-                        <h1 class="h3 fw-bold mb-0 text-white">${trainer.fullName}</h1>
+                        <h1 class="h3 fw-bold mb-0 text-dark">${trainer.fullName}</h1>
                         <c:if test="${empty statusKey}">
                             <c:set var="statusKey" value="${not empty trainer.partnerProfileStatus ? trainer.partnerProfileStatus.name() : (not empty trainer.verificationStatus ? (trainer.verificationStatus.name() == 'VERIFIED' ? 'APPROVED' : trainer.verificationStatus.name()) : 'PENDING')}"/>
                         </c:if>
@@ -409,20 +484,20 @@
                         </span>
 
                         <c:if test="${trainer.suspended}">
-                            <span class="badge bg-danger text-white px-3 py-1">SUSPENDED</span>
+                            <span class="badge bg-danger text-dark px-3 py-1">SUSPENDED</span>
                         </c:if>
                     </div>
 
-                    <div class="d-flex flex-wrap gap-4 text-white-50 small mb-3">
-                        <div><i class="bi bi-award-fill text-white"></i> <strong>Designation:</strong> ${not empty trainer.designation ? trainer.designation : 'Fitness Coach'}</div>
-                        <div><i class="bi bi-envelope-fill text-white"></i> <a href="mailto:${trainer.email}" class="text-white text-decoration-none">${trainer.email}</a></div>
-                        <div><i class="bi bi-telephone-fill text-white"></i> <a href="tel:${trainer.phone}" class="text-white text-decoration-none">${trainer.phone}</a></div>
-                        <div><i class="bi bi-geo-alt-fill text-white"></i> ${not empty trainer.city ? trainer.city : 'Location not set'}</div>
+                    <div class="d-flex flex-wrap gap-4 text-muted small mb-3">
+                        <div><i class="bi bi-award-fill text-dark"></i> <strong>Designation:</strong> ${not empty trainer.designation ? trainer.designation : 'Fitness Coach'}</div>
+                        <div><i class="bi bi-envelope-fill text-dark"></i> <a href="mailto:${trainer.email}" class="text-dark text-decoration-none">${trainer.email}</a></div>
+                        <div><i class="bi bi-telephone-fill text-dark"></i> <a href="tel:${trainer.phone}" class="text-dark text-decoration-none">${trainer.phone}</a></div>
+                        <div><i class="bi bi-geo-alt-fill text-dark"></i> ${not empty trainer.city ? trainer.city : 'Location not set'}</div>
                     </div>
 
                     <!-- Profile Completion -->
                     <div class="mt-2" style="max-width: 480px;">
-                        <div class="d-flex justify-content-between small fw-bold text-white mb-1">
+                        <div class="d-flex justify-content-between small fw-bold text-dark mb-1">
                             <span>Profile Completion</span>
                             <span>${trainer.profileCompletionPct != null ? trainer.profileCompletionPct : 0}%</span>
                         </div>
@@ -778,26 +853,30 @@
         <!-- STICKY ACTION DOCK -->
         <div class="action-dock">
             <div>
-                <span class="small text-white-50 d-block">Admin Decision Workflow</span>
-                <strong class="text-white">${trainer.fullName}</strong>
+                <span class="small text-muted d-block">Admin Decision Workflow</span>
+                <strong class="text-dark">${trainer.fullName}</strong>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                <!-- Approve -->
-                <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/approve" method="post" class="m-0">
-                    <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this fitness coach?');">
-                        <i class="bi bi-check-lg me-1"></i> Approve Coach
-                    </button>
-                </form>
+                <c:if test="${statusKey != 'APPROVED'}">
+                    <!-- Approve -->
+                    <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/approve" method="post" class="m-0">
+                        <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this fitness coach?');">
+                            <i class="bi bi-check-lg me-1"></i> Approve Coach
+                        </button>
+                    </form>
+                </c:if>
 
                 <!-- Request Changes Trigger -->
                 <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#trainerChangesModal">
                     <i class="bi bi-pencil me-1"></i> Request Changes
                 </button>
 
-                <!-- Reject Trigger -->
-                <button type="button" class="btn-action-reject" data-bs-toggle="modal" data-bs-target="#trainerRejectModal">
-                    <i class="bi bi-x-lg me-1"></i> Reject
-                </button>
+                <c:if test="${statusKey != 'APPROVED'}">
+                    <!-- Reject Trigger -->
+                    <button type="button" class="btn-action-reject" data-bs-toggle="modal" data-bs-target="#trainerRejectModal">
+                        <i class="bi bi-x-lg me-1"></i> Reject
+                    </button>
+                </c:if>
             </div>
         </div>
 
@@ -854,5 +933,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+</main></div><script>document.getElementById('sidebarToggle').addEventListener('click', function() { document.querySelector('.sidebar').classList.toggle('active'); });</script></body>
 </html>
+
