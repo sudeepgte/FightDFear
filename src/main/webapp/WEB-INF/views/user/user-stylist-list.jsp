@@ -347,9 +347,7 @@
                             </c:choose>
                         </div>
                         
-                        <a href="${pageContext.request.contextPath}/user/stylist/view?id=${stylist.id}" class="btn-stylist-action">
-                            View Details
-                        </a>
+
                     </div>
                 </div>
             </c:forEach>

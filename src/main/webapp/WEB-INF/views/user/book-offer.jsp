@@ -14,7 +14,7 @@
  
         h2.page-title {
             text-align: center;
-            color: #6a0572;
+            color: #F43F5E;
             font-weight: bold;
             margin: 40px 0;
         }
@@ -30,7 +30,7 @@
  
         .form-label {
             font-weight: 600;
-            color: #6a0572;
+            color: #F43F5E;
         }
  
         input.form-control,
@@ -44,12 +44,12 @@
         input.form-control:focus,
         select.form-control:focus,
         textarea.form-control:focus {
-            box-shadow: 0 0 8px rgba(106,5,114,0.3);
-            border-color: #6a0572;
+            box-shadow: 0 0 8px rgba(244,63,94,0.3);
+            border-color: #F43F5E;
         }
  
         button.btn-book {
-            background: linear-gradient(90deg, #8e2de2, #4a00e0);
+            background: linear-gradient(90deg, #F43F5E, #E11D48);
             border: none;
             color: #fff;
             font-weight: 500;
@@ -59,8 +59,8 @@
         }
  
         button.btn-book:hover {
-            background: linear-gradient(90deg, #4a00e0, #8e2de2);
-            box-shadow: 0 4px 12px rgba(78,0,224,0.3);
+            background: linear-gradient(90deg, #E11D48, #F43F5E);
+            box-shadow: 0 4px 12px rgba(225,29,72,0.3);
             transform: scale(1.05);
         }
  

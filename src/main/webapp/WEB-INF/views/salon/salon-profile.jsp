@@ -15,16 +15,23 @@
         :root {
             --sidebar-width: 280px;
             --dashboard-bg: #f8f9fc;
-            --fdf-burgundy: #2d0b20;
-            --fdf-burgundy-dark: #1f0615;
-            --fdf-pink: #db2777;
-            --fdf-pink-light: #fbcfe8;
-            --fdf-rose: #f43f5e;
+            --fdf-burgundy: #1E1B4B;
+            --fdf-burgundy-dark: #0f0d26;
+            --fdf-pink: #F43F5E;
+            --fdf-pink-light: #FFE4E6;
+            --fdf-rose: #E11D48;
             --fdf-lavender: #f3e8ff;
             --fdf-text-dark: #1e1b4b;
             --fdf-text-muted: #64748b;
             --fdf-border: #f1e9f0;
             --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
+            
+            --brand-pink: var(--fdf-pink);
+            --brand-pink-light: var(--fdf-pink-light);
+            --border-color: #E2E8F0;
+            --text-dark: var(--fdf-text-dark);
+            --text-muted: var(--fdf-text-muted);
+            --bg-color: var(--dashboard-bg);
         }
 
         html, body {

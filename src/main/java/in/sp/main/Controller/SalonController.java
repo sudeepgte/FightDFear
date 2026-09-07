@@ -944,8 +944,23 @@ public class SalonController {
      Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
      if (loggedSalon == null) return "redirect:/salons/login";
 
-     if (email == null || password == null) {
-         model.addAttribute("error", "Email and Password are required.");
+     if (email == null || email.trim().isEmpty() || !email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
+         model.addAttribute("error", "Please provide a valid email address.");
+         return "salon/salon-add-stylist";
+     }
+     
+     if (password == null || password.trim().isEmpty() || !password.matches("(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{8,}")) {
+         model.addAttribute("error", "Password must be at least 8 characters long, including an uppercase letter, lowercase letter, and a number.");
+         return "salon/salon-add-stylist";
+     }
+
+     if (contactNumber == null || contactNumber.trim().isEmpty() || !contactNumber.matches("^[0-9]{10}$")) {
+         model.addAttribute("error", "Please provide a valid 10-digit phone number.");
+         return "salon/salon-add-stylist";
+     }
+     
+     if (firstName == null || firstName.trim().isEmpty() || firstName.length() < 2) {
+         model.addAttribute("error", "First name must be at least 2 characters.");
          return "salon/salon-add-stylist";
      }
 

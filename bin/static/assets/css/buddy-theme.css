@@ -1,0 +1,21 @@
+/**
+ * Buddy page — rose/pink light background
+ * /buddy
+ */
+body.fdf-page-buddy #page-content-wrapper {
+    background: linear-gradient(180deg, #FFE4E6 0%, #FFF1F2 25%, #F8FAFC 50%, #FFF1F2 100%) !important;
+}
+
+body.fdf-page-buddy .fdf-page-main {
+    background: linear-gradient(145deg, rgba(255,255,255,0.75) 0%, rgba(255,241,242,0.88) 100%);
+    border-color: #FDA4AF;
+}
+
+body.fdf-page-buddy .fdf-card,
+body.fdf-page-buddy .fdf-card--rose {
+    background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 50%, #FFE4E6 100%);
+}
+
+body.fdf-page-buddy .matchItem {
+    background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%) !important;
+}

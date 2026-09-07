@@ -257,6 +257,9 @@ public class BookingController {
 
         // Fetch OfferBookings from another repository (also by ID)
         List<OfferBooking> offerBookings = offerbookingRepository.findBySalonId(salonId);
+        
+        // Fetch Stylist Bookings (Booking entity)
+        List<Booking> stylistBookings = bookingRepository.findBySalonId(salonId);
 
         // ✅ Merge all into one list for "bookings"
         List<Booking1> bookings = new ArrayList<>();
@@ -266,10 +269,31 @@ public class BookingController {
         // Add to model
         model.addAttribute("bookings", bookings);  
         model.addAttribute("offerBookings", offerBookings); 
+        model.addAttribute("stylistBookings", stylistBookings);
         model.addAttribute("salon", loggedSalon); // Added this line
         model.addAttribute("today", LocalDate.now()); // Added for date comparison
 
         return "salon/viewBookings";
+    }
+
+    @PostMapping("/updateStylistStatus")
+    public String updateStylistBookingStatus(@RequestParam Long bookingId,
+                                             @RequestParam String status,
+                                             HttpSession session) {
+
+        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
+        if (loggedSalon == null) {
+            return "redirect:/salons/login";
+        }
+
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+
+        if (booking != null && booking.getSalon().getId().equals(loggedSalon.getId())) {
+            booking.setStatus(BookingStatus.valueOf(status.toUpperCase()));
+            bookingRepository.save(booking);
+        }
+
+        return "redirect:/booking/list";
     }
 
     @PostMapping("/updateStatus")

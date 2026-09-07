@@ -356,6 +356,7 @@ public class LawyerController {
     public String saveProfileCompletion(@RequestParam String fullName,
                                       @RequestParam String phone,
                                       @RequestParam(required = false) String designation,
+                                      @RequestParam(required = false) String whatsappNumber,
                                       @RequestParam(required = false) String barCouncilId,
                                       @RequestParam(required = false) String city,
                                       @RequestParam(required = false) String state,
@@ -367,6 +368,14 @@ public class LawyerController {
                                       @RequestParam(required = false) String serviceMode,
                                       @RequestParam(required = false) Integer experienceYears,
                                       @RequestParam(required = false) String languages,
+                                      @RequestParam(required = false) String audience,
+                                      @RequestParam(required = false) String address,
+                                      @RequestParam(required = false) String pincode,
+                                      @RequestParam(required = false) String facilities,
+                                      @RequestParam(required = false) String consultationMode,
+                                      @RequestParam(required = false) Double consultationFee,
+                                      @RequestParam(required = false) String upiId,
+                                      @RequestParam(required = false) String bankDetails,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile profilePhoto,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile chamberPhoto,
                                       HttpSession session, RedirectAttributes ra) {
@@ -378,6 +387,7 @@ public class LawyerController {
             existing.setFullName(fullName != null ? fullName.trim() : "");
             existing.setPhone(phone != null ? phone.trim() : "");
             existing.setDesignation(designation != null ? designation.trim() : "");
+            existing.setWhatsappNumber(whatsappNumber != null ? whatsappNumber.trim() : "");
             existing.setBarCouncilId(barCouncilId != null ? barCouncilId.trim() : "");
             existing.setCity(city != null ? city.trim() : "");
             existing.setState(state != null ? state.trim() : "");
@@ -396,6 +406,15 @@ public class LawyerController {
             existing.setServiceMode(serviceMode != null ? serviceMode.trim() : "");
             if (experienceYears != null) existing.setExperienceYears(experienceYears);
             existing.setLanguages(languages != null ? languages.trim() : "");
+            
+            existing.setAudience(audience != null ? audience.trim() : "");
+            existing.setAddress(address != null ? address.trim() : "");
+            existing.setPincode(pincode != null ? pincode.trim() : "");
+            existing.setFacilities(facilities != null ? facilities.trim() : "");
+            existing.setConsultationMode(consultationMode != null ? consultationMode.trim() : "");
+            if (consultationFee != null) existing.setConsultationFee(consultationFee);
+            existing.setUpiId(upiId != null ? upiId.trim() : "");
+            existing.setBankDetails(bankDetails != null ? bankDetails.trim() : "");
             
             existing.setLocationText(city != null ? city.trim() : "");
             

@@ -211,8 +211,8 @@
 				             <div class="alert alert-danger text-center" role="alert">
 				               <strong>⚠️ ${error}</strong>
 				               <br>
-				               <a href="${pageContext.request.contextPath}/user/stylist/view?id=${stylist.id}" class="btn btn-sm btn-outline-dark mt-2">
-				                 ← Back to Stylist Profile
+				               <a href="${pageContext.request.contextPath}/user/stylists" class="btn btn-sm btn-outline-dark mt-2">
+				                 ← Back to Stylists
 				               </a>
 				             </div>
 				           </div>

@@ -68,6 +68,22 @@
     }
     .btn-reject-sm:hover { background-color: #B91C1C; color: white; transform: translateY(-1px); }
 
+    .btn-view-profile {
+      background-color: #3B82F6;
+      color: white;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: all 0.2s;
+      text-decoration: none !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-view-profile:hover { background-color: #2563EB; color: white; transform: translateY(-1px); }
+
     .btn-view-doc {
       display: inline-flex;
       align-items: center;
@@ -425,6 +441,7 @@
                       </td>
                       <td onclick="event.stopPropagation();">
                         <div class="dv-actions">
+                          <a class="btn-view-profile" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye"></i></a>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
                             <button class="btn-approve-sm" type="submit" title="Verify"><i class="fas fa-check"></i></button>
                           </form>
@@ -515,6 +532,7 @@
                       </div>
 
                       <div class="d-flex align-items-center gap-2">
+                          <a class="btn-view-profile py-1 px-3" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye me-1"></i> View</a>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
                               <button class="btn-approve-sm py-1 px-3" type="submit" title="Verify"><i class="fas fa-check me-1"></i> Approve</button>
                           </form>
