@@ -486,7 +486,8 @@ function markBroadcastsAsRead() {
     }
 </style>
 
-<c:if test="${not empty sessionScope.user}">
+<c:set var="activeWsUserId" value="${not empty sessionScope.loggedDoctor ? sessionScope.loggedDoctor.id : (not empty sessionScope.user ? sessionScope.user.id : '')}" />
+<c:if test="${not empty activeWsUserId}">
     <!-- Global WebSocket Signaling Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
@@ -495,7 +496,7 @@ function markBroadcastsAsRead() {
         (function() {
             window.__APP_CTX__ = "${pageContext.request.contextPath}";
             const ctx = window.__APP_CTX__;
-            const userId = "${sessionScope.user.id}";
+            const userId = "${activeWsUserId}";
             const isVerified = "${sessionScope.user.verificationStatus == 'VERIFIED'}";
             
             let globalStompClient = null;

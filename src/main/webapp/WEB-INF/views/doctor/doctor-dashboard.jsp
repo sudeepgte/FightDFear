@@ -472,10 +472,6 @@
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=prescriptions" class="dd-nav-item ${section == 'prescriptions' ? 'active' : ''}">
       <i class="bi bi-file-earmark-medical"></i> Prescriptions
     </a>
-    <div class="dd-nav-label">Network</div>
-    <a href="${pageContext.request.contextPath}/doctors/list" class="dd-nav-item">
-      <i class="bi bi-people"></i> Doctor Directory
-    </a>
   </nav>
   <div class="dd-sidebar-footer">
     <a href="${pageContext.request.contextPath}/doctors/logout" class="dd-nav-item">

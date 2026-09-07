@@ -123,11 +123,12 @@ public class DoctorController {
     public String register(
             @RequestParam String fullName,
             @RequestParam String email,
-    @RequestParam String phone,
+            @RequestParam String phone,
             @RequestParam String password,
             @RequestParam String confirmPassword,
             @RequestParam(required = false) String acceptedTerms,
             HttpSession session,
+            RedirectAttributes redirectAttributes,
             Model model) {
 
         boolean termsAccepted = "true".equalsIgnoreCase(acceptedTerms)
@@ -150,7 +151,13 @@ public class DoctorController {
             session.setAttribute(DOCTOR_PREFILL_AT, System.currentTimeMillis());
             session.setAttribute(DOCTOR_REG_SUCCESS_NAME, d.getFullName());
 
-            return "redirect:/doctors/register?success=1";
+            redirectAttributes.addFlashAttribute("registrationSuccess", true);
+            redirectAttributes.addFlashAttribute("registeredName", d.getFullName());
+            redirectAttributes.addFlashAttribute("prefillEmail", d.getEmail());
+            redirectAttributes.addFlashAttribute("prefillFromRegistration", true);
+            redirectAttributes.addFlashAttribute("message", "Registration successful! Welcome Dr. " + d.getFullName() + ". Please enter your password to sign in.");
+
+            return "redirect:/doctors/login?registered=1";
         } catch (ResponseStatusException ex) {
             model.addAttribute("error", ex.getReason() != null ? ex.getReason() : "Registration failed.");
             model.addAttribute("fullName", fullName);
@@ -167,11 +174,19 @@ public class DoctorController {
     }
 
     @GetMapping("/login")
-    public String loginPage(HttpSession session, Model model) {
+    public String loginPage(@RequestParam(value = "registered", required = false) String registered,
+                            HttpSession session, Model model) {
         if (requireLoggedDoctor(session) != null) {
             return "redirect:/doctors/profile-completion";
         }
         consumeDoctorLoginPrefill(session, model);
+        if ("1".equals(registered) || "true".equalsIgnoreCase(registered)) {
+            model.addAttribute("prefillFromRegistration", true);
+            Object name = session.getAttribute(DOCTOR_REG_SUCCESS_NAME);
+            if (name != null) {
+                model.addAttribute("registeredName", name.toString());
+            }
+        }
         return "doctor/doctor-login";
     }
 

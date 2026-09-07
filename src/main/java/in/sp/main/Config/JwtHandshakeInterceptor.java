@@ -67,6 +67,54 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
                 attributes.put("authUserId", user.getId());
                 return true;
             }
+
+            Object docObj = session.getAttribute("loggedDoctor");
+            if (docObj instanceof in.sp.main.Entities.Doctor doc) {
+                String email = doc.getEmail();
+                if (email == null || email.isBlank()) {
+                    email = "doctor-" + doc.getId() + "@session.fightdfear";
+                }
+                attributes.put("authEmail", email);
+                attributes.put("authRole", "DOCTOR");
+                attributes.put("authUserId", doc.getId());
+                return true;
+            }
+
+            Object adminObj = session.getAttribute("admin");
+            if (adminObj instanceof in.sp.main.Entities.Admin admin) {
+                String email = admin.getEmail();
+                if (email == null || email.isBlank()) {
+                    email = "admin-" + admin.getId() + "@session.fightdfear";
+                }
+                attributes.put("authEmail", email);
+                attributes.put("authRole", "ADMIN");
+                attributes.put("authUserId", (long) admin.getId());
+                return true;
+            }
+
+            Object salonObj = session.getAttribute("loggedSalon");
+            if (salonObj instanceof in.sp.main.Entities.Salon salon) {
+                String email = salon.getEmail();
+                if (email == null || email.isBlank()) {
+                    email = "salon-" + salon.getId() + "@session.fightdfear";
+                }
+                attributes.put("authEmail", email);
+                attributes.put("authRole", "SALON");
+                attributes.put("authUserId", salon.getId());
+                return true;
+            }
+
+            Object provObj = session.getAttribute("loggedProvider");
+            if (provObj instanceof in.sp.main.Entities.ServiceProvider prov) {
+                String email = prov.getEmail();
+                if (email == null || email.isBlank()) {
+                    email = "provider-" + prov.getId() + "@session.fightdfear";
+                }
+                attributes.put("authEmail", email);
+                attributes.put("authRole", "PROVIDER");
+                attributes.put("authUserId", prov.getId());
+                return true;
+            }
         }
         return false;
     }
