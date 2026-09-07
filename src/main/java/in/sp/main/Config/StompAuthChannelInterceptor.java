@@ -61,6 +61,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         if (command == StompCommand.SUBSCRIBE) {
             String destination = accessor.getDestination();
             if (destination != null && !isSubscribeAllowed(destination, role, userIdObj)) {
+                System.err.println("[STOMP AUTH] SUBSCRIBE DENIED: email=" + email + ", role=" + role + ", userId=" + resolveUserId(userIdObj) + ", destination=" + destination);
                 throw new IllegalArgumentException("Subscribe denied: " + destination);
             }
         }
@@ -76,15 +77,26 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         return message;
     }
 
+    private static Long resolveUserId(Object userIdObj) {
+        if (userIdObj == null) {
+            return null;
+        }
+        if (userIdObj instanceof Number n) {
+            return n.longValue();
+        }
+        try {
+            return Long.parseLong(userIdObj.toString().trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private boolean isSubscribeAllowed(String destination, String role, Object userIdObj) {
         if ("ADMIN".equals(role)) {
             return true;
         }
 
-        Long userId = null;
-        if (userIdObj instanceof Number n) {
-            userId = n.longValue();
-        }
+        Long userId = resolveUserId(userIdObj);
 
         // Public-ish feed topics for logged-in users
         if (destination.startsWith("/topic/reels")

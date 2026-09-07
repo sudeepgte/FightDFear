@@ -345,9 +345,7 @@
                                 <div class="field">
                                     <label>Gender</label>
                                     <select name="gender" id="gender">
-                                        <option value="FEMALE" ${doctor.gender == 'FEMALE' ? 'selected' : ''}>Female</option>
-                                        <option value="MALE" ${doctor.gender == 'MALE' ? 'selected' : ''}>Male</option>
-                                        <option value="OTHER" ${doctor.gender == 'OTHER' ? 'selected' : ''}>Other</option>
+                                        <option value="FEMALE" selected>Female</option>
                                     </select>
                                 </div>
                                 <div class="field">

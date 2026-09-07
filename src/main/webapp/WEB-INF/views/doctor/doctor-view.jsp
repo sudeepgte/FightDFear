@@ -651,12 +651,22 @@
 
             <div class="mb-4">
               <label class="small fw-800 text-muted mb-2 d-block">CONSULTATION MODE</label>
+              <c:set var="modesStr" value="${not empty doctor.consultationModes ? doctor.consultationModes.toUpperCase() : ''}" />
+              <c:set var="hasClinic" value="${empty modesStr or modesStr.contains('CLINIC') or modesStr.contains('BOTH') or modesStr.contains('OFFLINE')}" />
+              <c:set var="hasVideo" value="${empty modesStr or modesStr.contains('VIDEO') or modesStr.contains('BOTH') or modesStr.contains('ONLINE')}" />
               <div class="btn-group w-100" role="group">
-                <input type="radio" class="btn-check" name="consultationType" id="mode1" value="CLINIC" checked>
-                <label class="btn btn-outline-accent py-3 fw-700" for="mode1">Clinic Visit</label>
-                
-                <input type="radio" class="btn-check" name="consultationType" id="mode2" value="VIDEO">
-                <label class="btn btn-outline-accent py-3 fw-700" for="mode2">Video Call</label>
+                <c:if test="${hasClinic}">
+                  <input type="radio" class="btn-check" name="consultationType" id="mode1" value="CLINIC" ${hasClinic ? 'checked' : ''}>
+                  <label class="btn btn-outline-accent py-3 fw-700" for="mode1">Clinic Visit</label>
+                </c:if>
+                <c:if test="${hasVideo}">
+                  <input type="radio" class="btn-check" name="consultationType" id="mode2" value="VIDEO" ${!hasClinic && hasVideo ? 'checked' : ''}>
+                  <label class="btn btn-outline-accent py-3 fw-700" for="mode2">Video Call</label>
+                </c:if>
+                <c:if test="${!hasClinic and !hasVideo}">
+                  <input type="radio" class="btn-check" name="consultationType" id="mode1" value="CLINIC" checked>
+                  <label class="btn btn-outline-accent py-3 fw-700" for="mode1">Clinic Visit</label>
+                </c:if>
               </div>
             </div>
 
@@ -757,9 +767,9 @@
   <div id="bookingSuccessModal" class="doc-modal-overlay">
     <div class="doc-modal" role="dialog" aria-modal="true">
       <div class="doc-modal-header" style="flex-direction:column;align-items:center;text-align:center;gap:8px;">
-        <i class="bi bi-check-circle-fill" style="font-size:42px;color:var(--doc-primary);"></i>
-        <h3>Appointment requested</h3>
-        <p>Your booking has been sent to Dr. ${doctor.fullName}. Status starts as Pending until the doctor confirms.</p>
+        <i class="bi bi-check-circle-fill" style="font-size:42px;color:var(--doc-primary, #F43F5E);"></i>
+        <h3 id="bsTitle">Appointment Confirmed!</h3>
+        <p id="bsDesc">Your appointment with Dr. ${doctor.fullName} has been booked successfully.</p>
       </div>
       <div class="doc-modal-body">
         <div class="doc-modal-row"><span class="k">Doctor</span><span class="v">Dr. ${doctor.fullName}</span></div>
@@ -767,7 +777,8 @@
         <div class="doc-modal-row"><span class="k">When</span><span class="v" id="bsWhen">—</span></div>
         <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="bsMode">—</span></div>
         <div class="doc-modal-row"><span class="k">Fee</span><span class="v" id="bsFee">—</span></div>
-        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span class="doc-status pending">Pending</span></span></div>
+        <div class="doc-modal-row"><span class="k">Payment Status</span><span class="v" id="bsPaymentStatus"><span class="badge bg-success">Paid</span></span></div>
+        <div class="doc-modal-row" id="bsReceiptRow" style="display:none;"><span class="k">Receipt No</span><span class="v" id="bsReceipt">—</span></div>
       </div>
       <div class="doc-modal-footer" style="justify-content:center;">
         <a class="doc-modal-btn primary" href="${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed">View my appointments</a>
@@ -784,8 +795,21 @@
     var doctorAvailableDaysStr = "${doctor.availableDays}";
     var doctorStartTime = "${doctor.startTime}";
     var doctorEndTime = "${doctor.endTime}";
+    var doctorBreakStart = "${doctor.breakStart}";
+    var doctorBreakEnd = "${doctor.breakEnd}";
+    var doctorBlockedDatesStr = "${doctor.blockedDates}";
+    var doctorSlotDuration = parseInt("${doctor.slotDurationMinutes != null ? doctor.slotDurationMinutes : 30}") || 30;
     var daysMap = { "sunday":0, "monday":1, "tuesday":2, "wednesday":3, "thursday":4, "friday":5, "saturday":6 };
     var availableDays = (doctorAvailableDaysStr || "").split(",").map(d => d.trim().toLowerCase()).filter(d => daysMap[d] !== undefined).map(d => daysMap[d]);
+
+    function parseMinutes(timeStr) {
+      if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
+      var parts = timeStr.trim().split(':');
+      var h = parseInt(parts[0], 10);
+      var m = parseInt(parts[1] || '0', 10);
+      if (isNaN(h) || isNaN(m)) return null;
+      return h * 60 + m;
+    }
 
     function currentFee() {
       var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
@@ -836,19 +860,25 @@
         document.getElementById('payBtn').innerText = 'Schedule Unavailable';
         return;
       }
-      
+
+      var blockedList = (doctorBlockedDatesStr || "").split(/[,|]/).map(s => s.trim()).filter(Boolean);
       var html = '';
       var d = new Date();
       var count = 0;
+      var firstDateISO = null;
+
       while(count < 14) {
         if(availableDays.includes(d.getDay())) {
           var dateISO = localDateISO(d);
-          var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
-          html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
-                    <div class="small fw-700 opacity-50">\${dayName}</div>
-                    <div class="fs-5 fw-900">\${d.getDate()}</div>
-                   </div>`;
-          count++;
+          if (!blockedList.includes(dateISO)) {
+            if (!firstDateISO) firstDateISO = dateISO;
+            var dayName = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+            html += `<div class="day-selector-item" onclick="selectDate(this, '\${dateISO}')">
+                      <div class="small fw-700 opacity-50">\${dayName}</div>
+                      <div class="fs-5 fw-900">\${d.getDate()}</div>
+                     </div>`;
+            count++;
+          }
         }
         d.setDate(d.getDate() + 1);
       }
@@ -856,6 +886,10 @@
          dateScroll.innerHTML = '<p class="text-danger small fw-700 p-2">No available dates found.</p>';
       } else {
          dateScroll.innerHTML = html;
+         var firstEl = dateScroll.querySelector('.day-selector-item');
+         if (firstEl && firstDateISO) {
+           selectDate(firstEl, firstDateISO);
+         }
       }
       syncFeeUi();
     }
@@ -870,21 +904,59 @@
 
     function renderTimeSlots() {
       var sessionSlots = document.getElementById('sessionSlots');
-      if(!doctorStartTime || !doctorEndTime) return;
+      if (!sessionSlots) return;
+      if(!doctorStartTime || !doctorEndTime) {
+        sessionSlots.innerHTML = '<p class="text-muted small py-3 w-100 text-center">Doctor clinic hours not set.</p>';
+        return;
+      }
 
+      var start = parseMinutes(doctorStartTime);
+      var end = parseMinutes(doctorEndTime);
+      if (start === null || end === null) {
+        sessionSlots.innerHTML = '<p class="text-muted small py-3 w-100 text-center">Invalid doctor clinic hours.</p>';
+        return;
+      }
+
+      var bStart = parseMinutes(doctorBreakStart);
+      var bEnd = parseMinutes(doctorBreakEnd);
+
+      var now = new Date();
+      var isToday = selectedDateObj && (
+        selectedDateObj.getFullYear() === now.getFullYear() &&
+        selectedDateObj.getMonth() === now.getMonth() &&
+        selectedDateObj.getDate() === now.getDate()
+      );
+      var minMinutesToday = now.getHours() * 60 + now.getMinutes() + 15;
+
+      var step = doctorSlotDuration >= 10 ? doctorSlotDuration : 30;
       var html = '';
-      var start = parseInt(doctorStartTime.split(':')[0]) * 60 + parseInt(doctorStartTime.split(':')[1] || 0);
-      var end = parseInt(doctorEndTime.split(':')[0]) * 60 + parseInt(doctorEndTime.split(':')[1] || 0);
-      
-      for(var m = start; m < end; m += 30) {
-        var h = Math.floor(m/60);
-        var mm = m%60;
+      var slotCount = 0;
+
+      for(var m = start; m < end; m += step) {
+        // Skip slot if it falls inside doctor's break time
+        if (bStart !== null && bEnd !== null && m >= bStart && m < bEnd) {
+          continue;
+        }
+        // Skip slot if date is today and time is in past or too close (less than 15 mins)
+        if (isToday && m < minMinutesToday) {
+          continue;
+        }
+
+        var h = Math.floor(m / 60);
+        var mm = m % 60;
         var ampm = h >= 12 ? 'PM' : 'AM';
-        var t12 = (h%12 || 12) + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
+        var displayH = (h % 12 || 12);
+        var t12 = displayH + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
         var t24 = (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm + ':00';
         html += `<div class="time-slot-pill" onclick="selectTime(this, '\${t24}', '\${t12}')">\${t12}</div>`;
+        slotCount++;
       }
-      sessionSlots.innerHTML = html;
+
+      if (slotCount === 0) {
+        sessionSlots.innerHTML = '<p class="text-muted small py-3 w-100 text-center">No available time slots on this date (outside break hours).</p>';
+      } else {
+        sessionSlots.innerHTML = html;
+      }
     }
 
     function selectTime(el, t24, t12) {
@@ -910,10 +982,11 @@
       try { data = await res.json(); } catch (e) {}
       if (res.status === 401) {
         alert('Please log in as a patient to book this appointment.');
+        window.location.href = '${pageContext.request.contextPath}/login';
         return false;
       }
-      if (res.ok && data.success) {
-        showBookingSuccess();
+      if (res.ok && (data.success || data.appointmentId)) {
+        showBookingSuccess(data);
         return true;
       }
       alert(data.error || 'Unable to book appointment');
@@ -923,12 +996,17 @@
     async function initiatePayment() {
       syncFeeUi();
       var payBtn = document.getElementById('payBtn');
+      var bpConfirmBtn = document.getElementById('bpConfirmBtn');
       if (payBtn && payBtn.dataset.busy === '1') return;
       if (payBtn) {
         payBtn.dataset.busy = '1';
         payBtn.disabled = true;
         payBtn.dataset.label = payBtn.textContent;
         payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+      }
+      if (bpConfirmBtn) {
+        bpConfirmBtn.disabled = true;
+        bpConfirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing...';
       }
 
       const amount = document.getElementById('amount').value;
@@ -939,12 +1017,18 @@
       const reasonEl = document.getElementById('appointmentReason') || document.getElementById('reason');
       const reason = reasonEl ? (reasonEl.value || '').trim() : '';
       const fee = parseFloat(amount || '0');
+      const patientName = (document.getElementById('patientName') || {}).value || '${user.fullName}';
+      const patientPhone = (document.getElementById('patientPhone') || {}).value || '${user.phoneNumber}';
 
       function unlockPay() {
         if (payBtn) {
           payBtn.dataset.busy = '0';
           payBtn.disabled = !time;
-          payBtn.innerHTML = payBtn.dataset.label || 'Confirm & Pay';
+          payBtn.innerHTML = payBtn.dataset.label || (fee > 0 ? ('Review & Pay ₹' + fee) : 'Review free booking');
+        }
+        if (bpConfirmBtn) {
+          bpConfirmBtn.disabled = false;
+          bpConfirmBtn.innerHTML = fee > 0 ? ('Confirm & Pay ₹' + fee) : 'Confirm free booking';
         }
       }
 
@@ -964,14 +1048,121 @@
       }
 
       try {
-        const booked = await bookFree(doctorId, time, type, reason);
-        if (!booked) {
+        const orderRes = await fetch('${pageContext.request.contextPath}/payment/create-order', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            type: 'DOCTOR',
+            targetId: doctorId,
+            consultationType: type,
+            appointmentTime: time,
+            reason: reason,
+            amount: fee
+          })
+        });
+
+        if (orderRes.status === 401) {
+          alert('Please log in as a patient to proceed with payment.');
+          window.location.href = '${pageContext.request.contextPath}/login';
           unlockPay();
           return;
         }
-        unlockPay();
+
+        const order = await orderRes.json().catch(() => ({}));
+        if (!orderRes.ok || !order.orderId) {
+          throw new Error(order.error || 'Could not create payment order');
+        }
+
+        // Mock payment flow (for local development or test mode)
+        if (order.mock === true || (order.key && order.key.startsWith('rzp_test_mock'))) {
+          const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              razorpay_order_id: order.orderId,
+              razorpay_payment_id: 'mock_pay_' + Date.now(),
+              razorpay_signature: 'mock_sig',
+              type: 'DOCTOR',
+              targetId: doctorId,
+              consultationType: type,
+              appointmentTime: time,
+              reason: reason
+            })
+          });
+
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          if (!verifyRes.ok || verifyData.error) {
+            throw new Error(verifyData.error || 'Payment verification failed');
+          }
+          showBookingSuccess(verifyData);
+          return;
+        }
+
+        // Real Razorpay gateway
+        if (typeof Razorpay === 'undefined') {
+          throw new Error('Payment gateway SDK failed to load. Please check your internet connection.');
+        }
+
+        const options = {
+          key: order.key,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'Fight D Fear Healthcare',
+          description: 'Consultation with Dr. ${doctor.fullName}',
+          order_id: order.orderId,
+          handler: async function (response) {
+            try {
+              const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  type: 'DOCTOR',
+                  targetId: doctorId,
+                  consultationType: type,
+                  appointmentTime: time,
+                  reason: reason
+                })
+              });
+              const verifyData = await verifyRes.json().catch(() => ({}));
+              if (verifyRes.ok && (verifyData.success || verifyData.status === 'success' || verifyData.appointmentId)) {
+                showBookingSuccess(verifyData);
+              } else {
+                alert('Payment verification failed: ' + (verifyData.error || 'Please contact support'));
+                unlockPay();
+              }
+            } catch (err) {
+              alert('Error verifying payment: ' + err.message);
+              unlockPay();
+            }
+          },
+          prefill: {
+            name: patientName,
+            email: '${user.email}',
+            contact: patientPhone
+          },
+          theme: { color: '#F43F5E' },
+          modal: {
+            ondismiss: function () {
+              unlockPay();
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+          alert('Payment failed: ' + (resp.error ? resp.error.description : 'Transaction cancelled'));
+          unlockPay();
+        });
+        rzp.open();
+
       } catch (e) {
-        alert('Unable to book appointment. Please try again.');
+        alert(e.message || 'Payment initiation failed. Please try again.');
         unlockPay();
       }
     }
@@ -1005,15 +1196,37 @@
       closeBookingPreview();
       initiatePayment();
     }
-    function showBookingSuccess() {
+    function showBookingSuccess(data) {
       var overlay = document.getElementById('bookingSuccessModal');
       if (!overlay) {
         window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
         return;
       }
-      document.getElementById('bsWhen').textContent = (document.getElementById('bpWhen') || {}).textContent || document.getElementById('summaryText').innerText;
+      document.getElementById('bsWhen').textContent = (document.getElementById('bpWhen') || {}).textContent || (document.getElementById('summaryText') ? document.getElementById('summaryText').innerText : '—');
       document.getElementById('bsMode').textContent = (document.getElementById('bpMode') || {}).textContent || 'Consultation';
       document.getElementById('bsFee').textContent = (document.getElementById('bpFee') || {}).textContent || '—';
+      
+      var fee = currentFee();
+      var bsTitle = document.getElementById('bsTitle');
+      var bsDesc = document.getElementById('bsDesc');
+      var bsPaymentStatus = document.getElementById('bsPaymentStatus');
+      var bsReceiptRow = document.getElementById('bsReceiptRow');
+      var bsReceipt = document.getElementById('bsReceipt');
+
+      if (fee > 0) {
+        if (bsTitle) bsTitle.textContent = 'Payment & Booking Confirmed!';
+        if (bsDesc) bsDesc.textContent = 'Your payment was successful and your appointment has been confirmed with Dr. ${doctor.fullName}.';
+        if (bsPaymentStatus) bsPaymentStatus.innerHTML = '<span class="badge bg-success">Paid</span>';
+        if (data && data.receipt && data.receipt.receiptNumber) {
+          if (bsReceiptRow) bsReceiptRow.style.display = 'flex';
+          if (bsReceipt) bsReceipt.textContent = data.receipt.receiptNumber;
+        }
+      } else {
+        if (bsTitle) bsTitle.textContent = 'Appointment Requested!';
+        if (bsDesc) bsDesc.textContent = 'Your booking request has been sent to Dr. ${doctor.fullName}.';
+        if (bsPaymentStatus) bsPaymentStatus.innerHTML = '<span class="badge bg-secondary">Free</span>';
+      }
+
       overlay.classList.add('open');
     }
 
