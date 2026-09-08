@@ -189,6 +189,12 @@
             .visual-panel, .form-panel { padding: 40px; }
             .visual-panel { border-right: none; border-bottom: 1px solid #f1f3f5; }
         }
+        @media (max-width: 768px) {
+            #page-content-wrapper { padding: 20px 15px 15px 15px !important; display: block !important; }
+            .booking-card-white { margin-bottom: 150px; }
+            .visual-panel, .form-panel { padding: 25px; }
+            .item-title { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
@@ -201,7 +207,15 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+        
+        <!-- Back Button -->
+        <div style="width: 100%; max-width: 1100px; margin-bottom: 15px;">
+            <a href="javascript:history.back()" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: white; border-radius: 50px; color: var(--brand-primary); text-decoration: none; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <i class="bi bi-arrow-left"></i> Go Back
+            </a>
+        </div>
+
         <div class="booking-card-white">
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">

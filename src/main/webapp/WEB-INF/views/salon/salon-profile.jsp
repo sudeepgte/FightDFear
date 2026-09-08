@@ -411,7 +411,7 @@
                 justify-content: space-between;
             }
             .main-content {
-                padding: 12px !important;
+                padding: 12px 12px 120px 12px !important;
                 width: 100%;
                 overflow-x: hidden;
             }

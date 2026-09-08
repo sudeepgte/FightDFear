@@ -137,6 +137,34 @@
             font-weight: 600;
             margin-bottom: 20px;
         }
+        
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 15px 15px !important;
+                padding-bottom: 80px !important;
+            }
+            .header-main {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            .profile-photo {
+                width: 70px;
+                height: 70px;
+            }
+            .profile-info h1 {
+                font-size: 1.1rem;
+            }
+            .meta-list li {
+                font-size: 0.75rem;
+            }
+            .btn-group-custom {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .btn-solid, .btn-outline {
+                width: 100%;
+            }
+        }
 
         .btn-group-custom {
             display: flex;
@@ -331,13 +359,19 @@
 
         /* Bottom Mobile Nav */
         .bottom-nav {
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 20px 0;
-            border-top: 1px solid var(--border);
-            margin-top: 40px;
-            border-radius: 20px;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            padding: 12px 0 20px 0 !important;
+            border-top: 1px solid var(--border) !important;
+            z-index: 9999 !important;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05) !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
         }
         .bottom-nav .nav-item {
             display: flex;

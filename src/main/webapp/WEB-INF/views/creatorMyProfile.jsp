@@ -42,7 +42,7 @@
         /* 🍔 TOP NAV 🍔 */
         .top-nav {
             width: 100%;
-            position: sticky; top: 55px; z-index: 200;
+            position: sticky; top: 75px; z-index: 200;
             background: var(--card);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
@@ -78,20 +78,20 @@
             .page-wrapper { grid-template-columns: 1fr; padding: 20px; }
             .right-sidebar { display: none; }
         }
-                @media (max-width: 1200px) { .top-nav {
-                justify-content: flex-start;
-                overflow-x: auto;
-                white-space: nowrap;
-                padding: 0 16px;
-                gap: 15px;
-                scrollbar-width: none;
-                max-width: 100%;
-                box-sizing: border-box;
-            }
-            .top-nav::-webkit-scrollbar { display: none; }
-            .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
-            .top-nav .nav-actions { flex-shrink: 0; gap: 8px; display: flex; flex-wrap: nowrap; }
-            .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; flex-shrink: 0; }
+        @media (max-width: 1200px) { .top-nav {
+            justify-content: flex-start;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0 16px;
+            gap: 15px;
+            scrollbar-width: none;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .top-nav::-webkit-scrollbar { display: none; }
+        .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
+        .top-nav .nav-actions { flex-shrink: 0; gap: 8px; display: flex; flex-wrap: nowrap; }
+        .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; flex-shrink: 0; }
         }
         @media (max-width: 768px) {
             .page-wrapper { grid-template-columns: 1fr; padding: 12px 12px 90px; gap: 14px; }
@@ -475,10 +475,10 @@
   <body>
       <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
       <style>
-          #wrapper { margin-top: 55px !important; }
-          #sidebar-wrapper { top: 55px !important; }
+          #wrapper { margin-top: 75px !important; }
+          #sidebar-wrapper { top: 75px !important; }
       </style>
-      <div id="wrapper" style="overflow-x: hidden;">
+      <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
 
