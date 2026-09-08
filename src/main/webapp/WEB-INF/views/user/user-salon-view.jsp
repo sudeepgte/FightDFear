@@ -791,6 +791,7 @@
                                     <c:if test="${stylist.rating != null && stylist.rating > 0}">
                                         <span><i class="bi bi-star-fill text-warning me-1"></i> <fmt:formatNumber value="${stylist.rating}" maxFractionDigits="1"/></span>
                                     </c:if>
+                                </div>
                                 <div class="d-flex flex-column gap-2 mt-3">
                                     <button class="btn btn-outline-dark btn-sm rounded-pill w-100" data-bs-toggle="modal" data-bs-target="#viewStylistModal${stylist.id}">
                                         View Profile
@@ -799,6 +800,7 @@
                                         Book Now
                                     </a>
                                 </div>
+                            </div>
                                 
                                 <!-- Stylist Quick View Modal -->
                                 <div class="modal fade" id="viewStylistModal${stylist.id}" tabindex="-1" aria-hidden="true">
@@ -833,6 +835,7 @@
                                         </div>
                                     </div>
                                 </div>
+                        </div>
                     </c:forEach>
                 </div>
             </section>

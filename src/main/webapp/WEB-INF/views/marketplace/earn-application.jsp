@@ -22,12 +22,12 @@
         body.wj-earn-page {
             --wj-rose: #F43F5E;
             --wj-rose-hover: #E11D48;
-            --wj-navy: #1E1B4B;
+            --wj-navy: #0F172A;
             --wj-text: #0F172A;
             --wj-muted: #64748B;
             --wj-bg: #F8FAFC;
             --wj-border: #E2E8F0;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: var(--wj-bg);
             color: var(--wj-text);
             min-height: 100vh;
@@ -37,33 +37,53 @@
         }
         body.wj-earn-page .form-container {
             background: #FFFFFF;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            margin-top: 50px;
-            margin-bottom: 50px;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            margin-top: 30px;
+            margin-bottom: 30px;
             border: 1px solid var(--wj-border);
         }
-        body.wj-earn-page .form-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        body.wj-earn-page .form-header h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            color: var(--wj-navy);
-        }
-        body.wj-earn-page .form-header p {
-            color: var(--wj-muted);
-        }
+
         body.wj-earn-page .form-label {
             color: var(--wj-navy);
         }
+        body.wj-earn-page .form-header {
+            margin: -30px -30px 24px -30px;
+            padding: 20px 30px 20px 30px;
+            background: var(--wj-rose);
+            border-radius: 16px 16px 0 0;
+            color: #fff;
+        }
+        body.wj-earn-page .form-header h2 {
+            color: #fff !important;
+        }
+        body.wj-earn-page .form-header p {
+            color: #cbd5e1 !important;
+        }
+        @media (max-width: 576px) {
+            body.wj-earn-page .form-container {
+                padding: 20px 15px;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+            body.wj-earn-page .form-header {
+                margin: -20px -15px 20px -15px;
+                padding: 15px 15px;
+            }
+        }
         body.wj-earn-page .form-control,
         body.wj-earn-page .form-select {
-            border-radius: 10px;
-            padding: 12px 15px;
-            border-color: var(--wj-border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            border: 1px solid var(--wj-border);
+            font-size: 0.9rem;
+            max-width: 100%;
+        }
+        body.wj-earn-page .form-select {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
         body.wj-earn-page .form-control:focus,
         body.wj-earn-page .form-select:focus {
@@ -74,11 +94,13 @@
             background: var(--wj-rose);
             color: #fff;
             border: none;
-            padding: 12px 30px;
-            border-radius: 50px;
+            padding: 14px;
+            border-radius: 12px;
             font-weight: 700;
+            font-size: 1rem;
             width: 100%;
-            transition: 0.3s;
+            transition: 0.2s;
+            margin-top: 10px;
         }
         body.wj-earn-page .btn-submit:hover {
             background: var(--wj-rose-hover);
@@ -97,9 +119,9 @@
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
                 <div class="form-container">
-                    <div class="form-header">
-                        <h2>Start Earning Today</h2>
-                        <p class="text-muted">Fill out this application to offer your services.</p>
+                    <div class="form-header border-bottom">
+                        <h2 class="m-0 fs-4 fw-bold">Start Earning Today</h2>
+                        <p class="mt-2 mb-0" style="font-size: 0.9rem;">Fill out this application to offer your services.</p>
                     </div>
 
                     <c:if test="${not empty message}">
@@ -130,34 +152,47 @@
 
                         <!-- Job Details -->
                         <div class="mb-3">
-                            <label for="jobCategory" class="form-label fw-bold">Job Category <span class="text-danger">*</span></label>
-                            <select class="form-select" id="jobCategory" name="jobCategory" required onchange="updateSubCategories()">
-                                <option value="" disabled selected>Select Category</option>
-                                <option value="Caregiver">Caregiver</option>
-                                <option value="Babysitting">Babysitting</option>
-                                <option value="Housekeeping">Housekeeping</option>
-                                <option value="Cooking">Cooking</option>
-                                <option value="Beauty & Salon">Beauty & Salon</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Teaching">Teaching</option>
-                                <option value="Office Jobs">Office Jobs</option>
-                                <option value="Retail">Retail</option>
-                                <option value="Hospitality">Hospitality</option>
-                                <option value="Customer Support">Customer Support</option>
-                                <option value="Delivery & Logistics">Delivery & Logistics</option>
-                                <option value="Domestic Help">Domestic Help</option>
-                                <option value="Tailoring & Fashion">Tailoring & Fashion</option>
-                                <option value="Digital Jobs">Digital Jobs</option>
-                                <option value="Freelancing">Freelancing</option>
-                                <option value="Entrepreneurship">Entrepreneurship</option>
-                            </select>
+                            <label class="form-label fw-bold">Job Category <span class="text-danger">*</span></label>
+                            <input type="hidden" id="jobCategory" name="jobCategory" required>
+                            <div class="dropdown">
+                                <button class="btn w-100 text-start d-flex justify-content-between align-items-center" type="button" id="categoryDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="background:#fff; border: 1px solid var(--wj-border); color: #334155; padding: 12px 14px; border-radius: 8px;">
+                                    <span>Select Category</span>
+                                    <i class="fas fa-chevron-down text-muted" style="font-size: 0.8rem;"></i>
+                                </button>
+                                <ul class="dropdown-menu w-100 shadow" aria-labelledby="categoryDropdownBtn" style="max-height: 250px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--wj-border);">
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Caregiver', event)">Caregiver</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Babysitting', event)">Babysitting</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Housekeeping', event)">Housekeeping</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Cooking', event)">Cooking</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Beauty', event)">Beauty & Salon</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Healthcare', event)">Healthcare</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Teaching', event)">Teaching</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Office', event)">Office Jobs</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Retail', event)">Retail</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Hospitality', event)">Hospitality</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Support', event)">Support / Care</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Delivery', event)">Delivery</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Domestic', event)">Domestic Help</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Tailoring', event)">Tailoring</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Digital', event)">Digital Jobs</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Freelancing', event)">Freelancing</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="selectCategory('Business', event)">Business</a></li>
+                                </ul>
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label for="jobSubCategory" class="form-label fw-bold">Specific Job <span class="text-danger">*</span></label>
-                            <select class="form-select" id="jobSubCategory" name="jobSubCategory" required>
-                                <option value="" disabled selected>Select Specific Job</option>
-                            </select>
+                            <label class="form-label fw-bold">Specific Job <span class="text-danger">*</span></label>
+                            <input type="hidden" id="jobSubCategory" name="jobSubCategory" required>
+                            <div class="dropdown">
+                                <button class="btn w-100 text-start d-flex justify-content-between align-items-center" type="button" id="subCategoryDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" style="background:#fff; border: 1px solid var(--wj-border); color: #334155; padding: 12px 14px; border-radius: 8px;">
+                                    <span>Select Specific Job</span>
+                                    <i class="fas fa-chevron-down text-muted" style="font-size: 0.8rem;"></i>
+                                </button>
+                                <ul class="dropdown-menu w-100 shadow" id="subCategoryList" aria-labelledby="subCategoryDropdownBtn" style="max-height: 250px; overflow-y: auto; border-radius: 8px; border: 1px solid var(--wj-border);">
+                                    <li><a class="dropdown-item text-muted" href="#" onclick="event.preventDefault();">Please select a Job Category first</a></li>
+                                </ul>
+                            </div>
                         </div>
 
                         <!-- Proof Document -->
@@ -180,73 +215,73 @@
         </div>
     </div>
 
-    <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-    <style>
-        /* After shared footer.jsp so this page can override its navy !important without editing the fragment */
-        body.wj-earn-page .global-footer {
-            background-color: #FFF1F2 !important;
-            color: #0F172A !important;
-            border-top: 1px solid #FECDD3;
-        }
-        body.wj-earn-page .global-footer h4,
-        body.wj-earn-page .global-footer p {
-            color: #0F172A !important;
-        }
-        body.wj-earn-page .global-footer a {
-            color: #F43F5E !important;
-        }
-        body.wj-earn-page .global-footer a:hover {
-            color: #E11D48 !important;
-        }
-        body.wj-earn-page .global-footer .sitename {
-            color: #F43F5E !important;
-        }
-        body.wj-earn-page .global-footer .bi,
-        body.wj-earn-page .global-footer i {
-            color: #F43F5E !important;
-        }
-    </style>
+
 
     <!-- Bootstrap JS -->
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         const categories = {
-            "Caregiver": ["Elderly Caregiver", "Patient Care Assistant", "Child Caregiver", "Home Care Assistant"],
-            "Babysitting": ["Babysitter", "Nanny", "Daycare Assistant"],
+            "Caregiver": ["Elder Care", "Patient Care", "Child Care", "Home Care"],
+            "Babysitting": ["Babysitter", "Nanny", "Daycare"],
             "Housekeeping": ["House Maid", "Housekeeper", "Cleaner"],
-            "Cooking": ["Home Cook", "Personal Cook", "Kitchen Assistant"],
-            "Beauty & Salon": ["Beautician", "Hair Stylist", "Makeup Artist", "Nail Technician"],
-            "Healthcare": ["Nurse", "Care Assistant", "Receptionist", "Lab Assistant"],
-            "Teaching": ["Tutor", "School Teacher", "Preschool Teacher"],
-            "Office Jobs": ["Receptionist", "Office Assistant", "Data Entry Operator"],
-            "Retail": ["Cashier", "Sales Executive", "Store Assistant"],
-            "Hospitality": ["Hotel Receptionist", "Housekeeping Staff", "Waitress"],
-            "Customer Support": ["Call Center Executive", "Customer Care Representative"],
-            "Delivery & Logistics": ["Parcel Coordinator", "Delivery Executive (where applicable)"],
-            "Domestic Help": ["Laundry Assistant", "Home Helper"],
-            "Tailoring & Fashion": ["Tailor", "Boutique Assistant", "Fashion Designer"],
-            "Digital Jobs": ["Content Writer", "Graphic Designer", "Social Media Executive"],
-            "Freelancing": ["Virtual Assistant", "Translator", "Online Tutor"],
-            "Entrepreneurship": ["Sell Handmade Products", "Home Bakery", "Boutique Owner"]
+            "Cooking": ["Home Cook", "Personal Cook", "Kitchen Help"],
+            "Beauty": ["Beautician", "Hair Stylist", "Makeup Artist", "Nails"],
+            "Healthcare": ["Nurse", "Care Assist", "Receptionist", "Lab Assist"],
+            "Teaching": ["Tutor", "Teacher", "Preschool"],
+            "Office": ["Receptionist", "Office Assist", "Data Entry"],
+            "Retail": ["Cashier", "Sales Exec", "Store Assist"],
+            "Hospitality": ["Hotel Desk", "Housekeeping", "Waitress"],
+            "Support": ["Call Center", "Care Rep"],
+            "Delivery": ["Parcel Coord", "Delivery Exec"],
+            "Domestic": ["Laundry", "Home Helper"],
+            "Tailoring": ["Tailor", "Boutique Help", "Fashion"],
+            "Digital": ["Writer", "Designer", "Social Media"],
+            "Freelancing": ["Virtual Assist", "Translator", "Online Tutor"],
+            "Business": ["Handmade Goods", "Home Bakery", "Boutique Owner"]
         };
 
-        function updateSubCategories() {
-            const categorySelect = document.getElementById("jobCategory");
-            const subCategorySelect = document.getElementById("jobSubCategory");
-            const selectedCategory = categorySelect.value;
+        function selectCategory(categoryValue, event) {
+            event.preventDefault();
+            const categoryText = event.target.innerText;
             
-            // Clear existing options
-            subCategorySelect.innerHTML = '<option value="" disabled selected>Select Specific Job</option>';
+            // Set hidden input and button text
+            document.getElementById("jobCategory").value = categoryValue;
+            document.querySelector("#categoryDropdownBtn span").innerText = categoryText;
             
-            if (selectedCategory && categories[selectedCategory]) {
-                categories[selectedCategory].forEach(subCat => {
-                    const option = document.createElement("option");
-                    option.value = subCat;
-                    option.text = subCat;
-                    subCategorySelect.appendChild(option);
+            // Update sub-category button and options
+            const subCategoryList = document.getElementById("subCategoryList");
+            const subCategoryInput = document.getElementById("jobSubCategory");
+            
+            document.querySelector("#subCategoryDropdownBtn span").innerText = "Select Specific Job";
+            subCategoryInput.value = "";
+            
+            subCategoryList.innerHTML = '';
+            
+            if (categoryValue && categories[categoryValue]) {
+                categories[categoryValue].forEach(subCat => {
+                    const li = document.createElement("li");
+                    const a = document.createElement("a");
+                    a.className = "dropdown-item";
+                    a.href = "#";
+                    a.innerText = subCat;
+                    a.onclick = function(e) {
+                        e.preventDefault();
+                        subCategoryInput.value = subCat;
+                        document.querySelector("#subCategoryDropdownBtn span").innerText = subCat;
+                    };
+                    li.appendChild(a);
+                    subCategoryList.appendChild(li);
                 });
             }
         }
+        
+        // Add form validation to prevent submission if hidden inputs are empty
+        document.querySelector("form").addEventListener("submit", function(e) {
+            if(!document.getElementById("jobCategory").value || !document.getElementById("jobSubCategory").value) {
+                e.preventDefault();
+                alert("Please select both a Job Category and a Specific Job from the dropdown menus.");
+            }
+        });
     </script>
     </div>
 </div>

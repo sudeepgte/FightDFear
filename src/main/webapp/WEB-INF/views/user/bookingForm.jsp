@@ -248,7 +248,7 @@
                 </div>
             </div>
 
-            <form action="${pageContext.request.contextPath}/booking/new" method="post">
+            <form action="${pageContext.request.contextPath}/booking/new" method="post" onsubmit="initiatePayment(event, this)">
                 <c:choose>
                     <c:when test="${type == 'SERVICE'}">
                         <input type="hidden" name="serviceId" value="${item.id}" />
@@ -310,6 +310,79 @@
     </div>
     </div>
 </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        async function initiatePayment(event, form) {
+            event.preventDefault();
+            
+            var btn = form.querySelector('.btn-confirm-booking');
+            var originalText = btn.innerHTML;
+            btn.innerHTML = 'Processing Payment...';
+            btn.disabled = true;
+            
+            var feeText = document.querySelector('.price-chip span').innerText.replace('₹', '').trim();
+            var amount = parseFloat(feeText);
+            
+            if (amount <= 0) {
+                form.submit();
+                return;
+            }
+
+            try {
+                const response = await fetch('${pageContext.request.contextPath}/payment/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, type: 'SALON' })
+                });
+
+                const order = await response.json();
+                
+                if (!response.ok) {
+                    alert(order.error || 'Failed to create payment order');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                const options = {
+                    key: order.key,
+                    amount: order.amount,
+                    currency: 'INR',
+                    name: 'Fight D Fear',
+                    description: 'Salon Reservation Payment',
+                    order_id: order.orderId,
+                    handler: function (response) {
+                        form.submit();
+                    },
+                    prefill: {
+                        name: '${user.fullName}',
+                        email: '${user.email}',
+                        contact: '${user.phoneNumber}'
+                    },
+                    theme: { color: '#F43F5E' },
+                    modal: {
+                        ondismiss: function() {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    alert('Payment failed: ' + response.error.description);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+                rzp.open();
+            } catch (error) {
+                alert('Payment initialization failed. Check your connection.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
 
     <script>
         const bookingType = document.getElementById("bookingType");

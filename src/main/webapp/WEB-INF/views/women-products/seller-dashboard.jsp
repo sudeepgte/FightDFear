@@ -1781,18 +1781,15 @@
             </div>
 
 
-            <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" novalidate>
+            <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data" novalidate>
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
                 <input type="text" name="fullName" id="profileFullName" class="form-ctrl" value="${seller.fullName}"
                        required minlength="2" maxlength="80"
                        pattern="[A-Za-z][A-Za-z .'-]{1,79}"
                        title="2–80 letters only; spaces, apostrophes, periods, hyphens allowed">
+              </div>
 
-
-
-            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data">
-              <%-- Profile Photo Upload & Preview --%>
               <div class="fdf-form-group" style="margin-bottom: 20px; text-align: center; background: #fafafa; padding: 20px; border-radius: 14px; border: 1px dashed #ccc;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase; display:block; margin-bottom:10px;">Profile Photo / Business Logo</label>
                 <div style="margin-bottom: 10px;">
@@ -1800,19 +1797,10 @@
                 </div>
                 <input type="file" name="profilePhoto" accept="image/png, image/jpeg, image/jpg, image/webp" class="form-ctrl" onchange="previewProfilePhoto(this)">
                 <small style="color: #666; font-size: 0.75rem; margin-top: 5px; display: block;">Supported formats: JPG, JPEG, PNG, WEBP</small>
-
-            <form action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post">
-              <div class="fdf-form-group" style="margin-bottom: 15px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name</label>
-                <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required pattern="[A-Za-z\s]{3,50}" title="Must contain only letters and spaces, 3-50 characters">
-
               </div>
 
-              <%-- Basic Info --%>
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
                 <div>
-
-
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
                   <input type="text" name="businessName" id="profileBusinessName" class="form-ctrl" value="${seller.businessName}"
                          required minlength="2" maxlength="100"
@@ -1825,18 +1813,6 @@
                          required minlength="10" maxlength="10" pattern="[6-9][0-9]{9}"
                          title="Valid 10-digit Indian mobile number"
                          oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-
-
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
-                  <input type="text" name="fullName" class="form-ctrl" value="${seller.fullName}" required>
-                </div>
-                <div>
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name *</label>
-                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required>
-
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Name</label>
-                  <input type="text" name="businessName" class="form-ctrl" value="${seller.businessName}" required minlength="3" maxlength="100">
-
                 </div>
               </div>
 
@@ -1845,72 +1821,42 @@
                 <input type="text" name="serviceArea" class="form-ctrl" value="${seller.serviceArea}" placeholder="e.g. Hyderabad, Secunderabad">
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
-                <div>
-
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone *</label>
-                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required>
-
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Contact Phone</label>
-                  <input type="tel" name="phone" class="form-ctrl" value="${seller.phone}" required pattern="[6-9][0-9]{9}" maxlength="10" title="Valid 10-digit mobile number">
-
-                </div>
-                <div>
-                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
-                  <select name="experience" class="form-ctrl">
-                    <option value="">-- Select Experience --</option>
-                    <option value="Less than 1 year" ${seller.experience == 'Less than 1 year' ? 'selected' : ''}>Less than 1 year</option>
-                    <option value="1 year" ${seller.experience == '1 year' ? 'selected' : ''}>1 year</option>
-                    <option value="2 years" ${seller.experience == '2 years' ? 'selected' : ''}>2 years</option>
-                    <option value="3 years" ${seller.experience == '3 years' ? 'selected' : ''}>3 years</option>
-                    <option value="4 years" ${seller.experience == '4 years' ? 'selected' : ''}>4 years</option>
-                    <option value="5 years" ${seller.experience == '5 years' ? 'selected' : ''}>5 years</option>
-                    <option value="6 years" ${seller.experience == '6 years' ? 'selected' : ''}>6 years</option>
-                    <option value="7 years" ${seller.experience == '7 years' ? 'selected' : ''}>7 years</option>
-                    <option value="8 years" ${seller.experience == '8 years' ? 'selected' : ''}>8 years</option>
-                    <option value="9 years" ${seller.experience == '9 years' ? 'selected' : ''}>9 years</option>
-                    <option value="10 years" ${seller.experience == '10 years' ? 'selected' : ''}>10 years</option>
-                    <option value="11–15 years" ${seller.experience == '11–15 years' ? 'selected' : ''}>11–15 years</option>
-                    <option value="16–20 years" ${seller.experience == '16–20 years' ? 'selected' : ''}>16–20 years</option>
-                    <option value="20+ years" ${seller.experience == '20+ years' ? 'selected' : ''}>20+ years</option>
-                  </select>
-                </div>
+              <div class="fdf-form-group" style="margin-bottom:15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
+                <select name="experience" class="form-ctrl">
+                  <option value="">-- Select Experience --</option>
+                  <option value="Less than 1 year" ${seller.experience == 'Less than 1 year' ? 'selected' : ''}>Less than 1 year</option>
+                  <option value="1 year" ${seller.experience == '1 year' ? 'selected' : ''}>1 year</option>
+                  <option value="2 years" ${seller.experience == '2 years' ? 'selected' : ''}>2 years</option>
+                  <option value="3 years" ${seller.experience == '3 years' ? 'selected' : ''}>3 years</option>
+                  <option value="4 years" ${seller.experience == '4 years' ? 'selected' : ''}>4 years</option>
+                  <option value="5 years" ${seller.experience == '5 years' ? 'selected' : ''}>5 years</option>
+                  <option value="6 years" ${seller.experience == '6 years' ? 'selected' : ''}>6 years</option>
+                  <option value="7 years" ${seller.experience == '7 years' ? 'selected' : ''}>7 years</option>
+                  <option value="8 years" ${seller.experience == '8 years' ? 'selected' : ''}>8 years</option>
+                  <option value="9 years" ${seller.experience == '9 years' ? 'selected' : ''}>9 years</option>
+                  <option value="10 years" ${seller.experience == '10 years' ? 'selected' : ''}>10 years</option>
+                  <option value="11–15 years" ${seller.experience == '11–15 years' ? 'selected' : ''}>11–15 years</option>
+                  <option value="16–20 years" ${seller.experience == '16–20 years' ? 'selected' : ''}>16–20 years</option>
+                  <option value="20+ years" ${seller.experience == '20+ years' ? 'selected' : ''}>20+ years</option>
+                </select>
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
-
-
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
                           minlength="10" maxlength="1000">${seller.address}</textarea>
-
-
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
-                <textarea name="address" class="form-ctrl" rows="2" required>${seller.address}</textarea>
-
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Qualification / Certification</label>
                 <textarea name="qualification" class="form-ctrl" rows="2" placeholder="e.g. Certified Cosmetologist, Skincare & Haircare Specialist, Diploma in Beauty & Wellness">${seller.qualification}</textarea>
-
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address</label>
-                <textarea name="address" class="form-ctrl" rows="2" required minlength="10" maxlength="255">${seller.address}</textarea>
-              </div>
-              <div class="fdf-form-group" style="margin-bottom: 30px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business
-                  Description</label>
-
-                <textarea name="description" id="profileDescription" class="form-ctrl" rows="3"
-                          maxlength="2000">${seller.description}</textarea>
-
-                <textarea name="description" class="form-ctrl" rows="3" maxlength="500">${seller.description}</textarea>
-
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Description</label>
-                <textarea name="description" class="form-ctrl" rows="2">${seller.description}</textarea>
+                <textarea name="description" id="profileDescription" class="form-ctrl" rows="3"
+                          maxlength="2000">${seller.description}</textarea>
               </div>
 
               <%-- Available Days Multi-Select --%>

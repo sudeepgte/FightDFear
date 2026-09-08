@@ -128,19 +128,19 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Full name</label>
-                        <input type="text" name="fullName" class="form-input" value="${workerApp.user.fullName}" oninput="updatePreview('prevName', this.value)">
+                        <input type="text" name="fullName" class="form-input" value="${workerApp.user.fullName}" oninput="updatePreview('prevName', this.value)" pattern="^[a-zA-Z\s]+$" title="Only alphabets and spaces are allowed" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Role type / designation</label>
-                        <input type="text" name="designation" class="form-input" value="${workerApp.designation}" oninput="updatePreview('prevRole', this.value)" placeholder="e.g. Senior Baby Care Specialist">
+                        <input type="text" name="designation" class="form-input" value="${workerApp.designation}" oninput="updatePreview('prevRole', this.value)" placeholder="e.g. Senior Baby Care Specialist" pattern="^[a-zA-Z\s\-\.]+$" title="Only alphabets, spaces, hyphens, and dots are allowed">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Official phone</label>
-                        <input type="text" name="phone" class="form-input" value="${workerApp.user.phoneNumber}">
+                        <input type="tel" name="phone" class="form-input" value="${workerApp.user.phoneNumber}" pattern="^[0-9]{10}$" title="Phone number must be exactly 10 digits" maxlength="10">
                     </div>
                     <div class="form-group">
                         <label class="form-label">WhatsApp Number</label>
-                        <input type="text" name="whatsappNumber" class="form-input" value="${workerApp.whatsappNumber}">
+                        <input type="tel" name="whatsappNumber" class="form-input" value="${workerApp.whatsappNumber}" pattern="^[0-9]{10}$" title="WhatsApp number must be exactly 10 digits" maxlength="10">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Years of experience</label>
@@ -441,16 +441,26 @@
         const inputs = document.querySelectorAll('.form-input, .form-select');
         let filled = 0;
         let total = 0;
+        let missing = [];
         inputs.forEach(input => {
             if (input.type === 'file') return;
             total++;
             if (input.value && input.value.trim() !== '') {
                 filled++;
+            } else {
+                // Get a friendly name for the missing field
+                let label = input.closest('.form-group') ? input.closest('.form-group').querySelector('.form-label') : null;
+                missing.push(label ? label.textContent.trim() : input.name);
             }
         });
         const percent = total === 0 ? 0 : Math.round((filled / total) * 100);
         document.getElementById('pbFill').style.width = percent + '%';
-        document.getElementById('pbText').textContent = percent + '% Completed';
+        
+        let statusText = percent + '% Completed';
+        if (missing.length > 0) {
+            statusText += ' (Missing: ' + missing.join(', ') + ')';
+        }
+        document.getElementById('pbText').textContent = statusText;
     }
 
     document.addEventListener('DOMContentLoaded', function() {

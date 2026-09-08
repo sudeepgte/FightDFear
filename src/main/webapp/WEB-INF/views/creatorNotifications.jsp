@@ -20,131 +20,95 @@
     
     <style>
         :root {
-            --glow-bg: #fffcfd;
-            --card-bg: #ffffff;
-            --accent-pink: #f43f5e;
-            --accent-purple: #8b5cf6;
+            --accent:      #F43F5E;
+            --accent-soft: rgba(244,63,94,.08);
+            --accent-mid:  rgba(244,63,94,.15);
+            --sub:         #64748B;
+            --bg:          #F8FAFC;
+            --card:        #FFFFFF;
+            --border:      #E2E8F0;
+            --dark:        #0F172A;
+            --success:     #16A34A;
+            --success-bg:  #F0FDF4;
+            --radius-lg:   20px;
+            --radius-md:   14px;
+            --radius-sm:   8px;
+            --shadow:      0 2px 12px rgba(0,0,0,.06);
         }
         
         body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--glow-bg);
-            color: var(--fdf-text);
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--dark);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Floating background blobs */
-        .glow-bg-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .blob {
-            position: absolute;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.12;
-            animation: floatBlob 20s infinite alternate;
-        }
-        .blob-1 { top: -100px; right: -100px; background: var(--accent-purple); }
-        .blob-2 { bottom: -150px; left: -150px; background: var(--accent-pink); animation-delay: -5s; }
-        
-        @keyframes floatBlob {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(40px, 30px) scale(1.15); }
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        a { text-decoration: none; color: inherit; }
 
-        /* Clean Minimal Header */
-        .glow-header {
-            padding: 60px 20px 40px;
-            text-align: center;
-            background: white;
-            border-bottom: 1px solid var(--fdf-border);
-            position: relative;
-            margin-bottom: 40px;
-        }
-        .glow-header h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 38px;
-            font-weight: 900;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .glow-header p {
-            color: var(--fdf-muted);
-            font-size: 15px;
-            max-width: 650px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* Top Bar navigation */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 16px 30px;
-            position: absolute;
-            top: 0; right: 0;
+        /* ── TOP NAV ── */
+        .top-nav {
             width: 100%;
+            position: sticky; top: 80px; z-index: 200;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
         }
-        .top-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 999px;
-            background: #fff;
-            border: 1px solid var(--fdf-border);
-            color: var(--accent-purple);
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow-sm);
+        .top-nav .brand { font-size: 17px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .top-nav .nav-actions { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+        .icon-btn {
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg); color: var(--dark);
+            border: 1px solid var(--border); cursor: pointer;
+            font-size: 15px; transition: all .2s; position: relative;
         }
-        .top-btn:hover {
-            background: var(--accent-purple);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+        .icon-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+
+        /* ── LAYOUT GRID ── */
+        .page-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+            padding: 24px 40px;
         }
 
-        /* Notifications card */
-        .notif-container {
-            max-width: 700px;
-            margin: 0 auto 60px;
-            padding: 0 15px;
+        /* ── CARDS ── */
+        .card-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            padding: 20px;
         }
-        .glass-card {
-            background: var(--card-bg);
-            border: 1px solid var(--fdf-border);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: var(--shadow-sm);
+        .card-header-row {
+            padding: 10px 10px 20px;
+            font-size: 18px; font-weight: 700;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
         }
 
         .notif-item {
-            background: #fafafb;
-            border: 1px solid var(--fdf-border);
-            border-radius: 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             padding: 15px 20px;
             margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 15px;
-            transition: all 0.2s;
+            transition: all .2s;
         }
         .notif-item:hover {
-            background: #ffffff;
-            border-color: var(--brand-pink-light);
-            box-shadow: var(--shadow-sm);
-            transform: translateX(4px);
+            background: var(--bg);
+            border-color: var(--accent-soft);
+            box-shadow: var(--shadow);
         }
 
         .icon-box {
@@ -157,28 +121,14 @@
             font-size: 18px;
             flex-shrink: 0;
         }
-        .icon-like { background: rgba(244, 63, 94, 0.1); color: var(--accent-pink); }
+        .icon-like { background: var(--accent-soft); color: var(--accent); }
         .icon-comment { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; }
-        .icon-follow { background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+        .icon-follow { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
         .icon-money { background: rgba(234, 179, 8, 0.1); color: #eab308; }
-        .icon-system { background: #f3f4f6; color: #4b5563; }
+        .icon-system { background: var(--bg); color: var(--sub); }
 
         @media (max-width: 768px) {
-            .glow-header { padding-top: 30px; padding-bottom: 20px; }
-            .top-bar {
-                position: relative;
-                justify-content: center;
-                padding: 10px;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-bottom: 15px;
-            }
-            .top-btn {
-                padding: 8px 14px;
-                font-size: 12px;
-                margin-right: 0 !important;
-            }
-            .glow-header h1 { font-size: 28px; }
+            .page-wrapper { padding: 12px; }
         }
     </style>
 </head>
@@ -192,28 +142,24 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden;">
+    <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: 100%;" data-skip-global-back="true">
         
-        <!-- Blobs overlay -->
-        <div class="glow-bg-layer">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-        </div>
-
-        <!-- Dashboard Header -->
-        <div class="glow-header">
-            <div class="top-bar">
-                <a href="${pageContext.request.contextPath}/creator-hub" class="top-btn" style="margin-right: auto;">
-                    <i class="bi bi-arrow-left"></i> Back to Hub
+        <!-- TOP NAV -->
+        <nav class="top-nav">
+            <div class="brand">Notifications</div>
+            <div class="nav-actions">
+                <a href="${pageContext.request.contextPath}/creator-hub" class="icon-btn" title="Back to Hub">
+                    <i class="fa-solid fa-arrow-left"></i>
                 </a>
             </div>
-            
-            <h1>Notifications</h1>
-            <p>Stay updated on likes, comments, connections, and support tips from your creator audience.</p>
-        </div>
+        </nav>
 
-        <div class="notif-container">
-            <div class="glass-card" data-aos="fade-up">
+        <div class="page-wrapper">
+            <div class="card-box" data-aos="fade-up">
+                
+                <div class="card-header-row">
+                    <span>Recent Activity</span>
+                </div>
                 
                 <c:if test="${empty notifications}">
                     <div class="text-center py-5 text-muted">
@@ -252,8 +198,7 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
+
 
     </div><!-- /#page-content-wrapper -->
 </div><!-- /#wrapper -->
