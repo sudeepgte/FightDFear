@@ -51,7 +51,7 @@
         body.wj-earn-page .form-header {
             margin: -30px -30px 24px -30px;
             padding: 20px 30px 20px 30px;
-            background: var(--wj-navy);
+            background: var(--wj-rose);
             border-radius: 16px 16px 0 0;
             color: #fff;
         }

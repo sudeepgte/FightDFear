@@ -200,7 +200,7 @@
                         <c:otherwise>
                             <div class="booking-section">
                                 <h4 class="mb-4" style="color: var(--m-purple); font-weight: 700;"><i class="fas fa-calendar-check text-primary me-2"></i> Book this Professional</h4>
-                                <form action="${pageContext.request.contextPath}/marketplace/worker/${workerApp.id}/book" method="POST">
+                                <form action="${pageContext.request.contextPath}/marketplace/worker/${workerApp.id}/book" method="POST" onsubmit="return initiateWorkerPayment(event, this)">
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold">Select Date & Time</label>
@@ -244,6 +244,7 @@
             </div>
         </div>
     </div>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
         const bookedTimes = [
@@ -263,21 +264,22 @@
             return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + 'T' + pad(date.getHours()) + ':' + pad(date.getMinutes());
         };
 
-        if (!dateInputElem) return;
-        dateInputElem.min = formatDateTime(now);
-        dateInputElem.max = formatDateTime(maxDate);
+        if (dateInputElem) {
+            dateInputElem.min = formatDateTime(now);
+            dateInputElem.max = formatDateTime(maxDate);
+        }
 
-        const bookingForm = dateInputElem.closest('form');
-        if (!bookingForm) return;
-        bookingForm.addEventListener('submit', function(e) {
+        const bookingForm = dateInputElem ? dateInputElem.closest('form') : null;
+
+        async function initiateWorkerPayment(e, bookingForm) {
+            e.preventDefault();
             const dateInput = dateInputElem.value;
-            if (!dateInput) return;
+            if (!dateInput) return false;
             
             const inputDate = new Date(dateInput);
             
             // Check for 2 days limit on frontend
             if (inputDate > maxDate) {
-                e.preventDefault();
                 alert("Bookings can only be made up to 2 days in advance.");
                 return false;
             }
@@ -287,12 +289,79 @@
                 const bookedDate = new Date(timeStr);
                 const diffMinutes = Math.abs((inputDate - bookedDate) / (1000 * 60));
                 if (diffMinutes < 60) {
-                    e.preventDefault();
                     alert("This time slot is too close to an existing booking. Please select a time at least 1 hour away from booked slots.");
                     return false;
                 }
             }
-        });
+
+            // Razorpay Payment Logic
+            const btn = bookingForm.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Payment...';
+            btn.disabled = true;
+            
+            const amountText = document.getElementById('totalAmount').value;
+            const amount = parseFloat(amountText);
+            
+            if (amount <= 0 || isNaN(amount)) {
+                bookingForm.submit();
+                return false;
+            }
+            
+            try {
+                const response = await fetch('${pageContext.request.contextPath}/payment/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: amount, type: 'WORKER_BOOKING_PREPAY' })
+                });
+                
+                const order = await response.json();
+                
+                if (!response.ok) {
+                    alert(order.error || 'Failed to create payment order');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return false;
+                }
+                
+                const options = {
+                    key: order.key,
+                    amount: order.amount,
+                    currency: 'INR',
+                    name: 'Fight D Fear',
+                    description: 'Worker Booking Payment',
+                    order_id: order.orderId,
+                    handler: function (response) {
+                        bookingForm.submit();
+                    },
+                    prefill: {
+                        name: '${user.fullName}',
+                        email: '${user.email}',
+                        contact: '${user.phoneNumber}'
+                    },
+                    theme: { color: '#F43F5E' },
+                    modal: {
+                        ondismiss: function() {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }
+                    }
+                };
+                
+                const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function (response){
+                    alert('Payment failed: ' + response.error.description);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+                rzp.open();
+            } catch (error) {
+                alert('Payment initialization failed. Check your connection.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+            return false;
+        }
     </script>
 </body>
 </html>
