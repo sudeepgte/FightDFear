@@ -106,7 +106,7 @@
             .topbar-actions { width: 100%; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
             .btn-skip, .btn-save { flex: 1; text-align: center; justify-content: center; padding: 10px 0; min-width: 120px; }
             .container { margin: 16px auto; padding: 0 16px; width: 100%; max-width: 100%; box-sizing: border-box; display: block; }
-            .form-section { padding: 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
+            .form-section { padding: 16px 16px 150px 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
             .form-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; }
             input.form-input, select.form-select, textarea.form-input { width: 100%; box-sizing: border-box; }
             .progress-header { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -283,7 +283,7 @@
                     </div>
                     <div class="form-group full">
                         <label class="form-label">Bank Details</label>
-                        <textarea name="bankDetails" class="form-input" rows="2" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
+                        <textarea name="bankDetails" class="form-input" rows="4" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
                     </div>
                 </div>
             </div>

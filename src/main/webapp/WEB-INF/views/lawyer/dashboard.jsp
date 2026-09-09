@@ -40,7 +40,7 @@
         .brand { padding: 24px; font-size: 1.25rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
         .brand span { color: var(--navy); display: block; font-size: 0.8rem; font-weight: 500; }
         
-        .nav-items { flex: 1; padding: 20px 14px; display: flex; flex-direction: column; gap: 6px; }
+        .nav-items { flex: 1; padding: 20px 14px 150px; display: flex; flex-direction: column; gap: 6px; }
         .nav-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 14px; font-weight: 600; color: var(--secondary); transition: all 0.2s ease; }
         .nav-item:hover { background: var(--bg); color: var(--navy); }
         .nav-item.active { background: rgba(244, 63, 94, 0.1); color: var(--primary); }
@@ -193,7 +193,7 @@
         @media (max-width: 480px) {
             body { overflow-x: hidden; width: 100%; }
             .main-content { width: 100vw; overflow-x: hidden; }
-            .content-area { padding: 16px; overflow-x: hidden; width: 100%; }
+            .content-area { padding: 16px 16px 150px 16px; overflow-x: hidden; width: 100%; }
             .card { padding: 16px; width: 100%; }
             .stats-grid { gap: 12px; }
             .stat-card { padding: 16px; flex-direction: column; text-align: center; }
@@ -285,12 +285,10 @@
                     <i class="bi bi-gear"></i> Settings
                 </div>
             </c:if>
+            <a href="${pageContext.request.contextPath}/logout" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </div>
-
-        
-        <a href="${pageContext.request.contextPath}/logout" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
-            <i class="bi bi-box-arrow-right"></i> Logout
-        </a>
     </div>
 
     <!-- Main Content -->
@@ -939,7 +937,7 @@
                         <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Manage Availability</a>
                     </div>
                     <p style="color:var(--secondary); font-size:0.9rem;">Configure your working hours, break times, and unavailable dates.</p>
-                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="profile-field"><label>Operating Days</label><div>${empty lawyer.openDays ? 'Not added' : lawyer.openDays}</div></div>
                         <div class="profile-field"><label>Working Time</label><div>${empty lawyer.openTime ? 'HH:MM' : lawyer.openTime} — ${empty lawyer.closeTime ? 'HH:MM' : lawyer.closeTime}</div></div>
                         <div class="profile-field"><label>Consultation Mode</label><div>${empty lawyer.consultationMode ? 'Not added' : lawyer.consultationMode}</div></div>
@@ -1014,9 +1012,9 @@
                         <h3><i class="bi bi-person" style="color:var(--primary); margin-right:8px;"></i>Account Details</h3>
                         <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration:none; padding:8px 16px; font-size:0.8rem; border-radius:8px; color:#fff !important;">Edit Profile</a>
                     </div>
-                    <div style="margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="margin-top: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <div class="profile-field"><label>Full Name</label><div style="font-weight:600; color:var(--text);">${empty lawyer.fullName ? 'Not added' : lawyer.fullName}</div></div>
-                        <div class="profile-field"><label>Email Address</label><div style="font-weight:600; color:var(--text);">${empty lawyer.email ? 'Not added' : lawyer.email}</div></div>
+                        <div class="profile-field"><label>Email Address</label><div style="font-weight:600; color:var(--text); word-break: break-all;">${empty lawyer.email ? 'Not added' : lawyer.email}</div></div>
                         <div class="profile-field"><label>Phone Number</label><div style="font-weight:600; color:var(--text);">${empty lawyer.phone ? 'Not added' : lawyer.phone}</div></div>
                         <div class="profile-field"><label>Role / Category</label><div><span class="badge" style="background:#FFE4E6; color:var(--primary); padding:6px 12px; border-radius:20px; font-weight:600;">${empty lawyer.category ? 'Women Lawyer' : lawyer.category.displayName}</span></div></div>
                     </div>

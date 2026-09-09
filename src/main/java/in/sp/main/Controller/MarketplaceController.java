@@ -398,6 +398,7 @@ public class MarketplaceController {
     @PostMapping("/worker/{id}/book")
     public String bookWorker(@PathVariable Long id,
                              @RequestParam String bookingDate,
+                             @RequestParam(required = false) Integer hours,
                              @RequestParam(required = false) Double totalAmount,
                              @RequestParam(required = false) String note,
                              HttpSession session,
@@ -442,6 +443,7 @@ public class MarketplaceController {
             booking.setClient(u);
             booking.setJobApplication(app);
             booking.setBookingDate(reqTime);
+            booking.setHours(hours);
             booking.setTotalAmount(totalAmount != null ? totalAmount : 0.0);
             booking.setNote(note);
             booking.setStatus("PENDING");

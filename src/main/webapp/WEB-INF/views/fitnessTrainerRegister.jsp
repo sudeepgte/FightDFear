@@ -587,7 +587,7 @@
             </div>
             <div class="modal-body">
                 <div class="review-row">
-                    <span class="label">Coach Name:</span>
+                    <span class="label">Full name:</span>
                     <span class="value" id="revName">—</span>
                 </div>
                 <div class="review-row">

@@ -247,7 +247,7 @@
             </div>
 
             <!-- Chat Main Window -->
-            <div style="flex:1; min-width:400px; display:flex; flex-direction:column; background:var(--card); position:relative;">
+            <div id="chatMainWindow" style="flex:1; min-width:0; display:flex; flex-direction:column; background:var(--card); position:relative;">
                 <!-- Placeholder when no user selected -->
                 <div id="chatPlaceholder" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--sub); z-index:10; background:var(--card);">
                     <i class="fa-regular fa-paper-plane" style="font-size:64px; margin-bottom:20px; opacity:0.3;"></i>

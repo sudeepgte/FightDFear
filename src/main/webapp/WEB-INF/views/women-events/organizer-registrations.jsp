@@ -11,7 +11,7 @@
     <title>Registrations — Fight D Fear</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css?v=2"/>
     <style>
         .reg-count-badge {
             background: var(--fdf-rose-soft); color: var(--fdf-accent);
@@ -65,8 +65,15 @@
 <div class="org-main-wrapper">
     <div class="org-topbar">
         <div class="org-topbar-left">
-            <h2>Registrations</h2>
-            <p>All users who registered for your events.</p>
+            <div class="org-topbar-header-wrap">
+                <button class="org-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h2>Registrations</h2>
+                    <p>All users who registered for your events.</p>
+                </div>
+            </div>
         </div>
         <div class="org-topbar-right">
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="org-btn-secondary">

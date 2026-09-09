@@ -139,6 +139,34 @@
             font-weight: 600;
             margin-bottom: 20px;
         }
+        
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 15px 15px !important;
+                padding-bottom: 80px !important;
+            }
+            .header-main {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            .profile-photo {
+                width: 70px;
+                height: 70px;
+            }
+            .profile-info h1 {
+                font-size: 1.1rem;
+            }
+            .meta-list li {
+                font-size: 0.75rem;
+            }
+            .btn-group-custom {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .btn-solid, .btn-outline {
+                width: 100%;
+            }
+        }
 
         .btn-group-custom {
             display: flex;
@@ -333,13 +361,19 @@
 
         /* Bottom Mobile Nav */
         .bottom-nav {
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 20px 0;
-            border-top: 1px solid var(--border);
-            margin-top: 40px;
-            border-radius: 20px;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            padding: 12px 0 20px 0 !important;
+            border-top: 1px solid var(--border) !important;
+            z-index: 9999 !important;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05) !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
         }
         .bottom-nav .nav-item {
             display: flex;
@@ -910,6 +944,7 @@
     </a>
 </div>
 
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -936,7 +971,9 @@
         }
 
         if (bookingForm) {
-            bookingForm.addEventListener('submit', function(e) {
+            bookingForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
                 const mode = document.getElementById('consultMode').value;
                 const type = document.getElementById('callType').value;
                 const baseNote = document.getElementById('baseNote').value;
@@ -948,6 +985,73 @@
                 combinedNote += ` - ${baseNote}`;
                 
                 document.getElementById('finalNote').value = combinedNote;
+
+                // Razorpay Payment Logic
+                const btn = bookingForm.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Processing Payment...';
+                btn.disabled = true;
+                
+                const amountText = '${not empty provider.consultationFee ? provider.consultationFee : '1500'}'.replace(/,/g, '');
+                const amount = parseFloat(amountText);
+                
+                if (amount <= 0 || isNaN(amount)) {
+                    bookingForm.submit();
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('${pageContext.request.contextPath}/payment/create-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: amount, type: 'LAWYER' })
+                    });
+                    
+                    const order = await response.json();
+                    
+                    if (!response.ok) {
+                        alert(order.error || 'Failed to create payment order');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+                    
+                    const options = {
+                        key: order.key,
+                        amount: order.amount,
+                        currency: 'INR',
+                        name: 'Fight D Fear',
+                        description: 'Lawyer Consultation Payment',
+                        order_id: order.orderId,
+                        handler: function (response) {
+                            bookingForm.submit();
+                        },
+                        prefill: {
+                            name: '${user.fullName}',
+                            email: '${user.email}',
+                            contact: '${user.phoneNumber}'
+                        },
+                        theme: { color: '#F43F5E' },
+                        modal: {
+                            ondismiss: function() {
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                            }
+                        }
+                    };
+                    
+                    const rzp = new Razorpay(options);
+                    rzp.on('payment.failed', function (response){
+                        alert('Payment failed: ' + response.error.description);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                    rzp.open();
+                } catch (error) {
+                    alert('Payment initialization failed. Check your connection.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             });
         }
     });

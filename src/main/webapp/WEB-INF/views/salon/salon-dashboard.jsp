@@ -793,7 +793,7 @@
         .custom-table th {
             background: #fafafc !important;
             border-bottom: 1px solid var(--fdf-border) !important;
-            color: var(--fdf-text-muted);
+            color: var(--fdf-text-dark) !important;
             font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 800;
@@ -1073,7 +1073,7 @@
         /* Mobile Responsive Adjustments */
         @media (max-width: 991px) {
             .main-content {
-                padding: 12px;
+                padding: 12px 12px 120px 12px;
                 width: 100%;
                 overflow-x: hidden;
             }
@@ -1171,7 +1171,7 @@
     <div class="mobile-header d-lg-none shadow-sm" style="flex-wrap: nowrap; overflow: hidden;">
         <h4 class="m-0 fw-bold d-flex align-items-center gap-2 text-truncate" style="font-family:'Montserrat'; font-size: 1.1rem; flex: 1;">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 24px; width: 24px; border-radius: 6px; object-fit: cover; flex-shrink: 0;"> 
-            <span class="text-truncate">Fight D Fear</span>
+            <span class="text-truncate"><c:out value="${empty salon.name ? 'Fight D Fear' : salon.name}"/></span>
         </h4>
         <button class="btn btn-link text-white p-0 border-0 flex-shrink-0 ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
             <i class="bi bi-list" style="font-size: 1.6rem;"></i>

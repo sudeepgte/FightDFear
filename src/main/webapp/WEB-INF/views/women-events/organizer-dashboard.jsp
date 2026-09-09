@@ -11,7 +11,7 @@
     <title>Organizer Dashboard — Fight D Fear</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css?v=2"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .event-thumb {
@@ -44,6 +44,13 @@
         .reg-status.pending { background: #FFFBEB; color: #92400E; }
         .reg-name { font-size: 0.85rem; font-weight: 700; color: var(--fdf-navy); }
         .reg-event { font-size: 0.73rem; color: var(--fdf-text-muted); }
+        @media (max-width: 768px) {
+            .perf-stats { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        }
+        @media (max-width: 480px) {
+            .perf-stats { grid-template-columns: 1fr; }
+            .org-table-toolbar { flex-direction: column; }
+        }
     </style>
 </head>
 <body class="org-hub">
@@ -56,8 +63,15 @@
 <div class="org-main-wrapper">
     <div class="org-topbar">
         <div class="org-topbar-left">
-            <h2>Welcome back, <c:out value="${not empty host.fullName ? host.fullName : 'Organizer'}"/>!</h2>
-            <p>Here's what's happening with your events today.</p>
+            <div class="org-topbar-header-wrap">
+                <button class="org-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h2>Welcome back, <c:out value="${not empty host.fullName ? host.fullName : 'Organizer'}"/>!</h2>
+                    <p>Here's what's happening with your events today.</p>
+                </div>
+            </div>
         </div>
         <div class="org-topbar-right">
             <span class="org-status-pill ${hostApproved ? 'ok' : fn:contains(hostStatus, 'PENDING') ? 'wait' : 'bad'}">

@@ -25,7 +25,7 @@
             --border: #E2E8F0;
         }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--navy); margin: 0; }
-        .belt-wrap { padding: 96px 20px 40px; max-width: 1100px; }
+        .belt-wrap { padding: 0 0 16px 0; max-width: 1100px; width: 100%; margin: 0 auto; }
         .belt-card {
             border-radius: 16px;
             margin-bottom: 24px;
@@ -54,15 +54,15 @@
             display: flex; align-items: center; justify-content: center;
             z-index: 10; font-weight: 700; color: var(--muted);
         }
-        @media (max-width: 991px) { .belt-wrap { padding-top: 24px; } }
+        @media (max-width: 991px) { .belt-wrap { padding-top: 8px; } }
     </style>
 </head>
 <body>
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
-        <div id="page-content-wrapper" style="min-height:100vh; background:var(--bg);">
-            <div class="container belt-wrap">
+        <div id="page-content-wrapper" style="min-height: calc(100vh - 80px); background: var(--bg); padding-bottom: 24px;">
+            <div class="container-fluid belt-wrap">
                 <div id="react-root">
                     <div style="display:flex;justify-content:center;align-items:center;height:200px;">
                         <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--rose);"></i>

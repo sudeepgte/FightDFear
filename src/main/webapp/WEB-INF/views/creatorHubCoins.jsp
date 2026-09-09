@@ -30,7 +30,7 @@
             --shadow:      0 2px 12px rgba(0,0,0,.06);
         }
         * { box-sizing: border-box; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); overflow-y: scroll; overflow-x: hidden; width: 100%; }
+        body { background: var(--bg); color: var(--text); overflow-y: scroll; overflow-x: hidden; width: 100%; padding-bottom: 80px; }
         a { text-decoration: none; color: inherit; }
 
         @media (max-width: 768px) { .page-wrapper { padding: 10px 0 !important; gap: 10px !important; } } .page-wrapper {
@@ -157,7 +157,11 @@
 </head>
 <body>
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
-    <div id="wrapper">
+      <style>
+          #wrapper { margin-top: 60px !important; }
+          #sidebar-wrapper { top: 60px !important; }
+      </style>
+      <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
 <!-- Header -->
@@ -176,7 +180,7 @@
     .desktop-only { display: none !important; }
 }
 .stats-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; width:100%; max-width:800px; } @media (max-width: 768px) { .stats-grid { grid-template-columns: 1fr; } .coins-container { padding: 20px !important; } } </style>
-        <header class="ch-sub-header" style="position:sticky; top:80px; width:100%; height:60px; background:#fff; border-bottom:1px solid var(--border); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+        <header class="ch-sub-header" style="position:sticky; top:60px; width:100%; height:60px; background:#fff; border-bottom:1px solid var(--border); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
         <div style="font-weight:700; font-size:20px; color:var(--accent); display:flex; align-items:center; gap:12px;"><span><i class="fa-solid fa-clapperboard"></i> Creator Hub</span></div>
                 <div style="display:flex; align-items:center; gap:8px;">
             <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>

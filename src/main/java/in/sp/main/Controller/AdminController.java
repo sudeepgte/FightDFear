@@ -1392,6 +1392,7 @@ public class AdminController {
         return "adminViewDoctorProfile";
     }
 
+    @Transactional
     @PostMapping("/doctors/{id}/verify")
     public String verifyDoctor(@PathVariable Long id,
                                @RequestParam(value = "notes", required = false) String notes,
@@ -1416,6 +1417,7 @@ public class AdminController {
         return "redirect:/admin/doctors/" + id + "/profile";
     }
 
+    @Transactional
     @PostMapping("/doctors/{id}/reject")
     public String rejectDoctor(@PathVariable Long id,
                                @RequestParam(value = "reason", required = false) String reason,
@@ -1433,6 +1435,10 @@ public class AdminController {
         }
         Admin admin = (Admin) session.getAttribute("admin");
         String combined = (notes != null && !notes.isBlank()) ? notes : reason;
+        if (combined == null || combined.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("message", "Rejection notes are required");
+            return "redirect:/admin/doctors/" + id + "/profile";
+        }
         try {
             doctorVerificationService.reject(d, admin == null ? null : Long.valueOf(admin.getId()), combined);
             redirectAttributes.addFlashAttribute("message", "Doctor rejected.");
@@ -1442,6 +1448,7 @@ public class AdminController {
         return "redirect:/admin/doctors/" + id + "/profile";
     }
 
+    @Transactional
     @PostMapping("/doctors/{id}/request-changes")
     public String requestDoctorChanges(@PathVariable Long id,
                                        @RequestParam(value = "reasons", required = false) String reasons,
@@ -1458,6 +1465,12 @@ public class AdminController {
             return "redirect:/admin/pending-doctors";
         }
         Admin admin = (Admin) session.getAttribute("admin");
+        String combined = (reasons != null && !reasons.isBlank() ? "Reasons: " + reasons.trim() + "\n" : "") + 
+                          (notes != null && !notes.isBlank() ? notes.trim() : "");
+        if (combined.trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("message", "Please select a reason or enter comments");
+            return "redirect:/admin/doctors/" + id + "/profile";
+        }
         try {
             doctorVerificationService.requestChanges(d, admin == null ? null : Long.valueOf(admin.getId()), reasons, notes);
             redirectAttributes.addFlashAttribute("message", "Changes requested from doctor.");
@@ -2715,6 +2728,20 @@ public class AdminController {
         return "redirect:/admin/adminDashboard#fitnessOversightTabs";
     }
 
+    @GetMapping("/test-pending")
+    public String testPending(Model model) {
+        List<FitnessTrainer> pending = fitnessTrainerRepository.findByPartnerProfileStatusIn(Arrays.asList(
+                PartnerProfileStatus.PENDING_ADMIN_APPROVAL,
+                PartnerProfileStatus.READY_FOR_VERIFICATION,
+                PartnerProfileStatus.PROFILE_INCOMPLETE,
+                PartnerProfileStatus.CHANGES_REQUESTED,
+                PartnerProfileStatus.REGISTERED
+        ));
+        model.addAttribute("pendingTrainers", pending);
+        model.addAttribute("pendingCount", pending.size());
+        return "adminPendingTrainers";
+    }
+
     @GetMapping("/pending-trainers")
     public String viewPendingTrainers(Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
@@ -2734,8 +2761,13 @@ public class AdminController {
                 .comparingInt((FitnessTrainer t) -> PartnerLifecycleSupport.pendingPriority(t.getPartnerProfileStatus()))
                 .thenComparing(FitnessTrainer::getId, Comparator.nullsLast(Long::compareTo)));
 
+        List<FitnessTrainer> approved = fitnessTrainerRepository.findByPartnerProfileStatusIn(
+                List.of(in.sp.main.Entities.PartnerProfileStatus.APPROVED));
+
         model.addAttribute("pendingTrainers", pending);
         model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("approvedTrainers", approved);
+        model.addAttribute("approvedCount", approved.size());
         return "adminPendingTrainers";
     }
 

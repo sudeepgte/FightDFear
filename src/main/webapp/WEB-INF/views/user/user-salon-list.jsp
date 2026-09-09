@@ -272,7 +272,7 @@
             .salons-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
-                padding: 20px 15px;
+                padding: 20px 15px 150px 15px;
             }
         }
     </style>

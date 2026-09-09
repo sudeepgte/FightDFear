@@ -562,7 +562,15 @@
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/centres/allacceptedcentres">
                             <i class="bi bi-shield-check"></i>
-                            Find Martial Arts Centres
+                            Find Martial Arts
+                        </a>
+                        <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/list">
+                            <i class="bi bi-heart-pulse-fill"></i>
+                            Women Doctors
+                        </a>
+                        <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/myAppointments">
+                            <i class="bi bi-calendar-check"></i>
+                            My Appointments
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/user/bookings">
                             <i class="bi bi-journal-check"></i>

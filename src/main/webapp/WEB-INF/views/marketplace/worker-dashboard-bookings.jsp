@@ -221,7 +221,7 @@
                                 <span>${b.client.fullName}</span>
                               </div>
                             </td>
-                            <td>${empty b.hours ? '-' : b.hours} ${not empty b.hours ? 'hrs' : ''}</td>
+                            <td>${empty b.hours ? '2' : b.hours} hrs</td>
                             <td>&#8377;${b.totalAmount}</td>
                             <td>${b.bookingDate.toString().replace('T', ' ')}</td>
                             <td>
@@ -236,7 +236,15 @@
                             <td>
                               <div style="display:flex;gap:8px;">
                                 <button type="button" class="btn btn-sm btn-outline-primary" style="font-size:0.75rem;border-radius:8px;"
-                                        onclick="showDetails('${b.client.fullName}','${b.client.email}','${b.client.phoneNumber}','${b.bookingDate}','${b.hours}','&#8377;${b.totalAmount}','${b.status}','${b.note}')">
+                                        data-bs-toggle="modal" data-bs-target="#bookingDetailsModal"
+                                        data-client-name="${b.client.fullName}"
+                                        data-client-email="${b.client.email}"
+                                        data-client-phone="${b.client.phoneNumber}"
+                                        data-booking-date="${b.bookingDate}"
+                                        data-hours="${empty b.hours ? '2' : b.hours}"
+                                        data-amount="${b.totalAmount}"
+                                        data-status="${b.status}"
+                                        data-note="${b.note}">
                                   <i class="bi bi-eye"></i>
                                 </button>
                                   <button type="button" class="btn btn-sm btn-outline-info" style="font-size:0.75rem;border-radius:8px;" title="Chat with Client"
