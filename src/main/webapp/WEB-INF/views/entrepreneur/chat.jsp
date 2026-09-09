@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collaboration Chat — Fight D Fear</title>
@@ -309,6 +311,7 @@
             <!-- Footer / Input Form (White box, red button like image) -->
             <div class="chat-footer">
                 <form action="${pageContext.request.contextPath}/entrepreneur/chat/${investor.id}" method="post" id="chatForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="proposalId" value="${proposal.id}">
                     <div class="chat-input-wrapper">
                         <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
@@ -328,5 +331,6 @@
         if(area) area.scrollTop = area.scrollHeight;
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

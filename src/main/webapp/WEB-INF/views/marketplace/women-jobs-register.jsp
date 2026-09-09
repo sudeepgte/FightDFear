@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Women Jobs Register — Fight D Fear</title>
@@ -222,6 +224,7 @@
             </c:if>
 
             <form id="registerForm" action="${pageContext.request.contextPath}/women-jobs/register" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-grid">
                     <div class="section-label">Account details</div>
                     <div class="form-group">
@@ -640,5 +643,6 @@
             document.getElementById('registerForm').requestSubmit();
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
  <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Add Offer | Fight D Fear</title>
@@ -254,7 +256,10 @@
                 <div class="alert alert-success">${message}</div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/saveStylist" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <form action="${pageContext.request.contextPath}/saveStylist${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <c:if test="${not empty _csrf}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                </c:if>
                 <input type="hidden" name="salonId" value="${salon.id}" />
 
                 <div class="mb-3">
@@ -356,5 +361,6 @@
             })
     })()
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

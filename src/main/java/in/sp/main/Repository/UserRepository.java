@@ -6,8 +6,11 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import jakarta.persistence.LockModeType;
 
 import in.sp.main.Entities.PartnerProfileStatus;
 import in.sp.main.Entities.User;
@@ -16,6 +19,10 @@ import in.sp.main.Entities.VerificationStatus;
 public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.emergencyContacts LEFT JOIN FETCH u.medicalDetails WHERE u.id = :id")
     Optional<User> findByIdWithProfileDetails(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.id = :id")
+    Optional<User> findByIdForUpdate(@Param("id") Long id);
 
     Optional<User> findByEmail(String email);
     Optional<User> findByPhoneNumber(String phoneNumber);

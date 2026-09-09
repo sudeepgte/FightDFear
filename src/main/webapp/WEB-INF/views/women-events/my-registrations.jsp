@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>My Event Tickets — Women Events</title>
@@ -175,6 +177,7 @@
                         <c:if test="${reg.status == 'REGISTERED'}">
                             <form action="${pageContext.request.contextPath}/women-events/${reg.event.id}/cancel-registration" method="post" style="display:inline;"
                                   onsubmit="return confirm('Cancel your registration for this event?')">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button type="submit" class="action-btn action-btn-danger">
                                     <i class="bi bi-x-circle-fill"></i> Cancel
                                 </button>
@@ -212,6 +215,7 @@
 
             <form id="tpCancelForm" method="post" style="display:none;"
                   onsubmit="return confirm('Cancel your registration for this event?')">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <button type="submit" class="we-modal-btn secondary">Cancel registration</button>
             </form>
             <button type="button" class="we-modal-btn primary" onclick="closeTicketPreview()">Close</button>
@@ -252,5 +256,6 @@ function closeTicketPreview() {
 </script>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

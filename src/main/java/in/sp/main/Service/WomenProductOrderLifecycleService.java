@@ -57,6 +57,8 @@ public class WomenProductOrderLifecycleService {
     private WomenProductsCareService productsCareService;
     @Autowired
     private ProductDeliveryTrackingService trackingService;
+    @Autowired
+    private AtomicStockService atomicStockService;
 
     /**
      * Normalizes aliases without collapsing distinct delivery stages.
@@ -208,23 +210,10 @@ public class WomenProductOrderLifecycleService {
     }
 
     public void decrementStock(WomenProduct product, int qty) {
-        if (product == null) {
+        if (product == null || product.getId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A product in your order is unavailable.");
         }
-        if (qty < 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid quantity.");
-        }
-        int stock = product.getStock() == null ? 0 : product.getStock();
-        if (stock <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Product '" + product.getName() + "' is out of stock.");
-        }
-        if (qty > stock) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Only " + stock + " unit(s) available for '" + product.getName() + "'.");
-        }
-        product.setStock(stock - qty);
-        productRepository.save(product);
+        atomicStockService.decrementStock(product.getId(), qty);
     }
 
     public void applyStockUpdate(WomenProduct product, int stock) {

@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${not empty doctor.fullName ? doctor.fullName : 'Doctor'} - Application Review | Fight D Fear Admin</title>
@@ -778,29 +780,40 @@
 
         <div class="action-bar">
           <form id="approveForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="approveNotes">
             <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
               <i class="fas fa-check-circle"></i> Approve
             </button>
           </form>
 
-          <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
+          <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0"
+                onsubmit="
+                  var notes = document.getElementById('decisionNotes').value.trim();
+                  var checked = Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value);
+                  if(!notes && checked.length === 0){ alert('Please select a reason or enter comments to request changes.'); return false; }
+                  document.getElementById('changesNotes').value = notes;
+                  document.getElementById('changesReasons').value = checked.join(', ');
+                  return true;
+                ">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="changesNotes">
             <input type="hidden" name="reasons" id="changesReasons">
-            <button type="submit" class="btn-changes"
-                    onclick="
-                      document.getElementById('changesNotes').value=document.getElementById('decisionNotes').value;
-                      document.getElementById('changesReasons').value=Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value).join(', ');
-                    ">
+            <button type="submit" class="btn-changes">
               <i class="fas fa-edit"></i> Request Changes
             </button>
           </form>
 
           <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
-                onsubmit="return confirm('Reject this doctor?')">
+                onsubmit="
+                  var notes = document.getElementById('decisionNotes').value.trim();
+                  if(!notes){ alert('Please enter decision notes / rejection reason before rejecting.'); return false; }
+                  document.getElementById('rejectNotes').value = notes;
+                  return confirm('Reject this doctor?');
+                ">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="rejectNotes">
-            <button type="submit" class="btn-reject"
-                    onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
+            <button type="submit" class="btn-reject">
               <i class="fas fa-times-circle"></i> Reject
             </button>
           </form>
@@ -812,5 +825,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

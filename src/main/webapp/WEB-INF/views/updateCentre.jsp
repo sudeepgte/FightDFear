@@ -4,6 +4,8 @@
 
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Update Martial Arts Center</title>
     <style>
     /* ============================================
@@ -245,10 +247,11 @@
 <h2>Update Martial Arts Center</h2>
 
 <form:form 
-    action="${pageContext.request.contextPath}/centres/update/${center.id}" 
+    action="${pageContext.request.contextPath}/centres/update/${center.id}${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" 
     method="post" 
     modelAttribute="center"
     enctype="multipart/form-data">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
     <!-- Name -->
     <div class="form-section">
@@ -323,6 +326,7 @@
     <button type="submit">Update</button>
 </form:form>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

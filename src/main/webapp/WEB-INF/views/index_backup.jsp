@@ -6,6 +6,8 @@
 <meta charset="UTF-8">
 
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Fight D Fear - Empowering Women</title>
@@ -2033,6 +2035,7 @@
         <!-- Contact Form -->
         <div id="homeAlertContainer"></div>
         <form id="homeContactForm" action="${pageContext.request.contextPath}/sendMessage" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
           <div class="row gy-4">
 
@@ -2403,6 +2406,7 @@
         drawCanvas();
     });
   </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 
 </html>

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Medical Details</title>
       <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
    <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -12,6 +14,7 @@
 
 <!-- Form to add/update Medical Details -->
 <form action="${pageContext.request.contextPath}/users/{userId}/medical-details" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
     <label>Blood Group:</label><br>
     <input type="text" name="bloodGroup" required><br>
     <label>Allergies:</label><br>
@@ -23,6 +26,7 @@
     <input type="submit" value="Update Medical Details">
 </form>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

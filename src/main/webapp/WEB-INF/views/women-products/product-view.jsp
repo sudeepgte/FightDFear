@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${product.name} — Fight D Fear Shop</title>
@@ -721,6 +723,7 @@
 
         <div class="btn-group" style="margin-top:20px; gap:12px;">
           <form action="${pageContext.request.contextPath}/women-products/buy-now" method="post" id="buyNowForm" style="flex: 2;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="hidden" name="productId" value="${product.id}">
             <input type="hidden" name="quantity" id="buyNowQty" value="1">
             <button type="submit" class="btn-fdf-main" id="buyNowBtn" ${product.stock <= 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; background:#9ca3af; box-shadow:none;"' : ''}>
@@ -728,6 +731,7 @@
             </button>
           </form>
           <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" id="addToCartForm" style="flex: 2;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="hidden" name="productId" value="${product.id}">
             <input type="hidden" name="quantity" id="addToCartQty" value="1">
             <button type="submit" class="btn-fdf-main" id="addToCartBtn" ${product.stock <= 0 ? 'disabled style="opacity:0.5; cursor:not-allowed; background:#9ca3af; box-shadow:none;"' : 'style="background: #166534; box-shadow: none;"'}>
@@ -735,6 +739,7 @@
             </button>
           </form>
           <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post" style="flex: 1;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="hidden" name="productId" value="${product.id}">
             <button type="submit" class="btn-fdf-secondary ${inWishlist ? 'active' : ''}" title="${inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}">
               <i class="bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}"></i>
@@ -987,5 +992,6 @@
   </script>
 
   <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

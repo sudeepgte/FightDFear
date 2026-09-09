@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Create Event — Fight D Fear</title>
@@ -179,7 +181,10 @@
             <div class="step"><div class="step-num">4</div><div class="step-label">Banner &amp; Submit</div></div>
         </div>
 
-        <form action="${pageContext.request.contextPath}/women-events/organizer/create" method="post" enctype="multipart/form-data" id="createEventForm">
+        <form action="${pageContext.request.contextPath}/women-events/organizer/create${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="createEventForm">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             <div class="form-grid">
 
                 <div style="display:flex;flex-direction:column;gap:16px;">
@@ -594,5 +599,6 @@ function previewBanner(input) {
     }
 }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

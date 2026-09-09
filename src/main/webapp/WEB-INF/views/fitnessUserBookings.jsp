@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Fitness Bookings</title>
@@ -184,6 +186,7 @@
                                                 </c:otherwise>
                                             </c:choose>
                                             <form action="${pageContext.request.contextPath}/fitness/booking/cancel" method="POST" onsubmit="return confirm('Cancel this session? Fully refunded if paid.');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                 <button type="submit" class="btn btn-outline-danger btn-custom py-1 px-3">Cancel</button>
                                             </form>
@@ -280,6 +283,7 @@
                                                 </div>
                                                 <div class="modal-body border-0">
                                                     <form action="${pageContext.request.contextPath}/fitness/booking/rate" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <div class="mb-3">
                                                             <label class="form-label text-xs fw-bold text-muted uppercase">Star Rating</label>
@@ -315,5 +319,6 @@
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

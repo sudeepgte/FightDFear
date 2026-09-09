@@ -7,6 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${doctor.fullName} | Medical Profile</title>
   
+  <c:if test="${not empty _csrf}">
+    <meta name="_csrf" content="${_csrf.token}">
+    <meta name="_csrf_header" content="${_csrf.headerName}">
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}">
+  </c:if>
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
@@ -617,7 +623,10 @@
         <div class="booking-sticky-card">
           <h4 class="fw-900 mb-4">Book Appointment</h4>
           
-          <form id="bookingForm" onsubmit="event.preventDefault(); showBookingPreview();">
+          <form id="bookingForm" action="javascript:void(0);" method="POST" onsubmit="event.preventDefault(); showBookingPreview(); return false;">
+            <c:if test="${not empty _csrf}">
+              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            </c:if>
             <input type="hidden" id="doctorId" value="${doctor.id}">
             <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
             <input type="hidden" id="appointmentTime" value="">
@@ -679,7 +688,7 @@
               <div class="d-flex justify-content-between small"><span class="text-muted">Patient</span><span class="fw-700" id="summaryPatient">${user.fullName}</span></div>
             </div>
 
-            <button type="submit" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6">
+            <button type="button" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6" onclick="showBookingPreview()">
               Review booking
             </button>
             <p class="text-center mt-3 small text-muted" id="payHint"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
@@ -698,6 +707,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <form action="${pageContext.request.contextPath}/doctors/review" method="post" id="doctorReviewForm" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="doctorId" value="${doctor.id}">
           <div class="modal-body p-4">
             <c:if test="${not empty error}">
@@ -758,8 +768,8 @@
     <div class="doc-modal" role="dialog" aria-modal="true">
       <div class="doc-modal-header" style="flex-direction:column;align-items:center;text-align:center;gap:8px;">
         <i class="bi bi-check-circle-fill" style="font-size:42px;color:var(--doc-primary);"></i>
-        <h3>Appointment requested</h3>
-        <p>Your booking has been sent to Dr. ${doctor.fullName}. Status starts as Pending until the doctor confirms.</p>
+        <h3 id="bsHeaderTitle">Appointment requested</h3>
+        <p id="bsHeaderDesc">Your booking has been sent to Dr. ${doctor.fullName}. Status starts as Pending until the doctor confirms.</p>
       </div>
       <div class="doc-modal-body">
         <div class="doc-modal-row"><span class="k">Doctor</span><span class="v">Dr. ${doctor.fullName}</span></div>
@@ -767,7 +777,7 @@
         <div class="doc-modal-row"><span class="k">When</span><span class="v" id="bsWhen">—</span></div>
         <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="bsMode">—</span></div>
         <div class="doc-modal-row"><span class="k">Fee</span><span class="v" id="bsFee">—</span></div>
-        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span class="doc-status pending">Pending</span></span></div>
+        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span class="doc-status pending" id="bsStatus">Pending</span></span></div>
       </div>
       <div class="doc-modal-footer" style="justify-content:center;">
         <a class="doc-modal-btn primary" href="${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed">View my appointments</a>
@@ -899,37 +909,57 @@
       syncFeeUi();
     }
 
+    function getCsrfToken() {
+      var match = document.cookie.match(new RegExp('(^|;\\s*)XSRF-TOKEN=([^;]*)'));
+      if (match && match[2]) return decodeURIComponent(match[2]);
+      var meta = document.querySelector('meta[name="_csrf"]');
+      if (meta && meta.content) return meta.content;
+      var el = document.querySelector('input[name="_csrf"]') || document.getElementById('_global_header_csrf');
+      if (el && el.value) return el.value;
+      return '';
+    }
+
+    function csrfHeaders() {
+      var token = getCsrfToken();
+      var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      if (token) {
+        headers['X-CSRF-TOKEN'] = token;
+        headers['X-XSRF-TOKEN'] = token;
+      }
+      return headers;
+    }
+
     async function bookFree(doctorId, time, type, reason) {
-      const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        credentials: 'same-origin',
-        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
-      });
-      let data = {};
-      try { data = await res.json(); } catch (e) {}
-      if (res.status === 401) {
-        alert('Please log in as a patient to book this appointment.');
+      try {
+        const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
+          method: 'POST',
+          headers: csrfHeaders(),
+          credentials: 'same-origin',
+          body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (res.status === 401) {
+          alert('Please log in as a patient to book this appointment.');
+          window.location.href = '${pageContext.request.contextPath}/login';
+          return false;
+        }
+        if (res.ok && (data.success || data.appointmentId)) {
+          showBookingSuccess(false);
+          return true;
+        }
+        alert(data.error || 'Unable to book appointment');
+        return false;
+      } catch (err) {
+        alert('Network error while booking. Please try again.');
         return false;
       }
-      if (res.ok && data.success) {
-        showBookingSuccess();
-        return true;
-      }
-      alert(data.error || 'Unable to book appointment');
-      return false;
     }
 
     async function initiatePayment() {
       syncFeeUi();
       var payBtn = document.getElementById('payBtn');
       if (payBtn && payBtn.dataset.busy === '1') return;
-      if (payBtn) {
-        payBtn.dataset.busy = '1';
-        payBtn.disabled = true;
-        payBtn.dataset.label = payBtn.textContent;
-        payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-      }
 
       const amount = document.getElementById('amount').value;
       const doctorId = document.getElementById('doctorId').value;
@@ -939,19 +969,27 @@
       const reasonEl = document.getElementById('appointmentReason') || document.getElementById('reason');
       const reason = reasonEl ? (reasonEl.value || '').trim() : '';
       const fee = parseFloat(amount || '0');
+      const patientName = (document.getElementById('patientName') || {}).value || '${user.fullName}';
+      const patientPhone = (document.getElementById('patientPhone') || {}).value || '${user.phoneNumber}';
 
       function unlockPay() {
         if (payBtn) {
           payBtn.dataset.busy = '0';
           payBtn.disabled = !time;
-          payBtn.innerHTML = payBtn.dataset.label || 'Confirm & Pay';
+          payBtn.innerHTML = payBtn.dataset.label || ('Review & Pay ₹' + fee);
         }
       }
 
       if (!time) {
         alert('Please select date and time');
-        unlockPay();
         return;
+      }
+
+      if (payBtn) {
+        payBtn.dataset.busy = '1';
+        payBtn.disabled = true;
+        payBtn.dataset.label = payBtn.innerHTML;
+        payBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
       }
 
       if (fee <= 0) {
@@ -964,14 +1002,128 @@
       }
 
       try {
-        const booked = await bookFree(doctorId, time, type, reason);
-        if (!booked) {
+        const orderRes = await fetch('${pageContext.request.contextPath}/payment/create-order', {
+          method: 'POST',
+          headers: csrfHeaders(),
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            type: 'DOCTOR',
+            targetId: doctorId,
+            consultationType: type,
+            appointmentTime: time,
+            reason: reason
+          })
+        });
+
+        let orderData = {};
+        try { orderData = await orderRes.json(); } catch(e) {}
+
+        if (orderRes.status === 401) {
+          alert('Please log in as a patient to book this appointment.');
+          window.location.href = '${pageContext.request.contextPath}/login';
           unlockPay();
           return;
         }
-        unlockPay();
-      } catch (e) {
-        alert('Unable to book appointment. Please try again.');
+
+        if (!orderRes.ok) {
+          alert(orderData.error || 'Unable to create payment order. Please try again.');
+          unlockPay();
+          return;
+        }
+
+        // Handle mock mode
+        if (orderData.mock === true) {
+          const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+            method: 'POST',
+            headers: csrfHeaders(),
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              razorpay_order_id: orderData.orderId,
+              razorpay_payment_id: 'mock_pay_' + Date.now(),
+              razorpay_signature: 'mock_sig',
+              type: 'DOCTOR',
+              targetId: doctorId,
+              consultationType: type,
+              appointmentTime: time,
+              reason: reason
+            })
+          });
+          let verifyData = {};
+          try { verifyData = await verifyRes.json(); } catch(e) {}
+          if (verifyRes.ok && (verifyData.success || verifyData.status === 'success')) {
+            showBookingSuccess(true);
+          } else {
+            alert(verifyData.error || 'Payment verification failed.');
+            unlockPay();
+          }
+          return;
+        }
+
+        // Live / Test Razorpay Checkout
+        if (typeof Razorpay === 'undefined') {
+          alert('Payment gateway library failed to load. Please check your internet connection and try again.');
+          unlockPay();
+          return;
+        }
+
+        const options = {
+          key: orderData.key,
+          amount: orderData.amount,
+          currency: orderData.currency || 'INR',
+          name: 'Fight D Fear',
+          description: 'Consultation - Dr. ${doctor.fullName}',
+          order_id: orderData.orderId,
+          prefill: {
+            name: patientName,
+            contact: patientPhone
+          },
+          theme: { color: '#F43F5E' },
+          handler: async function(resp) {
+            try {
+              const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
+                method: 'POST',
+                headers: csrfHeaders(),
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                  razorpay_order_id: resp.razorpay_order_id,
+                  razorpay_payment_id: resp.razorpay_payment_id,
+                  razorpay_signature: resp.razorpay_signature,
+                  type: 'DOCTOR',
+                  targetId: doctorId,
+                  consultationType: type,
+                  appointmentTime: time,
+                  reason: reason
+                })
+              });
+              let verifyData = {};
+              try { verifyData = await verifyRes.json(); } catch(e) {}
+              if (verifyRes.ok && (verifyData.success || verifyData.status === 'success')) {
+                showBookingSuccess(true);
+              } else {
+                alert(verifyData.error || 'Payment verification failed. Please contact support.');
+                unlockPay();
+              }
+            } catch (verErr) {
+              alert('Verification request failed. Please check your connection.');
+              unlockPay();
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              unlockPay();
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function(resp) {
+          alert(resp.error ? resp.error.description : 'Payment failed. Please try again.');
+          unlockPay();
+        });
+        rzp.open();
+      } catch (err) {
+        console.error('Payment initiation error:', err);
+        alert('An unexpected error occurred while initiating payment. Please try again.');
         unlockPay();
       }
     }
@@ -980,40 +1132,75 @@
       var overlay = document.getElementById('bookingPreviewModal');
       if (overlay) overlay.classList.remove('open');
     }
+
     function showBookingPreview() {
+      var patientNameEl = document.getElementById('patientName');
+      if (patientNameEl && !patientNameEl.value.trim()) {
+        alert('Please enter patient name');
+        patientNameEl.focus();
+        return;
+      }
+      var patientPhoneEl = document.getElementById('patientPhone');
+      if (patientPhoneEl && (!patientPhoneEl.value.trim() || patientPhoneEl.value.trim().length !== 10)) {
+        alert('Please enter a valid 10-digit mobile number');
+        patientPhoneEl.focus();
+        return;
+      }
       var time = document.getElementById('appointmentTime').value;
       if (!time) {
-        alert('Please select date and time');
+        alert('Please select date and time slot');
         return;
       }
       var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
-      var modeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
+      var modeLabel = type === 'VIDEO' ? 'Video Call' : (type === 'ONLINE' ? 'Chat' : 'Clinic Visit');
       var fee = currentFee();
       var reasonEl = document.getElementById('appointmentReason');
-      var patient = (document.getElementById('patientName') || {}).value || '${user.fullName}';
+      var patient = (patientNameEl || {}).value || '${user.fullName}';
       document.getElementById('bpWhen').textContent = (document.getElementById('summaryText') || {}).innerText || time;
       document.getElementById('bpMode').textContent = modeLabel;
       document.getElementById('bpFee').textContent = fee > 0 ? ('₹' + fee) : 'Free';
       document.getElementById('bpPatient').textContent = patient || 'Not provided';
       document.getElementById('bpReason').textContent = (reasonEl && reasonEl.value.trim()) ? reasonEl.value.trim() : 'Not provided';
-      document.getElementById('bpPayHint').textContent = fee > 0 ? 'You will complete payment on the next step.' : 'No payment is required.';
+      document.getElementById('bpPayHint').textContent = fee > 0 ? 'You will complete payment securely via Razorpay on the next step.' : 'No payment is required.';
       var confirmBtn = document.getElementById('bpConfirmBtn');
       confirmBtn.textContent = fee > 0 ? ('Confirm & Pay ₹' + fee) : 'Confirm free booking';
       document.getElementById('bookingPreviewModal').classList.add('open');
     }
+
     function confirmBookingFromPreview() {
       closeBookingPreview();
       initiatePayment();
     }
-    function showBookingSuccess() {
+
+    function showBookingSuccess(isPaid) {
       var overlay = document.getElementById('bookingSuccessModal');
       if (!overlay) {
         window.location.href = '${pageContext.request.contextPath}/doctors/myAppointments?message=Booking-Confirmed';
         return;
       }
-      document.getElementById('bsWhen').textContent = (document.getElementById('bpWhen') || {}).textContent || document.getElementById('summaryText').innerText;
+      document.getElementById('bsWhen').textContent = (document.getElementById('bpWhen') || {}).textContent || (document.getElementById('summaryText') || {}).innerText || '—';
       document.getElementById('bsMode').textContent = (document.getElementById('bpMode') || {}).textContent || 'Consultation';
       document.getElementById('bsFee').textContent = (document.getElementById('bpFee') || {}).textContent || '—';
+      var statusEl = document.getElementById('bsStatus');
+      if (statusEl) {
+        if (isPaid) {
+          statusEl.className = 'doc-status confirmed';
+          statusEl.textContent = 'Confirmed';
+        } else {
+          statusEl.className = 'doc-status pending';
+          statusEl.textContent = 'Pending';
+        }
+      }
+      var headerTitle = document.getElementById('bsHeaderTitle');
+      var headerDesc = document.getElementById('bsHeaderDesc');
+      if (headerTitle) {
+        headerTitle.textContent = isPaid ? 'Appointment Confirmed!' : 'Appointment Requested';
+      }
+      if (headerDesc) {
+        headerDesc.textContent = isPaid
+          ? 'Payment received. Your consultation with Dr. ${doctor.fullName} has been confirmed.'
+          : 'Your booking has been sent to Dr. ${doctor.fullName}. Status starts as Pending until the doctor confirms.';
+      }
       overlay.classList.add('open');
     }
 
@@ -1070,6 +1257,7 @@
   </script>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

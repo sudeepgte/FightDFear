@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Complete seller profile — Women Products</title>
@@ -88,7 +90,10 @@
         <div class="progress" id="progress"><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
         <p class="step-title" id="stepLabel">Step 1 of 11 — Seller identity</p>
         <p class="step-desc" id="stepDesc">Owner, shop name and contact phone.</p>
-        <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data" novalidate>
+        <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" novalidate>
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             <div class="wj-step" data-step="1">
                 <div class="grid">
                     <div><label>1.1 Full name *</label><input name="fullName" id="fullName" required maxlength="80" value="${seller.fullName}"><small class="field-err" id="err-fullName"></small></div>
@@ -239,5 +244,6 @@
     render();
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery Partner Login — Women Products</title>
@@ -50,6 +52,7 @@
         <div class="form-card">
             <c:if test="${not empty error}"><div class="alert">${error}</div></c:if>
             <form action="${pageContext.request.contextPath}/women-products/delivery/login" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group"><label>Email</label><input class="form-input" type="email" name="email" required></div>
                 <div class="form-group">
                     <label>Password</label>
@@ -72,5 +75,6 @@
             icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

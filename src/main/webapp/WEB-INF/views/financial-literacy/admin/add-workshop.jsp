@@ -5,6 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Add Workshop - Financial Literacy</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -188,6 +190,7 @@
                 <div class="ap-panel p-4">
 
                     <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" method="POST" id="workshopForm" class="needs-validation" novalidate>
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <!-- Workshop Title -->
                         <div class="mb-3 position-relative">
                             <label for="title" class="form-label fw-bold">Workshop Title <span class="text-danger">*</span></label>
@@ -332,5 +335,6 @@
             });
         });
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

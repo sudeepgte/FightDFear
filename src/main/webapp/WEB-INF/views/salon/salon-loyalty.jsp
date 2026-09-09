@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loyalty Program | Fight D Fear</title>
@@ -63,6 +65,7 @@
                         <h4 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-gear-fill me-2"></i> Program Rules</h4>
                         
                         <form action="${pageContext.request.contextPath}/salon/loyalty/updateSettings" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             
                             <div class="form-check form-switch mb-4 pb-3 border-bottom">
                                 <input class="form-check-input" type="checkbox" name="isActive" id="flexSwitchCheckDefault" ${settings.active ? 'checked' : ''}>
@@ -164,6 +167,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

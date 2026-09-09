@@ -6,6 +6,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <title>Doctor Dashboard — Fight D Fear</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
@@ -753,6 +755,7 @@
                     <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
                   </c:choose>
                   <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <select name="status">
                       <option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option>
                       <option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option>
@@ -851,6 +854,7 @@
                   </c:choose>
                   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                     <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                       <select name="status">
                         <option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option>
                         <option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option>
@@ -1119,6 +1123,7 @@
                   <h3 style="margin:0 0 4px;color:#16A34A;font-size:1rem;">100% complete — ready to submit</h3>
                   <p style="margin:0 0 10px;color:var(--dd-muted);font-size:0.88rem;">Review your details, then submit for admin verification.</p>
                   <form action="${pageContext.request.contextPath}/doctors/submit-for-verification" method="post" style="margin:0;">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button type="submit" class="dd-btn-save" style="padding:8px 18px;font-size:13px;">Submit for Verification</button>
                   </form>
                 </c:otherwise>
@@ -1233,6 +1238,7 @@
         </div>
         <div class="dd-section-body padded">
           <form action="${pageContext.request.contextPath}/doctors/update-schedule" method="post">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div class="dd-edit-grid">
               <div class="dd-edit-field full">
                 <label>Available Days</label>
@@ -1305,6 +1311,7 @@
         </div>
         <div class="dd-section-body padded">
           <form action="${pageContext.request.contextPath}/doctors/update-fees" method="post">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div class="dd-edit-grid">
               <div class="dd-edit-field">
                 <label>Consultation Fee (₹)</label>
@@ -1514,6 +1521,7 @@
             <button type="button" onclick="closePrescriptionModal()" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:var(--dd-muted)"><i class="bi bi-x-lg"></i></button>
           </div>
           <form id="prescriptionForm" method="post" action="">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div style="margin-bottom:16px;">
               <label style="display:block;font-size:12px;font-weight:600;color:var(--dd-muted);margin-bottom:6px;">Patient</label>
               <input type="text" id="prescPatientName" readonly style="width:100%;padding:10px 14px;border:2px solid var(--dd-border);border-radius:10px;font-size:13px;background:var(--dd-bg);outline:none;font-family:'Poppins',sans-serif;">
@@ -1834,9 +1842,81 @@ document.addEventListener('keydown', function(e) {
       <button type="button" id="ppCompleteBtn" class="doc-modal-btn primary" style="display:none" onclick="submitPreviewStatus('COMPLETED')"><i class="bi bi-check-circle"></i> Complete</button>
       <button type="button" class="doc-modal-btn secondary" onclick="closePatientPreview()">Close</button>
     </div>
-    <form id="ppStatusForm" method="post" style="display:none"><input type="hidden" name="status" id="ppStatusValue"></form>
+    <form id="ppStatusForm" method="post" style="display:none">
+      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+      <input type="hidden" name="status" id="ppStatusValue">
+    </form>
   </div>
 </div>
+
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.dd-status-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var select = form.querySelector('select[name="status"]');
+      var btn = form.querySelector('button[type="submit"]');
+      var newStatus = select ? select.value : '';
+      if (!newStatus) return;
+
+      var origBtnHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin 1s linear infinite;"></i>';
+      }
+
+      var formData = new FormData(form);
+      var csrfToken = (typeof getCsrfToken === 'function') ? getCsrfToken() : (form.querySelector('input[name="_csrf"]') ? form.querySelector('input[name="_csrf"]').value : '');
+
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'X-XSRF-TOKEN': csrfToken
+        }
+      })
+      .then(function(res) {
+        if (!res.ok) throw new Error('Status ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        if (data && data.success) {
+          var card = form.closest('.doc-appt-card');
+          if (card) {
+            var badge = card.querySelector('.doc-status');
+            if (badge) {
+              badge.className = 'doc-status ' + newStatus.toLowerCase();
+              badge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1).toLowerCase();
+            }
+            card.setAttribute('data-status', newStatus);
+          }
+          if (btn) {
+            btn.innerHTML = '<i class="bi bi-check2-circle" style="color:#10B981;"></i>';
+            setTimeout(function() {
+              btn.disabled = false;
+              btn.innerHTML = origBtnHtml;
+            }, 1200);
+          }
+        } else {
+          alert((data && data.error) ? data.error : 'Failed to update appointment status');
+          if (btn) { btn.disabled = false; btn.innerHTML = origBtnHtml; }
+        }
+      })
+      .catch(function(err) {
+        console.warn('Falling back to direct form submit', err);
+        form.submit();
+      });
+    });
+  });
+});
+</script>
+<style>
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
 </body>
 </html>
 

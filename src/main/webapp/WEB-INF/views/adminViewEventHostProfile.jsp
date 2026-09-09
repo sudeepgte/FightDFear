@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${not empty host.fullName ? host.fullName : 'Event Host'} — Application Review | Fight D Fear Admin</title>
@@ -732,20 +734,19 @@
         </div>
 
         <div class="action-bar">
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/approve" method="post" class="m-0 p-0">
           <c:if test="${statusStr ne 'APPROVED'}">
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/approve" method="post" class="m-0">
+          <form id="approveForm" action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/approve" method="post" class="m-0">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="approveNotes">
             <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
               <i class="fas fa-check-circle"></i> Approve
             </button>
           </form>
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/request-changes" method="post" class="m-0 p-0">
           </c:if>
 
           <c:if test="${statusStr ne 'REJECTED' and statusStr ne 'SUSPENDED'}">
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/request-changes" method="post" class="m-0">
-
+          <form id="changesForm" action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/request-changes" method="post" class="m-0">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="changesNotes">
             <input type="hidden" name="reasons" id="changesReasons">
             <button type="submit" class="btn-changes"
@@ -756,13 +757,12 @@
               <i class="fas fa-edit"></i> Request Changes
             </button>
           </form>
-
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/reject" method="post" class="m-0 p-0"
           </c:if>
 
           <c:if test="${statusStr ne 'REJECTED'}">
-          <form action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/reject" method="post" class="m-0"
+          <form id="rejectForm" action="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/reject" method="post" class="m-0"
                 onsubmit="return confirm('Reject this event organizer?')">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="rejectNotes">
             <button type="submit" class="btn-reject" onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
               <i class="fas fa-times-circle"></i> Reject
@@ -788,5 +788,6 @@
     closeBtn.addEventListener('click', () => sidebar.classList.remove('active'));
   }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -7,6 +7,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title><c:out value="${entrepreneur.fullName}"/> — Entrepreneur Profile Review | Fight D Fear Admin</title>
 
     <!-- Bootstrap & Icons & Typography -->
@@ -571,6 +573,7 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- Approve -->
                 <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
                         <i class="bi bi-check-lg me-1"></i> Approve Entrepreneur
                     </button>
@@ -595,6 +598,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/request-changes" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i> Request Profile Changes</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -620,6 +624,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/reject" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-octagon me-2"></i> Reject Application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -641,5 +646,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

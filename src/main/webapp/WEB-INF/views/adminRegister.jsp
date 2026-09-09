@@ -5,6 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Admin Registration — Fight D Fear</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -213,6 +215,7 @@
             <div class="alert alert-error" id="formError" style="display:none;"></div>
 
             <form action="${pageContext.request.contextPath}/admin/registerAdmin" method="post" id="adminRegisterForm">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                 <div class="form-group">
                     <label>Admin Username *</label>
                     <input type="text" name="name" id="name" class="form-input" required 
@@ -301,5 +304,6 @@
     });
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

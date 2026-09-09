@@ -26,6 +26,7 @@
           <c:set var="opts" value="${nextStatuses[o.id]}"/>
           <c:if test="${approved && not empty opts}">
             <form method="post" action="${pageContext.request.contextPath}/women-products/delivery/orders/${o.id}/status">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
               <select name="status">
                 <c:forEach var="st" items="${opts}">
                   <option value="${st}">${st}</option>

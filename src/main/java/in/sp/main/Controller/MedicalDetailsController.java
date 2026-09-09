@@ -80,7 +80,7 @@ public class MedicalDetailsController {
         return "redirect:/medical-details/" + userId;
     }
 
-    @RequestMapping(value = "/delete/{userId}/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/delete/{userId}/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
     public String deleteMedicalDetails(@PathVariable Long userId, @PathVariable Long id,
                                        HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";

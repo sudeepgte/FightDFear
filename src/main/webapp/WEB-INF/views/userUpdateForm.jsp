@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Update Profile | Fight D Fear</title>
@@ -242,7 +244,10 @@
                     </c:if>
                 </div>
 
-                <form action="${pageContext.request.contextPath}/users/update/${user.id}" method="post" enctype="multipart/form-data" id="profileUpdateForm">
+                <form action="${pageContext.request.contextPath}/users/update/${user.id}${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="profileUpdateForm">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="confirmSave" id="confirmSave" value="false">
 
                     <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Personal Details</h5>
@@ -449,9 +454,33 @@ function hidePreview() {
     document.getElementById('profilePreviewCard').style.display = 'none';
     document.getElementById('btn-preview').style.display = 'block';
 }
+function ensureCsrfOnForm(form) {
+    if (!form) return;
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+    var csrfInput = form.querySelector('input[name="_csrf"]');
+    var token = (csrfInput && csrfInput.value) ? csrfInput.value : getCookie('XSRF-TOKEN');
+    if (token) {
+        if (!csrfInput) {
+            var hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = '_csrf';
+            hidden.value = token;
+            form.appendChild(hidden);
+        }
+        if (form.action && !form.action.includes('_csrf=')) {
+            var sep = form.action.includes('?') ? '&' : '?';
+            form.action += sep + '_csrf=' + encodeURIComponent(token);
+        }
+    }
+}
 function confirmAndSave() {
     document.getElementById('confirmSave').value = 'true';
-    document.getElementById('profileUpdateForm').submit();
+    var form = document.getElementById('profileUpdateForm');
+    ensureCsrfOnForm(form);
+    form.submit();
 }
 function previewPhoto(input) {
     if (input.files && input.files[0]) {
@@ -463,8 +492,12 @@ function previewPhoto(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-document.addEventListener('DOMContentLoaded', syncPreview);
+document.addEventListener('DOMContentLoaded', function() {
+    syncPreview();
+    ensureCsrfOnForm(document.getElementById('profileUpdateForm'));
+});
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

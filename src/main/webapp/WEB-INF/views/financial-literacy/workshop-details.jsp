@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${workshop != null ? workshop.title : 'Workshop Details'} — Financial Literacy</title>
@@ -363,6 +365,7 @@
             </div>
             <div class="modal-body p-4">
                 <form action="${pageContext.request.contextPath}/financial-literacy/workshop/register" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="workshopId" value="${workshop.id}">
                     
                     <div class="mb-3">
@@ -398,5 +401,6 @@
 
 <!-- Bootstrap JS -->
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

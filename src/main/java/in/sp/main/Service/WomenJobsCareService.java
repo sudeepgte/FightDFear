@@ -169,9 +169,10 @@ public class WomenJobsCareService {
 
     @Transactional
     public void creditPayout(JobApplication app, double amount) {
-        if (app == null || amount <= 0) return;
-        app.setPayoutBalance(app.getPayoutBalance() + amount);
-        jobAppRepository.save(app);
+        if (app == null || app.getId() == null || amount <= 0) return;
+        JobApplication locked = jobAppRepository.findByIdForUpdate(app.getId()).orElse(app);
+        locked.setPayoutBalance(locked.getPayoutBalance() + amount);
+        jobAppRepository.save(locked);
     }
 
     @Transactional

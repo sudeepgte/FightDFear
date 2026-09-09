@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <title>${workerApp.user.fullName} | Verified Worker</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
@@ -201,6 +203,7 @@
                             <div class="booking-section">
                                 <h4 class="mb-4" style="color: var(--m-purple); font-weight: 700;"><i class="fas fa-calendar-check text-primary me-2"></i> Book this Professional</h4>
                                 <form action="${pageContext.request.contextPath}/marketplace/worker/${workerApp.id}/book" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label class="form-label fw-bold">Select Date & Time (Max 2 days in advance)</label>
@@ -289,5 +292,6 @@
             }
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

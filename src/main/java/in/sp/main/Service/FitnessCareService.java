@@ -62,15 +62,18 @@ public class FitnessCareService {
 
     @Transactional
     public void creditPayout(FitnessBooking b) {
-        if (b == null || Boolean.TRUE.equals(b.getPayoutCredited())) return;
-        FitnessTrainer trainer = b.getTrainer();
-        if (trainer == null) return;
-        double amount = b.getPaymentAmount() == null ? 0 : b.getPaymentAmount();
+        if (b == null || b.getId() == null || Boolean.TRUE.equals(b.getPayoutCredited())) return;
+        FitnessBooking booking = bookingRepository.findByIdForUpdate(b.getId()).orElse(b);
+        if (Boolean.TRUE.equals(booking.getPayoutCredited())) return;
+        FitnessTrainer trainer = booking.getTrainer();
+        if (trainer == null || trainer.getId() == null) return;
+        double amount = booking.getPaymentAmount() == null ? 0 : booking.getPaymentAmount();
         if (amount <= 0) return;
-        trainer.setPayoutBalance(trainer.getPayoutBalance() + amount);
-        trainerRepository.save(trainer);
-        b.setPayoutCredited(true);
-        bookingRepository.save(b);
+        FitnessTrainer lockedTrainer = trainerRepository.findByIdForUpdate(trainer.getId()).orElse(trainer);
+        lockedTrainer.setPayoutBalance(lockedTrainer.getPayoutBalance() + amount);
+        trainerRepository.save(lockedTrainer);
+        booking.setPayoutCredited(true);
+        bookingRepository.save(booking);
     }
 
     @Transactional

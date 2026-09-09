@@ -341,15 +341,7 @@ public class MartialArtsCenterService {
 
     // ================== Helper methods ==================
     private String saveFile(MultipartFile file) throws IOException {
-        String uploadDir = servletContext.getRealPath("/uploads/");
-        File uploadFolder = new File(uploadDir);
-        if (!uploadFolder.exists()) uploadFolder.mkdirs();
-
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        String filePath = uploadDir + File.separator + fileName;
-        file.transferTo(new File(filePath));
-
-        return "/uploads/" + fileName;
+        return fileUploadService.saveFile(file);
     }
 
     private void initializeLazyCollections(List<MartialArtsCenter> centers) {

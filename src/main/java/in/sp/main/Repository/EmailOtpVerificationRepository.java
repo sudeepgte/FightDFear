@@ -22,4 +22,12 @@ public interface EmailOtpVerificationRepository extends JpaRepository<EmailOtpVe
     @Modifying
     @Query("DELETE FROM EmailOtpVerification e WHERE e.expiresAt < :cutoff")
     int deleteExpiredBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    @Modifying
+    @Query("DELETE FROM EmailOtpVerification e WHERE e.email = :email AND e.purpose = :purpose AND e.verified = false")
+    int deleteByEmailAndPurposeAndVerifiedFalse(@Param("email") String email, @Param("purpose") OtpPurpose purpose);
+
+    @Modifying
+    @Query("DELETE FROM EmailOtpVerification e WHERE e.email = :email AND e.purpose = :purpose")
+    int deleteByEmailAndPurpose(@Param("email") String email, @Param("purpose") OtpPurpose purpose);
 }

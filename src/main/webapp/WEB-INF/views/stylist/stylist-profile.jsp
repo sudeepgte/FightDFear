@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stylist Profile | Fight D Fear</title>
@@ -316,7 +318,10 @@
                         <div class="alert alert-danger rounded-4 mb-4">${error}</div>
                     </c:if>
 
-                    <form action="${pageContext.request.contextPath}/stylists/profile/update" method="post" enctype="multipart/form-data" id="stylistProfileForm" novalidate>
+                    <form action="${pageContext.request.contextPath}/stylists/profile/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="stylistProfileForm" novalidate>
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <input type="hidden" name="id" value="${stylist.id}">
 
                         <div class="row g-4">
@@ -513,6 +518,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

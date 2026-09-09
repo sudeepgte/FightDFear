@@ -70,6 +70,7 @@ public class DoctorPaymentService {
         return razorpayConfigured() || mockPaymentsEnabled();
     }
 
+    @Transactional
     public void applyPaidSettlement(DoctorAppointment appt, double amountPaid) {
         double commissionPct = defaultCommissionPercent;
         if (appt.getDoctor() != null && appt.getDoctor().getCommissionPercent() != null) {
@@ -91,15 +92,17 @@ public class DoctorPaymentService {
         }
 
         Doctor doctor = appt.getDoctor();
-        if (doctor != null) {
-            double bal = doctor.getPayoutBalance() == null ? 0 : doctor.getPayoutBalance();
-            double total = doctor.getTotalEarned() == null ? 0 : doctor.getTotalEarned();
-            doctor.setPayoutBalance(bal + doctorEarning);
-            doctor.setTotalEarned(total + doctorEarning);
-            if (doctor.getCommissionPercent() == null) {
-                doctor.setCommissionPercent(defaultCommissionPercent);
+        if (doctor != null && doctor.getId() != null) {
+            Doctor lockedDoctor = doctorRepository.findByIdForUpdate(doctor.getId()).orElse(doctor);
+            double bal = lockedDoctor.getPayoutBalance() == null ? 0 : lockedDoctor.getPayoutBalance();
+            double total = lockedDoctor.getTotalEarned() == null ? 0 : lockedDoctor.getTotalEarned();
+            lockedDoctor.setPayoutBalance(bal + doctorEarning);
+            lockedDoctor.setTotalEarned(total + doctorEarning);
+            if (lockedDoctor.getCommissionPercent() == null) {
+                lockedDoctor.setCommissionPercent(defaultCommissionPercent);
             }
-            doctorRepository.save(doctor);
+            doctorRepository.save(lockedDoctor);
+            appt.setDoctor(lockedDoctor);
         }
     }
 
@@ -145,7 +148,7 @@ public class DoctorPaymentService {
         // Reverse doctor payout balance if previously credited
         reverseDoctorEarning(appt);
 
-        if (paymentId != null && paymentId.startsWith("mock_")) {
+        if (paymentId != null && paymentId.startsWith("mock_") && (mockPaymentsEnabled() || STATUS_MOCK_PAID.equals(appt.getPaymentStatus()))) {
             appt.setPaymentStatus(STATUS_REFUNDED);
             appt.setRefundId("mock_rfnd_" + System.currentTimeMillis());
             appt.setRefundAmount(paid);
@@ -224,13 +227,15 @@ public class DoctorPaymentService {
     }
 
     private void reverseDoctorEarning(DoctorAppointment appt) {
-        if (appt.getDoctorEarning() == null || appt.getDoctorEarning() <= 0 || appt.getDoctor() == null) {
+        if (appt.getDoctorEarning() == null || appt.getDoctorEarning() <= 0 || appt.getDoctor() == null || appt.getDoctor().getId() == null) {
             return;
         }
         Doctor doctor = appt.getDoctor();
-        double bal = doctor.getPayoutBalance() == null ? 0 : doctor.getPayoutBalance();
-        doctor.setPayoutBalance(Math.max(0, bal - appt.getDoctorEarning()));
-        doctorRepository.save(doctor);
+        Doctor lockedDoctor = doctorRepository.findByIdForUpdate(doctor.getId()).orElse(doctor);
+        double bal = lockedDoctor.getPayoutBalance() == null ? 0 : lockedDoctor.getPayoutBalance();
+        lockedDoctor.setPayoutBalance(Math.max(0, bal - appt.getDoctorEarning()));
+        doctorRepository.save(lockedDoctor);
+        appt.setDoctor(lockedDoctor);
     }
 
     private void notifyRefund(DoctorAppointment appt) {

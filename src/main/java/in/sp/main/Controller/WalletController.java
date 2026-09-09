@@ -47,6 +47,9 @@ public class WalletController {
         return "wallet";
     }
 
+    @Autowired
+    private in.sp.main.Service.AtomicCoinService atomicCoinService;
+
     @PostMapping("/users/redeem")
     public String redeemReward(@RequestParam int cost, @RequestParam String rewardName, HttpSession session, RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("user");
@@ -54,18 +57,15 @@ public class WalletController {
             return "redirect:/login";
         }
 
-        User freshUser = userRepository.findById(user.getId()).orElse(null);
-        if (freshUser != null) {
-            int currentPoints = (freshUser.getRewardPoints() != null) ? freshUser.getRewardPoints() : 0;
-            if (currentPoints >= cost) {
-                freshUser.setRewardPoints(currentPoints - cost);
-                userRepository.save(freshUser);
-                session.setAttribute("user", freshUser);
-                redirectAttributes.addFlashAttribute("message", "Successfully redeemed: " + rewardName);
-                redirectAttributes.addFlashAttribute("coupon", "COUPON-" + System.currentTimeMillis() % 10000);
-            } else {
-                redirectAttributes.addFlashAttribute("error", "Insufficient coins!");
-            }
+        try {
+            User updatedUser = atomicCoinService.debitCoins(user.getId(), cost, "Redeemed: " + (rewardName != null ? rewardName : "Reward"));
+            session.setAttribute("user", updatedUser);
+            redirectAttributes.addFlashAttribute("message", "Successfully redeemed: " + rewardName);
+            redirectAttributes.addFlashAttribute("coupon", "COUPON-" + System.currentTimeMillis() % 10000);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Insufficient coins!");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("error", "Redeem failed. Please try again.");
         }
         return "redirect:/users/wallet";
     }

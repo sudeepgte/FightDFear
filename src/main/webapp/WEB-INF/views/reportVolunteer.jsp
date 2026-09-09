@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Report Volunteer</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
@@ -100,7 +102,10 @@
 <div class="container">
     <div class="report-container">
         <h2>Report Volunteer</h2>
-        <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/report" method="post" enctype="multipart/form-data">
+        <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/report${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             
             <div class="mb-3">
                 <label class="form-label">Your Name</label>
@@ -134,6 +139,7 @@
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

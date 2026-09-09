@@ -86,7 +86,7 @@ public class EmergencyContactController {
         return "redirect:/users/" + userId + "/emergency-contacts";
     }
 
-    @RequestMapping(value = "/delete/{contactId}", method = GET)
+    @RequestMapping(value = "/delete/{contactId}", method = {RequestMethod.POST, RequestMethod.DELETE})
     public String deleteEmergencyContact(@PathVariable Long contactId, @PathVariable Long userId,
                                          HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";

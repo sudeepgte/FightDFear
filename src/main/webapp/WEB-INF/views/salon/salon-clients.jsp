@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Clients | Fight D Fear</title>
@@ -426,6 +428,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form action="${pageContext.request.contextPath}/salon/clients/add" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="alert alert-info rounded-3 mb-4">
                             <i class="bi bi-info-circle-fill me-2"></i> If the phone number already exists, we will securely link their existing profile to your salon.
                         </div>
@@ -526,6 +529,7 @@
             });
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

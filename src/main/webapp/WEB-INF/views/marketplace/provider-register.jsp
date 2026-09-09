@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Provider Registration</title>
@@ -183,6 +185,7 @@
                 <c:if test="${not empty error}"><div class="alert alert-danger" style="border-radius:12px; padding:12px; font-size:0.9rem; margin-bottom:20px;">${error}</div></c:if>
                 
                 <form action="${pageContext.request.contextPath}/marketplace/provider/register" method="post" enctype="multipart/form-data" id="providerForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <!-- Step 1: Account Information -->
                     <div class="dr-step-panel active" id="step1">
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker);">Account Details</h3>
@@ -281,6 +284,7 @@
             if (valid) showStep(s + 1);
         }
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

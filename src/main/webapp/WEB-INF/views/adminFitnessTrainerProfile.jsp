@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 
     <style>
         :root {
@@ -784,6 +788,7 @@
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- Approve -->
                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/approve" method="post" class="m-0">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this fitness coach?');">
                         <i class="bi bi-check-lg me-1"></i> Approve Coach
                     </button>
@@ -808,6 +813,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/request-changes" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i> Request Profile Changes</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -833,6 +839,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/reject" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-octagon me-2"></i> Reject Coach</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

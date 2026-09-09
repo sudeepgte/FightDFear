@@ -94,7 +94,7 @@ public class TrustedContactController {
         }
     }
 
-    @GetMapping("/users/{userId}/trusted-contacts/delete/{contactId}")
+    @PostMapping("/users/{userId}/trusted-contacts/delete/{contactId}")
     public String deleteTrustedContact(@PathVariable Long contactId, @PathVariable Long userId,
                                        HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";

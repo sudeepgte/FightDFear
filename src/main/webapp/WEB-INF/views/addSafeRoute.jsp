@@ -3,6 +3,8 @@
 <head>
     <title>Add Safe Route - Fight D Fear</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
    <style>
         /* ============================================
            ORIGINAL STYLES (kept exactly as is)
@@ -271,6 +273,7 @@
         <p>Help the community by adding a verified safe path</p>
     </div>
     <form action="${pageContext.request.contextPath}/admin/saferoutes/save" method="post">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <div class="form-group">
             <label>📍 From</label>
             <input type="text" name="fromLocation" required placeholder="Starting point...">
@@ -286,6 +289,7 @@
         <button type="submit">✓ Save Route</button>
     </form>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

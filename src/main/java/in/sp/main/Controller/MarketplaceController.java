@@ -577,7 +577,7 @@ public class MarketplaceController {
         return "marketplace/payment";
     }
 
-    @GetMapping("/payment/{enrollmentId}/cancel")
+    @PostMapping("/payment/{enrollmentId}/cancel")
     public String cancelPayment(@PathVariable Long enrollmentId, HttpSession session,
                                 RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");

@@ -287,6 +287,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${categoryDisplayName} Dashboard | Fight D Fear</title>
@@ -1222,6 +1224,7 @@
                             </div>
 
                             <form action="${pageContext.request.contextPath}/marketplace/provider/classes/add" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <div class="row g-3">
                                     <div class="col-12">
                                         <label class="form-label-custom">Class Title</label>
@@ -1634,7 +1637,10 @@
                     <h5 class="modal-title fw-bold"><i class="bi bi-person-lines-fill me-2 text-danger"></i> Edit Provider Profile</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form action="${pageContext.request.contextPath}/marketplace/provider/profile/update" method="post" enctype="multipart/form-data" id="editProfileForm">
+                <form action="${pageContext.request.contextPath}/marketplace/provider/profile/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="editProfileForm">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -2390,5 +2396,6 @@
             });
         })();
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

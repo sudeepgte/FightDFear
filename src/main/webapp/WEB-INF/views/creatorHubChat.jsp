@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creator Hub - Feed</title>
@@ -634,6 +636,7 @@
     <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .chat-container { border-radius: 0 !important; border-left: none !important; border-right: none !important; flex-direction: column !important; height: auto !important; position: static !important; } .chat-container > div:first-child { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; max-height: 400px; } } </style>
         </div>
     </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

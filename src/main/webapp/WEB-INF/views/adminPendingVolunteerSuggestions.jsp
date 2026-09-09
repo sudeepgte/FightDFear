@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Volunteer Suggestions — Admin</title>
@@ -262,10 +264,12 @@
                           <td>
                               <div class="d-flex justify-content-center align-items-center gap-2">
                                 <form action="${pageContext.request.contextPath}/admin/approve-suggestion/${v.id}" method="post" class="m-0 d-flex gap-2">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                     <input type="password" name="password" class="password-input" placeholder="Set Password" required minlength="6">
                                     <button type="submit" class="btn-approve"><i class="fas fa-check me-1"></i> Approve</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/admin/reject-suggestion/${v.id}" method="post" class="m-0">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                     <button type="submit" class="btn-reject"><i class="fas fa-times me-1"></i> Reject</button>
                                 </form>
                               </div>
@@ -368,6 +372,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

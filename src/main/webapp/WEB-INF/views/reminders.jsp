@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Routine Safety Reminders</title>
@@ -35,6 +37,7 @@
       <div class="fdf-card fdf-card--rose">
         <h5 class="fdf-card-title">Add reminder</h5>
         <form action="${pageContext.request.contextPath}/reminders/add" method="post" class="row g-3">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <div class="col-12 col-md-6 col-lg-2">
             <label class="form-label">Title</label>
             <input class="form-control" name="title" maxlength="40" placeholder="Title" required>
@@ -106,10 +109,12 @@
                   <td>
                     <div class="d-flex flex-wrap gap-2">
                       <form action="${pageContext.request.contextPath}/reminders/toggle" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <input type="hidden" name="id" value="${r.id}">
                         <button class="btn btn-sm btn-outline-info" type="submit">Toggle</button>
                       </form>
                       <form action="${pageContext.request.contextPath}/reminders/delete" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <input type="hidden" name="id" value="${r.id}">
                         <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                       </form>
@@ -125,5 +130,6 @@
     </main>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

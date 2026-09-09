@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import in.sp.main.Entities.DayAvailable;
 import in.sp.main.Entities.Enrollment;
@@ -40,6 +41,7 @@ public class EnrollmentService {
     private SlotRepository slotRepository;
 
 
+    @Transactional
     public void enrollUser(EnrollmentRequest request, Long slotId, Set<DayAvailable> preferredDays) {
         User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
         MartialArtsCenter center = centerRepository.findById(request.getCenterId()).orElseThrow(() -> new RuntimeException("Center not found"));
@@ -62,6 +64,7 @@ public class EnrollmentService {
         return repository.findByUserId(userId);
     }
 
+    @Transactional
     public void updateStatus(Long enrollmentId, TrainingStatus status, String certificateDetails) {
         Enrollment enrollment = repository.findById(enrollmentId).orElseThrow();
         enrollment.setStatus(status);
