@@ -44,6 +44,7 @@ import in.sp.main.Service.DoctorDocumentService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -814,15 +815,49 @@ public class DoctorController {
     }
 
     @PostMapping("/appointments/{id}/status")
-    public String updateAppointmentStatus(@PathVariable Long id, @RequestParam String status, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+    public Object updateAppointmentStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            HttpServletRequest request,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
-        if (d == null) return "redirect:/doctors/login";
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"))
+                || (request.getContentType() != null && request.getContentType().contains("application/json"));
+
+        if (d == null) {
+            if (isAjax) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+            }
+            return "redirect:/doctors/login";
+        }
 
         in.sp.main.Entities.DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
         if (appt != null && appt.getDoctor() != null && appt.getDoctor().getId().equals(d.getId())) {
-            appt.setStatus(in.sp.main.Entities.DoctorAppointmentStatus.valueOf(status));
+            appt.setStatus(in.sp.main.Entities.DoctorAppointmentStatus.valueOf(status.toUpperCase()));
             appointmentRepo.save(appt);
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "status", status.toUpperCase(),
+                        "message", "Appointment status updated to " + status
+                ));
+            }
             redirectAttributes.addFlashAttribute("message", "Appointment status updated to " + status);
+        } else {
+            if (isAjax) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "error", "Appointment not found or not authorized"
+                ));
+            }
+            redirectAttributes.addFlashAttribute("error", "Appointment not found or not authorized");
+        }
+
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("section=appointments")) {
+            return "redirect:/doctors/dashboard?section=appointments";
         }
         return "redirect:/doctors/dashboard";
     }

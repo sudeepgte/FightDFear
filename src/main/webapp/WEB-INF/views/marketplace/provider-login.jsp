@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Provider Sign In — Fight D Fear</title>
@@ -251,6 +253,7 @@
             </c:if>
 
             <form action="${pageContext.request.contextPath}/marketplace/provider/login" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" class="form-input" placeholder="vendor@example.com" 
@@ -279,6 +282,7 @@
                 New Provider? <a href="${pageContext.request.contextPath}/marketplace/provider/register">Register here</a>
             </div>
         </div>
+
     </main>
 
     <script>
@@ -294,5 +298,9 @@
             }
         }
     </script>
+
+    </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
 </body>
 </html>

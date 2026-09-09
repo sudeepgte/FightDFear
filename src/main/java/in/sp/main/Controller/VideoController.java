@@ -56,26 +56,18 @@ public class VideoController {
             return "redirect:/video/uploadVideo";
         }
 
+        Admin admin = (Admin) session.getAttribute("admin");
+        User user = (User) session.getAttribute("user");
+
+        if (admin == null && user == null) {
+            redirectAttributes.addFlashAttribute("message", "Please log in to upload a video!");
+            return "redirect:/video/uploadVideo";
+        }
+
         try {
-            String uploadDir = servletContext.getRealPath("/uploads/");
-            File uploadFolder = new File(uploadDir);
-            if (!uploadFolder.exists()) {
-                uploadFolder.mkdirs();
-            }
+            String videoUrl = fileService.saveFile(file);
 
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            String filePath = uploadDir + File.separator + fileName;
-            file.transferTo(new File(filePath));
-
-            Admin admin = (Admin) session.getAttribute("admin");
-            User user = (User) session.getAttribute("user");
-
-            if (admin == null && user == null) {
-                redirectAttributes.addFlashAttribute("message", "Please log in to upload a video!");
-                return "redirect:/video/uploadVideo";
-            }
-
-            Video video = new Video(title, category, "/uploads/" + fileName, admin);
+            Video video = new Video(title, category, videoUrl, admin);
             video.setReel(isReel);
             if (user != null) {
                 video.setUserUploader(user);
@@ -90,7 +82,7 @@ public class VideoController {
                 return "redirect:" + (isReel ? "/video/allReels" : "/video/allVideos");
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             redirectAttributes.addFlashAttribute("message", "Video upload failed: " + e.getMessage());
             return "redirect:/video/uploadVideo";
         }
@@ -98,8 +90,21 @@ public class VideoController {
 
     // Show video edit form
     @RequestMapping(value = "/edit/{id}", method = RequestMethod.GET)
-    public String editVideoForm(@PathVariable Long id, Model model) {
+    public String editVideoForm(@PathVariable Long id, Model model, HttpSession session) {
+        Admin admin = (Admin) session.getAttribute("admin");
+        User user = (User) session.getAttribute("user");
+        if (admin == null && user == null) {
+            return "redirect:/login";
+        }
         Video video = videoService.getVideoById(id);
+        if (video == null) {
+            return "redirect:/video/allVideos";
+        }
+        boolean isOwner = (video.getUserUploader() != null && user != null && video.getUserUploader().getId().equals(user.getId()))
+                || (video.getUploadedBy() != null && admin != null);
+        if (!isOwner && admin == null) {
+            return "redirect:/video/allVideos";
+        }
         model.addAttribute("video", video);
         model.addAttribute("categories", Category.values());
         return "editVideo";
@@ -113,25 +118,55 @@ public class VideoController {
                               @RequestParam Category category,
                               @RequestParam(value = "videoFile", required = false) MultipartFile file,
                               HttpSession session) throws IOException {
+        Admin admin = (Admin) session.getAttribute("admin");
+        User user = (User) session.getAttribute("user");
+        if (admin == null && user == null) {
+            return "redirect:/login";
+        }
+        Video video = videoService.getVideoById(id);
+        if (video == null) {
+            return "redirect:/video/allVideos";
+        }
+        boolean isOwner = (video.getUserUploader() != null && user != null && video.getUserUploader().getId().equals(user.getId()))
+                || (video.getUploadedBy() != null && admin != null);
+        if (!isOwner && admin == null) {
+            return "redirect:/video/allVideos";
+        }
         if (file != null && !file.isEmpty()) {
             String videoUrl = fileService.saveFile(file);
             updatedVideo.setFilePath(videoUrl);
         }
         videoService.updateVideo(id, updatedVideo);
-        return "redirect:/video/videoManagement";
+        return admin != null ? "redirect:/video/videoManagement" : "redirect:/video/allVideos";
     }
 
     // Delete a video
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.GET)
-    public String deleteVideo(@PathVariable Long id) {
-        videoService.deleteVideo(id);
-        return "redirect:/video/videoManagement";
+    @RequestMapping(value = "/delete/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
+    public String deleteVideo(@PathVariable Long id, HttpSession session) {
+        Admin admin = (Admin) session.getAttribute("admin");
+        User user = (User) session.getAttribute("user");
+        if (admin == null && user == null) {
+            return "redirect:/login";
+        }
+        Video video = videoService.getVideoById(id);
+        if (video != null) {
+            boolean isOwner = (video.getUserUploader() != null && user != null && video.getUserUploader().getId().equals(user.getId()))
+                    || (video.getUploadedBy() != null && admin != null);
+            if (isOwner || admin != null) {
+                videoService.deleteVideo(id);
+            }
+        }
+        return admin != null ? "redirect:/video/videoManagement" : "redirect:/video/allVideos";
     }
 
     // Show All Videos for admin
     @RequestMapping(value = "/videoManagement", method = RequestMethod.GET)
     public String showVideoManagement(Model model,
-                                      @RequestParam(value = "category", required = false) String category) {
+                                      @RequestParam(value = "category", required = false) String category,
+                                      HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
         List<Video> videos;
 
         if (category != null && !category.isEmpty()) {

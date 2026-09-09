@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Complete Lawyer Profile | Fight D Fear</title>
@@ -115,7 +117,10 @@
 </head>
 <body>
 
-    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save" method="post" enctype="multipart/form-data">
+    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+        <c:if test="${not empty _csrf}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
         <!-- Top Bar -->
         <header class="topbar">
             <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none; display: flex; align-items: center; gap: 10px;">
@@ -394,5 +399,6 @@
             });
         }
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

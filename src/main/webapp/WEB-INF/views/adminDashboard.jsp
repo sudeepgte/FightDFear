@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
@@ -9,6 +9,9 @@
     <title>Admin Dashboard - Fight D Fear</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -496,6 +499,7 @@ body { font-family: 'Inter', 'Outfit', sans-serif; margin: 0; background: var(--
                             <td class="act-btns">
                               <a href="${pageContext.request.contextPath}/admin/pending-creators" title="Review"><i class="fas fa-eye"></i></a>
                               <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/approve" method="post" class="d-inline m-0">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                 <button type="submit" title="Approve"><i class="fas fa-check"></i></button>
                               </form>
                             </td>
@@ -767,6 +771,7 @@ body { font-family: 'Inter', 'Outfit', sans-serif; margin: 0; background: var(--
                                                     <td><span class="badge bg-warning text-dark">${empty c.creatorProfileStatus ? 'INCOMPLETE' : c.creatorProfileStatus}</span></td>
                                                     <td>
                                                         <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/approve" method="post" class="d-inline">
+                                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                             <button type="submit" class="btn btn-sm btn-warning text-dark font-weight-bold">Approve &amp; Badge</button>
                                                         </form>
                                                     </td>
@@ -868,6 +873,7 @@ body { font-family: 'Inter', 'Outfit', sans-serif; margin: 0; background: var(--
                             <!-- CREATE BRAND CAMPAIGN -->
                             <div class="tab-pane fade" id="campaignContent" role="tabpanel">
                                 <form id="brandCampaignForm" action="${pageContext.request.contextPath}/creator-hub/admin/create-campaign" method="POST">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-dark small">Brand Name</label>
@@ -963,11 +969,13 @@ body { font-family: 'Inter', 'Outfit', sans-serif; margin: 0; background: var(--
                                                                 <div class="d-flex gap-1">
                                                                     <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1">View Profile Fully</a>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/verify" method="POST">
+                                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="approve" value="true">
                                                                         <button type="submit" class="btn btn-sm btn-success py-1">Approve</button>
                                                                     </form>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/verify" method="POST">
+                                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="approve" value="false">
                                                                         <button type="submit" class="btn btn-sm btn-outline-danger py-1">Reject</button>
@@ -1031,6 +1039,7 @@ body { font-family: 'Inter', 'Outfit', sans-serif; margin: 0; background: var(--
                                                                 <div class="d-flex gap-1">
                                                                     <a href="${pageContext.request.contextPath}/admin/fitness/trainer/${t.id}" target="_blank" class="btn btn-sm btn-outline-info py-1" style="font-size:0.8rem; border-radius:15px;">View Profile Fully</a>
                                                                     <form action="${pageContext.request.contextPath}/admin/fitness/suspend" method="POST">
+                                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                         <input type="hidden" name="id" value="${t.id}">
                                                                         <input type="hidden" name="suspend" value="${!t.suspended}">
                                                                         <button type="submit" class="btn btn-sm ${t.suspended ? 'btn-success' : 'btn-outline-danger'} py-1" style="font-size:0.8rem; border-radius:15px;">

@@ -79,7 +79,7 @@ public class AttendanceController {
         return "myAttendance";
     }
 
-    @GetMapping("/attendance/clear-data")
+    @PostMapping("/attendance/clear-data")
     public String clearMockData(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user != null) {

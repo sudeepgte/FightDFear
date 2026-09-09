@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Provider Registration — Fight D Fear</title>
@@ -112,6 +114,7 @@
 </head>
 <body>
 
+
   <header class="app-header">
       <div style="display: flex; align-items: center; gap: 16px;">
           <a href="javascript:history.back()" style="color: var(--navy); text-decoration: none; font-size: 1.2rem; display: none;" class="mobile-back-btn">
@@ -123,6 +126,27 @@
       </div>
   </header>
 
+                <h2>Provider Partner</h2>
+                <p style="color:var(--fdf-muted); margin-bottom:25px;">Register your services to Join the platform</p>
+                <c:if test="${not empty error}"><div class="alert alert-danger" style="border-radius:12px; padding:12px; font-size:0.9rem; margin-bottom:20px;">${error}</div></c:if>
+                
+                <form action="${pageContext.request.contextPath}/marketplace/provider/register" method="post" enctype="multipart/form-data" id="providerForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                    <!-- Step 1: Account Information -->
+                    <div class="dr-step-panel active" id="step1">
+                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker);">Account Details</h3>
+                        <div class="fdf-row">
+                            <div class="fdf-group"><label>Full Name</label><input class="fdf-input" name="fullName" placeholder="Priya Sharma" required></div>
+                            <div class="fdf-group"><label>Email</label><input class="fdf-input" type="email" name="email" placeholder="priya@example.com" required></div>
+                        </div>
+                        <div class="fdf-row">
+                            <div class="fdf-group"><label>Phone</label><input class="fdf-input" type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required></div>
+                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="Min. 8 characters" minlength="8" required></div>
+                        </div>
+                        <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Professional Details</button>
+                    </div>
+
+
   <main class="main-container">
       <div class="form-card">
           <div class="card-header-area">
@@ -130,6 +154,7 @@
               <h2>Provider Registration</h2>
               <p>Register your services to join the platform</p>
           </div>
+
 
           <div class="dr-progress">
               <div class="dr-step-dot active" data-step="1" id="dot1">1</div>
@@ -241,5 +266,27 @@
           if (valid) showStep(s + 1);
       }
   </script>
+
+    <script>
+        function showStep(s) {
+            document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('step' + s).classList.add('active');
+            document.querySelectorAll('.dr-step-dot').forEach(d => {
+                const step = parseInt(d.dataset.step);
+                d.classList.remove('active', 'completed');
+                if (step === s) d.classList.add('active');
+                else if (step < s) d.classList.add('completed');
+            });
+        }
+        function nextStep(s) {
+            const panel = document.getElementById('step' + s);
+            const req = panel.querySelectorAll('[required]');
+            let valid = true;
+            req.forEach(el => { if (!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = ''; } });
+            if (valid) showStep(s + 1);
+        }
+    </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
 </body>
 </html>

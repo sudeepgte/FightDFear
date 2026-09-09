@@ -16,4 +16,8 @@ public interface WomenProductRepository extends JpaRepository<WomenProduct, Long
     List<WomenProduct> findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(String category);
 
     long countByActiveTrueAndDeletedFalse();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM WomenProduct p WHERE p.id = :id")
+    java.util.Optional<WomenProduct> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

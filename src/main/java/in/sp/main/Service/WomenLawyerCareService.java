@@ -162,9 +162,10 @@ public class WomenLawyerCareService {
 
     @Transactional
     public void creditPayout(ServiceProvider p, double amount) {
-        if (p == null || amount <= 0) return;
-        p.setPayoutBalance(p.getPayoutBalance() + amount);
-        providerRepository.save(p);
+        if (p == null || p.getId() == null || amount <= 0) return;
+        ServiceProvider locked = providerRepository.findByIdForUpdate(p.getId()).orElse(p);
+        locked.setPayoutBalance(locked.getPayoutBalance() + amount);
+        providerRepository.save(locked);
     }
 
     @Transactional

@@ -17,4 +17,8 @@ public interface WomenProductSellerRepository extends JpaRepository<WomenProduct
     List<WomenProductSeller> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<WomenProductSeller> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<WomenProductSeller> findByPartnerProfileStatusIsNull();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM WomenProductSeller s WHERE s.id = :id")
+    Optional<WomenProductSeller> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

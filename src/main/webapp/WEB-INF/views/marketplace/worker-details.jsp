@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${workerApp.user.fullName} | Verified Worker</title>
@@ -202,6 +204,7 @@
                             <div class="booking-section">
                                 <h4 class="mb-4" style="color: var(--m-purple); font-weight: 700;"><i class="fas fa-calendar-check text-primary me-2"></i> Book this Professional</h4>
                                 <form action="${pageContext.request.contextPath}/marketplace/worker/${workerApp.id}/book" method="POST" onsubmit="return initiateWorkerPayment(event, this)">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold">Select Date & Time</label>
@@ -364,5 +367,6 @@
             return false;
         }
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

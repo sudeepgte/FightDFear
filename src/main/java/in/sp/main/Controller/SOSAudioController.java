@@ -2,6 +2,7 @@ package in.sp.main.Controller;
 
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.SOSRequest;
+import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.SosService;
 import in.sp.main.Repository.SOSRequestRepository;
 import jakarta.servlet.http.HttpSession;
@@ -26,7 +27,8 @@ public class SOSAudioController {
     @Autowired
     private SOSRequestRepository sosRequestRepository;
 
-    private final String UPLOAD_DIR = "src/main/resources/static/uploads/sos_recordings/";
+    @Autowired
+    private FileUploadService fileUploadService;
 
     @PostMapping("/upload")
     public ResponseEntity<Map<String, Object>> uploadAudio(
@@ -56,26 +58,15 @@ public class SOSAudioController {
         }
 
         try {
-            // Ensure directory exists
-            File directory = new File(UPLOAD_DIR);
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
-
-            // Generate unique filename
-            String fileName = "sos_" + sosId + "_" + UUID.randomUUID().toString() + ".webm";
-            Path path = Paths.get(UPLOAD_DIR + fileName);
-            Files.write(path, audioFile.getBytes());
-
-            // Save path in database (relative path for web access)
-            sosRequest.setAudioRecordingPath("/uploads/sos_recordings/" + fileName);
+            String savedUrl = fileUploadService.saveFile(audioFile);
+            sosRequest.setAudioRecordingPath(savedUrl);
             sosRequestRepository.save(sosRequest);
 
             response.put("success", true);
-            response.put("audioPath", sosRequest.getAudioRecordingPath());
+            response.put("audioPath", savedUrl);
             return ResponseEntity.ok(response);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Failed to save audio file: " + e.getMessage());
             return ResponseEntity.status(500).body(response);

@@ -1,6 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Rate Volunteer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
@@ -237,6 +239,7 @@
     <div class="review-container">
         <h2>Rate Volunteer</h2>
         <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/addReview" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             
             <div class="mb-3">
                 <label class="form-label">Your Name</label>
@@ -265,6 +268,7 @@
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

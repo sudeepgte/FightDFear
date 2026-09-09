@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Complete Worker Profile | Fight D Fear</title>
@@ -101,7 +103,10 @@
     </style>
 </head>
 <body>
-    <form id="profileForm" action="${pageContext.request.contextPath}/women-jobs/profile" method="post" enctype="multipart/form-data">
+    <form id="profileForm" action="${pageContext.request.contextPath}/women-jobs/profile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+        <c:if test="${not empty _csrf}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
         <header class="topbar">
             <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none;">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain;">
@@ -476,5 +481,6 @@
         });
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

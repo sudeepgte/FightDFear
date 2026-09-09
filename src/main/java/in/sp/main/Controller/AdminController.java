@@ -18,11 +18,16 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
     private MartialArtsCenterService centreService;
@@ -38,6 +43,8 @@ public class AdminController {
     private DoctorVerificationService doctorVerificationService;
     @Autowired
     private AdminService adminService;
+    @Autowired
+    private in.sp.main.Service.AtomicCoinService atomicCoinService;
     @Autowired
     private VideoUploadRepository videouploadRepository;
     @Autowired
@@ -101,6 +108,12 @@ public class AdminController {
 
     @Autowired
     private FitnessBookingRepository fitnessBookingRepository;
+
+    @Autowired
+    private in.sp.main.Service.RateLimitService rateLimitService;
+
+    @Autowired
+    private in.sp.main.Service.SecurityAuditLogger securityAuditLogger;
 
     @Autowired
     private DoctorRepository doctorRepository;
@@ -190,18 +203,30 @@ public class AdminController {
     @RequestMapping(value = "/approve/{id}", method = POST)
     public String approveCentre(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
-        centreService.approveCenter(id);
-        MartialArtsCenter centre = centreService.getCenterById(id);
+        try {
+            centreService.approveCenter(id);
+            MartialArtsCenter centre = centreService.getCenterById(id);
+            if (centre != null) {
+                String subject = "Your Martial Arts Center is Now Approved!";
+                String text = "Dear " + (centre.getName() != null ? centre.getName() : "Center Partner") + ",\n\n"
+                        + "We are excited to inform you that your registration as a Martial Arts Training Center has been successfully approved.\n\n"
+                        + "Your center is now visible to users, and they can start enrolling in your training sessions.\n\n"
+                        + "Please log in to your profile to manage enrollments and update training details as needed.\n\n"
+                        + "Best Regards,\nFight D Fear\n";
 
-        String subject = "Your Martial Arts Center is Now Approved!";
-        String text = "Dear " + centre.getName() + ",\n\n"
-                + "We are excited to inform you that your registration as a Martial Arts Training Center has been successfully approved.\n\n"
-                + "Your center is now visible to users, and they can start enrolling in your training sessions.\n\n"
-                + "Please log in to your profile to manage enrollments and update training details as needed.\n\n"
-                + "Best Regards,\nFight D Fear\n";
-
-        emailService.sendEmail(centre.getEmail(), subject, text);
-        redirectAttributes.addFlashAttribute("message", "Centre approved successfully!");
+                try {
+                    if (centre.getEmail() != null && !centre.getEmail().isBlank()) {
+                        emailService.sendEmail(centre.getEmail(), subject, text);
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not send approval email to {}: {}", centre.getEmail(), e.getMessage());
+                }
+            }
+            redirectAttributes.addFlashAttribute("message", "Centre approved successfully!");
+        } catch (Exception e) {
+            log.warn("Could not approve center with id {}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Centre not found or could not be approved.");
+        }
         return "redirect:/admin/martialManagement";
     }
 
@@ -237,26 +262,55 @@ public class AdminController {
     }
 
     /**
-     * Public admin registration form (separate from user registration at /users/register).
+     * Super Admin registration form for creating new administrators.
      */
     @RequestMapping(value = "/registerAdmin", method = GET)
     public String showRegisterPage(Model model, 
                                    @RequestParam(value = "error", required = false) String error,
-                                   @RequestParam(value = "success", required = false) String success) {
+                                   @RequestParam(value = "success", required = false) String success,
+                                   HttpSession session,
+                                   HttpServletResponse response) throws IOException {
+        Object adminObj = session.getAttribute("admin");
+        if (adminObj == null) {
+            if (session.getAttribute("user") != null) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Administrator privileges required.");
+                return null;
+            }
+            return "redirect:/admin/loginAdmin";
+        }
+        if (!(adminObj instanceof Admin currentAdmin) || !adminService.isSuperAdmin(currentAdmin)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Only Super Admin can register new administrators.");
+            return null;
+        }
         model.addAttribute("error", error);
         model.addAttribute("success", success);
         return "adminRegister";
     }
 
     /**
-     * Creates a new admin account.
+     * Creates a new admin account (Super Admin authorization required).
      */
     @RequestMapping(value = "/registerAdmin", method = POST)
     public String registerAdmin(@RequestParam String name,
                                 @RequestParam String email,
                                 @RequestParam String password,
                                 @RequestParam(required = false) String confirmPassword,
-                                RedirectAttributes redirectAttributes) {
+                                HttpSession session,
+                                HttpServletResponse response,
+                                RedirectAttributes redirectAttributes) throws IOException {
+        Object adminObj = session.getAttribute("admin");
+        if (adminObj == null) {
+            if (session.getAttribute("user") != null) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Administrator privileges required.");
+                return null;
+            }
+            return "redirect:/admin/loginAdmin";
+        }
+        if (!(adminObj instanceof Admin currentAdmin) || !adminService.isSuperAdmin(currentAdmin)) {
+            securityAuditLogger.logAuthFailure("ADMIN", email, "UNAUTHORIZED_ADMIN_REGISTRATION_ATTEMPT", "unknown");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Only Super Admin can register new administrators.");
+            return null;
+        }
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email and Password are required!");
             return "redirect:/admin/registerAdmin";
@@ -274,7 +328,7 @@ public class AdminController {
                     "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.");
             return "redirect:/admin/registerAdmin";
         }
-        Admin admin = new Admin(name.trim(), email.trim().toLowerCase(), password);
+        Admin admin = new Admin(name.trim(), email.trim().toLowerCase(), password, "ADMIN");
         try {
             if (adminService.registerAdmin(admin)) {
                 redirectAttributes.addFlashAttribute("success", "Admin registered successfully. Please sign in.");
@@ -310,12 +364,25 @@ public class AdminController {
                              HttpSession session,
                              jakarta.servlet.http.HttpServletResponse response,
                              RedirectAttributes redirectAttributes) {
-        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+        String normEmail = (email == null) ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
+        String rawPassword = (password == null) ? "" : password;
+
+        if (normEmail.isBlank() || rawPassword.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Please enter both Email and Password!");
             return "redirect:/admin/loginAdmin";
         }
-        Admin admin = adminService.loginAdmin(email, password);
+
+        String failKey = "login:admin:fail:" + normEmail;
+        if (!rateLimitService.isAllowed(failKey, 5, java.time.Duration.ofMinutes(15))) {
+            securityAuditLogger.logAuthFailure("ADMIN", normEmail, "RATE_LIMIT_EXCEEDED", "unknown");
+            redirectAttributes.addFlashAttribute("error", "Too many failed login attempts. Please try again in 15 minutes.");
+            return "redirect:/admin/loginAdmin";
+        }
+
+        Admin admin = adminService.loginAdmin(normEmail, rawPassword);
         if (admin != null) {
+            rateLimitService.clear(failKey);
+            securityAuditLogger.logAuthSuccess("ADMIN", admin.getId(), admin.getEmail(), "ADMIN", "unknown");
             session.setAttribute("admin", admin);
             session.setAttribute("userRole", "ADMIN");
             
@@ -329,6 +396,8 @@ public class AdminController {
             
             return "redirect:/admin/adminDashboard"; 
         } else {
+            rateLimitService.recordFailure(failKey);
+            securityAuditLogger.logAuthFailure("ADMIN", normEmail, "INVALID_CREDENTIALS", "unknown");
             redirectAttributes.addFlashAttribute("error", "Invalid credentials!");
             return "redirect:/admin/loginAdmin";
         }
@@ -727,7 +796,7 @@ public class AdminController {
     }
 
    
-    @RequestMapping(value = "/delete/{id}", method = GET)
+    @RequestMapping(value = "/delete/{id}", method = POST)
     public String deleteAdmin(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         adminService.deleteAdmin(id);
@@ -1142,12 +1211,10 @@ public class AdminController {
             return "redirect:/admin/videos";
         }
 
-        // 3. Award points to the uploader's wallet
+        // 3. Award points to the uploader's wallet atomically
         User uploader = video.getUser();
         if (uploader != null) {
-            int currentPoints = (uploader.getRewardPoints() != null) ? uploader.getRewardPoints() : 0;
-            uploader.setRewardPoints(currentPoints + score);
-            userRepository.save(uploader);
+            atomicCoinService.creditCoins(uploader.getId(), score, "Admin awarded video reward for video " + video.getId());
 
             redirectAttributes.addFlashAttribute("success",
                     "Successfully awarded " + score + " coins to " + uploader.getFullName() + "'s wallet!");

@@ -54,6 +54,9 @@ public class WomenProductController {
     @Autowired
     private in.sp.main.Service.OtpVerificationService otpVerificationService;
 
+    @Autowired
+    private in.sp.main.Service.WomenProductOrderService womenProductOrderService;
+
     private static final String BUY_NOW_PRODUCT_ID = "wpBuyNowProductId";
     private static final String BUY_NOW_QTY = "wpBuyNowQty";
     private static final String JUST_PLACED_ORDER_IDS = "wpJustPlacedOrderIds";
@@ -1281,11 +1284,10 @@ public class WomenProductController {
     }
 
     @PostMapping("/checkout/place")
-    @org.springframework.transaction.annotation.Transactional
-    public synchronized String placeOrder(@RequestParam String paymentMethod,
-                                           @RequestParam String shippingAddress,
-                                           @RequestParam(required = false) String razorpayPaymentId,
-                                           HttpSession session, RedirectAttributes ra) {
+    public String placeOrder(@RequestParam String paymentMethod,
+                            @RequestParam String shippingAddress,
+                            @RequestParam(required = false) String razorpayPaymentId,
+                            HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -1313,13 +1315,10 @@ public class WomenProductController {
 
         List<Long> orderIds;
         try {
-            orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+            orderIds = womenProductOrderService.placeOrders(u, items, payNorm, address, razorpayPaymentId, !buyNowMode);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             ra.addFlashAttribute("error", ex.getReason() != null ? ex.getReason() : "Could not place order.");
             return buyNowMode ? checkoutRedirect(session) : "redirect:/women-products/cart";
-        }
-        if (!buyNowMode) {
-            cartRepo.deleteByUser(u);
         }
         session.removeAttribute(BUY_NOW_PRODUCT_ID);
         session.removeAttribute(BUY_NOW_QTY);
@@ -1330,11 +1329,10 @@ public class WomenProductController {
 
     @PostMapping("/checkout/place/ajax")
     @ResponseBody
-    @org.springframework.transaction.annotation.Transactional
-    public synchronized Map<String, Object> placeOrderAjax(@RequestParam String paymentMethod,
-                                                           @RequestParam String shippingAddress,
-                                                           @RequestParam(required = false) String razorpayPaymentId,
-                                                           HttpSession session) {
+    public Map<String, Object> placeOrderAjax(@RequestParam String paymentMethod,
+                                            @RequestParam String shippingAddress,
+                                            @RequestParam(required = false) String razorpayPaymentId,
+                                            HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User u = (User) session.getAttribute("user");
         if (u == null) { response.put("status", "ERROR"); response.put("message", "User not logged in"); return response; }
@@ -1366,14 +1364,11 @@ public class WomenProductController {
 
         List<Long> orderIds;
         try {
-            orderIds = persistOrders(u, items, payNorm, address, razorpayPaymentId);
+            orderIds = womenProductOrderService.placeOrders(u, items, payNorm, address, razorpayPaymentId, !buyNowMode);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             response.put("status", "ERROR");
             response.put("message", ex.getReason() != null ? ex.getReason() : "Could not place order.");
             return response;
-        }
-        if (!buyNowMode) {
-            cartRepo.deleteByUser(u);
         }
         session.removeAttribute(BUY_NOW_PRODUCT_ID);
         session.removeAttribute(BUY_NOW_QTY);

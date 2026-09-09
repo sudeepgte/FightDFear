@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offers & Discounts | Fight D Fear</title>
@@ -142,6 +144,7 @@
                                 <c:choose>
                                     <c:when test="${status == 'Paused'}">
                                         <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="offerId" value="${offer.id}">
                                             <input type="hidden" name="salonId" value="${salonId}">
                                             <input type="hidden" name="status" value="Resume">
@@ -150,6 +153,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="offerId" value="${offer.id}">
                                             <input type="hidden" name="salonId" value="${salonId}">
                                             <input type="hidden" name="status" value="Paused">
@@ -158,6 +162,7 @@
                                     </c:otherwise>
                                 </c:choose>
                                 <form action="${pageContext.request.contextPath}/salon/deleteOffer" method="POST" class="m-0 flex-grow-1" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="offerId" value="${offer.id}">
                                     <input type="hidden" name="salonId" value="${salonId}">
                                     <button type="submit" class="btn-action btn-archive w-100"><i class="bi bi-trash me-1"></i> Delete</button>
@@ -178,6 +183,7 @@
 
         </div>
     </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

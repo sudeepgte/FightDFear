@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Upload Content — Fight D Fear</title>
@@ -252,7 +254,10 @@
                     <div class="alert alert-danger rounded-4 border-0 shadow-sm mb-4">${error}</div>
                 </c:if>
 
-                <form action="${pageContext.request.contextPath}/creator-hub/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <form action="${pageContext.request.contextPath}/creator-hub/upload${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     
                     <!-- Format Selector -->
                     <div class="mb-4">
@@ -512,7 +517,7 @@
         document.getElementById('scanOverlay').style.display = 'flex';
     });
 </script>
-
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

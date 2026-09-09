@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Worker Dashboard — Fight D Fear</title>
@@ -251,16 +253,19 @@
                                   </button>
                                 <c:if test="${b.status == 'PENDING'}">
                                   <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="status" value="ACCEPTED">
                                     <button type="submit" class="btn btn-sm btn-success" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-check-lg"></i></button>
                                   </form>
                                   <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="status" value="REJECTED">
                                     <button type="submit" class="btn btn-sm btn-danger" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-x-lg"></i></button>
                                   </form>
                                 </c:if>
                                 <c:if test="${b.status == 'ACCEPTED' || b.status == 'PAID'}">
                                   <form action="${pageContext.request.contextPath}/women-jobs/booking/${b.id}/status" method="post" style="display:inline-block;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="status" value="COMPLETED">
                                     <button type="submit" class="btn btn-sm btn-primary" style="font-size:0.75rem;border-radius:8px;"><i class="bi bi-check-circle"></i> Complete</button>
                                   </form>
@@ -616,5 +621,6 @@
         }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

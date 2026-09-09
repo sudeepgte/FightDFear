@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trainer Studio - Dashboard</title>
@@ -694,6 +696,7 @@
                                     </div>
                                     <div class="d-flex gap-2 flex-wrap align-items-center">
                                         <form action="${pageContext.request.contextPath}/fitness/trainer/booking/status" method="POST" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="bookingId" value="${r.id}">
                                             <input type="hidden" name="action" value="APPROVE">
                                             <button type="submit" class="btn btn-success btn-action"><i class="bi bi-check-lg me-1"></i> Accept</button>
@@ -702,6 +705,7 @@
                                             <i class="bi bi-calendar-event me-1"></i> Reschedule
                                         </button>
                                         <form action="${pageContext.request.contextPath}/fitness/trainer/booking/status" method="POST" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="bookingId" value="${r.id}">
                                             <input type="hidden" name="action" value="REJECT">
                                             <button type="submit" class="btn btn-outline-danger btn-action"><i class="bi bi-x-lg me-1"></i> Reject</button>
@@ -765,6 +769,7 @@
                                             <i class="bi bi-calendar-event me-1"></i> Reschedule
                                         </button>
                                         <form action="${pageContext.request.contextPath}/fitness/trainer/booking/status" method="POST" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="bookingId" value="${b.id}">
                                             <input type="hidden" name="action" value="COMPLETE">
                                             <button type="submit" class="btn btn-submit btn-action">
@@ -867,6 +872,7 @@
                                                 <i class="bi bi-pencil-fill"></i> Edit
                                             </button>
                                             <form action="${pageContext.request.contextPath}/fitness/trainer/class/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this class? This will refund all enrolled students.');" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                 <input type="hidden" name="classId" value="${fc.id}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius: 20px; font-size: 0.8rem; font-weight:600; padding:4px 12px;">
                                                     <i class="bi bi-trash-fill"></i> Delete
@@ -968,11 +974,13 @@
                                                 </div>
                                                 <div class="d-flex gap-2">
                                                     <form action="${pageContext.request.contextPath}/fitness/trainer/package/toggle/${pkg.id}" method="POST" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill" title="Toggle Active">
                                                             <i class="bi bi-power"></i>
                                                         </button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/fitness/trainer/package/delete/${pkg.id}" method="POST" onsubmit="return confirm('Delete this package?');" class="m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Package">
                                                             <i class="bi bi-trash"></i>
                                                         </button>
@@ -1208,6 +1216,7 @@
 
                     
                     <form action="${pageContext.request.contextPath}/fitness/trainer/update-schedule" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="mb-4">
                             <label class="form-label fw-semibold">Session Fees (₹ per Class)</label>
                             <input type="number" name="sessionFees" class="form-control" value="${trainer.sessionFees}" min="0" required>
@@ -1351,7 +1360,10 @@
                     </div>
 
 
-                    <form action="${pageContext.request.contextPath}/fitness/trainer/update-profile" method="POST" enctype="multipart/form-data">
+                    <form action="${pageContext.request.contextPath}/fitness/trainer/update-profile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="POST" enctype="multipart/form-data">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <div class="row g-3">
 
                             <!-- Profile Photo Preview + Upload -->
@@ -1446,6 +1458,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="createClassForm" action="${pageContext.request.contextPath}/fitness/trainer/class/create" method="POST" onsubmit="return validateCreateClassForm()">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <div class="modal-body p-4">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -1516,6 +1529,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="editClassForm" action="${pageContext.request.contextPath}/fitness/trainer/class/edit" method="POST" onsubmit="return validateEditClassForm()">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <div class="modal-body p-4">
             <input type="hidden" name="classId" id="editClassId">
 
@@ -1748,6 +1762,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="${pageContext.request.contextPath}/fitness/trainer/package/create" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <div class="modal-body p-4">
             <div class="row g-3">
                 <div class="col-md-8">
@@ -1806,6 +1821,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="${pageContext.request.contextPath}/fitness/trainer/attendance/mark" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="bookingId" id="attBookingId">
           <div class="modal-body p-4">
             <div class="mb-3">
@@ -1852,6 +1868,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="${pageContext.request.contextPath}/fitness/trainer/progress/log" method="POST" id="logProgressForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <div class="modal-body p-4">
             <div class="row g-3">
                 <div class="col-md-6">
@@ -1926,6 +1943,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form action="${pageContext.request.contextPath}/fitness/trainer/booking/reschedule" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="bookingId" id="rescheduleBookingId">
           <div class="modal-body p-4">
             <div class="mb-3">
@@ -2229,6 +2247,7 @@
     }
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

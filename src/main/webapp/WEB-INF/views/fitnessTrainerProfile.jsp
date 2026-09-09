@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${trainer.fullName} — Certified Fitness Coach | Fight D Fear</title>
@@ -283,6 +285,7 @@
                                                     <div class="text-muted" style="font-size:0.75rem;">${pkg.sessionCount == 0 ? 'Unlimited' : pkg.sessionCount} Sessions &bull; ${pkg.durationDays} Days</div>
                                                 </div>
                                                 <form action="${pageContext.request.contextPath}/fitness/booking/package/buy" method="POST" class="m-0" onsubmit="return confirm('Subscribe to ${pkg.packageName} for ₹${pkg.price}?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="packageId" value="${pkg.id}">
                                                     <button type="submit" class="btn btn-sm btn-fdf-rose px-3">
                                                         Subscribe
@@ -332,6 +335,7 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <form action="${pageContext.request.contextPath}/fitness/class/book" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <div class="modal-body p-4">
                                                         <input type="hidden" name="classId" value="${fc.id}">
                                                         <div class="mb-3 text-center">
@@ -417,6 +421,7 @@
                         <h5 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-plus text-danger me-2"></i>Book Personal Session</h5>
                         
                         <form action="${pageContext.request.contextPath}/fitness/book" method="POST" id="fitnessBookingForm" onsubmit="return validateBookingForm();">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <input type="hidden" name="trainerId" value="${trainer.id}">
                             <input type="hidden" name="bookingTime" id="selectedBookingTime" required>
                             
@@ -624,5 +629,6 @@
     });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

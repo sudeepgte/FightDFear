@@ -3,6 +3,8 @@
 
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Upload Reel</title>
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
@@ -259,11 +261,13 @@
 
     <!-- Fallback: normal form submit still works if JS is blocked -->
     <form id="uploadForm"
-          action="${pageContext.request.contextPath}/video/upload"
+          action="${pageContext.request.contextPath}/video/upload${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}"
           method="post"
           enctype="multipart/form-data"
           class="row g-3">
-      
+      <c:if test="${not empty _csrf}">
+          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+      </c:if>
       <input type="hidden" name="isReel" value="${isReel}">
 
       <div class="col-lg-7">
@@ -506,8 +510,6 @@
 </script>
 
 <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
-
-

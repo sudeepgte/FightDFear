@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${event.name} — Women Events</title>
@@ -344,7 +346,10 @@
                     <c:if test="${alreadyRegistered && eventPassed && not empty loggedUser}">
                         <hr style="margin: 32px 0; border-color: var(--border-neutral);"/>
                         <div class="block-title" style="font-size:1.05rem;"><i class="bi bi-cloud-upload-fill"></i> Add Photo to Event Gallery</div>
-                        <form action="${pageContext.request.contextPath}/women-events/${event.id}/upload-photo" method="post" enctype="multipart/form-data">
+                        <form action="${pageContext.request.contextPath}/women-events/${event.id}/upload-photo${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                            <c:if test="${not empty _csrf}">
+                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                            </c:if>
                             <div class="upload-zone" onclick="document.getElementById('photoFile').click()">
                                 <i class="bi bi-camera-fill" style="font-size:2rem; color:var(--color-accent); display:block; margin-bottom:8px;"></i>
                                 <div style="font-weight:700; color:var(--text-primary);">Click to pick a photo</div>
@@ -411,6 +416,7 @@
                         <hr style="margin: 32px 0; border-color: var(--border-neutral);"/>
                         <div class="block-title" style="font-size: 1.05rem;"><i class="bi bi-chat-quote-fill"></i> Share Your Review</div>
                         <form action="${pageContext.request.contextPath}/women-events/${event.id}/review" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <div class="mb-3">
                                 <label class="form-label small text-muted font-weight-bold">Rate this Workshop</label>
                                 <div class="star-input">
@@ -528,7 +534,8 @@
                                             <c:otherwise>Review &amp; pay ₹${event.entryFee}</c:otherwise>
                                         </c:choose>
                                     </button>
-                                    <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
+                                    <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"></form>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -804,5 +811,6 @@
         </script>
     </div>
 </div>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

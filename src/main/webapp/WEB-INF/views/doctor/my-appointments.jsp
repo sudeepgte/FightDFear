@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Appointments — Fight D Fear</title>
@@ -1015,8 +1017,8 @@
     </div>
   </div>
 </div>
-
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 <script>
 function filterBoard(category, btn) {
   document.querySelectorAll('.ma-pill-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -1160,6 +1162,5 @@ document.addEventListener('keydown', function(e) {
   }
 });
 </script>
-
 </body>
 </html>

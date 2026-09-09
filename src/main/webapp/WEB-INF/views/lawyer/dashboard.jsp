@@ -6,6 +6,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Women Safety | Lawyer Dashboard</title>
@@ -471,7 +473,10 @@
                                     <h3>Action Required</h3>
                                     <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
                                 </div>
-                                <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc" method="post" enctype="multipart/form-data" style="display:none;">
+                                <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" style="display:none;">
+                                    <c:if test="${not empty _csrf}">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                                    </c:if>
                                     <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
                                 </form>
                                 <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
@@ -1075,6 +1080,7 @@
                 <button class="close-modal" onclick="closeAvailabilityModal()"><i class="bi bi-x"></i></button>
             </div>
             <form action="${pageContext.request.contextPath}/lawyer/profile/update" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <input type="hidden" name="fullName" value="${lawyer.fullName}">
                 <input type="hidden" name="phone" value="${lawyer.phone}">
                 <div class="form-group">
@@ -1151,6 +1157,7 @@
             }).catch(e => alert("Failed to update status"));
         }
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

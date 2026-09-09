@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${provider.fullName} | Women Marketplace</title>
@@ -518,6 +520,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="bookingForm" action="${pageContext.request.contextPath}/marketplace/book" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="modal-body" style="padding:25px;">
                             <input type="hidden" name="providerId" value="${provider.id}">
                             
@@ -890,6 +893,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form action="${pageContext.request.contextPath}/marketplace/review" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <input type="hidden" name="providerId" value="${provider.id}">
                         <div class="modal-body">
                             <div class="mb-3">
@@ -1052,5 +1056,6 @@
         }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

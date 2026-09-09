@@ -1,22 +1,45 @@
 package in.sp.main.Config;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
-import jakarta.servlet.DispatcherType;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -123,7 +146,6 @@ public class SecurityConfig {
             "/users/register",
             "/users/register/**",
             "/admin/loginAdmin",
-            "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
             "/doctors/logout",
@@ -188,6 +210,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // Stateless Bearer token requests (Mobile clients) are exempted from CSRF checks
+        RequestMatcher bearerAuthMatcher = request -> {
+            String header = request.getHeader("Authorization");
+            return header != null && header.regionMatches(true, 0, "Bearer ", 0, 7);
+        };
+
         http
             .securityMatcher("/**")
             .authorizeHttpRequests(auth -> auth
@@ -203,41 +231,105 @@ public class SecurityConfig {
                 .anyRequest().authenticated())
             // Add JWT filter
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
-            // Session management is handled by JWT, but we don't strictly enforce stateless because our filter hydrates the session
-            // for compatibility with legacy controllers.
-            // Disable default login
+            .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
+            // Session Management & Fixation Protection
+            .sessionManagement(session -> session
+                .sessionFixation(sf -> sf.migrateSession())
+            )
+            // Disable default login forms
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
-                .deleteCookies("JWT_TOKEN")
+                .deleteCookies("JWT_TOKEN", "JSESSIONID")
                 .invalidateHttpSession(true)
                 .permitAll()
             )
-            .exceptionHandling(e -> e.authenticationEntryPoint((request, response, authException) -> {
-                String path = request.getRequestURI();
-                boolean wantsJson = path != null && (path.startsWith("/api/")
-                        || path.startsWith("/payment/")
-                        || path.startsWith("/chat/send-message")
-                        || path.startsWith("/chat/messages-since"));
-                if (wantsJson) {
-                    response.setStatus(401);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
-                } else if (path != null && path.startsWith("/admin/")) {
-                    response.sendRedirect("/admin/loginAdmin");
-                } else if (path != null && (
-                        path.startsWith("/doctors/dashboard")
-                        || path.startsWith("/doctors/profile-completion")
-                        || path.equals("/doctors/logout"))) {
-                    response.sendRedirect("/doctors/login");
-                } else {
-                    response.sendRedirect("/login");
-                }
-            }))
-            .cors(c -> {})
-            .csrf(AbstractHttpConfigurer::disable);
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint((request, response, authException) -> {
+                    String path = request.getRequestURI();
+                    log.warn("[SECURITY-AUDIT] event=AUTH_REQUIRED uri={} ip={}",
+                            in.sp.main.Util.LogSanitizer.sanitize(path), request.getRemoteAddr());
+                    boolean wantsJson = path != null && (path.startsWith("/api/")
+                            || path.startsWith("/payment/")
+                            || path.startsWith("/chat/send-message")
+                            || path.startsWith("/chat/messages-since"));
+                    if (wantsJson) {
+                        response.setStatus(401);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"success\":false,\"error\":\"Unauthorized\"}");
+                    } else if (path != null && path.startsWith("/admin/")) {
+                        response.sendRedirect("/admin/loginAdmin");
+                    } else if (path != null && (
+                            path.startsWith("/doctors/dashboard")
+                            || path.startsWith("/doctors/profile-completion")
+                            || path.equals("/doctors/logout"))) {
+                        response.sendRedirect("/doctors/login");
+                    } else {
+                        response.sendRedirect("/login");
+                    }
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    String path = request.getRequestURI();
+                    log.warn("[SECURITY-AUDIT] event=ACCESS_DENIED uri={} ip={}",
+                            in.sp.main.Util.LogSanitizer.sanitize(path), request.getRemoteAddr());
+                    boolean wantsJson = (path != null && (path.startsWith("/api/")
+                            || path.startsWith("/payment/")
+                            || path.startsWith("/chat/")))
+                            || "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                            || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"))
+                            || (request.getContentType() != null && request.getContentType().contains("application/json"));
+                    if (wantsJson) {
+                        response.setStatus(403);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"success\":false,\"error\":\"Access denied\"}");
+                    } else {
+                        response.sendError(403, "Access denied");
+                    }
+                })
+            )
+            .cors(Customizer.withDefaults())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                .ignoringRequestMatchers(
+                    bearerAuthMatcher,
+                    request -> {
+                        String path = request.getRequestURI();
+                        if (path == null) return false;
+                        return path.equals("/payment/webhook/razorpay")
+                                || path.startsWith("/actuator/")
+                                || path.contains("/otp/")
+                                || path.endsWith("/register-quick")
+                                || path.equals("/login")
+                                || path.startsWith("/auth/")
+                                || path.startsWith("/api/auth/")
+                                || path.endsWith("/login")
+                                || path.endsWith("/loginAdmin")
+                                || path.endsWith("/register");
+                    }
+                )
+            )
+            .headers(headers -> {
+                headers.contentTypeOptions(Customizer.withDefaults());
+                headers.frameOptions(frame -> frame.sameOrigin());
+                headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
+                headers.permissionsPolicy(permissions -> permissions.policy(
+                    "camera=(self), microphone=(self), geolocation=(self), payment=*"
+                ));
+                headers.contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com https://maps.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+                    "img-src 'self' data: blob: https:; " +
+                    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
+                    "connect-src 'self' https://api.razorpay.com https://*.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com wss: ws:; " +
+                    "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self';"
+                ));
+            });
         return http.build();
     }
 
@@ -253,5 +345,121 @@ public class SecurityConfig {
                 || "::1".equals(remoteAddr)
                 || "0:0:0:0:0:0:0:1".equals(remoteAddr);
         return new AuthorizationDecision(localhost);
+    }
+
+    /**
+     * SPA and JSP CSRF Token Request Handler supporting raw header tokens and masked tokens.
+     */
+    static final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
+        private final CsrfTokenRequestHandler delegate = new XorCsrfTokenRequestAttributeHandler();
+
+        @Override
+        public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
+            this.delegate.handle(request, response, csrfToken);
+        }
+
+        @Override
+        public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+            if (csrfToken == null) {
+                return null;
+            }
+            String rawToken = csrfToken.getToken();
+
+            // 1. Check headers: configured headerName, X-XSRF-TOKEN, X-CSRF-TOKEN
+            String header = request.getHeader(csrfToken.getHeaderName());
+            if (header == null || header.isBlank()) {
+                header = request.getHeader("X-XSRF-TOKEN");
+            }
+            if (header == null || header.isBlank()) {
+                header = request.getHeader("X-CSRF-TOKEN");
+            }
+
+            if (header != null && !header.isBlank()) {
+                // If header matches the raw unmasked token, return it directly
+                if (rawToken != null && header.equals(rawToken)) {
+                    return rawToken;
+                }
+                // Try delegate resolution (handles XOR tokens if headerName matches)
+                String resolved = this.delegate.resolveCsrfTokenValue(request, csrfToken);
+                String unmasked = unmaskXorToken(header, rawToken);
+                if (rawToken != null && rawToken.equals(resolved)) {
+                    return resolved;
+                }
+                // Unmask XOR token directly in case header was sent under an alternate header name
+                if (unmasked != null && rawToken != null && rawToken.equals(unmasked)) {
+                    return unmasked;
+                }
+                return header;
+            }
+
+            // 2. Check request parameter
+            String param = request.getParameter(csrfToken.getParameterName());
+            if (param == null || param.isBlank()) {
+                param = request.getParameter("_csrf");
+            }
+            if (param != null && !param.isBlank()) {
+                if (rawToken != null && param.equals(rawToken)) {
+                    return rawToken;
+                }
+                String resolved = this.delegate.resolveCsrfTokenValue(request, csrfToken);
+                if (rawToken != null && rawToken.equals(resolved)) {
+                    return resolved;
+                }
+                String unmasked = unmaskXorToken(param, rawToken);
+                if (unmasked != null && rawToken != null && rawToken.equals(unmasked)) {
+                    return unmasked;
+                }
+                return param;
+            }
+
+            return this.delegate.resolveCsrfTokenValue(request, csrfToken);
+        }
+
+        private static String unmaskXorToken(String candidate, String rawToken) {
+            if (candidate == null || rawToken == null || candidate.isBlank()) {
+                return null;
+            }
+            try {
+                byte[] actualBytes;
+                try {
+                    actualBytes = Base64.getUrlDecoder().decode(candidate);
+                } catch (IllegalArgumentException e) {
+                    actualBytes = Base64.getDecoder().decode(candidate);
+                }
+                byte[] tokenBytes = rawToken.getBytes(StandardCharsets.UTF_8);
+                int length = tokenBytes.length;
+                if (actualBytes.length != length * 2) {
+                    return null;
+                }
+                byte[] randomBytes = Arrays.copyOfRange(actualBytes, 0, length);
+                byte[] xoredBytes = Arrays.copyOfRange(actualBytes, length, actualBytes.length);
+                byte[] csrfBytes = new byte[length];
+                for (int i = 0; i < length; i++) {
+                    csrfBytes[i] = (byte) (randomBytes[i] ^ xoredBytes[i]);
+                }
+                return new String(csrfBytes, StandardCharsets.UTF_8);
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Filter that ensures the XSRF-TOKEN cookie is rendered on responses.
+     */
+    static final class CsrfCookieFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                throws ServletException, IOException {
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (csrfToken == null) {
+                csrfToken = (CsrfToken) request.getAttribute("_csrf");
+            }
+            if (csrfToken != null) {
+                // Invoking getToken() triggers deferred rendering into cookie
+                csrfToken.getToken();
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 }

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Bookings | Fight D Fear</title>
@@ -427,12 +429,14 @@
                                                 <div class="d-flex gap-2 justify-content-end">
                                                     <c:if test="${b.status eq 'PENDING'}">
                                                         <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                             <input type="hidden" name="bookingId" value="${b.id}">
                                                             <input type="hidden" name="bookingType" value="NORMAL">
                                                             <input type="hidden" name="status" value="CONFIRMED">
                                                             <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
                                                         </form>
                                                         <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                             <input type="hidden" name="bookingId" value="${b.id}">
                                                             <input type="hidden" name="bookingType" value="NORMAL">
                                                             <input type="hidden" name="status" value="REJECTED">
@@ -442,6 +446,7 @@
                                                     <c:if test="${b.status eq 'CONFIRMED'}">
                                                         <c:if test="${b.bookingDate le today}">
                                                             <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                                 <input type="hidden" name="bookingType" value="NORMAL">
                                                                 <input type="hidden" name="status" value="COMPLETED">
@@ -449,6 +454,7 @@
                                                             </form>
                                                         </c:if>
                                                         <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                             <input type="hidden" name="bookingId" value="${b.id}">
                                                             <input type="hidden" name="bookingType" value="NORMAL">
                                                             <input type="hidden" name="status" value="CANCELLED">
@@ -506,12 +512,14 @@
                                                     <div class="d-flex gap-2 justify-content-end">
                                                         <c:if test="${b.status eq 'PENDING'}">
                                                             <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                                 <input type="hidden" name="bookingType" value="NORMAL">
                                                                 <input type="hidden" name="status" value="CONFIRMED">
                                                                 <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
                                                             </form>
                                                             <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                                 <input type="hidden" name="bookingType" value="NORMAL">
                                                                 <input type="hidden" name="status" value="REJECTED">
@@ -521,6 +529,7 @@
                                                         <c:if test="${b.status eq 'CONFIRMED'}">
                                                             <c:if test="${b.bookingDate le today}">
                                                                 <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                     <input type="hidden" name="bookingId" value="${b.id}">
                                                                     <input type="hidden" name="bookingType" value="NORMAL">
                                                                     <input type="hidden" name="status" value="COMPLETED">
@@ -528,6 +537,7 @@
                                                                 </form>
                                                             </c:if>
                                                             <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                                 <input type="hidden" name="bookingType" value="NORMAL">
                                                                 <input type="hidden" name="status" value="CANCELLED">
@@ -591,11 +601,13 @@
                                             <div class="d-flex gap-2 justify-content-end">
                                                 <c:if test="${b.status eq 'PENDING'}">
                                                     <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="status" value="CONFIRMED">
                                                         <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="status" value="REJECTED">
                                                         <button type="submit" class="btn-action-pill btn-reject"><i class="bi bi-x-circle"></i> Reject</button>
@@ -603,11 +615,13 @@
                                                 </c:if>
                                                 <c:if test="${b.status eq 'CONFIRMED'}">
                                                     <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="status" value="COMPLETED">
                                                         <button type="submit" class="btn-action-pill btn-complete"><i class="bi bi-check2-all"></i> Complete</button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/booking/updateStylistStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="status" value="CANCELLED">
                                                         <button type="submit" class="btn-action-pill btn-cancel"><i class="bi bi-slash-circle"></i> Cancel</button>
@@ -668,12 +682,14 @@
                                             <div class="d-flex gap-2 justify-content-end">
                                                 <c:if test="${b.status eq 'PENDING'}">
                                                     <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="bookingType" value="OFFER">
                                                         <input type="hidden" name="status" value="CONFIRMED">
                                                         <button type="submit" class="btn-action-pill btn-confirm"><i class="bi bi-check-circle"></i> Confirm</button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="bookingType" value="OFFER">
                                                         <input type="hidden" name="status" value="REJECTED">
@@ -683,6 +699,7 @@
                                                 <c:if test="${b.status eq 'CONFIRMED'}">
                                                     <c:if test="${b.date le today}">
                                                         <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                             <input type="hidden" name="bookingId" value="${b.id}">
                                                             <input type="hidden" name="bookingType" value="OFFER">
                                                             <input type="hidden" name="status" value="COMPLETED">
@@ -690,6 +707,7 @@
                                                         </form>
                                                     </c:if>
                                                     <form action="${pageContext.request.contextPath}/booking/updateStatus" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <input type="hidden" name="bookingType" value="OFFER">
                                                         <input type="hidden" name="status" value="CANCELLED">
@@ -711,6 +729,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

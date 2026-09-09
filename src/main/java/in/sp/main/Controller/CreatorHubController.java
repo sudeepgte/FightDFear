@@ -91,6 +91,9 @@ public class CreatorHubController {
     @Autowired
     private FileUploadService fileUploadService;
 
+    @Autowired
+    private in.sp.main.Service.AtomicCoinService atomicCoinService;
+
     private final String[] CREATOR_CATEGORIES = {
         "Safety Awareness", "Entrepreneurship", "Financial Literacy", "Skill Development", "Inspirational", "Entertainment"
     };
@@ -971,8 +974,7 @@ public class CreatorHubController {
         User creator = video.getUser();
         if (creator != null) {
             int pointsEarned = 10; // 10 points per view
-            creator.setRewardPoints((creator.getRewardPoints() == null ? 0 : creator.getRewardPoints()) + pointsEarned);
-            userRepository.save(creator);
+            creator = atomicCoinService.creditCoins(creator.getId(), pointsEarned, "Video engagement reward: " + video.getTitle());
 
             // Notify creator on landmark milestones (like every 100 views)
             if (video.getViewCount() % 100 == 0) {
@@ -1069,30 +1071,29 @@ public class CreatorHubController {
             return response;
         }
 
-        if (currentUser.getRewardPoints() == null || currentUser.getRewardPoints() < points) {
+        User updatedUser;
+        try {
+            updatedUser = atomicCoinService.debitCoins(currentUser.getId(), points, "Creator Hub cashout request");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
             response.put("error", "INSUFFICIENT_POINTS");
             return response;
         }
-
-        // Deduct points immediately
-        currentUser.setRewardPoints(currentUser.getRewardPoints() - points);
-        userRepository.save(currentUser);
 
         // Convert rate: 100 points = Rs. 10
         Double amount = (points / 100.0) * 10.0;
 
         // Log cashout request
         CreatorCashout cashout = new CreatorCashout();
-        cashout.setCreator(currentUser);
+        cashout.setCreator(updatedUser);
         cashout.setPoints(points);
         cashout.setAmount(amount);
         cashout.setStatus("PENDING");
         creatorCashoutRepository.save(cashout);
 
-        session.setAttribute("user", currentUser);
+        session.setAttribute("user", updatedUser);
 
         response.put("success", true);
-        response.put("remainingPoints", currentUser.getRewardPoints());
+        response.put("remainingPoints", updatedUser.getRewardPoints());
         response.put("amount", amount);
         return response;
     }
@@ -1304,8 +1305,7 @@ public class CreatorHubController {
         videoReportRepository.save(report);
 
         // Increment points for report submission as safety awareness point
-        currentUser.setRewardPoints((currentUser.getRewardPoints() == null ? 0 : currentUser.getRewardPoints()) + 5);
-        userRepository.save(currentUser);
+        currentUser = atomicCoinService.creditCoins(currentUser.getId(), 5, "Safety report submission reward");
         session.setAttribute("user", currentUser);
 
         response.put("success", true);
@@ -1557,8 +1557,9 @@ public class CreatorHubController {
                 userRepository.save(creator);
             } else {
                 // Refund points
-                creator.setRewardPoints((creator.getRewardPoints() == null ? 0 : creator.getRewardPoints()) + cashout.getPoints());
-                userRepository.save(creator);
+                if (cashout.getPoints() > 0) {
+                    creator = atomicCoinService.creditCoins(creator.getId(), cashout.getPoints(), "Cashout rejection refund: Request #" + cashout.getId());
+                }
             }
 
             // Notify creator

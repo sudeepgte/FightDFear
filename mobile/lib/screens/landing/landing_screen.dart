@@ -5,6 +5,7 @@ import '../../services/auth_state.dart';
 import '../../services/landing_service.dart';
 import '../../services/module_services.dart';
 import '../../widgets/module_theme.dart';
+import '../../widgets/server_config_dialog.dart';
 import '../safety/contacts_screen.dart';
 import '../creator/creator_hub_screen.dart';
 import '../creator/creator_portal_login_screen.dart';
@@ -24,7 +25,6 @@ import '../marketplace/job_bookings_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import 'landing_notifications_screen.dart';
 import '../auth/login_screen.dart';
-import '../martial_arts/martial_arts_admin_screen.dart';
 import '../martial_arts/martial_arts_centre_login_screen.dart';
 import '../martial_arts/martial_arts_screen.dart';
 import '../doctors/women_doctors_screen.dart';
@@ -910,6 +910,11 @@ class _Header extends StatelessWidget {
                       ),
                     ),
                 ],
+              ),
+              IconButton(
+                tooltip: 'Server Connection',
+                onPressed: () => ServerConfigDialog.show(context),
+                icon: const Icon(Icons.dns_outlined, color: LandingScreen.navy),
               ),
             ],
           ),

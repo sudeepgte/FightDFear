@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>
@@ -443,9 +445,11 @@
                         <div class="dv-actions">
                           <a class="btn-view-profile" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye"></i></a>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button class="btn-approve-sm" type="submit" title="Verify"><i class="fas fa-check"></i></button>
                           </form>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0 p-0">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button class="btn-reject-sm" type="submit" title="Reject"><i class="fas fa-times"></i></button>
                           </form>
                           <c:if test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
@@ -534,9 +538,11 @@
                       <div class="d-flex align-items-center gap-2">
                           <a class="btn-view-profile py-1 px-3" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye me-1"></i> View</a>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                               <button class="btn-approve-sm py-1 px-3" type="submit" title="Verify"><i class="fas fa-check me-1"></i> Approve</button>
                           </form>
                           <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0 p-0">
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                               <button class="btn-reject-sm py-1 px-3" type="submit" title="Reject"><i class="fas fa-times me-1"></i> Reject</button>
                           </form>
                       </div>
@@ -585,9 +591,11 @@
 
               <div class="d-flex gap-2">
                 <form id="pvApproveForm" action="#" method="post" class="flex-grow-1">
+                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                   <button type="submit" class="btn-approve-sm w-100 py-2 fs-6"><i class="fas fa-check me-1"></i> Approve</button>
                 </form>
                 <form id="pvRejectForm" action="#" method="post" class="flex-grow-1">
+                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                   <button type="submit" class="btn-reject-sm w-100 py-2 fs-6"><i class="fas fa-times me-1"></i> Reject</button>
                 </form>
               </div>
@@ -795,5 +803,6 @@
   }
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

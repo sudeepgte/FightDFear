@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${not empty center.name ? center.name : 'Martial Arts Centre'} — Application Review | Fight D Fear Admin</title>
@@ -813,6 +815,7 @@
             <!-- APPROVE FORM (Only show if not already approved) -->
             <c:if test="${!center.approved and statusKey ne 'APPROVED'}">
               <form id="approveForm" action="${pageContext.request.contextPath}/admin/centres/${center.id}/approve" method="post" class="m-0">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                 <input type="hidden" name="notes" id="approveNotes">
                 <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value = document.getElementById('decisionNotes').value; return confirm('Approve this centre for public listing?');">
                   <i class="fas fa-check-circle"></i> Approve Centre
@@ -828,6 +831,7 @@
 
             <!-- REQUEST CHANGES FORM -->
             <form id="requestChangesForm" action="${pageContext.request.contextPath}/admin/centres/${center.id}/request-changes" method="post" class="m-0">
+              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
               <input type="hidden" name="notes" id="changesNotes">
               <input type="hidden" name="reasons" id="changesReasons">
               <button type="submit" class="btn-changes" onclick="
@@ -840,6 +844,7 @@
 
             <!-- REJECT FORM -->
             <form id="rejectForm" action="${pageContext.request.contextPath}/admin/centres/${center.id}/reject" method="post" class="m-0" onsubmit="return confirm('Reject this centre application?');">
+              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
               <input type="hidden" name="notes" id="rejectNotes">
               <button type="submit" class="btn-reject" onclick="document.getElementById('rejectNotes').value = document.getElementById('decisionNotes').value;">
                 <i class="fas fa-times-circle"></i> Reject Application
@@ -859,6 +864,7 @@
             </div>
             <form action="${pageContext.request.contextPath}/centres/delete/${center.id}" method="post" class="m-0"
                   onsubmit="return confirm('Are you sure you want to permanently delete this centre? This action cannot be undone.');">
+              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
               <button type="submit" class="btn-delete-acc">
                 <i class="bi bi-trash me-1"></i> Delete Record
               </button>
@@ -886,5 +892,6 @@
     toggle.addEventListener('click', () => sidebar.classList.toggle('active'));
   }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

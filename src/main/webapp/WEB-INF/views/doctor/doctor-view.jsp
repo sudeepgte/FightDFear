@@ -7,6 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${doctor.fullName} | Medical Profile</title>
   
+  <c:if test="${not empty _csrf}">
+    <meta name="_csrf" content="${_csrf.token}">
+    <meta name="_csrf_header" content="${_csrf.headerName}">
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}">
+  </c:if>
+
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
@@ -617,7 +623,10 @@
         <div class="booking-sticky-card">
           <h4 class="fw-900 mb-4">Book Appointment</h4>
           
-          <form id="bookingForm" onsubmit="event.preventDefault(); showBookingPreview();">
+          <form id="bookingForm" action="javascript:void(0);" method="POST" onsubmit="event.preventDefault(); showBookingPreview(); return false;">
+            <c:if test="${not empty _csrf}">
+              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            </c:if>
             <input type="hidden" id="doctorId" value="${doctor.id}">
             <input type="hidden" id="amount" value="${doctor.consultationFee != null ? doctor.consultationFee : 0}">
             <input type="hidden" id="appointmentTime" value="">
@@ -689,7 +698,7 @@
               <div class="d-flex justify-content-between small"><span class="text-muted">Patient</span><span class="fw-700" id="summaryPatient">${user.fullName}</span></div>
             </div>
 
-            <button type="submit" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6">
+            <button type="button" id="payBtn" class="btn-book-primary" disabled style="opacity: 0.6" onclick="showBookingPreview()">
               Review booking
             </button>
             <p class="text-center mt-3 small text-muted" id="payHint"><i class="bi bi-shield-lock-fill text-success me-1"></i> Secure Payment by Razorpay</p>
@@ -708,6 +717,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <form action="${pageContext.request.contextPath}/doctors/review" method="post" id="doctorReviewForm" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="doctorId" value="${doctor.id}">
           <div class="modal-body p-4">
             <c:if test="${not empty error}">
@@ -777,6 +787,7 @@
         <div class="doc-modal-row"><span class="k">When</span><span class="v" id="bsWhen">—</span></div>
         <div class="doc-modal-row"><span class="k">Consultation</span><span class="v" id="bsMode">—</span></div>
         <div class="doc-modal-row"><span class="k">Fee</span><span class="v" id="bsFee">—</span></div>
+        <div class="doc-modal-row"><span class="k">Status</span><span class="v"><span class="doc-status pending" id="bsStatus">Pending</span></span></div>
         <div class="doc-modal-row"><span class="k">Payment Status</span><span class="v" id="bsPaymentStatus"><span class="badge bg-success">Paid</span></span></div>
         <div class="doc-modal-row" id="bsReceiptRow" style="display:none;"><span class="k">Receipt No</span><span class="v" id="bsReceipt">—</span></div>
       </div>
@@ -971,26 +982,51 @@
       syncFeeUi();
     }
 
+    function getCsrfToken() {
+      var match = document.cookie.match(new RegExp('(^|;\\s*)XSRF-TOKEN=([^;]*)'));
+      if (match && match[2]) return decodeURIComponent(match[2]);
+      var meta = document.querySelector('meta[name="_csrf"]');
+      if (meta && meta.content) return meta.content;
+      var el = document.querySelector('input[name="_csrf"]') || document.getElementById('_global_header_csrf');
+      if (el && el.value) return el.value;
+      return '';
+    }
+
+    function csrfHeaders() {
+      var token = getCsrfToken();
+      var headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+      if (token) {
+        headers['X-CSRF-TOKEN'] = token;
+        headers['X-XSRF-TOKEN'] = token;
+      }
+      return headers;
+    }
+
     async function bookFree(doctorId, time, type, reason) {
-      const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        credentials: 'same-origin',
-        body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
-      });
-      let data = {};
-      try { data = await res.json(); } catch (e) {}
-      if (res.status === 401) {
-        alert('Please log in as a patient to book this appointment.');
-        window.location.href = '${pageContext.request.contextPath}/login';
+      try {
+        const res = await fetch('${pageContext.request.contextPath}/api/doctors/' + doctorId + '/appointments', {
+          method: 'POST',
+          headers: csrfHeaders(),
+          credentials: 'same-origin',
+          body: JSON.stringify({ appointmentTime: time, consultationType: type, reason: reason || '' })
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (res.status === 401) {
+          alert('Please log in as a patient to book this appointment.');
+          window.location.href = '${pageContext.request.contextPath}/login';
+          return false;
+        }
+        if (res.ok && (data.success || data.appointmentId)) {
+          showBookingSuccess(data);
+          return true;
+        }
+        alert(data.error || 'Unable to book appointment');
+        return false;
+      } catch (err) {
+        alert('Network error while booking. Please try again.');
         return false;
       }
-      if (res.ok && (data.success || data.appointmentId)) {
-        showBookingSuccess(data);
-        return true;
-      }
-      alert(data.error || 'Unable to book appointment');
-      return false;
     }
 
     async function initiatePayment() {
@@ -1034,8 +1070,14 @@
 
       if (!time) {
         alert('Please select date and time');
-        unlockPay();
         return;
+      }
+
+      if (payBtn) {
+        payBtn.dataset.busy = '1';
+        payBtn.disabled = true;
+        payBtn.dataset.label = payBtn.innerHTML;
+        payBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
       }
 
       if (fee <= 0) {
@@ -1050,7 +1092,7 @@
       try {
         const orderRes = await fetch('${pageContext.request.contextPath}/payment/create-order', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: csrfHeaders(),
           credentials: 'same-origin',
           body: JSON.stringify({
             type: 'DOCTOR',
@@ -1071,14 +1113,16 @@
 
         const order = await orderRes.json().catch(() => ({}));
         if (!orderRes.ok || !order.orderId) {
-          throw new Error(order.error || 'Could not create payment order');
+          alert(order.error || 'Unable to create payment order. Please try again.');
+          unlockPay();
+          return;
         }
 
         // Mock payment flow (for local development or test mode)
         if (order.mock === true || (order.key && order.key.startsWith('rzp_test_mock'))) {
           const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: csrfHeaders(),
             credentials: 'same-origin',
             body: JSON.stringify({
               razorpay_order_id: order.orderId,
@@ -1093,16 +1137,20 @@
           });
 
           const verifyData = await verifyRes.json().catch(() => ({}));
-          if (!verifyRes.ok || verifyData.error) {
-            throw new Error(verifyData.error || 'Payment verification failed');
+          if (verifyRes.ok && (verifyData.success || verifyData.status === 'success' || verifyData.appointmentId)) {
+            showBookingSuccess(verifyData);
+          } else {
+            alert(verifyData.error || 'Payment verification failed.');
+            unlockPay();
           }
-          showBookingSuccess(verifyData);
           return;
         }
 
-        // Real Razorpay gateway
+        // Live / Test Razorpay Checkout
         if (typeof Razorpay === 'undefined') {
-          throw new Error('Payment gateway SDK failed to load. Please check your internet connection.');
+          alert('Payment gateway library failed to load. Please check your internet connection and try again.');
+          unlockPay();
+          return;
         }
 
         const options = {
@@ -1116,7 +1164,7 @@
             try {
               const verifyRes = await fetch('${pageContext.request.contextPath}/payment/verify', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: csrfHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify({
                   razorpay_order_id: response.razorpay_order_id,
@@ -1137,7 +1185,7 @@
                 unlockPay();
               }
             } catch (err) {
-              alert('Error verifying payment: ' + err.message);
+              alert('Error verifying payment: ' + (err.message || 'Please check your connection.'));
               unlockPay();
             }
           },
@@ -1161,8 +1209,9 @@
         });
         rzp.open();
 
-      } catch (e) {
-        alert(e.message || 'Payment initiation failed. Please try again.');
+      } catch (err) {
+        console.error('Payment initiation error:', err);
+        alert(err.message || 'An unexpected error occurred while initiating payment. Please try again.');
         unlockPay();
       }
     }
@@ -1171,27 +1220,41 @@
       var overlay = document.getElementById('bookingPreviewModal');
       if (overlay) overlay.classList.remove('open');
     }
+
     function showBookingPreview() {
+      var patientNameEl = document.getElementById('patientName');
+      if (patientNameEl && !patientNameEl.value.trim()) {
+        alert('Please enter patient name');
+        patientNameEl.focus();
+        return;
+      }
+      var patientPhoneEl = document.getElementById('patientPhone');
+      if (patientPhoneEl && (!patientPhoneEl.value.trim() || patientPhoneEl.value.trim().length !== 10)) {
+        alert('Please enter a valid 10-digit mobile number');
+        patientPhoneEl.focus();
+        return;
+      }
       var time = document.getElementById('appointmentTime').value;
       if (!time) {
-        alert('Please select date and time');
+        alert('Please select date and time slot');
         return;
       }
       var type = (document.querySelector('input[name="consultationType"]:checked') || {}).value || 'CLINIC';
-      var modeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
+      var modeLabel = type === 'VIDEO' ? 'Video Call' : (type === 'ONLINE' ? 'Chat' : 'Clinic Visit');
       var fee = currentFee();
       var reasonEl = document.getElementById('appointmentReason');
-      var patient = (document.getElementById('patientName') || {}).value || '${user.fullName}';
+      var patient = (patientNameEl || {}).value || '${user.fullName}';
       document.getElementById('bpWhen').textContent = (document.getElementById('summaryText') || {}).innerText || time;
       document.getElementById('bpMode').textContent = modeLabel;
       document.getElementById('bpFee').textContent = fee > 0 ? ('₹' + fee) : 'Free';
       document.getElementById('bpPatient').textContent = patient || 'Not provided';
       document.getElementById('bpReason').textContent = (reasonEl && reasonEl.value.trim()) ? reasonEl.value.trim() : 'Not provided';
-      document.getElementById('bpPayHint').textContent = fee > 0 ? 'You will complete payment on the next step.' : 'No payment is required.';
+      document.getElementById('bpPayHint').textContent = fee > 0 ? 'You will complete payment securely via Razorpay on the next step.' : 'No payment is required.';
       var confirmBtn = document.getElementById('bpConfirmBtn');
       confirmBtn.textContent = fee > 0 ? ('Confirm & Pay ₹' + fee) : 'Confirm free booking';
       document.getElementById('bookingPreviewModal').classList.add('open');
     }
+
     function confirmBookingFromPreview() {
       closeBookingPreview();
       initiatePayment();
@@ -1207,8 +1270,9 @@
       document.getElementById('bsFee').textContent = (document.getElementById('bpFee') || {}).textContent || '—';
       
       var fee = currentFee();
-      var bsTitle = document.getElementById('bsTitle');
-      var bsDesc = document.getElementById('bsDesc');
+      var bsTitle = document.getElementById('bsTitle') || document.getElementById('bsHeaderTitle');
+      var bsDesc = document.getElementById('bsDesc') || document.getElementById('bsHeaderDesc');
+      var bsStatus = document.getElementById('bsStatus');
       var bsPaymentStatus = document.getElementById('bsPaymentStatus');
       var bsReceiptRow = document.getElementById('bsReceiptRow');
       var bsReceipt = document.getElementById('bsReceipt');
@@ -1216,6 +1280,10 @@
       if (fee > 0) {
         if (bsTitle) bsTitle.textContent = 'Payment & Booking Confirmed!';
         if (bsDesc) bsDesc.textContent = 'Your payment was successful and your appointment has been confirmed with Dr. ${doctor.fullName}.';
+        if (bsStatus) {
+          bsStatus.className = 'doc-status confirmed';
+          bsStatus.textContent = 'Confirmed';
+        }
         if (bsPaymentStatus) bsPaymentStatus.innerHTML = '<span class="badge bg-success">Paid</span>';
         if (data && data.receipt && data.receipt.receiptNumber) {
           if (bsReceiptRow) bsReceiptRow.style.display = 'flex';
@@ -1224,6 +1292,10 @@
       } else {
         if (bsTitle) bsTitle.textContent = 'Appointment Requested!';
         if (bsDesc) bsDesc.textContent = 'Your booking request has been sent to Dr. ${doctor.fullName}.';
+        if (bsStatus) {
+          bsStatus.className = 'doc-status pending';
+          bsStatus.textContent = 'Pending';
+        }
         if (bsPaymentStatus) bsPaymentStatus.innerHTML = '<span class="badge bg-secondary">Free</span>';
       }
 
@@ -1283,6 +1355,7 @@
   </script>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

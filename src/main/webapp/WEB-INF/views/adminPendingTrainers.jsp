@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fitness Trainers Management - Fight D Fear Admin</title>
@@ -296,6 +298,7 @@
                                 <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/fitness/trainer/${trainer.id}"><i class="fas fa-eye"></i> View</a>
                                 <a class="dv-more" href="${pageContext.request.contextPath}/admin/fitness/trainer/${trainer.id}" title="Profile"><i class="fas fa-ellipsis-v"></i></a>
                                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/revoke" method="post">
+                                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                   <button type="submit" class="btn-revoke" onclick="return confirm('Are you sure you want to revoke approval for this trainer?');">
                                     <i class="fas fa-ban"></i> Revoke
                                   </button>
@@ -342,10 +345,12 @@
                                 <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/fitness/trainer/${trainer.id}"><i class="fas fa-eye"></i> View</a>
                                 <a class="dv-more" href="${pageContext.request.contextPath}/admin/fitness/trainer/${trainer.id}" title="More"><i class="fas fa-ellipsis-v"></i></a>
                                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/approve" method="post">
+                                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                   <button type="submit" class="btn-approve"><i class="fas fa-check"></i> Approve</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/admin/trainers/${trainer.id}/reject" method="post"
                                       onsubmit="return confirm('Reject this trainer registration?');">
+                                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                   <input type="text" name="reason" placeholder="Reason" class="ap-input" style="padding:4px 8px; font-size:0.8rem; width:100px; display:inline-block;" required>
                                   <button type="submit" class="btn-reject"><i class="fas fa-times"></i> Reject</button>
                                 </form>
@@ -496,10 +501,10 @@
           </div>
         </section>
       </div>
-    </div>
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 <script>
 (function () {
   var ctx = '${pageContext.request.contextPath}';

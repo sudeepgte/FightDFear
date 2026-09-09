@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Centre Profile — Fight D Fear</title>
@@ -615,7 +617,10 @@
 
                 <!-- Submit for Verification Bar -->
                 <div class="submit-bar">
-                    <form action="${pageContext.request.contextPath}/centres/submitVerification" method="post">
+                    <form action="${pageContext.request.contextPath}/centres/submit-verification${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <button type="submit" class="btn-submit-verification" 
                                 <c:if test="${center.centreProfileStatus == 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
                             <c:choose>
@@ -634,7 +639,10 @@
                 </div>
 
                 <!-- Section Forms Form Container -->
-                <form id="profileForm" action="${pageContext.request.contextPath}/centres/updateProfile" method="post" enctype="multipart/form-data">
+                <form id="profileForm" action="${pageContext.request.contextPath}/centres/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="id" value="${center.id}">
 
                     <!-- Section 1: Centre Identity -->
@@ -1232,6 +1240,6 @@
 
         document.addEventListener('DOMContentLoaded', bindMartialArtsLivePreview);
     </script>
-
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

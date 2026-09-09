@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Wallet | Fight D Fear</title>
@@ -106,6 +108,7 @@
                                 <div class="reward-card-footer">
                                     <span class="coin-badge"><i class="bi bi-coin"></i> 100</span>
                                     <form action="${pageContext.request.contextPath}/users/redeem" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <input type="hidden" name="cost" value="100">
                                         <input type="hidden" name="rewardName" value="10% Salon Discount">
                                         <button type="submit" class="btn btn-redeem">Redeem</button>
@@ -125,6 +128,7 @@
                                 <div class="reward-card-footer">
                                     <span class="coin-badge"><i class="bi bi-coin"></i> 200</span>
                                     <form action="${pageContext.request.contextPath}/users/redeem" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <input type="hidden" name="cost" value="200">
                                         <input type="hidden" name="rewardName" value="Free Martial Arts Class">
                                         <button type="submit" class="btn btn-redeem">Redeem</button>
@@ -144,6 +148,7 @@
                                 <div class="reward-card-footer">
                                     <span class="coin-badge"><i class="bi bi-coin"></i> 50</span>
                                     <form action="${pageContext.request.contextPath}/users/redeem" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                         <input type="hidden" name="cost" value="50">
                                         <input type="hidden" name="rewardName" value="Safety Badge">
                                         <button type="submit" class="btn btn-redeem">Redeem</button>
@@ -210,5 +215,6 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

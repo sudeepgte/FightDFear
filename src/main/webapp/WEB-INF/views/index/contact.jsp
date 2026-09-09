@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Contact Us | Fight D Fear</title>
@@ -167,6 +169,7 @@
                         </div>
                     </div>
 
+
                     <div class="col-lg-7">
                         <h3 class="fw-bold mb-4" style="font-size: 24px;">Send an Inquiry</h3>
                         <div id="alertContainer"></div>
@@ -202,6 +205,27 @@
                                               placeholder="Message" required minlength="10" maxlength="2000"></textarea>
                                     <div class="invalid-feedback">Message must be 10–2000 characters.</div>
                                 </div>
+
+                <div class="col-lg-7">
+                    <h2 class="fw-bold mb-4">Send an Inquiry</h2>
+                    <div id="alertContainer"></div>
+                    <c:if test="${not empty error}">
+                        <div class="alert alert-danger rounded-4" role="alert"><c:out value="${error}"/></div>
+                    </c:if>
+                    <c:if test="${not empty success}">
+                        <div class="alert alert-success rounded-4" role="alert"><c:out value="${success}"/></div>
+                    </c:if>
+                    <form id="inquiryForm" action="${pageContext.request.contextPath}/sendMessage" method="post" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="inquiryName" class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+                                <input type="text" id="inquiryName" name="name" class="form-control p-3 rounded-4"
+                                       placeholder="Full Name" required minlength="2" maxlength="80"
+                                       pattern="[A-Za-z]([A-Za-z .'-]*[A-Za-z])?"
+                                       title="Letters only (spaces, apostrophes, hyphens allowed). No numbers.">
+                                <div class="invalid-feedback">Enter a valid name (letters only, 2–80 characters).</div>
+
                             </div>
                             <button type="submit" id="btnSubmitMessage" class="btn-send-message mt-4">Send Message</button>
                         </form>
@@ -305,6 +329,7 @@
             });
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

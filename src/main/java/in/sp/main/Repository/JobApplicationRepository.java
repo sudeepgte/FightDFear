@@ -26,4 +26,8 @@ public interface JobApplicationRepository extends JpaRepository<JobApplication, 
     boolean existsByUser_IdAndStatusIn(Long userId, java.util.Collection<VerificationStatus> statuses);
 
     long countByStatus(VerificationStatus status);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT j FROM JobApplication j WHERE j.id = :id")
+    java.util.Optional<JobApplication> findByIdForUpdate(@Param("id") Long id);
 }

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Book Stylist — Fight D Fear</title>
@@ -143,6 +145,7 @@
                 </c:if>
 
                 <form action="${pageContext.request.contextPath}/user/stylist/book" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="stylistId" value="${stylist.id}">
 
                     <div class="mb-4">
@@ -196,5 +199,6 @@
     });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <title>Forgot Password</title>
     <style>
@@ -226,11 +228,13 @@
             <p class="message-success">${message}</p>
         </c:if>
         <form action="${pageContext.request.contextPath}/auth/forgot-password" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="email" name="email" placeholder="Enter your email" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" required>
             <button type="submit">Reset Password</button>
         </form>
     </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

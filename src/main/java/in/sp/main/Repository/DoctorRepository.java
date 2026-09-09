@@ -31,5 +31,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
            "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(d.locationText)   LIKE LOWER(CONCAT('%', :keyword, '%'))")
     List<Doctor> searchDoctors(@Param("keyword") String keyword);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM Doctor d WHERE d.id = :id")
+    Optional<Doctor> findByIdForUpdate(@Param("id") Long id);
 }
 

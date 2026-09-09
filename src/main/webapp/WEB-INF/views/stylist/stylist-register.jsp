@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stylist Registration — Fight D Fear</title>
@@ -152,6 +154,7 @@
                 </c:if>
 
                 <form action="${pageContext.request.contextPath}/stylists/register" method="post" id="stylistRegForm" enctype="multipart/form-data">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <!-- Step 1: Personal Profile -->
                     <div class="dr-step-panel active" id="step1">
                         <h3 style="margin-bottom:20px; color:var(--brand-purple-darker); font-family:'Montserrat'; font-weight: 800;">Step 1: Personal Profile</h3>
@@ -392,6 +395,7 @@
             checkFormValidity();
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

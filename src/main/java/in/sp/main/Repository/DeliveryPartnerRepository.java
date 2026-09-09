@@ -17,4 +17,8 @@ public interface DeliveryPartnerRepository extends JpaRepository<DeliveryPartner
     List<DeliveryPartner> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<DeliveryPartner> findByPartnerProfileStatusIsNull();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT d FROM DeliveryPartner d WHERE d.id = :id")
+    Optional<DeliveryPartner> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

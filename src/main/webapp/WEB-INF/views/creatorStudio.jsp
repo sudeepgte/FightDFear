@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -442,6 +444,7 @@
                                                         </td>
                                                         <td>
                                                             <form action="${pageContext.request.contextPath}/creator-hub/dashboard/deleteUpload" method="POST" onsubmit="return confirm('Delete this post permanently?')">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                 <input type="hidden" name="videoId" value="${post.id}">
                                                                 <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill"><i class="fa-regular fa-trash-can"></i> Delete</button>
                                                             </form>
@@ -502,10 +505,12 @@
                                                         <td>
                                                             <div class="d-flex gap-2">
                                                                 <form action="${pageContext.request.contextPath}/creator-hub/dashboard/publishDraft" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                     <input type="hidden" name="videoId" value="${draft.id}">
                                                                     <button type="submit" class="btn btn-sm btn-success rounded-pill px-3"><i class="fa-solid fa-paper-plane me-1"></i> Publish</button>
                                                                 </form>
                                                                 <form action="${pageContext.request.contextPath}/creator-hub/dashboard/deleteUpload" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                     <input type="hidden" name="videoId" value="${draft.id}">
                                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill"><i class="fa-regular fa-trash-can"></i> Delete</button>
                                                                 </form>
@@ -993,6 +998,7 @@
     });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

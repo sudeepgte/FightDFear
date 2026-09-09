@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reported Videos — Admin</title>
@@ -187,11 +189,11 @@
                       <td class="fw-bold">
                         <a href="${pageContext.request.contextPath}${r.video.videoPath}" target="_blank" class="text-maroon text-decoration-none">
                           <i class="fas fa-file-video me-1 text-muted"></i>
-                          ${r.video.description != null ? r.video.description : 'View Video'}
+                          <c:out value="${r.video.description != null ? r.video.description : 'View Video'}"/>
                         </a>
                       </td>
-                      <td><span class="fw-600">${r.video.user.email}</span></td>
-                      <td>${r.reportedBy.fullName}</td>
+                      <td><span class="fw-600"><c:out value="${r.video.user.email}"/></span></td>
+                      <td><c:out value="${r.reportedBy.fullName}"/></td>
                       <td>
                         <c:choose>
                             <c:when test="${r.reason == 'NOT_GOOD_CONTENT'}">
@@ -207,7 +209,7 @@
                                 <span class="badge-status" style="background:#f1f5f9; color:#0f172a; border-color:#e2e8f0;">Sexual/Violence</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="badge-status status-PENDING">${r.reason}</span>
+                                <span class="badge-status status-PENDING"><c:out value="${r.reason}"/></span>
                             </c:otherwise>
                         </c:choose>
                       </td>
@@ -223,6 +225,7 @@
                               </c:when>
                               <c:otherwise>
                                   <form action="${pageContext.request.contextPath}/admin/reported-videos/block/${r.video.id}" method="post" class="m-0">
+                                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                       <button type="submit" class="btn-update bg-danger" onclick="return confirm('Are you sure you want to block this video? It will be removed from user dashboards.')">
                                         <i class="fas fa-ban me-1"></i> Block
                                       </button>
@@ -254,6 +257,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

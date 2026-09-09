@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Complete seller profile — Women Products</title>
@@ -269,7 +271,10 @@
                 <c:if test="${not empty error}"><div class="alert alert-err">${error}</div></c:if>
                 <c:if test="${not empty message}"><div class="alert alert-ok">${message}</div></c:if>
 
-                <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data" novalidate>
+                <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" novalidate>
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <div class="section-card">
                         <div class="section-header">1. Seller identity</div>
                         <div class="form-row">
@@ -514,5 +519,6 @@
     });
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

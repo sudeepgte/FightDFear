@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
+import '../../widgets/server_config_dialog.dart';
 import '../safety/home_screen.dart';
 import 'register_screen.dart';
 import '../user/user_dashboard_screen.dart';
@@ -93,6 +94,13 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: Colors.transparent,
         foregroundColor: const Color(0xFF1E1B4B),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dns_outlined),
+            tooltip: 'Server Connection',
+            onPressed: () => ServerConfigDialog.show(context),
+          ),
+        ],
       ),
       body: Container(
         width: double.infinity,
@@ -143,11 +151,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Color(0xFF64748B)),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      context.watch<AuthState>().apiBaseUrl,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: InkWell(
+                        onTap: () => ServerConfigDialog.show(context),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.dns_outlined, size: 12, color: Color(0xFFF43F5E)),
+                              const SizedBox(width: 4),
+                              Text(
+                                context.watch<AuthState>().apiBaseUrl,
+                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.edit, size: 10, color: Color(0xFF94A3B8)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 22),
                     Container(

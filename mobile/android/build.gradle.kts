@@ -21,6 +21,11 @@ subprojects {
     pluginManager.withPlugin("com.android.library") {
         extensions.configure(LibraryExtension::class.java) {
             compileSdk = 36
+            defaultConfig {
+                ndk {
+                    abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+                }
+            }
             lint {
                 abortOnError = false
                 checkReleaseBuilds = false

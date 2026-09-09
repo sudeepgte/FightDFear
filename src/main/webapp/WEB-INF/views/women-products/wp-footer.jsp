@@ -15,3 +15,4 @@
   </div>
   <div class="wp-footer-copy">Fight D Fear · Women Products</div>
 </footer>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
