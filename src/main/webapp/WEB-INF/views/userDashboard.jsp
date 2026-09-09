@@ -356,7 +356,7 @@
         .ud-grid { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
-        #page-content-wrapper { padding: 16px 12px 28px !important; }
+        #page-content-wrapper { padding: 16px 12px 120px !important; }
         .ud-greeting h1 { font-size: 1.35rem; }
         .ud-profile-card { padding: 18px; }
         .ud-stats { grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -599,6 +599,8 @@
             </div>
         </div>
 
+        <!-- Extra spacing to bypass emulator cutoff -->
+        <div style="height: 150px; width: 100%;"></div>
     </div>
 </div>
 

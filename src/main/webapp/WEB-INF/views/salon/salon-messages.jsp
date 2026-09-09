@@ -83,6 +83,36 @@
             padding: 25px;
             margin-left: var(--sidebar-width);
         }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 15px;
+                width: 100%;
+                overflow-x: hidden;
+            }
+            .chat-container {
+                height: 50vh !important;
+                padding: 15px;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-4 {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            /* Override h-100 on mobile for the row and left panel */
+            .row.h-100 {
+                min-height: auto !important;
+                height: auto !important;
+            }
+            .col-lg-4 .card.h-100 {
+                height: auto !important;
+                max-height: 40vh;
+            }
+        }
     </style>
 </head>
 <body>

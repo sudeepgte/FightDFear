@@ -3,84 +3,118 @@
 
 <style>
     .global-footer {
-        background-color: #1e1b4b !important;
-        color: rgba(255, 255, 255, 0.8) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: #FFF1F2 !important; /* light pink background */
+        color: #0F172A !important;
+        border-top: 1px solid #FFE4E6;
+        padding-top: 35px;
+        padding-bottom: 20px;
+        font-family: 'Inter', sans-serif;
     }
-    .global-footer h4, .global-footer p {
-        color: white !important;
+    .global-footer h4 {
+        color: #F43F5E !important; /* pink titles */
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #FFE4E6;
+        padding-bottom: 8px;
+        font-family: 'Poppins', sans-serif;
+    }
+    .global-footer ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .global-footer ul li {
+        margin-bottom: 8px;
     }
     .global-footer a {
-        color: rgba(255, 255, 255, 0.8) !important;
+        color: #475569 !important;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: 0.3s;
     }
     .global-footer a:hover {
-        color: #f43f5e !important;
+        color: #F43F5E !important;
     }
-    .global-footer .sitename {
-        color: #f43f5e !important;
+    .global-footer-bottom {
+        border-top: 1px solid #FFE4E6;
+        margin-top: 25px;
+        padding-top: 15px;
+        text-align: center;
+        font-weight: 700;
+        color: #E11D48;
+        font-size: 14px;
     }
 </style>
 
 <footer id="footer" class="footer position-relative global-footer">
     <div class="container footer-top">
       <div class="row gy-4">
-        <div class="col-lg-4 col-md-6 footer-about">
-          <a href="${pageContext.request.contextPath}/" class="d-flex align-items-center">
-          Fight D Fear
-          </a>
-             
-  <div class="pt-3">
-    <p class="fw-semibold">Our Values</p>
-	<p>Empowering women to stay safe, strong, and supported through awareness, self-defense, and action.</p>
-    <p>Awareness • Safety • Equality • Empowerment</p>
-    <p class="mt-2">Building a safer tomorrow, together.</p>
-  </div>
-</div>
-        <div class="col-lg-2 col-md-3 footer-links">
-          <h4>Useful Links</h4>
-          <ul>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/">Home</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/index/about">About us</a></li>
-            <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/services">Services</a></li>
-             <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/terms">Terms</a></li>
-              </ul>
         
+        <!-- Column 1: PLATFORM -->
+        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+          <h4>PLATFORM</h4>
+          <ul>
+            <li><a href="${pageContext.request.contextPath}/sos">Safety</a></li>
+            <li><a href="${pageContext.request.contextPath}/sos">Emergency SOS</a></li>
+            <li><a href="${pageContext.request.contextPath}/marketplace">Marketplace</a></li>
+            <li><a href="${pageContext.request.contextPath}/women-events">Events</a></li>
+            <li><a href="${pageContext.request.contextPath}/community">Community</a></li>
+          </ul>
         </div>
 
-      <div class="col-lg-2 col-md-3 footer-links">
-  <h4>Our Services</h4>
-  <ul>
-    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/sos/dashboard">Emergency Assistance</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/video/allVideos">Safety Education</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/centres/allacceptedcentres">Self-defense Training</a></li>
-    <li><i class="bi bi-chevron-right"></i> <a href="${pageContext.request.contextPath}/stories">Community Support</a></li>
-  </ul>
-</div>
+        <!-- Column 2: WELLNESS -->
+        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+          <h4>WELLNESS</h4>
+          <ul>
+            <li><a href="${pageContext.request.contextPath}/doctors/list">Women Doctors</a></li>
+            <li><a href="${pageContext.request.contextPath}/fitness">Fitness</a></li>
+            <li><a href="${pageContext.request.contextPath}/centres">Wellness Centres</a></li>
+            <li><a href="${pageContext.request.contextPath}/beauty">Beauty & Self Care</a></li>
+          </ul>
+        </div>
 
-<div class="col-lg-4 col-md-12">
-  <h4>Follow Us</h4>
-  <p>Stay connected with us for safety updates, resources, and tips. Empower yourself and others!</p>
-  <jsp:include page="/WEB-INF/views/fragments/social-follow.jsp" />
-</div>
+        <!-- Column 3: BUSINESS -->
+        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+          <h4>BUSINESS</h4>
+          <ul>
+            <li><a href="${pageContext.request.contextPath}/entrepreneur">Entrepreneurs</a></li>
+            <li><a href="${pageContext.request.contextPath}/investors">Women Investors</a></li>
+            <li><a href="${pageContext.request.contextPath}/opportunities">Opportunities</a></li>
+            <li><a href="${pageContext.request.contextPath}/networking">Networking</a></li>
+          </ul>
+        </div>
 
+        <!-- Column 4: RESOURCES -->
+        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+          <h4>RESOURCES</h4>
+          <ul>
+            <li><a href="${pageContext.request.contextPath}/awareness">Awareness</a></li>
+            <li><a href="${pageContext.request.contextPath}/safety-tips">Safety Tips</a></li>
+            <li><a href="${pageContext.request.contextPath}/health-resources">Health Resources</a></li>
+            <li><a href="${pageContext.request.contextPath}/centres">Self Defense</a></li>
+          </ul>
+        </div>
 
       </div>
+      
+      <!-- Footer Copyright Section -->
+      <div class="global-footer-bottom">
+          &copy; Copyright Fight D Fear All Rights Reserved
+      </div>
+
     </div>
 
-    <div class="container copyright text-center mt-4">
-      <p> &copy; Copyright <strong class="px-1 sitename">Fight D Fear</strong> All Rights Reserved</p>
-      <div class="credits">
-        <!-- All the links in the footer should remain intact. -->
-        <!-- You can delete the links only if you've purchased the pro version. -->
-        <!-- Licensing information: https://bootstrapmade.com/license/ -->
-        <!-- Purchase the pro version with working PHP/AJAX contact form: [buy-url] -->
-       <!--  Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a> -->
-      </div>
-    </div>
+</footer>
+
 
   </footer>
   <c:if test="${not empty _csrf}">
     <input type="hidden" id="_global_footer_csrf" name="${_csrf.parameterName}" value="${_csrf.token}" />
   </c:if>
   <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
 

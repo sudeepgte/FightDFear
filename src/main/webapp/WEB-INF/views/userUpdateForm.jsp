@@ -78,25 +78,24 @@
 
         .form-control,
         .form-select {
-            border: 1px solid #E2E8F0;
-
-        .form-control, .form-select {
-            border: 1px solid var(--fdf-border);
-
+            border: 1px solid var(--fdf-border, #E2E8F0);
             border-radius: 12px;
             padding: 11px 14px;
             font-size: 0.95rem;
             color: #0F172A;
             background: #FFFFFF;
+            max-width: 100%;
+            text-overflow: ellipsis;
+        }
+        
+        .form-select option {
+            white-space: normal;
+            word-wrap: break-word;
         }
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #F43F5E;
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--brand-pink);
-
+            border-color: var(--brand-pink, #F43F5E);
             box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
         .form-control[readonly] {
@@ -121,7 +120,6 @@
             margin: 22px 0;
         }
 
-
         .form-check {
             display: flex;
             align-items: flex-start;
@@ -136,7 +134,7 @@
             height: 18px;
             margin-top: 2px;
             flex-shrink: 0;
-            accent-color: var(--brand-pink);
+            accent-color: var(--brand-pink, #F43F5E);
         }
         .form-check-label {
             font-size: 0.9rem;
@@ -144,39 +142,27 @@
             line-height: 1.45;
         }
 
-
         .field-group { margin-bottom: 16px; }
 
         .btn-save {
             width: 100%;
             border: none;
-
-            border-radius: 14px;
-            background: #0F172A;
-
             border-radius: 50px;
             padding: 14px 24px;
             font-weight: 700;
-            background: var(--gradient-primary);
-
+            background: var(--gradient-primary, #0F172A);
             color: #fff;
         }
         .btn-cancel {
             display: block;
-
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
-            border: 2px solid var(--fdf-border);
+            border: 2px solid var(--fdf-border, #E2E8F0);
             border-radius: 14px;
             background: #FFFFFF;
-            color: #64748B;
-            font-weight: 600;
-
-
             text-align: center;
             margin-top: 14px;
-            color: var(--fdf-muted);
+            color: #64748B;
             text-decoration: none;
             font-weight: 600;
         }
@@ -391,9 +377,9 @@
                     <div class="field-group">
                         <label class="form-label" for="safetyPreferences">Notification &amp; Sharing Preferences</label>
                         <select name="safetyPreferences" id="safetyPreferences" class="form-select">
-                            <option value="ALERTS_AND_LOCATION" ${user.safetyPreferences eq 'ALERTS_AND_LOCATION' ? 'selected' : ''}>Enable real-time location sharing with emergency contacts and receive danger zone alerts</option>
-                            <option value="ALERTS_ONLY" ${user.safetyPreferences eq 'ALERTS_ONLY' ? 'selected' : ''}>Danger zone alerting only</option>
-                            <option value="NONE" ${user.safetyPreferences eq 'NONE' ? 'selected' : ''}>Disable safety notifications</option>
+                            <option value="ALERTS_AND_LOCATION" ${user.safetyPreferences eq 'ALERTS_AND_LOCATION' ? 'selected' : ''}>Location & alerts</option>
+                            <option value="ALERTS_ONLY" ${user.safetyPreferences eq 'ALERTS_ONLY' ? 'selected' : ''}>Alerts only</option>
+                            <option value="NONE" ${user.safetyPreferences eq 'NONE' ? 'selected' : ''}>None</option>
                         </select>
                     </div>
                     <div class="field-group mb-0">

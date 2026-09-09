@@ -707,6 +707,7 @@
         }
 
         @media (max-width: 768px) {
+            body { padding-bottom: 80px; }
             #wrapper { flex-direction: column !important; margin-top: 68px !important; }
             .profile-topbar { padding: 16px; flex-wrap: wrap; gap: 12px; }
             .profile-content { padding: 16px; }
