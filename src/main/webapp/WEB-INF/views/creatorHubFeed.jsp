@@ -151,7 +151,15 @@
         
         .empty-feed { text-align: center; padding: 40px 20px; color: var(--sub); }
         .empty-feed i { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
-    @media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+    @media (max-width: 768px) { 
+        body { padding-bottom: 60px; }
+        .feed-container { padding-bottom: 40px; }
+        .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } 
+        .fp-actions { font-size: 20px; padding: 10px 12px 6px; }
+        .fp-actions-left { gap: 12px; }
+        .fp-likes { padding: 0 12px; font-size: 13px; }
+        .fp-caption { padding: 0 12px 12px; font-size: 13px; }
+    } </style>
 </head>
 <body>
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
@@ -182,7 +190,7 @@
             <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
-            <a href="${pageContext.request.contextPath}/logout" title="Logout" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--accent); text-decoration:none;"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span></a>
+
         </div>
     </header>
 
@@ -209,9 +217,7 @@
                 <i class="fa-solid fa-gear"></i> Settings
             </a>
             <div style="margin:20px 0;"></div>
-            <a href="${pageContext.request.contextPath}/logout" class="ls-item">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-            </a>
+
         </div>
 
         <!-- CENTER FEED -->
@@ -295,15 +301,7 @@
         </div>
     </div>
     
-    <!-- STORY VIEWER MODAL -->
-    <div id="storyViewer" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
-        <div style="position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; z-index:10;" onclick="document.getElementById('storyViewer').style.display='none'"><i class="fa-solid fa-times"></i></div>
-        <div style="position:absolute; top:20px; left:20px; display:flex; align-items:center; gap:12px; color:white; z-index:10;">
-            <img id="storyViewerAvatar" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid white;">
-            <span id="storyViewerName" style="font-weight:700; font-size:16px;"></span>
-        </div>
-        <img id="storyViewerImg" src="" style="max-width:90%; max-height:80vh; border-radius:12px; object-fit:contain;">
-    </div>
+    <!-- STORY VIEWER MODAL MOVED TO END OF FILE -->
 
     <script>
         function viewStory(storyId, handle, avatar, mediaUrl) {
@@ -426,6 +424,21 @@
         function toggleNotifPanel() {}
     </script>
 
+    <!-- COMMENTS MODAL MOVED TO END OF FILE -->
+    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        </div>
+    </div>
+    
+    <!-- STORY VIEWER MODAL -->
+    <div id="storyViewer" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; z-index:10;" onclick="document.getElementById('storyViewer').style.display='none'"><i class="fa-solid fa-times"></i></div>
+        <div style="position:absolute; top:20px; left:20px; display:flex; align-items:center; gap:12px; color:white; z-index:10;">
+            <img id="storyViewerAvatar" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid white;">
+            <span id="storyViewerName" style="font-weight:700; font-size:16px;"></span>
+        </div>
+        <img id="storyViewerImg" src="" style="max-width:90%; max-height:80vh; border-radius:12px; object-fit:contain;">
+    </div>
+
     <!-- COMMENTS MODAL -->
     <div id="commentsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:flex-end; justify-content:center;">
         <div style="width:100%; max-width:600px; height:70vh; background:var(--card); border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; animation: slideUp 0.3s ease-out;">
@@ -434,7 +447,7 @@
                 <i class="fa-solid fa-times" style="font-size:20px; cursor:pointer;" onclick="closeComments()"></i>
             </div>
             <div id="commentsList" style="flex:1; overflow-y:auto; padding:20px;"></div>
-            <div style="border-top:1px solid var(--border); padding:12px 16px;">
+            <div style="border-top:1px solid var(--border); padding:12px 16px; padding-bottom: 100px;">
                 <div style="display:flex; gap:10px; margin-bottom:8px; font-size:20px; cursor:pointer;">
                     <span onclick="insertEmoji('😂')">😂</span><span onclick="insertEmoji('😍')">😍</span><span onclick="insertEmoji('🔥')">🔥</span><span onclick="insertEmoji('👏')">👏</span><span onclick="insertEmoji('😢')">😢</span><span onclick="insertEmoji('🎉')">🎉</span><span onclick="insertEmoji('❤️')">❤️</span><span onclick="insertEmoji('👍')">👍</span>
                 </div>
@@ -444,9 +457,6 @@
                     <i class="fa-solid fa-paper-plane" style="color:var(--accent); font-size:20px; cursor:pointer;" onclick="submitComment()"></i>
                 </div>
             </div>
-        </div>
-    </div>
-    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
         </div>
     </div>
 </body>

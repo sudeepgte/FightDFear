@@ -11,8 +11,32 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-tokens.css">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Inter',sans-serif;background:var(--doc-bg);height:100vh;display:flex;flex-direction:column;color:var(--doc-text)}
-    .ch-header{background:var(--doc-card);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--doc-border);box-shadow:var(--doc-shadow)}
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--doc-bg);
+      display: flex;
+      flex-direction: column;
+      color: var(--doc-text);
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+    }
+    .ch-header {
+      background: var(--doc-card);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--doc-border);
+      box-shadow: var(--doc-shadow);
+      flex: 0 0 auto;
+      z-index: 20;
+    }
     .ch-back{width:36px;height:36px;border-radius:10px;background:var(--doc-primary-soft);display:flex;align-items:center;justify-content:center;color:var(--doc-primary);text-decoration:none;font-size:16px;border:1px solid #fecdd3}
     .ch-back:hover{background:var(--doc-primary-light)}
     .ch-avatar{width:42px;height:42px;border-radius:50%;background:var(--doc-primary-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--doc-primary);flex-shrink:0}
@@ -23,12 +47,30 @@
     .ch-act.call{background:var(--doc-success-bg);color:var(--doc-success)}
     .ch-act.video{background:var(--doc-primary-soft);color:#be123c}
     .ch-act:hover{transform:scale(1.06)}
-    .ch-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--doc-bg)}
+    .ch-messages{
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--doc-bg);
+    }
     .ch-msg{max-width:75%;padding:10px 16px;border-radius:16px;font-size:13px;line-height:1.5;animation:fadeIn 0.3s;box-shadow:var(--doc-shadow)}
     .ch-msg.sent{align-self:flex-end;background:var(--doc-primary);color:#fff;border-bottom-right-radius:4px}
     .ch-msg.received{align-self:flex-start;background:var(--doc-card);color:var(--doc-text);border:1px solid var(--doc-border);border-bottom-left-radius:4px}
     .ch-msg .time{font-size:9px;opacity:0.7;margin-top:4px;display:block}
-    .ch-input-area{padding:12px 16px;background:var(--doc-card);border-top:1px solid var(--doc-border);display:flex;gap:10px;align-items:center}
+    .ch-input-area{
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      background: var(--doc-card);
+      border-top: 1px solid var(--doc-border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 20;
+    }
     .ch-input-area input{flex:1;padding:12px 18px;border:1px solid var(--doc-border);border-radius:999px;background:var(--doc-bg);color:var(--doc-text);font-size:13px;font-family:inherit;outline:none}
     .ch-input-area input:focus{border-color:var(--doc-primary);box-shadow:0 0 0 3px rgba(244,63,94,0.12)}
     .ch-input-area input::placeholder{color:var(--doc-muted)}

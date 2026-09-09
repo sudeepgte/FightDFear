@@ -10,10 +10,10 @@
     /* ============================================
        ORIGINAL STYLES (kept exactly as is)
        ============================================ */
-    /* 🌸 Lavender-Themed Styles */
+    /* Brand Theme Styles */
     body {
-        font-family: Arial, sans-serif;
-        background: linear-gradient(to right, #E6E6FA, #D8BFD8); /* Light to dark lavender */
+        font-family: 'Poppins', sans-serif;
+        background: #F8FAFC; /* Neutral background */
         display: flex;
         justify-content: center;
         align-items: center;
@@ -22,52 +22,59 @@
     }
     
     .container {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        width: 350px;
+        background: #FFFFFF;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E2E8F0;
+        width: 380px;
         text-align: center;
     }
 
     h2 {
-        color: #6A5ACD; /* Dark lavender */
+        color: #0F172A; /* Dark navy text */
+        font-weight: 700;
+        margin-bottom: 5px;
     }
 
     input {
         width: 90%;
-        padding: 10px;
-        margin: 10px 0;
-        border: 1px solid #D8BFD8; /* Light lavender border */
-        border-radius: 6px;
+        padding: 12px 14px;
+        margin: 15px 0;
+        border: 1px solid #E2E8F0; /* Light gray border */
+        border-radius: 12px;
         outline: none;
         transition: 0.3s;
+        font-size: 0.95rem;
+        color: #0F172A;
     }
 
     input:focus {
-        border-color: #6A5ACD; /* Dark lavender on focus */
-        box-shadow: 0px 0px 6px rgba(106, 90, 205, 0.5);
+        border-color: #F43F5E; /* Brand pink on focus */
+        box-shadow: 0px 0px 0px 3px rgba(244, 63, 94, 0.12);
     }
 
     button {
-        background: #6A5ACD; /* Dark lavender */
+        background: #F43F5E; /* Brand pink */
         color: white;
         border: none;
-        padding: 12px;
+        padding: 14px;
         width: 100%;
-        border-radius: 6px;
+        border-radius: 50px;
         font-size: 16px;
+        font-weight: 600;
         cursor: pointer;
         transition: 0.3s;
+        margin-top: 10px;
     }
 
     button:hover {
-        background: #483D8B; /* Deeper lavender */
+        background: #E11D48; /* Darker pink on hover */
+        transform: translateY(-2px);
     }
 
     p {
-        color: #483D8B;
-        font-weight: bold;
+        color: #64748B;
         margin-top: 10px;
     }
 

@@ -21,6 +21,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 20px;
+            padding-bottom: 100px;
         }
         body.fdf-page-chats .friend-card {
             background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 100%);
@@ -126,9 +127,7 @@
                     <h1 class="fdf-page-title">My Active Chats</h1>
                     <p class="fdf-page-subtitle">Access your ongoing conversations with friends and medical professionals.</p>
                 </div>
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="fdf-nav-btn">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
+
             </header>
 
             <div class="friends-grid">

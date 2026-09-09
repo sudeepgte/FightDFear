@@ -182,7 +182,6 @@
             <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
-            <a href="${pageContext.request.contextPath}/logout" title="Logout" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--accent); text-decoration:none;"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span></a>
         </div>
     </header>
 
@@ -210,9 +209,7 @@
                 <i class="fa-solid fa-gear"></i> Settings
             </a>
             <div style="margin:20px 0;"></div>
-            <a href="${pageContext.request.contextPath}/logout" class="ls-item">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-            </a>
+
         </div>
 
 
@@ -269,7 +266,7 @@
                     <div id="chatMessagesArea" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; min-height:0;">
                     </div>
 
-                    <div style="padding:15px; border-top:1px solid var(--border); background:var(--bg); display:flex; align-items:center; gap:12px; position:relative;">
+                    <div id="chatInputArea" style="padding:15px; border-top:1px solid var(--border); background:var(--bg); display:flex; align-items:center; gap:12px; position:relative;">
                         <i class="fa-regular fa-face-smile" style="font-size:24px; color:var(--sub); cursor:pointer;" onclick="togglePicker('emoji')"></i>
                         <i class="fa-solid fa-note-sticky" style="font-size:24px; color:var(--sub); cursor:pointer;" onclick="togglePicker('sticker')"></i>
                         <span style="font-size:18px; font-weight:bold; color:var(--sub); cursor:pointer;" onclick="togglePicker('gif')">GIF</span>
@@ -297,7 +294,7 @@
                         <input type="file" id="chatFileInput" style="display:none;" accept="image/*,video/*" onchange="handleFileUpload(event)">
                         <i class="fa-solid fa-paperclip" style="color:var(--sub); cursor:pointer; font-size:20px;" onclick="triggerFileUpload()"></i>
                         <i class="fa-solid fa-moon theme-toggle" onclick="toggleTheme()"></i>
-                        <button onclick="sendChatMessage()" style="width:45px; height:45px; border-radius:50%; border:none; background:var(--accent); color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;">
+                        <button onclick="sendChatMessage()" style="flex-shrink:0; width:45px; height:45px; border-radius:50%; border:none; background:var(--accent); color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.2s;">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
                     </div>
@@ -631,7 +628,7 @@
         function toggleChatPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/chat'; }
         function toggleNotifPanel() {}
     </script>
-    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .chat-container { border-radius: 0 !important; border-left: none !important; border-right: none !important; flex-direction: column !important; height: auto !important; position: static !important; } .chat-container > div:first-child { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; max-height: 400px; } } </style>
+    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { body { padding-bottom: 80px; } .chat-container { border-radius: 0 !important; border-left: none !important; border-right: none !important; flex-direction: column !important; height: auto !important; position: static !important; } .chat-container > div:first-child { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; max-height: 400px; } #chatInputArea { gap: 4px !important; padding: 8px 4px !important; flex-wrap: nowrap !important; } #chatInputMsg { min-width: 100px !important; padding: 8px 10px !important; font-size: 14px !important; } #chatInputArea > i, #chatInputArea > span { font-size: 16px !important; } .theme-toggle { display: none !important; } } </style>
         </div>
     </div>
 </body>

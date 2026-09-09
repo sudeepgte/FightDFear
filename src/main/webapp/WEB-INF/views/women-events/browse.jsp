@@ -145,6 +145,8 @@
             font-size: 15px; 
             color: var(--fdf-text); 
             font-weight: 500;
+            min-width: 0; /* Prevents placeholder from pushing layout */
+            text-overflow: ellipsis;
         }
         .search-bar input::placeholder {
             color: #94A3B8;
@@ -160,10 +162,25 @@
             font-size: 14px;
             box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
             transition: var(--transition-smooth);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .search-bar button:hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 18px rgba(244, 63, 94, 0.3);
+        }
+        @media (max-width: 576px) {
+            .search-bar {
+                padding: 6px 6px 6px 16px;
+                gap: 8px;
+            }
+            .search-bar input {
+                font-size: 13px;
+            }
+            .search-bar button {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
         }
  
         /* Stats strip */
