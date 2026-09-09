@@ -3,10 +3,12 @@ package in.sp.main;
 import in.sp.main.Entities.User;
 import in.sp.main.Repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
+@Profile("!prod")
 public class TestRunner implements CommandLineRunner {
     private final UserRepository userRepository;
     public TestRunner(UserRepository userRepository) { this.userRepository = userRepository; }

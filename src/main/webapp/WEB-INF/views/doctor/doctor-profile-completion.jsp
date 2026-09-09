@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Doctor Profile — Fight D Fear</title>
@@ -323,7 +325,10 @@
 
                 <!-- EDIT -->
                 <div id="editPanel">
-                    <form id="profileForm" action="${pageContext.request.contextPath}/doctors/profile-completion" method="post" enctype="multipart/form-data" novalidate>
+                    <form id="profileForm" action="${pageContext.request.contextPath}/doctors/profile-completion${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" novalidate>
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <!-- 1. Professional Information -->
                         <div class="section-card">
                             <div class="section-title"><span class="num">1</span> Professional Information</div>
@@ -345,9 +350,7 @@
                                 <div class="field">
                                     <label>Gender</label>
                                     <select name="gender" id="gender">
-                                        <option value="FEMALE" ${doctor.gender == 'FEMALE' ? 'selected' : ''}>Female</option>
-                                        <option value="MALE" ${doctor.gender == 'MALE' ? 'selected' : ''}>Male</option>
-                                        <option value="OTHER" ${doctor.gender == 'OTHER' ? 'selected' : ''}>Other</option>
+                                        <option value="FEMALE" selected>Female</option>
                                     </select>
                                 </div>
                                 <div class="field">
@@ -1104,6 +1107,32 @@
                 confirmSaveBtn.disabled = false;
                 confirmSaveBtn.textContent = 'Confirm & Save';
             });
+            function ensureCsrfOnForm() {
+                if (!form) return;
+                var token = '';
+                var csrfInput = form.querySelector('input[name="_csrf"]');
+                if (csrfInput && csrfInput.value) {
+                    token = csrfInput.value;
+                }
+                if (!token) {
+                    var match = document.cookie.match(/(^|;)\s*XSRF-TOKEN\s*=\s*([^;]+)/);
+                    if (match) token = decodeURIComponent(match[2]);
+                }
+                if (token) {
+                    if (!form.querySelector('input[name="_csrf"]')) {
+                        var hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.name = '_csrf';
+                        hidden.value = token;
+                        form.appendChild(hidden);
+                    }
+                    if (form.action && !form.action.includes('_csrf=')) {
+                        var sep = form.action.includes('?') ? '&' : '?';
+                        form.action += sep + '_csrf=' + encodeURIComponent(token);
+                    }
+                }
+            }
+
             confirmSaveBtn.addEventListener('click', () => {
                 if (saving) return;
                 if (!validateKeyFields('draft')) {
@@ -1116,6 +1145,7 @@
                 saving = true;
                 confirmSaveBtn.disabled = true;
                 confirmSaveBtn.textContent = 'Saving...';
+                ensureCsrfOnForm();
                 form.submit();
             });
 
@@ -1132,6 +1162,7 @@
                     if (intentField) intentField.value = 'submitVerification';
                     saving = true;
                     submitVerifyBtn.textContent = 'Submitting...';
+                    ensureCsrfOnForm();
                     form.submit();
                 });
             }
@@ -1142,10 +1173,12 @@
                     saving = false;
                     return;
                 }
+                ensureCsrfOnForm();
             });
 
             updateLivePreview();
         })();
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Book Offer</title>
     <style>
         body {
@@ -59,6 +61,7 @@
 
     <form:form action="${pageContext.request.contextPath}/salon/saveBooking?offerId=${offer.id}"
                method="post" modelAttribute="booking">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
         <div>
             <label>Your Name:</label>
@@ -92,5 +95,6 @@
     </form:form>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

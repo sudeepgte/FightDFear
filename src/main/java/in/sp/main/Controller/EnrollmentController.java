@@ -422,24 +422,27 @@ public class EnrollmentController {
     @RequestMapping(value = "/downloadCertificate/{enrollmentId}", method = GET)
     public ResponseEntity<FileSystemResource> downloadCertificate(@PathVariable Long enrollmentId, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
-        if (currentUser == null) {
+        Object adminUser = session.getAttribute("admin");
+        if (currentUser == null && adminUser == null) {
             return ResponseEntity.status(401).build();
         }
-        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
-        if (enrollment.getUser() == null || !enrollment.getUser().getId().equals(currentUser.getId())) {
+        Enrollment enrollment = enrollmentRepository.findById(enrollmentId).orElse(null);
+        if (enrollment == null) {
+            return ResponseEntity.status(404).build();
+        }
+        if (adminUser == null && (enrollment.getUser() == null || !enrollment.getUser().getId().equals(currentUser.getId()))) {
             return ResponseEntity.status(403).build();
         }
         String certificatePath = enrollment.getCertificateDetails();
 
         if (certificatePath == null || certificatePath.isEmpty()) {
-            throw new RuntimeException("Certificate not available for download");
+            return ResponseEntity.status(404).build();
         }
 
         FileSystemResource resource = new FileSystemResource(certificatePath);
 
         if (!resource.exists()) {
-            throw new RuntimeException("Certificate file does not exist at the specified path");
+            return ResponseEntity.status(404).build();
         }
 
         HttpHeaders headers = new HttpHeaders();

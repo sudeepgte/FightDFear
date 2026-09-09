@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <title>Edit Video</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
@@ -230,7 +232,10 @@
 
     <div class="form-container">
         <h2>Edit Video</h2>
-        <form action="${pageContext.request.contextPath}/video/update/${video.id}" method="post" enctype="multipart/form-data">
+        <form action="${pageContext.request.contextPath}/video/update/${video.id}${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" value="${video.title}" required>
@@ -249,6 +254,7 @@
         </form>
     </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

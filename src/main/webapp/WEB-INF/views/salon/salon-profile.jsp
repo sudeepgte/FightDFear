@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Profile | Fight D Fear</title>
@@ -411,7 +413,7 @@
                 justify-content: space-between;
             }
             .main-content {
-                padding: 12px !important;
+                padding: 12px 12px 120px 12px !important;
                 width: 100%;
                 overflow-x: hidden;
             }
@@ -510,7 +512,10 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
     
     <!-- Main Content Area -->
     <div class="main-content">
-        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
+        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             <input type="hidden" name="id" value="${salon.id}">
             
             <!-- Top Header -->
@@ -1409,6 +1414,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
             });
         });
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

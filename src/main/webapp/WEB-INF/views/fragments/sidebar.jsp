@@ -262,8 +262,11 @@
                 <a href="${pageContext.request.contextPath}/users/wallet" class="sidebar-list-group-item ${fn:contains(currentUri,'/wallet') ? 'active' : ''}">
                     <i class="bi bi-wallet2"></i> My Wallet
                 </a>
-                <a href="${pageContext.request.contextPath}/doctors/list" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors') ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/doctors/list" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors/list') or (fn:contains(currentUri,'/doctors') and not fn:contains(currentUri,'/doctors/myAppointments')) ? 'active' : ''}">
                     <i class="bi bi-heart-pulse"></i> Women Doctors
+                </a>
+                <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors/myAppointments') ? 'active' : ''}">
+                    <i class="bi bi-calendar-check"></i> My Appointments
                 </a>
                 <a href="${pageContext.request.contextPath}/marketplace" class="sidebar-list-group-item ${fn:contains(currentUri, '/marketplace') && (empty requestScope['javax.servlet.forward.query_string'] || !fn:contains(requestScope['javax.servlet.forward.query_string'], 'category=')) && !fn:contains(currentUri, '/marketplace/earn') ? 'active' : ''}">
                     <i class="bi bi-shop"></i> Women Marketplace

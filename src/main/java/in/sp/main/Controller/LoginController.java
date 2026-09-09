@@ -37,13 +37,23 @@ public class LoginController {
     @Autowired
     private in.sp.main.Repository.FitnessTrainerRepository fitnessTrainerRepository;
 
+    @Autowired
+    private in.sp.main.Service.RateLimitService rateLimitService;
+
+    @Autowired
+    private in.sp.main.Service.SecurityAuditLogger securityAuditLogger;
+
     // Show login page
     @GetMapping
     public String showLoginPage(@RequestParam(value = "redirect", required = false) String redirect,
                                 HttpSession session,
                                 Model model) {
         if (redirect != null && !redirect.isEmpty()) {
-            session.setAttribute("redirectAfterLogin", redirect);
+            if (in.sp.main.Util.SafeRedirectValidator.isSafeRedirect(redirect)) {
+                session.setAttribute("redirectAfterLogin", redirect.trim());
+            } else {
+                session.removeAttribute("redirectAfterLogin");
+            }
         }
         // One-time post-registration prefill (email always; password only if still in session).
         Object prefillEmail = session.getAttribute("regPrefillEmail");
@@ -76,8 +86,15 @@ public class LoginController {
                         Model model,
                         HttpSession session,
                         jakarta.servlet.http.HttpServletResponse response) {
-        String normEmail = (email == null) ? "" : email.trim().toLowerCase();
+        String normEmail = (email == null) ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
         String rawPassword = (password == null) ? "" : password;
+
+        String failKey = "login:web:fail:" + normEmail;
+        if (!normEmail.isBlank() && !rateLimitService.isAllowed(failKey, 5, java.time.Duration.ofMinutes(15))) {
+            securityAuditLogger.logAuthFailure("WEB", normEmail, "RATE_LIMIT_EXCEEDED", "unknown");
+            model.addAttribute("error", "Too many failed login attempts. Please try again in 15 minutes.");
+            return "login";
+        }
 
         // 1. Try Normal User
         User user = userService.findByUsername(normEmail);
@@ -87,14 +104,17 @@ public class LoginController {
                 userService.createUser(user);
             });
             if (ok) {
+                rateLimitService.clear(failKey);
                 VerificationStatus status = user.getVerificationStatus();
                 // Parity with MobileAuthController: members may sign in after email OTP.
                 // PENDING is allowed; only REJECTED / banned are blocked.
                 if (status == VerificationStatus.REJECTED) {
+                    securityAuditLogger.logAuthFailure("WEB", normEmail, "ACCOUNT_REJECTED", "unknown");
                     model.addAttribute("error", "Your account has been rejected by admin.");
                     return "login";
                 }
                 if (user.isBanned()) {
+                    securityAuditLogger.logAuthFailure("WEB", normEmail, "ACCOUNT_BANNED", "unknown");
                     model.addAttribute("error", "Your account has been banned due to policy violations.");
                     return "login";
                 }
@@ -111,6 +131,7 @@ public class LoginController {
                 session.removeAttribute("loggedTrainer");
                 session.removeAttribute("admin");
                 session.setAttribute("user", user);
+                securityAuditLogger.logAuthSuccess("WEB", user.getId(), user.getEmail(), "USER", "unknown");
 
                 String token = jwtUtil.generateToken(user.getEmail(), "USER");
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
@@ -120,14 +141,9 @@ public class LoginController {
                 response.addCookie(cookie);
 
                 String redirect = (String) session.getAttribute("redirectAfterLogin");
-                if (redirect != null && !redirect.isBlank()) {
-                    session.removeAttribute("redirectAfterLogin");
-                    if (redirect.startsWith("/")) {
-                        return "redirect:" + redirect;
-                    }
-                    return "redirect:/" + redirect;
-                }
-                return "redirect:/users/dashboard";
+                session.removeAttribute("redirectAfterLogin");
+                String target = in.sp.main.Util.SafeRedirectValidator.getSafeLocalRedirect(redirect, "/users/dashboard");
+                return "redirect:" + target;
             }
         }
 
@@ -140,6 +156,7 @@ public class LoginController {
                 centreRepository.save(centre);
             });
             if (ok) {
+                rateLimitService.clear(failKey);
                 session.removeAttribute("user");
                 session.removeAttribute("loggedTrainer");
                 session.setAttribute("loggedCentre", centre);
@@ -172,6 +189,7 @@ public class LoginController {
                 fitnessTrainerRepository.save(trainer);
             });
             if (ok) {
+                rateLimitService.clear(failKey);
                 if (trainer.isSuspended()) {
                     model.addAttribute("error", "Your trainer account has been suspended.");
                     return "login";
@@ -192,7 +210,10 @@ public class LoginController {
             }
         }
 
-        log.warn("Login failed: invalid credentials for email={}", normEmail);
+        if (!normEmail.isBlank()) {
+            rateLimitService.recordFailure(failKey);
+        }
+        securityAuditLogger.logAuthFailure("WEB", normEmail, "INVALID_CREDENTIALS", "unknown");
         model.addAttribute("error", "Invalid credentials. Please try again.");
         return "login";
     }

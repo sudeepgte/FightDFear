@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Coach Profile — Fight D Fear</title>
@@ -549,7 +551,10 @@
                 </c:if>
 
                 <div class="submit-bar">
-                    <form action="${pageContext.request.contextPath}/fitness/trainer/submitVerification" method="post">
+                    <form action="${pageContext.request.contextPath}/fitness/trainer/submitVerification${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <button type="submit" class="btn-submit-verification" 
                                 <c:if test="${trainer.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
                             <c:choose>
@@ -567,7 +572,10 @@
                     </form>
                 </div>
 
-                <form id="trainerProfileForm" action="${pageContext.request.contextPath}/fitness/trainer/updateProfile" method="post" enctype="multipart/form-data">
+                <form id="trainerProfileForm" action="${pageContext.request.contextPath}/fitness/trainer/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="id" value="${trainer.id}">
 
                     <!-- Section 1: Trainer Identity -->
@@ -1112,7 +1120,6 @@
 
         document.addEventListener('DOMContentLoaded', bindLivePreview);
     </script>
-
-
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

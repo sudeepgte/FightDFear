@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Event Host Verification - Fight D Fear Admin</title>
@@ -405,6 +407,7 @@
                           <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/profile"><i class="fas fa-eye"></i> View</a>
                           <c:if test="${stKey != 'APPROVED' && stKey != 'VERIFIED'}">
                             <form action="${pageContext.request.contextPath}/admin/event-hosts/${h.id}/approve" method="post">
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                               <button type="submit" class="ap-btn-view" style="color: #15803D !important; border-color: #BBF7D0; background: #F0FDF4; cursor: pointer;">
                                 <i class="fas fa-check"></i> Approve
                               </button>
@@ -524,9 +527,11 @@
                         <td onclick="event.stopPropagation();">
                           <div class="eh-inline-forms">
                             <form action="${pageContext.request.contextPath}/admin/women-events/${e.id}/approve" method="post">
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                               <button type="submit" class="ap-btn ap-btn-approve" style="padding:7px 12px;font-size:0.78rem;">Approve</button>
                             </form>
                             <form action="${pageContext.request.contextPath}/admin/women-events/${e.id}/reject" method="post">
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                               <button type="submit" class="ap-btn ap-btn-reject" style="padding:7px 12px;font-size:0.78rem;">Reject</button>
                             </form>
                           </div>
@@ -676,5 +681,6 @@
   }
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

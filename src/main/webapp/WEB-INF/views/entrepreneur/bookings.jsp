@@ -5,6 +5,8 @@
             <html lang="en">
 
             <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>My Bookings | Entrepreneur Dashboard</title>
@@ -481,6 +483,7 @@
                                                                         <form
                                                                             action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/accept"
                                                                             method="post" style="display:inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                             <button type="submit"
                                                                                 class="btn btn-sm btn-brand-pink rounded-pill px-3"
                                                                                 style="font-weight: 600;">Accept</button>
@@ -488,6 +491,7 @@
                                                                         <form
                                                                             action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/reject"
                                                                             method="post" style="display:inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                             <button type="submit"
                                                                                 class="btn btn-sm btn-brand-pink rounded-pill px-3"
                                                                                 style="font-weight: 600;">Reject</button>
@@ -598,6 +602,7 @@
                         }
                     }
                 </script>
-            </body>
+            <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+</body>
 
             </html>

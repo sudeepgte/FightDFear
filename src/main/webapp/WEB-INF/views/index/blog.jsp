@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Energen - Free Bootstrap 4 Template by Colorlib</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -289,5 +291,6 @@
   <script src="/beauty/js/google-map.js"></script>
   <script src="/beauty/js/main.js"></script>
     
-  </body>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+</body>
 </html>

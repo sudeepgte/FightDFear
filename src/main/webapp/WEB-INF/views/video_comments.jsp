@@ -3,6 +3,8 @@
 
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>💬 Video Comments</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -312,8 +314,8 @@
                 <!-- Comment Body -->
                 <div class="flex-grow-1">
                     <div>
-                        <span class="fw-bold me-1" style="font-size: 0.9rem;">${comment.user.fullName}</span>
-                        <span style="font-size: 0.9rem; color: #262626;">${comment.text}</span>
+                        <span class="fw-bold me-1" style="font-size: 0.9rem;"><c:out value="${comment.user.fullName}"/></span>
+                        <span style="font-size: 0.9rem; color: #262626;"><c:out value="${comment.text}"/></span>
                     </div>
                     
                     <div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">
@@ -325,7 +327,7 @@
                     <div class="reply-form-container mt-2 mb-3" style="display: none;">
                         <form class="reply-form" data-comment-id="${comment.id}">
                             <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-white border-end-0 text-muted" style="font-size:0.8rem; border-radius: 20px 0 0 20px;">↳ Replying to @${comment.user.fullName}</span>
+                                <span class="input-group-text bg-white border-end-0 text-muted" style="font-size:0.8rem; border-radius: 20px 0 0 20px;">↳ Replying to @<c:out value="${comment.user.fullName}"/></span>
                                 <input type="text" class="form-control border-start-0 reply-text" placeholder="Write a reply..." style="font-size:0.8rem;" required>
                                 <button type="submit" class="btn btn-link text-danger text-decoration-none fw-bold" style="border:1px solid #dee2e6; border-left:none; border-radius: 0 20px 20px 0;">➤</button>
                             </div>
@@ -344,8 +346,8 @@
                                         <img src="${pageContext.request.contextPath}${not empty reply.user.profilePhoto ? reply.user.profilePhoto : '/assets/img/default-avatar.png'}" alt="Avatar" class="rounded-circle me-2 mt-1" style="width: 24px; height: 24px; object-fit: cover; background: #eee;">
                                         <div class="flex-grow-1">
                                             <div>
-                                                <span class="fw-bold me-1" style="font-size: 0.9rem;">${reply.user.fullName}</span>
-                                                <span style="font-size: 0.9rem; color: #262626;">${reply.text}</span>
+                                                <span class="fw-bold me-1" style="font-size: 0.9rem;"><c:out value="${reply.user.fullName}"/></span>
+                                                <span style="font-size: 0.9rem; color: #262626;"><c:out value="${reply.text}"/></span>
                                             </div>
                                             <div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">
                                                 <span class="me-3">1h</span>
@@ -383,6 +385,11 @@
 <div style="height: 100px;"></div>
 
 <script>
+function escapeHtml(str) {
+    if (!str) return '';
+    return $('<div>').text(str).html();
+}
+
 $(document).ready(function() {
 
     // Submit top-level comment
@@ -412,12 +419,14 @@ $(document).ready(function() {
             if (!data.error) {
                 // Append reply dynamically
                 const avatarUrl = '${pageContext.request.contextPath}' + ('${not empty currentUser.profilePhoto ? currentUser.profilePhoto : "/assets/img/default-avatar.png"}');
+                const safeUser = escapeHtml(data.user);
+                const safeText = escapeHtml(data.text);
                 const replyHtml = '<div class="d-flex mb-3" data-comment-id="' + data.id + '">' +
                     '<img src="' + avatarUrl + '" alt="Avatar" class="rounded-circle me-2 mt-1" style="width: 24px; height: 24px; object-fit: cover; background: #eee;">' +
                     '<div class="flex-grow-1">' +
                         '<div>' +
-                            '<span class="fw-bold me-1" style="font-size: 0.9rem;">' + data.user + '</span>' +
-                            '<span style="font-size: 0.9rem; color: #262626;">' + data.text + '</span>' +
+                            '<span class="fw-bold me-1" style="font-size: 0.9rem;">' + safeUser + '</span>' +
+                            '<span style="font-size: 0.9rem; color: #262626;">' + safeText + '</span>' +
                         '</div>' +
                         '<div class="d-flex align-items-center mt-1 text-muted" style="font-size: 0.75rem; font-weight: 500;">' +
                             '<span class="me-3">now</span>' +
@@ -461,6 +470,7 @@ $(document).ready(function() {
 });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

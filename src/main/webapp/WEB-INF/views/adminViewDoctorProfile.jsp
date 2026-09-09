@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${not empty doctor.fullName ? doctor.fullName : 'Doctor'} - Application Review | Fight D Fear Admin</title>
@@ -133,6 +135,7 @@
 <c:if test="${empty statusKey}"><c:set var="statusKey" value="PENDING"/></c:if>
 <c:set var="displayStatus" value="${not empty statusLabel ? statusLabel : pp.doctorProfileStatusLabel}"/>
 <c:if test="${empty displayStatus}"><c:set var="displayStatus" value="${statusKey}"/></c:if>
+<c:set var="isApproved" value="${doctor.doctorProfileStatus == 'APPROVED' || doctor.verificationStatus == 'VERIFIED' || statusKey == 'APPROVED' || statusKey == 'VERIFIED'}"/>
 
 
 <div class="layout">
@@ -744,7 +747,7 @@
         </c:choose>
       </div>
 
-      <!-- 8. Admin Decision -->
+      <!-- 7. Admin Decision -->
       <div class="review-card">
         <div class="section-header">
           <i class="bi bi-gavel"></i>
@@ -760,51 +763,93 @@
           </c:if>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Decision notes / comments</label>
-          <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the doctor (required for reject / request changes)"></textarea>
-        </div>
+        <c:choose>
+          <c:when test="${isApproved}">
+            <div class="alert alert-success d-flex align-items-center gap-2 mb-3" style="border-radius:12px;">
+              <i class="fas fa-check-circle fs-5 text-success"></i>
+              <div>
+                <strong>Doctor Profile Approved</strong> — This doctor has already been verified and is active on Fight D Fear. No further approval required.
+              </div>
+            </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Request-change reasons (optional checkboxes)</label>
-          <div class="d-flex flex-wrap gap-2 reason-checks">
-            <label><input type="checkbox" class="reason-box" value="Professional information"> Professional information</label>
-            <label><input type="checkbox" class="reason-box" value="Clinic details"> Clinic details</label>
-            <label><input type="checkbox" class="reason-box" value="Documents"> Documents</label>
-            <label><input type="checkbox" class="reason-box" value="Availability"> Availability</label>
-            <label><input type="checkbox" class="reason-box" value="Fees"> Fees</label>
-          </div>
-        </div>
+            <div class="action-bar">
+              <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                <input type="hidden" name="notes" id="changesNotes" value="Admin requested profile updates.">
+                <input type="hidden" name="reasons" id="changesReasons" value="Profile update">
+                <button type="submit" class="btn-changes">
+                  <i class="fas fa-edit"></i> Request Changes
+                </button>
+              </form>
+              <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
+                    onsubmit="return confirm('Revoke / reject this doctor?')">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                <input type="hidden" name="notes" id="rejectNotes" value="Revoked by admin.">
+                <button type="submit" class="btn-reject">
+                  <i class="fas fa-times-circle"></i> Revoke Approval
+                </button>
+              </form>
+            </div>
+          </c:when>
+          <c:otherwise>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Decision notes / comments</label>
+              <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the doctor (required for reject / request changes)"></textarea>
+            </div>
 
-        <div class="action-bar">
-          <form id="approveForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
-            <input type="hidden" name="notes" id="approveNotes">
-            <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
-              <i class="fas fa-check-circle"></i> Approve
-            </button>
-          </form>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Request-change reasons (optional checkboxes)</label>
+              <div class="d-flex flex-wrap gap-2 reason-checks">
+                <label><input type="checkbox" class="reason-box" value="Professional information"> Professional information</label>
+                <label><input type="checkbox" class="reason-box" value="Clinic details"> Clinic details</label>
+                <label><input type="checkbox" class="reason-box" value="Documents"> Documents</label>
+                <label><input type="checkbox" class="reason-box" value="Availability"> Availability</label>
+                <label><input type="checkbox" class="reason-box" value="Fees"> Fees</label>
+              </div>
+            </div>
 
-          <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0">
-            <input type="hidden" name="notes" id="changesNotes">
-            <input type="hidden" name="reasons" id="changesReasons">
-            <button type="submit" class="btn-changes"
-                    onclick="
-                      document.getElementById('changesNotes').value=document.getElementById('decisionNotes').value;
-                      document.getElementById('changesReasons').value=Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value).join(', ');
+            <div class="action-bar">
+              <form id="approveForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/verify" method="post" class="m-0 p-0">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                <input type="hidden" name="notes" id="approveNotes">
+                <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
+                  <i class="fas fa-check-circle"></i> Approve
+                </button>
+              </form>
+
+              <form id="changesForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/request-changes" method="post" class="m-0 p-0"
+                    onsubmit="
+                      var notes = document.getElementById('decisionNotes').value.trim();
+                      var checked = Array.from(document.querySelectorAll('.reason-box:checked')).map(e=>e.value);
+                      if(!notes && checked.length === 0){ alert('Please select a reason or enter comments to request changes.'); return false; }
+                      document.getElementById('changesNotes').value = notes;
+                      document.getElementById('changesReasons').value = checked.join(', ');
+                      return true;
                     ">
-              <i class="fas fa-edit"></i> Request Changes
-            </button>
-          </form>
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                <input type="hidden" name="notes" id="changesNotes">
+                <input type="hidden" name="reasons" id="changesReasons">
+                <button type="submit" class="btn-changes">
+                  <i class="fas fa-edit"></i> Request Changes
+                </button>
+              </form>
 
-          <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
-                onsubmit="return confirm('Reject this doctor?')">
-            <input type="hidden" name="notes" id="rejectNotes">
-            <button type="submit" class="btn-reject"
-                    onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
-              <i class="fas fa-times-circle"></i> Reject
-            </button>
-          </form>
-        </div>
+              <form id="rejectForm" action="${pageContext.request.contextPath}/admin/doctors/${doctor.id}/reject" method="post" class="m-0 p-0"
+                    onsubmit="
+                      var notes = document.getElementById('decisionNotes').value.trim();
+                      if(!notes){ alert('Please enter decision notes / rejection reason before rejecting.'); return false; }
+                      document.getElementById('rejectNotes').value = notes;
+                      return confirm('Reject this doctor?');
+                    ">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                <input type="hidden" name="notes" id="rejectNotes">
+                <button type="submit" class="btn-reject">
+                  <i class="fas fa-times-circle"></i> Reject
+                </button>
+              </form>
+            </div>
+          </c:otherwise>
+        </c:choose>
       </div>
 
     </div>
@@ -812,5 +857,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

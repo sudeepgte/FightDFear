@@ -20,4 +20,8 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
     List<ServiceProvider> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<ServiceProvider> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<ServiceProvider> findByPartnerProfileStatusIsNull();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM ServiceProvider s WHERE s.id = :id")
+    Optional<ServiceProvider> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

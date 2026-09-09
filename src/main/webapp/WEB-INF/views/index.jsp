@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FightDFear - Women's Empowerment</title>
@@ -133,6 +135,25 @@
 
         .nav-item:hover {
             color: var(--brand-rose);
+        }
+
+        .nav-link-direct, .nav-item-header {
+            color: inherit;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+        }
+
+        .nav-chevron {
+            font-size: 0.75rem;
+            transition: transform 0.25s ease;
+            display: inline-block;
+        }
+
+        .nav-item:hover .nav-chevron {
+            transform: translateY(2px);
         }
 
         /* Dropdown */
@@ -533,7 +554,7 @@
 
         @media (max-width: 900px) {
             .navbar {
-                padding: 0 1.5rem;
+                padding: 0 1.25rem;
             }
             .nav-links {
                 display: flex;
@@ -542,43 +563,81 @@
                 top: var(--nav-height);
                 left: 0;
                 right: 0;
-                background: rgba(255, 244, 246, 0.98);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                padding: 1.5rem 2rem 2.5rem;
+                background: linear-gradient(180deg, #FFF6F8 0%, #FFEBF0 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 1.2rem 1.25rem 3.5rem;
                 height: calc(100vh - var(--nav-height));
                 overflow-y: auto;
-                gap: 1rem;
-                align-items: flex-start;
-                box-shadow: 0 20px 40px rgba(45, 20, 44, 0.12);
-                border-top: 1px solid rgba(248, 200, 212, 0.6);
-                transform: translateY(-100%);
+                overflow-x: hidden;
+                gap: 0.65rem;
+                align-items: stretch;
+                box-shadow: 0 20px 40px rgba(45, 20, 44, 0.15);
+                border-top: 1px solid rgba(248, 200, 212, 0.7);
+                transform: translateY(-110%);
                 opacity: 0;
                 visibility: hidden;
-                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.3s ease;
+                transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.25s ease;
                 z-index: 999;
+                -webkit-overflow-scrolling: touch;
             }
             .nav-links.active {
                 transform: translateY(0);
                 opacity: 1;
                 visibility: visible;
             }
-            .split-hero-section {
-                min-height: auto;
-                padding: calc(var(--nav-height) + 1rem) 0 2rem;
-            }
-            .split-hero-container {
-                padding: 0 1.2rem;
-            }
             .nav-links .nav-item {
                 width: 100%;
                 flex-direction: column;
-                align-items: flex-start;
+                align-items: stretch;
                 height: auto;
-                padding: 0.5rem 0;
-                font-size: 1.05rem;
+                padding: 0;
+                font-size: 0.96rem;
                 font-weight: 600;
-                border-bottom: 1px solid rgba(248, 200, 212, 0.3);
+                border-bottom: none;
+                background: #FFFFFF;
+                border: 1px solid rgba(248, 200, 212, 0.7);
+                border-radius: 14px;
+                box-shadow: 0 2px 8px rgba(243, 63, 94, 0.04);
+                overflow: hidden;
+                transition: all 0.2s ease;
+            }
+            .nav-links .nav-item:hover, .nav-links .nav-item:active {
+                border-color: rgba(243, 63, 94, 0.35);
+            }
+            .nav-item-header, .nav-link-direct {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.85rem 1.1rem;
+                color: var(--text-plum);
+                font-weight: 600;
+                font-size: 0.96rem;
+                cursor: pointer;
+                user-select: none;
+                width: 100%;
+                text-decoration: none;
+            }
+            .nav-link-direct:hover, .nav-item-header:hover {
+                background: #FFF0F3;
+                color: var(--brand-plum);
+            }
+            .nav-item-header .nav-chevron {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                background: #FFF1F4;
+                color: var(--brand-plum);
+                font-size: 0.75rem;
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease;
+            }
+            .nav-item.open .nav-item-header .nav-chevron {
+                transform: rotate(180deg);
+                background: var(--brand-plum);
+                color: #FFFFFF;
             }
             .nav-links .dropdown-menu {
                 position: static;
@@ -586,23 +645,91 @@
                 opacity: 1;
                 visibility: visible;
                 box-shadow: none;
-                background: rgba(248, 200, 212, 0.2);
-                padding: 0.5rem 1rem;
-                border-radius: 12px;
-                margin-top: 0.5rem;
+                background: #FFF9FA;
+                padding: 0.4rem 0.6rem 0.6rem;
+                border-radius: 0;
+                border-top: 1px solid rgba(248, 200, 212, 0.4);
+                margin-top: 0;
                 width: 100%;
-                display: flex;
+                display: none;
                 flex-direction: column;
-                gap: 0.4rem;
+                gap: 0.35rem;
+                max-height: 280px;
+                overflow-y: auto;
+            }
+            .nav-item.open .dropdown-menu {
+                display: flex;
+                animation: mobileDropdownSlide 0.25s ease forwards;
+            }
+            @keyframes mobileDropdownSlide {
+                from { opacity: 0; transform: translateY(-6px); }
+                to { opacity: 1; transform: translateY(0); }
             }
             .nav-links .dropdown-item {
-                padding: 0.4rem 0.6rem;
-                font-size: 0.9rem;
-                color: var(--text-plum);
-                border-radius: 6px;
+                padding: 0.6rem 0.85rem;
+                font-size: 0.88rem;
+                font-weight: 500;
+                color: var(--text-charcoal);
+                background: #FFFFFF;
+                border: 1px solid rgba(248, 200, 212, 0.35);
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.2s ease;
+            }
+            .nav-links .dropdown-item:active, .nav-links .dropdown-item:hover {
+                background: #FFF1F3;
+                color: var(--brand-plum);
+                border-color: var(--brand-rose);
+                transform: translateX(3px);
             }
             .mobile-only-item {
                 display: flex;
+            }
+            .mobile-menu-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 0.6rem;
+                margin-top: 0.6rem;
+                padding: 0 !important;
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .mobile-action-btn-row {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.6rem;
+            }
+            .mobile-action-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.8rem 1rem;
+                border-radius: 12px;
+                font-weight: 700;
+                font-size: 0.92rem;
+                text-align: center;
+                text-decoration: none;
+                transition: all 0.25s ease;
+            }
+            .mobile-btn-login {
+                background: #F43F5E;
+                color: #FFFFFF;
+                box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+            }
+            .mobile-btn-register {
+                background: #FFF1F2;
+                color: #F43F5E;
+                border: 1.5px solid #F43F5E;
+            }
+            .mobile-btn-sos {
+                background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%);
+                color: #FFFFFF;
+                box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+                font-size: 0.95rem;
+                letter-spacing: 0.02em;
             }
             .nav-actions .nav-login, .nav-actions .nav-events,
             .nav-actions .nav-auth-wrap {
@@ -612,19 +739,22 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 40px;
-                height: 40px;
+                width: 42px;
+                height: 42px;
                 border-radius: 50%;
                 background: rgba(243, 63, 94, 0.08);
-                border: 1px solid rgba(243, 63, 94, 0.2);
-                color: var(--text-plum);
-                font-size: 1.3rem;
+                border: 1.5px solid rgba(243, 63, 94, 0.2);
+                color: var(--brand-plum);
+                font-size: 1.35rem;
                 cursor: pointer;
-                transition: all 0.3s ease;
+                transition: all 0.25s ease;
+                box-shadow: 0 2px 8px rgba(243, 63, 94, 0.08);
             }
-            .mobile-menu-btn:hover {
+            .mobile-menu-btn:hover, .mobile-menu-btn.active {
                 background: var(--brand-plum);
                 color: var(--white);
+                border-color: var(--brand-plum);
+                box-shadow: 0 4px 14px rgba(243, 63, 94, 0.3);
             }
             
             .carousel-slide {
@@ -1923,79 +2053,108 @@
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
-        <a href="/users/register" class="nav-logo">
+        <a href="${pageContext.request.contextPath}/" class="nav-logo">
             <img src="${pageContext.request.contextPath}/images/logo.png" alt="FightDFear Logo" class="brand-logo-img">
-           
         </a>
         
-        <ul class="nav-links">
-            <li class="nav-item">Home</li>
+        <ul class="nav-links" id="navLinks">
             <li class="nav-item">
-                Safety ⌄
+                <a href="${pageContext.request.contextPath}/" class="nav-link-direct">Home</a>
+            </li>
+            <li class="nav-item has-dropdown">
+                <div class="nav-item-header">
+                    <span>Safety</span>
+                    <span class="nav-chevron">▾</span>
+                </div>
                 <div class="dropdown-menu">
-                    <a href="/users/register" class="dropdown-item">Emergency SOS</a>
-                    <a href="/users/register" class="dropdown-item">Emergency Contacts</a>
-                    <a href="/users/register" class="dropdown-item">Safe Route</a>
-                    <a href="/centres/registerCentre" class="dropdown-item">Self Defense</a>
-                    <a href="/users/register" class="dropdown-item">Safety Awareness</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>🆘</span> Emergency SOS</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>📞</span> Emergency Contacts</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>🗺️</span> Safe Route</a>
+                    <a href="${pageContext.request.contextPath}/centres/registerCentre" class="dropdown-item"><span>🥋</span> Self Defense</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>💡</span> Safety Awareness</a>
                 </div>
             </li>
-            <li class="nav-item">
-                Wellness ⌄
+            <li class="nav-item has-dropdown">
+                <div class="nav-item-header">
+                    <span>Wellness</span>
+                    <span class="nav-chevron">▾</span>
+                </div>
                 <div class="dropdown-menu">
-                    <a href="/doctors/register" class="dropdown-item">Women Doctors</a>
-                    <a href="/fitness/trainer/register" class="dropdown-item">Fitness</a>
-                    <a href="/salons/register" class="dropdown-item">Beauty & Wellness</a>
+                    <a href="${pageContext.request.contextPath}/doctors/register" class="dropdown-item"><span>👩‍⚕️</span> Women Doctors</a>
+                    <a href="${pageContext.request.contextPath}/fitness/trainer/register" class="dropdown-item"><span>💪</span> Fitness</a>
+                    <a href="${pageContext.request.contextPath}/salons/register" class="dropdown-item"><span>💇‍♀️</span> Beauty &amp; Wellness</a>
                 </div>
             </li>
-            <li class="nav-item">
-                Business ⌄
+            <li class="nav-item has-dropdown">
+                <div class="nav-item-header">
+                    <span>Business</span>
+                    <span class="nav-chevron">▾</span>
+                </div>
                 <div class="dropdown-menu">
-                    <a href="/entrepreneur/register" class="dropdown-item">Entrepreneurs</a>
-                    <a href="/investor/register" class="dropdown-item">Women Investors</a>
-                    <a href="/financial-literacy" class="dropdown-item">Financial Literacy</a>
+                    <a href="${pageContext.request.contextPath}/entrepreneur/register" class="dropdown-item"><span>🚀</span> Entrepreneurs</a>
+                    <a href="${pageContext.request.contextPath}/investor/register" class="dropdown-item"><span>📈</span> Women Investors</a>
+                    <a href="${pageContext.request.contextPath}/financial-literacy" class="dropdown-item"><span>💰</span> Financial Literacy</a>
                 </div>
             </li>
-            <li class="nav-item">
-                Community ⌄
+            <li class="nav-item has-dropdown">
+                <div class="nav-item-header">
+                    <span>Community</span>
+                    <span class="nav-chevron">▾</span>
+                </div>
                 <div class="dropdown-menu">
-                    <a href="/women-events/host/register" class="dropdown-item">Events</a>
-                    <a href="/users/register" class="dropdown-item">Women's Community</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/register" class="dropdown-item"><span>🎪</span> Events</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>👭</span> Women's Community</a>
                 </div>
             </li>
             <li class="nav-item mobile-only-item">
-                Login Portals ⌄
+                <a href="${pageContext.request.contextPath}/women-events" class="nav-link-direct"><span>🎉</span> Events</a>
+            </li>
+            <li class="nav-item has-dropdown mobile-only-item">
+                <div class="nav-item-header">
+                    <span>🔐 Login Portals</span>
+                    <span class="nav-chevron">▾</span>
+                </div>
                 <div class="dropdown-menu">
-                    <a href="/login" class="dropdown-item">Join as Member</a>
-                    <a href="/doctors/login" class="dropdown-item">Women Doctor</a>
-                    <a href="/centres/login" class="dropdown-item">Self-Defense Trainer</a>
-                    <a href="/salons/login" class="dropdown-item">Beauty & Wellness</a>
-                    <a href="/lawyer/login" class="dropdown-item">Women Lawyer</a>
-                    <a href="/women-jobs/login" class="dropdown-item">Women Jobs</a>
-                    <a href="/women-products/seller/login" class="dropdown-item">Product Seller</a>
-                    <a href="/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
-                    <a href="/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
-                    <a href="/investor/login" class="dropdown-item">Investor</a>
-                    <a href="/women-events/host/login" class="dropdown-item">Event Host</a>
-                    <a href="/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
+                    <a href="${pageContext.request.contextPath}/login" class="dropdown-item">Join as Member</a>
+                    <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
+                    <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
+                    <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
+                    <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
+                    <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
+                    <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
+                    <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </li>
-            <li class="nav-item mobile-only-item">
-                Register Portals ⌄
-                <div class="dropdown-menu">
-                    <a href="/users/register" class="dropdown-item">Join as Member</a>
-                    <a href="/doctors/register" class="dropdown-item">Women Doctor</a>
-                    <a href="/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
-                    <a href="/salons/register" class="dropdown-item">Beauty & Wellness</a>
-                    <a href="/lawyer/register" class="dropdown-item">Women Lawyer</a>
-                    <a href="/women-jobs/register" class="dropdown-item">Women Jobs</a>
-                    <a href="/women-products/seller/register" class="dropdown-item">Product Seller</a>
-                    <a href="/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
-                    <a href="/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
-                    <a href="/investor/register" class="dropdown-item">Investor</a>
-                    <a href="/women-events/host/register" class="dropdown-item">Event Host</a>
-                    <a href="/fitness/trainer/register" class="dropdown-item">Fitness Trainer</a>
+            <li class="nav-item has-dropdown mobile-only-item">
+                <div class="nav-item-header">
+                    <span>✨ Register Portals</span>
+                    <span class="nav-chevron">▾</span>
                 </div>
+                <div class="dropdown-menu">
+                    <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item">Join as Member</a>
+                    <a href="${pageContext.request.contextPath}/doctors/register" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
+                    <a href="${pageContext.request.contextPath}/salons/register" class="dropdown-item">Beauty &amp; Wellness</a>
+                    <a href="${pageContext.request.contextPath}/lawyer/register" class="dropdown-item">Women Lawyer</a>
+                    <a href="${pageContext.request.contextPath}/women-jobs/register" class="dropdown-item">Women Jobs</a>
+                    <a href="${pageContext.request.contextPath}/women-products/seller/register" class="dropdown-item">Product Seller</a>
+                    <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
+                    <a href="${pageContext.request.contextPath}/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
+                    <a href="${pageContext.request.contextPath}/investor/register" class="dropdown-item">Investor</a>
+                    <a href="${pageContext.request.contextPath}/women-events/host/register" class="dropdown-item">Event Host</a>
+                    <a href="${pageContext.request.contextPath}/fitness/trainer/register" class="dropdown-item">Fitness Trainer</a>
+                </div>
+            </li>
+            <li class="mobile-menu-actions mobile-only-item">
+                <div class="mobile-action-btn-row">
+                    <a href="${pageContext.request.contextPath}/login" class="mobile-action-btn mobile-btn-login">Sign In</a>
+                    <a href="${pageContext.request.contextPath}/users/register" class="mobile-action-btn mobile-btn-register">Register</a>
+                </div>
+                <a href="${pageContext.request.contextPath}/users/register" class="mobile-action-btn mobile-btn-sos">🆘 Emergency SOS Alert</a>
             </li>
         </ul>
 
@@ -2044,7 +2203,7 @@
                 </div>
             </div>
             <a href="/users/register" class="btn-sos-nav">🆘 Emergency SOS</a>
-            <button class="mobile-menu-btn">☰</button>
+            <button class="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
         </div>
     </nav>
 
@@ -2816,27 +2975,49 @@
             if (mobileBtn && navLinks) {
                 mobileBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    navLinks.classList.toggle('active');
-                    const isOpen = navLinks.classList.contains('active');
+                    const isOpen = navLinks.classList.toggle('active');
+                    mobileBtn.classList.toggle('active', isOpen);
                     mobileBtn.innerHTML = isOpen ? '✕' : '☰';
                     mobileBtn.setAttribute('aria-expanded', isOpen);
+                });
+
+                // Accordion toggle on mobile for dropdown headers
+                navLinks.querySelectorAll('.nav-item.has-dropdown').forEach(item => {
+                    const header = item.querySelector('.nav-item-header');
+                    if (header) {
+                        header.addEventListener('click', (e) => {
+                            if (window.innerWidth <= 900) {
+                                e.stopPropagation();
+                                const isCurrentlyOpen = item.classList.contains('open');
+                                // Close other open dropdowns for a clean accordion effect
+                                navLinks.querySelectorAll('.nav-item.has-dropdown.open').forEach(openItem => {
+                                    if (openItem !== item) openItem.classList.remove('open');
+                                });
+                                item.classList.toggle('open', !isCurrentlyOpen);
+                            }
+                        });
+                    }
                 });
 
                 // Close mobile menu when clicking outside
                 document.addEventListener('click', (e) => {
                     if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !mobileBtn.contains(e.target)) {
                         navLinks.classList.remove('active');
+                        mobileBtn.classList.remove('active');
                         mobileBtn.innerHTML = '☰';
                         mobileBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
 
-                // Close mobile menu when clicking any link inside
+                // Close mobile menu when clicking any actual link inside
                 navLinks.querySelectorAll('a').forEach(link => {
                     link.addEventListener('click', () => {
-                        navLinks.classList.remove('active');
-                        mobileBtn.innerHTML = '☰';
-                        mobileBtn.setAttribute('aria-expanded', 'false');
+                        if (window.innerWidth <= 900) {
+                            navLinks.classList.remove('active');
+                            mobileBtn.classList.remove('active');
+                            mobileBtn.innerHTML = '☰';
+                            mobileBtn.setAttribute('aria-expanded', 'false');
+                        }
                     });
                 });
             }
@@ -2861,5 +3042,6 @@
         });
     </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

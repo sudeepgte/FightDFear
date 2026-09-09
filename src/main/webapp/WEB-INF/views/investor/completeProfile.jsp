@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Profile — Fight D Fear</title>
@@ -436,6 +438,7 @@
                 </c:when>
                 <c:otherwise>
                     <form action="${pageContext.request.contextPath}/investor/submit-verification" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <button type="submit" id="btnSubmitVerification" class="btn-submit-verification" 
                                 <c:if test="${(empty investor.profileCompletionPct or investor.profileCompletionPct < 100) or investor.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
                             <c:choose>
@@ -454,6 +457,7 @@
 
         <!-- Onboarding and profile completion form -->
         <form id="profileForm" action="${pageContext.request.contextPath}/investor/complete-profile" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             
             <!-- Section 1: Business Profile & Credentials -->
             <div class="section-card">
@@ -675,6 +679,7 @@
             updateCompletionPct();
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

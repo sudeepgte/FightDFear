@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <title>Reset Password - Fight The Fire</title>
@@ -181,6 +183,7 @@
           </c:if>
 
           <form action="${pageContext.request.contextPath}/auth/reset-password" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="hidden" name="token" value="${token}">
             <div class="mb-3">
               <label for="newPassword" class="form-label">New password</label>
@@ -249,6 +252,7 @@
   <script>
     if (typeof AOS !== 'undefined') { AOS.init(); }
   </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

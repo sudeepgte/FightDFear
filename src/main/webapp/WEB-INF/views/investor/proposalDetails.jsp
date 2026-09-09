@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${proposal.title} — Fight D Fear</title>
@@ -435,6 +437,7 @@
                                 The entrepreneur will provide a meeting link once they accept your request.
                             </p>
                             <form action="${pageContext.request.contextPath}/investor/proposal/${proposal.id}/meeting" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <div class="mb-2">
                                     <label class="form-label small fw-semibold">Date & Time *</label>
                                     <input type="datetime-local" name="meetingTime" class="form-control form-control-sm" required>
@@ -456,6 +459,7 @@
                             
                             <!-- Ask Box -->
                             <form action="${pageContext.request.contextPath}/investor/proposal/${proposal.id}/ask" method="post" class="mb-3">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <div class="input-group input-group-sm">
                                     <input type="text" name="question" class="form-control" placeholder="Ask a question..." required>
                                     <button class="btn btn-rose" type="submit" style="background-color: #f43f5e; border: none;">Ask</button>
@@ -606,6 +610,7 @@
         }, 1500);
     }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

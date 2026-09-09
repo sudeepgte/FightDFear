@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Services | Fight D Fear</title>
@@ -514,6 +516,7 @@
                                     <i class="bi bi-pencil-square me-1"></i> Edit
                                 </a>
                                 <form action="${pageContext.request.contextPath}/salon/deleteService" method="post" onsubmit="return confirm('Delete this service permanently?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="id" value="${service.id}">
                                     <button type="submit" class="btn-delete-icon">
                                         <i class="bi bi-trash3-fill"></i>
@@ -530,6 +533,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

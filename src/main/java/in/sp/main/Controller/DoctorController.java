@@ -44,6 +44,7 @@ import in.sp.main.Service.DoctorDocumentService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
 import in.sp.main.Service.FileUploadService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -123,11 +124,12 @@ public class DoctorController {
     public String register(
             @RequestParam String fullName,
             @RequestParam String email,
-    @RequestParam String phone,
+            @RequestParam String phone,
             @RequestParam String password,
             @RequestParam String confirmPassword,
             @RequestParam(required = false) String acceptedTerms,
             HttpSession session,
+            RedirectAttributes redirectAttributes,
             Model model) {
 
         boolean termsAccepted = "true".equalsIgnoreCase(acceptedTerms)
@@ -150,7 +152,13 @@ public class DoctorController {
             session.setAttribute(DOCTOR_PREFILL_AT, System.currentTimeMillis());
             session.setAttribute(DOCTOR_REG_SUCCESS_NAME, d.getFullName());
 
-            return "redirect:/doctors/register?success=1";
+            redirectAttributes.addFlashAttribute("registrationSuccess", true);
+            redirectAttributes.addFlashAttribute("registeredName", d.getFullName());
+            redirectAttributes.addFlashAttribute("prefillEmail", d.getEmail());
+            redirectAttributes.addFlashAttribute("prefillFromRegistration", true);
+            redirectAttributes.addFlashAttribute("message", "Registration successful! Welcome Dr. " + d.getFullName() + ". Please enter your password to sign in.");
+
+            return "redirect:/doctors/login?registered=1";
         } catch (ResponseStatusException ex) {
             model.addAttribute("error", ex.getReason() != null ? ex.getReason() : "Registration failed.");
             model.addAttribute("fullName", fullName);
@@ -167,11 +175,19 @@ public class DoctorController {
     }
 
     @GetMapping("/login")
-    public String loginPage(HttpSession session, Model model) {
+    public String loginPage(@RequestParam(value = "registered", required = false) String registered,
+                            HttpSession session, Model model) {
         if (requireLoggedDoctor(session) != null) {
             return "redirect:/doctors/profile-completion";
         }
         consumeDoctorLoginPrefill(session, model);
+        if ("1".equals(registered) || "true".equalsIgnoreCase(registered)) {
+            model.addAttribute("prefillFromRegistration", true);
+            Object name = session.getAttribute(DOCTOR_REG_SUCCESS_NAME);
+            if (name != null) {
+                model.addAttribute("registeredName", name.toString());
+            }
+        }
         return "doctor/doctor-login";
     }
 
@@ -799,15 +815,49 @@ public class DoctorController {
     }
 
     @PostMapping("/appointments/{id}/status")
-    public String updateAppointmentStatus(@PathVariable Long id, @RequestParam String status, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+    public Object updateAppointmentStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            HttpServletRequest request,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
-        if (d == null) return "redirect:/doctors/login";
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"))
+                || (request.getContentType() != null && request.getContentType().contains("application/json"));
+
+        if (d == null) {
+            if (isAjax) {
+                return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+            }
+            return "redirect:/doctors/login";
+        }
 
         in.sp.main.Entities.DoctorAppointment appt = appointmentRepo.findById(id).orElse(null);
         if (appt != null && appt.getDoctor() != null && appt.getDoctor().getId().equals(d.getId())) {
-            appt.setStatus(in.sp.main.Entities.DoctorAppointmentStatus.valueOf(status));
+            appt.setStatus(in.sp.main.Entities.DoctorAppointmentStatus.valueOf(status.toUpperCase()));
             appointmentRepo.save(appt);
+            if (isAjax) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "status", status.toUpperCase(),
+                        "message", "Appointment status updated to " + status
+                ));
+            }
             redirectAttributes.addFlashAttribute("message", "Appointment status updated to " + status);
+        } else {
+            if (isAjax) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "error", "Appointment not found or not authorized"
+                ));
+            }
+            redirectAttributes.addFlashAttribute("error", "Appointment not found or not authorized");
+        }
+
+        String referer = request.getHeader("Referer");
+        if (referer != null && referer.contains("section=appointments")) {
+            return "redirect:/doctors/dashboard?section=appointments";
         }
         return "redirect:/doctors/dashboard";
     }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import in.sp.main.Entities.Admin;
 import in.sp.main.Entities.Enrollment;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.Salon;
@@ -275,8 +276,19 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{id:[0-9]+}", method = RequestMethod.GET)
-    public String getUser(@PathVariable Long id, Model model) {
+    public String getUser(@PathVariable Long id, Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("user");
+        Admin sessionAdmin = (Admin) session.getAttribute("admin");
+        if (sessionUser == null && sessionAdmin == null) {
+            return "redirect:/login";
+        }
+        if (sessionUser != null && !sessionUser.getId().equals(id) && sessionAdmin == null) {
+            return "redirect:/users/" + sessionUser.getId();
+        }
         User user = userService.getUserById(id);
+        if (user == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("user", user);
         return "user";
     }
@@ -458,26 +470,71 @@ public class UserController {
 
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
-    public String getUserList(Model model) {
+    public String getUserList(Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
         List<User> users = userService.getAllUsers();
         model.addAttribute("users", users);
         return "userList";
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public String createUserFromForm(@ModelAttribute User user) {
-        userService.createUser(user);
-        return "redirect:/users/" + user.getId();
+    public String createUserFromForm(@ModelAttribute User user, HttpSession session) {
+        if (session == null || session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        if (user != null) {
+            user.setId(null);
+            user.setRewardPoints(0);
+            user.setBanned(false);
+            user.setBannedCreator(false);
+            user.setVerifiedCreator(false);
+            user.setCreatorProfileStatus(null);
+            user.setVerificationStatus(VerificationStatus.PENDING);
+            userService.createUser(user);
+            return "redirect:/users/" + user.getId();
+        }
+        return "redirect:/users/list";
     }
 
-    @RequestMapping(value = "/delete/{id}", method = RequestMethod.GET)
-    public String deleteUser(@PathVariable Long id) {
+    @PostMapping("/delete/{id}")
+    public String deleteUser(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        User sessionUser = (User) session.getAttribute("user");
+        Admin sessionAdmin = (Admin) session.getAttribute("admin");
+        if (sessionUser == null && sessionAdmin == null) {
+            return "redirect:/login";
+        }
+        if (sessionUser != null && !sessionUser.getId().equals(id) && sessionAdmin == null) {
+            redirectAttributes.addFlashAttribute("error", "Access denied: you can only delete your own account.");
+            return "redirect:/users/" + sessionUser.getId();
+        }
         userService.deleteUser(id);
+        if (sessionUser != null && sessionUser.getId().equals(id)) {
+            session.invalidate();
+            return "redirect:/users/register";
+        }
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/delete")
+    public String deleteCurrentAccount(HttpSession session, RedirectAttributes redirectAttributes) {
+        User sessionUser = (User) session.getAttribute("user");
+        if (sessionUser == null) {
+            return "redirect:/login";
+        }
+        userService.deleteUser(sessionUser.getId());
+        session.invalidate();
         return "redirect:/users/register";
     }
 
     @RequestMapping(value = "/profile/{userId}", method = RequestMethod.GET)
-    public String getUserProfile(@PathVariable Long userId, Model model) {
+    public String getUserProfile(@PathVariable Long userId, Model model, HttpSession session) {
+        User sessionUser = (User) session.getAttribute("user");
+        Admin sessionAdmin = (Admin) session.getAttribute("admin");
+        if (sessionUser == null && sessionAdmin == null) {
+            return "redirect:/login";
+        }
         User user = userService.getUserById(userId);
         if (user == null) {
             return "redirect:/login";
@@ -488,6 +545,7 @@ public class UserController {
 
         model.addAttribute("user", user);
         model.addAttribute("completionPercentage", completionPercentage);
+        model.addAttribute("isOwner", sessionUser != null && sessionUser.getId().equals(userId));
         
         // Instagram-style counts
         model.addAttribute("postsCount", videos.size());
@@ -538,7 +596,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/profile1/{userId}", method = RequestMethod.GET)
-    public String getUserProfile(
+    public String getUserProfile1(
             @PathVariable Long userId,
             Model model,
             HttpSession session) {

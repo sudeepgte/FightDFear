@@ -67,34 +67,40 @@ public class WomenProductsCareService {
 
     @Transactional
     public void creditSeller(WomenProductOrder o) {
-        if (o == null || Boolean.TRUE.equals(o.getSellerPayoutCredited())) return;
-        WomenProductSeller s = o.getSeller();
-        if (s == null) return;
-        double amount = o.getTotalPrice() == null ? 0 : o.getTotalPrice();
+        if (o == null || o.getId() == null || Boolean.TRUE.equals(o.getSellerPayoutCredited())) return;
+        WomenProductOrder order = orderRepository.findByIdForUpdate(o.getId()).orElse(o);
+        if (Boolean.TRUE.equals(order.getSellerPayoutCredited())) return;
+        WomenProductSeller s = order.getSeller();
+        if (s == null || s.getId() == null) return;
+        double amount = order.getTotalPrice() == null ? 0 : order.getTotalPrice();
         if (amount <= 0) return;
-        s.setPayoutBalance(s.getPayoutBalance() + amount);
-        sellerRepository.save(s);
-        o.setSellerPayoutCredited(true);
-        orderRepository.save(o);
+        WomenProductSeller lockedSeller = sellerRepository.findByIdForUpdate(s.getId()).orElse(s);
+        lockedSeller.setPayoutBalance(lockedSeller.getPayoutBalance() + amount);
+        sellerRepository.save(lockedSeller);
+        order.setSellerPayoutCredited(true);
+        orderRepository.save(order);
     }
 
     @Transactional
     public void creditDelivery(WomenProductOrder o) {
-        if (o == null || Boolean.TRUE.equals(o.getDeliveryPayoutCredited())) return;
-        DeliveryPartner p = o.getDeliveryPartner();
-        if (p == null) return;
-        double total = o.getTotalPrice() == null ? 0 : o.getTotalPrice();
+        if (o == null || o.getId() == null || Boolean.TRUE.equals(o.getDeliveryPayoutCredited())) return;
+        WomenProductOrder order = orderRepository.findByIdForUpdate(o.getId()).orElse(o);
+        if (Boolean.TRUE.equals(order.getDeliveryPayoutCredited())) return;
+        DeliveryPartner p = order.getDeliveryPartner();
+        if (p == null || p.getId() == null) return;
+        double total = order.getTotalPrice() == null ? 0 : order.getTotalPrice();
         double fee = Math.max(30, Math.round(total * 0.10));
-        p.setPayoutBalance(p.getPayoutBalance() + fee);
-        deliveryRepository.save(p);
-        o.setDeliveryPayoutCredited(true);
-        orderRepository.save(o);
-        if (o.getUser() != null) {
+        DeliveryPartner lockedPartner = deliveryRepository.findByIdForUpdate(p.getId()).orElse(p);
+        lockedPartner.setPayoutBalance(lockedPartner.getPayoutBalance() + fee);
+        deliveryRepository.save(lockedPartner);
+        order.setDeliveryPayoutCredited(true);
+        orderRepository.save(order);
+        if (order.getUser() != null) {
             pushNotificationService.notifyUser(
-                    o.getUser().getId(),
+                    order.getUser().getId(),
                     "Order delivered",
                     "Your Women Products order has been delivered.",
-                    Map.of("type", "WOMEN_PRODUCT_DELIVERED", "orderId", String.valueOf(o.getId())));
+                    Map.of("type", "WOMEN_PRODUCT_DELIVERED", "orderId", String.valueOf(order.getId())));
         }
     }
 

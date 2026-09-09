@@ -11,6 +11,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
     <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
       .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
@@ -276,26 +280,32 @@
 
                                             <c:if test="${ev.status == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/approve" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-approve">✓ Approve</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/reject" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">✗ Reject</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/request-changes" method="post" style="display:inline;"
                                                       onsubmit="var r=prompt('What should the host change?'); if(!r) return false; this.querySelector('[name=reason]').value=r;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <input type="hidden" name="reason" value=""/>
                                                     <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill">Request changes</button>
                                                 </form>
                                             </c:if>
                                             <c:if test="${ev.status == 'APPROVED'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/unpublish" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Unpublish</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/cancel" method="post" style="display:inline;"
                                                       onsubmit="return confirm('Cancel this event and notify the workflow?')">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">Cancel event</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/feature" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-feature">
                                                         <i class="bi bi-star${ev.featured ? '-fill' : ''}"></i>${ev.featured ? 'Unfeature' : 'Feature'}
                                                     </button>
@@ -303,6 +313,7 @@
                                             </c:if>
                                             <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/delete" method="post" style="display:inline;"
                                                   onsubmit="return confirm('Delete this event permanently?')">
+                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                 <button type="submit" class="btn-delete"><i class="bi bi-trash-fill"></i></button>
                                             </form>
                                         </div>
@@ -360,9 +371,11 @@
                                             <a href="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/profile" class="btn-review">Review profile</a>
                                             <c:if test="${host.verificationStatus == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/host/${host.id}/approve" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-approve">✓ Approve</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/host/${host.id}/reject" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">✗ Reject</button>
                                                 </form>
                                             </c:if>

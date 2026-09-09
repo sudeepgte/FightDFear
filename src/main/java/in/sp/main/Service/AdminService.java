@@ -28,10 +28,18 @@ public class AdminService {
     	                    "Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character");
     	        }
     	        admin.setPassword(passwordService.encode(raw));
+    	        if (admin.getRole() == null || admin.getRole().isBlank() || !"SUPER_ADMIN".equalsIgnoreCase(admin.getRole())) {
+    	            admin.setRole("ADMIN");
+    	        }
     	        adminRepository.save(admin);
     	        return true;
     	    }
         return false;
+    }
+
+    public boolean isSuperAdmin(Admin admin) {
+        if (admin == null) return false;
+        return admin.isSuperAdmin();
     }
 
     public Admin loginAdmin(String email, String password) {

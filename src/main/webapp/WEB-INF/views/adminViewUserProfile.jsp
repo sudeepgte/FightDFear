@@ -9,6 +9,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="_csrf" content="${_csrf.token}"/>
+  <meta name="_csrf_header" content="${_csrf.headerName}"/>
+  <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 <style>
   :root {
     --maroon:        #1e1b4b;
@@ -424,6 +428,7 @@
           <div class="action-bar">
               <c:if test="${user.verificationStatus != 'VERIFIED'}">
                   <form action="${pageContext.request.contextPath}/admin/users/${user.id}/verify" method="post" class="m-0 p-0">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <button type="submit" class="btn-verify">
                           <i class="fas fa-check-circle"></i> Verify User
                       </button>
@@ -432,6 +437,7 @@
 
               <c:if test="${user.verificationStatus != 'REJECTED'}">
                   <form action="${pageContext.request.contextPath}/admin/users/${user.id}/reject" method="post" class="m-0 p-0" onsubmit="return confirm('Are you sure you want to reject this user?')">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <button type="submit" class="btn-reject">
                           <i class="fas fa-times-circle"></i> Reject User
                       </button>

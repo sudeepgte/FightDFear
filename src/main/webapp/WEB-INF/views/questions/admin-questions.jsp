@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Manage Q&A — Admin</title>
@@ -239,6 +241,7 @@
                       </button>
 
                       <form action="${pageContext.request.contextPath}/qna/admin/qna/delete" method="post" style="display:inline;">
+                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                           <input type="hidden" name="questionId" value="${q.id}" />
                           <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this question?');">
                             <i class="fas fa-trash-alt me-1"></i> Delete
@@ -248,6 +251,7 @@
 
                   <div class="toggle-section" id="form-${q.id}">
                       <form action="${pageContext.request.contextPath}/qna/admin/qna/answer" method="post">
+                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                           <input type="hidden" name="questionId" value="${q.id}" />
                           <textarea name="content" required placeholder="Write your official answer here..."><c:if test="${not empty q.answer}"><c:out value="${q.answer.content}"/></c:if></textarea>
                           <button type="submit" class="btn-custom"><i class="fas fa-paper-plane me-1"></i> Post Answer</button>
@@ -268,6 +272,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

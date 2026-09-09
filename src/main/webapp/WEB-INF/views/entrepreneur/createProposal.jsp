@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Proposal — Fight D Fear</title>
@@ -435,7 +437,10 @@
                 </div>
             </c:if>
 
-            <form action="${pageContext.request.contextPath}/entrepreneur/proposal/create" method="post" enctype="multipart/form-data">
+            <form action="${pageContext.request.contextPath}/entrepreneur/proposal/create${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                <c:if test="${not empty _csrf}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                </c:if>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Proposal Title *</label>
@@ -554,5 +559,6 @@
         });
     }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

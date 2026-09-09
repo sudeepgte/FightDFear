@@ -256,6 +256,9 @@
         cursor: pointer;
         margin-right: 15px;
         line-height: 1;
+        outline: none !important;
+        border: none !important;
+        -webkit-tap-highlight-color: transparent;
     }
     @media (max-width: 768px) {
         .header-sidebar-toggle {
@@ -265,6 +268,28 @@
             display: none !important; /* Hide original redundant top-right nav toggle on mobile */
         }
     }
+    
+    @keyframes ring {
+        0% { transform: rotate(0); }
+        10% { transform: rotate(15deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(15deg); }
+        40% { transform: rotate(-10deg); }
+        50% { transform: rotate(0); }
+        100% { transform: rotate(0); }
+    }
+    .bell-dynamic {
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    .bell-dynamic:hover {
+        transform: scale(1.15);
+        color: var(--uh-coral);
+    }
+    .bell-ringing {
+        animation: ring 2.5s infinite;
+        color: var(--uh-coral);
+    }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -272,8 +297,7 @@
 <!-- ======= Header ======= -->
 <header id="header" class="header d-flex align-items-center fixed-top">
   <div class="container-fluid container-xl d-flex align-items-center">
-    <!-- Left Side Top Sidebar Toggle -->
-    <i class="bi bi-list header-sidebar-toggle" id="globalSidebarToggle"></i>
+    <!-- Removed redundant Left Side Top Sidebar Toggle -->
     
     <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
         <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#F43F5E !important;">Fight D Fear</h1>
@@ -286,7 +310,7 @@
                 <li>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
-                            <i class="fas fa-bell fs-5"></i>
+                            <i class="fas fa-bell fs-5 bell-dynamic ${unreadBroadcastCount > 0 ? 'bell-ringing' : ''}"></i>
                             <c:if test="${unreadBroadcastCount > 0}">
                                 <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
                                       style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
@@ -304,7 +328,7 @@
                 <li>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
-                            <i class="fas fa-bell fs-5"></i>
+                            <i class="fas fa-bell fs-5 bell-dynamic ${unreadBroadcastCount > 0 ? 'bell-ringing' : ''}"></i>
                             <c:if test="${unreadBroadcastCount > 0}">
                                 <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
                                       style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
@@ -325,7 +349,7 @@
                 <li>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
-                            <i class="fas fa-bell fs-5"></i>
+                            <i class="fas fa-bell fs-5 bell-dynamic ${unreadBroadcastCount > 0 ? 'bell-ringing' : ''}"></i>
                             <c:if test="${unreadBroadcastCount > 0}">
                                 <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
                                       style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
@@ -377,6 +401,50 @@
   </div>
 </header>
 
+<!-- Broadcast alerts modal (header bell) -->
+<div class="modal fade" id="broadcastModal" tabindex="-1" aria-labelledby="broadcastModalLabel" aria-hidden="true" style="z-index: 2000;">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0" style="border-radius:18px;">
+      <div class="modal-header border-0" style="background:#FFF1F2;">
+        <h5 class="modal-title fw-bold" id="broadcastModalLabel" style="color:#0F172A;">
+          <i class="bi bi-bell-fill me-2" style="color:#F43F5E;"></i> Alerts
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <c:choose>
+          <c:when test="${empty recentBroadcasts}">
+            <p class="text-muted text-center py-4 mb-0">No alerts right now.</p>
+          </c:when>
+          <c:otherwise>
+            <c:forEach var="b" items="${recentBroadcasts}">
+              <div class="mb-3 pb-3 border-bottom">
+                <div class="fw-semibold" style="color:#0F172A;"><c:out value="${b.title != null ? b.title : 'Announcement'}"/></div>
+                <div class="small text-muted mt-1"><c:out value="${b.message}"/></div>
+                <c:if test="${not empty b.sentAt}">
+                  <div class="small text-muted mt-1" style="font-size:0.75rem;">${b.sentAt}</div>
+                </c:if>
+              </div>
+            </c:forEach>
+          </c:otherwise>
+        </c:choose>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function markBroadcastsAsRead() {
+  fetch('${pageContext.request.contextPath}/users/broadcast/read', { method: 'POST' })
+    .then(function () {
+      var badge = document.getElementById('broadcastBadge');
+      if (badge) badge.style.display = 'none';
+      var bells = document.querySelectorAll('.bell-dynamic');
+      bells.forEach(b => b.classList.remove('bell-ringing'));
+    })
+    .catch(function () {});
+}
+</script>
+
 <!-- Global Incoming Call Modal -->
 <div class="modal fade" id="globalIncomingCallModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" style="z-index: 2000;">
     <div class="modal-dialog modal-dialog-centered">
@@ -418,7 +486,8 @@
     }
 </style>
 
-<c:if test="${not empty sessionScope.user}">
+<c:set var="activeWsUserId" value="${not empty sessionScope.loggedDoctor ? sessionScope.loggedDoctor.id : (not empty sessionScope.user ? sessionScope.user.id : '')}" />
+<c:if test="${not empty activeWsUserId}">
     <!-- Global WebSocket Signaling Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
@@ -427,7 +496,7 @@
         (function() {
             window.__APP_CTX__ = "${pageContext.request.contextPath}";
             const ctx = window.__APP_CTX__;
-            const userId = "${sessionScope.user.id}";
+            const userId = "${activeWsUserId}";
             const isVerified = "${sessionScope.user.verificationStatus == 'VERIFIED'}";
             
             let globalStompClient = null;
@@ -582,6 +651,13 @@
       }
   });
 </script>
+<c:if test="${not empty _csrf}">
+    <meta name="_csrf" content="${_csrf.token}" />
+    <meta name="_csrf_header" content="${_csrf.headerName}" />
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}" />
+    <input type="hidden" id="_global_header_csrf" name="${_csrf.parameterName}" value="${_csrf.token}" />
+</c:if>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 
 
 

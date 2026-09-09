@@ -34,6 +34,7 @@ public class WomenEventBookingService {
     @Autowired private WomenEventAuditService auditService;
     @Autowired private WomenEventLifecycleService lifecycleService;
     @Autowired private PushNotificationService pushNotificationService;
+    @Autowired private AtomicCoinService atomicCoinService;
 
     public Map<String, Object> quoteCoins(User user, double ticketAmount, int requestedCoins) {
         User fresh = user == null ? null : userRepository.findById(user.getId()).orElse(user);
@@ -219,16 +220,8 @@ public class WomenEventBookingService {
     public void restoreCoins(WomenEventRegistration r, String reason) {
         if (r == null || r.getCoinsUsed() == null || r.getCoinsUsed() <= 0) return;
         if (r.getUser() == null) return;
-        User user = userRepository.findById(r.getUser().getId()).orElse(null);
-        if (user == null) return;
         int coins = r.getCoinsUsed();
-        int current = user.getRewardPoints() == null ? 0 : user.getRewardPoints();
-        user.setRewardPoints(current + coins);
-        userRepository.save(user);
-        walletTransactionRepository.save(new WalletTransaction(
-                user, (double) coins, "CREDIT",
-                reason == null ? "Event booking coin restore" : reason,
-                LocalDateTime.now()));
+        User user = atomicCoinService.creditCoins(r.getUser().getId(), coins, reason == null ? "Event booking coin restore" : reason);
         r.setCoinsUsed(0);
         registrationRepository.save(r);
         auditService.log("SYSTEM", user.getId(), user.getEmail(), "COIN_RESTORE",
@@ -254,15 +247,8 @@ public class WomenEventBookingService {
     }
 
     private void debitCoins(User user, int coins, String description) {
-        int current = user.getRewardPoints() == null ? 0 : user.getRewardPoints();
-        if (current < coins) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient coins");
-        }
-        user.setRewardPoints(current - coins);
-        userRepository.save(user);
-        walletTransactionRepository.save(new WalletTransaction(
-                user, (double) coins, "DEBIT", description, LocalDateTime.now()));
-        auditService.log("MEMBER", user.getId(), user.getEmail(), "COIN_DEBIT",
-                "WALLET", user.getId(), description, "{\"coins\":" + coins + "}");
+        User updated = atomicCoinService.debitCoins(user.getId(), coins, description);
+        auditService.log("MEMBER", updated.getId(), updated.getEmail(), "COIN_DEBIT",
+                "WALLET", updated.getId(), description, "{\"coins\":" + coins + "}");
     }
 }

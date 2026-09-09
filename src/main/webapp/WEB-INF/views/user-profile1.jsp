@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta charset="utf-8">
 <meta name="viewport"
 	content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -444,6 +446,7 @@ background-position
 											<form
 												action="${pageContext.request.contextPath}/users/acceptRequest/${user.id}"
 												method="post" style="display: inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 												<button type="submit" class="btn btn-success mt-3 px-4">
 													<i class="fas fa-check me-2"></i> Accept Request
 												</button>
@@ -451,6 +454,7 @@ background-position
 											<form
 												action="${pageContext.request.contextPath}/users/declineRequest/${user.id}"
 												method="post" style="display: inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 												<button type="submit"
 													class="btn btn-outline-danger mt-3 px-4">
 													<i class="fas fa-times me-2"></i> Decline
@@ -533,6 +537,7 @@ background-position
 										action="${pageContext.request.contextPath}/video/deleteUpload"
 										onsubmit="return confirm('Delete this video?');"
 										style="display: inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 										<input type="hidden" name="videoId" value="${video.id}">
 										<button type="submit"
 											class="btn btn-sm btn-danger p-1 opacity-75">
@@ -638,6 +643,7 @@ background-position
 					  	}
 					  	</script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

@@ -2,6 +2,7 @@
 <div class="container mt-4">
     <h3>Submit Review for ${stylist.firstName} ${stylist.lastName}</h3>
     <form action="${pageContext.request.contextPath}/users/reviews/add" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
         <input type="hidden" name="stylist.id" value="${stylist.id}"/>
         <div class="mb-3">
             <label>Rating (1–5)</label>

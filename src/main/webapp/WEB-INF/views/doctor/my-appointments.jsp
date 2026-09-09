@@ -1,333 +1,854 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Appointments — Fight D Fear</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+  <link href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-tokens.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
-    :root{
-      --primary:#F43F5E;--rose-soft:#FFF1F2;--bg-page:#F8FAFC;--navy:#0F172A;--navy-soft:#1E293B;--border:#E2E8F0;
-      --ma-coral:#f43f5e;--ma-teal:#16a34a;--ma-gold:#eab308;--ma-bg:var(--bg-page);--ma-card:#fff;
-      --ma-text:var(--navy);--ma-muted:#64748b;--ma-border:var(--border);
-      --ma-gradient:linear-gradient(135deg,#F43F5E 0%,#E11D48 100%);
-      --ma-shadow:0 4px 20px rgba(15, 23, 42, 0.04);--ma-radius:16px;
-      --sidebar-w:240px
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--ma-bg);min-height:100vh;color:var(--ma-text);overflow-x:hidden}
-
-    /* Hero — 60/30/10: white bar, pink accent, pink wordmark */
-    .ma-hero{background:#fff;padding:14px 24px;position:relative;display:flex;align-items:center;gap:12px;border-bottom:3px solid #F43F5E;box-shadow:0 1px 0 #FFE4E6}
-    .ma-hero::after{display:none}
-    .ma-back{position:static;width:40px;height:40px;border-radius:50%;background:#FFF1F2;display:flex;align-items:center;justify-content:center;color:#F43F5E;text-decoration:none;font-size:18px;z-index:5;transition:all 0.2s;flex-shrink:0}
-    .ma-back:hover{background:#F43F5E;color:#fff}
-    .ma-brand{display:inline-flex;align-items:center;gap:10px;position:static;top:auto;left:auto;transform:none;color:#F43F5E;font-weight:800;font-size:18px}
-    .ma-brand img{width:32px;height:32px;border-radius:8px;object-fit:cover}
-    @media(max-width:800px){.ma-brand{left:auto;transform:none}}
-
-    /* Header Card */
-    .ma-header-card{margin:20px 24px 0;position:relative;z-index:3;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:0 8px 40px rgba(244, 63, 94, 0.08);padding:28px;display:flex;align-items:center;gap:20px;border:1px solid #FFE4E6}
-    .ma-header-icon{width:60px;height:60px;border-radius:16px;background:var(--ma-gradient);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0}
-    .ma-header-info h1{font-size:22px;font-weight:800;margin:0}
-    .ma-header-info p{font-size:13px;color:var(--ma-muted);margin:2px 0 0}
-    .ma-header-stats{margin-left:auto;display:flex;gap:16px;flex-shrink:0}
-    .ma-stat{text-align:center;padding:8px 16px;border-radius:12px;background:var(--rose-soft);min-width:70px}
-    .ma-stat .num{font-size:22px;font-weight:800;color:var(--primary)}
-    .ma-stat .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--ma-muted)}
-
-    /* Main Layout */
-    .ma-main{margin:24px 24px 0;padding:0 0 24px;display:grid;grid-template-columns:var(--sidebar-w) 1fr;gap:24px;align-items:stretch;min-height:calc(100vh - 260px)}
-    .ma-page-footer{margin-top:8px;width:100%}
-    .ma-page-footer .footer{margin:0}
-    .ma-page-footer .global-footer,
-    .ma-page-footer #footer.footer{
-      background:#FFF1F2 !important;
-      color:#1E293B !important;
-      border-top:3px solid #F43F5E;
-      padding:36px 16px 20px;
-    }
-    .ma-page-footer .footer-top .row{
-      display:flex;flex-wrap:wrap;align-items:flex-start;column-gap:0;row-gap:28px;
-    }
-    .ma-page-footer .footer-about,
-    .ma-page-footer .footer-links,
-    .ma-page-footer .col-lg-4.col-md-12{
-      padding-top:0 !important;
-    }
-    .ma-page-footer .footer-about > a,
-    .ma-page-footer .footer-links h4,
-    .ma-page-footer .col-lg-4.col-md-12 > h4{
-      margin:0 0 14px;min-height:28px;line-height:28px;font-size:1.05rem;font-weight:800;
-    }
-    .ma-page-footer .footer-about > a{color:#F43F5E !important;text-decoration:none;display:inline-block}
-    .ma-page-footer .global-footer h4,
-    .ma-page-footer .global-footer p{color:#0F172A !important}
-    .ma-page-footer .global-footer a{color:#64748B !important}
-    .ma-page-footer .global-footer a:hover,
-    .ma-page-footer .sitename{color:#F43F5E !important}
-    .ma-page-footer .footer-links ul{list-style:none;padding:0;margin:0}
-    .ma-page-footer .footer-links ul li{margin:0 0 8px;display:flex;align-items:center;gap:6px}
-    .ma-page-footer .copyright{border-top:1px solid #FECDD3;padding-top:16px;margin-top:24px !important}
-    .ma-page-footer .copyright p{color:#64748B !important}
-    .ma-page-footer .social-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    .ma-page-footer .social-links a{
-      background:#fff !important;color:#F43F5E !important;border:1px solid #FECDD3 !important;
+    :root {
+      --primary: #F43F5E;
+      --primary-hover: #E11D48;
+      --rose-soft: #FFF1F2;
+      --rose-border: #FECDD3;
+      --rose-tint: #FFF5F6;
+      --bg-page: #F8FAFC;
+      --navy: #0F172A;
+      --navy-soft: #1E293B;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --card-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+      --card-radius: 20px;
     }
 
-    /* Sidebar */
-    .ma-sidebar{position:sticky;top:24px;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);overflow:hidden;display:flex;flex-direction:column}
-    .ma-sidebar-nav{display:flex;flex-direction:column;padding:8px;flex:1}
-    .ma-sidebar-btn{display:flex;align-items:center;gap:12px;padding:14px 18px;border:none;background:transparent;font-size:14px;font-weight:600;font-family:inherit;color:var(--ma-muted);cursor:pointer;border-radius:10px;transition:all 0.2s;text-align:left;margin-bottom:2px;text-decoration:none}
-    .ma-sidebar-btn i{font-size:18px;width:22px;text-align:center}
-    .ma-sidebar-btn:hover{background:var(--rose-soft);color:var(--primary)}
-    .ma-sidebar-btn.active{background:var(--rose-soft);color:var(--primary);box-shadow:inset 3px 0 0 var(--primary)}
-    .ma-sidebar-btn.active i{color:var(--primary)}
-    .ma-sidebar-footer{padding:16px 18px;border-top:1px solid var(--ma-border);font-size:11px;color:var(--ma-muted)}
-    .ma-sidebar-footer a{color:var(--primary);text-decoration:none;font-weight:600;transition:all 0.2s ease;display:inline-block}
-    .ma-sidebar-footer a:hover{color:#e11d48;transform:translateX(3px)}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-page);
+      min-height: 100vh;
+      color: var(--navy);
+      overflow-x: hidden;
+    }
 
-    /* Content */
-    .ma-content{min-width:0;display:flex;flex-direction:column}
-    .ma-panel{display:none;animation:maFadeIn 0.3s ease}
-    .ma-panel.active{display:flex;flex-direction:column;flex:1}
-    @keyframes maFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    #page-content-wrapper {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 28px 40px !important;
+      background: var(--bg-page) !important;
+    }
 
-    /* Flash */
-    .ma-flash{padding:14px 20px;border-radius:12px;background:rgba(32,201,151,0.1);border:1px solid rgba(32,201,151,0.2);color:#0d9668;font-size:13px;font-weight:500;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    /* Page Heading Header */
+    .ma-page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .ma-header-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 6px;
+      letter-spacing: -0.4px;
+    }
+    .ma-header-text p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .ma-slogan-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #E11D48;
+      font-family: 'Caveat', cursive;
+      font-size: 22px;
+      line-height: 1.15;
+      text-align: right;
+      transform: rotate(-3deg);
+    }
+    .ma-slogan-badge i {
+      font-size: 26px;
+      color: #F43F5E;
+    }
 
-    /* Appointment Cards */
-    .ma-appt-list{display:flex;flex-direction:column;gap:14px;flex:1}
-    .ma-appt-card{background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border);padding:20px 24px;display:flex;align-items:center;gap:20px;transition:all 0.25s;cursor:pointer}
-    .ma-appt-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(15, 23, 42, 0.08);border-color:#FECDD3}
+    /* Alert Banner */
+    .ma-alert-banner {
+      background: #FFF1F2;
+      border: 1px solid #FECDD3;
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+    .ma-alert-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #E11D48;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .ma-alert-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #9F1239;
+      margin-bottom: 2px;
+    }
+    .ma-alert-desc {
+      font-size: 13px;
+      color: #BE123C;
+    }
 
-    .ma-doc-avatar{width:56px;height:56px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
-    .ma-doc-avatar img{width:56px;height:56px;border-radius:50%;object-fit:cover}
+    /* Filter Pills */
+    .ma-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .ma-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--navy-soft);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .ma-pill-btn:hover {
+      border-color: var(--rose-border);
+      background: var(--rose-soft);
+      color: var(--primary);
+    }
+    .ma-pill-btn.active {
+      background: var(--rose-soft);
+      border-color: var(--rose-border);
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(244, 63, 94, 0.12);
+    }
+    .ma-pill-count {
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #F1F5F9;
+      color: var(--navy-soft);
+    }
+    .ma-pill-btn.active .ma-pill-count {
+      background: rgba(244, 63, 94, 0.18);
+      color: var(--primary);
+    }
 
-    .ma-appt-info{flex:1;min-width:0}
-    .ma-appt-info .doc-name{font-size:15px;font-weight:700;margin:0}
-    .ma-appt-info .doc-spec{font-size:12px;color:var(--primary);font-weight:600}
-    .ma-appt-info .appt-meta{display:flex;gap:16px;margin-top:6px;flex-wrap:wrap}
-    .ma-appt-info .appt-meta span{font-size:12px;color:var(--ma-muted);display:flex;align-items:center;gap:4px}
-    .ma-appt-info .appt-meta span i{font-size:14px;color:var(--primary)}
+    /* 3-Column Grid Layout */
+    .ma-board-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+      align-items: start;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    @media (max-width: 1280px) {
+      .ma-board-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+        gap: 18px;
+      }
+    }
+    @media (max-width: 991px) {
+      .ma-board-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
 
-    .ma-appt-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
-    .ma-status{padding:5px 14px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-    .ma-status.pending{background:#FEF3C7;color:#92400E}
-    .ma-status.confirmed{background:#DCFCE7;color:#166534}
-    .ma-status.completed{background:#F1F5F9;color:#475569}
-    .ma-status.cancelled{background:#FEE2E2;color:#991B1B}
-    .ma-status.rejected{background:#FEE2E2;color:#991B1B}
+    /* Column Container */
+    .ma-column {
+      background: #FFF9FA;
+      border: 1px solid #FFE4E6;
+      border-radius: var(--card-radius);
+      padding: 20px;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .ma-column-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #FFE4E6;
+      min-width: 0;
+    }
+    .ma-col-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #FFF1F2;
+      border: 1px solid var(--rose-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .ma-col-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ma-col-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
 
-    .ma-type-badge{padding:4px 12px;border-radius:8px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-    .ma-type-badge.clinic{background:#DCFCE7;color:#166534}
-    .ma-type-badge.video{background:#FFF1F2;color:#BE123C}
+    /* Appointment Card */
+    .ma-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .ma-card-item {
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid #F1F5F9;
+      box-shadow: var(--card-shadow);
+      padding: 14px 16px;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+      text-decoration: none;
+      color: inherit;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .ma-card-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(244, 63, 94, 0.08);
+      border-color: var(--rose-border);
+    }
+    .ma-card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .ma-card-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: var(--rose-soft);
+      border: 2px solid #FFE4E6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: var(--primary);
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .ma-card-avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .ma-card-names {
+      flex: 1 1 110px;
+      min-width: 0;
+    }
+    .ma-card-name {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ma-card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ma-status-tag {
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 10.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .ma-status-tag.pending {
+      background: #FFF1F2;
+      color: #E11D48;
+      border: 1px solid #FECDD3;
+    }
+    .ma-status-tag.confirmed {
+      background: #FFF1F2;
+      color: #E11D48;
+      border: 1px solid #FECDD3;
+    }
+    .ma-status-tag.completed {
+      background: #F1F5F9;
+      color: #475569;
+      border: 1px solid #CBD5E1;
+    }
+    .ma-status-tag.cancelled {
+      background: #FEE2E2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
 
-    .ma-join-btn{padding:8px 16px;border:none;border-radius:10px;background:var(--ma-teal);color:#fff;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;min-height:40px}
-    .ma-join-btn:hover{filter:brightness(1.08);color:#fff}
-    .ma-empty{text-align:center;padding:60px 20px;color:var(--ma-muted);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ma-card);border-radius:var(--ma-radius);box-shadow:var(--ma-shadow);border:1px solid var(--ma-border)}
-    .ma-empty i{font-size:56px;opacity:0.2;margin-bottom:12px}
-    .ma-empty p{font-size:14px;margin:4px 0 0}
-    .ma-empty a{margin-top:16px;padding:10px 28px;border-radius:999px;background:var(--primary);color:#fff;text-decoration:none;font-size:13px;font-weight:700}
+    .ma-card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      min-width: 0;
+    }
+    .ma-detail-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #334155;
+      font-weight: 600;
+      min-width: 0;
+    }
+    .ma-detail-row span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .ma-detail-row i {
+      color: var(--primary);
+      font-size: 13px;
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .ma-reason-box {
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px dashed #F1F5F9;
+      min-width: 0;
+    }
+    .ma-reason-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .ma-reason-txt {
+      font-size: 12px;
+      color: var(--navy-soft);
+      margin-top: 1px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-    /* Responsive */
-    @media(max-width:800px){
-      .ma-main{grid-template-columns:1fr;gap:16px}
-      .ma-sidebar{position:static}
-      .ma-sidebar-nav{flex-direction:row;overflow-x:auto;gap:4px;padding:6px}
-      .ma-sidebar-btn{padding:10px 14px;font-size:12px;gap:8px;white-space:nowrap;border-radius:10px;margin-bottom:0}
-      .ma-sidebar-btn.active{box-shadow:none;background:var(--primary);color:#fff}
-      .ma-sidebar-btn.active i{color:#fff}
-      .ma-sidebar-footer{display:none}
-      .ma-header-card{flex-direction:column;text-align:center}
-      .ma-header-stats{margin-left:0;justify-content:center}
-      .ma-appt-card{flex-direction:column;text-align:center;align-items:center}
-      .ma-appt-right{align-items:center}
-      .ma-appt-info .appt-meta{justify-content:center}
+    .ma-card-arrow {
+      display: none;
+    }
+
+    /* Prescription specific card styles */
+    .btn-view-rx {
+      border: 1.5px solid var(--primary);
+      background: #ffffff;
+      color: var(--primary);
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 10px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .btn-view-rx:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .ma-rx-footer-box {
+      margin-top: auto;
+      padding-top: 18px;
+      min-width: 0;
+    }
+    .ma-rx-quote-box {
+      background: #FFF1F2;
+      border: 1px dashed #FECDD3;
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      min-width: 0;
+    }
+    .ma-rx-quote-box i {
+      font-size: 20px;
+      color: var(--primary);
+    }
+    .ma-rx-quote-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #9F1239;
+    }
+    .ma-rx-quote-sub {
+      font-size: 11px;
+      color: #BE123C;
+      font-weight: 500;
+    }
+
+    /* Empty state inside column */
+    .ma-col-empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+    .ma-col-empty i {
+      font-size: 36px;
+      opacity: 0.25;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+    .ma-col-empty p {
+      font-size: 13px;
+      margin: 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile & Tablet Responsive Enhancements */
+    @media (max-width: 768px) {
+      #page-content-wrapper {
+        padding: 16px 12px 36px !important;
+      }
+      .ma-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      .ma-header-text h1 {
+        font-size: 22px;
+      }
+      .ma-header-text p {
+        font-size: 13px;
+      }
+      .ma-alert-banner {
+        padding: 12px 14px;
+        gap: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+      }
+      .ma-filter-bar {
+        gap: 8px;
+        margin-bottom: 16px;
+        scrollbar-width: none;
+      }
+      .ma-filter-bar::-webkit-scrollbar {
+        display: none;
+      }
+      .ma-pill-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+      .ma-column {
+        padding: 14px 12px;
+        border-radius: 16px;
+        min-height: auto;
+      }
+      .ma-col-header {
+        gap: 10px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+      }
+      .ma-col-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+        border-radius: 10px;
+      }
+      .ma-col-title {
+        font-size: 14px;
+      }
+      .ma-col-desc {
+        font-size: 11px;
+      }
+      .ma-card-item {
+        padding: 12px 14px;
+        border-radius: 12px;
+      }
+      .ma-card-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+      }
+      .ma-card-name {
+        font-size: 13px;
+      }
+      .btn-view-rx {
+        font-size: 10.5px;
+        padding: 4px 8px;
+      }
     }
   </style>
 </head>
 <body>
 
-<!-- Hero -->
-<div class="ma-hero">
-  <a href="${pageContext.request.contextPath}/doctors/list" class="ma-back"><i class="bi bi-arrow-left"></i></a>
-  <div class="ma-brand">
-    <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-    <span>Fight D Fear</span>
-  </div>
-</div>
+<!-- Universal Header -->
+<jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
-<!-- Header Card -->
-<div class="ma-header-card">
-  <div class="ma-header-icon"><i class="bi bi-calendar2-check"></i></div>
-  <div class="ma-header-info">
-    <h1>My Appointments</h1>
-    <p>Track your appointment requests and status</p>
-  </div>
-  <div class="ma-header-stats">
-    <div class="ma-stat">
-      <div class="num">${appointments != null ? appointments.size() : 0}</div>
-      <div class="lbl">Total</div>
+<!-- Main Dashboard Layout Shell -->
+<div id="wrapper">
+  <!-- Universal Sidebar -->
+  <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+
+  <!-- Main Page Content Wrapper -->
+  <div id="page-content-wrapper" data-skip-global-back="true">
+    
+    <!-- Page Title & Slogan Header -->
+    <div class="ma-page-header">
+      <div class="ma-header-text">
+        <h1>My Appointments</h1>
+        <p>View and manage your patient appointments, consultations and prescriptions.</p>
+      </div>
+      <div class="ma-slogan-badge d-none d-md-flex">
+        <div>Healthier<br>Stronger<br>Brighter You</div>
+        <i class="bi bi-heart"></i>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- Main Layout -->
-<div class="ma-main">
+    <!-- Alert Banner -->
+    <c:if test="${not empty param.message or not empty message}">
+      <div class="ma-alert-banner alert alert-dismissible fade show" role="alert">
+        <div class="ma-alert-icon">
+          <i class="bi bi-check-lg"></i>
+        </div>
+        <div>
+          <div class="ma-alert-title">${not empty message ? message : 'Booking Confirmed'}</div>
+          <div class="ma-alert-desc">Your appointment has been successfully booked. You can track its confirmation and details below.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    </c:if>
 
-  <!-- Sidebar -->
-  <aside class="ma-sidebar">
-    <nav class="ma-sidebar-nav">
-      <button class="ma-sidebar-btn ${empty section || section != 'prescriptions' ? 'active' : ''}" onclick="filterAppts(this,'all')">
-        <i class="bi bi-grid"></i><span>All</span>
+    <!-- Categorized Count Calculations -->
+    <c:set var="pendingCount" value="0" />
+    <c:set var="confirmedCount" value="0" />
+    <c:set var="prescriptionCount" value="0" />
+
+    <c:forEach var="a" items="${appointments}">
+      <c:if test="${a.status == 'PENDING'}">
+        <c:set var="pendingCount" value="${pendingCount + 1}" />
+      </c:if>
+      <c:if test="${a.status == 'CONFIRMED' || a.status == 'COMPLETED'}">
+        <c:set var="confirmedCount" value="${confirmedCount + 1}" />
+      </c:if>
+      <c:if test="${not empty a.prescriptionText}">
+        <c:set var="prescriptionCount" value="${prescriptionCount + 1}" />
+      </c:if>
+    </c:forEach>
+
+    <!-- Filter Pills Bar -->
+    <div class="ma-filter-bar">
+      <button type="button" class="ma-pill-btn active" onclick="filterBoard('all', this)">
+        <i class="bi bi-grid-fill text-pink"></i> All Columns
       </button>
-      <button class="ma-sidebar-btn" onclick="filterAppts(this,'pending')">
-        <i class="bi bi-hourglass-split"></i><span>Pending</span>
+      <button type="button" class="ma-pill-btn" onclick="filterBoard('pending', this)">
+        <i class="bi bi-clock-history text-danger"></i> Pending <span class="ma-pill-count">${pendingCount}</span>
       </button>
-      <button class="ma-sidebar-btn" onclick="filterAppts(this,'confirmed')">
-        <i class="bi bi-check-circle"></i><span>Confirmed</span>
+      <button type="button" class="ma-pill-btn" onclick="filterBoard('confirmed', this)">
+        <i class="bi bi-calendar-check text-success"></i> Confirmed <span class="ma-pill-count">${confirmedCount}</span>
       </button>
-      <button class="ma-sidebar-btn" onclick="filterAppts(this,'completed')">
-        <i class="bi bi-trophy"></i><span>Completed</span>
+      <button type="button" class="ma-pill-btn" onclick="filterBoard('prescriptions', this)">
+        <i class="bi bi-file-earmark-medical text-primary"></i> Prescriptions <span class="ma-pill-count">${prescriptionCount}</span>
       </button>
-      <button class="ma-sidebar-btn ${section == 'prescriptions' ? 'active' : ''}" onclick="filterAppts(this,'prescriptions')">
-        <i class="bi bi-file-earmark-medical"></i><span>Prescriptions</span>
-      </button>
-      <a class="ma-sidebar-btn" href="${pageContext.request.contextPath}/doctors/list">
-        <i class="bi bi-search"></i><span>Find Doctors</span>
-      </a>
-    </nav>
-    <div class="ma-sidebar-footer">
-      <a href="${pageContext.request.contextPath}/users/dashboard"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
     </div>
-  </aside>
 
-  <!-- Content -->
-  <div class="ma-content">
+    <!-- 3-Column Board Layout -->
+    <div class="ma-board-grid" id="boardGrid">
 
-    <c:if test="${not empty param.message}">
-      <div class="doc-confirm-banner">
-        <h3><i class="bi bi-check-circle-fill"></i> Booking confirmed</h3>
-        <p>Your appointment request has been sent. The doctor will confirm the slot. You can track it below.</p>
-        <c:if test="${not empty appointments}">
-          <c:set var="latest" value="${appointments[0]}"/>
-          <div class="doc-confirm-grid">
-            <div><div class="k">Doctor</div><div class="v">Dr. ${empty latest.doctor.fullName ? 'Doctor' : latest.doctor.fullName}</div></div>
-            <div><div class="k">Specialization</div><div class="v">${empty latest.doctor.specialization ? 'General consultation' : latest.doctor.specialization}</div></div>
-            <div><div class="k">Date &amp; time</div><div class="v">${empty latest.appointmentTime ? 'To be confirmed' : latest.appointmentTime}</div></div>
-            <div><div class="k">Consultation</div><div class="v">${latest.consultationType == 'VIDEO' ? 'Video' : (latest.consultationType == 'ONLINE' ? 'Online' : 'Clinic visit')}</div></div>
-            <div><div class="k">Fee</div><div class="v"><c:choose><c:when test="${latest.amountPaid != null}">&#8377;${latest.amountPaid}</c:when><c:otherwise>As listed</c:otherwise></c:choose></div></div>
-            <div><div class="k">Status</div><div class="v">${empty latest.status ? 'PENDING' : latest.status}</div></div>
+      <!-- Column 1: Pending Appointments -->
+      <div class="ma-column" id="colPending">
+        <div class="ma-column-header">
+          <div class="ma-col-icon"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <h3 class="ma-col-title">Pending Appointments (${pendingCount})</h3>
+            <div class="ma-col-desc">Appointments awaiting confirmation or consultation.</div>
           </div>
-        </c:if>
-      </div>
-    </c:if>
-    <c:if test="${empty param.message and not empty message}">
-      <div class="ma-flash"><i class="bi bi-check-circle-fill"></i> ${message}</div>
-    </c:if>
-    <c:if test="${not empty error}">
-      <div class="ma-flash" style="background:rgba(244,63,94,0.1);color:#be123c;border-color:rgba(244,63,94,0.2)">
-        <i class="bi bi-exclamation-circle-fill"></i> ${error}
-      </div>
-    </c:if>
+        </div>
 
-    <c:if test="${empty appointments}">
-      <div class="ma-empty">
-        <i class="bi bi-calendar-x"></i>
-        <h3>No Appointments Yet</h3>
-        <p>Book your first appointment with a verified doctor</p>
-        <a href="${pageContext.request.contextPath}/doctors/list"><i class="bi bi-search"></i> Browse Doctors</a>
-      </div>
-    </c:if>
+        <div class="ma-cards-list">
+          <c:set var="hasPending" value="false" />
+          <c:forEach var="a" items="${appointments}">
+            <c:if test="${a.status == 'PENDING'}">
+              <c:set var="hasPending" value="true" />
+              <div class="ma-card-item"
+                   role="button"
+                   onclick="openUserApptPreview(this)"
+                   data-doctor="${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}"
+                   data-spec="${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}"
+                   data-hospital="${empty a.doctor.hospitalName ? '' : a.doctor.hospitalName}"
+                   data-time="${empty a.appointmentTime ? '' : a.appointmentTime}"
+                   data-reason="${empty a.reason ? '' : a.reason}"
+                   data-type="${a.consultationType}"
+                   data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+                   data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+                   data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+                   data-status="${a.status}"
+                   data-chat-url="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}"
+                   data-video-url="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}"
+                   data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${a.doctor.id}"
+                   data-profile-url="${pageContext.request.contextPath}/doctors/view/${a.doctor.id}"
+                   data-rx-url="<c:if test='${not empty a.prescriptionText}'>${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view</c:if>">
+                
+                <div class="ma-card-head">
+                  <div class="ma-card-avatar">
+                    <c:choose>
+                      <c:when test="${not empty a.doctor.profilePhotoPath}">
+                        <img src="${pageContext.request.contextPath}${a.doctor.profilePhotoPath}" alt="">
+                      </c:when>
+                      <c:otherwise>${empty a.doctor.fullName ? 'D' : a.doctor.fullName.charAt(0)}</c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div class="ma-card-names">
+                    <div class="ma-card-name">Dr. ${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}</div>
+                    <div class="ma-card-sub">${empty a.doctor.specialization ? 'General Physician' : a.doctor.specialization}</div>
+                  </div>
+                  <span class="ma-status-tag pending"><i class="bi bi-clock"></i> Pending</span>
+                </div>
 
-    <c:if test="${not empty appointments}">
-      <div class="ma-appt-list" id="apptList">
-        <c:forEach var="a" items="${appointments}">
-          <div class="ma-appt-card" data-status="${a.status}" data-has-rx="${not empty a.prescriptionText}"
-               role="button" tabindex="0"
-               onclick="openUserApptPreview(this)"
-               onkeydown="if(event.key==='Enter')openUserApptPreview(this)"
-               data-doctor="${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}"
-               data-spec="${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}"
-               data-hospital="${empty a.doctor.hospitalName ? '' : a.doctor.hospitalName}"
-               data-time="${empty a.appointmentTime ? '' : a.appointmentTime}"
-               data-reason="${empty a.reason ? '' : a.reason}"
-               data-type="${a.consultationType}"
-               data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
-               data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
-               data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
-               data-chat-url="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}"
-               data-video-url="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}"
-               data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${a.doctor.id}"
-               data-profile-url="${pageContext.request.contextPath}/doctors/view/${a.doctor.id}"
-               data-rx-url="<c:if test='${not empty a.prescriptionText}'>${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view</c:if>">
-            <div class="ma-doc-avatar">
-              <c:choose>
-                <c:when test="${not empty a.doctor.profilePhotoPath}">
-                  <img src="${pageContext.request.contextPath}${a.doctor.profilePhotoPath}" alt="">
-                </c:when>
-                <c:otherwise>${a.doctor.fullName.charAt(0)}</c:otherwise>
-              </c:choose>
-            </div>
-            <div class="ma-appt-info">
-              <div class="doc-name">Dr. ${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}</div>
-              <div class="doc-spec">${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}</div>
-              <div class="appt-meta">
-                <span><i class="bi bi-calendar3"></i> ${empty a.appointmentTime ? 'Time to be confirmed' : a.appointmentTime}</span>
-                <c:choose>
-                  <c:when test="${a.reason != null && a.reason != ''}">
-                    <span><i class="bi bi-chat-text"></i> ${a.reason}</span>
-                  </c:when>
-                  <c:otherwise>
-                    <span><i class="bi bi-chat-text"></i> No reason provided</span>
-                  </c:otherwise>
-                </c:choose>
-                <c:choose>
-                  <c:when test="${a.amountPaid != null}">
-                    <span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span>
-                  </c:when>
-                  <c:otherwise>
-                    <span><i class="bi bi-wallet2"></i> Payment pending</span>
-                  </c:otherwise>
-                </c:choose>
+                <div class="ma-card-details">
+                  <div class="ma-detail-row">
+                    <i class="bi bi-calendar3"></i>
+                    <span>${empty a.appointmentTime ? 'Time to be confirmed' : a.appointmentTime}</span>
+                  </div>
+                  <div class="ma-detail-row">
+                    <c:choose>
+                      <c:when test="${a.consultationType == 'VIDEO'}">
+                        <i class="bi bi-camera-video"></i> <span>Video Consultation</span>
+                      </c:when>
+                      <c:when test="${a.consultationType == 'ONLINE'}">
+                        <i class="bi bi-chat-dots"></i> <span>Online Chat</span>
+                      </c:when>
+                      <c:otherwise>
+                        <i class="bi bi-geo-alt"></i> <span>In-clinic Visit</span>
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div class="ma-reason-box">
+                    <div class="ma-reason-lbl">Reason for Visit</div>
+                    <div class="ma-reason-txt text-truncate">${empty a.reason ? 'Regular check-up' : a.reason}</div>
+                  </div>
+                </div>
+
+                <i class="bi bi-chevron-right ma-card-arrow"></i>
               </div>
+            </c:if>
+          </c:forEach>
+
+          <c:if test="${!hasPending}">
+            <div class="ma-col-empty">
+              <i class="bi bi-clock-history"></i>
+              <p>No pending appointment requests.</p>
             </div>
-            <div class="ma-appt-right" onclick="event.stopPropagation()">
-              <c:choose>
-                <c:when test="${a.status == 'PENDING'}"><span class="ma-status pending">Pending</span></c:when>
-                <c:when test="${a.status == 'CONFIRMED'}"><span class="ma-status confirmed">Confirmed</span></c:when>
-                <c:when test="${a.status == 'COMPLETED'}"><span class="ma-status completed">Completed</span></c:when>
-                <c:when test="${a.status == 'CANCELLED'}"><span class="ma-status cancelled">Cancelled</span></c:when>
-                <c:otherwise><span class="ma-status pending">${a.status}</span></c:otherwise>
-              </c:choose>
+          </c:if>
+        </div>
+      </div>
 
-              <c:choose>
-                <c:when test="${a.consultationType == 'VIDEO'}">
-                  <span class="ma-type-badge video"><i class="bi bi-camera-video"></i> Video</span>
-                  <c:if test="${a.status == 'CONFIRMED'}">
-                    <a href="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}" target="_blank" class="ma-join-btn"><i class="bi bi-camera-video-fill"></i> Join Call</a>
-                  </c:if>
-                </c:when>
-                <c:when test="${a.consultationType == 'ONLINE'}">
-                  <span class="ma-type-badge video"><i class="bi bi-chat-dots"></i> Online</span>
-                </c:when>
-                <c:otherwise>
-                  <span class="ma-type-badge clinic"><i class="bi bi-hospital"></i> Clinic visit</span>
-                </c:otherwise>
-              </c:choose>
+      <!-- Column 2: Confirmed Appointments -->
+      <div class="ma-column" id="colConfirmed">
+        <div class="ma-column-header">
+          <div class="ma-col-icon"><i class="bi bi-calendar2-check"></i></div>
+          <div>
+            <h3 class="ma-col-title">Confirmed Appointments (${confirmedCount})</h3>
+            <div class="ma-col-desc">Upcoming and completed consultations.</div>
+          </div>
+        </div>
 
-              <c:if test="${a.status == 'CONFIRMED' || a.status == 'COMPLETED'}">
-                <a href="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}" class="ma-join-btn" style="background:#F43F5E;text-decoration:none;"><i class="bi bi-chat-dots-fill"></i> Chat</a>
-              </c:if>
-              
-              <c:if test="${not empty a.prescriptionText}">
+        <div class="ma-cards-list">
+          <c:set var="hasConfirmed" value="false" />
+          <c:forEach var="a" items="${appointments}">
+            <c:if test="${a.status == 'CONFIRMED' || a.status == 'COMPLETED'}">
+              <c:set var="hasConfirmed" value="true" />
+              <div class="ma-card-item"
+                   role="button"
+                   onclick="openUserApptPreview(this)"
+                   data-doctor="${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}"
+                   data-spec="${empty a.doctor.specialization ? 'General consultation' : a.doctor.specialization}"
+                   data-hospital="${empty a.doctor.hospitalName ? '' : a.doctor.hospitalName}"
+                   data-time="${empty a.appointmentTime ? '' : a.appointmentTime}"
+                   data-reason="${empty a.reason ? '' : a.reason}"
+                   data-type="${a.consultationType}"
+                   data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+                   data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+                   data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+                   data-status="${a.status}"
+                   data-chat-url="${pageContext.request.contextPath}/doctors/chat/${a.doctor.id}"
+                   data-video-url="${pageContext.request.contextPath}/doctors/video-call/${a.doctor.id}"
+                   data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${a.doctor.id}"
+                   data-profile-url="${pageContext.request.contextPath}/doctors/view/${a.doctor.id}"
+                   data-rx-url="<c:if test='${not empty a.prescriptionText}'>${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view</c:if>">
+                
+                <div class="ma-card-head">
+                  <div class="ma-card-avatar">
+                    <c:choose>
+                      <c:when test="${not empty a.doctor.profilePhotoPath}">
+                        <img src="${pageContext.request.contextPath}${a.doctor.profilePhotoPath}" alt="">
+                      </c:when>
+                      <c:otherwise>${empty a.doctor.fullName ? 'D' : a.doctor.fullName.charAt(0)}</c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div class="ma-card-names">
+                    <div class="ma-card-name">Dr. ${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}</div>
+                    <div class="ma-card-sub">${empty a.doctor.specialization ? 'General Physician' : a.doctor.specialization}</div>
+                  </div>
+                  <c:choose>
+                    <c:when test="${a.status == 'CONFIRMED'}">
+                      <span class="ma-status-tag confirmed"><i class="bi bi-check-circle"></i> Confirmed</span>
+                    </c:when>
+                    <c:otherwise>
+                      <span class="ma-status-tag completed"><i class="bi bi-check2-all"></i> Completed</span>
+                    </c:otherwise>
+                  </c:choose>
+                </div>
+
+                <div class="ma-card-details">
+                  <div class="ma-detail-row">
+                    <i class="bi bi-calendar3"></i>
+                    <span>${empty a.appointmentTime ? 'Time to be confirmed' : a.appointmentTime}</span>
+                  </div>
+                  <div class="ma-detail-row">
+                    <c:choose>
+                      <c:when test="${a.consultationType == 'VIDEO'}">
+                        <i class="bi bi-camera-video"></i> <span>Video Consultation</span>
+                      </c:when>
+                      <c:when test="${a.consultationType == 'ONLINE'}">
+                        <i class="bi bi-chat-dots"></i> <span>Online Chat</span>
+                      </c:when>
+                      <c:otherwise>
+                        <i class="bi bi-geo-alt"></i> <span>In-clinic Visit</span>
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div class="ma-reason-box">
+                    <div class="ma-reason-lbl">Reason for Visit</div>
+                    <div class="ma-reason-txt text-truncate">${empty a.reason ? 'Follow-up consultation' : a.reason}</div>
+                  </div>
+                </div>
+
+                <i class="bi bi-chevron-right ma-card-arrow"></i>
+              </div>
+            </c:if>
+          </c:forEach>
+
+          <c:if test="${!hasConfirmed}">
+            <div class="ma-col-empty">
+              <i class="bi bi-calendar2-check"></i>
+              <p>No confirmed appointments yet.</p>
+            </div>
+          </c:if>
+        </div>
+      </div>
+
+      <!-- Column 3: Prescriptions -->
+      <div class="ma-column" id="colPrescriptions">
+        <div class="ma-column-header">
+          <div class="ma-col-icon"><i class="bi bi-file-earmark-medical"></i></div>
+          <div>
+            <h3 class="ma-col-title">Prescriptions (${prescriptionCount})</h3>
+            <div class="ma-col-desc">View and download your prescriptions.</div>
+          </div>
+        </div>
+
+        <div class="ma-cards-list">
+          <c:set var="hasRx" value="false" />
+          <c:forEach var="a" items="${appointments}">
+            <c:if test="${not empty a.prescriptionText}">
+              <c:set var="hasRx" value="true" />
+              <div class="ma-card-item" onclick="viewPrescription('${a.id}')">
                 <textarea id="rx-data-${a.id}" style="display:none;" 
                   data-doc-name="<c:out value='${a.doctor.fullName}'/>"
                   data-doc-spec="<c:out value='${a.doctor.specialization}'/>"
@@ -335,262 +856,130 @@
                   data-address="<c:out value='${a.doctor.clinicAddress}'/>"
                   data-date="<c:out value='${a.appointmentTime}'/>"
                   data-patient-name="<c:out value='${a.user.fullName}'/>"><c:out value="${a.prescriptionText}" /></textarea>
-                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/view" class="ma-join-btn" style="background:#0F172A;text-decoration:none;">
-                  <i class="bi bi-eye"></i> View Rx
-                </a>
-                <a href="${pageContext.request.contextPath}/doctors/appointments/${a.id}/prescription/download" class="ma-join-btn" style="background:#16A34A;text-decoration:none;">
-                  <i class="bi bi-download"></i> Download
-                </a>
-                <button type="button" class="ma-join-btn" style="background:#1E293B;" onclick="viewPrescription('${a.id}')">
-                  <i class="bi bi-printer"></i> Print Preview
-                </button>
-              </c:if>
+
+                <div class="ma-card-head">
+                  <div class="ma-card-avatar">
+                    <c:choose>
+                      <c:when test="${not empty a.doctor.profilePhotoPath}">
+                        <img src="${pageContext.request.contextPath}${a.doctor.profilePhotoPath}" alt="">
+                      </c:when>
+                      <c:otherwise>${empty a.doctor.fullName ? 'D' : a.doctor.fullName.charAt(0)}</c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div class="ma-card-names">
+                    <div class="ma-card-name">Dr. ${empty a.doctor.fullName ? 'Doctor' : a.doctor.fullName}</div>
+                    <div class="ma-card-sub">${empty a.doctor.specialization ? 'General Physician' : a.doctor.specialization}</div>
+                  </div>
+                  <button type="button" class="btn-view-rx" onclick="event.stopPropagation(); viewPrescription('${a.id}');">
+                    View Prescription
+                  </button>
+                </div>
+
+                <div class="ma-card-details">
+                  <div class="ma-detail-row">
+                    <i class="bi bi-calendar3"></i>
+                    <span>${empty a.appointmentTime ? 'Recently Issued' : a.appointmentTime}</span>
+                  </div>
+                  <div class="ma-detail-row">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Medical Prescription &amp; Dosage</span>
+                  </div>
+                </div>
+
+                <i class="bi bi-chevron-right ma-card-arrow"></i>
+              </div>
+            </c:if>
+          </c:forEach>
+
+          <c:if test="${!hasRx}">
+            <div class="ma-col-empty">
+              <i class="bi bi-file-earmark-medical"></i>
+              <p>No prescriptions issued yet.</p>
+            </div>
+          </c:if>
+        </div>
+
+        <div class="ma-rx-footer-box">
+          <div class="ma-rx-quote-box">
+            <i class="bi bi-heart-pulse-fill"></i>
+            <div class="text-start">
+              <div class="ma-rx-quote-title">Better Conversations</div>
+              <div class="ma-rx-quote-sub">Healthier Tomorrows</div>
             </div>
           </div>
-        </c:forEach>
+        </div>
       </div>
-      <div class="ma-empty" id="filterEmpty" style="display:none;" aria-live="polite">
-        <i class="bi bi-calendar-x" id="filterEmptyIcon"></i>
-        <h3 id="filterEmptyTitle">No appointments</h3>
-        <p id="filterEmptyText">There are no appointments in this category.</p>
-        <a href="${pageContext.request.contextPath}/doctors/list"><i class="bi bi-search"></i> Browse Doctors</a>
-      </div>
-    </c:if>
+
+    </div>
 
   </div>
 </div>
 
-<%-- Global app footer (consistent with doctors list and other user pages) --%>
-<div class="ma-page-footer">
-  <jsp:include page="/WEB-INF/views/fragments/footer.jsp" />
-</div>
-
-<div id="rxModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#fff;border-radius:8px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
-    <!-- Actions -->
-    <div style="position:sticky;top:0;background:#f8f9fa;padding:12px 20px;border-bottom:1px solid #ddd;display:flex;justify-content:flex-end;gap:10px;z-index:10;">
-      <button onclick="downloadPDF()" style="padding:6px 12px;border:1px solid #F43F5E;background:#F43F5E;color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-download"></i> Download PDF</button>
-      <button onclick="window.print()" style="padding:6px 12px;border:1px solid #ddd;background:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-printer"></i> Print</button>
-      <button onclick="document.getElementById('rxModal').style.display='none'" style="padding:6px 12px;border:none;background:var(--ma-coral);color:#fff;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;"><i class="bi bi-x-lg"></i> Close</button>
+<!-- Prescription View & Print Modal -->
+<div id="rxModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.6);backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:18px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:1px solid #FFE4E6;">
+    <!-- Actions Header -->
+    <div style="position:sticky;top:0;background:#FFF1F2;padding:14px 20px;border-bottom:1px solid #FECDD3;display:flex;justify-content:space-between;align-items:center;z-index:10;">
+      <div style="font-weight:800;color:#9F1239;font-size:15px;display:flex;align-items:center;gap:6px;">
+        <i class="bi bi-file-earmark-medical-fill"></i> Medical Prescription
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="downloadPDF()" style="padding:6px 14px;border:none;background:#F43F5E;color:#fff;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;"><i class="bi bi-download"></i> Download PDF</button>
+        <button onclick="window.print()" style="padding:6px 14px;border:1px solid #E2E8F0;background:#fff;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;"><i class="bi bi-printer"></i> Print</button>
+        <button onclick="document.getElementById('rxModal').style.display='none'" style="padding:6px 12px;border:none;background:#64748B;color:#fff;border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;"><i class="bi bi-x-lg"></i></button>
+      </div>
     </div>
     
-    <!-- Printable Area -->
-    <div id="rxPrintArea" style="padding:40px;background:#fff;color:#333;font-family:'Times New Roman', Times, serif;">
+    <!-- Printable Prescription Area -->
+    <div id="rxPrintArea" style="padding:36px;background:#fff;color:#1E293B;font-family:'Inter', sans-serif;">
       <!-- Header -->
-      <div style="display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:16px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #F43F5E;padding-bottom:16px;margin-bottom:16px;">
         <div>
-          <h2 id="rxDocName" style="margin:0;font-size:24px;text-transform:uppercase;letter-spacing:1px;color:#222;"></h2>
-          <div id="rxDocSpec" style="font-size:14px;color:#555;margin-top:4px;"></div>
+          <h2 id="rxDocName" style="margin:0;font-size:20px;font-weight:900;color:#0F172A;"></h2>
+          <div id="rxDocSpec" style="font-size:13px;color:#F43F5E;font-weight:700;margin-top:2px;"></div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:24px;font-weight:bold;color:#222;"><i class="bi bi-heart-pulse"></i></div>
-          <div id="rxHospName" style="font-size:12px;font-weight:bold;margin-top:4px;text-transform:uppercase;"></div>
+          <div style="font-size:22px;font-weight:bold;color:#F43F5E;"><i class="bi bi-heart-pulse-fill"></i></div>
+          <div id="rxHospName" style="font-size:12px;font-weight:800;color:#64748B;text-transform:uppercase;"></div>
         </div>
       </div>
       
       <!-- Sub-header -->
-      <div style="display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:12px;margin-bottom:20px;font-size:12px;">
+      <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #E2E8F0;padding-bottom:12px;margin-bottom:20px;font-size:12px;color:#64748B;">
         <div style="max-width:60%;">
-          <strong>Clinic/Address:</strong> <span id="rxAddress"></span>
+          <strong style="color:#0F172A;">Clinic:</strong> <span id="rxAddress"></span>
         </div>
         <div style="text-align:right;">
-          <strong>Date & Time:</strong> <span id="rxDate"></span>
+          <strong style="color:#0F172A;">Date:</strong> <span id="rxDate"></span>
         </div>
       </div>
       
       <!-- Patient Details -->
-      <div style="display:flex;justify-content:space-between;margin-bottom:30px;font-size:14px;">
-        <div><strong>Patient's Name:</strong> <span id="rxPatientName" style="border-bottom:1px solid #888;padding:0 10px;"></span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:24px;font-size:13px;background:#F8FAFC;padding:10px 14px;border-radius:10px;">
+        <div><strong style="color:#0F172A;">Patient Name:</strong> <span id="rxPatientName" style="font-weight:700;color:#F43F5E;"></span></div>
       </div>
       
       <!-- Rx Symbol & Content -->
-      <div style="min-height:300px;position:relative;">
-        <div style="margin-bottom:20px;">
-          <!-- Outlined Rx Logo -->
-          <svg width="60" height="60" viewBox="0 0 100 100" fill="none" stroke="#222" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
-            <path d="M 20 80 L 20 20 L 50 20 C 65 20 70 30 70 40 C 70 50 65 60 50 60 L 20 60"/>
-            <path d="M 45 60 L 75 90"/>
-            <path d="M 60 75 L 80 55"/>
-          </svg>
+      <div style="min-height:240px;position:relative;">
+        <div style="margin-bottom:14px;color:#F43F5E;font-size:24px;font-weight:900;font-style:italic;">
+          ℞
         </div>
-        <div id="rxContent" style="font-size:15px;line-height:1.6;white-space:pre-wrap;padding-left:20px;z-index:2;position:relative;"></div>
-        
-        <!-- Watermark Medicine Bottle -->
-        <svg style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:250px;height:250px;opacity:0.04;z-index:1;" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 35 10 L 65 10 L 65 18 L 35 18 Z M 30 20 L 70 20 L 70 25 L 65 35 L 65 85 C 65 90 60 95 50 95 C 40 95 35 90 35 85 L 35 35 L 30 25 Z" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-          <path d="M 40 60 L 60 60 M 50 50 L 50 70" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-        </svg>
+        <div id="rxContent" style="font-size:14px;line-height:1.7;white-space:pre-wrap;padding-left:10px;color:#1E293B;position:relative;z-index:2;"></div>
       </div>
       
-      <!-- Footer -->
-      <div style="margin-top:40px;border-top:1px solid #ddd;padding-top:20px;display:flex;justify-content:flex-end;">
+      <!-- Footer & Signature -->
+      <div style="margin-top:30px;border-top:1px solid #E2E8F0;padding-top:16px;display:flex;justify-content:flex-end;">
         <div style="text-align:center;width:200px;">
-          <div id="rxDocSignature" style="font-family:'Brush Script MT', 'Lucida Handwriting', cursive;font-size:24px;color:#000;margin-bottom:4px;padding:0 10px;"></div>
-          <div style="border-bottom:1px solid #333;margin-bottom:5px;"></div>
-          <div style="font-size:12px;font-weight:bold;">Signature</div>
+          <div id="rxDocSignature" style="font-family:'Caveat', cursive;font-size:26px;color:#0F172A;margin-bottom:2px;"></div>
+          <div style="border-bottom:1.5px solid #0F172A;margin-bottom:4px;"></div>
+          <div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase;">Doctor Signature</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<style>
-@media print {
-  body * { visibility: hidden; }
-  #rxPrintArea, #rxPrintArea * { visibility: visible; }
-  #rxPrintArea { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
-}
-</style>
-
-<script>
-function filterAppts(btn, status) {
-  var btns = document.querySelectorAll('.ma-sidebar-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-  btn.classList.add('active');
-
-  var cards = document.querySelectorAll('.ma-appt-card');
-  var visible = 0;
-  for (var i = 0; i < cards.length; i++) {
-    var show = false;
-    if (status === 'all') {
-      show = true;
-    } else if (status === 'prescriptions') {
-      show = cards[i].getAttribute('data-has-rx') === 'true';
-    } else {
-      show = cards[i].getAttribute('data-status').toLowerCase() === status;
-    }
-    cards[i].style.display = show ? 'flex' : 'none';
-    if (show) visible++;
-  }
-
-  var emptyEl = document.getElementById('filterEmpty');
-  var listEl = document.getElementById('apptList');
-  if (!emptyEl || !listEl) return;
-
-  var messages = {
-    pending: {
-      title: 'No pending appointments',
-      text: 'You do not have any appointments awaiting doctor confirmation.'
-    },
-    confirmed: {
-      title: 'No confirmed appointments',
-      text: 'You do not have any confirmed appointments right now.'
-    },
-    completed: {
-      title: 'No completed appointments',
-      text: 'Completed consultations will appear here.'
-    },
-    prescriptions: {
-      title: 'No prescriptions yet',
-      text: 'When your doctor writes a prescription, it will show up here.'
-    },
-    all: {
-      title: 'No appointments',
-      text: 'There are no appointments to display.'
-    }
-  };
-
-  if (visible === 0) {
-    var msg = messages[status] || messages.all;
-    document.getElementById('filterEmptyTitle').textContent = msg.title;
-    document.getElementById('filterEmptyText').textContent = msg.text;
-    emptyEl.style.display = 'flex';
-    listEl.style.display = 'none';
-  } else {
-    emptyEl.style.display = 'none';
-    listEl.style.display = 'flex';
-  }
-}
-
-<c:if test="${section == 'prescriptions'}">
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.querySelector('.ma-sidebar-btn[onclick*="prescriptions"]');
-  if (btn) filterAppts(btn, 'prescriptions');
-});
-</c:if>
-
-function viewPrescription(apptId) {
-    var dataElem = document.getElementById('rx-data-' + apptId);
-    var docName = dataElem.getAttribute('data-doc-name') || 'Doctor';
-    
-    document.getElementById('rxDocName').innerText = docName;
-    document.getElementById('rxDocSpec').innerText = dataElem.getAttribute('data-doc-spec') || 'Specialist';
-    document.getElementById('rxHospName').innerText = dataElem.getAttribute('data-hosp-name') || 'Fight D Fear Clinic';
-    document.getElementById('rxAddress').innerText = dataElem.getAttribute('data-address') || '—';
-    document.getElementById('rxDate').innerText = dataElem.getAttribute('data-date') || '—';
-    document.getElementById('rxPatientName').innerText = dataElem.getAttribute('data-patient-name') || 'Patient';
-    document.getElementById('rxContent').innerText = dataElem.value;
-    
-    // Set cursive signature text
-    document.getElementById('rxDocSignature').innerText = docName;
-    
-    document.getElementById('rxModal').style.display = 'flex';
-}
-
-function downloadPDF() {
-    const element = document.getElementById('rxPrintArea');
-    const opt = {
-      margin:       0.5,
-      filename:     'Prescription.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).save();
-}
-
-function openUserApptPreview(el) {
-  var overlay = document.getElementById('userApptModal');
-  if (!overlay || !el) return;
-  var doctor = el.getAttribute('data-doctor') || 'Doctor';
-  var spec = el.getAttribute('data-spec') || 'General consultation';
-  var hospital = el.getAttribute('data-hospital') || '';
-  var time = el.getAttribute('data-time') || 'Time to be confirmed';
-  var reason = el.getAttribute('data-reason') || '';
-  var type = el.getAttribute('data-type') || 'CLINIC';
-  var status = (el.getAttribute('data-status') || 'PENDING').toUpperCase();
-  var payment = el.getAttribute('data-payment') || '';
-  var amount = el.getAttribute('data-amount') || '';
-  var receipt = el.getAttribute('data-receipt') || '';
-  var chatUrl = el.getAttribute('data-chat-url') || '';
-  var videoUrl = el.getAttribute('data-video-url') || '';
-  var callUrl = el.getAttribute('data-call-url') || '';
-  var profileUrl = el.getAttribute('data-profile-url') || '';
-  var rxUrl = el.getAttribute('data-rx-url') || '';
-  var typeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
-  document.getElementById('uaAvatar').textContent = doctor.charAt(0).toUpperCase();
-  document.getElementById('uaName').textContent = 'Dr. ' + doctor;
-  document.getElementById('uaSpec').textContent = spec + (hospital ? ' · ' + hospital : '');
-  document.getElementById('uaTime').textContent = time;
-  document.getElementById('uaType').textContent = typeLabel;
-  document.getElementById('uaReason').textContent = reason || 'Not provided';
-  document.getElementById('uaStatus').textContent = status;
-  document.getElementById('uaStatus').className = 'doc-status ' + status.toLowerCase();
-  document.getElementById('uaPayment').textContent = amount ? ((payment || 'Paid') + ' · ₹' + amount) : (payment || 'Payment pending');
-  document.getElementById('uaReceipt').textContent = receipt || 'Not issued';
-  var chatBtn = document.getElementById('uaChatBtn');
-  var videoBtn = document.getElementById('uaVideoBtn');
-  var callBtn = document.getElementById('uaCallBtn');
-  var profileBtn = document.getElementById('uaProfileBtn');
-  var rxBtn = document.getElementById('uaRxBtn');
-  var canChat = status === 'CONFIRMED' || status === 'COMPLETED';
-  var canJoin = status === 'CONFIRMED' && (type === 'VIDEO' || type === 'ONLINE');
-  if (chatUrl && canChat) { chatBtn.href = chatUrl; chatBtn.style.display = 'inline-flex'; } else { chatBtn.style.display = 'none'; }
-  if (videoUrl && canJoin) { videoBtn.href = videoUrl; videoBtn.style.display = 'inline-flex'; } else { videoBtn.style.display = 'none'; }
-  if (callUrl && canJoin) { callBtn.href = callUrl; callBtn.style.display = 'inline-flex'; } else { callBtn.style.display = 'none'; }
-  if (profileUrl) { profileBtn.href = profileUrl; profileBtn.style.display = 'inline-flex'; } else { profileBtn.style.display = 'none'; }
-  if (rxUrl) { rxBtn.href = rxUrl; rxBtn.style.display = 'inline-flex'; } else { rxBtn.style.display = 'none'; }
-  overlay.classList.add('open');
-}
-function closeUserApptPreview() {
-  var overlay = document.getElementById('userApptModal');
-  if (overlay) overlay.classList.remove('open');
-}
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeUserApptPreview();
-});
-</script>
-
+<!-- Appointment Preview Modal -->
 <div id="userApptModal" class="doc-modal-overlay" onclick="if(event.target===this)closeUserApptPreview()">
   <div class="doc-modal" role="dialog" aria-modal="true" aria-labelledby="uaName">
     <div class="doc-modal-header">
@@ -628,6 +1017,150 @@ document.addEventListener('keydown', function(e) {
     </div>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+<script>
+function filterBoard(category, btn) {
+  document.querySelectorAll('.ma-pill-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+
+  var colPending = document.getElementById('colPending');
+  var colConfirmed = document.getElementById('colConfirmed');
+  var colPrescriptions = document.getElementById('colPrescriptions');
+  var grid = document.getElementById('boardGrid');
+
+  if (!colPending || !colConfirmed || !colPrescriptions || !grid) return;
+
+  if (category === 'all') {
+    colPending.style.display = 'flex';
+    colConfirmed.style.display = 'flex';
+    colPrescriptions.style.display = 'flex';
+    grid.style.gridTemplateColumns = '';
+  } else if (category === 'pending') {
+    colPending.style.display = 'flex';
+    colConfirmed.style.display = 'none';
+    colPrescriptions.style.display = 'none';
+    grid.style.gridTemplateColumns = '1fr';
+  } else if (category === 'confirmed') {
+    colPending.style.display = 'none';
+    colConfirmed.style.display = 'flex';
+    colPrescriptions.style.display = 'none';
+    grid.style.gridTemplateColumns = '1fr';
+  } else if (category === 'prescriptions') {
+    colPending.style.display = 'none';
+    colConfirmed.style.display = 'none';
+    colPrescriptions.style.display = 'flex';
+    grid.style.gridTemplateColumns = '1fr';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var sec = params.get('section');
+    if (sec === 'prescriptions') {
+      var rxBtn = document.querySelector(".ma-pill-btn[onclick*='prescriptions']");
+      filterBoard('prescriptions', rxBtn);
+    } else if (sec === 'pending') {
+      var pBtn = document.querySelector(".ma-pill-btn[onclick*='pending']");
+      filterBoard('pending', pBtn);
+    } else if (sec === 'confirmed') {
+      var cBtn = document.querySelector(".ma-pill-btn[onclick*='confirmed']");
+      filterBoard('confirmed', cBtn);
+    }
+  } catch(e) {}
+});
+
+function viewPrescription(apptId) {
+  var dataElem = document.getElementById('rx-data-' + apptId);
+  if (!dataElem) return;
+  var docName = dataElem.getAttribute('data-doc-name') || 'Doctor';
+  
+  document.getElementById('rxDocName').innerText = 'Dr. ' + docName;
+  document.getElementById('rxDocSpec').innerText = dataElem.getAttribute('data-doc-spec') || 'Specialist';
+  document.getElementById('rxHospName').innerText = dataElem.getAttribute('data-hosp-name') || 'Fight D Fear Medical';
+  document.getElementById('rxAddress').innerText = dataElem.getAttribute('data-address') || '—';
+  document.getElementById('rxDate').innerText = dataElem.getAttribute('data-date') || '—';
+  document.getElementById('rxPatientName').innerText = dataElem.getAttribute('data-patient-name') || 'Patient';
+  document.getElementById('rxContent').innerText = dataElem.value;
+  document.getElementById('rxDocSignature').innerText = docName;
+  
+  document.getElementById('rxModal').style.display = 'flex';
+}
+
+function downloadPDF() {
+  const element = document.getElementById('rxPrintArea');
+  const opt = {
+    margin:       0.5,
+    filename:     'Prescription.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+
+function openUserApptPreview(el) {
+  var overlay = document.getElementById('userApptModal');
+  if (!overlay || !el) return;
+  var doctor = el.getAttribute('data-doctor') || 'Doctor';
+  var spec = el.getAttribute('data-spec') || 'General consultation';
+  var hospital = el.getAttribute('data-hospital') || '';
+  var time = el.getAttribute('data-time') || 'Time to be confirmed';
+  var reason = el.getAttribute('data-reason') || '';
+  var type = el.getAttribute('data-type') || 'CLINIC';
+  var status = (el.getAttribute('data-status') || 'PENDING').toUpperCase();
+  var payment = el.getAttribute('data-payment') || '';
+  var amount = el.getAttribute('data-amount') || '';
+  var receipt = el.getAttribute('data-receipt') || '';
+  var chatUrl = el.getAttribute('data-chat-url') || '';
+  var videoUrl = el.getAttribute('data-video-url') || '';
+  var callUrl = el.getAttribute('data-call-url') || '';
+  var profileUrl = el.getAttribute('data-profile-url') || '';
+  var rxUrl = el.getAttribute('data-rx-url') || '';
+  var typeLabel = type === 'VIDEO' ? 'Video consultation' : (type === 'ONLINE' ? 'Online' : 'Clinic visit');
+  
+  document.getElementById('uaAvatar').textContent = doctor.charAt(0).toUpperCase();
+  document.getElementById('uaName').textContent = 'Dr. ' + doctor;
+  document.getElementById('uaSpec').textContent = spec + (hospital ? ' · ' + hospital : '');
+  document.getElementById('uaTime').textContent = time;
+  document.getElementById('uaType').textContent = typeLabel;
+  document.getElementById('uaReason').textContent = reason || 'Not provided';
+  document.getElementById('uaStatus').textContent = status;
+  document.getElementById('uaStatus').className = 'doc-status ' + status.toLowerCase();
+  document.getElementById('uaPayment').textContent = amount ? ((payment || 'Paid') + ' · ₹' + amount) : (payment || 'Payment pending');
+  document.getElementById('uaReceipt').textContent = receipt || 'Not issued';
+  
+  var chatBtn = document.getElementById('uaChatBtn');
+  var videoBtn = document.getElementById('uaVideoBtn');
+  var callBtn = document.getElementById('uaCallBtn');
+  var profileBtn = document.getElementById('uaProfileBtn');
+  var rxBtn = document.getElementById('uaRxBtn');
+  
+  var canChat = status === 'CONFIRMED' || status === 'COMPLETED';
+  var canJoin = status === 'CONFIRMED' && (type === 'VIDEO' || type === 'ONLINE');
+  
+  if (chatUrl && canChat) { chatBtn.href = chatUrl; chatBtn.style.display = 'inline-flex'; } else { chatBtn.style.display = 'none'; }
+  if (videoUrl && canJoin) { videoBtn.href = videoUrl; videoBtn.style.display = 'inline-flex'; } else { videoBtn.style.display = 'none'; }
+  if (callUrl && canJoin) { callBtn.href = callUrl; callBtn.style.display = 'inline-flex'; } else { callBtn.style.display = 'none'; }
+  if (profileUrl) { profileBtn.href = profileUrl; profileBtn.style.display = 'inline-flex'; } else { profileBtn.style.display = 'none'; }
+  if (rxUrl) { rxBtn.href = rxUrl; rxBtn.style.display = 'inline-flex'; } else { rxBtn.style.display = 'none'; }
+  
+  overlay.classList.add('open');
+}
+
+function closeUserApptPreview() {
+  var overlay = document.getElementById('userApptModal');
+  if (overlay) overlay.classList.remove('open');
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeUserApptPreview();
+    var rxModal = document.getElementById('rxModal');
+    if (rxModal) rxModal.style.display = 'none';
+  }
+});
+</script>
 </body>
 </html>
-

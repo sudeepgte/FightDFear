@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Find Your Right Lawyer | LexAssist</title>
@@ -428,15 +430,87 @@
             font-size: 0.9rem;
             color: var(--secondary);
         }
+        
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 15px 15px !important;
+            }
+            .search-box {
+                padding: 4px !important;
+            }
+            .search-input {
+                padding: 8px 10px !important;
+                font-size: 0.85rem !important;
+                width: calc(100% - 50px) !important;
+            }
+            .search-btn {
+                width: 38px !important;
+                height: 38px !important;
+            }
+            .filter-row {
+                flex-direction: column !important;
+                gap: 12px !important;
+            }
+            .location-selector, .dropdown, .filter-btn {
+                width: 100% !important;
+                justify-content: center;
+            }
+            .location-selector select {
+                max-width: 100% !important;
+                text-overflow: ellipsis !important;
+            }
+            .lawyer-header {
+                flex-wrap: wrap;
+            }
+            .lawyer-photo {
+                width: 60px;
+                height: 60px;
+            }
+            .price-availability-col {
+                width: 100%;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                border-top: 1px solid var(--border);
+                padding-top: 12px;
+                margin-top: 5px;
+            }
+            .price-box {
+                text-align: left;
+            }
+            .availability {
+                margin-top: 0 !important;
+            }
+            .favorite-btn {
+                order: 3;
+                margin-bottom: 0;
+            }
+            .card-actions {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .btn-secondary, .btn-primary-action {
+                flex: 1 1 45%;
+                font-size: 0.85rem;
+                padding: 10px 4px;
+            }
+        }
+        
         /* Bottom Mobile Nav */
         .bottom-nav {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
             background: white;
-            display: flex;
+            display: flex !important;
             justify-content: space-around;
-            padding: 20px 0;
+            padding: 12px 0 20px 0;
             border-top: 1px solid var(--border);
-            margin-top: 40px;
-            border-radius: 20px;
+            z-index: 9999 !important;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+            margin: 0 !important;
+            border-radius: 0 !important;
         }
         .bottom-nav .nav-item {
             display: flex;
@@ -823,5 +897,6 @@
     </script>
 
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

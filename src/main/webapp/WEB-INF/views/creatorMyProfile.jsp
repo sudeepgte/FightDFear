@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile — ${currentUser.fullName}</title>
@@ -39,9 +41,10 @@
         }
         a { text-decoration: none; color: inherit; }
 
-        /* ── TOP NAV ── */
+        /* 🍔 TOP NAV 🍔 */
         .top-nav {
-            position: sticky; top: 80px; z-index: 200;
+            width: 100%;
+            position: sticky; top: 75px; z-index: 200;
             background: var(--card);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
@@ -65,6 +68,7 @@
 
         /* ── LAYOUT GRID ── */
         .page-wrapper {
+            width: 100%;
             max-width: 1536px; /* Use full space */
             margin: 0 auto;
             display: grid;
@@ -76,18 +80,20 @@
             .page-wrapper { grid-template-columns: 1fr; padding: 20px; }
             .right-sidebar { display: none; }
         }
-                @media (max-width: 1200px) { .top-nav {
-                justify-content: flex-start;
-                overflow-x: auto;
-                white-space: nowrap;
-                padding: 0 16px;
-                gap: 15px;
-                scrollbar-width: none;
-            }
-            .top-nav::-webkit-scrollbar { display: none; }
-            .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
-            .top-nav .nav-actions { flex-shrink: 0; gap: 8px; }
-            .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; }
+        @media (max-width: 1200px) { .top-nav {
+            justify-content: flex-start;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0 16px;
+            gap: 15px;
+            scrollbar-width: none;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .top-nav::-webkit-scrollbar { display: none; }
+        .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
+        .top-nav .nav-actions { flex-shrink: 0; gap: 8px; display: flex; flex-wrap: nowrap; }
+        .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; flex-shrink: 0; }
         }
         @media (max-width: 768px) {
             .page-wrapper { grid-template-columns: 1fr; padding: 12px 12px 90px; gap: 14px; }
@@ -138,10 +144,16 @@
             padding: 28px 24px 20px;
             display: flex; gap: 20px;
         }
+        @media (max-width: 768px) {
+            .profile-top { flex-direction: column; align-items: center; text-align: center; padding: 20px 15px; }
+            .name-row { justify-content: center; }
+            .location-row { justify-content: center; }
+        }
         .avatar-wrap { position: relative; flex-shrink: 0; }
         .avatar-img {
             width: 110px; height: 110px; border-radius: 50%;
             object-fit: cover;
+            object-position: top;
             border: 3px solid var(--accent);
             padding: 2px; background: var(--card);
         }
@@ -179,6 +191,12 @@
         .stats-row {
             display: grid; grid-template-columns: repeat(4,1fr);
             border-top: 1px solid var(--border);
+        }
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); border-bottom: 1px solid var(--border); }
+            .stat-cell:nth-child(2) { border-right: none; }
+            .stat-cell { padding: 12px 8px; border-bottom: 1px solid var(--border); }
+            .stat-cell:nth-child(3), .stat-cell:nth-child(4) { border-bottom: none; }
         }
         .stat-cell {
             padding: 16px 8px; text-align: center; cursor: pointer;
@@ -252,8 +270,8 @@
         .cell-overlay span { display: flex; align-items: center; gap: 5px; }
 
         /* ── EMPTY STATE ── */
-        .empty-state { display: none; padding: 50px 20px; text-align: center; }
-        .empty-state.active { display: block; }
+        .empty-state { display: none; padding: 50px 20px; text-align: center; min-height: 400px; flex-direction: column; align-items: center; justify-content: center; }
+        .empty-state.active { display: flex; }
         .empty-state i { font-size: 44px; opacity: .35; color: var(--sub); margin-bottom: 14px; }
         .empty-state h5 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
         .empty-state p { font-size: 13px; color: var(--sub); }
@@ -455,10 +473,14 @@
             .chat-window { width: 100%; right: 0; }
         }
     </style>
-</head>
-<body>
-    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
-    <div id="wrapper">
+  </head>
+  <body>
+      <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+      <style>
+          #wrapper { margin-top: 75px !important; }
+          #sidebar-wrapper { top: 75px !important; }
+      </style>
+      <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
 
@@ -497,9 +519,6 @@
         <a href="${pageContext.request.contextPath}/creator-hub/dashboard" class="icon-btn" title="Settings" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
             <i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span>
         </a>
-        <a href="${pageContext.request.contextPath}/logout" class="icon-btn" title="Logout" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px; color:var(--accent); border-color:var(--accent);">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> <span class="desktop-only">Logout</span>
-        </a>
     </div>
 </nav>
 
@@ -512,7 +531,7 @@
     <div class="notif-panel-body">
         <c:choose>
             <c:when test="${empty recentNotifications}">
-                <div class="empty-state active" style="padding: 30px 20px;">
+                <div class="empty-state active" style="padding: 30px 20px; min-height: auto;">
                     <i class="fa-regular fa-bell"></i>
                     <h5>All clear!</h5>
                     <p>No notifications yet.</p>
@@ -577,10 +596,6 @@
         <a href="${pageContext.request.contextPath}/creator-hub/dashboard" class="ls-item">
             <i class="fa-solid fa-gear"></i> Settings
         </a>
-        <div style="margin:20px 0;"></div>
-        <a href="${pageContext.request.contextPath}/logout" class="ls-item">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
-        </a>
     </div>
 
     <!-- ━━━━━━━━━ CENTER: PROFILE ━━━━━━━━━ -->
@@ -633,7 +648,7 @@
                             <c:otherwise>India</c:otherwise>
                         </c:choose>
                     </div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
                         <button onclick="openEditProfileModal()" class="edit-btn" style="border:1px solid rgba(244,63,94,.25); cursor:pointer;">
                             <i class="fa-regular fa-pen-to-square"></i> Edit Profile
                         </button>
@@ -1418,6 +1433,7 @@
         </div>
     </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

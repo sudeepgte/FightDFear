@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Friends | Fight D Fear</title>
@@ -130,6 +132,7 @@ body { background: #f8f9fa; }
         </a>
 
         <form action="${pageContext.request.contextPath}/users/unfollow/${f.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <button class="btn btn-outline-danger btn-sm">
             <i class="bi bi-person-x"></i>
           </button>
@@ -197,6 +200,7 @@ function sendReel() {
 					  	<script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
 					  	<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

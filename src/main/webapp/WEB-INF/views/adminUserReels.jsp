@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>User Reels Management — Admin</title>
@@ -267,6 +269,7 @@
                                       <i class="fas fa-external-link-alt"></i> Open
                                   </a>
                                   <form action="${pageContext.request.contextPath}/admin/user-reels/delete/${reel.id}" method="post" style="flex:1; margin:0;" onsubmit="return confirm('Are you sure you want to permanently delete this reel?');">
+                                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                       <button type="submit" class="btn-delete w-100">
                                           <i class="fas fa-trash-alt"></i> Delete
                                       </button>
@@ -290,6 +293,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

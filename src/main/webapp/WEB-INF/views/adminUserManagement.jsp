@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>User Management - Fight D Fear Admin</title>
@@ -163,9 +165,9 @@
                           <c:forEach var="u" items="${searchResults}">
                               <tr>
                                   <td class="ap-muted">${u.id}</td>
-                                  <td><div class="nm" style="font-weight:700;">${u.fullName}</div></td>
-                                  <td>${u.email}</td>
-                                  <td>${not empty u.phoneNumber ? u.phoneNumber : '-'}</td>
+                                  <td><div class="nm" style="font-weight:700;"><c:out value="${u.fullName}"/></div></td>
+                                  <td><c:out value="${u.email}"/></td>
+                                  <td><c:out value="${not empty u.phoneNumber ? u.phoneNumber : '-'}"/></td>
                                   <td>
                                       <c:choose>
                                           <c:when test="${u.verificationStatus == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
@@ -185,16 +187,18 @@
                                         <c:choose>
                                             <c:when test="${u.banned}">
                                                 <form action="${pageContext.request.contextPath}/admin/users/${u.id}/unban" method="post" class="m-0">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="ap-btn-action ap-btn-success"><i class="fas fa-unlock"></i> Unban</button>
                                                 </form>
                                             </c:when>
                                             <c:otherwise>
                                                 <form action="${pageContext.request.contextPath}/admin/users/${u.id}/ban" method="post" class="m-0">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="ap-btn-action ap-btn-warn"><i class="fas fa-ban"></i> Ban</button>
                                                 </form>
                                             </c:otherwise>
                                         </c:choose>
-                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id}, '${u.fullName}')">
+                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id})">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                       </div>
@@ -237,18 +241,20 @@
                           <c:forEach var="u" items="${pendingUsers}">
                               <tr>
                                   <td class="ap-muted">${u.id}</td>
-                                  <td><div class="nm" style="font-weight:700;">${u.fullName}</div></td>
-                                  <td>${u.email}</td>
-                                  <td>${not empty u.phoneNumber ? u.phoneNumber : '-'}</td>
-                                  <td><code style="color:var(--ap-muted);background:#F1F5F9;padding:2px 6px;border-radius:4px;">${not empty u.identityDocument ? u.identityDocument : '-'}</code></td>
+                                  <td><div class="nm" style="font-weight:700;"><c:out value="${u.fullName}"/></div></td>
+                                  <td><c:out value="${u.email}"/></td>
+                                  <td><c:out value="${not empty u.phoneNumber ? u.phoneNumber : '-'}"/></td>
+                                  <td><code style="color:var(--ap-muted);background:#F1F5F9;padding:2px 6px;border-radius:4px;"><c:out value="${not empty u.identityDocument ? u.identityDocument : '-'}"/></code></td>
                                   <td>
                                       <div style="display:flex;gap:6px;align-items:center;">
                                           <form action="${pageContext.request.contextPath}/admin/users/${u.id}/approve" method="post" class="m-0">
+                                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                               <button type="submit" class="ap-btn-action ap-btn-success-solid">
                                                   <i class="fas fa-check-circle me-1"></i> Verify
                                               </button>
                                           </form>
                                           <form action="${pageContext.request.contextPath}/admin/users/${u.id}/reject" method="post" class="m-0">
+                                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                               <button type="submit" class="ap-btn-action ap-btn-danger">
                                                   <i class="fas fa-times-circle me-1"></i> Reject
                                               </button>
@@ -287,17 +293,18 @@
                               <c:if test="${!u.banned}">
                               <tr>
                                   <td class="ap-muted">${u.id}</td>
-                                  <td><div class="nm" style="font-weight:700;">${u.fullName}</div></td>
-                                  <td>${u.email}</td>
-                                  <td>${not empty u.phoneNumber ? u.phoneNumber : '-'}</td>
+                                  <td><div class="nm" style="font-weight:700;"><c:out value="${u.fullName}"/></div></td>
+                                  <td><c:out value="${u.email}"/></td>
+                                  <td><c:out value="${not empty u.phoneNumber ? u.phoneNumber : '-'}"/></td>
                                   <td><span class="ap-badge ap-badge-approved">VERIFIED</span></td>
                                   <td>
                                       <div style="display:flex;gap:6px;align-items:center;">
                                         <a href="${pageContext.request.contextPath}/admin/users/${u.id}/profile" class="ap-btn-view"><i class="fas fa-user"></i> Profile</a>
                                         <form action="${pageContext.request.contextPath}/admin/users/${u.id}/ban" method="post" class="m-0">
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                             <button type="submit" class="ap-btn-action ap-btn-warn"><i class="fas fa-ban"></i> Ban</button>
                                         </form>
-                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id}, '${u.fullName}')">
+                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id})">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                       </div>
@@ -331,17 +338,18 @@
                           <c:forEach var="u" items="${bannedUsers}">
                               <tr style="background-color: #FFF7F8;">
                                   <td class="ap-muted">${u.id}</td>
-                                  <td><div class="nm" style="font-weight:700;">${u.fullName}</div></td>
-                                  <td>${u.email}</td>
-                                  <td>${not empty u.phoneNumber ? u.phoneNumber : '-'}</td>
+                                  <td><div class="nm" style="font-weight:700;"><c:out value="${u.fullName}"/></div></td>
+                                  <td><c:out value="${u.email}"/></td>
+                                  <td><c:out value="${not empty u.phoneNumber ? u.phoneNumber : '-'}"/></td>
                                   <td><span class="ap-badge ap-badge-banned">BANNED</span></td>
                                   <td>
                                       <div style="display:flex;gap:6px;align-items:center;">
                                         <a href="${pageContext.request.contextPath}/admin/users/${u.id}/profile" class="ap-btn-view"><i class="fas fa-user"></i> Profile</a>
                                         <form action="${pageContext.request.contextPath}/admin/users/${u.id}/unban" method="post" class="m-0">
+                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                             <button type="submit" class="ap-btn-action ap-btn-success"><i class="fas fa-unlock"></i> Unban</button>
                                         </form>
-                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id}, '${u.fullName}')">
+                                        <button class="ap-btn-action ap-btn-danger" onclick="confirmDelete(${u.id})">
                                             <i class="fas fa-trash"></i> Delete
                                         </button>
                                       </div>
@@ -372,6 +380,7 @@
            This action <strong>cannot be undone</strong>.</p>
         <div class="modal-actions">
             <form id="deleteForm" method="post" action="">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                 <button type="submit" class="btn-confirm-delete">Yes, Delete</button>
             </form>
             <button class="btn-cancel-delete" onclick="closeModal()">Cancel</button>
@@ -387,8 +396,8 @@ function switchTab(tabId) {
     document.getElementById('tab-pane-' + tabId).style.display = 'block';
 }
 
-function confirmDelete(id, name) {
-    document.getElementById('deleteUserName').textContent = name;
+function confirmDelete(id) {
+    document.getElementById('deleteUserName').textContent = 'User #' + id;
     document.getElementById('deleteForm').action =
         '${pageContext.request.contextPath}/admin/users/' + id + '/delete';
     document.getElementById('deleteModal').classList.add('open');
@@ -419,5 +428,6 @@ if (hs) {
 }
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -709,9 +709,7 @@ public class PaymentController {
 
             boolean isValid;
             try {
-                if (doctorPaymentService.mockPaymentsEnabled()
-                        || orderId.startsWith("order_mock_")
-                        || paymentId.startsWith("mock_")) {
+                if (doctorPaymentService.mockPaymentsEnabled()) {
                     isValid = !orderId.isBlank() && !paymentId.isBlank();
                     if (paymentId.isBlank()) {
                         paymentId = "mock_pay_" + System.currentTimeMillis();
@@ -728,6 +726,8 @@ public class PaymentController {
             }
 
             if (!isValid) {
+                log.warn("[SECURITY-AUDIT] event=PAYMENT_SIGNATURE_MISMATCH userId={} orderId={} paymentId={} result=FAILED",
+                        user.getId(), in.sp.main.Util.LogSanitizer.sanitize(orderId), in.sp.main.Util.LogSanitizer.sanitize(paymentId));
                 responseMap.put("error", "Invalid payment signature.");
                 return ResponseEntity.status(400).body(responseMap);
             }
@@ -1192,6 +1192,9 @@ public class PaymentController {
             String resolvedType = type.isBlank() ? Objects.toString(pending.type(), "UNKNOWN") : type;
             finalizeSuccessfulPayment(
                     orderId, paymentId, user, resolvedType, pending.targetId(), expectedPaise, responseMap);
+            log.info("[SECURITY-AUDIT] event=PAYMENT_VERIFIED userId={} orderId={} paymentId={} type={} amount={} result=SUCCESS",
+                    user.getId(), in.sp.main.Util.LogSanitizer.sanitize(orderId), in.sp.main.Util.LogSanitizer.sanitize(paymentId),
+                    resolvedType, amountPaid);
             return ResponseEntity.ok(responseMap);
         } catch (Exception e) {
             log.error("Payment verify failed for order", e);
@@ -1219,6 +1222,7 @@ public class PaymentController {
                 }
                 boolean ok = Utils.verifyWebhookSignature(rawBody, signature, razorpayWebhookSecret);
                 if (!ok) {
+                    log.warn("[SECURITY-AUDIT] event=PAYMENT_WEBHOOK_SIGNATURE_INVALID result=FAILED");
                     res.put("error", "Invalid webhook signature");
                     return ResponseEntity.status(401).body(res);
                 }

@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>User Dashboard — Fight D Fear</title>
@@ -560,7 +562,15 @@
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/centres/allacceptedcentres">
                             <i class="bi bi-shield-check"></i>
-                            Find Martial Arts Centres
+                            Find Martial Arts
+                        </a>
+                        <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/list">
+                            <i class="bi bi-heart-pulse-fill"></i>
+                            Women Doctors
+                        </a>
+                        <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/myAppointments">
+                            <i class="bi bi-calendar-check"></i>
+                            My Appointments
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/user/bookings">
                             <i class="bi bi-journal-check"></i>
@@ -635,5 +645,6 @@ function markBroadcastsAsRead() {
     .catch(function () {});
 }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

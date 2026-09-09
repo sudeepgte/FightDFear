@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payments & Payouts | Fight D Fear</title>
@@ -84,6 +86,7 @@
                     <div class="content-panel mb-4" style="height: auto;">
                         <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-cart-dash me-2"></i> Record Expense</h5>
                         <form action="${pageContext.request.contextPath}/salon/payments/addExpense" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <div class="mb-3">
                                 <label class="fw-bold mb-1">Category</label>
                                 <select name="category" class="form-select rounded-pill">
@@ -113,6 +116,7 @@
                     <div class="content-panel" style="height: auto;">
                         <h5 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-bank me-2"></i> Request Payout</h5>
                         <form action="${pageContext.request.contextPath}/salon/payments/requestPayout" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <div class="mb-3">
                                 <label class="fw-bold mb-1">Amount to withdraw (₹)</label>
                                 <input type="number" name="amount" class="form-control rounded-pill" step="0.01" required>
@@ -194,6 +198,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

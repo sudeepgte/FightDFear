@@ -1,4 +1,5 @@
 <%@ page language="java" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <style>
     .global-footer {
@@ -78,4 +79,8 @@
     </div>
 
   </footer>
+  <c:if test="${not empty _csrf}">
+    <input type="hidden" id="_global_footer_csrf" name="${_csrf.parameterName}" value="${_csrf.token}" />
+  </c:if>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 

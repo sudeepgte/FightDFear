@@ -8,6 +8,10 @@
   <title>Pending Creators | Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <meta name="_csrf" content="${_csrf.token}"/>
+  <meta name="_csrf_header" content="${_csrf.headerName}"/>
+  <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
   <style>
     body { background: #f8fafc; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .page-wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
@@ -85,14 +89,17 @@
                 <td>
                   <div class="d-flex flex-wrap gap-2">
                     <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/approve" method="post" class="m-0">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <button type="submit" class="btn-approve"><i class="fas fa-check me-1"></i>Approve</button>
                     </form>
                     <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/reject" method="post" class="m-0"
                           onsubmit="return confirm('Reject this creator application?');">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <input type="text" name="reason" placeholder="Reason" class="form-control form-control-sm mb-1" style="min-width:140px;">
                       <button type="submit" class="btn-reject"><i class="fas fa-times me-1"></i>Reject</button>
                     </form>
                     <form action="${pageContext.request.contextPath}/admin/creators/${c.id}/request-changes" method="post" class="m-0">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <input type="text" name="note" placeholder="Changes note" class="form-control form-control-sm mb-1" style="min-width:140px;">
                       <button type="submit" class="btn-changes"><i class="fas fa-edit me-1"></i>Request changes</button>
                     </form>

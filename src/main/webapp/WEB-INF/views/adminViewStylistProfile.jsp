@@ -9,6 +9,10 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="_csrf" content="${_csrf.token}"/>
+  <meta name="_csrf_header" content="${_csrf.headerName}"/>
+  <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 <style>
   :root {
     --primary-accent: #F43F5E;
@@ -317,9 +321,11 @@
   <c:if test="${not stylist.approved}">
     <div class="audit-actions">
       <form action="${pageContext.request.contextPath}/admin/stylists/${stylist.id}/approve" method="post">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <button type="submit" class="btn-action btn-approve"><i class="fas fa-check me-2"></i> Approve Stylist</button>
       </form>
       <form action="${pageContext.request.contextPath}/admin/stylists/${stylist.id}/reject" method="post" onsubmit="return confirm('Reject and delete this profile?');">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
         <button type="submit" class="btn-action btn-reject"><i class="fas fa-times me-2"></i> Reject Profile</button>
       </form>
     </div>

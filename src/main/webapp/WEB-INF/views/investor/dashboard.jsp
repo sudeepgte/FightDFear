@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investor Dashboard — Fight D Fear</title>
@@ -375,11 +377,13 @@
                                             <c:choose>
                                                 <c:when test="${inv.status == 'PENDING'}">
                                                     <form action="${pageContext.request.contextPath}/investor/investment/${inv.id}/confirm" method="post" class="d-inline">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <button type="submit" class="btn btn-sm btn-rose rounded-pill px-3" onclick="return confirm('Confirm that fund transfer of ₹${inv.amount} is completed?');" style="font-size: 0.78rem;">
                                                             <i class="bi bi-check-lg me-1"></i> Confirm Transfer
                                                         </button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/investor/investment/${inv.id}/withdraw" method="post" class="d-inline">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="return confirm('Are you sure you want to withdraw this investment interest?');" style="font-size: 0.78rem;">
                                                             Withdraw
                                                         </button>
@@ -418,6 +422,7 @@
                                                 <div class="modal-dialog modal-dialog-centered">
                                                     <div class="modal-content rounded-4 border-0 shadow">
                                                         <form action="${pageContext.request.contextPath}/investor/investment/${inv.id}/rate" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                             <div class="modal-header border-bottom-0 pb-0">
                                                                 <h5 class="modal-title fw-bold" style="color: var(--primary-plum);">Rate & Review Investment Deal</h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -647,6 +652,7 @@
         }, 1500);
     }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

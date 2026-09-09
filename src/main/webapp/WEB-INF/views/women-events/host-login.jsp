@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Event Host Sign In — Fight D Fear</title>
@@ -287,6 +289,7 @@
             </c:if>
 
             <form id="loginForm" action="${pageContext.request.contextPath}/women-events/host/login" method="post" onsubmit="return handleLogin(event)">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" class="form-input" placeholder="organizer@example.com" required autofocus oninput="validateEmail()" onblur="validateEmail()"
@@ -406,5 +409,6 @@
             } catch (err) { /* ignore */ }
         })();
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

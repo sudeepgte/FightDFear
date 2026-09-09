@@ -56,14 +56,20 @@ public class PasswordResetService {
     @Autowired private PasswordResetTokenRepository tokenRepository;
     @Autowired private JavaMailSender mailSender;
     @Autowired private PasswordService passwordService;
+    @Autowired private RateLimitService rateLimitService;
 
-    @Value("${app.base-url}")
+    @Value("${app.base-url:http://localhost:8084}")
     private String baseUrl;
 
     private static final int EXPIRATION_TIME = 15;
 
     public String createPasswordResetToken(String email) {
-        String normEmail = email.trim().toLowerCase();
+        String normEmail = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
+        if (normEmail.isBlank()) {
+            return "Email is required";
+        }
+        rateLimitService.checkOrThrow("pwdreset:req:" + normEmail, 5, java.time.Duration.ofHours(1));
+
         Optional<User> user = userRepository.findByEmail(normEmail);
         Optional<Admin> admin = adminRepository.findByEmail(normEmail);
         Optional<MartialArtsCenter> centre = centreRepository.findByEmail(normEmail);
@@ -90,7 +96,7 @@ public class PasswordResetService {
         else if (investor.isPresent()) userType = UserType.INVESTOR;
         else if (fitnessTrainer.isPresent()) userType = UserType.FITNESS_TRAINER;
         else if (eventHost.isPresent()) userType = UserType.EVENT_HOST;
-        else return "Email not found";
+        else return "If an account with that email exists, a password reset link has been sent";
 
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(normEmail, token, userType, EXPIRATION_TIME);
@@ -127,11 +133,21 @@ public class PasswordResetService {
     }
 
     public String resetPassword(String token, String newPassword) {
-        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+        String safeToken = token == null ? "" : token.trim();
+        String failKey = "pwdreset:attempt:" + safeToken;
+        if (!safeToken.isBlank() && !rateLimitService.isAllowed(failKey, 5, java.time.Duration.ofMinutes(15))) {
+            return "Too many failed attempts. Please request a new password reset link.";
+        }
+
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(safeToken);
         if (tokenOpt.isEmpty() || tokenOpt.get().isExpired()) {
+            if (!safeToken.isBlank()) {
+                rateLimitService.recordFailure(failKey);
+            }
             return "Invalid or expired token";
         }
 
+        rateLimitService.clear(failKey);
         PasswordResetToken resetToken = tokenOpt.get();
         String email = resetToken.getEmail();
         UserType userType = resetToken.getUserType();

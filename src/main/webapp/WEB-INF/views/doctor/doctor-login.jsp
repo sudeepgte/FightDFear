@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Login — Fight D Fear</title>
@@ -133,9 +135,19 @@
             <h1>Doctor Login</h1>
             <p class="subtitle">Sign in to manage appointments, patients and your clinic profile</p>
 
-            <c:if test="${prefillFromRegistration}">
-                <div class="info-alert">
-                    Your registration email is ready. Enter your password and sign in to continue.
+            <c:if test="${not empty message || prefillFromRegistration}">
+                <div class="success-alert" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#166534; padding:14px 16px; border-radius:12px; margin-bottom:20px; display:flex; align-items:flex-start; gap:10px;">
+                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                    <div>
+                        <strong style="display:block; margin-bottom:2px;">Registration Successful!</strong>
+                        <span style="font-size:0.88rem;">
+                            <c:choose>
+                                <c:when test="${not empty message}"><c:out value="${message}"/></c:when>
+                                <c:when test="${not empty registeredName}">Welcome Dr. <c:out value="${registeredName}"/>. Your email is ready — please enter your password to sign in.</c:when>
+                                <c:otherwise>Your account is created. Enter your password to sign in and complete your doctor profile.</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </div>
                 </div>
             </c:if>
 
@@ -150,13 +162,14 @@
             </c:if>
 
             <form id="loginForm" action="${pageContext.request.contextPath}/doctors/login" method="post" autocomplete="on" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <div class="input-wrap">
                         <i class="bi bi-envelope prefix"></i>
                         <input type="email" id="email" name="email" class="form-input"
                                placeholder="doctor@example.com" required maxlength="120"
-                               value="${prefillEmail != null ? prefillEmail : ''}"
+                               value="${prefillEmail != null ? prefillEmail : (not empty param.email ? param.email : '')}"
                                autocomplete="username">
                     </div>
                     <div class="error-msg" id="emailError">Enter a valid email address.</div>
@@ -258,7 +271,15 @@
                 loginBtn.disabled = true;
                 loginBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Signing in...';
             });
+
+            // Focus password field if email is already filled
+            if (email && email.value.trim().length > 0) {
+                password.focus();
+            } else if (email) {
+                email.focus();
+            }
         })();
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

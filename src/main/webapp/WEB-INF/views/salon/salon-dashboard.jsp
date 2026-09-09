@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Partner Dashboard | Fight D Fear</title>
@@ -791,7 +793,7 @@
         .custom-table th {
             background: #fafafc !important;
             border-bottom: 1px solid var(--fdf-border) !important;
-            color: var(--fdf-text-muted);
+            color: var(--fdf-text-dark) !important;
             font-size: 0.75rem;
             text-transform: uppercase;
             font-weight: 800;
@@ -1071,7 +1073,7 @@
         /* Mobile Responsive Adjustments */
         @media (max-width: 991px) {
             .main-content {
-                padding: 12px;
+                padding: 12px 12px 120px 12px;
                 width: 100%;
                 overflow-x: hidden;
             }
@@ -1169,7 +1171,7 @@
     <div class="mobile-header d-lg-none shadow-sm" style="flex-wrap: nowrap; overflow: hidden;">
         <h4 class="m-0 fw-bold d-flex align-items-center gap-2 text-truncate" style="font-family:'Montserrat'; font-size: 1.1rem; flex: 1;">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 24px; width: 24px; border-radius: 6px; object-fit: cover; flex-shrink: 0;"> 
-            <span class="text-truncate">Fight D Fear</span>
+            <span class="text-truncate"><c:out value="${empty salon.name ? 'Fight D Fear' : salon.name}"/></span>
         </h4>
         <button class="btn btn-link text-white p-0 border-0 flex-shrink-0 ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMenu">
             <i class="bi bi-list" style="font-size: 1.6rem;"></i>
@@ -1634,6 +1636,7 @@
                                         <c:choose>
                                             <c:when test="${status == 'Paused'}">
                                                 <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="offerId" value="${offer.id}">
                                                     <input type="hidden" name="salonId" value="${salon.id}">
                                                     <input type="hidden" name="status" value="Resume">
@@ -1643,6 +1646,7 @@
                                             </c:when>
                                             <c:otherwise>
                                                 <form action="${pageContext.request.contextPath}/salon/updateOfferStatus" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="offerId" value="${offer.id}">
                                                     <input type="hidden" name="salonId" value="${salon.id}">
                                                     <input type="hidden" name="status" value="Paused">
@@ -1652,6 +1656,7 @@
                                             </c:otherwise>
                                         </c:choose>
                                         <form action="${pageContext.request.contextPath}/salon/deleteOffer" method="POST" class="m-0 flex-grow-1" onsubmit="return confirm('Are you sure you want to delete this offer?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="offerId" value="${offer.id}">
                                             <input type="hidden" name="salonId" value="${salon.id}">
                                             <input type="hidden" name="redirect" value="/salons/dashboard">
@@ -2324,6 +2329,7 @@
             }
         }
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 
