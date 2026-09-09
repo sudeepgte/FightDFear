@@ -115,7 +115,7 @@
 
         @media (max-width: 991px) {
             .profile-layout-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
             }
             .preview-column {
                 order: 2;
@@ -380,7 +380,26 @@
         }
 
         @media (max-width: 600px) {
+            .app-header { padding: 12px 14px; }
+            .header-brand span { display: none; }
+            .main-container { padding: 0 14px; margin-top: 16px; }
             .form-row { grid-template-columns: 1fr; }
+            .chips-container {
+                flex-direction: column;
+                flex-wrap: nowrap;
+                align-items: stretch;
+            }
+            .chip-checkbox {
+                width: 100%;
+                display: block;
+            }
+            .chip-checkbox .chip-label {
+                display: block;
+                width: 100%;
+                text-align: center;
+                padding: 12px;
+                font-size: 0.95rem;
+            }
         }
 
         .chips-container {
@@ -403,6 +422,8 @@
             font-weight: 600;
             color: #475569;
             transition: all 0.2s;
+            white-space: normal;
+            word-break: break-word;
         }
 
         .chip-checkbox input:checked + .chip-label {
@@ -470,12 +491,15 @@
 <body>
 
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear Coach Studio
-        </a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:history.back()" style="color: var(--navy); font-size: 1.2rem; text-decoration: none;"><i class="bi bi-arrow-left"></i></a>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="header-brand">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> <span>Fight D Fear Coach Studio</span>
+            </a>
+        </div>
         <div class="header-actions">
-            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">Skip for now</a>
-            <button type="button" class="btn-header-save" onclick="document.getElementById('trainerProfileForm').submit()">Save Profile</button>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">Skip</a>
+            <button type="button" class="btn-header-save" onclick="document.getElementById('trainerProfileForm').submit()">Save</button>
         </div>
     </header>
 

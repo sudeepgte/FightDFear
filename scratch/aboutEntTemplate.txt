@@ -551,15 +551,14 @@
         </div>
 
                 <!-- ADMIN ACTION BUTTONS -->
+        <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
         <div class="action-buttons-container">
             <!-- Approve -->
-            <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
             <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
                 <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
                     <i class="bi bi-check-circle-fill me-1"></i> Approve Entrepreneur
                 </button>
             </form>
-            </c:if>
 
             <!-- Request Changes -->
             <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#requestChangesModal">
@@ -571,6 +570,7 @@
                 <i class="bi bi-x-circle-fill me-1"></i> Reject Application
             </button>
         </div>
+        </c:if>
 
     </div>
 

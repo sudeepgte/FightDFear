@@ -52,4 +52,26 @@
 .we-fact .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--we-muted); }
 .we-fact .v { font-size: 14px; font-weight: 700; color: var(--we-navy); margin-top: 4px; }
 @media (max-width: 720px) { .we-fact-grid { grid-template-columns: 1fr; } }
+
+/* Custom 60-30-10 Pink Scrollbar for Women Events */
+html, body, * {
+  scrollbar-width: thin !important;
+  scrollbar-color: #F43F5E #F8FAFC !important;
+}
+::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
+}
+::-webkit-scrollbar-track {
+  background: #F8FAFC !important;
+  border-radius: 4px !important;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #F43F5E !important;
+  border-radius: 4px !important;
+  border: 2px solid #F8FAFC !important;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #E11D48 !important;
+}
 </style>

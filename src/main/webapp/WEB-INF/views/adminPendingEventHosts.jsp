@@ -37,7 +37,108 @@
     }
     .eh-inline-forms { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .eh-inline-forms form { margin: 0; }
-    @media (max-width: 992px) { .eh-bottom-grid { grid-template-columns: 1fr; } }
+
+    /* ── Tablet ── */
+    @media (max-width: 992px) {
+      .eh-bottom-grid { grid-template-columns: 1fr; }
+      .mobile-toggle { display: inline-flex !important; }
+      .sidebar {
+        position: fixed !important; left: -100% !important; top: 0 !important;
+        z-index: 2000 !important; width: 280px !important; height: 100vh !important;
+        transition: left 0.3s ease !important; box-shadow: 10px 0 30px rgba(0,0,0,0.18) !important;
+      }
+      .sidebar.active { left: 0 !important; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      /* Tabs: horizontal scroll instead of wrapping and overflowing */
+      .ap-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 4px !important;
+        gap: 0 !important;
+      }
+      .ap-tab {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+        padding: 10px 12px !important;
+        font-size: 0.78rem !important;
+      }
+
+      /* Filter row: remove inline min-width on select containers */
+      .ap-filter-row div[style*="min-width"] {
+        min-width: 0 !important;
+        width: 100% !important;
+      }
+
+      /* Table: ensure scrollable wrap is properly constrained */
+      .ap-table-wrap {
+        max-width: calc(100vw - 24px) !important;
+        border-radius: 0 0 12px 12px;
+      }
+
+      /* Action buttons in table rows — compact */
+      .eh-actions, .eh-inline-forms {
+        gap: 4px !important;
+      }
+      .ap-btn-view {
+        padding: 5px 8px !important;
+        font-size: 0.72rem !important;
+      }
+      .eh-more {
+        width: 28px !important;
+        height: 28px !important;
+      }
+
+      /* Bottom grid: single column with full-width panels */
+      .eh-bottom-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      /* Panels: prevent overflow */
+      .ap-panel {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+
+      /* Organizer doc cell: truncate names better on small screens */
+      .ap-doc .nm { max-width: 120px !important; }
+      .ap-doc .meta { max-width: 120px !important; }
+      .ap-clip { max-width: 100px !important; }
+
+      /* Panel header: wrap text */
+      .ap-panel-hd {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 12px !important;
+      }
+      .ap-panel-hd h2 {
+        font-size: 0.88rem !important;
+        word-break: break-word !important;
+      }
+    }
+
+    /* ── Small phones ── */
+    @media (max-width: 480px) {
+      /* Action buttons: stack vertically in table cells */
+      .eh-actions, .eh-inline-forms {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 4px !important;
+      }
+      .eh-actions > *, .eh-inline-forms > *,
+      .eh-inline-forms form button {
+        width: 100% !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+      }
+      .eh-more { width: 100% !important; height: auto !important; padding: 6px !important; }
+    }
   </style>
 </head>
 <body class="ap-page">
@@ -557,6 +658,20 @@
         var q = hs.value.trim();
         if (q) window.location.href = ctx + '/admin/pending-event-hosts?q=' + encodeURIComponent(q);
       }
+    });
+  }
+
+  var sidebarToggle = document.getElementById('sidebarToggle');
+  var closeSidebar = document.getElementById('closeSidebar');
+  var sidebar = document.querySelector('.sidebar');
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', function () {
+      sidebar.classList.toggle('active');
+    });
+  }
+  if (closeSidebar && sidebar) {
+    closeSidebar.addEventListener('click', function () {
+      sidebar.classList.remove('active');
     });
   }
 })();

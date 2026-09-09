@@ -68,22 +68,24 @@
   .back-nav:hover { color: var(--primary); }
 
   .header-card {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
-    border-radius: 20px; padding: 28px; color: #fff; margin-bottom: 22px;
+    background: #FFFFFF;
+    border: 1px solid var(--rose-soft);
+    border-radius: 20px; padding: 28px; color: var(--navy); margin-bottom: 22px;
     position: relative; overflow: hidden;
+    box-shadow: 0 4px 20px rgba(244, 63, 94, 0.06);
   }
   .header-card::after {
-    content: ''; position: absolute; right: -50px; top: -50px;
-    width: 200px; height: 200px; background: rgba(244, 63, 94, 0.16);
+    content: ''; position: absolute; right: -40px; top: -40px;
+    width: 180px; height: 180px; background: rgba(244, 63, 94, 0.05);
     border-radius: 50%; pointer-events: none;
   }
   .avatar-box {
     width: 112px; height: 112px; border-radius: 20px;
-    border: 4px solid rgba(255,255,255,0.22); overflow: hidden; background: #fff; flex-shrink: 0;
+    border: 3px solid #FECDD3; overflow: hidden; background: var(--rose-soft); flex-shrink: 0;
   }
   .avatar-box img { width: 100%; height: 100%; object-fit: cover; }
-  .header-card h1 { font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 800; margin: 0; color: #fff; }
-  .progress-wrap { background: rgba(255,255,255,0.16); border-radius: 50px; height: 10px; overflow: hidden; margin-top: 8px; }
+  .header-card h1 { font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 800; margin: 0; color: var(--navy); }
+  .progress-wrap { background: var(--rose-soft); border-radius: 50px; height: 10px; overflow: hidden; margin-top: 8px; border: 1px solid #FECDD3; }
   .progress-bar-fill { background: linear-gradient(90deg, var(--primary), #fb7185); height: 100%; border-radius: 50px; }
 
   .badge-status-lg {
@@ -168,6 +170,7 @@
   .missing-list { margin: 0; padding-left: 1.15rem; color: var(--text-muted); font-size: 0.9rem; }
   .missing-list li { margin-bottom: 4px; }
 
+  /* ── Tablet (sidebar collapses) ── */
   @media (max-width: 992px) {
     .mobile-toggle { display: block; }
     .layout { flex-direction: column; }
@@ -177,131 +180,215 @@
     }
     .sidebar.active { left: 0; }
   }
+
+  /* ── Mobile (full responsive rewrite) ── */
   @media (max-width: 768px) {
-    .main { padding: 16px 12px 40px; }
-    .header-card { padding: 20px 16px; }
-    .review-card { padding: 18px 14px; }
-    .info-grid { grid-template-columns: 1fr; }
-    .action-bar { justify-content: stretch; }
-    .action-bar form, .action-bar button { width: 100%; }
-    .btn-verify, .btn-reject, .btn-changes { width: 100%; justify-content: center; }
-    .avatar-box { width: 88px; height: 88px; }
+    /* 1. Lock viewport — prevent ANY horizontal scroll */
+    html, body {
+      max-width: 100vw !important;
+      width: 100% !important;
+      overflow-x: hidden !important;
+    }
+
+    /* 2. Layout skeleton */
+    .layout, .main, .mainInner {
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+    .main {
+      padding: 16px 12px 40px !important;
+      min-width: 0 !important;
+    }
+    .mainInner {
+      padding: 0 !important;
+    }
+
+    /* 3. Topbar */
+    .topbar {
+      padding: 0 12px !important;
+      gap: 8px;
+    }
+    .topbar .brand span { font-size: 0.9rem; }
+
+    /* 4. Page header (Back to Organizers row) */
+    .pg-header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+    }
+    .pg-header h4 { font-size: 1.1rem !important; }
+    .back-nav { font-size: 0.82rem; }
+
+    /* 5. Profile header card — stack everything vertically */
+    .header-card {
+      padding: 18px 14px !important;
+      border-radius: 14px !important;
+      overflow: hidden !important;
+    }
+    .header-card > .d-flex {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 14px !important;
+    }
+    .avatar-box {
+      width: 80px !important;
+      height: 80px !important;
+      border-radius: 14px !important;
+    }
+    .header-card h1 {
+      font-size: 1.2rem !important;
+      word-break: break-word !important;
+    }
+    .header-card .d-flex.flex-wrap {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px !important;
+    }
+    .badge-status-lg {
+      font-size: 0.72rem !important;
+      padding: 4px 10px !important;
+    }
+    /* Progress bar — remove fixed max-width so it uses full card width */
+    .header-card div[style*="max-width:480px"] {
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    /* Contact info text — prevent overflow */
+    .header-card .text-muted.small div {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-card .text-muted.small a {
+      word-break: break-all;
+    }
+
+    /* 6. Review cards */
+    .review-card {
+      padding: 16px 12px !important;
+      border-radius: 12px !important;
+      margin-bottom: 16px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    .section-header {
+      gap: 8px !important;
+      margin-bottom: 14px !important;
+      padding-bottom: 10px !important;
+    }
+    .section-header h3 {
+      font-size: 0.95rem !important;
+    }
+
+    /* 7. Info grid — single column */
+    .info-grid {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+    .info-field-value {
+      word-break: break-word !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    /* 8. Document rows */
+    .doc-row {
+      flex-wrap: wrap !important;
+      gap: 10px !important;
+      padding: 12px !important;
+    }
+    .doc-icon {
+      width: 40px !important;
+      height: 40px !important;
+      font-size: 1rem !important;
+    }
+    .doc-link {
+      font-size: 0.85rem !important;
+      word-break: break-all !important;
+    }
+
+    /* 9. Bio box */
+    .bio-box {
+      padding: 12px !important;
+      font-size: 0.88rem !important;
+      word-break: break-word !important;
+    }
+
+    /* 10. Tag pills — wrap properly */
+    .tag-pill {
+      font-size: 0.74rem !important;
+      padding: 3px 10px !important;
+      margin: 0 4px 4px 0 !important;
+    }
+
+    /* 11. Reason-change checkboxes — stack vertically */
+    .reason-checks {
+      flex-direction: column !important;
+      gap: 6px !important;
+    }
+    .reason-checks label {
+      font-size: 0.78rem !important;
+      padding: 5px 10px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 12. Decision textarea */
+    .form-control {
+      font-size: 0.88rem !important;
+    }
+
+    /* 13. Action bar — full-width stacked buttons */
+    .action-bar {
+      flex-direction: column !important;
+      gap: 8px !important;
+      padding-top: 14px !important;
+    }
+    .action-bar form {
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .action-bar button,
+    .btn-verify, .btn-reject, .btn-changes {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 12px 16px !important;
+      font-size: 0.88rem !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 14. Alerts */
+    .alert {
+      font-size: 0.85rem !important;
+      padding: 10px 14px !important;
+    }
+
+    /* 15. Event rows inside admin decision */
+    .event-row {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px !important;
+    }
+
+    /* 16. Section title inside review-card */
+    .section-title {
+      font-size: 0.88rem !important;
+    }
+
+    /* 17. Info items (legacy class used in some sections) */
+    .info-item {
+      overflow: hidden !important;
+      word-break: break-word !important;
+    }
+    .info-value {
+      word-break: break-word !important;
+      overflow-wrap: anywhere !important;
+    }
   }
-=======
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --we-navy: #0F172A;
-    --we-navy-soft: #1E293B;
-    --we-accent: #F43F5E;
-    --we-bg: #F8FAFC;
-    --we-card: #FFFFFF;
-    --we-muted: #64748B;
-    --we-border: #E2E8F0;
-    --sidebar-w: 272px;
-  }
-  * { box-sizing: border-box; }
-  body { font-family:'Outfit',sans-serif; margin:0; background:var(--we-bg); color:var(--we-navy); }
-  .topbar {
-    background: var(--we-navy); color:#fff; padding: 0 20px; height: 58px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 1000;
-  }
-  .topbar .brand { font-size:1.05rem; font-weight:700; }
-  .topbar .btn-logout {
-    background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.25);
-    border-radius:8px; padding:6px 14px; font-size:0.85rem; font-weight:600; text-decoration:none;
-  }
-  .layout { display:flex; min-height:calc(100vh - 58px); }
-  .main { flex:1; min-width:0; padding:28px 20px 48px; }
-  .mainInner { max-width:920px; margin:0 auto; }
-  .pg-header {
-    background: #fff; border: 1px solid var(--we-border);
-    border-radius:16px; padding:20px 24px; margin-bottom:22px;
-    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-  }
-  .pg-header h4 { color:var(--we-navy); font-weight:800; font-size:1.2rem; margin:0; }
-  .pg-header p { color:var(--we-muted); margin:4px 0 0; font-size:0.85rem; }
-  .pg-header .btn-back {
-    background: #F8FAFC; color: var(--we-navy); border: 1px solid var(--we-border);
-    border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
-  }
-  .profile-card {
-    background: #fff; border-radius: 16px; padding: 28px;
-    box-shadow: 0 4px 20px rgba(15,23,42,0.05); border: 1px solid var(--we-border);
-  }
-  .profile-header {
-    display: flex; flex-direction: column; align-items: center; text-align: center;
-    margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--we-border);
-  }
-  .profile-avatar {
-    width: 96px; height: 96px; background: #FFF1F2; color: var(--we-accent);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 2.2rem; margin-bottom: 14px; border: 1px solid #FECDD3; object-fit: cover;
-  }
-  .profile-name { font-size: 1.5rem; font-weight: 800; color: var(--we-navy); margin-bottom: 4px; }
-  .profile-email { color: var(--we-muted); font-size: 0.95rem; margin-bottom: 12px; }
-  .badge-status {
-    padding:6px 14px; border-radius:999px; font-size:0.78rem; font-weight:700;
-    display:inline-block; border:1px solid transparent;
-  }
-  .status-APPROVED, .status-VERIFIED { background:#DCFCE7; color:#166534; border-color:#BBF7D0; }
-  .status-PENDING, .status-PENDING_ADMIN_APPROVAL { background:#FEF3C7; color:#92400E; border-color:#FDE68A; }
-  .status-PROFILE_INCOMPLETE, .status-REGISTERED, .status-READY_FOR_VERIFICATION { background:#F1F5F9; color:#475569; border-color:#E2E8F0; }
-  .status-REJECTED { background:#FEE2E2; color:#991B1B; border-color:#FECACA; }
-  .status-CHANGES_REQUESTED { background:#FFEDD5; color:#9A3412; border-color:#FED7AA; }
-  .section-title {
-    font-size: 1rem; font-weight: 800; color: var(--we-navy);
-    margin: 8px 0 14px; display: flex; align-items: center; gap: 8px;
-  }
-  .info-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px; margin-bottom: 24px;
-  }
-  .info-item {
-    background: var(--we-bg); padding: 14px 16px; border-radius: 12px;
-    border: 1px solid var(--we-border);
-  }
-  .info-label {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
-    color: var(--we-muted); font-weight: 700; margin-bottom: 6px;
-  }
-  .info-value { font-size: 0.98rem; font-weight: 600; color: var(--we-navy); word-break: break-word; white-space: pre-wrap; }
-  .info-item.highlight { background: #fff; border: 1px solid #FECDD3; }
-  .bio-block { white-space: pre-wrap; font-weight: 500; line-height: 1.55; }
-  .doc-box {
-    background: #fff; border-radius: 12px; padding: 16px 18px;
-    display: flex; align-items: center; gap: 14px;
-    border: 1px solid var(--we-border); margin-bottom: 12px;
-  }
-  .doc-box-icon {
-    width: 44px; height: 44px; background: #FFF1F2; color: var(--we-accent);
-    border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-  }
-  .doc-link { color: var(--we-navy); font-weight: 700; text-decoration: none; }
-  .action-bar {
-    display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
-    padding-top: 22px; border-top: 1px solid var(--we-border);
-  }
-  .btn-verify {
-    background: #059669; color: #fff; border: none; border-radius: 10px;
-    padding: 11px 22px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
-  }
-  .btn-reject {
-    background: #DC2626; color: #fff; border: none; border-radius: 10px;
-    padding: 11px 22px; font-size: 0.95rem; font-weight: 600; cursor: pointer;
-  }
-  .missing-list { margin: 0; padding-left: 1.2rem; font-size: 0.9rem; color: var(--we-muted); }
-  .event-row {
-    display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    padding:12px 0; border-bottom:1px solid #F1F5F9; font-size:0.9rem;
-  }
-  .event-row:last-child { border-bottom:none; }
-  @media (max-width: 720px) {
-    .info-grid { grid-template-columns: 1fr; }
-    .profile-card { padding: 20px 16px; }
-  }
->>>>>>> 977a3c5eb51e653e2654f1498f4a15377a662a29
+
 </style>
 </head>
 <body>
@@ -375,8 +462,8 @@
                 <img src="${fn:startsWith(logoPath, 'http') ? logoPath : pageContext.request.contextPath.concat(logoPath)}" alt="${host.fullName}">
               </c:when>
               <c:otherwise>
-                <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
-                  <i class="bi bi-calendar-heart" style="font-size:2.6rem;color:#94a3b8;"></i>
+                <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: var(--rose-soft);">
+                  <i class="bi bi-calendar-heart" style="font-size:2.6rem;color:var(--primary);"></i>
                 </div>
               </c:otherwise>
             </c:choose>
@@ -386,29 +473,29 @@
               <h1>${not empty host.fullName ? host.fullName : 'Unnamed organizer'}</h1>
               <span class="badge-status-lg status-${statusKey}">${displayStatus}</span>
             </div>
-            <div class="d-flex flex-wrap gap-3 gap-md-4 text-white-50 small mb-3">
+            <div class="d-flex flex-wrap gap-3 gap-md-4 text-muted small mb-3">
               <div>
-                <i class="bi bi-envelope-fill text-white"></i>
+                <i class="bi bi-envelope-fill text-danger"></i>
                 <c:choose>
-                  <c:when test="${not empty host.email}"><a href="mailto:${host.email}" class="text-white text-decoration-none">${host.email}</a></c:when>
+                  <c:when test="${not empty host.email}"><a href="mailto:${host.email}" class="text-dark text-decoration-none fw-semibold">${host.email}</a></c:when>
                   <c:otherwise>No email</c:otherwise>
                 </c:choose>
               </div>
               <div>
-                <i class="bi bi-telephone-fill text-white"></i>
+                <i class="bi bi-telephone-fill text-danger"></i>
                 <c:choose>
-                  <c:when test="${not empty host.phone}"><a href="tel:${host.phone}" class="text-white text-decoration-none">${host.phone}</a></c:when>
+                  <c:when test="${not empty host.phone}"><a href="tel:${host.phone}" class="text-dark text-decoration-none fw-semibold">${host.phone}</a></c:when>
                   <c:otherwise>No phone</c:otherwise>
                 </c:choose>
               </div>
               <c:if test="${not empty host.organizerName}">
-                <div><i class="bi bi-building text-white"></i> ${host.organizerName}</div>
+                <div><i class="bi bi-building text-danger"></i> <span class="text-dark fw-semibold">${host.organizerName}</span></div>
               </c:if>
             </div>
             <div style="max-width:480px;">
-              <div class="d-flex justify-content-between small fw-bold text-white mb-1">
+              <div class="d-flex justify-content-between small fw-bold text-dark mb-1">
                 <span>Profile Completion</span>
-                <span>${pct}%</span>
+                <span class="text-danger">${pct}%</span>
               </div>
               <div class="progress-wrap">
                 <div class="progress-bar-fill" style="width:${pct}%;"></div>

@@ -54,6 +54,24 @@
             border-radius: 50%;
             object-fit: cover;
         }
+
+        #wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        #page-content-wrapper {
+            flex: 1;
+            min-width: 0;
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            #wrapper {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -144,6 +162,11 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="past-tab" data-bs-toggle="tab" data-bs-target="#pastContent" type="button" role="tab" style="color:var(--primary); font-weight:600;">
                                 Completed Classes
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progressContent" type="button" role="tab" style="color:var(--primary); font-weight:600;">
+                                Progress & Milestones
                             </button>
                         </li>
                     </ul>
@@ -307,6 +330,29 @@
                             <c:if test="${not hasPast}">
                                 <p class="text-muted text-center py-4 small">No past session records found.</p>
                             </c:if>
+                        </div>
+
+                        <!-- PROGRESS & MILESTONES -->
+                        <div class="tab-pane fade" id="progressContent" role="tabpanel">
+                            <c:choose>
+                                <c:when test="${empty progressLogs}">
+                                    <p class="text-muted text-center py-4 small">No progress logs recorded yet. When your coach logs your progress, it will appear here.</p>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="row g-3">
+                                        <c:forEach var="log" items="${progressLogs}">
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                                                    <h6 class="fw-bold mb-1">${log.trainer.fullName} <span class="text-muted small ms-2">${log.logDate}</span></h6>
+                                                    <p class="small text-muted mb-2">Weight: ${log.currentWeight}kg | Body Fat: ${log.bodyFatPct}%</p>
+                                                    <div class="small fw-semibold text-dark mb-1">Coach Notes:</div>
+                                                    <p class="small text-muted mb-0">${log.coachNotes}</p>
+                                                </div>
+                                            </div>
+                                        </c:forEach>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
                     </div>

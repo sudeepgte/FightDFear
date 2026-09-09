@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -242,9 +242,7 @@
             <a href="${pageContext.request.contextPath}/investor/complete-profile" class="sidebar-link">
                 <i class="bi bi-person"></i> Profile
             </a>
-            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
-                <i class="bi bi-shield-check"></i> Safety Hub Home
-            </a>
+            
             <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-3">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
@@ -651,3 +649,4 @@
 </script>
 </body>
 </html>
+

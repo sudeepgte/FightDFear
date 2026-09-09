@@ -17,9 +17,9 @@
       .we-modal-overlay.open { display:flex; }
     </style>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #F8FAFC; }
+        body { font-family: 'Outfit', sans-serif; background: #F8FAFC; padding-top: 68px; }
         .page-header { background: #0F172A;
-            padding: 40px 20px; color: white; }
+            padding: 36px 20px; color: white; }
         .container-main { max-width: 1300px; margin: 0 auto; padding: 36px 20px 60px; }
 
         /* Stats */
@@ -81,6 +81,32 @@
             border: 1.5px solid #e5e7eb;
         }
         .s-NONE { background: #e2e8f0; color: #475569; }
+
+        @media (max-width: 768px) {
+            .page-header { padding: 24px 16px; }
+            .page-header h1 { font-size: 1.35rem !important; }
+            .container-main { padding: 20px 12px 60px; overflow-x: hidden; width: 100%; max-width: 100vw; box-sizing: border-box; }
+            .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+            .stat-card { padding: 14px 10px; }
+            .stat-num { font-size: 1.5rem; }
+            .stat-label { font-size: 0.7rem; }
+            .nav-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; margin-bottom: 16px !important; }
+            .nav-item { white-space: nowrap; flex-shrink: 0; }
+            .nav-pills .nav-link { padding: 8px 16px !important; font-size: 0.82rem; }
+            .panel { width: 100%; box-sizing: border-box; border-radius: 14px; }
+            .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 750px; }
+            .btn-approve, .btn-reject, .btn-feature, .btn-delete, .btn-review { padding: 4px 10px; font-size: 0.75rem; }
+            
+            /* Modal mobile fixes */
+            .we-modal { width: 92% !important; max-height: 85vh; overflow-y: auto; padding: 16px !important; margin: 10px; }
+            .we-modal-overlay { padding: 10px !important; }
+        }
+
+        @media (max-width: 480px) {
+            .stat-row { grid-template-columns: 1fr; }
+            .page-header div[style*="display:flex"] { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+        }
     </style>
 </head>
 <body>

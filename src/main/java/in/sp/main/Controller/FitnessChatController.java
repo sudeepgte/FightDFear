@@ -6,6 +6,7 @@ import in.sp.main.Entities.User;
 import in.sp.main.Repository.FitnessChatMessageRepository;
 import in.sp.main.Repository.FitnessTrainerRepository;
 import in.sp.main.Repository.UserRepository;
+import in.sp.main.Service.PushNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/fitness/chat")
 public class FitnessChatController {
+
+    @Autowired
+    private PushNotificationService pushNotificationService;
 
     @Autowired
     private FitnessChatMessageRepository chatMessageRepository;
@@ -93,6 +97,7 @@ public class FitnessChatController {
             chatMsg.setSenderType("USER");
         } else if (currentTrainer != null && currentTrainer.getId().equals(trainerId)) {
             chatMsg.setSenderType("TRAINER");
+            pushNotificationService.notifyUser(userId, "New Message from Coach " + trainer.getFullName(), message, Map.of("type", "FITNESS_CHAT", "trainerId", trainerId.toString()));
         } else {
             return ResponseEntity.status(403).body("Forbidden");
         }

@@ -291,18 +291,24 @@
         #logProgressModal .modal-content, #logProgressModal .modal-body { overflow: visible; }
         .btn-submit { 
             background: var(--fitness-rose); 
-            color: white; 
+            background: linear-gradient(135deg, #f43f5e, #fb7185); 
             border: none; 
-            border-radius: 12px; 
-            font-weight: 700; 
-            padding: 11px 20px; 
-            transition: all 0.2s; 
+            color: white; 
+            transition: all 0.3s ease; 
         }
         .btn-submit:hover { 
-            background: var(--fitness-rose-dark); 
             transform: translateY(-2px); 
             box-shadow: 0 4px 14px rgba(244,63,94,0.25); 
             color: white; 
+        }
+        select.form-select {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        select.form-select option {
+            white-space: normal;
+            word-break: break-word;
         }
         
         @media (max-width: 1200px) {
@@ -364,16 +370,17 @@
                 position: fixed;
                 top: 0;
                 left: 0;
-                width: 100vw !important;
-                max-width: 100vw !important;
+                width: 50vw !important;
+                min-width: 50vw !important;
+                max-width: 50vw !important;
                 height: 100vh !important;
                 max-height: 100vh !important;
                 min-height: 100vh !important;
                 z-index: 1050;
                 background: #ffffff;
-                box-shadow: none;
+                box-shadow: 6px 0 30px rgba(0,0,0,0.18);
                 overflow-y: auto;
-                border-right: none;
+                border-right: 1px solid var(--fitness-border);
                 padding-bottom: 8px !important;
             }
             #sidebar-wrapper.show-mobile #studioTab {
@@ -409,12 +416,12 @@
                 height: 800px !important;
                 flex-direction: column;
             }
-            .tab-pane#messagesContent .col-md-4 {
+            .tab-pane#messagesContent .col-md-3 {
                 height: 250px !important;
                 border-bottom: 1px solid #dee2e6;
                 border-right: none !important;
             }
-            .tab-pane#messagesContent .col-md-8 {
+            .tab-pane#messagesContent .col-md-9 {
                 height: 550px !important;
             }
         }
@@ -476,10 +483,6 @@
             <button class="list-group-item" onclick="switchTab('editProfileContent', this)" type="button">
                 <i class="bi bi-person-lines-fill"></i> Edit Profile
             </button>
-            <a href="${pageContext.request.contextPath}/" class="list-group-item" type="button">
-                <i class="bi bi-chevron-left"></i> Back to Home
-            </a>
-
             <a href="${pageContext.request.contextPath}/fitness/trainer/logout" class="list-group-item" style="color:var(--fitness-rose-dark);" type="button">
                 <i class="bi bi-power" style="color:var(--fitness-rose-dark);"></i> Logout
             </a>

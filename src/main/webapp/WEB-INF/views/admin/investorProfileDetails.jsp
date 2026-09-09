@@ -7,7 +7,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><c:out value="${entrepreneur.fullName}"/> � Entrepreneur Profile Review | Fight D Fear Admin</title>
+  <title><c:out value="${investor.fullName}"/> � Investor Profile Details | Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -286,7 +286,7 @@
 
     
     <div class="layout">
-      <%@ include file="globalAdminMenu.jsp" %>
+      <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
       <main class="main">
         <div class="ap-topbar">
           <div class="ap-topbar-left">
@@ -327,8 +327,8 @@
             <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-4">
                 <div class="avatar-box">
                     <c:choose>
-                        <c:when test="${not empty entrepreneur.profilePhoto}">
-                            <img src="${pageContext.request.contextPath}${entrepreneur.profilePhoto}" alt="<c:out value='${entrepreneur.fullName}'/>">
+                        <c:when test="${not empty investor.profilePhoto}">
+                            <img src="${pageContext.request.contextPath}${investor.profilePhoto}" alt="<c:out value='${investor.fullName}'/>">
                         </c:when>
                         <c:otherwise>
                             <i class="bi bi-person-circle" style="font-size:3.5rem; color:var(--ap-accent);"></i>
@@ -338,8 +338,8 @@
 
                 <div class="flex-grow-1" style="position:relative; z-index:1;">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
-                        <h1><c:out value="${entrepreneur.fullName}"/></h1>
-                        <c:set var="statusKey" value="${entrepreneur.partnerProfileStatus != null ? entrepreneur.partnerProfileStatus : 'REGISTERED'}"/>
+                        <h1><c:out value="${investor.fullName}"/></h1>
+                        <c:set var="statusKey" value="${investor.partnerProfileStatus != null ? investor.partnerProfileStatus : 'REGISTERED'}"/>
                         <span class="badge-status-lg status-${statusKey}">
                             <i class="bi ${statusKey == 'APPROVED' ? 'bi-check-circle-fill' : 'bi-clock-history'}"></i>
                             ${statusKey}
@@ -347,20 +347,20 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-3 gap-md-4 small mb-3" style="color:var(--ap-muted);">
-                        <div><i class="bi bi-envelope-fill me-1" style="color:var(--ap-accent);"></i> <a href="mailto:${entrepreneur.email}" class="text-decoration-none fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${entrepreneur.email}"/></a></div>
-                        <div><i class="bi bi-telephone-fill me-1" style="color:var(--ap-accent);"></i> <a href="tel:${entrepreneur.phone}" class="text-decoration-none fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${entrepreneur.phone}"/></a></div>
-                        <div><i class="bi bi-building me-1" style="color:var(--ap-accent);"></i> <strong style="color:var(--ap-navy-mid);">Business:</strong> <c:out value="${not empty entrepreneur.businessName ? entrepreneur.businessName : 'Not specified'}"/></div>
-                        <div><i class="bi bi-geo-alt-fill me-1" style="color:var(--ap-accent);"></i> <span class="fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${not empty entrepreneur.city ? entrepreneur.city : entrepreneur.businessLocation}"/></span></div>
+                        <div><i class="bi bi-envelope-fill me-1" style="color:var(--ap-accent);"></i> <a href="mailto:${investor.email}" class="text-decoration-none fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${investor.email}"/></a></div>
+                        <div><i class="bi bi-telephone-fill me-1" style="color:var(--ap-accent);"></i> <a href="tel:${investor.phone}" class="text-decoration-none fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${investor.phone}"/></a></div>
+                        <div><i class="bi bi-building me-1" style="color:var(--ap-accent);"></i> <strong style="color:var(--ap-navy-mid);">Company:</strong> <c:out value="${not empty investor.companyName ? investor.companyName : 'Not specified'}"/></div>
+                        <div><i class="bi bi-geo-alt-fill me-1" style="color:var(--ap-accent);"></i> <span class="fw-semibold" style="color:var(--ap-navy-mid);"><c:out value="${not empty investor.city ? investor.city : investor.address}"/></span></div>
                     </div>
 
                     <!-- Profile Completion -->
                     <div style="max-width: 480px;">
                         <div class="d-flex justify-content-between small fw-bold mb-1" style="color:var(--ap-navy-mid);">
                             <span>Profile Completion</span>
-                            <span style="color:var(--ap-accent); font-weight:800;"><c:out value="${entrepreneur.profileCompletionPct != null ? entrepreneur.profileCompletionPct : 0}"/>%</span>
+                            <span style="color:var(--ap-accent); font-weight:800;"><c:out value="${investor.profileCompletionPct != null ? investor.profileCompletionPct : 0}"/>%</span>
                         </div>
                         <div class="progress-wrap">
-                            <c:set var="pctVal" value="${entrepreneur.profileCompletionPct != null ? entrepreneur.profileCompletionPct : 0}"/>
+                            <c:set var="pctVal" value="${investor.profileCompletionPct != null ? investor.profileCompletionPct : 0}"/>
                             <div class="progress-bar-fill" style="width: ${pctVal}%;"></div>
                         </div>
                     </div>
@@ -372,66 +372,66 @@
         <div class="review-card">
             <div class="section-header">
                 <i class="bi bi-person-vcard-fill"></i>
-                <h3>1. Entrepreneur Personal Identity</h3>
+                <h3>1. Investor Personal Identity</h3>
             </div>
             <div class="info-grid">
                 <div class="info-field">
                     <span class="info-field-label">Full Name</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.fullName ? entrepreneur.fullName : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.fullName ? investor.fullName : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Official Email</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.email ? entrepreneur.email : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.email ? investor.email : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Primary Phone</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.phone ? entrepreneur.phone : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.phone ? investor.phone : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">WhatsApp Helpline</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.whatsappNumber ? entrepreneur.whatsappNumber : 'Same as phone'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.whatsappNumber ? investor.whatsappNumber : 'Same as phone'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Date of Birth</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.dob ? entrepreneur.dob : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.designation ? investor.designation : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Gender</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.gender ? entrepreneur.gender : 'Not specified'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.credentialNumber ? investor.credentialNumber : 'Not specified'}"/></span>
                 </div>
             </div>
         </div>
 
-        <!-- 2. BUSINESS OVERVIEW -->
+        <!-- 2. COMPANY OVERVIEW -->
         <div class="review-card">
             <div class="section-header">
                 <i class="bi bi-briefcase-fill"></i>
-                <h3>2. Business & Enterprise Overview</h3>
+                <h3>2. Company & Profile Overview</h3>
             </div>
             <div class="info-grid">
                 <div class="info-field">
-                    <span class="info-field-label">Business / Venture Name</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.businessName ? entrepreneur.businessName : 'Not provided'}"/></span>
+                    <span class="info-field-label">Company / Firm Name</span>
+                    <span class="info-field-value"><c:out value="${not empty investor.companyName ? investor.companyName : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
-                    <span class="info-field-label">Business Category</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.businessCategory ? entrepreneur.businessCategory : 'Not specified'}"/></span>
+                    <span class="info-field-label">Categories Offered</span>
+                    <span class="info-field-value"><c:out value="${not empty investor.categoriesOffered ? investor.categoriesOffered : 'Not specified'}"/></span>
                 </div>
                 <div class="info-field">
-                    <span class="info-field-label">Business Location / Address</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.businessLocation ? entrepreneur.businessLocation : 'Not provided'}"/></span>
+                    <span class="info-field-label">Office Location / Address</span>
+                    <span class="info-field-value"><c:out value="${not empty investor.address ? investor.address : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">City</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.city ? entrepreneur.city : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.city ? investor.city : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">State</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.state ? entrepreneur.state : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.state ? investor.state : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Postal Pincode</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.pincode ? entrepreneur.pincode : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.pincode ? investor.pincode : 'Not provided'}"/></span>
                 </div>
             </div>
         </div>
@@ -440,25 +440,25 @@
         <div class="review-card">
             <div class="section-header">
                 <i class="bi bi-cash-stack"></i>
-                <h3>3. Funding Required & Financial Projections</h3>
+                <h3>3. Investment & Funding Focus</h3>
             </div>
             <div class="row g-3">
                 <div class="col-md-4">
                     <div class="p-3 bg-light rounded-3">
-                        <span class="info-field-label">Investment / Capital Needed</span>
-                        <div class="h4 fw-bold text-success mb-0 mt-1">₹<c:out value="${entrepreneur.investmentNeeded != null ? entrepreneur.investmentNeeded : 0}"/></div>
+                        <span class="info-field-label">Typical Cheque Size</span>
+                        <div class="h4 fw-bold text-success mb-0 mt-1">₹<c:out value="${investor.typicalCheque != null ? investor.typicalCheque : 0}"/></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="p-3 bg-light rounded-3">
-                        <span class="info-field-label">Expected Monthly Revenue</span>
-                        <div class="h4 fw-bold text-primary mb-0 mt-1">₹<c:out value="${entrepreneur.expectedMonthlyIncome != null ? entrepreneur.expectedMonthlyIncome : 0}"/></div>
+                        <span class="info-field-label">Ticket Mode / Preference</span>
+                        <div class="h4 fw-bold text-primary mb-0 mt-1">₹<c:out value="${investor.ticketMode != null ? investor.ticketMode : 0}"/></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="p-3 bg-light rounded-3">
-                        <span class="info-field-label">Business Experience</span>
-                        <div class="h4 fw-bold text-dark mb-0 mt-1"><c:out value="${entrepreneur.businessExperience != null ? entrepreneur.businessExperience : 0}"/> <small class="fs-6 fw-normal text-muted">Years</small></div>
+                        <span class="info-field-label">Target Audience</span>
+                        <div class="h4 fw-bold text-dark mb-0 mt-1"><c:out value="${investor.audience != null ? investor.audience : 0}"/> <small class="fs-6 fw-normal text-muted">Years</small></div>
                     </div>
                 </div>
             </div>
@@ -468,26 +468,26 @@
         <div class="review-card">
             <div class="section-header">
                 <i class="bi bi-shield-lock-fill"></i>
-                <h3>4. Aadhaar Identity Verification</h3>
+                <h3>4. Credentials & Availability</h3>
             </div>
             <div class="info-grid">
                 <div class="info-field">
-                    <span class="info-field-label">Aadhaar Number (Encrypted / Verified)</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.aadhaarNumber ? entrepreneur.aadhaarNumber : 'Not provided'}"/></span>
+                    <span class="info-field-label">Credential number (Encrypted / Verified)</span>
+                    <span class="info-field-value"><c:out value="${not empty investor.openDays ? investor.openDays : 'Not provided'}"/></span>
                 </div>
             </div>
         </div>
 
-        <!-- 5. BUSINESS DESCRIPTION & PITCH -->
+        <!-- 5. INVESTOR BIO & OVERVIEW -->
         <div class="review-card">
             <div class="section-header">
                 <i class="bi bi-journal-text"></i>
-                <h3>5. Business Description & Pitch Overview</h3>
+                <h3>5. Investor Bio & Overview</h3>
             </div>
             <div class="p-3 bg-light rounded-3 text-secondary" style="font-size: 0.95rem; line-height: 1.6;">
                 <c:choose>
-                    <c:when test="${not empty entrepreneur.businessDescription}">
-                        <c:out value="${entrepreneur.businessDescription}"/>
+                    <c:when test="${not empty investor.bio}">
+                        <c:out value="${investor.bio}"/>
                     </c:when>
                     <c:otherwise>
                         <span class="empty-text">No detailed pitch description provided yet.</span>
@@ -505,11 +505,11 @@
             <div class="info-grid">
                 <div class="info-field">
                     <span class="info-field-label">UPI Identifier</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.upiId ? entrepreneur.upiId : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.upiId ? investor.upiId : 'Not provided'}"/></span>
                 </div>
                 <div class="info-field" style="grid-column: 1 / -1;">
                     <span class="info-field-label">Bank Account / IFSC Details</span>
-                    <span class="info-field-value"><c:out value="${not empty entrepreneur.bankDetails ? entrepreneur.bankDetails : 'Not provided'}"/></span>
+                    <span class="info-field-value"><c:out value="${not empty investor.bankDetails ? investor.bankDetails : 'Not provided'}"/></span>
                 </div>
             </div>
         </div>
@@ -531,21 +531,21 @@
                 </div>
                 <div class="info-field">
                     <span class="info-field-label">Verification Status</span>
-                    <span class="info-field-value"><c:out value="${entrepreneur.verificationStatus != null ? entrepreneur.verificationStatus : 'PENDING'}"/></span>
+                    <span class="info-field-value"><c:out value="${investor.verificationStatus != null ? investor.verificationStatus : 'PENDING'}"/></span>
                 </div>
             </div>
 
-            <c:if test="${not empty entrepreneur.rejectionReason}">
+            <c:if test="${not empty investor.rejectionReason}">
                 <div class="alert alert-danger rounded-3 mt-3">
                     <strong><i class="bi bi-x-octagon-fill me-1"></i> Rejection Reason on Record:</strong>
-                    <div class="mt-1"><c:out value="${entrepreneur.rejectionReason}"/></div>
+                    <div class="mt-1"><c:out value="${investor.rejectionReason}"/></div>
                 </div>
             </c:if>
 
-            <c:if test="${not empty entrepreneur.changesRequestedNote}">
+            <c:if test="${not empty investor.changesRequestedNote}">
                 <div class="alert alert-warning rounded-3 mt-3">
                     <strong><i class="bi bi-pencil-square me-1"></i> Changes Requested Note on Record:</strong>
-                    <div class="mt-1"><c:out value="${entrepreneur.changesRequestedNote}"/></div>
+                    <div class="mt-1"><c:out value="${investor.changesRequestedNote}"/></div>
                 </div>
             </c:if>
         </div>
@@ -553,10 +553,10 @@
                 <!-- ADMIN ACTION BUTTONS -->
         <div class="action-buttons-container">
             <!-- Approve -->
-            <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
-            <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
-                <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
-                    <i class="bi bi-check-circle-fill me-1"></i> Approve Entrepreneur
+            <c:if test="${investor.partnerProfileStatus != 'APPROVED'}">
+            <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/approve" method="post" class="m-0">
+                <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this investor for platform access?');">
+                    <i class="bi bi-check-circle-fill me-1"></i> Approve Investor
                 </button>
             </form>
             </c:if>
@@ -578,7 +578,7 @@
     <div class="modal fade" id="requestChangesModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/request-changes" method="post">
+                <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/request-changes" method="post">
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i> Request Profile Changes</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -587,7 +587,7 @@
                         <p class="small text-muted">Provide specific feedback explaining what needs to be updated before approval.</p>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Feedback Note</label>
-                            <textarea name="note" class="form-control" rows="4" placeholder="e.g., Please enter a valid Aadhaar number and expand your business pitch..." required></textarea>
+                            <textarea name="note" class="form-control" rows="4" placeholder="e.g., Please enter a valid Credential number and expand your investor bio..." required></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -603,13 +603,13 @@
     <div class="modal fade" id="rejectModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/reject" method="post">
+                <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/reject" method="post">
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-octagon me-2"></i> Reject Application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p class="small text-muted">Provide the reason for rejecting this entrepreneur profile.</p>
+                        <p class="small text-muted">Provide the reason for rejecting this investor profile.</p>
                         <div class="mb-3">
                             <label class="form-label fw-semibold small">Rejection Reason</label>
                             <textarea name="reason" class="form-control" rows="4" placeholder="e.g., Incomplete documentation or invalid credentials..." required></textarea>
@@ -627,6 +627,16 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </div></main></div></body>
 </html>
+
+
+
+
+
+
+
+
+
+
 
 
 

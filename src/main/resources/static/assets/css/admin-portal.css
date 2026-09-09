@@ -276,8 +276,10 @@
 
 @media (max-width: 1200px) {
   .ap-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .ap-split { grid-template-columns: 1fr; }
-  .ap-preview { position: static; }
+  .ap-split { grid-template-columns: minmax(0, 1fr); }
+  .ap-preview, .ap-preview-col { display: none; }
+  .ap-table tbody tr.selected { background: none; }
+  .ap-filter-row { flex-wrap: wrap; }
 }
 
 @media (max-width: 992px) {

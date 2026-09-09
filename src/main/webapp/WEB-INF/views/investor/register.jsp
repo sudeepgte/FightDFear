@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -274,6 +274,152 @@
         .bg-rose { background-color: #f43f5e !important; color: white !important; }
         .text-rose { color: #f43f5e !important; }
         .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
+
+        /* Preview Modal Card CSS */
+        .preview-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .preview-modal-overlay.open {
+            display: flex;
+        }
+
+        .preview-card-dialog {
+            background: #ffffff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .preview-header {
+            padding: 24px 24px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .preview-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #ffe4e6;
+            color: #f43f5e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .preview-header-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .preview-header-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .preview-body-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px;
+            margin: 0 24px 20px;
+        }
+
+        .preview-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            font-size: 0.88rem;
+        }
+
+        .preview-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .preview-info-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .preview-info-value {
+            color: var(--text-primary);
+            font-weight: 700;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .preview-footer-actions {
+            padding: 0 24px 24px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-preview-back {
+            flex: 1;
+            height: 46px;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-light);
+            background: #ffffff;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-preview-back:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .btn-preview-confirm {
+            flex: 1.2;
+            height: 46px;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary-rose);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-preview-confirm:hover {
+            background: var(--primary-rose-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(244, 63, 94, 0.25);
+        }
 </style>
 </head>
 <body>
@@ -667,7 +813,80 @@
                 e.preventDefault();
                 return;
             }
+
+            if (isConfirmed) {
+                return;
+            }
+
+            e.preventDefault();
+
+            document.getElementById('previewFullName').innerText = name;
+            document.getElementById('previewPhone').innerText = phone;
+            document.getElementById('previewEmail').innerText = email;
+
+            const overlay = document.getElementById('previewModalOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.classList.add('open');
+            }
         });
+
+        let isConfirmed = false;
+
+        function closePreviewModal() {
+            const overlay = document.getElementById('previewModalOverlay');
+            if (overlay) {
+                overlay.classList.remove('open');
+                overlay.style.display = 'none';
+            }
+        }
+
+        function confirmAndSubmitRegister() {
+            closePreviewModal();
+            isConfirmed = true;
+            const form = document.getElementById('investorRegForm');
+            if (form) {
+                form.submit();
+            }
+        }
     </script>
+
+    <!-- Confirm Details Preview Modal Card -->
+    <div id="previewModalOverlay" class="preview-modal-overlay" onclick="if(event.target===this)closePreviewModal()">
+        <div class="preview-card-dialog">
+            <div class="preview-header">
+                <div class="preview-icon-box">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <h4 class="preview-header-title">Confirm Details</h4>
+                    <div class="preview-header-subtitle">Review your information before account creation</div>
+                </div>
+            </div>
+            
+            <div class="preview-body-card">
+                <div class="preview-info-row">
+                    <span class="preview-info-label">Full Name:</span>
+                    <span class="preview-info-value" id="previewFullName">-</span>
+                </div>
+                <div class="preview-info-row">
+                    <span class="preview-info-label">Mobile Number:</span>
+                    <span class="preview-info-value" id="previewPhone">-</span>
+                </div>
+                <div class="preview-info-row">
+                    <span class="preview-info-label">Email:</span>
+                    <span class="preview-info-value" id="previewEmail">-</span>
+                </div>
+            </div>
+
+            <div class="preview-footer-actions">
+                <button type="button" class="btn-preview-back" id="previewBackBtn" onclick="closePreviewModal()">Back / Edit</button>
+                <button type="button" class="btn-preview-confirm" id="previewConfirmBtn" onclick="confirmAndSubmitRegister()">
+                    Confirm &amp; Register <i class="bi bi-check-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+

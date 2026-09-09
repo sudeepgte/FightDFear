@@ -44,7 +44,7 @@ public class Investor {
     private String verificationDocuments; // Document paths
 
     @Enumerated(EnumType.STRING)
-    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+    private VerificationStatus verificationStatus = VerificationStatus.VERIFIED;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "partner_profile_status", length = 40)
