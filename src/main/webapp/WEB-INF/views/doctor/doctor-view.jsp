@@ -708,6 +708,9 @@
     </div>
   </div>
 
+  <!-- Extra spacing to bypass emulator cutoff -->
+  <div style="height: 150px; width: 100%;"></div>
+
   <!-- Review Modal -->
   <div class="modal fade" id="reviewModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">

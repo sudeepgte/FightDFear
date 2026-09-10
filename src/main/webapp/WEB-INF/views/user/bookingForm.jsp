@@ -222,7 +222,15 @@
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">
             <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : (type == 'PACKAGE' ? 'Salon Package' : (type == 'MEMBERSHIP' ? 'Premium Membership' : 'Special Deal & Offer')))}</span>
-            <h1 class="item-title">${type == 'SERVICE' ? item.name : (type == 'TREATMENT' ? item.serviceName : (type == 'PACKAGE' ? item.packageName : (type == 'MEMBERSHIP' ? item.membershipName : item.title)))}</h1>
+            <h1 class="item-title">
+                <c:choose>
+                    <c:when test="${type == 'SERVICE'}">${item.name}</c:when>
+                    <c:when test="${type == 'TREATMENT'}">${item.serviceName}</c:when>
+                    <c:when test="${type == 'PACKAGE'}">${item.packageName}</c:when>
+                    <c:when test="${type == 'MEMBERSHIP'}">${item.membershipName}</c:when>
+                    <c:otherwise>${item.title}</c:otherwise>
+                </c:choose>
+            </h1>
             
             <div class="salon-tag">
                 <i class="bi bi-geo-alt-fill"></i>
@@ -231,14 +239,11 @@
 
             <div class="description-box">
                 <c:choose>
-                    <c:when test="${not empty item.description}">
-                        ${item.description}
-                    </c:when>
-                    <c:when test="${type == 'MEMBERSHIP' && not empty item.benefits}">
-                        ${item.benefits}
+                    <c:when test="${type == 'MEMBERSHIP'}">
+                        ${not empty item.benefits ? item.benefits : 'A premium membership designed to give you exclusive salon perks and benefits.'}
                     </c:when>
                     <c:otherwise>
-                        A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.
+                        ${not empty item.description ? item.description : 'A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.'}
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -247,7 +252,15 @@
                 <div class="price-chip">
                     <span>₹${type == 'OFFER' ? (item.discountedPrice > 0 ? item.discountedPrice : item.originalPrice) : item.price}</span>
                     <small>|</small>
-                    <small>${type == 'SERVICE' ? item.durationMinutes : (type == 'TREATMENT' ? item.duration : (type == 'PACKAGE' ? 'PACKAGE' : (type == 'MEMBERSHIP' ? item.durationInMonths.toString().concat(' MONTH(S)') : 'DEAL')))} ${type == 'PACKAGE' || type == 'MEMBERSHIP' || type == 'OFFER' ? '' : 'MIN'}</small>
+                    <small>
+                        <c:choose>
+                            <c:when test="${type == 'SERVICE'}">${item.durationMinutes} MIN</c:when>
+                            <c:when test="${type == 'TREATMENT'}">${item.duration} MIN</c:when>
+                            <c:when test="${type == 'PACKAGE'}">PACKAGE</c:when>
+                            <c:when test="${type == 'MEMBERSHIP'}">${item.durationInMonths} MONTH(S)</c:when>
+                            <c:otherwise>DEAL</c:otherwise>
+                        </c:choose>
+                    </small>
                 </div>
             </div>
         </div>

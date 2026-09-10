@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
@@ -403,14 +403,14 @@
                     </p>
                 </div>
                 <a class="btn-ud-primary" href="${pageContext.request.contextPath}/users/update/${user.id}">
-                    Complete Profile <i class="bi bi-arrow-right"></i>
+                    Complete Profile <i class="fas fa-arrow-right"></i>
                 </a>
             </div>
         </c:if>
 
         <div class="ud-stats">
             <div class="ud-stat">
-                <div class="ud-stat-icon"><i class="bi bi-calendar2-heart"></i></div>
+                <div class="ud-stat-icon"><i class="fas fa-calendar-alt"></i></div>
                 <div class="num">${upcomingFitnessCount != null ? upcomingFitnessCount : 0}</div>
                 <div class="label">Active Fitness Bookings</div>
                 <c:if test="${upcomingFitnessCount == null || upcomingFitnessCount == 0}">
@@ -421,7 +421,7 @@
                 </c:if>
             </div>
             <div class="ud-stat">
-                <div class="ud-stat-icon"><i class="bi bi-shield-check"></i></div>
+                <div class="ud-stat-icon"><i class="fas fa-shield-alt"></i></div>
                 <div class="num">${activeEnrollmentCount != null ? activeEnrollmentCount : 0}</div>
                 <div class="label">Martial Arts Enrollments</div>
                 <c:if test="${activeEnrollmentCount == null || activeEnrollmentCount == 0}">
@@ -432,12 +432,12 @@
                 </c:if>
             </div>
             <div class="ud-stat">
-                <div class="ud-stat-icon"><i class="bi bi-building"></i></div>
+                <div class="ud-stat-icon"><i class="fas fa-building"></i></div>
                 <div class="num">${approvedCentreCount != null ? approvedCentreCount : 0}</div>
                 <div class="label">Martial Arts Centres</div>
             </div>
             <div class="ud-stat">
-                <div class="ud-stat-icon"><i class="bi bi-bell"></i></div>
+                <div class="ud-stat-icon"><i class="fas fa-bell"></i></div>
                 <div class="num">${unreadBroadcastCount != null ? unreadBroadcastCount : 0}</div>
                 <div class="label">Unread Alerts</div>
             </div>
@@ -461,7 +461,7 @@
                                             <c:if test="${not empty b.trainer}"><span class="text-muted fw-normal"> · <c:out value="${b.trainer.fullName}"/></span></c:if>
                                         </div>
                                         <div class="small text-muted">
-                                            <i class="bi bi-calendar3 me-1"></i>${b.bookingDate}
+                                            <i class="fas fa-calendar me-1"></i>${b.bookingDate}
                                             <c:if test="${not empty b.bookingTime}"> · ${b.bookingTime}</c:if>
                                         </div>
                                     </div>
@@ -477,7 +477,7 @@
                                         </div>
                                         <div class="small text-muted">
                                             <c:if test="${not empty e.batch}">
-                                                <i class="bi bi-people me-1"></i><c:out value="${e.batch.name}"/>
+                                                <i class="fas fa-users me-1"></i><c:out value="${e.batch.name}"/>
                                                 <c:if test="${not empty e.batch.timeSlot}"> · ${e.batch.timeSlot}</c:if>
                                             </c:if>
                                         </div>
@@ -491,7 +491,7 @@
                         </c:when>
                         <c:otherwise>
                             <div class="ud-empty">
-                                <div class="ud-empty-icon"><i class="bi bi-calendar2-x"></i></div>
+                                <div class="ud-empty-icon"><i class="fas fa-calendar-times"></i></div>
                                 <h4>You have no upcoming bookings</h4>
                                 <p>Explore fitness classes or martial arts centres to get started.</p>
                                 <div class="ud-empty-actions">
@@ -511,7 +511,7 @@
                         <c:when test="${hasActivity}">
                             <c:forEach var="b" items="${upcomingFitnessBookings}" end="2">
                                 <div class="ud-activity-item">
-                                    <div class="ud-activity-dot"><i class="bi bi-activity"></i></div>
+                                    <div class="ud-activity-dot"><i class="fas fa-heartbeat"></i></div>
                                     <div>
                                         <div class="fw-semibold small">Fitness booking · <c:out value="${b.status}"/></div>
                                         <div class="text-muted" style="font-size:0.8rem;">
@@ -522,7 +522,7 @@
                             </c:forEach>
                             <c:forEach var="e" items="${userEnrollments}" end="2">
                                 <div class="ud-activity-item">
-                                    <div class="ud-activity-dot"><i class="bi bi-shield"></i></div>
+                                    <div class="ud-activity-dot"><i class="fas fa-shield-alt"></i></div>
                                     <div>
                                         <div class="fw-semibold small">Martial arts enrollment · <c:out value="${e.status}"/></div>
                                         <div class="text-muted" style="font-size:0.8rem;">
@@ -533,7 +533,7 @@
                             </c:forEach>
                             <c:forEach var="c" items="${completedFitnessBookings}" end="1">
                                 <div class="ud-activity-item">
-                                    <div class="ud-activity-dot"><i class="bi bi-check2-circle"></i></div>
+                                    <div class="ud-activity-dot"><i class="fas fa-check-circle"></i></div>
                                     <div>
                                         <div class="fw-semibold small">Completed session awaiting review</div>
                                         <div class="text-muted" style="font-size:0.8rem;"><c:out value="${c.category}"/></div>
@@ -543,7 +543,7 @@
                         </c:when>
                         <c:otherwise>
                             <div class="ud-empty py-4">
-                                <div class="ud-empty-icon"><i class="bi bi-activity"></i></div>
+                                <div class="ud-empty-icon"><i class="fas fa-heartbeat"></i></div>
                                 <h4>No recent activity yet</h4>
                                 <p>Your recent bookings and activities will appear here.</p>
                             </div>
@@ -557,44 +557,44 @@
                     <h2 class="ud-section-title mb-3">Quick Actions</h2>
                     <div class="ud-qa-grid">
                         <a class="ud-qa" href="${pageContext.request.contextPath}/fitness">
-                            <i class="bi bi-heart-pulse"></i>
+                            <i class="fas fa-heartbeat"></i>
                             Find Fitness Classes
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/centres/allacceptedcentres">
-                            <i class="bi bi-shield-check"></i>
+                            <i class="fas fa-shield-alt"></i>
                             Find Martial Arts
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/list">
-                            <i class="bi bi-heart-pulse-fill"></i>
+                            <i class="fas fa-heartbeat"></i>
                             Women Doctors
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/doctors/myAppointments">
-                            <i class="bi bi-calendar-check"></i>
+                            <i class="fas fa-calendar-check"></i>
                             My Appointments
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/user/bookings">
-                            <i class="bi bi-journal-check"></i>
+                            <i class="fas fa-book"></i>
                             My Bookings
                         </a>
                         <a class="ud-qa" href="${pageContext.request.contextPath}/users/profile/${user.id}">
-                            <i class="bi bi-person"></i>
+                            <i class="fas fa-user"></i>
                             My Profile
                         </a>
                     </div>
                 </div>
 
                 <div class="ud-side-card">
-                    <div class="icon-lg"><i class="bi bi-people"></i></div>
+                    <div class="icon-lg"><i class="fas fa-users"></i></div>
                     <h4>Join Our Community</h4>
                     <p>Stay updated with events, tips, and inspiration from Fight D Fear.</p>
-                    <a class="btn-ud-primary" href="${pageContext.request.contextPath}/video/reels">Join Community <i class="bi bi-arrow-right"></i></a>
+                    <a class="btn-ud-primary" href="${pageContext.request.contextPath}/video/reels">Join Community <i class="fas fa-arrow-right"></i></a>
                 </div>
 
                 <div class="ud-side-card">
-                    <div class="icon-lg"><i class="bi bi-headset"></i></div>
+                    <div class="icon-lg"><i class="fas fa-headset"></i></div>
                     <h4>Need Help?</h4>
                     <p>Our support team is here to help you.</p>
-                    <a class="btn-ud-primary" href="${pageContext.request.contextPath}/contact">Contact Support <i class="bi bi-arrow-right"></i></a>
+                    <a class="btn-ud-primary" href="${pageContext.request.contextPath}/contact">Contact Support <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
         </div>
@@ -612,7 +612,7 @@
     <div class="modal-content border-0" style="border-radius:18px;">
       <div class="modal-header border-0" style="background:#FFF1F2;">
         <h5 class="modal-title fw-bold" id="broadcastModalLabel" style="color:#0F172A;">
-          <i class="bi bi-bell-fill me-2" style="color:#F43F5E;"></i> Alerts
+          <i class="fas fa-bell-fill me-2" style="color:#F43F5E;"></i> Alerts
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -650,3 +650,4 @@ function markBroadcastsAsRead() {
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
+

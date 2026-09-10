@@ -15,29 +15,39 @@
     *{box-sizing:border-box;margin:0;padding:0}
     html, body {
       height: 100%;
+      height: 100dvh;
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background: var(--doc-bg);
     }
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--doc-bg);
+      color: var(--doc-text);
+    }
+    .chat-container {
       display: flex;
       flex-direction: column;
-      color: var(--doc-text);
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
     }
     .ch-header {
+      flex: 0 0 65px;
       background: var(--doc-card);
-      padding: 14px 20px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
       gap: 14px;
       border-bottom: 1px solid var(--doc-border);
       box-shadow: var(--doc-shadow);
-      flex: 0 0 auto;
-      z-index: 20;
+      z-index: 10;
     }
     .ch-back{width:36px;height:36px;border-radius:10px;background:var(--doc-primary-soft);display:flex;align-items:center;justify-content:center;color:var(--doc-primary);text-decoration:none;font-size:16px;border:1px solid #fecdd3}
     .ch-back:hover{background:var(--doc-primary-light)}
@@ -49,7 +59,7 @@
     .ch-act.call{background:var(--doc-success-bg);color:var(--doc-success)}
     .ch-act.video{background:var(--doc-primary-soft);color:#be123c}
     .ch-act:hover{transform:scale(1.06)}
-    .ch-messages{
+    .ch-messages {
       flex: 1 1 auto;
       overflow-y: auto;
       padding: 20px;
@@ -62,16 +72,17 @@
     .ch-msg.sent{align-self:flex-end;background:var(--doc-primary);color:#fff;border-bottom-right-radius:4px}
     .ch-msg.received{align-self:flex-start;background:var(--doc-card);color:var(--doc-text);border:1px solid var(--doc-border);border-bottom-left-radius:4px}
     .ch-msg .time{font-size:9px;opacity:0.7;margin-top:4px;display:block}
-    .ch-input-area{
+    .ch-input-area {
       flex: 0 0 auto;
-      padding: 12px 16px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      min-height: 70px;
+      padding: 10px 16px;
       background: var(--doc-card);
       border-top: 1px solid var(--doc-border);
       display: flex;
       gap: 10px;
       align-items: center;
-      z-index: 20;
+      z-index: 10;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     }
     .ch-input-area input{flex:1;padding:12px 18px;border:1px solid var(--doc-border);border-radius:999px;background:var(--doc-bg);color:var(--doc-text);font-size:13px;font-family:inherit;outline:none}
     .ch-input-area input:focus{border-color:var(--doc-primary);box-shadow:0 0 0 3px rgba(244,63,94,0.12)}
@@ -80,11 +91,24 @@
     .ch-send:hover{transform:scale(1.06);background:var(--doc-primary-dark)}
     .ch-empty{text-align:center;margin:auto;color:var(--doc-muted)}
     .ch-empty i{font-size:48px;display:block;margin-bottom:8px;color:#fecdd3}
+    @media (max-width: 480px) {
+      .ch-header { padding: 0 10px; gap: 8px; flex: 0 0 60px; }
+      .ch-back, .ch-act { width: 32px; height: 32px; font-size: 14px; }
+      .ch-avatar { width: 36px; height: 36px; font-size: 14px; }
+      .ch-doc-info h3 { font-size: 13px; }
+      .ch-doc-info p { font-size: 11px; }
+      .ch-actions { gap: 4px; }
+      .ch-input-area { padding: 8px 10px; gap: 6px; }
+      .ch-input-area input { padding: 10px 14px; font-size: 12px; }
+      .ch-send { width: 40px; height: 40px; font-size: 16px; }
+      .ch-msg { max-width: 85%; font-size: 12px; padding: 8px 14px; }
+    }
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
-  <div class="ch-header">
+  <div class="chat-container">
+    <div class="ch-header">
     <c:choose>
       <c:when test="${senderType == 'USER'}">
         <a href="${pageContext.request.contextPath}/doctors/view/${doctor.id}" class="ch-back"><i class="bi bi-arrow-left"></i></a>
@@ -190,5 +214,6 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   </script>
   <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+  </div>
 </body>
 </html>
