@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
     <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: var(--we-bg); }
+        body { font-family: 'Outfit', sans-serif; background: var(--we-bg); padding-top: 68px; }
         .page-header { background: var(--we-navy); padding: 36px 20px; color: white; }
         .container-main { max-width: 1000px; margin: 0 auto; padding: 36px 20px 60px; }
         .panel { background: white; border-radius: 16px; box-shadow: var(--we-shadow); overflow: hidden; border: 1px solid var(--we-border); }

@@ -5,7 +5,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><c:out value="${entrepreneur.fullName}"/> � Entrepreneur Profile Review | Fight D Fear Admin</title>
@@ -23,12 +22,6 @@
     --ap-accent-surface: #FFF5F6;
     --ap-accent-border: #FECDD3;
     --ap-accent-text: #BE123C;
-=======
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="_csrf" content="${_csrf.token}"/>
-    <meta name="_csrf_header" content="${_csrf.headerName}"/>
-    <title><c:out value="${entrepreneur.fullName}"/> — Entrepreneur Profile Review | Fight D Fear Admin</title>
 
     /* 60% PRIMARY SURFACE */
     --ap-bg: #F8FAFC;
@@ -557,37 +550,15 @@
             </c:if>
         </div>
 
-
                 <!-- ADMIN ACTION BUTTONS -->
+        <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
         <div class="action-buttons-container">
             <!-- Approve -->
-            <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
             <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
                 <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
                     <i class="bi bi-check-circle-fill me-1"></i> Approve Entrepreneur
-
-        <!-- STICKY ACTION DOCK -->
-        <div class="action-dock">
-            <div>
-                <span class="small text-white-50 d-block">Admin Decision Workflow</span>
-                <strong class="text-white"><c:out value="${entrepreneur.fullName}"/></strong>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <!-- Approve -->
-                <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                    <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
-                        <i class="bi bi-check-lg me-1"></i> Approve Entrepreneur
-                    </button>
-                </form>
-
-                <!-- Request Changes Modal Trigger -->
-                <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#requestChangesModal">
-                    <i class="bi bi-pencil me-1"></i> Request Changes
-
                 </button>
             </form>
-            </c:if>
 
             <!-- Request Changes -->
             <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#requestChangesModal">
@@ -599,6 +570,7 @@
                 <i class="bi bi-x-circle-fill me-1"></i> Reject Application
             </button>
         </div>
+        </c:if>
 
     </div>
 
@@ -607,7 +579,6 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/request-changes" method="post">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i> Request Profile Changes</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -633,7 +604,6 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/reject" method="post">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-octagon me-2"></i> Reject Application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -655,12 +625,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 </div></main></div></body>
-
-    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
-</body>
-
 </html>
 
 

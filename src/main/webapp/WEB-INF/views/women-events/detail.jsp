@@ -489,13 +489,22 @@
                         <div class="sidebar-action-button-layer">
                             <c:choose>
                                 <c:when test="${isOrganizerView}">
-                                    <div class="registered-badge-box" style="background-color: var(--bg-neutral); border-color: var(--border-neutral);">
-                                        <i class="bi bi-person-badge text-muted"></i>
-                                        <h5 class="text-muted">Organizer View</h5>
-                                        <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ticket-link text-muted" style="border-color: var(--border-neutral);">
-                                            <i class="bi bi-arrow-left-circle"></i> Back to Dashboard
+                                    <div class="registered-badge-box mb-3" style="background-color: #FFF1F2; border-color: #FECDD3;">
+                                        <i class="bi bi-info-circle-fill" style="color:var(--we-accent);"></i>
+                                        <h5 style="color:var(--we-navy); font-weight:700; margin-bottom:4px;">Organizer View</h5>
+                                        <p style="font-size: 0.8rem; color: #64748B; margin-bottom: 8px;">You are the host of this event. Self-registration is restricted for organizers, but regular attendees see the active booking button.</p>
+                                        <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ticket-link" style="border-color: #FECDD3; color: var(--we-accent);">
+                                            <i class="bi bi-speedometer2"></i> Organizer Dashboard
                                         </a>
                                     </div>
+                                    <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                                        <i class="bi bi-ticket-perforated-fill"></i>
+                                        <c:choose>
+                                            <c:when test="${event.free}">Preview Booking Flow (Free)</c:when>
+                                            <c:otherwise>Review &amp; Pay ₹${event.entryFee} (Test Flow)</c:otherwise>
+                                        </c:choose>
+                                    </button>
+                                    <form id="eventRegisterForm" action="${pageContext.request.contextPath}/women-events/${event.id}/register" method="post" style="display:none;"></form>
                                 </c:when>
                                 <c:when test="${empty loggedUser}">
                                     <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
@@ -572,9 +581,18 @@
                 <p>Review your booking details, then confirm. A ticket code is issued after registration.</p>
                 <c:choose>
                     <c:when test="${isOrganizerView}">
-                        <div class="reserved-pill" style="background-color: var(--bg-neutral); color: var(--fdf-text-muted);">
-                            <i class="bi bi-person-badge"></i> You are the Organizer
+                        <div class="mb-3">
+                            <span class="reserved-pill" style="background-color: #FFF1F2; color: var(--we-accent); border: 1px solid #FECDD3;">
+                                <i class="bi bi-info-circle-fill me-1"></i> Organizer View: Self-booking is restricted for event hosts. Regular attendees see the active booking option below.
+                            </span>
                         </div>
+                        <button type="button" class="btn-premium-cta" onclick="openEventReviewModal()">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                            <c:choose>
+                                <c:when test="${event.free}">Review &amp; Register</c:when>
+                                <c:otherwise>Review &amp; Pay ₹${event.entryFee}</c:otherwise>
+                            </c:choose>
+                        </button>
                     </c:when>
                     <c:when test="${empty loggedUser}">
                         <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta">
@@ -610,7 +628,9 @@
                 </div>
                 <c:choose>
                     <c:when test="${isOrganizerView}">
-                        <span class="reserved-pill compact" style="background-color: transparent; color: var(--fdf-text-muted);"><i class="bi bi-person-badge me-1"></i> Organizer</span>
+                        <button type="button" class="btn-premium-cta" style="padding: 10px 18px; font-size: 0.85rem; width: auto;" onclick="openEventReviewModal()">
+                            <i class="bi bi-ticket-perforated-fill me-1"></i> Book ₹${event.entryFee}
+                        </button>
                     </c:when>
                     <c:when test="${empty loggedUser}">
                         <a href="${pageContext.request.contextPath}/login" class="btn-premium-cta" style="padding: 12px 24px; font-size: 0.9rem; width: auto;">

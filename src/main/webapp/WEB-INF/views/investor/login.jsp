@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -205,9 +205,9 @@
         }
 
         .rose-alert-success {
-            background: #fff5f5;
-            border: 1px solid #fed7d7;
-            color: #9b2c2c;
+            background: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            color: #166534;
             padding: 12px 16px;
             border-radius: 12px;
             font-size: 0.85rem;
@@ -296,3 +296,4 @@
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
+

@@ -418,8 +418,11 @@ public class FitnessController {
         // Sort bookings: pending/approved first, then completed/cancelled
         bookings.sort((b1, b2) -> b2.getBookingDate().compareTo(b1.getBookingDate()));
 
+        List<in.sp.main.Entities.FitnessProgressLog> progressLogs = fitnessProgressLogRepository.findByUser_IdOrderByLogDateDesc(currentUser.getId());
+
         model.addAttribute("user", currentUser);
         model.addAttribute("bookings", bookings);
+        model.addAttribute("progressLogs", progressLogs);
 
         return "fitnessUserBookings";
     }

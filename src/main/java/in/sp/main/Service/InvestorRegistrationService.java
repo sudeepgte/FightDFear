@@ -116,6 +116,7 @@ public class InvestorRegistrationService {
         investor.setPassword(passwordService.encode(password));
         investor.setSubscribed(false);
         investor.setAcceptedTermsAt(LocalDateTime.now());
+        investor.setVerificationStatus(in.sp.main.Entities.VerificationStatus.VERIFIED);
         investorProfileService.setLifecycleStatus(investor, PartnerProfileStatus.REGISTERED);
         investor = investorRepository.save(investor);
         investorProfileService.setLifecycleStatus(investor, PartnerProfileStatus.PROFILE_INCOMPLETE);

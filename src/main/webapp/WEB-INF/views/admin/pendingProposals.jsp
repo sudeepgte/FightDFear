@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -307,6 +307,19 @@
                         </c:choose>
                       </td>
                       <td>
+
+                                                  <div class="dv-actions">
+                            <c:if test="${prop.status != 'VERIFIED'}">
+                            <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/approve" style="display:inline;">
+                               <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
+                            </form>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/reject" style="display:inline;">
+                               <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
+                            </form>
+                            </c:if>
+                            <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/proposals/about/${prop.id}"><i class="fas fa-eye"></i> View</a>
+                          </div>
+=======
                         <div class="dv-actions">
                           <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/approve" style="display:inline;">
                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
@@ -318,6 +331,7 @@
                           </form>
                           <a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${prop.entrepreneur.id}"><i class="fas fa-eye"></i> View Profile</a>
                         </div>
+
                       </td>
                     </tr>
                   </c:forEach>
@@ -373,6 +387,22 @@
                         </c:choose>
                       </td>
                       <td>
+
+                                                  <div class="dv-actions">
+                            <a href="${pageContext.request.contextPath}/admin/investors/about/${inv.id}" class="ap-btn-view" style="color: #f43f5e;" ><i class="fas fa-eye me-1"></i> View Profile</a>
+                            <c:if test="${inv.verificationStatus != 'VERIFIED'}">
+                            <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/approve" style="display:inline;">
+                               <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
+                            </form>
+                            <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/reject" style="display:inline;">
+                               <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
+                            </form>
+                            </c:if>
+                          </div>
+
+                        
+                              
+
                         <div class="dv-actions">
                           <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/approve" style="display:inline;">
                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
@@ -382,6 +412,7 @@
                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                              <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
                           </form>
+
                         </div>
                       </td>
                     </tr>
@@ -623,8 +654,15 @@
   }
 })();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
 </body>
 </html>
+
+
+
 
 

@@ -2496,6 +2496,17 @@ public class AdminController {
         return "admin/pendingProposals";
     }
 
+    @GetMapping("/proposals/about/{id}")
+    public String viewProposalDetails(@PathVariable Long id, HttpSession session, Model model) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        in.sp.main.Entities.BusinessProposal p = businessProposalRepository.findById(id).orElse(null);
+        if (p == null) {
+            return "redirect:/admin/pending-proposals";
+        }
+        model.addAttribute("proposal", p);
+        return "adminViewProposal";
+    }
+
     @PostMapping("/proposals/{id}/approve")
     public String approveProposal(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -2585,6 +2596,17 @@ public class AdminController {
             investorRepository.save(i);
         });
         ra.addFlashAttribute("message", "Investor verification rejected.");
+        return "redirect:/admin/pending-proposals";
+    }
+
+    @GetMapping({"/investors/about/{id}", "/investors/{id}/details"})
+    public String viewInvestorProfileDetails(@PathVariable Long id, Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        Optional<Investor> opt = investorRepository.findById(id);
+        if (opt.isPresent()) {
+            model.addAttribute("investor", opt.get());
+            return "admin/investorProfileDetails";
+        }
         return "redirect:/admin/pending-proposals";
     }
 
@@ -3157,4 +3179,5 @@ public class AdminController {
         return "redirect:/centres/about/" + id;
     }
 }
+
 
