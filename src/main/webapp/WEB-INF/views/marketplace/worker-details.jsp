@@ -116,6 +116,25 @@
         
         h2, h4, h5 { color: var(--text-primary); font-weight: 700; }
         p, span { color: var(--text-secondary); }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .profile-header { padding: 60px 0 80px; }
+            .profile-container { margin: -50px 15px 30px; padding: 25px; }
+            .profile-img { width: 120px; height: 120px; }
+            .profile-img-wrap { margin-top: -75px; }
+            .booking-section { padding: 20px; }
+        }
+        @media (max-width: 480px) {
+            .profile-header { padding: 50px 0 70px; }
+            .profile-container { margin: -40px 10px 20px; padding: 15px; border-radius: 12px; }
+            .profile-img { width: 100px; height: 100px; }
+            .profile-img-wrap { margin-top: -65px; margin-bottom: 15px; }
+            h2 { font-size: 1.5rem; }
+            .info-card { padding: 15px; }
+            .info-card h5 { font-size: 1.1rem; }
+            .booking-section { padding: 15px; }
+        }
     </style>
 </head>
 <body>

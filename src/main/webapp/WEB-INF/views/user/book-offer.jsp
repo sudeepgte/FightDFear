@@ -70,6 +70,33 @@
             display: block;
             margin-bottom: 5px;
         }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            form.container {
+                padding: 20px;
+                margin: 0 15px 30px;
+            }
+            h2.page-title {
+                margin: 25px 15px;
+                font-size: 1.5rem;
+            }
+        }
+        @media (max-width: 480px) {
+            form.container {
+                padding: 15px;
+                margin: 0 10px 20px;
+                border-radius: 10px;
+            }
+            h2.page-title {
+                margin: 20px 10px;
+                font-size: 1.25rem;
+            }
+            button.btn-book {
+                padding: 10px 0;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>

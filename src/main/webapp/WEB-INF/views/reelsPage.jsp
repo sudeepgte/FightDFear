@@ -204,7 +204,7 @@
         .dashboard-bar {
             position: relative;
             z-index: 99;
-            margin-top: 10px;
+            margin-top: 100px; /* Increased to avoid header overlap */
             padding-right: 15px;
         }
         .dashboard-btn {
@@ -231,9 +231,25 @@
         .dashboard-btn i {
             font-size: 1.2rem;
             transition: transform 0.3s ease;
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
         }
         .dashboard-btn:hover i {
             transform: translateX(5px);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-bar { flex-direction: column; padding: 10px 15px; gap: 8px !important; margin-top: 80px; }
+            .dashboard-bar.justify-content-end { justify-content: center !important; }
+            .dashboard-btn { justify-content: center; width: 100%; }
+            .filter-bar { padding: 15px; border-radius: 16px; }
+            .category-tag { padding: 6px 12px; font-size: 0.8rem; margin: 3px; display: inline-block; }
+            .video-hero { height: 40vh; }
+        }
+        @media (max-width: 480px) {
+            .dashboard-btn { padding: 8px 12px; font-size: 0.85rem; }
+            .video-hero h1 { font-size: 2rem; }
+            .v-thumb { height: 350px; }
         }
     </style>
 </head>
@@ -243,13 +259,13 @@
 <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
     <div class="dashboard-bar container-fluid container-xl d-flex justify-content-end gap-3">
         <a href="${pageContext.request.contextPath}/video/allVideos" class="dashboard-btn">
-            Video Gallery <i class="bi bi-play-btn"></i>
+            Video Gallery <i class="fa-solid fa-play"></i>
         </a>
         <a href="${pageContext.request.contextPath}/video/uploadVideo" class="dashboard-btn">
-            Upload Reel <i class="bi bi-cloud-arrow-up"></i>
+            Upload Reel <i class="fa-solid fa-cloud-arrow-up"></i>
         </a>
         <a href="${pageContext.request.contextPath}/users/dashboard" class="dashboard-btn">
-            Dashboard <i class="bi bi-arrow-right"></i>
+            Dashboard <i class="fa-solid fa-arrow-right"></i>
         </a>
     </div>
 

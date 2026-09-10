@@ -47,6 +47,58 @@
         font-weight: 700;
         color: #E11D48;
         font-size: 14px;
+        padding-bottom: 10px;
+        line-height: 1.5;
+    }
+    @media (max-width: 768px) {
+        .global-footer {
+            padding-top: 15px !important;
+        }
+        .global-footer-bottom {
+            font-size: 11px;
+            padding-left: 10px;
+            padding-right: 10px;
+            padding-bottom: 15px;
+            margin-top: 15px;
+        }
+        .global-footer h4 {
+            font-size: 10px;
+            margin-bottom: 8px;
+            letter-spacing: 0;
+        }
+        .global-footer a {
+            font-size: 9.5px;
+            letter-spacing: -0.2px;
+        }
+        .global-footer ul li {
+            margin-bottom: 4px;
+        }
+        .footer-links {
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+        }
+    }
+    @media (max-width: 480px) {
+        .global-footer-bottom {
+            font-size: 10px;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+        .global-footer h4 {
+            font-size: 8.5px;
+            margin-bottom: 5px;
+        }
+        .global-footer a {
+            font-size: 8.5px;
+            letter-spacing: -0.3px;
+        }
+        .global-footer ul li {
+            margin-bottom: 2px;
+        }
+        .footer-links {
+            padding-left: 1px !important;
+            padding-right: 1px !important;
+        }
     }
 </style>
 
@@ -55,7 +107,7 @@
       <div class="row gy-4">
         
         <!-- Column 1: PLATFORM -->
-        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+        <div class="col-3 col-md-3 col-lg-3 footer-links mb-4 mb-lg-0">
           <h4>PLATFORM</h4>
           <ul>
             <li><a href="${pageContext.request.contextPath}/sos">Safety</a></li>
@@ -67,7 +119,7 @@
         </div>
 
         <!-- Column 2: WELLNESS -->
-        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+        <div class="col-3 col-md-3 col-lg-3 footer-links mb-4 mb-lg-0">
           <h4>WELLNESS</h4>
           <ul>
             <li><a href="${pageContext.request.contextPath}/doctors/list">Women Doctors</a></li>
@@ -78,7 +130,7 @@
         </div>
 
         <!-- Column 3: BUSINESS -->
-        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+        <div class="col-3 col-md-3 col-lg-3 footer-links mb-4 mb-lg-0">
           <h4>BUSINESS</h4>
           <ul>
             <li><a href="${pageContext.request.contextPath}/entrepreneur">Entrepreneurs</a></li>
@@ -89,7 +141,7 @@
         </div>
 
         <!-- Column 4: RESOURCES -->
-        <div class="col-6 col-md-6 col-lg-3 footer-links mb-4 mb-lg-0">
+        <div class="col-3 col-md-3 col-lg-3 footer-links mb-4 mb-lg-0">
           <h4>RESOURCES</h4>
           <ul>
             <li><a href="${pageContext.request.contextPath}/awareness">Awareness</a></li>

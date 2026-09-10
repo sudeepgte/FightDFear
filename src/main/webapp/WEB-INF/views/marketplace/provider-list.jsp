@@ -453,11 +453,15 @@
             }
             .location-selector, .dropdown, .filter-btn {
                 width: 100% !important;
-                justify-content: center;
+                box-sizing: border-box !important;
+                justify-content: flex-start !important;
+                overflow: hidden !important;
             }
             .location-selector select {
-                max-width: 100% !important;
+                max-width: calc(100% - 25px) !important;
                 text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
             }
             .lawyer-header {
                 flex-wrap: wrap;

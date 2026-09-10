@@ -41,6 +41,52 @@
             padding-bottom: 80px;
             min-height: calc(100vh - 300px);
         }
+        @media (max-width: 768px) {
+            .contact-wrapper {
+                padding-top: 90px;
+                padding-bottom: 40px;
+            }
+            .contact-header {
+                margin-bottom: 30px;
+            }
+            .contact-header h1 {
+                font-size: 32px;
+            }
+            .glass-contact-card {
+                padding: 25px;
+            }
+            .info-pill {
+                padding: 16px;
+                gap: 12px;
+            }
+        }
+        @media (max-width: 480px) {
+            .contact-wrapper {
+                padding-top: 85px;
+                padding-bottom: 30px;
+            }
+            .contact-header h1 {
+                font-size: 26px;
+            }
+            .glass-contact-card {
+                padding: 20px 15px;
+            }
+            .info-pill {
+                padding: 12px;
+                gap: 10px;
+            }
+            .info-icon {
+                width: 42px;
+                height: 42px;
+                font-size: 1.1rem;
+            }
+            .info-pill .fw-bold {
+                font-size: 15px !important;
+            }
+            .info-pill .small {
+                font-size: 13px !important;
+            }
+        }
 
         .contact-header {
             text-align: center;
@@ -205,29 +251,12 @@
                                               placeholder="Message" required minlength="10" maxlength="2000"></textarea>
                                     <div class="invalid-feedback">Message must be 10–2000 characters.</div>
                                 </div>
-
-                <div class="col-lg-7">
-                    <h2 class="fw-bold mb-4">Send an Inquiry</h2>
-                    <div id="alertContainer"></div>
-                    <c:if test="${not empty error}">
-                        <div class="alert alert-danger rounded-4" role="alert"><c:out value="${error}"/></div>
-                    </c:if>
-                    <c:if test="${not empty success}">
-                        <div class="alert alert-success rounded-4" role="alert"><c:out value="${success}"/></div>
-                    </c:if>
-                    <form id="inquiryForm" action="${pageContext.request.contextPath}/sendMessage" method="post" novalidate>
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="inquiryName" class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
-                                <input type="text" id="inquiryName" name="name" class="form-control p-3 rounded-4"
-                                       placeholder="Full Name" required minlength="2" maxlength="80"
-                                       pattern="[A-Za-z]([A-Za-z .'-]*[A-Za-z])?"
-                                       title="Letters only (spaces, apostrophes, hyphens allowed). No numbers.">
-                                <div class="invalid-feedback">Enter a valid name (letters only, 2–80 characters).</div>
-
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                    <button type="submit" id="btnSubmitMessage" class="btn-send-message">Send Message</button>
+                                </div>
                             </div>
-                            <button type="submit" id="btnSubmitMessage" class="btn-send-message mt-4">Send Message</button>
                         </form>
                     </div>
                 </div>

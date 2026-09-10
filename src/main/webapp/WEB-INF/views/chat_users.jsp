@@ -113,6 +113,13 @@
         @media (max-width: 768px) {
             body.fdf-page-chats .friends-grid { grid-template-columns: 1fr; }
         }
+        @media (max-width: 480px) {
+            body.fdf-page-chats .friends-grid { gap: 12px; }
+            body.fdf-page-chats .friend-card { padding: 20px 15px; }
+            body.fdf-page-chats .friend-avatar { width: 64px; height: 64px; }
+            body.fdf-page-chats .friend-name { font-size: 14px; margin-bottom: 10px; }
+            body.fdf-page-chats .btn-chat-open { font-size: 12px; padding: 6px 16px; }
+        }
     </style>
 </head>
 <body class="fdf-page-shell fdf-page-chats">

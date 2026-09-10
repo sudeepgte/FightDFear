@@ -585,7 +585,7 @@
                                                         data-bs-target="#serviceModal"
                                                         onclick="showServiceModal('${service.name}', '${service.category}', '${service.price}', '${service.durationMinutes}', '${service.ingredients}', '${service.allergenInfo}', '${pageContext.request.contextPath}${service.photoUrl}', '${service.salon.name}', '${service.id}')"
                                                         title="View Details">
-                                                    <i class="bi bi-eye"></i>
+                                                    <i class="fas fa-eye"></i>
                                                 </button>
                                                 <a href="${pageContext.request.contextPath}/booking/new?serviceId=${service.id}" class="btn btn-action-primary btn-sm px-3">
                                                     Book Now
