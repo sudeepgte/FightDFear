@@ -693,6 +693,7 @@ public class EntrepreneurController {
             @PathVariable("investorId") Long investorId,
             @RequestParam(value = "proposalId", required = false) Long proposalId,
             HttpSession session,
+            RedirectAttributes redirectAttributes,
             Model model) {
 
         Entrepreneur e = getLoggedEntrepreneur(session);
@@ -734,6 +735,8 @@ public class EntrepreneurController {
 
             return "entrepreneur/chat";
         }
+        
+        redirectAttributes.addFlashAttribute("error", "You must have at least one active proposal and an investor before using Chat.");
         return "redirect:/entrepreneur/dashboard";
     }
 

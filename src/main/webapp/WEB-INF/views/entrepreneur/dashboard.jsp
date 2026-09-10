@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         /* Hide fragment header to prevent dark blue header override */
         #header {
@@ -167,12 +167,13 @@
             position: fixed;
             top: 70px;
             left: 0;
-            z-index: 1000;
+            z-index: 1040;
             padding: 24px 16px;
             border-right: 1px solid #FCE8EB;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            transition: margin-left 0.3s ease-in-out;
         }
 
         .sidebar-heading {
@@ -181,13 +182,14 @@
             font-weight: 800;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
             color: var(--text-plum);
             border-bottom: 1px solid #FCE8EB;
             margin-bottom: 16px;
         }
 
-        .sidebar-heading i {
+        .sidebar-heading i.brand-icon {
             color: var(--brand-pink);
             font-size: 1.2rem;
         }
@@ -244,6 +246,7 @@
             background-color: var(--bg-page);
         }
 
+        /* ... existing styles ... */
 
         /* Stat Cards */
         .stat-card-box {
@@ -355,10 +358,37 @@
         }
 
         @media (max-width: 992px) {
-            #sidebar-wrapper { margin-left: -240px; }
-            #wrapper.toggled #sidebar-wrapper { margin-left: 0; }
-            #page-content-wrapper { margin-left: 0 !important; padding: 20px; }
+            #sidebar-wrapper { 
+                margin-left: -240px; 
+                box-shadow: 4px 0 24px rgba(0,0,0,0.1); 
+            }
+            #wrapper.toggled #sidebar-wrapper { 
+                margin-left: 0; 
+            }
+            #page-content-wrapper { 
+                margin-left: 0 !important; 
+                padding: 20px; 
+            }
             .top-nav-links { display: none; }
+            .top-navbar { padding: 0 16px; }
+            .welcome-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+        @media (max-width: 576px) {
+            .stat-card-box {
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .panel-header-title {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
     
         .bg-brand-pink { background-color: var(--brand-pink) !important; color: white !important; }
@@ -376,9 +406,14 @@
 
 <!-- Top Navbar Header -->
 <div class="top-navbar">
-    <a href="${pageContext.request.contextPath}/" class="top-brand">
-        <i class="bi bi-fire"></i> Fight D Fear
-    </a>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-light d-lg-none p-1 border-0" id="mobileSidebarToggle" style="background: transparent;">
+            <i class="bi bi-list fs-3 text-brand-pink"></i>
+        </button>
+        <a href="${pageContext.request.contextPath}/" class="top-brand">
+            <i class="bi bi-fire"></i> Fight D Fear
+        </a>
+    </div>
     
     <div class="top-nav-links">
         <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="top-nav-link active">Home</a>
@@ -427,16 +462,26 @@
     <!-- Left Sidebar -->
     <div id="sidebar-wrapper">
         <div class="sidebar-heading">
-            <i class="bi bi-briefcase-fill"></i> Entrepreneur
+            <div class="d-flex align-items-center gap-2"><i class="bi bi-briefcase-fill brand-icon"></i> Entrepreneur</div>
+            <button class="btn btn-sm btn-light border-0 d-lg-none" id="closeSidebarBtn"><i class="bi bi-x-lg text-brand-pink"></i></button>
         </div>
         
         <div class="d-flex flex-column" style="flex: 1;">
             <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="sidebar-link active">
                 <i class="bi bi-house-door-fill"></i> Dashboard
             </a>
-            <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
-                <i class="bi bi-chat-left-dots-fill"></i> Chat
-            </a>
+            <c:choose>
+                <c:when test="${not empty proposals}">
+                    <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
+                        <i class="bi bi-chat-left-dots-fill"></i> Chat
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a href="#" class="sidebar-link" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('You must create a proposal and have an investor before you can use the Chat feature.'); return false;">
+                        <i class="bi bi-chat-left-dots-fill"></i> Chat <i class="bi bi-lock-fill ms-2"></i>
+                    </a>
+                </c:otherwise>
+            </c:choose>
             <c:choose>
                 <c:when test="${entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED'}">
                     <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="sidebar-link">
@@ -476,7 +521,7 @@
         <div class="container-fluid p-0">
             
             <!-- Welcome Header & Refresh -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4 welcome-header">
                 <div>
                     <h2 class="fw-bold m-0" style="color: var(--text-plum);">Hello, ${entrepreneur.fullName != null ? entrepreneur.fullName : 'Sindhu'}! 👋</h2>
                     <p class="text-muted m-0 small mt-1">Manage your business projects and engage with interested funding entities.</p>
@@ -1107,11 +1152,21 @@
     }
     
     // Mobile Sidebar Toggle
-    const menuToggle = document.getElementById('menu-toggle');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function(e) {
+    const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const wrapper = document.getElementById('wrapper');
+    
+    if (mobileSidebarToggle) {
+        mobileSidebarToggle.addEventListener('click', function(e) {
             e.preventDefault();
-            document.getElementById('wrapper').classList.toggle('toggled');
+            wrapper.classList.add('toggled');
+        });
+    }
+    
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            wrapper.classList.remove('toggled');
         });
     }
 </script>

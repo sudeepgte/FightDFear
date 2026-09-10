@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -153,36 +153,82 @@
                 flex-direction: column !important;
             }
             #sidebar-wrapper {
-                min-width: 100% !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                position: static !important;
-                border-radius: 0 0 20px 20px !important;
-                padding: 20px 15px !important;
+                position: fixed !important;
+                top: 0;
+                left: -280px;
+                width: 260px !important;
+                max-width: 260px !important;
+                min-width: 260px !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
+                padding: 20px 0 !important;
+                z-index: 1050;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            }
+            #sidebar-wrapper.show-sidebar {
+                left: 0;
             }
             #sidebar-wrapper .mt-1 {
                 display: flex !important;
-                flex-wrap: wrap !important;
-                flex-direction: row !important;
-                gap: 8px !important;
+                flex-direction: column !important;
+                gap: 0 !important;
             }
             .sidebar-link {
-                padding: 8px 15px !important;
-                border-radius: 20px !important;
-                border-left: none !important;
-                background: #fff1f2 !important;
-                display: inline-flex !important;
+                padding: 10px 20px !important;
+                border-radius: 0 !important;
+                border-left: 3px solid transparent !important;
+                background: transparent !important;
+                display: flex !important;
+                margin-bottom: 8px !important;
                 white-space: nowrap !important;
-                margin-bottom: 0 !important;
             }
             .sidebar-link:hover, .sidebar-link.active {
-                border-left-color: transparent !important;
-                background: #f43f5e !important;
+                border-left-color: #f43f5e !important;
+                background: #fff1f2 !important;
             }
             #page-content-wrapper {
                 margin-left: 0 !important;
                 padding: 20px 15px !important;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .stat-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+                padding: 15px 10px;
+            }
+            .stat-info .stat-label {
+                font-size: 0.7rem;
+            }
+            .stat-info .stat-value {
+                font-size: 1rem;
+            }
+            .welcome-header {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+            }
+            .welcome-header button {
+                position: static !important;
+                margin-top: 10px;
+            }
+            /* Stack buttons inside the table actions on mobile */
+            td .d-flex.align-items-center.gap-1.flex-wrap {
+                flex-direction: column;
+                align-items: stretch !important;
+            }
+            td .d-flex.align-items-center.gap-1.flex-wrap .btn, 
+            td .d-flex.align-items-center.gap-1.flex-wrap form {
+                width: 100%;
+                margin-bottom: 2px;
+            }
+            td .d-flex.align-items-center.gap-1.flex-wrap form .btn {
+                width: 100%;
             }
         }
     
@@ -219,8 +265,9 @@
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2">
-            <i class="bi bi-wallet2"></i> Investor Panel
+        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2 d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-wallet2 text-rose me-2"></i> Investor Panel</div>
+            <button class="btn btn-light btn-sm border-0 d-lg-none shadow-sm" id="closeSidebarBtn"><i class="bi bi-x-lg text-rose"></i></button>
         </div>
         <div class="mt-1 d-flex flex-column">
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
@@ -253,9 +300,17 @@
 
     <!-- Page Content -->
     <div id="page-content-wrapper">
-        <div class="container-fluid">
+        <!-- Mobile Header Toggle -->
+        <div class="d-flex d-lg-none justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <h5 class="fw-bold m-0" style="color: var(--navy-dark);"><i class="bi bi-wallet2 text-rose me-2"></i>Investor Panel</h5>
+            <button class="btn btn-light border shadow-sm rounded-circle d-flex align-items-center justify-content-center" id="mobileSidebarToggle" style="width: 40px; height: 40px;">
+                <i class="bi bi-list fs-5 text-rose"></i>
+            </button>
+        </div>
+        
+        <div class="container-fluid px-0">
             
-            <div class="text-center mb-4 position-relative">
+            <div class="text-center mb-4 position-relative welcome-header">
                 <h5 class="fw-bold m-0" style="color: #0f172a;">Welcome Back, ${investor.fullName}!</h5>
                 <p class="text-muted small m-0 mt-1">Browse opportunities and manage portfolios.</p>
                 <button onclick="location.reload()" class="btn btn-outline-rose rounded-pill btn-sm position-absolute" style="right: 0; top: 0;">
@@ -329,7 +384,7 @@
 
             <!-- Investment Portfolio Table -->
             <div class="panel" id="portfolio-section">
-                <h3 class="panel-title">My Investments Portfolio</h3>
+                <h3 class="panel-title">Wallet & Investment Portfolio</h3>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
@@ -474,11 +529,11 @@
                 <!-- Left: Scheduled Meetings -->
                 <div class="col-lg-6" id="bookings-section">
                     <div class="panel">
-                        <h3 class="panel-title">Consultation Meetings</h3>
+                        <h3 class="panel-title">My Bookings / Meetings</h3>
                         <div class="list-group list-group-flush">
                             <c:forEach var="meeting" items="${meetings}">
                                 <div class="list-group-item py-3 border-0 border-bottom">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                                         <span class="fw-bold"><i class="bi bi-camera-video"></i> ${meeting.proposal.title}</span>
                                         <c:choose>
                                             <c:when test="${meeting.status == 'ACCEPTED'}">
@@ -651,6 +706,48 @@
             }, 1000);
         }, 1500);
     }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const toggleBtn = document.getElementById("mobileSidebarToggle");
+        const closeBtn = document.getElementById("closeSidebarBtn");
+        const sidebar = document.getElementById("sidebar-wrapper");
+        
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener("click", function() {
+                sidebar.classList.add("show-sidebar");
+            });
+        }
+        
+        if (closeBtn && sidebar) {
+            closeBtn.addEventListener("click", function() {
+                sidebar.classList.remove("show-sidebar");
+            });
+        }
+        
+        // Close sidebar on mobile when a link is clicked, and ensure smooth scrolling
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                // If it's a hash link to the same page, do smooth scroll
+                const href = this.getAttribute('href');
+                if (href && href.includes('#')) {
+                    const targetId = href.substring(href.indexOf('#'));
+                    const targetEl = document.querySelector(targetId);
+                    if (targetEl) {
+                        e.preventDefault();
+                        targetEl.scrollIntoView({ behavior: 'smooth' });
+                        // Update URL hash without jumping
+                        history.pushState(null, null, targetId);
+                    }
+                }
+                
+                // Close sidebar on mobile
+                if (window.innerWidth <= 992 && sidebar.classList.contains("show-sidebar")) {
+                    sidebar.classList.remove("show-sidebar");
+                }
+            });
+        });
+    });
 </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

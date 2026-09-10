@@ -323,7 +323,7 @@ public class SecurityConfig {
                     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com https://maps.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
                     "img-src 'self' data: blob: https:; " +
-                    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
+                    "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; " +
                     "connect-src 'self' https://api.razorpay.com https://*.razorpay.com https://lumberjack.razorpay.com https://maps.googleapis.com wss: ws:; " +
                     "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://*.razorpay.com; " +
                     "object-src 'none'; " +
