@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collaboration Chat — Fight D Fear</title>
@@ -238,6 +240,46 @@
         .chat-input-wrapper button:hover {
             background-color: var(--primary-rose-hover);
         }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 991px) {
+            #sidebar-wrapper {
+                position: fixed;
+                top: 0;
+                left: -280px;
+                width: 260px;
+                max-width: 260px;
+                min-width: 260px;
+                height: 100vh;
+                z-index: 1050;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            }
+            #sidebar-wrapper.show-sidebar {
+                left: 0;
+            }
+            #page-content-wrapper {
+                padding: 0;
+                width: 100%;
+                height: 100vh;
+            }
+            .chat-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            .chat-header {
+                padding: 15px 20px;
+            }
+            .chat-messages {
+                padding: 15px;
+            }
+            .chat-footer {
+                padding: 15px;
+            }
+            .message {
+                max-width: 85%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -245,8 +287,9 @@
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading">
-            <i class="bi bi-briefcase-fill"></i> Investor Panel
+        <div class="sidebar-heading d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-briefcase-fill"></i> Investor Panel</div>
+            <button class="btn btn-light btn-sm border-0 d-lg-none shadow-sm" id="closeSidebarBtn"><i class="bi bi-x-lg" style="color: var(--primary-rose);"></i></button>
         </div>
         <div class="mt-3">
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
@@ -285,6 +328,9 @@
                     <a href="${pageContext.request.contextPath}/investor/dashboard" class="btn-back text-decoration-none">
                         <i class="bi bi-chevron-left"></i>
                     </a>
+                    <button class="btn btn-dark d-lg-none border-0 ms-1 me-2 p-0" id="mobileSidebarToggle" style="background: transparent;">
+                        <i class="bi bi-list fs-4 text-white"></i>
+                    </button>
                     <div>
                         <h6 class="fw-bold">${entrepreneur.fullName}</h6>
                         <span class="subtitle">${proposal.title}</span>
@@ -312,6 +358,7 @@
             <!-- Footer / Input Form (White box, red button like image) -->
             <div class="chat-footer">
                 <form action="${pageContext.request.contextPath}/investor/chat/${entrepreneur.id}" method="post" id="chatForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="proposalId" value="${proposal.id}">
                     <div class="chat-input-wrapper">
                         <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
@@ -329,7 +376,25 @@
     document.addEventListener("DOMContentLoaded", function() {
         const area = document.getElementById("messageArea");
         if(area) area.scrollTop = area.scrollHeight;
+
+        const toggleBtn = document.getElementById("mobileSidebarToggle");
+        const closeBtn = document.getElementById("closeSidebarBtn");
+        const sidebar = document.getElementById("sidebar-wrapper");
+        
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener("click", function() {
+                sidebar.classList.add("show-sidebar");
+            });
+        }
+        
+        if (closeBtn && sidebar) {
+            closeBtn.addEventListener("click", function() {
+                sidebar.classList.remove("show-sidebar");
+            });
+        }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
+

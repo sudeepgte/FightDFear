@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Promotions | Fight D Fear</title>
@@ -190,6 +192,7 @@
                                 <c:choose>
                                     <c:when test="${status == 'Paused'}">
                                         <form action="${pageContext.request.contextPath}/salon/promotions/status" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="promotionId" value="${promo.id}">
                                             <input type="hidden" name="status" value="Resume">
                                             <button type="submit" class="btn-action btn-resume w-100"><i class="bi bi-play-circle me-1"></i> Resume</button>
@@ -197,6 +200,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <form action="${pageContext.request.contextPath}/salon/promotions/status" method="POST" class="m-0 flex-grow-1">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="promotionId" value="${promo.id}">
                                             <input type="hidden" name="status" value="Paused">
                                             <button type="submit" class="btn-action btn-pause w-100" ${status == 'Expired' ? 'disabled' : ''}><i class="bi bi-pause-circle me-1"></i> Pause</button>
@@ -205,6 +209,7 @@
                                 </c:choose>
 
                                 <form action="${pageContext.request.contextPath}/salon/promotions/delete" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to archive this promotion?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <input type="hidden" name="promotionId" value="${promo.id}">
                                     <button type="submit" class="btn-action btn-archive"><i class="bi bi-archive me-1"></i></button>
                                 </form>
@@ -227,6 +232,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

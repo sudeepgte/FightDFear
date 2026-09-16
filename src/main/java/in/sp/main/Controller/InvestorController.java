@@ -84,8 +84,8 @@ public class InvestorController {
             investorRegistrationService.registerQuick(
                     fullName, email, phone, password, confirmPassword, emailOtp, acceptedTerms);
 
-            redirectAttributes.addFlashAttribute("success", "Registration successful! You will be able to log in once verified by Admin.");
-            return "redirect:/admin/pending-proposals";
+            redirectAttributes.addFlashAttribute("success", "Registration successful! Please login with your email and password.");
+            return "redirect:/investor/login";
 
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getReason());
@@ -119,11 +119,16 @@ public class InvestorController {
 
     @PostMapping("/login")
     public String loginInvestor(
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "password", required = false) String password,
             HttpSession session,
             HttpServletResponse response,
             Model model) {
+
+        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
+            model.addAttribute("error", "Please provide both email and password.");
+            return "investor/login";
+        }
 
         Optional<Investor> opt = investorRepository.findByEmail(email.toLowerCase().trim());
         if (opt.isPresent()) {
@@ -132,10 +137,6 @@ public class InvestorController {
                 inv.setPassword(hashed);
                 investorRepository.save(inv);
             })) {
-                if (inv.getVerificationStatus() == VerificationStatus.PENDING) {
-                    model.addAttribute("error", "Your profile is pending admin approval and verification.");
-                    return "investor/login";
-                }
                 if (inv.getVerificationStatus() == VerificationStatus.REJECTED) {
                     model.addAttribute("error", "Your registration has been rejected by the admin.");
                     return "investor/login";
@@ -263,12 +264,10 @@ public class InvestorController {
         if (inv == null) return "redirect:/investor/login";
 
         // Refresh state
-        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
+        Optional<Investor> opt = investorRepository.findById(inv.getId());
+        if (opt.isEmpty()) return "redirect:/investor/login";
+        final Investor refreshedInv = opt.get();
         session.setAttribute("loggedInvestor", refreshedInv);
-
-        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
-            return "redirect:/investor/complete-profile";
-        }
 
         List<Investment> investments = investmentRepository.findByInvestor(refreshedInv);
         List<InvestmentMeeting> meetings = investmentMeetingRepository.findByInvestor(refreshedInv);

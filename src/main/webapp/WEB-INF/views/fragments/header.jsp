@@ -651,6 +651,13 @@ function markBroadcastsAsRead() {
       }
   });
 </script>
+<c:if test="${not empty _csrf}">
+    <meta name="_csrf" content="${_csrf.token}" />
+    <meta name="_csrf_header" content="${_csrf.headerName}" />
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}" />
+    <input type="hidden" id="_global_header_csrf" name="${_csrf.parameterName}" value="${_csrf.token}" />
+</c:if>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 
 
 

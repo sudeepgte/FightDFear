@@ -49,6 +49,9 @@ public class DoctorAppointmentService {
     private DoctorNotificationService notificationService;
 
     @Autowired
+    private in.sp.main.Repository.DoctorRepository doctorRepository;
+
+    @Autowired
     private DoctorPaymentService doctorPaymentService;
 
     @Autowired
@@ -106,6 +109,9 @@ public class DoctorAppointmentService {
                 && appointment.getStatus() != DoctorAppointmentStatus.CONFIRMED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending/confirmed appointments can be rescheduled");
         }
+        if (appointment.getDoctor() != null && appointment.getDoctor().getId() != null) {
+            doctorRepository.findByIdForUpdate(appointment.getDoctor().getId());
+        }
         bookingService.validateAppointmentSlot(appointment.getDoctor(), newTime);
         appointment.setRescheduledFrom(appointment.getAppointmentTime());
         appointment.setAppointmentTime(newTime);
@@ -130,6 +136,9 @@ public class DoctorAppointmentService {
         if (appointment.getStatus() != DoctorAppointmentStatus.PENDING
                 && appointment.getStatus() != DoctorAppointmentStatus.CONFIRMED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending/confirmed appointments can be rescheduled");
+        }
+        if (appointment.getDoctor() != null && appointment.getDoctor().getId() != null) {
+            doctorRepository.findByIdForUpdate(appointment.getDoctor().getId());
         }
         bookingService.validateAppointmentSlot(appointment.getDoctor(), newTime);
         appointment.setRescheduledFrom(appointment.getAppointmentTime());

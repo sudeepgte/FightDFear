@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seller Registration — Women Products</title>
@@ -266,6 +268,7 @@
             </c:if>
 
             <form method="post" action="${pageContext.request.contextPath}/women-products/seller/register" enctype="multipart/form-data" id="sellerForm" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="row-2">
                     <div class="form-group">
                         <label for="fullName">Owner / contact name *</label>
@@ -561,5 +564,6 @@
             document.getElementById('sellerForm').requestSubmit();
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

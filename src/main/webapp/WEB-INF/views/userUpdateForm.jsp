@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Update Profile | Fight D Fear</title>
@@ -76,25 +78,24 @@
 
         .form-control,
         .form-select {
-            border: 1px solid #E2E8F0;
-
-        .form-control, .form-select {
-            border: 1px solid var(--fdf-border);
-
+            border: 1px solid var(--fdf-border, #E2E8F0);
             border-radius: 12px;
             padding: 11px 14px;
             font-size: 0.95rem;
             color: #0F172A;
             background: #FFFFFF;
+            max-width: 100%;
+            text-overflow: ellipsis;
+        }
+        
+        .form-select option {
+            white-space: normal;
+            word-wrap: break-word;
         }
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #F43F5E;
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--brand-pink);
-
+            border-color: var(--brand-pink, #F43F5E);
             box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
         .form-control[readonly] {
@@ -119,7 +120,6 @@
             margin: 22px 0;
         }
 
-
         .form-check {
             display: flex;
             align-items: flex-start;
@@ -134,7 +134,7 @@
             height: 18px;
             margin-top: 2px;
             flex-shrink: 0;
-            accent-color: var(--brand-pink);
+            accent-color: var(--brand-pink, #F43F5E);
         }
         .form-check-label {
             font-size: 0.9rem;
@@ -142,39 +142,27 @@
             line-height: 1.45;
         }
 
-
         .field-group { margin-bottom: 16px; }
 
         .btn-save {
             width: 100%;
             border: none;
-
-            border-radius: 14px;
-            background: #0F172A;
-
             border-radius: 50px;
             padding: 14px 24px;
             font-weight: 700;
-            background: var(--gradient-primary);
-
+            background: var(--gradient-primary, #0F172A);
             color: #fff;
         }
         .btn-cancel {
             display: block;
-
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
-            border: 2px solid var(--fdf-border);
+            border: 2px solid var(--fdf-border, #E2E8F0);
             border-radius: 14px;
             background: #FFFFFF;
-            color: #64748B;
-            font-weight: 600;
-
-
             text-align: center;
             margin-top: 14px;
-            color: var(--fdf-muted);
+            color: #64748B;
             text-decoration: none;
             font-weight: 600;
         }
@@ -242,7 +230,10 @@
                     </c:if>
                 </div>
 
-                <form action="${pageContext.request.contextPath}/users/update/${user.id}" method="post" enctype="multipart/form-data" id="profileUpdateForm">
+                <form action="${pageContext.request.contextPath}/users/update/${user.id}${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="profileUpdateForm">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="confirmSave" id="confirmSave" value="false">
 
                     <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Personal Details</h5>
@@ -386,9 +377,9 @@
                     <div class="field-group">
                         <label class="form-label" for="safetyPreferences">Notification &amp; Sharing Preferences</label>
                         <select name="safetyPreferences" id="safetyPreferences" class="form-select">
-                            <option value="ALERTS_AND_LOCATION" ${user.safetyPreferences eq 'ALERTS_AND_LOCATION' ? 'selected' : ''}>Enable real-time location sharing with emergency contacts and receive danger zone alerts</option>
-                            <option value="ALERTS_ONLY" ${user.safetyPreferences eq 'ALERTS_ONLY' ? 'selected' : ''}>Danger zone alerting only</option>
-                            <option value="NONE" ${user.safetyPreferences eq 'NONE' ? 'selected' : ''}>Disable safety notifications</option>
+                            <option value="ALERTS_AND_LOCATION" ${user.safetyPreferences eq 'ALERTS_AND_LOCATION' ? 'selected' : ''}>Location & alerts</option>
+                            <option value="ALERTS_ONLY" ${user.safetyPreferences eq 'ALERTS_ONLY' ? 'selected' : ''}>Alerts only</option>
+                            <option value="NONE" ${user.safetyPreferences eq 'NONE' ? 'selected' : ''}>None</option>
                         </select>
                     </div>
                     <div class="field-group mb-0">
@@ -449,9 +440,33 @@ function hidePreview() {
     document.getElementById('profilePreviewCard').style.display = 'none';
     document.getElementById('btn-preview').style.display = 'block';
 }
+function ensureCsrfOnForm(form) {
+    if (!form) return;
+    function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+    var csrfInput = form.querySelector('input[name="_csrf"]');
+    var token = (csrfInput && csrfInput.value) ? csrfInput.value : getCookie('XSRF-TOKEN');
+    if (token) {
+        if (!csrfInput) {
+            var hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = '_csrf';
+            hidden.value = token;
+            form.appendChild(hidden);
+        }
+        if (form.action && !form.action.includes('_csrf=')) {
+            var sep = form.action.includes('?') ? '&' : '?';
+            form.action += sep + '_csrf=' + encodeURIComponent(token);
+        }
+    }
+}
 function confirmAndSave() {
     document.getElementById('confirmSave').value = 'true';
-    document.getElementById('profileUpdateForm').submit();
+    var form = document.getElementById('profileUpdateForm');
+    ensureCsrfOnForm(form);
+    form.submit();
 }
 function previewPhoto(input) {
     if (input.files && input.files[0]) {
@@ -463,8 +478,12 @@ function previewPhoto(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
-document.addEventListener('DOMContentLoaded', syncPreview);
+document.addEventListener('DOMContentLoaded', function() {
+    syncPreview();
+    ensureCsrfOnForm(document.getElementById('profileUpdateForm'));
+});
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

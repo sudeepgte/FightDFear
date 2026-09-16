@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Women Events — Discover Empowering Events</title>
@@ -145,6 +147,8 @@
             font-size: 15px; 
             color: var(--fdf-text); 
             font-weight: 500;
+            min-width: 0; /* Prevents placeholder from pushing layout */
+            text-overflow: ellipsis;
         }
         .search-bar input::placeholder {
             color: #94A3B8;
@@ -160,10 +164,25 @@
             font-size: 14px;
             box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
             transition: var(--transition-smooth);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .search-bar button:hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 18px rgba(244, 63, 94, 0.3);
+        }
+        @media (max-width: 576px) {
+            .search-bar {
+                padding: 6px 6px 6px 16px;
+                gap: 8px;
+            }
+            .search-bar input {
+                font-size: 13px;
+            }
+            .search-bar button {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
         }
  
         /* Stats strip */
@@ -938,5 +957,6 @@
         });
     }, 4000);
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

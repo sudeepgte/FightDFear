@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Financial Educator Dashboard - Fight D Fear Admin</title>
@@ -277,6 +279,7 @@
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/delete-video/${video.id}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this recorded video?');">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Video">
                                                         <i class="fas fa-trash-alt"></i> Delete
                                                     </button>
@@ -369,6 +372,7 @@
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/delete-live-session/${session.id}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this live session?');">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Session">
                                                         <i class="fas fa-trash-alt"></i> Delete
                                                     </button>
@@ -456,6 +460,7 @@
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/delete-workshop/${workshop.id}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this offline workshop?');">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Workshop">
                                                         <i class="fas fa-trash-alt"></i> Delete
                                                     </button>
@@ -568,5 +573,6 @@
         }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

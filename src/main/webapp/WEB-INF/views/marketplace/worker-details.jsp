@@ -3,7 +3,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${workerApp.user.fullName} | Verified Worker</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -113,6 +116,25 @@
         
         h2, h4, h5 { color: var(--text-primary); font-weight: 700; }
         p, span { color: var(--text-secondary); }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .profile-header { padding: 60px 0 80px; }
+            .profile-container { margin: -50px 15px 30px; padding: 25px; }
+            .profile-img { width: 120px; height: 120px; }
+            .profile-img-wrap { margin-top: -75px; }
+            .booking-section { padding: 20px; }
+        }
+        @media (max-width: 480px) {
+            .profile-header { padding: 50px 0 70px; }
+            .profile-container { margin: -40px 10px 20px; padding: 15px; border-radius: 12px; }
+            .profile-img { width: 100px; height: 100px; }
+            .profile-img-wrap { margin-top: -65px; margin-bottom: 15px; }
+            h2 { font-size: 1.5rem; }
+            .info-card { padding: 15px; }
+            .info-card h5 { font-size: 1.1rem; }
+            .booking-section { padding: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -201,6 +223,7 @@
                             <div class="booking-section">
                                 <h4 class="mb-4" style="color: var(--m-purple); font-weight: 700;"><i class="fas fa-calendar-check text-primary me-2"></i> Book this Professional</h4>
                                 <form action="${pageContext.request.contextPath}/marketplace/worker/${workerApp.id}/book" method="POST" onsubmit="return initiateWorkerPayment(event, this)">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <div class="row g-3">
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold">Select Date & Time</label>
@@ -363,5 +386,6 @@
             return false;
         }
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

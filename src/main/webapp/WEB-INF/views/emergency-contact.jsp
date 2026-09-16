@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emergency Contacts | Women Safety</title>
@@ -437,6 +439,7 @@
         <h3><i class="bi bi-plus-circle-fill"></i> Add Emergency Contact</h3>
         <p class="text-muted small mb-3">${personalContactCount} of ${maxPersonalContacts} personal contacts added.</p>
         <form action="${pageContext.request.contextPath}/users/${userId}/emergency-contacts" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <div class="form-row">
                 <div class="form-group">
                     <label>Full Name</label>
@@ -477,6 +480,7 @@
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

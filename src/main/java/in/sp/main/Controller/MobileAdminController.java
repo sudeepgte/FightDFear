@@ -30,6 +30,9 @@ public class MobileAdminController {
     private JwtUtil jwtUtil;
 
     @Autowired
+    private in.sp.main.Service.RateLimitService rateLimitService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -149,6 +152,9 @@ public class MobileAdminController {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private in.sp.main.Service.SecurityAuditLogger securityAuditLogger;
+
     @Autowired(required = false)
     private jakarta.servlet.http.HttpServletRequest currentRequest;
 
@@ -210,31 +216,23 @@ public class MobileAdminController {
         if (email.isBlank() || password.isBlank()) {
             return badRequest("Email and password are required.");
         }
+
+        String failKey = "login:admin:fail:" + email;
+        if (!rateLimitService.isAllowed(failKey, 5, java.time.Duration.ofMinutes(15))) {
+            securityAuditLogger.logAuthFailure("MOBILE_ADMIN", email, "RATE_LIMIT_EXCEEDED", "unknown");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(Map.of("success", false, "error", "Too many failed login attempts. Please try again in 15 minutes."));
+        }
+
         Admin admin = adminService.loginAdmin(email, password);
         if (admin == null) {
-            // Auto-provision or password recovery for default Super Admin credentials
-            if (("admin@gmail.com".equalsIgnoreCase(email) || "admin@fightdfear.com".equalsIgnoreCase(email) || "admin@example.com".equalsIgnoreCase(email))
-                    && "Admin@123".equals(password)) {
-                try {
-                    Admin existing = adminRepository.findByEmailIgnoreCase(email)
-                            .or(() -> adminRepository.findByEmail(email))
-                            .orElse(null);
-                    if (existing != null) {
-                        existing.setPassword(passwordService.encode("Admin@123"));
-                        admin = adminRepository.save(existing);
-                    } else {
-                        Admin def = new Admin("Super Admin", email.toLowerCase(Locale.ROOT), passwordService.encode("Admin@123"));
-                        admin = adminRepository.save(def);
-                    }
-                } catch (Exception ignored) {
-                    admin = adminRepository.findByEmail(email).orElse(null);
-                }
-            }
-        }
-        if (admin == null) {
+            rateLimitService.recordFailure(failKey);
+            securityAuditLogger.logAuthFailure("MOBILE_ADMIN", email, "INVALID_CREDENTIALS", "unknown");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("success", false, "error", "Invalid admin email or password."));
         }
+        rateLimitService.clear(failKey);
+        securityAuditLogger.logAuthSuccess("MOBILE_ADMIN", admin.getId(), admin.getEmail(), "ADMIN", "unknown");
         session.setAttribute("admin", admin);
         session.setAttribute("userRole", "ADMIN");
         String token = jwtUtil.generateToken(admin.getEmail(), "ADMIN");

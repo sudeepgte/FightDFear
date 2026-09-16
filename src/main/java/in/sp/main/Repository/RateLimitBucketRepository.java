@@ -20,4 +20,9 @@ public interface RateLimitBucketRepository extends JpaRepository<RateLimitBucket
     int deleteByBucketKeyAndCreatedAtBefore(
             @Param("bucketKey") String bucketKey,
             @Param("cutoff") Instant cutoff);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("DELETE FROM RateLimitBucket r WHERE r.bucketKey = :bucketKey")
+    int deleteByBucketKey(@Param("bucketKey") String bucketKey);
 }

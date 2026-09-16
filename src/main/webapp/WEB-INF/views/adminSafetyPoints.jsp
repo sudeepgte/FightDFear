@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Safety Points & Routes — Admin</title>
@@ -216,9 +218,11 @@
                               <td>
                                   <div class="d-flex gap-2 justify-content-center">
                                       <form action="${pageContext.request.contextPath}/admin/safety-points/danger/${p.id}/verify" method="post">
+                                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                           <button type="submit" class="btn btn-approve">Approve</button>
                                       </form>
                                       <form action="${pageContext.request.contextPath}/admin/safety-points/danger/${p.id}/delete" method="post">
+                                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                           <button type="submit" class="btn btn-delete">Reject</button>
                                       </form>
                                   </div>
@@ -259,9 +263,11 @@
                               <td>
                                   <div class="d-flex gap-2 justify-content-center">
                                       <form action="${pageContext.request.contextPath}/admin/safety-points/route/${r.id}/verify" method="post">
+                                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                           <button type="submit" class="btn btn-approve">Verify</button>
                                       </form>
                                       <form action="${pageContext.request.contextPath}/admin/safety-points/route/${r.id}/delete" method="post">
+                                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                           <button type="submit" class="btn btn-delete">Reject</button>
                                       </form>
                                   </div>
@@ -331,6 +337,7 @@
                               <td><span class="badge bg-success"><i class="fas fa-globe"></i> LIVE</span></td>
                               <td>
                                   <form action="${pageContext.request.contextPath}/admin/safety-points/danger/${p.id}/delete" method="post" onsubmit="return confirm('Remove this point from the live map?');">
+                                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                       <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> Remove</button>
                                   </form>
                               </td>
@@ -371,6 +378,7 @@
                               <td><span class="badge bg-success"><i class="fas fa-check-circle"></i> ACTIVE</span></td>
                               <td>
                                   <form action="${pageContext.request.contextPath}/admin/safety-points/route/${r.id}/delete" method="post" onsubmit="return confirm('Remove this route?');">
+                                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                       <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i> Remove</button>
                                   </form>
                               </td>
@@ -412,6 +420,7 @@
   });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

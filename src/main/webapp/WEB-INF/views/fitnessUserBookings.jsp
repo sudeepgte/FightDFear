@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Fitness Bookings</title>
@@ -53,6 +55,24 @@
             height: 45px;
             border-radius: 50%;
             object-fit: cover;
+        }
+
+        #wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        #page-content-wrapper {
+            flex: 1;
+            min-width: 0;
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            #wrapper {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -146,6 +166,11 @@
                                 Completed Classes
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="progress-tab" data-bs-toggle="tab" data-bs-target="#progressContent" type="button" role="tab" style="color:var(--primary); font-weight:600;">
+                                Progress & Milestones
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content" id="bookingTabContents">
@@ -184,6 +209,7 @@
                                                 </c:otherwise>
                                             </c:choose>
                                             <form action="${pageContext.request.contextPath}/fitness/booking/cancel" method="POST" onsubmit="return confirm('Cancel this session? Fully refunded if paid.');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                 <input type="hidden" name="bookingId" value="${b.id}">
                                                 <button type="submit" class="btn btn-outline-danger btn-custom py-1 px-3">Cancel</button>
                                             </form>
@@ -280,6 +306,7 @@
                                                 </div>
                                                 <div class="modal-body border-0">
                                                     <form action="${pageContext.request.contextPath}/fitness/booking/rate" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <div class="mb-3">
                                                             <label class="form-label text-xs fw-bold text-muted uppercase">Star Rating</label>
@@ -309,11 +336,35 @@
                             </c:if>
                         </div>
 
+                        <!-- PROGRESS & MILESTONES -->
+                        <div class="tab-pane fade" id="progressContent" role="tabpanel">
+                            <c:choose>
+                                <c:when test="${empty progressLogs}">
+                                    <p class="text-muted text-center py-4 small">No progress logs recorded yet. When your coach logs your progress, it will appear here.</p>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="row g-3">
+                                        <c:forEach var="log" items="${progressLogs}">
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                                                    <h6 class="fw-bold mb-1">${log.trainer.fullName} <span class="text-muted small ms-2">${log.logDate}</span></h6>
+                                                    <p class="small text-muted mb-2">Weight: ${log.currentWeight}kg | Body Fat: ${log.bodyFatPct}%</p>
+                                                    <div class="small fw-semibold text-dark mb-1">Coach Notes:</div>
+                                                    <p class="small text-muted mb-0">${log.coachNotes}</p>
+                                                </div>
+                                            </div>
+                                        </c:forEach>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+
                     </div>
                 </div>
             </div>
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

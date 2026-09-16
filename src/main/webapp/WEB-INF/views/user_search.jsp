@@ -3,6 +3,8 @@
 
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 
 <meta charset="utf-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -245,9 +247,11 @@
 			            </a>
 			            <div class="d-flex justify-content-center gap-2 mt-2">
 			              <form action="${pageContext.request.contextPath}/users/acceptRequest/${req.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 			                <button type="submit" class="btn btn-success btn-sm">Accept</button>
 			              </form>
 			              <form action="${pageContext.request.contextPath}/users/declineRequest/${req.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 			                <button type="submit" class="btn btn-outline-secondary btn-sm">Decline</button>
 			              </form>
 			            </div>
@@ -281,6 +285,7 @@
 			              </c:when>
 			              <c:otherwise>
 			                <form action="${pageContext.request.contextPath}/users/follow/${u.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 			                  <button type="submit" class="btn btn-primary btn-sm">Follow</button>
 			                </form>
 			              </c:otherwise>
@@ -402,6 +407,7 @@
 
 		    </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 		</html>
 

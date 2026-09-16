@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create New Offer | Fight D Fear</title>
@@ -67,7 +69,10 @@
                 <h2 class="fw-800 m-0" style="color: var(--fdf-pink) !important;">Create New Offer / Discount</h2>
             </div>
 
-            <form action="${pageContext.request.contextPath}/salon/saveOffer" method="POST" enctype="multipart/form-data">
+            <form action="${pageContext.request.contextPath}/salon/saveOffer${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="POST" enctype="multipart/form-data">
+                <c:if test="${not empty _csrf}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                </c:if>
                 <input type="hidden" name="salonId" value="${salonId}">
                 
                 <!-- 1. Basic Info -->
@@ -218,6 +223,7 @@
             });
         });
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

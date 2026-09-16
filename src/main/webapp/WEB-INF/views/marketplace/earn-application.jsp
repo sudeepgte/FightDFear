@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Want to Earn | Apply for a Job</title>
@@ -135,7 +137,10 @@
                         </div>
                     </c:if>
 
-                    <form action="${pageContext.request.contextPath}/marketplace/earn" method="POST" enctype="multipart/form-data">
+                    <form action="${pageContext.request.contextPath}/marketplace/earn${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="POST" enctype="multipart/form-data">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <!-- User Details (Pre-filled) -->
                         <div class="mb-3">
                             <label class="form-label fw-bold">Full Name</label>
@@ -285,5 +290,6 @@
     </script>
     </div>
 </div>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

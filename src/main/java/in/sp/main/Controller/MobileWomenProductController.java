@@ -55,6 +55,8 @@ public class MobileWomenProductController {
     private WomenProductOrderLifecycleService orderLifecycle;
     @Autowired
     private WomenProductDeliveryService deliveryService;
+    @Autowired
+    private in.sp.main.Service.WomenProductOrderService womenProductOrderService;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
@@ -299,51 +301,19 @@ public class MobileWomenProductController {
         List<WomenCartItem> items = cartRepo.findByUser(user);
         if (items.isEmpty()) return badRequest("Cart is empty.");
 
+        double total = 0;
         for (WomenCartItem ci : items) {
-            WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
-            if (p == null || p.getDeleted() || !Boolean.TRUE.equals(p.getActive())
-                    || p.getSeller() == null || !p.getSeller().isApprovedForCatalog()) {
-                return badRequest("A product in your cart is unavailable.");
-            }
-            int stock = p.getStock() == null ? 0 : p.getStock();
-            int qty = ci.getQuantity() == null ? 0 : ci.getQuantity();
-            if (qty < 1) return badRequest("Invalid quantity.");
-            if (stock <= 0) return badRequest("Product '" + p.getName() + "' is out of stock.");
-            if (qty > stock) return badRequest("Only " + stock + " unit(s) available for '" + p.getName() + "'.");
+            double price = ci.getProduct() != null && ci.getProduct().getPrice() != null ? ci.getProduct().getPrice() : 0.0;
+            int qty = ci.getQuantity() == null || ci.getQuantity() < 1 ? 1 : ci.getQuantity();
+            total += price * qty;
         }
 
-        List<Long> orderIds = new ArrayList<>();
-        double total = 0;
+        List<Long> orderIds;
         try {
-            for (WomenCartItem ci : items) {
-                WomenProduct p = productRepo.findById(ci.getProduct().getId()).orElse(null);
-                int qty = ci.getQuantity();
-                WomenProductOrder o = new WomenProductOrder();
-                o.setUser(user);
-                o.setProduct(p);
-                o.setSeller(p.getSeller());
-                o.setQuantity(qty);
-                double line = (p.getPrice() == null ? 0 : p.getPrice()) * qty;
-                o.setTotalPrice(line);
-                o.setPaymentMethod(paymentMethod);
-                o.setPaymentStatus("COD".equals(paymentMethod) ? "COD" : "PENDING");
-                o.setShippingAddress(shippingAddress);
-                o.setStatus("PLACED");
-                java.time.LocalDateTime placedAt = java.time.LocalDateTime.now();
-                o.setOrderTime(placedAt);
-                o.setExpectedDeliveryDate(deliveryService
-                        .calculateExpectedDeliveryDate(placedAt, shippingAddress, p, qty)
-                        .atStartOfDay());
-                orderRepo.save(o);
-                trackingService.ensureGeocoded(o);
-                orderIds.add(o.getId());
-                total += line;
-                orderLifecycle.decrementStock(p, qty);
-            }
+            orderIds = womenProductOrderService.placeOrders(user, items, paymentMethod, shippingAddress, null, true);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
         }
-        cartRepo.deleteByUser(user);
 
         if (orderIds.isEmpty()) return badRequest("Could not place order. Items are unavailable.");
         return ResponseEntity.ok(ok(Map.of(

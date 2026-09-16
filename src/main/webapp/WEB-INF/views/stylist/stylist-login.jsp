@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stylist Login — Fight D Fear</title>
@@ -199,6 +201,7 @@
                 </c:if>
 
                 <form action="${pageContext.request.contextPath}/stylists/login" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <div class="fdf-form-group">
                         <label>Email Address</label>
                         <div class="input-wrapper">
@@ -235,6 +238,7 @@
             </div>
         </div>
     </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

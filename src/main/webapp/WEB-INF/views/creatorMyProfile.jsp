@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile — ${currentUser.fullName}</title>
@@ -42,7 +44,7 @@
         /* 🍔 TOP NAV 🍔 */
         .top-nav {
             width: 100%;
-            position: sticky; top: 55px; z-index: 200;
+            position: sticky; top: 75px; z-index: 200;
             background: var(--card);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 60px;
@@ -78,20 +80,20 @@
             .page-wrapper { grid-template-columns: 1fr; padding: 20px; }
             .right-sidebar { display: none; }
         }
-                @media (max-width: 1200px) { .top-nav {
-                justify-content: flex-start;
-                overflow-x: auto;
-                white-space: nowrap;
-                padding: 0 16px;
-                gap: 15px;
-                scrollbar-width: none;
-                max-width: 100%;
-                box-sizing: border-box;
-            }
-            .top-nav::-webkit-scrollbar { display: none; }
-            .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
-            .top-nav .nav-actions { flex-shrink: 0; gap: 8px; display: flex; flex-wrap: nowrap; }
-            .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; flex-shrink: 0; }
+        @media (max-width: 1200px) { .top-nav {
+            justify-content: flex-start;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0 16px;
+            gap: 15px;
+            scrollbar-width: none;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .top-nav::-webkit-scrollbar { display: none; }
+        .top-nav .brand { flex-shrink: 0; white-space: nowrap; }
+        .top-nav .nav-actions { flex-shrink: 0; gap: 8px; display: flex; flex-wrap: nowrap; }
+        .top-nav .nav-actions a.icon-btn { padding: 0 10px !important; flex-shrink: 0; }
         }
         @media (max-width: 768px) {
             .page-wrapper { grid-template-columns: 1fr; padding: 12px 12px 90px; gap: 14px; }
@@ -437,12 +439,8 @@
 
         /* ── BOTTOM NAV (mobile) ── */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: var(--card); border-top: 1px solid var(--border);
-            display: none; justify-content: space-around; align-items: center;
-            padding: 10px 0 14px; z-index: 200;
+            display: none !important;
         }
-        @media (max-width: 768px) { .bottom-nav { display: flex; } }
         .bn-link {
             display: flex; flex-direction: column; align-items: center;
             color: var(--sub); font-size: 10px; font-weight: 600; gap: 3px;
@@ -451,7 +449,7 @@
         .bn-link.active { color: var(--accent); }
         .bn-add {
             width: 48px; height: 48px; border-radius: 50%;
-            background: var(--accent); color: #fff; margin-top: -8px;
+            background: var(--accent); color: #fff; margin-top: -16px;
             display: flex; align-items: center; justify-content: center;
             font-size: 22px; box-shadow: 0 4px 12px rgba(244,63,94,.4);
         }
@@ -475,10 +473,10 @@
   <body>
       <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
       <style>
-          #wrapper { margin-top: 55px !important; }
-          #sidebar-wrapper { top: 55px !important; }
+          #wrapper { margin-top: 75px !important; }
+          #sidebar-wrapper { top: 75px !important; }
       </style>
-      <div id="wrapper" style="overflow-x: hidden;">
+      <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
 
@@ -913,7 +911,7 @@
     </div><!-- /center -->
 
     <!-- ━━━━━━━━━ MIDDLE SIDEBAR: Suggestions ━━━━━━━━━ -->
-    <div class="desktop-sidebar">
+    <div class="suggestions-sidebar">
 
         <!-- People You May Know -->
         <div class="card-box">
@@ -1037,24 +1035,7 @@
     </div>
 </div>
 
-<!-- ══════════════════ MOBILE BOTTOM NAV ══════════════════ -->
-<div class="bottom-nav">
-    <a href="${pageContext.request.contextPath}/" class="bn-link">
-        <i class="fa-solid fa-house"></i><span>Home</span>
-    </a>
-    <a href="${pageContext.request.contextPath}/creator-hub/feed" class="bn-link">
-        <i class="fa-solid fa-clapperboard"></i><span>Feed</span>
-    </a>
-    <a href="${pageContext.request.contextPath}/creator-hub/upload" class="bn-add">
-        <i class="fa-solid fa-plus"></i>
-    </a>
-    <div class="bn-link" onclick="toggleNotifPanel()">
-        <i class="fa-regular fa-bell"></i><span>Alerts</span>
-    </div>
-    <div class="bn-link" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/chat'">
-        <i class="fa-regular fa-comment-dots"></i><span>Chat</span>
-    </div>
-</div>
+<!-- Bottom nav moved outside wrapper -->
 
 
 <script>
@@ -1430,7 +1411,28 @@
 
         </div>
     </div>
+    
+<!-- ══════════════════ MOBILE BOTTOM NAV ══════════════════ -->
+<div class="bottom-nav">
+    <a href="${pageContext.request.contextPath}/" class="bn-link">
+        <i class="fa-solid fa-house"></i><span>Home</span>
+    </a>
+    <a href="${pageContext.request.contextPath}/creator-hub/feed" class="bn-link">
+        <i class="fa-solid fa-clapperboard"></i><span>Feed</span>
+    </a>
+    <a href="${pageContext.request.contextPath}/creator-hub/upload" class="bn-add">
+        <i class="fa-solid fa-plus"></i>
+    </a>
+    <div class="bn-link" onclick="toggleNotifPanel()">
+        <i class="fa-regular fa-bell"></i><span>Alerts</span>
+    </div>
+    <div class="bn-link" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/chat'">
+        <i class="fa-regular fa-comment-dots"></i><span>Chat</span>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

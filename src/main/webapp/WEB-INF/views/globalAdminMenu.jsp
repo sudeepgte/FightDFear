@@ -3,6 +3,12 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
+<meta name="_csrf" content="${_csrf.token}"/>
+<meta name="_csrf_header" content="${_csrf.headerName}"/>
+<meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+<input type="hidden" id="_global_csrf" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
 <aside class="sidebar">
 
     <!-- MOBILE HEADER -->

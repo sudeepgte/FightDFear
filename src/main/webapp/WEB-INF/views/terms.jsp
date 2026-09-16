@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <title>Terms of Service - Fight D Fear</title>
   <link rel="stylesheet" href="resources/bootstrap/css/bootstrap.min.css">
@@ -271,6 +273,7 @@
 
   <a href="${pageContext.request.contextPath}/index.html" class="back-link">← Back to Home</a>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

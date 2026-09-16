@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Safety Stories</title>
@@ -294,7 +296,10 @@
 
   <div class="card p-3 shadow-sm rounded-4 mb-3">
     <h5 class="mb-3">Share your story</h5>
-    <form action="${pageContext.request.contextPath}/stories/create" method="post" enctype="multipart/form-data">
+    <form action="${pageContext.request.contextPath}/stories/create${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+      <c:if test="${not empty _csrf}">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+      </c:if>
       <div class="mb-2">
         <textarea class="form-control" name="content" rows="3" maxlength="1200" placeholder="Write your experience or safety tip…" required></textarea>
       </div>
@@ -325,6 +330,7 @@
   </c:forEach>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

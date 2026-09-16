@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investment Marketplace — Fight D Fear</title>
@@ -152,36 +154,44 @@
                 flex-direction: column !important;
             }
             #sidebar-wrapper {
-                min-width: 100% !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                height: auto !important;
-                position: static !important;
-                border-radius: 0 0 20px 20px !important;
-                padding: 20px 15px !important;
+                position: fixed !important;
+                top: 0;
+                left: -280px;
+                width: 260px !important;
+                max-width: 260px !important;
+                min-width: 260px !important;
+                height: 100vh !important;
+                border-radius: 0 !important;
+                padding: 20px 0 !important;
+                z-index: 1050;
+                transition: left 0.3s ease-in-out;
+                box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+            }
+            #sidebar-wrapper.show-sidebar {
+                left: 0;
             }
             #sidebar-wrapper .mt-1 {
                 display: flex !important;
-                flex-wrap: wrap !important;
-                flex-direction: row !important;
-                gap: 8px !important;
+                flex-direction: column !important;
+                gap: 0 !important;
             }
             .sidebar-link {
-                padding: 8px 15px !important;
-                border-radius: 20px !important;
-                border-left: none !important;
-                background: #fff1f2 !important;
-                display: inline-flex !important;
+                padding: 10px 20px !important;
+                border-radius: 0 !important;
+                border-left: 3px solid transparent !important;
+                background: transparent !important;
+                display: flex !important;
+                margin-bottom: 8px !important;
                 white-space: nowrap !important;
-                margin-bottom: 0 !important;
             }
             .sidebar-link:hover, .sidebar-link.active {
-                border-left-color: transparent !important;
-                background: #f43f5e !important;
+                border-left-color: #f43f5e !important;
+                background: #fff1f2 !important;
             }
             #page-content-wrapper {
                 margin-left: 0 !important;
                 padding: 20px 15px !important;
+                width: 100%;
             }
         }
     
@@ -218,8 +228,9 @@
 <div id="wrapper">
     <!-- Sidebar -->
     <div id="sidebar-wrapper">
-        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2">
-            <i class="bi bi-wallet2"></i> Investor Panel
+        <div class="sidebar-heading fs-6 pb-3 px-3 mx-2 mb-2 d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-wallet2 text-rose me-2"></i> Investor Panel</div>
+            <button class="btn btn-light btn-sm border-0 d-lg-none shadow-sm" id="closeSidebarBtn"><i class="bi bi-x-lg text-rose"></i></button>
         </div>
         <div class="mt-1 d-flex flex-column">
             <a href="${pageContext.request.contextPath}/" class="sidebar-link">
@@ -240,9 +251,7 @@
             <a href="${pageContext.request.contextPath}/investor/complete-profile" class="sidebar-link">
                 <i class="bi bi-person"></i> Profile
             </a>
-            <a href="${pageContext.request.contextPath}/" class="sidebar-link">
-                <i class="bi bi-shield-check"></i> Safety Hub Home
-            </a>
+            
             <a href="${pageContext.request.contextPath}/logout" class="sidebar-link text-danger mt-3">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
@@ -251,7 +260,14 @@
 
     <!-- Page Content -->
     <div id="page-content-wrapper">
-        <div class="container-fluid">
+        <div class="container-fluid px-0">
+            <!-- Mobile Header Toggle -->
+            <div class="d-flex d-lg-none justify-content-between align-items-center mb-4 border-bottom pb-3 px-3 mt-2">
+                <h5 class="fw-bold m-0" style="color: var(--navy-dark);"><i class="bi bi-shop text-rose me-2"></i>Marketplace</h5>
+                <button class="btn btn-light border shadow-sm rounded-circle d-flex align-items-center justify-content-center" id="mobileSidebarToggle" style="width: 40px; height: 40px;">
+                    <i class="bi bi-list fs-5 text-rose"></i>
+                </button>
+            </div>
             
             <div class="text-center mb-4 position-relative">
                 <h5 class="fw-bold m-0" style="color: #0f172a;"><i class="bi bi-shop"></i> Investor Marketplace</h5>
@@ -352,5 +368,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toggleBtn = document.getElementById("mobileSidebarToggle");
+        const closeBtn = document.getElementById("closeSidebarBtn");
+        const sidebar = document.getElementById("sidebar-wrapper");
+        
+        if (toggleBtn && sidebar) {
+            toggleBtn.addEventListener("click", function() {
+                sidebar.classList.add("show-sidebar");
+            });
+        }
+        
+        if (closeBtn && sidebar) {
+            closeBtn.addEventListener("click", function() {
+                sidebar.classList.remove("show-sidebar");
+            });
+        }
+        
+        // Close sidebar on mobile when a link is clicked
+        const sidebarLinks = document.querySelectorAll('.sidebar-link');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 992 && sidebar.classList.contains("show-sidebar")) {
+                    sidebar.classList.remove("show-sidebar");
+                }
+            });
+        });
+    });
+</script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
+

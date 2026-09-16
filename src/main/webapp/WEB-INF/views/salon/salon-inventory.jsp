@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Management | Fight D Fear</title>
@@ -128,11 +130,13 @@
                                     <td>
                                         <div class="d-flex gap-2">
                                             <form action="${pageContext.request.contextPath}/salon/inventory/updateStock" method="POST" class="d-flex gap-1 m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                 <input type="hidden" name="itemId" value="${item.id}">
                                                 <input type="number" name="stockAdjustment" class="form-control form-control-sm text-center" value="1" style="width: 60px;">
                                                 <button type="submit" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-right-circle"></i></button>
                                             </form>
                                             <form action="${pageContext.request.contextPath}/salon/inventory/deleteItem" method="POST" class="m-0" onsubmit="return confirm('Delete this item?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                 <input type="hidden" name="itemId" value="${item.id}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
                                             </form>
@@ -161,6 +165,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form action="${pageContext.request.contextPath}/salon/inventory/addItem" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="fw-bold mb-1">Product Name *</label>
@@ -226,6 +231,7 @@
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

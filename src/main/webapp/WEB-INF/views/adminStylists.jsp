@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stylist Verification — Admin</title>
@@ -131,9 +133,11 @@
                     <div class="d-flex gap-2 flex-wrap">
                       <a href="${pageContext.request.contextPath}/admin/stylists/${s.id}/profile" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Profile</a>
                       <form action="${pageContext.request.contextPath}/admin/stylists/${s.id}/approve" method="post">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <button type="submit" class="btn-approve">Approve</button>
                       </form>
                       <form action="${pageContext.request.contextPath}/admin/stylists/${s.id}/reject" method="post" onsubmit="return confirm('Reject and delete this stylist?');">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <button type="submit" class="btn-reject">Reject</button>
                       </form>
                     </div>
@@ -170,6 +174,7 @@
                     <div class="d-flex gap-2 flex-wrap">
                       <a href="${pageContext.request.contextPath}/admin/stylists/${s.id}/profile" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View Profile</a>
                       <form action="${pageContext.request.contextPath}/admin/stylists/${s.id}/reject" method="post" onsubmit="return confirm('Delete this stylist profile?');">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                       </form>
                     </div>
@@ -188,5 +193,6 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

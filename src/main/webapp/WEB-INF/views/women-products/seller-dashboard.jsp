@@ -6,6 +6,8 @@
     <html lang="en">
 
     <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <title>Seller Management — ${seller.businessName}</title>
@@ -848,6 +850,7 @@
                                 ${p.inventoryLabel}
                               </div>
                               <form action="${pageContext.request.contextPath}/women-products/seller/products/${p.id}/stock" method="post" style="margin-top:6px; display:flex; gap:4px;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <input type="number" name="stock" value="${p.stock}" min="0" max="1000000" style="width:70px; padding:4px 6px; border-radius:8px; border:1px solid #e2e8f0;">
                                 <button type="submit" style="border:none; background:#fdf2f8; color:#9d174d; font-weight:800; border-radius:8px; padding:4px 8px; cursor:pointer;">Save</button>
                               </form>
@@ -887,6 +890,7 @@
                                 <form
                                   action="${pageContext.request.contextPath}/women-products/seller/products/${p.id}/delete"
                                   method="post" onsubmit="return confirm('Execute permanent removal?')">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                   <button type="submit"
                                     style="background: #fee2e2; color: #ef4444; border: none; width: 36px; height: 36px; border-radius: 10px; cursor: pointer;"><i
                                       class="bi bi-trash3-fill"></i></button>
@@ -915,6 +919,7 @@
                   <form id="productForm" method="post"
                     action="${pageContext.request.contextPath}/women-products/seller/products/add"
                     enctype="multipart/form-data">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="productId" id="editProductId" value="">
 
                     <h4
@@ -1189,6 +1194,7 @@
                                 <c:if test="${not empty opts}">
                                   <form action="${pageContext.request.contextPath}/women-products/seller/orders/${o.id}/status"
                                     method="post" class="seller-order-form wp-order-update" data-order-id="${o.id}" style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <select name="status" class="form-ctrl" style="margin-top:0; padding:6px 10px; font-size:0.8rem; min-width:170px; border-radius:10px;">
                                       <c:forEach var="st" items="${opts}">
                                         <option value="${st}">${st}</option>
@@ -1345,6 +1351,7 @@
                                         <form
                                           action="${pageContext.request.contextPath}/women-products/seller/returns/${r.id}/status"
                                           method="post" style="display:flex; gap:8px;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                           <input type="hidden" name="section" value="exchanges">
                                           <select name="status" class="form-ctrl"
                                             style="margin-top:0; padding:8px 12px; font-size:0.85rem; width:120px;">
@@ -1441,6 +1448,7 @@
                                           <form
                                             action="${pageContext.request.contextPath}/women-products/seller/returns/${r.id}/status"
                                             method="post" style="display:flex; gap:8px;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="section" value="refunds">
                                             <select name="status" class="form-ctrl"
                                               style="margin-top:0; padding:8px 12px; font-size:0.85rem; width:120px;">
@@ -1781,7 +1789,11 @@
             </div>
 
 
-            <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update" method="post" enctype="multipart/form-data" novalidate>
+            <form id="sellerProfileForm" action="${pageContext.request.contextPath}/women-products/seller/profile/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" novalidate>
+              <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+              </c:if>
+
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Full Name *</label>
                 <input type="text" name="fullName" id="profileFullName" class="form-ctrl" value="${seller.fullName}"
@@ -2390,6 +2402,7 @@
               });
             });
           </script>
+      <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
     </body>
 
     </html>

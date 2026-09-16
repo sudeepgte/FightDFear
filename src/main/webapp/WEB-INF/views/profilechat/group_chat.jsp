@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>${group.name} - Group Chat</title>
 
     <link rel="stylesheet"
@@ -157,6 +159,7 @@
     <form method="post"
           action="${pageContext.request.contextPath}/users/groups/${group.id}/send"
           class="chat-input">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
         <input type="text" name="message" placeholder="Type a message..." required>
         <button type="submit">Send</button>
@@ -243,6 +246,7 @@
                                     <c:otherwise>
                                         <form method="post"
                                               action="${pageContext.request.contextPath}/users/groups/${group.id}/add-member">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="userId" value="${f.id}">
                                             <button class="btn btn-sm btn-success">
                                                 Add
@@ -274,6 +278,7 @@
 
                 <form method="post"
                       action="${pageContext.request.contextPath}/users/groups/${group.id}/exit">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button class="btn btn-danger">
                         Exit Group
                     </button>
@@ -291,6 +296,7 @@
     }
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

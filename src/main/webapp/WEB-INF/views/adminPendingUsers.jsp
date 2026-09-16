@@ -8,6 +8,10 @@
 
     <link rel="stylesheet"
           href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
     <!-- Purpose: load Poppins (used by this page) + Montserrat (global headings) -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
 
@@ -425,12 +429,14 @@
                                 <c:if test="${u.verificationStatus != 'VERIFIED'}">
                                     <form action="${pageContext.request.contextPath}/admin/users/${u.id}/verify"
                                           method="post" style="display:inline-block;">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <button class="btn btn-approve btn-sm" type="submit">Verify</button>
                                     </form>
                                 </c:if>
                                 <c:if test="${u.verificationStatus != 'REJECTED'}">
                                     <form action="${pageContext.request.contextPath}/admin/users/${u.id}/reject"
                                           method="post" style="display:inline-block;">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                         <button class="btn btn-reject btn-sm" type="submit">Reject</button>
                                     </form>
                                 </c:if>
@@ -486,10 +492,12 @@
                            class="btn btn-sm btn-view-profile" title="View Full Profile">&#128100; Profile</a>
                         <form action="${pageContext.request.contextPath}/admin/users/${u.id}/verify"
                               method="post" style="display:inline-block;">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button class="btn btn-approve btn-sm" type="submit">Verify</button>
                         </form>
                         <form action="${pageContext.request.contextPath}/admin/users/${u.id}/reject"
                               method="post" style="display:inline-block;">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button class="btn btn-reject btn-sm" type="submit">Reject</button>
                         </form>
                     </td>

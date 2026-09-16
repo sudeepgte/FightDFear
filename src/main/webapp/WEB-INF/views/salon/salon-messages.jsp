@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages - Fight D Fear</title>
@@ -80,6 +82,36 @@
         .main-content {
             padding: 25px;
             margin-left: var(--sidebar-width);
+        }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                display: none !important;
+            }
+            .main-content {
+                margin-left: 0 !important;
+                padding: 15px;
+                width: 100%;
+                overflow-x: hidden;
+            }
+            .chat-container {
+                height: 50vh !important;
+                padding: 15px;
+            }
+            .d-flex.justify-content-between.align-items-center.mb-4 {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            /* Override h-100 on mobile for the row and left panel */
+            .row.h-100 {
+                min-height: auto !important;
+                height: auto !important;
+            }
+            .col-lg-4 .card.h-100 {
+                height: auto !important;
+                max-height: 40vh;
+            }
         }
     </style>
 </head>
@@ -359,6 +391,7 @@
             }
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

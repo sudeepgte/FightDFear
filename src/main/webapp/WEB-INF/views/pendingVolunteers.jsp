@@ -1,8 +1,12 @@
 <%@ page contentType="text/html; charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
+<meta name="_csrf" content="${_csrf.token}"/>
+<meta name="_csrf_header" content="${_csrf.headerName}"/>
+<meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
 <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 
 <style>
     /* ============================================
@@ -260,9 +264,11 @@
                     <td>${volunteer.verificationStatus}</td>
                     <td>
                         <form action="${pageContext.request.contextPath}/volunteer/admin/volunteer/${volunteer.id}/verify" method="post" style="display:inline;">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-verify">Verify</button>
                         </form>
                         <form action="${pageContext.request.contextPath}/admin/rejectvolunteer/${volunteer.id}" method="post" style="display:inline;">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                             <button type="submit" class="btn btn-reject">Reject</button>
                         </form>
                     </td>

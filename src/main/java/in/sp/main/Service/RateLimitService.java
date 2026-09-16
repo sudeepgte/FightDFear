@@ -37,4 +37,24 @@ public class RateLimitService {
             throw new RateLimitExceededException("Too many requests. Please try again later.");
         }
     }
+
+    @Transactional
+    public boolean isAllowed(String key, int limit, Duration window) {
+        Instant windowStart = Instant.now().minus(window);
+        rateLimitBucketRepository.deleteByBucketKeyAndCreatedAtBefore(key, windowStart);
+        long count = rateLimitBucketRepository.countByBucketKeyAndCreatedAtAfter(key, windowStart);
+        return count < limit;
+    }
+
+    @Transactional
+    public void recordFailure(String key) {
+        RateLimitBucket bucket = new RateLimitBucket();
+        bucket.setBucketKey(key);
+        rateLimitBucketRepository.save(bucket);
+    }
+
+    @Transactional
+    public void clear(String key) {
+        rateLimitBucketRepository.deleteByBucketKey(key);
+    }
 }

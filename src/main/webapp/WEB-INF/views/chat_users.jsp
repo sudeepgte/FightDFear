@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Chat with Friends — Fight D Fear</title>
@@ -21,6 +23,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
             gap: 20px;
+            padding-bottom: 100px;
         }
         body.fdf-page-chats .friend-card {
             background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 100%);
@@ -110,6 +113,13 @@
         @media (max-width: 768px) {
             body.fdf-page-chats .friends-grid { grid-template-columns: 1fr; }
         }
+        @media (max-width: 480px) {
+            body.fdf-page-chats .friends-grid { gap: 12px; }
+            body.fdf-page-chats .friend-card { padding: 20px 15px; }
+            body.fdf-page-chats .friend-avatar { width: 64px; height: 64px; }
+            body.fdf-page-chats .friend-name { font-size: 14px; margin-bottom: 10px; }
+            body.fdf-page-chats .btn-chat-open { font-size: 12px; padding: 6px 16px; }
+        }
     </style>
 </head>
 <body class="fdf-page-shell fdf-page-chats">
@@ -126,9 +136,7 @@
                     <h1 class="fdf-page-title">My Active Chats</h1>
                     <p class="fdf-page-subtitle">Access your ongoing conversations with friends and medical professionals.</p>
                 </div>
-                <a href="${pageContext.request.contextPath}/users/dashboard" class="fdf-nav-btn">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
+
             </header>
 
             <div class="friends-grid">
@@ -288,5 +296,6 @@
     })();
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

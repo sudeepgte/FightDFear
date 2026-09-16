@@ -47,6 +47,7 @@ public class MobileCreatorHubController {
     @Autowired private FileUploadService fileUploadService;
     @Autowired private CreatorProfileService creatorProfileService;
     @Autowired private in.sp.main.Service.CreatorCareService creatorCareService;
+    @Autowired private in.sp.main.Service.AtomicCoinService atomicCoinService;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
@@ -593,8 +594,7 @@ public class MobileCreatorHubController {
         videoUploadRepository.save(video);
         User creator = video.getUser();
         if (creator != null) {
-            creator.setRewardPoints((creator.getRewardPoints() == null ? 0 : creator.getRewardPoints()) + 10);
-            userRepository.save(creator);
+            atomicCoinService.creditCoins(creator.getId(), 10, "Mobile video engagement reward: " + video.getTitle());
         }
         return ok(Map.of("viewCount", video.getViewCount()));
     }
@@ -654,8 +654,7 @@ public class MobileCreatorHubController {
         report.setReportedBy(user);
         report.setReason(body == null ? "Reported from mobile" : str(body.get("reason")));
         videoReportRepository.save(report);
-        user.setRewardPoints((user.getRewardPoints() == null ? 0 : user.getRewardPoints()) + 5);
-        userRepository.save(user);
+        user = atomicCoinService.creditCoins(user.getId(), 5, "Mobile safety report submission reward");
         session.setAttribute("user", user);
         return ok(Map.of("message", "Report submitted"));
     }
@@ -685,18 +684,23 @@ public class MobileCreatorHubController {
         if (user == null) return unauthorized();
         int points = body.get("points") instanceof Number n ? n.intValue() : 0;
         if (points < 100) return badRequest("Minimum 100 points");
-        if (user.getRewardPoints() == null || user.getRewardPoints() < points) return badRequest("Insufficient points");
-        user.setRewardPoints(user.getRewardPoints() - points);
+
+        User updatedUser;
+        try {
+            updatedUser = atomicCoinService.debitCoins(user.getId(), points, "Creator Hub mobile cashout");
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return badRequest(ex.getReason() != null ? ex.getReason() : "Insufficient points");
+        }
+
         double amount = (points / 100.0) * 10.0;
         CreatorCashout cashout = new CreatorCashout();
-        cashout.setCreator(user);
+        cashout.setCreator(updatedUser);
         cashout.setPoints(points);
         cashout.setAmount(amount);
         cashout.setStatus("PENDING");
         creatorCashoutRepository.save(cashout);
-        userRepository.save(user);
-        session.setAttribute("user", user);
-        return ok(Map.of("success", true, "amount", amount, "remainingPoints", user.getRewardPoints()));
+        session.setAttribute("user", updatedUser);
+        return ok(Map.of("success", true, "amount", amount, "remainingPoints", updatedUser.getRewardPoints()));
     }
 
     @PostMapping("/dashboard/claim-ad-revenue")

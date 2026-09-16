@@ -2,7 +2,9 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <!DOCTYPE html>
 <html>
-<head>   
+<head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">   
     <meta charset="UTF-8">
     <title>Success Reports</title>
 
@@ -312,6 +314,7 @@
                                 <i class="fas fa-edit"></i> Edit
                             </a>
                             <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/successReports/${report.id}/delete" method="post" onsubmit="return confirm('Are you sure you want to delete this report?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <button type="submit" class="btn btn-danger btn-action">
                                     <i class="fas fa-trash-alt"></i> Delete
                                 </button>
@@ -333,6 +336,7 @@
     </div>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

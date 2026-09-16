@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../widgets/registration_form_kit.dart';
+import '../../widgets/server_config_dialog.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -166,8 +167,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _submitting = false);
 
     if (result == null) {
+      final err = auth.error ?? 'Registration failed';
+      if (err.toLowerCase().contains('email not verified')) {
+        setState(() => _emailOtpOk = false);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error ?? 'Registration failed')),
+        SnackBar(content: Text(err)),
       );
       return;
     }
@@ -188,7 +193,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(title: const Text('Create account')),
+      appBar: AppBar(
+        title: const Text('Create account'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dns_outlined),
+            tooltip: 'Server Connection',
+            onPressed: () => ServerConfigDialog.show(context),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -207,10 +221,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'New accounts need admin verification before login works.',
                 style: TextStyle(color: Colors.black54),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'API: ${context.read<AuthState>().apiBaseUrl}',
-                style: const TextStyle(color: Colors.black45, fontSize: 12),
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () => ServerConfigDialog.show(context),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.dns_outlined, size: 14, color: Color(0xFFF43F5E)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Server: ${context.watch<AuthState>().apiBaseUrl}',
+                          style: const TextStyle(color: Color(0xFF475569), fontSize: 12),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text('Change', style: TextStyle(color: Color(0xFFF43F5E), fontSize: 11, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               FileUploadTile(
@@ -255,6 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 label: 'Email',
                 verified: _emailOtpOk,
                 onVerified: () => setState(() => _emailOtpOk = true),
+                onReset: () => setState(() => _emailOtpOk = false),
                 onSend: () async {
                   final email = _email.text.trim();
                   if (!RegValidators.isEmail(email)) {
@@ -263,31 +301,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     );
                     return false;
                   }
-                  final res = await context.read<AuthState>().api.post(
-                    '/api/auth/otp/send-email',
-                    auth: false,
-                    body: {'email': email.toLowerCase()},
-                    timeout: const Duration(seconds: 30),
-                  );
-                  if (res['success'] == true) return true;
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(res['error']?.toString() ?? 'Failed to send OTP')),
+                  try {
+                    final res = await context.read<AuthState>().api.post(
+                      '/api/auth/otp/send-email',
+                      auth: false,
+                      body: {'email': email.toLowerCase()},
+                      timeout: const Duration(seconds: 45),
                     );
+                    if (res['success'] == true) return true;
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(res['error']?.toString() ?? 'Failed to send OTP')),
+                      );
+                    }
+                    return false;
+                  } catch (e) {
+                    if (mounted) {
+                      final err = e.toString().contains('TimeoutException')
+                          ? 'Server timed out. Make sure backend is running on ${context.read<AuthState>().apiBaseUrl}'
+                          : 'Failed to send OTP: $e';
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                    }
+                    return false;
                   }
-                  return false;
                 },
                 onVerify: (otp) async {
-                  final res = await context.read<AuthState>().api.post(
-                    '/api/auth/otp/verify-email',
-                    auth: false,
-                    body: {
-                      'email': _email.text.trim().toLowerCase(),
-                      'otp': otp,
-                    },
-                  );
-                  if (res['success'] == true) return null;
-                  return res['error']?.toString() ?? 'Invalid or expired OTP';
+                  try {
+                    final res = await context.read<AuthState>().api.post(
+                      '/api/auth/otp/verify-email',
+                      auth: false,
+                      body: {
+                        'email': _email.text.trim().toLowerCase(),
+                        'otp': otp.trim(),
+                      },
+                      timeout: const Duration(seconds: 15),
+                    );
+                    if (res['success'] == true) return null;
+                    return res['error']?.toString() ?? 'Invalid or expired OTP';
+                  } catch (e) {
+                    return 'Verification failed: $e';
+                  }
                 },
               ),
               const SizedBox(height: 8),

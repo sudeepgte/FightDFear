@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>All Salon Reviews</title>
@@ -136,6 +138,7 @@
                 </c:when>
                 <c:otherwise>
                     <form action="${pageContext.request.contextPath}/salon/reviews/reply" method="post" class="mt-3">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     
                         <input type="hidden" name="reviewId" value="${review.id}">
                         <textarea name="replyText" rows="2" class="form-control mb-2"
@@ -179,6 +182,7 @@
 <script src="${pageContext.request.contextPath}/beauty/js/google-map.js"></script>
 <script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
  
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
  

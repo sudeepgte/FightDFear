@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stylist Dashboard | Fight D Fear</title>
@@ -267,6 +269,7 @@
                         ${isAvailable ? 'Accepting Requests' : 'Currently Offline'}
                     </div>
                     <form action="${pageContext.request.contextPath}/stylists/toggleAvailability" method="post" class="d-inline-block w-100 w-md-auto">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <button type="submit" id="toggleStatusBtn" class="btn btn-light btn-sm rounded-pill px-4 py-2 fw-700 w-100">
                             Toggle Status
                         </button>
@@ -393,12 +396,14 @@
                                             <td>
                                                 <div class="d-flex justify-content-center gap-2">
                                                     <form action="${pageContext.request.contextPath}/stylists/booking/confirm" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
                                                             <i class="bi bi-check-lg me-1"></i> Accept
                                                         </button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/stylists/booking/reject" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                         <input type="hidden" name="bookingId" value="${b.id}">
                                                         <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
                                                             Reject
@@ -452,6 +457,7 @@
                                             </td>
                                             <td class="text-center">
                                                 <form action="${pageContext.request.contextPath}/stylists/booking/complete" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                     <input type="hidden" name="bookingId" value="${b.id}">
                                                     <button type="submit" class="btn btn-purple btn-sm rounded-pill px-4 fw-700">
                                                         Mark Completed
@@ -475,6 +481,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

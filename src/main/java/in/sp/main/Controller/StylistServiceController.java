@@ -98,7 +98,7 @@ public class StylistServiceController {
     }
 
     // ===== Delete Service =====
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteService(@PathVariable Long id, HttpSession session) {
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
         if (stylist == null) return "redirect:/stylists/login";

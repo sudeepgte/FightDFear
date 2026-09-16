@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Explore Salons — Fight D Fear</title>
@@ -270,7 +272,7 @@
             .salons-grid {
                 grid-template-columns: 1fr;
                 gap: 20px;
-                padding: 20px 15px;
+                padding: 20px 15px 150px 15px;
             }
         }
     </style>
@@ -380,5 +382,6 @@
     });
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

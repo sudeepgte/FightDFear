@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Attendees — ${event.name}</title>
@@ -12,7 +14,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
     <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: var(--we-bg); }
+        body { font-family: 'Outfit', sans-serif; background: var(--we-bg); padding-top: 68px; }
         .page-header { background: var(--we-navy); padding: 36px 20px; color: white; }
         .container-main { max-width: 1000px; margin: 0 auto; padding: 36px 20px 60px; }
         .panel { background: white; border-radius: 16px; box-shadow: var(--we-shadow); overflow: hidden; border: 1px solid var(--we-border); }
@@ -87,5 +89,6 @@
 
 <jsp:include page="/WEB-INF/views/fragments/footer.jsp"/>
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

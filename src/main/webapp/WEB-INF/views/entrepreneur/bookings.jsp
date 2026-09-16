@@ -5,6 +5,8 @@
             <html lang="en">
 
             <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>My Bookings | Entrepreneur Dashboard</title>
@@ -291,9 +293,14 @@
 
                 <!-- Top Navbar Header -->
                 <div class="top-navbar">
-                    <a href="${pageContext.request.contextPath}/" class="top-brand">
-                        <i class="bi bi-fire"></i> Fight D Fear
-                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-light d-lg-none p-1 border-0" id="mobileSidebarToggle" style="background: transparent;">
+                            <i class="bi bi-list fs-3 text-brand-pink"></i>
+                        </button>
+                        <a href="${pageContext.request.contextPath}/" class="top-brand">
+                            <i class="bi bi-fire"></i> Fight D Fear
+                        </a>
+                    </div>
 
                     <div class="top-nav-links">
                         <a href="${pageContext.request.contextPath}/entrepreneur/dashboard"
@@ -347,16 +354,26 @@
                     <!-- Left Sidebar -->
                     <div id="sidebar-wrapper">
                         <div class="sidebar-heading">
-                            <i class="bi bi-briefcase-fill"></i> Entrepreneur
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-briefcase-fill brand-icon"></i> Entrepreneur</div>
+                            <button type="button" class="btn btn-sm btn-light border-0 d-lg-none" id="closeSidebarBtn"><i class="bi bi-x-lg text-brand-pink"></i></button>
                         </div>
 
                         <div class="d-flex flex-column" style="flex: 1;">
                             <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="sidebar-link">
                                 <i class="bi bi-house-door-fill"></i> Dashboard
                             </a>
-                            <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
-                                <i class="bi bi-chat-left-dots-fill"></i> Chat
-                            </a>
+            <c:choose>
+                <c:when test="${not empty proposals}">
+                    <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
+                        <i class="bi bi-chat-left-dots-fill"></i> Chat
+                    </a>
+                </c:when>
+                <c:otherwise>
+                    <a href="#" class="sidebar-link" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('You must create a proposal and have an investor before you can use the Chat feature.'); return false;">
+                        <i class="bi bi-chat-left-dots-fill"></i> Chat <i class="bi bi-lock-fill ms-2"></i>
+                    </a>
+                </c:otherwise>
+            </c:choose>
                             <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create"
                                 class="sidebar-link">
                                 <i class="bi bi-plus-square-fill"></i> Create Proposal
@@ -481,6 +498,7 @@
                                                                         <form
                                                                             action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/accept"
                                                                             method="post" style="display:inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                             <button type="submit"
                                                                                 class="btn btn-sm btn-brand-pink rounded-pill px-3"
                                                                                 style="font-weight: 600;">Accept</button>
@@ -488,6 +506,7 @@
                                                                         <form
                                                                             action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/reject"
                                                                             method="post" style="display:inline;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                                                             <button type="submit"
                                                                                 class="btn btn-sm btn-brand-pink rounded-pill px-3"
                                                                                 style="font-weight: 600;">Reject</button>
@@ -597,7 +616,29 @@
                             badge.style.display = 'none';
                         }
                     }
+
+                    // Mobile Sidebar Toggle
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+                        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+                        const wrapper = document.getElementById('wrapper');
+                        
+                        if (mobileSidebarToggle) {
+                            mobileSidebarToggle.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                wrapper.classList.add('toggled');
+                            });
+                        }
+                        
+                        if (closeSidebarBtn) {
+                            closeSidebarBtn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                wrapper.classList.remove('toggled');
+                            });
+                        }
+                    });
                 </script>
-            </body>
+            <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+</body>
 
             </html>

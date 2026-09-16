@@ -1,6 +1,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
-<head><title>Followers</title></head>
+<head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}"><title>Followers</title></head>
 <body>
 <h2>Your Followers</h2>
 <c:forEach var="u" items="${followers}">
@@ -9,5 +11,6 @@
     <span>${u.fullName}</span>
   </div>
 </c:forEach>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

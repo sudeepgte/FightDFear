@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Seller Profile — Admin View</title>
@@ -392,6 +394,7 @@
               <div class="action-bar" style="border-top:none; padding-top:10px; justify-content:flex-start;">
                   <c:if test="${seller.verificationStatus != 'VERIFIED'}">
                       <form id="approveForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/verify" method="post" class="m-0 p-0">
+                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                           <button type="submit" class="btn-verify">
                               <i class="fas fa-check-circle"></i> Approve Seller
                           </button>
@@ -400,6 +403,7 @@
 
                   <form id="changesForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/request-changes" method="post" class="m-0 p-0"
                         onsubmit="var n = document.getElementById('decisionNotes').value.trim(); if(!n){alert('Please provide notes to request changes.'); return false;} document.getElementById('changesNote').value=n;">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <input type="hidden" name="note" id="changesNote">
                       <button type="submit" class="btn-changes" style="background:#F59E0B; color:#fff; border:none; border-radius:9px; padding:10px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
                           <i class="fas fa-edit"></i> Request Changes
@@ -409,6 +413,7 @@
                   <c:if test="${seller.verificationStatus != 'REJECTED'}">
                       <form id="rejectForm" action="${pageContext.request.contextPath}/admin/sellers/${seller.id}/reject" method="post" class="m-0 p-0" 
                             onsubmit="var r = document.getElementById('decisionNotes').value.trim(); if(!r){alert('Please provide a reason to reject the seller.'); return false;} document.getElementById('rejectReason').value=r; return confirm('Are you sure you want to reject this seller?')">
+                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                           <input type="hidden" name="reason" id="rejectReason">
                           <button type="submit" class="btn-reject">
                               <i class="fas fa-times-circle"></i> Reject Application
@@ -424,6 +429,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

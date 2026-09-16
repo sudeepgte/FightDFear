@@ -2,6 +2,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Safe Route Suggestions</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
@@ -62,6 +64,7 @@
     <button onclick="findSafeRoute()">Find Safe Route</button>
 
     <div id="routeDetails"></div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

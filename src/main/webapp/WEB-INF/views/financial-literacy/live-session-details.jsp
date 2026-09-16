@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${session != null ? session.title : 'Live Session Details'} — Financial Literacy</title>
@@ -441,6 +443,7 @@
             </div>
             <div class="modal-body p-4">
                 <form action="${pageContext.request.contextPath}/financial-literacy/live-session/register" method="POST" id="registrationForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="sessionId" value="${session.id}">
                     
                     <div class="mb-3">
@@ -522,5 +525,6 @@
         return false;
     }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

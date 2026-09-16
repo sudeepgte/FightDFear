@@ -14,6 +14,7 @@ class ApiConfig {
   static const String productionHost = 'https://fightdfire.chethancodehub.com';
   static const String androidEmulatorHost = 'http://10.0.2.2:8084';
   static const String localhostHost = 'http://localhost:8084';
+  static const String defaultLocalLanHost = 'http://10.222.42.179:8084';
 
   /// Override at build time:
   /// flutter run --dart-define=API_BASE=http://192.168.x.x:8084
@@ -24,6 +25,7 @@ class ApiConfig {
     if (kDebugMode) {
       return isAndroid ? androidEmulatorHost : localhostHost;
     }
-    return productionHost;
+    // Default to the active laptop LAN host so physical device APKs connect directly
+    return defaultLocalLanHost;
   }
 }

@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Broadcast Center — Admin</title>
@@ -225,6 +227,7 @@
               <div class="admin-card">
                   <div class="card-title"><i class="fas fa-paper-plane"></i> Send New Broadcast</div>
                   <form action="${pageContext.request.contextPath}/admin/broadcast/send" method="post">
+                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                       <div class="mb-3">
                           <label class="form-label">Broadcast Type</label>
                           <select name="type" class="form-select" required>
@@ -281,6 +284,7 @@
                                               </td>
                                               <td>
                                                   <form action="${pageContext.request.contextPath}/admin/broadcast/delete/${b.id}" method="post" onsubmit="return confirm('Delete this broadcast record?');">
+                                                      <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                       <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
                                                   </form>
                                               </td>
@@ -306,6 +310,7 @@
 </div>
 
 <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

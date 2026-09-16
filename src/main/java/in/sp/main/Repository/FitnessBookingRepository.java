@@ -11,4 +11,8 @@ public interface FitnessBookingRepository extends JpaRepository<FitnessBooking, 
     List<FitnessBooking> findByUser_IdAndTrainer_Id(Long userId, Long trainerId);
     List<FitnessBooking> findByStatus(String status);
     List<FitnessBooking> findByFitnessClass_Id(Long classId);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT b FROM FitnessBooking b WHERE b.id = :id")
+    java.util.Optional<FitnessBooking> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

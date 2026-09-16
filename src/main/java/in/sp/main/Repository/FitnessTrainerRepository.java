@@ -17,4 +17,8 @@ public interface FitnessTrainerRepository extends JpaRepository<FitnessTrainer, 
     List<FitnessTrainer> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     long countByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<FitnessTrainer> findByPartnerProfileStatusIsNull();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM FitnessTrainer t WHERE t.id = :id")
+    Optional<FitnessTrainer> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

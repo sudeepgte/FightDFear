@@ -469,6 +469,7 @@ class OtpVerifyRow extends StatefulWidget {
     required this.label,
     required this.verified,
     required this.onVerified,
+    this.onReset,
     this.onSend,
     this.onVerify,
   });
@@ -476,6 +477,7 @@ class OtpVerifyRow extends StatefulWidget {
   final String label;
   final bool verified;
   final VoidCallback onVerified;
+  final VoidCallback? onReset;
   /// When set, sends a real OTP. Return true on success.
   final Future<bool> Function()? onSend;
   /// When set, verifies OTP. Return null on success, or an error message.
@@ -596,6 +598,18 @@ class _OtpVerifyRowState extends State<OtpVerifyRow> {
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.verified, color: Colors.green),
         title: Text('${widget.label} verified'),
+        trailing: widget.onReset == null
+            ? null
+            : TextButton(
+                onPressed: () {
+                  setState(() {
+                    _sent = false;
+                    _otp.clear();
+                  });
+                  widget.onReset!();
+                },
+                child: const Text('Change', style: TextStyle(fontSize: 12, color: Color(0xFFF43F5E))),
+              ),
       );
     }
     return Column(

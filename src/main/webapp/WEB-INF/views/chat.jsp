@@ -2,6 +2,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <title>Chat</title>
 <meta http-equiv="refresh" content="5"> <!-- Auto-refresh every 5 seconds -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -23,10 +25,12 @@
   </div>
 
   <form action="${pageContext.request.contextPath}/chat/send" method="post" class="d-flex">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
     <input type="hidden" name="receiverId" value="${receiver.id}">
     <input type="text" name="message" class="form-control me-2" placeholder="Type your message..." required>
     <button class="btn btn-success">Send</button>
   </form>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

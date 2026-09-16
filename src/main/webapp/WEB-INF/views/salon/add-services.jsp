@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${service.id == null ? 'Add Service' : 'Edit Service'} | Fight D Fear</title>
@@ -346,7 +348,10 @@
             </div>
 
             <div class="form-card">
-                <form action="${pageContext.request.contextPath}/salon/addService" method="post" enctype="multipart/form-data">
+                <form action="${pageContext.request.contextPath}/salon/addService${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="id" value="${service.id}">
 
                     <div class="row g-4">
@@ -420,6 +425,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

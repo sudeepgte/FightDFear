@@ -1,27 +1,24 @@
-import sys
+import re
 
-with open('c:/Users/priya/Desktop/FightDfire/FightDFear/src/main/webapp/WEB-INF/views/creatorMyProfile.jsp', 'r', encoding='utf-8') as f:
+with open('src/main/java/in/sp/main/Service/FitnessTrainerProfileService.java', 'r', encoding='utf-8') as f:
     content = f.read()
 
-target = """                viewers.forEach(v => {
-                    list.innerHTML += `
-                    <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);">
-                        <img src="${v.avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png'}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
-                        <div style="font-size:14px;font-weight:600;">${v.name}</div>
-                    </div>`;
-                });"""
+# Remove all injected blocks first
+bad_block = '''if (PartnerLifecycleSupport.blank(trainer.getCertificationsPath())) {
+            missing.add("10. Documents & Certification");
+        }
+        if (PartnerLifecycleSupport.blank(trainer.getGalleryPhotos())) {
+            missing.add("11. Studio photos");
+        }
+        '''
+content = content.replace(bad_block, '')
 
-replacement = """                viewers.forEach(v => {
-                    list.innerHTML += '<div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);">'
-                        + '<img src="' + (v.avatar ? v.avatar : '${pageContext.request.contextPath}/assets/img/default-avatar.png') + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">'
-                        + '<div style="font-size:14px;font-weight:600;">' + v.name + '</div>'
-                        + '</div>';
-                });"""
+# Now insert it exactly once before the last return missing; in missingItems
+# Let's find missingItems function
+pattern = r'(if \(PartnerLifecycleSupport\.blank\(trainer\.getSessionMode\(\)\) \|\| trainer\.getTypicalPrice\(\) == null\) \{\s*missing\.add\("8\. Typical session"\);\s*\})(\s*return missing;\s*\})'
+replacement = r'\1\n        if (PartnerLifecycleSupport.blank(trainer.getCertificationsPath())) {\n            missing.add("10. Documents & Certification");\n        }\n        if (PartnerLifecycleSupport.blank(trainer.getGalleryPhotos())) {\n            missing.add("11. Studio photos");\n        }\2'
 
-if target in content:
-    content = content.replace(target, replacement)
-    with open('c:/Users/priya/Desktop/FightDfire/FightDFear/src/main/webapp/WEB-INF/views/creatorMyProfile.jsp', 'w', encoding='utf-8') as f:
-        f.write(content)
-    print('Replaced successfully.')
-else:
-    print('Target not found!')
+new_content = re.sub(pattern, replacement, content)
+
+with open('src/main/java/in/sp/main/Service/FitnessTrainerProfileService.java', 'w', encoding='utf-8') as f:
+    f.write(new_content)

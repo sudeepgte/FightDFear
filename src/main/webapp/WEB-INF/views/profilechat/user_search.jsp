@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Connect with Members — Fight D Fear</title>
@@ -427,6 +429,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <form action="${pageContext.request.contextPath}/users/follow/${f.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="tab" value="followers">
                                             <button class="btn-social btn-social-primary">➕ Follow Back</button>
                                         </form>
@@ -460,6 +463,7 @@
                                     <a href="${pageContext.request.contextPath}/chat/window/${f.id}" class="btn-social btn-social-outline mb-1">💬 Chat</a>
                                 </c:if>
                                 <form action="${pageContext.request.contextPath}/users/unfollow/${f.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button class="btn-social btn-social-danger">❌ Unfollow</button>
                                 </form>
                             </div>
@@ -488,6 +492,7 @@
                             <div class="d-flex flex-column gap-2 w-100">
                                 <a href="${pageContext.request.contextPath}/chat/window/${f.id}" class="btn-social btn-social-outline">💬 Chat</a>
                                 <form action="${pageContext.request.contextPath}/users/unfollow/${f.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button class="btn-social btn-social-danger">❌ Unfriend</button>
                                 </form>
                             </div>
@@ -554,9 +559,11 @@
                             <h5>${req.fullName}</h5>
                             <div class="d-flex flex-column gap-2 w-100 mt-2">
                                 <form action="${pageContext.request.contextPath}/users/acceptRequest/${req.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button class="btn-social btn-social-primary">✓ Accept</button>
                                 </form>
                                 <form action="${pageContext.request.contextPath}/users/declineRequest/${req.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button class="btn-social btn-social-danger">✗ Decline</button>
                                 </form>
                             </div>
@@ -608,6 +615,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <form action="${pageContext.request.contextPath}/users/follow/${u.id}" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="tab" value="search">
                                             <input type="hidden" name="keyword" value="${keyword}">
                                             <button class="btn-social btn-social-primary">➕ Connect</button>
@@ -642,7 +650,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
-            <form action="${pageContext.request.contextPath}/users/groups/create" method="post" enctype="multipart/form-data">
+            <form action="${pageContext.request.contextPath}/users/groups/create${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                <c:if test="${not empty _csrf}">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                </c:if>
                 <div class="modal-body p-4 bg-white">
                     <!-- Photo -->
                     <div class="mb-3">
@@ -800,5 +811,6 @@
     })();
 </script>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -113,24 +113,91 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (principal == null || principal.isBlank()) {
                         principal = "user-" + appUser.getId() + "@session.fightdfear";
                     }
-                    UserDetails userDetails = User.withUsername(principal).password("").roles("USER").build();
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                } else {
-                    Object sessionAdmin = session.getAttribute("admin");
-                    if (sessionAdmin instanceof Admin adminUser) {
-                        String principal = adminUser.getEmail();
-                        if (principal == null || principal.isBlank()) {
-                            principal = "admin-" + adminUser.getId() + "@session.fightdfear";
-                        }
-                        UserDetails userDetails = User.withUsername(principal).password("").roles("ADMIN").build();
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    setSessionAuthentication(request, principal, "USER");
+                } else if (session.getAttribute("admin") instanceof Admin adminUser) {
+                    String principal = adminUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "admin-" + adminUser.getId() + "@session.fightdfear";
                     }
+                    setSessionAuthentication(request, principal, "ADMIN");
+                } else if (session.getAttribute("loggedDoctor") instanceof Doctor doctorUser) {
+                    String principal = doctorUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "doctor-" + doctorUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "DOCTOR");
+                } else if (session.getAttribute("loggedCentre") instanceof MartialArtsCenter centreUser) {
+                    String principal = centreUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "centre-" + centreUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "CENTRE");
+                } else if (session.getAttribute("loggedTrainer") instanceof FitnessTrainer trainerUser) {
+                    String principal = trainerUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "trainer-" + trainerUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "TRAINER");
+                } else if (session.getAttribute("loggedEntrepreneur") instanceof Entrepreneur entUser) {
+                    String principal = entUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "entrepreneur-" + entUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "ENTREPRENEUR");
+                } else if (session.getAttribute("loggedInvestor") instanceof Investor invUser) {
+                    String principal = invUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "investor-" + invUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "INVESTOR");
+                } else if (session.getAttribute("loggedLawyer") instanceof ServiceProvider lawyerUser) {
+                    String principal = lawyerUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "lawyer-" + lawyerUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "LAWYER");
+                } else if (session.getAttribute("loggedHost") instanceof EventHost hostUser) {
+                    String principal = hostUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "host-" + hostUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "HOST");
+                } else if (session.getAttribute("loggedSeller") instanceof WomenProductSeller sellerUser) {
+                    String principal = sellerUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "seller-" + sellerUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "SELLER");
+                } else if (session.getAttribute("loggedSalon") instanceof Salon salonUser) {
+                    String principal = salonUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "salon-" + salonUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "SALON");
+                } else if (session.getAttribute("loggedStylist") instanceof Stylist stylistUser) {
+                    String principal = stylistUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "stylist-" + stylistUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "STYLIST");
+                } else if (session.getAttribute("loggedProvider") instanceof ServiceProvider providerUser) {
+                    String principal = providerUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "provider-" + providerUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "PROVIDER");
+                } else if (session.getAttribute("loggedDelivery") instanceof DeliveryPartner deliveryUser) {
+                    String principal = deliveryUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "delivery-" + deliveryUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "DELIVERY");
+                } else if (session.getAttribute("loggedEducator") instanceof FinancialEducator educatorUser) {
+                    String principal = educatorUser.getEmail();
+                    if (principal == null || principal.isBlank()) {
+                        principal = "educator-" + educatorUser.getId() + "@session.fightdfear";
+                    }
+                    setSessionAuthentication(request, principal, "EDUCATOR");
                 }
             }
         }
@@ -146,6 +213,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return value.isEmpty() ? null : value;
         }
         return null;
+    }
+
+    private void setSessionAuthentication(HttpServletRequest request, String principal, String role) {
+        UserDetails userDetails = User.withUsername(principal).password("").roles(role).build();
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 
     private void hydrateSession(HttpSession session, String email, String role) {
@@ -166,6 +241,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } else if ("PROVIDER".equals(role)) {
             if (session.getAttribute("loggedProvider") == null) {
                 providerRepository.findByEmail(email).ifPresent(p -> session.setAttribute("loggedProvider", p));
+            }
+        } else if ("LAWYER".equals(role)) {
+            if (session.getAttribute("loggedLawyer") == null) {
+                providerRepository.findByEmail(email).ifPresent(p -> session.setAttribute("loggedLawyer", p));
             }
         } else if ("CENTRE".equals(role)) {
             if (session.getAttribute("loggedCentre") == null) {

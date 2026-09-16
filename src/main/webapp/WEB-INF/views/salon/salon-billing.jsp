@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Billing & Invoices | Fight D Fear</title>
@@ -85,6 +87,7 @@
                     <div class="pos-panel">
                         <h4 class="fw-bold mb-4 border-bottom pb-2"><i class="bi bi-cart-plus me-2"></i> Quick Bill</h4>
                         <form action="${pageContext.request.contextPath}/salon/billing/create" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             
                             <div class="mb-3">
                                 <label class="fw-bold mb-1">Customer Name *</label>
@@ -177,6 +180,7 @@
             $('.select2-multiple').select2({ placeholder: "Search and add services..." });
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

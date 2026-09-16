@@ -42,6 +42,9 @@ public class ProductionEnvironmentValidator {
     @Value("${spring.mail.password}")
     private String mailPassword;
 
+    @Value("${razorpay.webhook.secret:}")
+    private String razorpayWebhookSecret;
+
     @PostConstruct
     void validate() {
         if (paymentMockEnabled) {
@@ -50,6 +53,7 @@ public class ProductionEnvironmentValidator {
         }
         requireNonBlank(razorpayKeyId, "RAZORPAY_KEY_ID");
         requireNonBlank(razorpayKeySecret, "RAZORPAY_KEY_SECRET");
+        requireNonBlank(razorpayWebhookSecret, "RAZORPAY_WEBHOOK_SECRET");
         requireNonBlank(jwtSecret, "JWT_SECRET");
         if (DEV_JWT_PLACEHOLDER.equals(jwtSecret)) {
             throw new IllegalStateException(

@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Delivery Dashboard — Women Products</title>
@@ -120,6 +122,7 @@
                       <c:set var="opts" value="${nextStatuses[o.id]}"/>
                       <c:if test="${approved && not empty opts}">
                         <form method="post" action="${pageContext.request.contextPath}/women-products/delivery/orders/${o.id}/status">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                           <select name="status"><c:forEach var="st" items="${opts}"><option value="${st}">${st}</option></c:forEach></select>
                           <button class="btn" type="submit">Update</button>
                         </form>
@@ -159,6 +162,7 @@
                       <c:set var="opts" value="${nextStatuses[o.id]}"/>
                       <c:if test="${approved && not empty opts}">
                         <form method="post" action="${pageContext.request.contextPath}/women-products/delivery/orders/${o.id}/status">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                           <select name="status"><c:forEach var="st" items="${opts}"><option value="${st}">${st}</option></c:forEach></select>
                           <button class="btn" type="submit">Update</button>
                         </form>
@@ -195,5 +199,6 @@
       return false;
     }
   </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

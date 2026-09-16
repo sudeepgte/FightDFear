@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta charset="UTF-8">
 <title>Suggest a Volunteer</title>
 
@@ -139,8 +141,11 @@
 
     <h3>Suggest a Volunteer</h3>
 
-    <form action="${pageContext.request.contextPath}/users/suggest-volunteer"
+    <form action="${pageContext.request.contextPath}/users/suggest-volunteer${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}"
           method="post" enctype="multipart/form-data">
+        <c:if test="${not empty _csrf}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
 
         <div class="mb-3">
             <label>Full Name</label>
@@ -176,6 +181,7 @@
 
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

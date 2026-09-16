@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Coach Profile — Fight D Fear</title>
@@ -115,7 +117,7 @@
 
         @media (max-width: 991px) {
             .profile-layout-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
             }
             .preview-column {
                 order: 2;
@@ -380,7 +382,26 @@
         }
 
         @media (max-width: 600px) {
+            .app-header { padding: 12px 14px; }
+            .header-brand span { display: none; }
+            .main-container { padding: 0 14px; margin-top: 16px; }
             .form-row { grid-template-columns: 1fr; }
+            .chips-container {
+                flex-direction: column;
+                flex-wrap: nowrap;
+                align-items: stretch;
+            }
+            .chip-checkbox {
+                width: 100%;
+                display: block;
+            }
+            .chip-checkbox .chip-label {
+                display: block;
+                width: 100%;
+                text-align: center;
+                padding: 12px;
+                font-size: 0.95rem;
+            }
         }
 
         .chips-container {
@@ -403,6 +424,8 @@
             font-weight: 600;
             color: #475569;
             transition: all 0.2s;
+            white-space: normal;
+            word-break: break-word;
         }
 
         .chip-checkbox input:checked + .chip-label {
@@ -470,12 +493,15 @@
 <body>
 
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear Coach Studio
-        </a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:history.back()" style="color: var(--navy); font-size: 1.2rem; text-decoration: none;"><i class="bi bi-arrow-left"></i></a>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="header-brand">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> <span>Fight D Fear Coach Studio</span>
+            </a>
+        </div>
         <div class="header-actions">
-            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">Skip for now</a>
-            <button type="button" class="btn-header-save" onclick="document.getElementById('trainerProfileForm').submit()">Save Profile</button>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">Skip</a>
+            <button type="button" class="btn-header-save" onclick="document.getElementById('trainerProfileForm').submit()">Save</button>
         </div>
     </header>
 
@@ -525,7 +551,10 @@
                 </c:if>
 
                 <div class="submit-bar">
-                    <form action="${pageContext.request.contextPath}/fitness/trainer/submitVerification" method="post">
+                    <form action="${pageContext.request.contextPath}/fitness/trainer/submitVerification${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <button type="submit" class="btn-submit-verification" 
                                 <c:if test="${trainer.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
                             <c:choose>
@@ -543,7 +572,10 @@
                     </form>
                 </div>
 
-                <form id="trainerProfileForm" action="${pageContext.request.contextPath}/fitness/trainer/updateProfile" method="post" enctype="multipart/form-data">
+                <form id="trainerProfileForm" action="${pageContext.request.contextPath}/fitness/trainer/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                    <c:if test="${not empty _csrf}">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                    </c:if>
                     <input type="hidden" name="id" value="${trainer.id}">
 
                     <!-- Section 1: Trainer Identity -->
@@ -1088,7 +1120,6 @@
 
         document.addEventListener('DOMContentLoaded', bindLivePreview);
     </script>
-
-
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

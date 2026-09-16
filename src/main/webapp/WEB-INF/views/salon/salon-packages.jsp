@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Packages & Memberships | Fight D Fear</title>
@@ -403,6 +405,7 @@
                                     
                                     <div class="card-actions">
                                         <form action="${pageContext.request.contextPath}/salon/packages/togglePackage" method="POST" class="flex-grow-1 m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="packageId" value="${pkg.id}">
                                             <button type="submit" class="btn-toggle w-100 ${pkg.isActive ? 'btn-toggle-inactive' : 'btn-toggle-active'}">
                                                 <i class="bi ${pkg.isActive ? 'bi-pause-circle' : 'bi-play-circle'} me-1"></i>
@@ -411,6 +414,7 @@
                                         </form>
                                         
                                         <form action="${pageContext.request.contextPath}/salon/packages/deletePackage" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to delete this package?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="packageId" value="${pkg.id}">
                                             <button type="submit" class="btn-delete" title="Delete Package">
                                                 <i class="bi bi-trash3"></i>
@@ -466,6 +470,7 @@
                                     
                                     <div class="card-actions">
                                         <form action="${pageContext.request.contextPath}/salon/packages/toggleMembership" method="POST" class="flex-grow-1 m-0">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="membershipId" value="${mem.id}">
                                             <button type="submit" class="btn-toggle w-100 ${mem.isActive ? 'btn-toggle-inactive' : 'btn-toggle-active'}">
                                                 <i class="bi ${mem.isActive ? 'bi-pause-circle' : 'bi-play-circle'} me-1"></i>
@@ -474,6 +479,7 @@
                                         </form>
                                         
                                         <form action="${pageContext.request.contextPath}/salon/packages/deleteMembership" method="POST" class="m-0" onsubmit="return confirm('Are you sure you want to delete this membership?');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                             <input type="hidden" name="membershipId" value="${mem.id}">
                                             <button type="submit" class="btn-delete" title="Delete Membership">
                                                 <i class="bi bi-trash3"></i>
@@ -509,6 +515,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form action="${pageContext.request.contextPath}/salon/packages/addPackage" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         
                         <div class="row g-3 mb-3">
                             <div class="col-md-8">
@@ -556,6 +563,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <form action="${pageContext.request.contextPath}/salon/packages/addMembership" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         
                         <div class="mb-3">
                             <label class="form-label fw-bold">Membership Name *</label>
@@ -603,6 +611,7 @@
             });
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

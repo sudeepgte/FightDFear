@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Workshop & Session Registrations - Fight D Fear Admin</title>
@@ -382,6 +384,7 @@
                                                         <c:if test="${registration.status == 'pending'}">
                                                             <div class="action-btn-group">
                                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/registration/approve" method="POST" style="display: inline; margin: 0;">
+                                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                     <input type="hidden" name="registrationId" value="${registration.id}">
                                                                     <input type="hidden" name="type" value="live">
                                                                     <button type="submit" class="btn-approve">
@@ -389,6 +392,7 @@
                                                                     </button>
                                                                 </form>
                                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/registration/reject" method="POST" style="display: inline; margin: 0;">
+                                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                     <input type="hidden" name="registrationId" value="${registration.id}">
                                                                     <input type="hidden" name="type" value="live">
                                                                     <button type="submit" class="btn-reject">
@@ -466,6 +470,7 @@
                                                         <c:if test="${registration.status == 'pending'}">
                                                             <div class="action-btn-group">
                                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/registration/approve" method="POST" style="display: inline; margin: 0;">
+                                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                     <input type="hidden" name="registrationId" value="${registration.id}">
                                                                     <input type="hidden" name="type" value="workshop">
                                                                     <button type="submit" class="btn-approve">
@@ -473,6 +478,7 @@
                                                                     </button>
                                                                 </form>
                                                                 <form action="${pageContext.request.contextPath}/financial-literacy/admin/registration/reject" method="POST" style="display: inline; margin: 0;">
+                                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                     <input type="hidden" name="registrationId" value="${registration.id}">
                                                                     <input type="hidden" name="type" value="workshop">
                                                                     <button type="submit" class="btn-reject">
@@ -540,5 +546,6 @@
         }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

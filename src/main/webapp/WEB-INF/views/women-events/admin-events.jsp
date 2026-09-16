@@ -11,15 +11,19 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/women-events-tokens.css"/>
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <meta name="_csrf_parameter" content="${_csrf.parameterName}"/>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
     <jsp:include page="/WEB-INF/views/women-events/we-tokens-inline.jsp"/>
     <style>
       .we-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
       .we-modal-overlay.open { display:flex; }
     </style>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #F8FAFC; }
+        body { font-family: 'Outfit', sans-serif; background: #F8FAFC; padding-top: 68px; }
         .page-header { background: #0F172A;
-            padding: 40px 20px; color: white; }
+            padding: 36px 20px; color: white; }
         .container-main { max-width: 1300px; margin: 0 auto; padding: 36px 20px 60px; }
 
         /* Stats */
@@ -81,6 +85,32 @@
             border: 1.5px solid #e5e7eb;
         }
         .s-NONE { background: #e2e8f0; color: #475569; }
+
+        @media (max-width: 768px) {
+            .page-header { padding: 24px 16px; }
+            .page-header h1 { font-size: 1.35rem !important; }
+            .container-main { padding: 20px 12px 60px; overflow-x: hidden; width: 100%; max-width: 100vw; box-sizing: border-box; }
+            .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+            .stat-card { padding: 14px 10px; }
+            .stat-num { font-size: 1.5rem; }
+            .stat-label { font-size: 0.7rem; }
+            .nav-pills { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; margin-bottom: 16px !important; }
+            .nav-item { white-space: nowrap; flex-shrink: 0; }
+            .nav-pills .nav-link { padding: 8px 16px !important; font-size: 0.82rem; }
+            .panel { width: 100%; box-sizing: border-box; border-radius: 14px; }
+            .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 750px; }
+            .btn-approve, .btn-reject, .btn-feature, .btn-delete, .btn-review { padding: 4px 10px; font-size: 0.75rem; }
+            
+            /* Modal mobile fixes */
+            .we-modal { width: 92% !important; max-height: 85vh; overflow-y: auto; padding: 16px !important; margin: 10px; }
+            .we-modal-overlay { padding: 10px !important; }
+        }
+
+        @media (max-width: 480px) {
+            .stat-row { grid-template-columns: 1fr; }
+            .page-header div[style*="display:flex"] { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -250,26 +280,32 @@
 
                                             <c:if test="${ev.status == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/approve" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-approve">✓ Approve</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/reject" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">✗ Reject</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/request-changes" method="post" style="display:inline;"
                                                       onsubmit="var r=prompt('What should the host change?'); if(!r) return false; this.querySelector('[name=reason]').value=r;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <input type="hidden" name="reason" value=""/>
                                                     <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill">Request changes</button>
                                                 </form>
                                             </c:if>
                                             <c:if test="${ev.status == 'APPROVED'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/unpublish" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Unpublish</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/cancel" method="post" style="display:inline;"
                                                       onsubmit="return confirm('Cancel this event and notify the workflow?')">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">Cancel event</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/feature" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-feature">
                                                         <i class="bi bi-star${ev.featured ? '-fill' : ''}"></i>${ev.featured ? 'Unfeature' : 'Feature'}
                                                     </button>
@@ -277,6 +313,7 @@
                                             </c:if>
                                             <form action="${pageContext.request.contextPath}/women-events/admin/${ev.id}/delete" method="post" style="display:inline;"
                                                   onsubmit="return confirm('Delete this event permanently?')">
+                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                 <button type="submit" class="btn-delete"><i class="bi bi-trash-fill"></i></button>
                                             </form>
                                         </div>
@@ -334,9 +371,11 @@
                                             <a href="${pageContext.request.contextPath}/admin/event-hosts/${host.id}/profile" class="btn-review">Review profile</a>
                                             <c:if test="${host.verificationStatus == 'PENDING'}">
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/host/${host.id}/approve" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-approve">✓ Approve</button>
                                                 </form>
                                                 <form action="${pageContext.request.contextPath}/women-events/admin/host/${host.id}/reject" method="post" style="display:inline;">
+                                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                     <button type="submit" class="btn-reject">✗ Reject</button>
                                                 </form>
                                             </c:if>

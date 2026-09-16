@@ -18,4 +18,8 @@ public interface WomenProductOrderRepository extends JpaRepository<WomenProductO
 
     @Query("SELECT o.product.id, AVG(o.rating), COUNT(o.id) FROM WomenProductOrder o WHERE o.rating IS NOT NULL AND o.product IS NOT NULL GROUP BY o.product.id")
     List<Object[]> findAverageRatingsGroupedByProduct();
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM WomenProductOrder o WHERE o.id = :id")
+    java.util.Optional<WomenProductOrder> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
 }

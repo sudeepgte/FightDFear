@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${salon.name} — Salon Services & Booking | Fight D Fear</title>
@@ -583,7 +585,7 @@
                                                         data-bs-target="#serviceModal"
                                                         onclick="showServiceModal('${service.name}', '${service.category}', '${service.price}', '${service.durationMinutes}', '${service.ingredients}', '${service.allergenInfo}', '${pageContext.request.contextPath}${service.photoUrl}', '${service.salon.name}', '${service.id}')"
                                                         title="View Details">
-                                                    <i class="bi bi-eye"></i>
+                                                    <i class="fas fa-eye"></i>
                                                 </button>
                                                 <a href="${pageContext.request.contextPath}/booking/new?serviceId=${service.id}" class="btn btn-action-primary btn-sm px-3">
                                                     Book Now
@@ -1098,5 +1100,6 @@
             }
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

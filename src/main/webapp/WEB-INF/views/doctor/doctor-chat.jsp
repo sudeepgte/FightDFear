@@ -5,14 +5,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <title>Chat with Dr. ${doctor.fullName} — Fight D Fear</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/doctor-tokens.css">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Inter',sans-serif;background:var(--doc-bg);height:100vh;display:flex;flex-direction:column;color:var(--doc-text)}
-    .ch-header{background:var(--doc-card);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--doc-border);box-shadow:var(--doc-shadow)}
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--doc-bg);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--doc-text);
+    }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+    }
+    .ch-header {
+      flex: 0 0 65px;
+      background: var(--doc-card);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--doc-border);
+      box-shadow: var(--doc-shadow);
+      z-index: 10;
+    }
     .ch-back{width:36px;height:36px;border-radius:10px;background:var(--doc-primary-soft);display:flex;align-items:center;justify-content:center;color:var(--doc-primary);text-decoration:none;font-size:16px;border:1px solid #fecdd3}
     .ch-back:hover{background:var(--doc-primary-light)}
     .ch-avatar{width:42px;height:42px;border-radius:50%;background:var(--doc-primary-light);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--doc-primary);flex-shrink:0}
@@ -23,12 +59,31 @@
     .ch-act.call{background:var(--doc-success-bg);color:var(--doc-success)}
     .ch-act.video{background:var(--doc-primary-soft);color:#be123c}
     .ch-act:hover{transform:scale(1.06)}
-    .ch-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--doc-bg)}
+    .ch-messages {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--doc-bg);
+    }
     .ch-msg{max-width:75%;padding:10px 16px;border-radius:16px;font-size:13px;line-height:1.5;animation:fadeIn 0.3s;box-shadow:var(--doc-shadow)}
     .ch-msg.sent{align-self:flex-end;background:var(--doc-primary);color:#fff;border-bottom-right-radius:4px}
     .ch-msg.received{align-self:flex-start;background:var(--doc-card);color:var(--doc-text);border:1px solid var(--doc-border);border-bottom-left-radius:4px}
     .ch-msg .time{font-size:9px;opacity:0.7;margin-top:4px;display:block}
-    .ch-input-area{padding:12px 16px;background:var(--doc-card);border-top:1px solid var(--doc-border);display:flex;gap:10px;align-items:center}
+    .ch-input-area {
+      flex: 0 0 auto;
+      min-height: 70px;
+      padding: 10px 16px;
+      background: var(--doc-card);
+      border-top: 1px solid var(--doc-border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 10;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
     .ch-input-area input{flex:1;padding:12px 18px;border:1px solid var(--doc-border);border-radius:999px;background:var(--doc-bg);color:var(--doc-text);font-size:13px;font-family:inherit;outline:none}
     .ch-input-area input:focus{border-color:var(--doc-primary);box-shadow:0 0 0 3px rgba(244,63,94,0.12)}
     .ch-input-area input::placeholder{color:var(--doc-muted)}
@@ -36,11 +91,24 @@
     .ch-send:hover{transform:scale(1.06);background:var(--doc-primary-dark)}
     .ch-empty{text-align:center;margin:auto;color:var(--doc-muted)}
     .ch-empty i{font-size:48px;display:block;margin-bottom:8px;color:#fecdd3}
+    @media (max-width: 480px) {
+      .ch-header { padding: 0 10px; gap: 8px; flex: 0 0 60px; }
+      .ch-back, .ch-act { width: 32px; height: 32px; font-size: 14px; }
+      .ch-avatar { width: 36px; height: 36px; font-size: 14px; }
+      .ch-doc-info h3 { font-size: 13px; }
+      .ch-doc-info p { font-size: 11px; }
+      .ch-actions { gap: 4px; }
+      .ch-input-area { padding: 8px 10px; gap: 6px; }
+      .ch-input-area input { padding: 10px 14px; font-size: 12px; }
+      .ch-send { width: 40px; height: 40px; font-size: 16px; }
+      .ch-msg { max-width: 85%; font-size: 12px; padding: 8px 14px; }
+    }
     @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
-  <div class="ch-header">
+  <div class="chat-container">
+    <div class="ch-header">
     <c:choose>
       <c:when test="${senderType == 'USER'}">
         <a href="${pageContext.request.contextPath}/doctors/view/${doctor.id}" class="ch-back"><i class="bi bi-arrow-left"></i></a>
@@ -145,5 +213,7 @@
 
     chatBox.scrollTop = chatBox.scrollHeight;
   </script>
+  <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+  </div>
 </body>
 </html>

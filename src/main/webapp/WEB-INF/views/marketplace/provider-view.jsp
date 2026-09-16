@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>${provider.fullName} | Women Marketplace</title>
@@ -136,6 +138,34 @@
             font-size: 0.8rem;
             font-weight: 600;
             margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 15px 15px !important;
+                padding-bottom: 80px !important;
+            }
+            .header-main {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+            .profile-photo {
+                width: 70px;
+                height: 70px;
+            }
+            .profile-info h1 {
+                font-size: 1.1rem;
+            }
+            .meta-list li {
+                font-size: 0.75rem;
+            }
+            .btn-group-custom {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .btn-solid, .btn-outline {
+                width: 100%;
+            }
         }
 
         .btn-group-custom {
@@ -331,13 +361,19 @@
 
         /* Bottom Mobile Nav */
         .bottom-nav {
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 20px 0;
-            border-top: 1px solid var(--border);
-            margin-top: 40px;
-            border-radius: 20px;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            padding: 12px 0 20px 0 !important;
+            border-top: 1px solid var(--border) !important;
+            z-index: 9999 !important;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.05) !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
         }
         .bottom-nav .nav-item {
             display: flex;
@@ -484,6 +520,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="bookingForm" action="${pageContext.request.contextPath}/marketplace/book" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="modal-body" style="padding:25px;">
                             <input type="hidden" name="providerId" value="${provider.id}">
                             
@@ -856,6 +893,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form action="${pageContext.request.contextPath}/marketplace/review" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <input type="hidden" name="providerId" value="${provider.id}">
                         <div class="modal-body">
                             <div class="mb-3">
@@ -1018,5 +1056,6 @@
         }
     });
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

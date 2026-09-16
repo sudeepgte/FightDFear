@@ -1040,7 +1040,7 @@ public class SalonController {
     // ===========================
     // 5️⃣ Optional: Delete stylist
     // ===========================
-    @GetMapping("/stylist/delete")
+    @PostMapping("/stylist/delete")
     public String deleteStylist(@RequestParam("id") Long stylistId,
                                 HttpSession session,
                                 Model model) {

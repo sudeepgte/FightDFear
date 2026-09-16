@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Dashboard - Job Applications</title>
@@ -226,9 +228,11 @@
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                         <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Approve</button>
                                                     </form>
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                         <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-circle"></i> Reject</button>
                                                     </form>
                                                     </div>
@@ -310,6 +314,7 @@
                                                         <i class="bi bi-eye"></i> View
                                                     </button>
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/reject" method="POST">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                         <button type="submit" class="btn btn-sm btn-danger">Revoke (Reject)</button>
                                                     </form>
                                                     </div>
@@ -388,6 +393,7 @@
                                                 <td class="action-td">
                                                     <div class="wj-actions">
                                                     <form action="${pageContext.request.contextPath}/admin/job-applications/${app.id}/approve" method="POST">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                         <button type="submit" class="btn btn-sm btn-success">Approve</button>
                                                     </form>
                                                     </div>
@@ -437,5 +443,6 @@
   }
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

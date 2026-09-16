@@ -6,7 +6,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import in.sp.main.Entities.BatteryStatus;
+import in.sp.main.Entities.User;
 import in.sp.main.Service.BatteryStatusService;
+import jakarta.servlet.http.HttpSession;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -17,7 +19,11 @@ public class BatteryStatusController {
     private BatteryStatusService batteryStatusService;
 
     @RequestMapping(value = "/batteryStatus", method = GET)
-    public String getBatteryStatus(Model model) {
+    public String getBatteryStatus(Model model, HttpSession session) {
+        User user = (User) session.getAttribute("user");
+        if (user == null && session.getAttribute("admin") == null) {
+            return "redirect:/login";
+        }
         batteryStatusService.getLatestBatteryStatus()
             .ifPresent(status -> model.addAttribute("batteryStatus", status));
         return "batteryStatus"; 
@@ -27,7 +33,12 @@ public class BatteryStatusController {
     public String updateBatteryStatus(@RequestParam("batteryLevel") int batteryLevel,
                                       @RequestParam("lastKnownLocation") String lastKnownLocation,
                                       @RequestParam("nonEssentialAppsDisabled") boolean nonEssentialAppsDisabled,
+                                      HttpSession session,
                                       Model model) {
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            return "redirect:/login";
+        }
         BatteryStatus status = new BatteryStatus();
         status.setBatteryLevel(batteryLevel);
         status.setLastKnownLocation(lastKnownLocation);

@@ -22,6 +22,8 @@ public class MobileWalletController {
     private UserRepository userRepo;
     @Autowired
     private WalletTransactionRepository walletTransactionRepo;
+    @Autowired
+    private in.sp.main.Service.AtomicCoinService atomicCoinService;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> wallet(HttpSession session) {
@@ -49,17 +51,19 @@ public class MobileWalletController {
         if (user == null) return unauthorized();
         int cost = body.get("cost") instanceof Number n ? n.intValue() : 0;
         String rewardName = body.get("rewardName") == null ? "Reward" : body.get("rewardName").toString();
-        User fresh = userRepo.findById(user.getId()).orElse(null);
-        if (fresh == null) return badRequest("User not found");
-        int current = fresh.getRewardPoints() == null ? 0 : fresh.getRewardPoints();
-        if (current < cost) return badRequest("Insufficient coins");
-        fresh.setRewardPoints(current - cost);
-        userRepo.save(fresh);
-        session.setAttribute("user", fresh);
-        return ResponseEntity.ok(ok(Map.of(
-                "message", "Successfully redeemed: " + rewardName,
-                "rewardPoints", fresh.getRewardPoints()
-        )));
+
+        try {
+            User updated = atomicCoinService.debitCoins(user.getId(), cost, "Redeemed: " + rewardName);
+            session.setAttribute("user", updated);
+            return ResponseEntity.ok(ok(Map.of(
+                    "message", "Successfully redeemed: " + rewardName,
+                    "rewardPoints", updated.getRewardPoints()
+            )));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return badRequest(ex.getReason() != null ? ex.getReason() : "Insufficient coins");
+        } catch (Exception ex) {
+            return badRequest("Redeem failed. Please try again.");
+        }
     }
 
     private Map<String, Object> txDto(WalletTransaction t) {

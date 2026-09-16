@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Complete Purchase — Fight D Fear</title>
@@ -333,6 +335,7 @@
     </div>
 
     <form method="post" action="${pageContext.request.contextPath}/women-products/checkout/place" id="checkoutForm">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
       <c:if test="${buyNowMode}"><input type="hidden" name="buyNow" value="1"></c:if>
       <div class="checkout-grid">
         <!-- Left Column: Details -->
@@ -712,6 +715,7 @@
   </script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <jsp:include page="/WEB-INF/views/women-products/wp-footer.jsp" />
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

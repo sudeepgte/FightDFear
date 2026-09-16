@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Friends | Fight D Fear</title>
@@ -171,6 +173,7 @@
           <form action="${pageContext.request.contextPath}/users/unfollow/${f.id}"
                 method="post"
                 onclick="event.stopPropagation();">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <button class="btn btn-outline-danger btn-sm w-100">
               ❌ Unfollow
             </button>
@@ -223,6 +226,7 @@ function sendReel() {
 </script>
 
 <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

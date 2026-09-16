@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Profile | Fight D Fear</title>
@@ -411,7 +413,7 @@
                 justify-content: space-between;
             }
             .main-content {
-                padding: 12px !important;
+                padding: 12px 12px 120px 12px !important;
                 width: 100%;
                 overflow-x: hidden;
             }
@@ -510,7 +512,10 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
     
     <!-- Main Content Area -->
     <div class="main-content">
-        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile" method="post" enctype="multipart/form-data">
+        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             <input type="hidden" name="id" value="${salon.id}">
             
             <!-- Top Header -->
@@ -680,7 +685,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <div class="pt-label">Salon<br>Details</div>
                         <div class="pt-status">${stepSalonDetails ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepServices ? 'done' : ''}" onclick="window.location.href='${pageContext.request.contextPath}/salon/viewServices'" style="cursor:pointer;">
+                    <div class="pt-step ${stepServices ? 'done' : ''}" onclick="openEditMode('tab-services')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Services<br>Offered</div>
                         <div class="pt-status">${stepServices ? 'Completed' : 'Pending'}</div>
@@ -719,7 +724,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
             <div class="custom-tabs" id="profileTabs">
                 <a href="#" class="custom-tab active" data-target="tab-business">Business Information</a>
                 <a href="#" class="custom-tab" data-target="tab-details">Salon Details</a>
-                <a href="${pageContext.request.contextPath}/salon/viewServices" class="custom-tab"><i class="bi bi-scissors"></i> Services Offered</a>
+                <a href="#" class="custom-tab" data-target="tab-services"><i class="bi bi-scissors"></i> Services Offered</a>
                 <a href="#" class="custom-tab" data-target="tab-facilities">Facilities & Amenities</a>
                 <a href="#" class="custom-tab" data-target="tab-documents">Documents</a>
                 <a href="#" class="custom-tab" data-target="tab-social">Social Media</a>
@@ -965,6 +970,64 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     </div>
                 </div>
                 </div> <!-- End Tab Details -->
+
+                <!-- Tab: Services Offered -->
+                <div class="tab-pane" id="tab-services" style="display:none;">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-scissors"></i>
+                        <h4>Services Offered</h4>
+                    </div>
+                    
+                    <div class="f-row-2 mt-3">
+                        <div class="f-group">
+                            <label class="f-label">Service Category</label>
+                            <select name="serviceCategory" class="f-control">
+                                <option value="Haircut">Haircut</option>
+                                <option value="Hair Styling">Hair Styling</option>
+                                <option value="Hair Coloring">Hair Coloring</option>
+                                <option value="Facial">Facial</option>
+                                <option value="Massage">Massage</option>
+                                <option value="Manicure">Manicure</option>
+                                <option value="Pedicure">Pedicure</option>
+                                <option value="Makeup">Makeup</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label">Service Name</label>
+                            <input type="text" name="serviceName" class="f-control" placeholder="e.g. Premium Hair Spa">
+                        </div>
+                    </div>
+
+                    <div class="f-row-2 mt-2">
+                        <div class="f-group">
+                            <label class="f-label">Price (₹)</label>
+                            <input type="number" name="servicePrice" step="0.01" class="f-control" placeholder="0.00">
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label">Duration (Minutes)</label>
+                            <input type="number" name="serviceDuration" class="f-control" placeholder="e.g. 45">
+                        </div>
+                    </div>
+
+                    <div class="f-row-2 mt-2">
+                        <div class="f-group">
+                            <label class="f-label">Ingredients Used</label>
+                            <input type="text" name="serviceIngredients" class="f-control" placeholder="e.g. Argan oil, Keratin">
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label">Allergen Information</label>
+                            <input type="text" name="serviceAllergenInfo" class="f-control" placeholder="e.g. Contains nut extracts">
+                        </div>
+                    </div>
+                    
+                    <div class="f-group mt-3">
+                        <label class="f-label">Service Photo</label>
+                        <input type="file" name="servicePhoto" class="f-control">
+                    </div>
+                </div>
+                </div> <!-- End Tab Services -->
 
                 <div class="tab-pane" id="tab-facilities" style="display:none;">
                 <div class="form-section">
@@ -1409,6 +1472,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
             });
         });
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

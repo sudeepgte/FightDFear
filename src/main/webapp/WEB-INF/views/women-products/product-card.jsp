@@ -25,6 +25,7 @@
     </c:if>
   </a>
   <form class="wish-float" action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
     <input type="hidden" name="productId" value="${p.id}">
     <input type="hidden" name="returnTo" value="shop">
     <c:set var="inWishlist" value="false"/>
@@ -67,12 +68,14 @@
       </a>
       <c:if test="${p.stock > 0}">
         <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" style="flex: 1;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="productId" value="${p.id}">
           <button type="submit" class="btn-shop btn-shop-primary w-100">
             <i class="bi bi-cart-plus"></i> Add to Cart
           </button>
         </form>
         <form action="${pageContext.request.contextPath}/women-products/buy-now" method="post" style="flex: 1;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="productId" value="${p.id}">
           <input type="hidden" name="quantity" value="1">
           <button type="submit" class="btn-shop btn-shop-outline w-100">

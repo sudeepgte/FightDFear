@@ -2,6 +2,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <title>Q&A Thread</title>
 
 
@@ -245,6 +247,7 @@
 
             <!-- Reply Input Box -->
             <form id="reply-to-answer-form" class="hidden" action="${pageContext.request.contextPath}/qna/thread/${thread.id}/comment" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <input type="hidden" name="parentType" value="ANSWER"/>
                 <input type="hidden" name="parentId" value="${thread.answer.id}"/>
                 <textarea name="content" required placeholder="Reply to admin..."></textarea>
@@ -266,6 +269,7 @@
 
     <!-- Add comment to Question -->
    <form id="comment-on-question-form" class="hidden" action="${pageContext.request.contextPath}/qna/thread/${thread.id}/comment" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
     <input type="hidden" name="parentType" value="QUESTION"/>
     <input type="hidden" name="parentId" value="${thread.id}"/>
     <textarea name="content" required placeholder="Add a public comment..."></textarea>
@@ -273,6 +277,7 @@
 </form>
 </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

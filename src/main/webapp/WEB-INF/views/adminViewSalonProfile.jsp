@@ -5,6 +5,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${not empty salon.name ? salon.name : 'Salon'} - Application Review | Fight D Fear Admin</title>
@@ -570,6 +572,7 @@
 
         <div class="action-bar">
           <form id="approveForm" action="${pageContext.request.contextPath}/admin/salons/${salon.id}/approve" method="post" class="m-0 p-0">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="approveNotes">
             <button type="submit" class="btn-verify" onclick="document.getElementById('approveNotes').value=document.getElementById('decisionNotes').value;">
               <i class="fas fa-check-circle"></i> Approve
@@ -578,6 +581,7 @@
 
           <form id="rejectForm" action="${pageContext.request.contextPath}/admin/salons/${salon.id}/reject" method="post" class="m-0 p-0"
                 onsubmit="return confirm('Reject this salon?')">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <input type="hidden" name="notes" id="rejectNotes">
             <button type="submit" class="btn-reject" onclick="document.getElementById('rejectNotes').value=document.getElementById('decisionNotes').value;">
               <i class="fas fa-times-circle"></i> Reject
@@ -590,6 +594,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>div>
 

@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shopping Cart — Fight D Fear</title>
@@ -442,16 +444,19 @@
                 <div class="cart-controls">
                   <div class="cart-qty-control">
                     <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/update" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                       <input type="hidden" name="quantity" value="${ci.quantity - 1}">
                       <button type="submit" class="qty-btn" ${ci.quantity <= 1 ? 'disabled' : ''} aria-label="Decrease quantity">−</button>
                     </form>
                     <span class="qty-val">${ci.quantity}</span>
                     <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/update" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                       <input type="hidden" name="quantity" value="${ci.quantity + 1}">
                       <button type="submit" class="qty-btn" aria-label="Increase quantity">+</button>
                     </form>
                   </div>
                   <form action="${pageContext.request.contextPath}/women-products/cart/${ci.id}/remove" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button type="submit" class="remove-btn" title="Remove item">
                       <i class="bi bi-trash3"></i>
                     </button>
@@ -486,5 +491,6 @@
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

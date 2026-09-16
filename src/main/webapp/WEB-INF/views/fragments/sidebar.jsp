@@ -207,8 +207,8 @@
 <!-- Sidebar -->
 <div id="sidebar-wrapper">
     <button type="button" class="sidebar-mobile-toggle" id="sidebarMobileToggle" aria-expanded="false" aria-controls="sidebarNavList">
-        <span><i class="bi bi-list me-2"></i> Menu</span>
-        <i class="bi bi-chevron-down" id="sidebarToggleIcon"></i>
+        <span><i class="fas fa-bars me-2"></i> Menu</span>
+        <i class="fas fa-chevron-down" id="sidebarToggleIcon"></i>
     </button>
     <c:set var="isWorkerPortal" value="${isWorkerDashboard || fn:contains(currentUri, '/women-jobs/') || fn:contains(pageContext.request.requestURI, 'worker-profile') || fn:contains(pageContext.request.requestURI, 'worker-dashboard')}" />
     <div class="list-group list-group-flush mt-1" id="sidebarNavList">
@@ -318,8 +318,8 @@
                 var isOpen = sidebar.classList.toggle("sidebar-open");
                 toggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
                 if (toggleIcon) {
-                    toggleIcon.classList.toggle("bi-chevron-down", !isOpen);
-                    toggleIcon.classList.toggle("bi-chevron-up", isOpen);
+                    toggleIcon.classList.toggle("fa-chevron-down", !isOpen);
+                    toggleIcon.classList.toggle("fa-chevron-up", isOpen);
                 }
             });
         }

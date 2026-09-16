@@ -1,6 +1,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
 <title>Share Video</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
@@ -248,6 +250,7 @@
         <img src="${follow.follower.profilePhoto}" alt="pfp">
         <span>${follow.follower.fullName}</span>
         <form action="${pageContext.request.contextPath}/video/share/send" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="videoId" value="${video.id}">
           <input type="hidden" name="receiverId" value="${follow.follower.id}">
           <button type="submit" class="btn btn-outline-primary btn-sm">Send</button>
@@ -261,6 +264,7 @@
         <img src="${follow.followed.profilePhoto}" alt="pfp">
         <span>${follow.followed.fullName}</span>
         <form action="${pageContext.request.contextPath}/video/share/send" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
           <input type="hidden" name="videoId" value="${video.id}">
           <input type="hidden" name="receiverId" value="${follow.followed.id}">
           <button type="submit" class="btn btn-outline-primary btn-sm">Send</button>
@@ -269,5 +273,6 @@
     </c:forEach>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

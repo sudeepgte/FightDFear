@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><c:out value="${service.id != null ? 'Edit Service' : 'Add Service'}"/> | Fight D Fear</title>
@@ -66,6 +68,7 @@
             </c:if>
             <div class="form-card">
                 <form action="${pageContext.request.contextPath}/stylists/services/save" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="id" value="${service.id}">
 
                     <div class="mb-3">
@@ -105,5 +108,6 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

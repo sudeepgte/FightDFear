@@ -186,8 +186,7 @@ public class TreatmentController {
  
     // Delete
 
-    @GetMapping("/delete/{id}")
-
+    @PostMapping("/delete/{id}")
     public String deleteTreatment(@PathVariable Long id) {
 
         treatmentService.deleteTreatment(id);

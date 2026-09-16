@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -48,6 +49,9 @@ public class MobileAuthController {
 
     @Autowired
     private RateLimitService rateLimitService;
+
+    @Autowired
+    private in.sp.main.Service.SecurityAuditLogger securityAuditLogger;
 
     @Autowired
     private OtpVerificationService otpVerificationService;
@@ -96,8 +100,12 @@ public class MobileAuthController {
         if (emailErr != null) {
             return ResponseEntity.badRequest().body(error(emailErr));
         }
-        if (!otpVerificationService.verifyOtp(email, otp, OtpPurpose.USER_REGISTER)) {
-            return ResponseEntity.badRequest().body(error("Invalid or expired email OTP"));
+        try {
+            if (!otpVerificationService.verifyOtp(email, otp, OtpPurpose.USER_REGISTER)) {
+                return ResponseEntity.badRequest().body(error("Invalid or expired email OTP"));
+            }
+        } catch (in.sp.main.Exception.RateLimitExceededException ex) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error(ex.getMessage()));
         }
         if (request != null) {
             request.getSession(true).setAttribute("REG_VERIFIED_EMAIL", email);
@@ -154,8 +162,12 @@ public class MobileAuthController {
         if (phoneErr != null) {
             return ResponseEntity.badRequest().body(error(phoneErr));
         }
-        if (!otpVerificationService.verifyPhoneOtp(phone, otp, OtpPurpose.USER_PHONE_REGISTER)) {
-            return ResponseEntity.badRequest().body(error("Invalid or expired phone OTP"));
+        try {
+            if (!otpVerificationService.verifyPhoneOtp(phone, otp, OtpPurpose.USER_PHONE_REGISTER)) {
+                return ResponseEntity.badRequest().body(error("Invalid or expired phone OTP"));
+            }
+        } catch (in.sp.main.Exception.RateLimitExceededException ex) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error(ex.getMessage()));
         }
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
@@ -422,7 +434,7 @@ public class MobileAuthController {
         String email = body == null ? null : body.get("email");
         String password = body == null ? null : body.get("password");
 
-        String normEmail = email == null ? "" : email.trim().toLowerCase();
+        String normEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         String rawPassword = password == null ? "" : password;
 
         if (normEmail.isEmpty() || rawPassword.isEmpty()) {
@@ -434,6 +446,14 @@ public class MobileAuthController {
         String clientIp = request == null ? "unknown" : request.getRemoteAddr();
         rateLimitService.checkOrThrow("login:" + clientIp + ":" + normEmail, 10, Duration.ofMinutes(15));
 
+        String failKey = "login:mobile:fail:" + normEmail;
+        if (!rateLimitService.isAllowed(failKey, 5, Duration.ofMinutes(15))) {
+            securityAuditLogger.logAuthFailure("MOBILE", normEmail, "RATE_LIMIT_EXCEEDED", clientIp);
+            response.put("success", false);
+            response.put("error", "Too many failed login attempts. Please try again in 15 minutes.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+
         User user = userService.findByUsername(normEmail);
         boolean ok = false;
         if (user != null && user.getPassword() != null) {
@@ -444,24 +464,31 @@ public class MobileAuthController {
         }
 
         if (!ok) {
+            rateLimitService.recordFailure(failKey);
+            securityAuditLogger.logAuthFailure("MOBILE", normEmail, "INVALID_CREDENTIALS", clientIp);
             response.put("success", false);
             response.put("error", "Invalid credentials");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
+        rateLimitService.clear(failKey);
+
         VerificationStatus status = user.getVerificationStatus();
         if (status == VerificationStatus.REJECTED) {
+            securityAuditLogger.logAuthFailure("MOBILE", normEmail, "ACCOUNT_REJECTED", clientIp);
             response.put("success", false);
             response.put("error", "Account rejected by admin");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
         if (user.isBanned()) {
+            securityAuditLogger.logAuthFailure("MOBILE", normEmail, "ACCOUNT_BANNED", clientIp);
             response.put("success", false);
             response.put("error", "Account banned");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
         // Members sign in after email OTP. Job workers are gated separately via Women Jobs admin approval.
 
+        securityAuditLogger.logAuthSuccess("MOBILE", user.getId(), user.getEmail(), "USER", clientIp);
         String token = jwtUtil.generateToken(user.getEmail(), "USER");
         response.put("success", true);
         response.put("token", token);

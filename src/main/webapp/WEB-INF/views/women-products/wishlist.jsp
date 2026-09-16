@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Your Wishlist — Fight D Fear</title>
@@ -403,12 +405,14 @@
                     <i class="bi bi-eye"></i> View
                   </a>
                   <form action="${pageContext.request.contextPath}/women-products/cart/add" method="post" style="flex: 1; display: flex;">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="productId" value="${w.product.id}">
                     <button type="submit" class="btn-wish-main" ${w.product.stock == null || w.product.stock <= 0 ? 'disabled' : ''}>
                       <i class="bi bi-cart-plus"></i> Add to Cart
                     </button>
                   </form>
                   <form action="${pageContext.request.contextPath}/women-products/wishlist/toggle" method="post">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <input type="hidden" name="productId" value="${w.product.id}">
                     <input type="hidden" name="returnTo" value="wishlist">
                     <button type="submit" class="btn-wish-del" title="Remove from wishlist">
@@ -427,5 +431,6 @@
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
   </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

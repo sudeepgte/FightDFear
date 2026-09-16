@@ -19,12 +19,23 @@ public class Admin {
     private String password;
     private String profilePhoto;
 
+    @jakarta.persistence.Column(nullable = false, length = 32)
+    private String role = "ADMIN";
+
     public Admin() {}
 
     public Admin(String name, String email, String password) {
         this.name = name;
         this.email = email;
         this.password = password;
+        this.role = "ADMIN";
+    }
+
+    public Admin(String name, String email, String password, String role) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = (role != null && !role.isBlank()) ? role : "ADMIN";
     }
 
 	public String getProfilePhoto() {
@@ -67,5 +78,16 @@ public class Admin {
 		this.password = password;
 	}
 
-   
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public boolean isSuperAdmin() {
+		return "SUPER_ADMIN".equalsIgnoreCase(this.role) 
+			|| "Super Admin".equalsIgnoreCase(this.name);
+	}
 }

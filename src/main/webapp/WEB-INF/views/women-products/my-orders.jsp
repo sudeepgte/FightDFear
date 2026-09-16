@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Orders — Fight D Fear</title>
@@ -511,6 +513,7 @@
                 </div>
                 <c:if test="${canCancel[o.id]}">
                   <form action="${pageContext.request.contextPath}/women-products/orders/${o.id}/cancel" method="post" style="margin:0;" onsubmit="return confirm('Cancel this order? Stock will be restored if the order is still eligible.');">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                     <button type="submit" class="action-btn" style="background:#fef2f2;color:#b91c1c;border:0;cursor:pointer;font-weight:800;">
                       <i class="bi bi-x-circle"></i> Cancel Order
                     </button>
@@ -588,6 +591,9 @@
         <button type="button" class="close-modal" onclick="closeModal('exchangeModal')">&times;</button>
       </div>
       <form id="exchangeForm" method="post" enctype="multipart/form-data">
+        <c:if test="${not empty _csrf}">
+          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
         <input type="hidden" name="type" value="EXCHANGE">
         <div class="fdf-form-group">
           <label>Reason for Exchange</label>
@@ -620,6 +626,9 @@
         <button type="button" class="close-modal" onclick="closeModal('refundModal')">&times;</button>
       </div>
       <form id="refundForm" method="post" enctype="multipart/form-data" novalidate>
+        <c:if test="${not empty _csrf}">
+          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
         <input type="hidden" name="type" value="REFUND">
         <div class="fdf-form-group">
           <label>Refund Reason *</label>
@@ -954,6 +963,7 @@
   <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

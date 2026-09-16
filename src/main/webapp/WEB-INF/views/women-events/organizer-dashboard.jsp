@@ -4,6 +4,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Organizer Dashboard — Fight D Fear</title>
@@ -78,13 +80,13 @@
             <c:choose>
                 <c:when test="${hostApproved}">
                     <a href="${pageContext.request.contextPath}/women-events/organizer/create" class="org-btn-primary">
-                        <i class="bi bi-plus-lg"></i> Create Event
+                        <i class="bi bi-plus-lg"></i><span>Create Event</span>
                     </a>
                 </c:when>
                 <c:otherwise>
                     <button type="button" class="org-btn-primary" style="opacity:0.65;cursor:not-allowed;"
                             onclick="alert('Complete profile and wait for admin approval before creating events.')">
-                        <i class="bi bi-lock-fill"></i> Create Event
+                        <i class="bi bi-lock-fill"></i><span>Create Event</span>
                     </button>
                 </c:otherwise>
             </c:choose>
@@ -213,12 +215,12 @@
                             <c:choose>
                                 <c:when test="${hostApproved}">
                                     <a href="${pageContext.request.contextPath}/women-events/organizer/create" class="org-btn-primary">
-                                        <i class="bi bi-plus-lg"></i> Create Event
+                                        <i class="bi bi-plus-lg"></i><span>Create Event</span>
                                     </a>
                                 </c:when>
                                 <c:otherwise>
                                     <a href="${pageContext.request.contextPath}/women-events/organizer/profile-completion" class="org-btn-primary">
-                                        <i class="bi bi-person-check"></i> Complete Profile
+                                        <i class="bi bi-person-check"></i><span>Complete Profile</span>
                                     </a>
                                 </c:otherwise>
                             </c:choose>
@@ -309,5 +311,6 @@ function filterEvents() {
     });
 }
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

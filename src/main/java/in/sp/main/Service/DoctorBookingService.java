@@ -51,6 +51,9 @@ public class DoctorBookingService {
     @Autowired
     private PushNotificationService pushNotificationService;
 
+    @Autowired
+    private in.sp.main.Repository.DoctorRepository doctorRepository;
+
     public void requireBookableDoctor(Doctor doctor) {
         if (doctor == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor not found");
@@ -219,11 +222,14 @@ public class DoctorBookingService {
             String reason,
             boolean allowUnpaid,
             Long followUpOfId) {
-        requireBookableDoctor(doctor);
-        validateConsultationMode(doctor, consultationType);
-        validateAppointmentSlot(doctor, appointmentTime);
+        Doctor lockedDoctor = (doctor != null && doctor.getId() != null)
+                ? doctorRepository.findByIdForUpdate(doctor.getId()).orElse(doctor)
+                : doctor;
+        requireBookableDoctor(lockedDoctor);
+        validateConsultationMode(lockedDoctor, consultationType);
+        validateAppointmentSlot(lockedDoctor, appointmentTime);
 
-        double fee = resolveFee(doctor, consultationType);
+        double fee = resolveFee(lockedDoctor, consultationType);
         if (followUpOfId != null) {
             fee = Math.round(fee * 0.5);
         }
@@ -234,9 +240,9 @@ public class DoctorBookingService {
 
         DoctorAppointment appt = new DoctorAppointment();
         appt.setUser(user);
-        appt.setDoctor(doctor);
+        appt.setDoctor(lockedDoctor);
         appt.setAppointmentTime(appointmentTime);
-        boolean auto = Boolean.TRUE.equals(doctor.getAutoConfirm());
+        boolean auto = Boolean.TRUE.equals(lockedDoctor.getAutoConfirm());
         appt.setStatus(auto ? DoctorAppointmentStatus.CONFIRMED : DoctorAppointmentStatus.PENDING);
         appt.setFollowUpOfId(followUpOfId);
         appt.setReason(reason == null || reason.isBlank() ? null : reason.trim());
@@ -276,7 +282,10 @@ public class DoctorBookingService {
             String orderId,
             String paymentId,
             String signature) {
-        requireBookableDoctor(doctor);
+        Doctor lockedDoctor = (doctor != null && doctor.getId() != null)
+                ? doctorRepository.findByIdForUpdate(doctor.getId()).orElse(doctor)
+                : doctor;
+        requireBookableDoctor(lockedDoctor);
 
         // Idempotent: same Razorpay payment must not create duplicate appointments
         if (paymentId != null && !paymentId.isBlank()) {
@@ -325,12 +334,12 @@ public class DoctorBookingService {
             return appointmentService.markConfirmedAfterPayment(saved);
         }
 
-        validateConsultationMode(doctor, consultationType);
-        validateAppointmentSlot(doctor, appointmentTime);
+        validateConsultationMode(lockedDoctor, consultationType);
+        validateAppointmentSlot(lockedDoctor, appointmentTime);
 
         DoctorAppointment appt = new DoctorAppointment();
         appt.setUser(user);
-        appt.setDoctor(doctor);
+        appt.setDoctor(lockedDoctor);
         appt.setAppointmentTime(appointmentTime);
         appt.setReason(reason == null || reason.isBlank() ? null : reason.trim());
         appt.setConsultationType(consultationType == null ? ConsultationType.CLINIC : consultationType);

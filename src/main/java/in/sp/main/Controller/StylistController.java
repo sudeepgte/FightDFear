@@ -444,11 +444,6 @@ public class StylistController {
     // ==============================
     // 7️⃣ Toggle Availability
     // ==============================
-    @GetMapping("/toggleAvailability")
-    public String toggleAvailabilityGet(HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
-        return toggleAvailability(session, ra);
-    }
-
     @PostMapping("/toggleAvailability")
     public String toggleAvailabilityPost(HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
         return toggleAvailability(session, ra);

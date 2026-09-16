@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Complete Lawyer Profile | Fight D Fear</title>
@@ -104,7 +106,7 @@
             .topbar-actions { width: 100%; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
             .btn-skip, .btn-save { flex: 1; text-align: center; justify-content: center; padding: 10px 0; min-width: 120px; }
             .container { margin: 16px auto; padding: 0 16px; width: 100%; max-width: 100%; box-sizing: border-box; display: block; }
-            .form-section { padding: 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
+            .form-section { padding: 16px 16px 150px 16px; width: 100%; box-sizing: border-box; overflow: hidden; }
             .form-grid { display: flex; flex-direction: column; gap: 16px; width: 100%; }
             input.form-input, select.form-select, textarea.form-input { width: 100%; box-sizing: border-box; }
             .progress-header { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -115,7 +117,10 @@
 </head>
 <body>
 
-    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save" method="post" enctype="multipart/form-data">
+    <form id="profileForm" action="${pageContext.request.contextPath}/lawyer/profile-completion/save${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+        <c:if test="${not empty _csrf}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+        </c:if>
         <!-- Top Bar -->
         <header class="topbar">
             <a href="${pageContext.request.contextPath}/" class="brand" style="text-decoration:none; display: flex; align-items: center; gap: 10px;">
@@ -278,7 +283,7 @@
                     </div>
                     <div class="form-group full">
                         <label class="form-label">Bank Details</label>
-                        <textarea name="bankDetails" class="form-input" rows="2" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
+                        <textarea name="bankDetails" class="form-input" rows="4" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
                     </div>
                 </div>
             </div>
@@ -394,5 +399,6 @@
             });
         }
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

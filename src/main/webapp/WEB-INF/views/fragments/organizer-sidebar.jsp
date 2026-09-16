@@ -5,10 +5,14 @@
 <c:set var="nav" value="${empty organizerNavActive ? 'dashboard' : organizerNavActive}"/>
 <c:set var="hostInitial" value="${not empty host.fullName ? fn:substring(host.fullName, 0, 1) : 'H'}"/>
 
+<div class="org-sidebar-overlay" onclick="document.body.classList.remove('sidebar-open')"></div>
 <aside class="org-sidebar">
     <div class="org-sidebar-brand">
         <div class="brand-icon"><i class="bi bi-calendar-heart-fill"></i></div>
-        <span>Fight D Fear<br>Event Host</span>
+        <span class="flex-grow-1">Fight D Fear<br>Event Host</span>
+        <button type="button" class="org-sidebar-close d-md-none" onclick="document.body.classList.remove('sidebar-open')" aria-label="Close menu">
+            <i class="bi bi-x-lg"></i>
+        </button>
     </div>
     <nav class="org-sidebar-nav">
         <div class="org-nav-label">Main</div>

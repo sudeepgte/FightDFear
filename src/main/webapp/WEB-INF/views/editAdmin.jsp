@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Edit Admin Profile — Admin</title>
@@ -233,7 +235,10 @@
               <i class="fas fa-shield-alt text-primary"></i> Administrator Credentials
           </div>
           
-          <form action="${pageContext.request.contextPath}/admin/update" method="post" enctype="multipart/form-data" class="m-0">
+          <form action="${pageContext.request.contextPath}/admin/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" class="m-0">
+              <c:if test="${not empty _csrf}">
+                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+              </c:if>
               <div class="form-body">
                   <input type="hidden" name="id" value="${admin.id}">
                   
@@ -306,6 +311,7 @@
   </main>
 </div>
 
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

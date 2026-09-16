@@ -85,8 +85,10 @@ public class VideoUploadController {
     private VideoCommentRepository videocommentRepository;
 
     @Autowired
-
     private UserRepository userRepository;
+
+    @Autowired
+    private in.sp.main.Service.AtomicCoinService atomicCoinService;
  
     
     @Autowired
@@ -729,9 +731,7 @@ public class VideoUploadController {
             videoRepository.save(video);
 
             // 💰 Earn Coins Logic
-            int currentPoints = (user.getRewardPoints() != null) ? user.getRewardPoints() : 0;
-            user.setRewardPoints(currentPoints + 10);
-            userRepository.save(user);
+            user = atomicCoinService.creditCoins(user.getId(), 10, "Earned coins for watching video: " + video.getTitle());
             session.setAttribute("user", user); // Update session user
 
             res.put("viewed", true);

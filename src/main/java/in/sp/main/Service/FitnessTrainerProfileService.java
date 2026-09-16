@@ -1,45 +1,21 @@
 package in.sp.main.Service;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
+import in.sp.main.Entities.FitnessTrainer;
+import in.sp.main.Entities.PartnerProfileStatus;
+import in.sp.main.Repository.FitnessTrainerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import in.sp.main.Entities.FitnessTrainer;
-import in.sp.main.Entities.PartnerProfileStatus;
-import in.sp.main.Entities.VerificationStatus;
-import in.sp.main.Repository.FitnessTrainerRepository;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 public class FitnessTrainerProfileService {
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
-
     @Autowired
     private FitnessTrainerRepository trainerRepository;
 
-    public void setLifecycleStatus(FitnessTrainer trainer, PartnerProfileStatus status) {
-        if (trainer == null || status == null) {
-            return;
-        }
-        trainer.setPartnerProfileStatus(status);
-        trainer.setVerificationStatus(PartnerLifecycleSupport.toVerificationStatus(status));
-        if (status == PartnerProfileStatus.SUSPENDED) {
-            trainer.setSuspended(true);
-        }
-    }
-
-    public static boolean isApproved(FitnessTrainer trainer) {
-        if (trainer == null || trainer.isSuspended()) return false;
-        return trainer.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED
-                || trainer.getVerificationStatus() == VerificationStatus.VERIFIED;
-    }
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public List<String> missingItems(FitnessTrainer trainer) {
         List<String> missing = new ArrayList<>();
@@ -71,11 +47,17 @@ public class FitnessTrainerProfileService {
         if (PartnerLifecycleSupport.blank(trainer.getSessionMode()) || trainer.getTypicalPrice() == null) {
             missing.add("8. Typical session");
         }
+        if (PartnerLifecycleSupport.blank(trainer.getCertificationsPath())) {
+            missing.add("10. Documents & Certification");
+        }
+        if (PartnerLifecycleSupport.blank(trainer.getGalleryPhotos())) {
+            missing.add("11. Studio photos");
+        }
         return missing;
     }
 
     public int calculateCompletionPct(FitnessTrainer trainer) {
-        int total = 16;
+        int total = 18;
         int filled = total - missingItems(trainer).size();
         if (filled < 0) filled = 0;
         return (int) Math.round(100.0 * filled / total);
@@ -172,154 +154,73 @@ public class FitnessTrainerProfileService {
         m.put("durationMinutes", t.getDurationMinutes());
         m.put("bufferMinutes", t.getBufferMinutes());
         m.put("typicalPrice", t.getTypicalPrice() != null ? t.getTypicalPrice() : t.getSessionFees());
-        m.put("upiId", t.getUpiId());
-        m.put("bankDetails", t.getBankDetails());
-        m.put("payoutBalance", t.getPayoutBalance());
-        m.put("galleryPhotos", splitCsv(t.getGalleryPhotos()));
-        m.put("profileImageUrl", t.getProfilePhotoPath());
-        m.put("rating", t.getRating());
-        m.put("reviewCount", t.getReviewCount());
-        m.put("bio", t.getBio());
     }
 
-    @Transactional
-    public FitnessTrainer applyExtraFields(FitnessTrainer t, Map<String, Object> body) {
-        if (t == null || body == null) return t;
-        if (body.get("fullName") != null) t.setFullName(blankToNull(str(body.get("fullName"))));
-        if (body.get("phone") != null) t.setPhone(blankToNull(str(body.get("phone"))));
-        if (body.get("designation") != null) t.setDesignation(blankToNull(str(body.get("designation"))));
-        if (body.get("whatsappNumber") != null) t.setWhatsappNumber(blankToNull(str(body.get("whatsappNumber"))));
-        if (body.get("address") != null) t.setAddress(blankToNull(str(body.get("address"))));
-        if (body.get("city") != null) t.setCity(blankToNull(str(body.get("city"))));
-        if (body.get("state") != null) t.setState(blankToNull(str(body.get("state"))));
-        if (body.get("pincode") != null) t.setPincode(blankToNull(str(body.get("pincode"))));
-        if (body.get("latitude") != null && !str(body.get("latitude")).isBlank()) {
-            try { t.setLatitude(Double.parseDouble(str(body.get("latitude")))); } catch (Exception ignored) {}
+    private static List<String> splitCsv(String s) {
+        if (s == null || s.trim().isEmpty()) return Collections.emptyList();
+        List<String> list = new ArrayList<>();
+        for (String x : s.split(",")) {
+            String trimmed = x.trim();
+            if (!trimmed.isEmpty()) list.add(trimmed);
         }
-        if (body.get("longitude") != null && !str(body.get("longitude")).isBlank()) {
-            try { t.setLongitude(Double.parseDouble(str(body.get("longitude")))); } catch (Exception ignored) {}
+        return list;
+    }
+
+    public void setLifecycleStatus(FitnessTrainer trainer, PartnerProfileStatus status) {
+        trainer.setPartnerProfileStatus(status);
+        if (status == PartnerProfileStatus.READY_FOR_VERIFICATION) {
+            trainer.setVerificationStatus(in.sp.main.Entities.VerificationStatus.PENDING);
+        } else if (status == PartnerProfileStatus.APPROVED) {
+            trainer.setVerificationStatus(in.sp.main.Entities.VerificationStatus.VERIFIED);
         }
-        if (body.get("specializations") != null || body.get("categoriesOffered") != null) {
-            t.setSpecializations(csv(body.get("specializations") != null
-                    ? body.get("specializations") : body.get("categoriesOffered")));
-        }
-        if (body.get("audience") != null) t.setAudience(csv(body.get("audience")));
-        if (body.get("doorService") != null) t.setDoorService(Boolean.TRUE.equals(body.get("doorService"))
-                || "true".equalsIgnoreCase(str(body.get("doorService"))));
-        if (body.get("facilities") != null) t.setFacilities(csv(body.get("facilities")));
-        if (body.get("openDays") != null) t.setOpenDays(csv(body.get("openDays")));
-        if (body.get("openTime") != null) t.setOpenTime(parseTime(body.get("openTime")));
-        if (body.get("closeTime") != null) t.setCloseTime(parseTime(body.get("closeTime")));
-        if (body.get("breakStart") != null) t.setBreakStart(parseTime(body.get("breakStart")));
-        if (body.get("breakEnd") != null) t.setBreakEnd(parseTime(body.get("breakEnd")));
-        if (body.get("blockedDates") != null) t.setBlockedDates(csv(body.get("blockedDates")));
-        if (body.get("bio") != null) t.setBio(blankToNull(str(body.get("bio"))));
-        if (body.get("experience") != null || body.get("yearsExperience") != null || body.get("experienceYears") != null) {
-            Object raw = body.get("experience") != null ? body.get("experience")
-                    : (body.get("yearsExperience") != null ? body.get("yearsExperience") : body.get("experienceYears"));
-            if (raw == null || str(raw).isBlank()) {
-                t.setExperience(null);
-            } else {
-                try { t.setExperience(Integer.parseInt(str(raw))); } catch (Exception ignored) {}
-            }
-        }
-        if (body.get("credentialNumber") != null) t.setCredentialNumber(blankToNull(str(body.get("credentialNumber"))));
-        if (body.get("sessionMode") != null) {
-            t.setSessionMode(blankToNull(str(body.get("sessionMode"))));
-            t.setServiceType(blankToNull(str(body.get("sessionMode"))));
-        }
-        if (body.get("serviceType") != null) t.setServiceType(blankToNull(str(body.get("serviceType"))));
-        if (body.get("durationMinutes") != null && !str(body.get("durationMinutes")).isBlank()) {
-            try { t.setDurationMinutes(Integer.parseInt(str(body.get("durationMinutes")))); } catch (Exception ignored) {}
-        }
-        if (body.get("bufferMinutes") != null && !str(body.get("bufferMinutes")).isBlank()) {
-            try { t.setBufferMinutes(Integer.parseInt(str(body.get("bufferMinutes")))); } catch (Exception ignored) {}
-        }
-        if (body.get("typicalPrice") != null || body.get("sessionFees") != null) {
-            Object raw = body.get("typicalPrice") != null ? body.get("typicalPrice") : body.get("sessionFees");
-            if (raw == null || str(raw).isBlank()) {
-                t.setTypicalPrice(null);
-                t.setSessionFees(null);
-            } else {
-                try {
-                    double fee = Double.parseDouble(str(raw));
-                    t.setTypicalPrice(fee);
-                    t.setSessionFees(fee);
-                } catch (Exception ignored) {}
-            }
-        }
-        if (body.get("upiId") != null) t.setUpiId(blankToNull(str(body.get("upiId"))));
-        if (body.get("bankDetails") != null) t.setBankDetails(blankToNull(str(body.get("bankDetails"))));
-        if (body.get("availableTimings") != null) {
-            t.setAvailableTimings(blankToNull(str(body.get("availableTimings"))));
-        } else if (t.getOpenTime() != null && t.getCloseTime() != null) {
-            t.setAvailableTimings(t.getOpenTime().format(TIME_FMT) + " - " + t.getCloseTime().format(TIME_FMT));
-        }
-        return t;
     }
 
     public static String statusLabel(PartnerProfileStatus status) {
-        return PartnerLifecycleSupport.statusLabel(status);
+        if (status == null) return "Registered";
+        switch (status) {
+            case REGISTERED: return "Registered";
+            case PROFILE_INCOMPLETE: return "Profile Incomplete";
+            case READY_FOR_VERIFICATION: return "Under Verification";
+            case PENDING_ADMIN_APPROVAL: return "Awaiting Approval";
+            case CHANGES_REQUESTED: return "Action Required";
+            case APPROVED: return "Verified";
+            case REJECTED: return "Rejected";
+            case SUSPENDED: return "Suspended";
+            default: return status.name();
+        }
     }
 
     private boolean canSubmit(FitnessTrainer trainer, List<String> missing) {
-        PartnerProfileStatus s = trainer.getPartnerProfileStatus();
-        if (s == PartnerProfileStatus.PENDING_ADMIN_APPROVAL || s == PartnerProfileStatus.SUSPENDED
-                || s == PartnerProfileStatus.APPROVED) {
-            return false;
-        }
-        return missing.isEmpty();
+        if (trainer == null) return false;
+        if (!missing.isEmpty()) return false;
+        PartnerProfileStatus status = trainer.getPartnerProfileStatus();
+        return status == PartnerProfileStatus.PROFILE_INCOMPLETE
+                || status == PartnerProfileStatus.CHANGES_REQUESTED
+                || status == PartnerProfileStatus.REGISTERED
+                || status == PartnerProfileStatus.READY_FOR_VERIFICATION;
     }
 
     private String guidance(FitnessTrainer trainer, List<String> missing) {
-        PartnerProfileStatus s = trainer.getPartnerProfileStatus();
-        if (s == PartnerProfileStatus.PENDING_ADMIN_APPROVAL) {
-            return "Your profile is under admin review. You'll be notified once approved.";
-        }
-        if (isApproved(trainer)) {
-            return "Your trainer profile is approved and visible to clients.";
-        }
-        if (s == PartnerProfileStatus.REJECTED) {
-            return "Registration was rejected. Update your profile and resubmit.";
-        }
-        if (s == PartnerProfileStatus.CHANGES_REQUESTED) {
-            return "Admin requested changes. Update the highlighted items and resubmit.";
+        if (trainer == null) return "";
+        PartnerProfileStatus status = trainer.getPartnerProfileStatus();
+        if (status == PartnerProfileStatus.SUSPENDED) return "Your account is suspended.";
+        if (status == PartnerProfileStatus.APPROVED) return "Your profile is live.";
+        if (status == PartnerProfileStatus.REJECTED) return "Your application was rejected.";
+        if (status == PartnerProfileStatus.CHANGES_REQUESTED) return "Please update the requested details and submit.";
+        if (status == PartnerProfileStatus.PENDING_ADMIN_APPROVAL || status == PartnerProfileStatus.READY_FOR_VERIFICATION) {
+            return "Your profile is under review by our admin team.";
         }
         if (!missing.isEmpty()) {
-            return "Complete " + missing.get(0) + " to submit verification.";
+            return "Complete all missing items (" + missing.size() + ") to submit for verification.";
         }
-        return "All required items are ready. Submit for admin verification.";
+        return "You can now submit your profile for verification.";
     }
 
-    private static String str(Object v) { return v == null ? "" : String.valueOf(v).trim(); }
-    private static String blankToNull(String v) { return v == null || v.isBlank() ? null : v.trim(); }
-
-    private static String csv(Object v) {
-        if (v instanceof List<?> list) {
-            return list.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isEmpty())
-                    .reduce((a, b) -> a + "," + b).orElse("");
-        }
-        return str(v);
+    public static boolean isApproved(FitnessTrainer trainer) {
+        return trainer != null && trainer.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
     }
 
-    private static List<String> splitCsv(String v) {
-        if (v == null || v.isBlank()) return List.of();
-        List<String> out = new ArrayList<>();
-        for (String p : v.split("[,|]")) {
-            String t = p.trim();
-            if (!t.isEmpty()) out.add(t);
-        }
-        return out;
-    }
-
-    private static LocalTime parseTime(Object v) {
-        String s = str(v);
-        if (s.isBlank()) return null;
-        try {
-            if (s.length() >= 5) return LocalTime.parse(s.substring(0, 5));
-            return LocalTime.parse(s, TIME_FMT);
-        } catch (Exception e) {
-            try { return LocalTime.parse(s); } catch (Exception ignored) { return null; }
-        }
+    public void applyExtraFields(FitnessTrainer trainer, Map<String, Object> m) {
+        putExtra(m, trainer);
     }
 }

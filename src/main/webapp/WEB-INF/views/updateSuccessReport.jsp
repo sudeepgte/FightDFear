@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <title>Update Success Report</title>
     
@@ -258,7 +260,10 @@
     <div class="container">
         <h1>Update Success Report</h1>
 
-        <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/successReports/${report.id}/update" method="post" enctype="multipart/form-data">
+        <form action="${pageContext.request.contextPath}/volunteer/${volunteerId}/successReports/${report.id}/update${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             <div class="mb-3">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description" class="form-control" required>${report.description}</textarea>
@@ -284,6 +289,7 @@
 
         <a href="${pageContext.request.contextPath}/volunteer/${volunteerId}/successReports" class="btn-back">Back to Success Reports</a>
     </div>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

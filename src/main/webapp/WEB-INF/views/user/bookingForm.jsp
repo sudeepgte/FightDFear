@@ -7,6 +7,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Your Booking | Fight D Fear</title>
@@ -189,6 +191,12 @@
             .visual-panel, .form-panel { padding: 40px; }
             .visual-panel { border-right: none; border-bottom: 1px solid #f1f3f5; }
         }
+        @media (max-width: 768px) {
+            #page-content-wrapper { padding: 20px 15px 15px 15px !important; display: block !important; }
+            .booking-card-white { margin-bottom: 150px; }
+            .visual-panel, .form-panel { padding: 25px; }
+            .item-title { font-size: 2rem; }
+        }
     </style>
 </head>
 <body>
@@ -201,12 +209,28 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <!-- Content wrapper -->
-    <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: hidden; display: flex; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div id="page-content-wrapper" data-skip-global-back="true" style="min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+        
+        <!-- Back Button -->
+        <div style="width: 100%; max-width: 1100px; margin-bottom: 15px;">
+            <a href="javascript:history.back()" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: white; border-radius: 50px; color: var(--brand-primary); text-decoration: none; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                <i class="bi bi-arrow-left"></i> Go Back
+            </a>
+        </div>
+
         <div class="booking-card-white">
         <!-- Left Panel: Treatment Visuals & Info -->
         <div class="visual-panel">
             <span class="badge-category">${type == 'SERVICE' ? 'Elite Service' : (type == 'TREATMENT' ? 'Specialized Treatment' : (type == 'PACKAGE' ? 'Salon Package' : (type == 'MEMBERSHIP' ? 'Premium Membership' : 'Special Deal & Offer')))}</span>
-            <h1 class="item-title">${type == 'SERVICE' ? item.name : (type == 'TREATMENT' ? item.serviceName : (type == 'PACKAGE' ? item.packageName : (type == 'MEMBERSHIP' ? item.membershipName : item.title)))}</h1>
+            <h1 class="item-title">
+                <c:choose>
+                    <c:when test="${type == 'SERVICE'}">${item.name}</c:when>
+                    <c:when test="${type == 'TREATMENT'}">${item.serviceName}</c:when>
+                    <c:when test="${type == 'PACKAGE'}">${item.packageName}</c:when>
+                    <c:when test="${type == 'MEMBERSHIP'}">${item.membershipName}</c:when>
+                    <c:otherwise>${item.title}</c:otherwise>
+                </c:choose>
+            </h1>
             
             <div class="salon-tag">
                 <i class="bi bi-geo-alt-fill"></i>
@@ -215,14 +239,11 @@
 
             <div class="description-box">
                 <c:choose>
-                    <c:when test="${not empty item.description}">
-                        ${item.description}
-                    </c:when>
-                    <c:when test="${type == 'MEMBERSHIP' && not empty item.benefits}">
-                        ${item.benefits}
+                    <c:when test="${type == 'MEMBERSHIP'}">
+                        ${not empty item.benefits ? item.benefits : 'A premium membership designed to give you exclusive salon perks and benefits.'}
                     </c:when>
                     <c:otherwise>
-                        A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.
+                        ${not empty item.description ? item.description : 'A premium salon service designed to rejuvenate and pamper you. Includes expert care and standard quality products.'}
                     </c:otherwise>
                 </c:choose>
             </div>
@@ -231,7 +252,15 @@
                 <div class="price-chip">
                     <span>₹${type == 'OFFER' ? (item.discountedPrice > 0 ? item.discountedPrice : item.originalPrice) : item.price}</span>
                     <small>|</small>
-                    <small>${type == 'SERVICE' ? item.durationMinutes : (type == 'TREATMENT' ? item.duration : (type == 'PACKAGE' ? 'PACKAGE' : (type == 'MEMBERSHIP' ? item.durationInMonths.toString().concat(' MONTH(S)') : 'DEAL')))} ${type == 'PACKAGE' || type == 'MEMBERSHIP' || type == 'OFFER' ? '' : 'MIN'}</small>
+                    <small>
+                        <c:choose>
+                            <c:when test="${type == 'SERVICE'}">${item.durationMinutes} MIN</c:when>
+                            <c:when test="${type == 'TREATMENT'}">${item.duration} MIN</c:when>
+                            <c:when test="${type == 'PACKAGE'}">PACKAGE</c:when>
+                            <c:when test="${type == 'MEMBERSHIP'}">${item.durationInMonths} MONTH(S)</c:when>
+                            <c:otherwise>DEAL</c:otherwise>
+                        </c:choose>
+                    </small>
                 </div>
             </div>
         </div>
@@ -249,6 +278,7 @@
             </div>
 
             <form action="${pageContext.request.contextPath}/booking/new" method="post" onsubmit="initiatePayment(event, this)">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <c:choose>
                     <c:when test="${type == 'SERVICE'}">
                         <input type="hidden" name="serviceId" value="${item.id}" />
@@ -402,6 +432,7 @@
 
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

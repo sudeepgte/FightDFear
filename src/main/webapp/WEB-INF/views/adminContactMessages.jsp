@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Contact Messages — Admin</title>
@@ -294,22 +296,24 @@
                                                         </c:choose>
                                                     </td>
                                                     <td>
-                                                        <div style="font-weight:600; color:var(--maroon-dark);">${cm.name}</div>
-                                                        <div style="font-size:0.85rem;"><a href="mailto:${cm.email}">${cm.email}</a></div>
+                                                        <div style="font-weight:600; color:var(--maroon-dark);"><c:out value="${cm.name}"/></div>
+                                                        <div style="font-size:0.85rem;"><a href="mailto:<c:out value="${cm.email}"/>"><c:out value="${cm.email}"/></a></div>
                                                     </td>
                                                     <td>
-                                                        <div style="font-weight:600;">${cm.subject}</div>
-                                                        <div class="msg-preview">${cm.message}</div>
+                                                        <div style="font-weight:600;"><c:out value="${cm.subject}"/></div>
+                                                        <div class="msg-preview"><c:out value="${cm.message}"/></div>
                                                     </td>
                                                     <td style="white-space:nowrap; font-size:0.85rem;">${cm.submittedAt}</td>
                                                     <td style="white-space:nowrap;">
                                                         <c:if test="${!cm.readByAdmin}">
                                                             <form action="${pageContext.request.contextPath}/admin/contact-messages/${cm.id}/read" method="post" class="d-inline">
+                                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                                 <button type="submit" class="btn-mark"><i class="fas fa-check"></i> Mark read</button>
                                                             </form>
                                                         </c:if>
                                                         <form action="${pageContext.request.contextPath}/admin/contact-messages/delete/${cm.id}" method="post" class="d-inline"
                                                               onsubmit="return confirm('Delete this message?');">
+                                                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                                                             <button type="submit" class="btn-delete"><i class="fas fa-trash-alt"></i></button>
                                                         </form>
                                                     </td>
@@ -367,6 +371,7 @@
             });
         });
     </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
 

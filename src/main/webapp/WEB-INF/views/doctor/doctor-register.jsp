@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Doctor Registration | Fight D Fear</title>
@@ -274,6 +276,7 @@
 
                 <div class="form-card" id="formPanel">
                     <form id="registerForm" action="${pageContext.request.contextPath}/doctors/register" method="post" novalidate>
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                         <div class="form-group">
                             <label for="fullName">Full name *</label>
                             <input type="text" id="fullName" name="fullName" class="form-input"
@@ -730,5 +733,6 @@
         })();
     </script>
     </c:if>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

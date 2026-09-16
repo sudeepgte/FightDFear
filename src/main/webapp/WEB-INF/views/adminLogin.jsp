@@ -5,6 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Admin Login — Fight D Fear</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
@@ -200,6 +202,7 @@
             </c:if>
 
             <form action="${pageContext.request.contextPath}/admin/loginAdmin" method="post">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                 <div class="form-group">
                     <label for="email">Admin Email</label>
                     <div class="input-wrapper">
@@ -257,5 +260,6 @@
     });
 })();
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

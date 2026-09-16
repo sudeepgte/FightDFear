@@ -3,6 +3,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Complete Entrepreneur Profile — Fight D Fear</title>
@@ -418,7 +420,10 @@
                     </a>
                 </c:when>
                 <c:otherwise>
-                    <form action="${pageContext.request.contextPath}/entrepreneur/submit-verification" method="post">
+                    <form action="${pageContext.request.contextPath}/entrepreneur/submit-verification${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post">
+                        <c:if test="${not empty _csrf}">
+                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                        </c:if>
                         <button type="submit" class="btn-submit-verification" 
                                 <c:if test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
                             <c:choose>
@@ -436,7 +441,10 @@
         </div>
 
         <!-- Section Forms Container -->
-        <form id="profileForm" action="${pageContext.request.contextPath}/entrepreneur/profile-completion" method="post" enctype="multipart/form-data">
+        <form id="profileForm" action="${pageContext.request.contextPath}/entrepreneur/profile-completion${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+            <c:if test="${not empty _csrf}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+            </c:if>
             
             <!-- Section 1: Business & Identity -->
             <div class="section-card">
@@ -656,5 +664,6 @@
             updateCompletionPct();
         });
     </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

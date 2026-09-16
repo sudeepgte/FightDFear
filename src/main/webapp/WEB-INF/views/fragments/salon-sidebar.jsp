@@ -54,7 +54,7 @@
 
     .nav-container {
         flex: 1;
-        padding: 0 16px;
+        padding: 0 16px 150px 16px;
         overflow-y: auto;
     }
 
