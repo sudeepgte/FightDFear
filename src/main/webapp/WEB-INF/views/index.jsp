@@ -248,21 +248,40 @@
             color: #FFFFFF;
         }
 
+        .nav-actions .nav-auth-wrap {
+            position: relative;
+        }
+
         .nav-actions .nav-auth-wrap .dropdown-menu.nav-auth-dropdown {
             left: auto;
             right: 0;
+            top: 100%;
             transform: translateX(0) translateY(10px);
-            width: 185px;
-            min-width: 185px;
-            max-width: 185px;
-            max-height: 300px;
+            width: 210px;
+            min-width: 210px;
+            max-width: 240px;
+            max-height: 320px;
             overflow-y: auto;
             overflow-x: hidden;
-            margin-top: 12px;
+            margin-top: 8px;
             padding: 0.45rem 0;
             border: 1px solid rgba(248, 200, 212, 0.7);
+            border-radius: 14px;
+            box-shadow: 0 12px 36px rgba(45, 20, 44, 0.12);
             scrollbar-width: thin;
             scrollbar-color: #F43F5E #FFF1F2;
+            z-index: 1100;
+        }
+
+        /* Invisible bridge to prevent mouse leaving hover area */
+        .nav-actions .nav-auth-wrap .dropdown-menu.nav-auth-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 0;
+            right: 0;
+            height: 12px;
+            background: transparent;
         }
 
         .nav-auth-dropdown::-webkit-scrollbar {
@@ -283,7 +302,10 @@
             background: #E4234C;
         }
 
-        .nav-actions .nav-auth-wrap:hover .dropdown-menu.nav-auth-dropdown {
+        .nav-actions .nav-auth-wrap:hover .dropdown-menu.nav-auth-dropdown,
+        .nav-actions .nav-auth-wrap.open .dropdown-menu.nav-auth-dropdown {
+            opacity: 1;
+            visibility: visible;
             transform: translateX(0) translateY(0);
         }
 
@@ -303,10 +325,16 @@
         }
 
         .nav-auth-dropdown .dropdown-item {
-            padding: 0.55rem 1rem;
-            font-size: 0.82rem;
+            padding: 0.6rem 1.1rem;
+            font-size: 0.85rem;
+            font-weight: 500;
             white-space: normal;
             line-height: 1.3;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
         }
 
         .nav-auth-dropdown .dropdown-item:hover {
@@ -2114,7 +2142,7 @@
                 </div>
                 <div class="dropdown-menu">
                     <a href="${pageContext.request.contextPath}/login" class="dropdown-item">Join as Member</a>
-                    <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor Login</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
@@ -2158,15 +2186,15 @@
 
         <div class="nav-actions">
             <a href="${pageContext.request.contextPath}/women-events" class="nav-events" style="text-decoration:none;">Events</a>
-            <div class="nav-item nav-auth-wrap">
-                <span class="nav-auth-btn nav-auth-btn--login">
+            <div class="nav-item nav-auth-wrap" id="loginAuthWrap">
+                <span class="nav-auth-btn nav-auth-btn--login" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
                     <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     Login ▾
                 </span>
                 <div class="dropdown-menu nav-auth-dropdown">
                     <span class="dropdown-label">Sign in</span>
                     <a href="${pageContext.request.contextPath}/login" class="dropdown-item">Join as Member</a>
-                    <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor</a>
+                    <a href="${pageContext.request.contextPath}/doctors/login" class="dropdown-item">Women Doctor Login</a>
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
@@ -2179,8 +2207,8 @@
                     <a href="${pageContext.request.contextPath}/fitness/trainer/login" class="dropdown-item">Fitness Trainer</a>
                 </div>
             </div>
-            <div class="nav-item nav-auth-wrap">
-                <span class="nav-auth-btn nav-auth-btn--register">
+            <div class="nav-item nav-auth-wrap" id="registerAuthWrap">
+                <span class="nav-auth-btn nav-auth-btn--register" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false">
                     <svg fill="currentColor" width="18" height="18" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     Register ▾
                 </span>
@@ -3019,6 +3047,46 @@
                     });
                 });
             }
+
+            // Desktop / Touch Auth Dropdowns (Login / Register) toggle & navigation
+            const authWraps = document.querySelectorAll('.nav-actions .nav-auth-wrap');
+            authWraps.forEach(wrap => {
+                const btn = wrap.querySelector('.nav-auth-btn');
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const isCurrentlyOpen = wrap.classList.contains('open');
+                        authWraps.forEach(w => {
+                            if (w !== wrap) {
+                                w.classList.remove('open');
+                                const b = w.querySelector('.nav-auth-btn');
+                                if (b) b.setAttribute('aria-expanded', 'false');
+                            }
+                        });
+                        wrap.classList.toggle('open', !isCurrentlyOpen);
+                        btn.setAttribute('aria-expanded', !isCurrentlyOpen);
+                    });
+
+                    // Keyboard enter / space support
+                    btn.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            btn.click();
+                        }
+                    });
+                }
+            });
+
+            // Close auth dropdowns on click outside
+            document.addEventListener('click', (e) => {
+                authWraps.forEach(wrap => {
+                    if (!wrap.contains(e.target)) {
+                        wrap.classList.remove('open');
+                        const btn = wrap.querySelector('.nav-auth-btn');
+                        if (btn) btn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
 
             // Scroll Reveal Animation
             const revealElements = document.querySelectorAll('.reveal');

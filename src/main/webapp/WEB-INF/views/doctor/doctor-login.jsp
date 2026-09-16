@@ -120,6 +120,7 @@
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
+                 onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/images/logo.png';"
                  style="height:32px;width:32px;border-radius:8px;object-fit:cover;">
             Fight D Fear
         </a>

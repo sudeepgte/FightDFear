@@ -177,7 +177,7 @@ public class DoctorController {
     public String loginPage(@RequestParam(value = "registered", required = false) String registered,
                             HttpSession session, Model model) {
         if (requireLoggedDoctor(session) != null) {
-            return "redirect:/doctors/profile-completion";
+            return "redirect:/doctors/dashboard";
         }
         consumeDoctorLoginPrefill(session, model);
         if ("1".equals(registered) || "true".equalsIgnoreCase(registered)) {
@@ -227,7 +227,6 @@ public class DoctorController {
         // Clear conflicting user session so doctor chat/calls use doctor role, not leftover user session
         session.removeAttribute("user");
         session.setAttribute("loggedDoctor", d);
-        session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
 
         // Generate JWT and add to response
         String token = jwtUtil.generateToken(d.getEmail(), "DOCTOR");
@@ -237,7 +236,7 @@ public class DoctorController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
 
-        return "redirect:/doctors/profile-completion";
+        return "redirect:/doctors/dashboard";
     }
 
 
@@ -492,9 +491,6 @@ public class DoctorController {
 
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d == null) return "redirect:/doctors/login";
-        if (Boolean.TRUE.equals(session.getAttribute("postLoginOpenProfile"))) {
-            return "redirect:/doctors/profile-completion";
-        }
         d = doctorRepo.findById(d.getId()).orElse(d);
 
         
