@@ -13,10 +13,64 @@ public class GlobalModelAttributes {
     @Autowired
     private in.sp.main.Repository.SalonNotificationRepository salonNotificationRepository;
 
+    @Autowired
+    private in.sp.main.Repository.BroadcastMessageRepository broadcastRepo;
+
+    @Autowired
+    private in.sp.main.Repository.ContactMessageRepository contactMessageRepo;
+
     @ModelAttribute("user")
     public User currentUser(HttpSession session) {
         Object u = session.getAttribute("user");
         return (u instanceof User) ? (User) u : null;
+    }
+
+    @ModelAttribute("unreadBroadcastCount")
+    public long unreadBroadcastCount(HttpSession session) {
+        Object u = session.getAttribute("user");
+        if (u instanceof User user) {
+            long unreadBroadcasts = 0;
+            try {
+                java.util.List<in.sp.main.Entities.BroadcastMessage> broadcasts = broadcastRepo.findAllByOrderBySentAtDesc();
+                if (user.getLastReadBroadcastTime() == null) {
+                    unreadBroadcasts = broadcasts.size();
+                } else {
+                    unreadBroadcasts = broadcasts.stream()
+                            .filter(b -> b.getSentAt() != null && b.getSentAt().isAfter(user.getLastReadBroadcastTime()))
+                            .count();
+                }
+            } catch (Exception ignored) {}
+
+            long unreadReplies = 0;
+            if (user.getEmail() != null) {
+                try {
+                    unreadReplies = contactMessageRepo
+                            .countByEmailIgnoreCaseAndAdminReplyIsNotNullAndReplyReadByUserFalse(user.getEmail().trim());
+                } catch (Exception ignored) {}
+            }
+            return unreadBroadcasts + unreadReplies;
+        }
+        return 0;
+    }
+
+    @ModelAttribute("userContactReplies")
+    public java.util.List<in.sp.main.Entities.ContactMessage> userContactReplies(HttpSession session) {
+        Object u = session.getAttribute("user");
+        if (u instanceof User user && user.getEmail() != null) {
+            try {
+                return contactMessageRepo.findByEmailIgnoreCaseAndAdminReplyIsNotNullOrderByRepliedAtDesc(user.getEmail().trim());
+            } catch (Exception ignored) {}
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    @ModelAttribute("recentBroadcasts")
+    public java.util.List<in.sp.main.Entities.BroadcastMessage> recentBroadcasts(HttpSession session) {
+        try {
+            return broadcastRepo.findTop5ByOrderBySentAtDesc();
+        } catch (Exception ignored) {
+            return java.util.Collections.emptyList();
+        }
     }
 
     @ModelAttribute("unreadNotifCount")

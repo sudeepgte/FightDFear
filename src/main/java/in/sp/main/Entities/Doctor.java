@@ -127,7 +127,7 @@ public class Doctor {
     private LocalDateTime lastSeenAt;
 
     // ── 6. Earnings Setup ──
-    private Double consultationFee = 500.0;
+    private Double consultationFee;
     private Double chatFee;
     private Double callFee;
     private Double videoFee;

@@ -14,4 +14,10 @@ public interface ContactMessageRepository extends JpaRepository<ContactMessage, 
     List<ContactMessage> findTop5ByOrderBySubmittedAtDesc();
 
     long countByReadByAdminFalse();
+
+    List<ContactMessage> findByEmailIgnoreCaseOrderBySubmittedAtDesc(String email);
+
+    List<ContactMessage> findByEmailIgnoreCaseAndAdminReplyIsNotNullOrderByRepliedAtDesc(String email);
+
+    long countByEmailIgnoreCaseAndAdminReplyIsNotNullAndReplyReadByUserFalse(String email);
 }

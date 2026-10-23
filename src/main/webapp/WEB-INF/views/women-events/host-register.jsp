@@ -427,8 +427,8 @@
 <body>
 
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/women-events" class="header-brand">
-            <i class="bi bi-shield-heart-fill"></i> Fight D Fear Event Studio
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
         </a>
         <div class="header-links">
             Already registered? <a href="${pageContext.request.contextPath}/women-events/host/login" style="color: var(--primary); font-weight: 700; text-decoration: none; margin-left: 4px;">Sign in</a>
@@ -516,11 +516,23 @@
                     <div class="error-feedback" id="error-confirmPassword"></div>
                 </div>
 
-                <label class="terms-row">
-                    <input type="checkbox" id="acceptedTerms" required onchange="onFormChange()">
-                    <span>I accept the <strong>Terms & Safety Policies</strong> *</span>
-                </label>
-                <div class="error-feedback" id="error-acceptedTerms" style="margin-top: -12px; margin-bottom: 12px;"></div>
+                <!-- Terms & Conditions Box with Modal Link -->
+                <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" id="acceptedTerms" name="acceptedTerms" value="true" required onchange="onFormChange()" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="acceptedTerms" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
+                <div class="error-feedback" id="error-acceptedTerms" style="margin-top: -8px; margin-bottom: 12px;"></div>
 
                 <button type="button" id="btnReview" class="btn-submit" disabled onclick="showPreview()">
                     <i class=""></i> Create Account
@@ -577,7 +589,71 @@
         </div>
     </div>
 
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="we-modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(30,41,59,0.7); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+        <div style="background:#fff; width:90%; max-width:580px; border-radius:20px; padding:28px; box-shadow:0 20px 40px rgba(0,0,0,0.15); max-height:85vh; display:flex; flex-direction:column;">
+            <div style="display:flex; align-items:center; gap:14px; border-bottom:1px solid #E2E8F0; padding-bottom:14px; margin-bottom:14px;">
+                <div style="width:44px; height:44px; border-radius:12px; background:#FDF2F8; color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.3rem;">
+                    <i class="bi bi-journal-check"></i>
+                </div>
+                <div style="flex:1;">
+                    <h3 id="termsModalTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:var(--navy);">Terms &amp; Conditions</h3>
+                    <p style="font-size:0.82rem; color:var(--text-gray); margin:0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div style="overflow-y:auto; max-height:48vh; font-size:0.88rem; line-height:1.6; color:var(--navy); background:#FFF; padding:14px 18px; border:1px solid #E2E8F0; border-radius:12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Events</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear provides a secure, empowering event hosting network dedicated to women's safety, growth, and wellness. Hosts pledge to create respectful, inclusive, and strictly safe environments for all attendees.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Event Authenticity &amp; Venue Verification</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">All workshops, networking sessions, and gatherings must be accurately represented. Venue locations and safety guidelines must be clearly communicated and strictly verified.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Identity &amp; Payout Integrity</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Event hosts must maintain verified identity documentation. Payout and ticketing transactions must comply with all transparent platform financial rules.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Zero-Tolerance Safety Protocol</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Any violation of attendee safety or platform policies will result in immediate event cancellation, account termination, and appropriate legal reporting.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact data, organization details, and verification credentials necessary to safely organize and publish women's community events.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Security &amp; Data Safeguards</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">All personal data, booking records, and financial details are protected using industry-standard TLS encryption and safeguarded access protocols.</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:16px;">
+                <button type="button" onclick="closeTermsModal()" style="flex:1; padding:12px; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:10px; font-weight:700; color:var(--navy); cursor:pointer;">Close</button>
+                <button type="button" onclick="acceptTermsAndClose()" style="flex:1.5; padding:12px; background:var(--primary); border:none; border-radius:10px; font-weight:700; color:#FFFFFF; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            const chk = document.getElementById('acceptedTerms');
+            if (chk) {
+                chk.checked = true;
+                onFormChange();
+            }
+            closeTermsModal();
+        }
+
         let isEmailVerified = false;
         let submitting = false;
         let otpResendTimer = null;
@@ -587,6 +663,11 @@
         let otpResendCooldownSeconds = 60;
 
         function onFormChange() {
+            const chk = document.getElementById('acceptedTerms');
+            const badge = document.getElementById('termsCheckBadge');
+            if (badge && chk) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
             refreshReviewButton();
         }
 

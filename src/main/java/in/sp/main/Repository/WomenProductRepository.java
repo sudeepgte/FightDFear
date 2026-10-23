@@ -15,6 +15,9 @@ public interface WomenProductRepository extends JpaRepository<WomenProduct, Long
     List<WomenProduct> findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc();
     List<WomenProduct> findByCategoryAndActiveTrueAndDeletedFalseOrderByCreatedAtDesc(String category);
 
+    List<WomenProduct> findByApprovalStatusAndDeletedFalseOrderByCreatedAtDesc(String approvalStatus);
+    long countByApprovalStatusAndDeletedFalse(String approvalStatus);
+
     long countByActiveTrueAndDeletedFalse();
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)

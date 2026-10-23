@@ -28,9 +28,19 @@ public class ContactMessage {
     @Column(name = "read_by_admin")
     private boolean readByAdmin;
 
+    @Column(name = "admin_reply", columnDefinition = "TEXT")
+    private String adminReply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
+
+    @Column(name = "reply_read_by_user")
+    private boolean replyReadByUser;
+
     public ContactMessage() {
         this.submittedAt = LocalDateTime.now();
         this.readByAdmin = false;
+        this.replyReadByUser = false;
     }
 
     public Long getId() {
@@ -87,5 +97,29 @@ public class ContactMessage {
 
     public void setReadByAdmin(boolean readByAdmin) {
         this.readByAdmin = readByAdmin;
+    }
+
+    public String getAdminReply() {
+        return adminReply;
+    }
+
+    public void setAdminReply(String adminReply) {
+        this.adminReply = adminReply;
+    }
+
+    public LocalDateTime getRepliedAt() {
+        return repliedAt;
+    }
+
+    public void setRepliedAt(LocalDateTime repliedAt) {
+        this.repliedAt = repliedAt;
+    }
+
+    public boolean isReplyReadByUser() {
+        return replyReadByUser;
+    }
+
+    public void setReplyReadByUser(boolean replyReadByUser) {
+        this.replyReadByUser = replyReadByUser;
     }
 }

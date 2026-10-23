@@ -587,11 +587,22 @@
                     </div>
                 </div>
 
-                <!-- Terms -->
-                <label class="terms-row">
-                    <input type="checkbox" id="termsCheck" required>
-                    <span>I accept the <strong>Terms & Privacy Policy</strong></span>
-                </label>
+                <!-- Terms & Conditions Box with Modal Link -->
+                <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" onclick="openTermsModal('Terms & Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy & Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
 
                 <!-- Submit Button -->
                 <button type="button" class="btn-submit" onclick="openConfirmationModal()">
@@ -640,8 +651,85 @@
         </div>
     </div>
 
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 14px;">
+                <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Community</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear is an empowerment, health, business incubator, and personal safety ecosystem built for women. By registering as an entrepreneur, you commit to upholding the values of mutual respect, trust, empathy, and integrity within our community.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Business Authenticity &amp; Integrity</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">All business information, credentials, pitching details, and payout details provided must be genuine and accurate. Fraudulent claims, misrepresentation, or duplicate account creation will lead to instant account revocation.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Identity Verification &amp; Account Protection</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Entrepreneurs must provide valid identity verification documents (such as Aadhaar). Authentication keys and one-time passwords (OTP) must not be transferred or shared.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Privacy &amp; Data Security</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We implement industry-standard encryption to protect your personal details, business documents, and payout records. Your proprietary ideas and pitch decks are safeguarded for verified platform review only.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">5. Zero-Tolerance Safety Policy</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Any harassment, abusive communication, or unlawful activity on the platform will result in immediate termination and legal action where necessary.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact info, business profile data, and banking details strictly necessary to facilitate business verification, investor proposals, and platform communication.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Security &amp; Encryption</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Your banking information and personal credentials are encrypted in transit and at rest. We never sell or distribute your private business data.</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 14px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()">Close</button>
+                <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Script Logic -->
     <script>
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            const chk = document.getElementById('termsCheck');
+            chk.checked = true;
+            syncTermsCheckBadge();
+            closeTermsModal();
+        }
+
+        function syncTermsCheckBadge() {
+            const chk = document.getElementById('termsCheck');
+            const badge = document.getElementById('termsCheckBadge');
+            if (badge) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.addEventListener('change', syncTermsCheckBadge);
+            }
+        });
         let isOtpSent = false;
         let isOtpVerified = false;
         let resendSeconds = 0;

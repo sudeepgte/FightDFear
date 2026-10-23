@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "women_product_orders")
+@Table(name = "women_product_orders", indexes = {
+    @Index(name = "idx_wp_orders_payment_id", columnList = "razorpay_payment_id")
+})
 public class WomenProductOrder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

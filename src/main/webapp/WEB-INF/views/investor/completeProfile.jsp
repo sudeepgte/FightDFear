@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -456,9 +456,50 @@
         </div>
 
         <!-- Onboarding and profile completion form -->
-        <form id="profileForm" action="${pageContext.request.contextPath}/investor/complete-profile" method="post">
+        <form id="profileForm" action="${pageContext.request.contextPath}/investor/complete-profile" method="post" enctype="multipart/form-data">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             
+            <!-- Section 0: Profile Photo Card -->
+            <div class="section-card" style="border: 2px solid #FBCFE8; background: linear-gradient(180deg, #FFFFFF 0%, #FFF5F7 100%);">
+                <div class="section-header" style="color: var(--primary-rose); border-bottom-color: #FECDD3;">
+                    <i class="bi bi-camera-fill me-2"></i> Professional Profile Photo
+                </div>
+                <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                    <div style="position: relative; width: 110px; height: 110px; flex-shrink: 0;">
+                        <c:choose>
+                            <c:when test="${not empty investor.profilePhoto}">
+                                <img id="profilePhotoPreview" src="${pageContext.request.contextPath}${investor.profilePhoto}" 
+                                     alt="Profile Photo" 
+                                     style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #F43F5E; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.2);">
+                            </c:when>
+                            <c:otherwise>
+                                <img id="profilePhotoPreview" src="" alt="Profile Photo" 
+                                     style="display: none; width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid #F43F5E; box-shadow: 0 4px 14px rgba(244, 63, 94, 0.2);">
+                                <div id="profilePhotoFallback" 
+                                     style="width: 110px; height: 110px; border-radius: 50%; background: #FFE4E6; color: #F43F5E; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; border: 4px solid #FECDD3;">
+                                    ${not empty investor.fullName ? investor.fullName.substring(0, 1).toUpperCase() : 'I'}
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div style="flex: 1; min-width: 240px;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin: 0 0 4px;">Upload Profile Headshot *</h4>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0 0 12px; line-height: 1.4;">
+                            A clear, professional photo increases investor trust and startup pitch acceptance by 70%. Accepts JPG, PNG, or WebP (max 5MB).
+                        </p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <label for="profilePhotoInput" style="background: var(--primary-rose); color: white; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin: 0; transition: background 0.2s;">
+                                <i class="bi bi-upload"></i> Choose Photo
+                            </label>
+                            <input type="file" id="profilePhotoInput" name="profilePhotoFile" accept="image/*" style="display: none;" onchange="previewSelectedPhoto(this)">
+                            <button type="button" id="btnClearPhoto" onclick="clearSelectedPhoto()" style="display: none; background: white; border: 1px solid #E2E8F0; color: var(--text-secondary); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                <i class="bi bi-x-circle"></i> Remove Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Section 1: Business Profile & Credentials -->
             <div class="section-card">
                 <div class="section-header">1. Business Profile & Identity</div>
@@ -589,13 +630,51 @@
             <div class="section-card">
                 <div class="section-header">6. Payout & Bank Settling Info</div>
                 <div class="form-group">
-                    <label>6.1 UPI ID</label>
-                    <input type="text" name="upiId" class="form-input" value="<c:out value='${investor.upiId}'/>" placeholder="e.g. pay@bank">
+                    <label>6.1 UPI ID (for instant settlement)</label>
+                    <input type="text" name="upiId" id="inputUpiId" class="form-input" value="<c:out value='${investor.upiId}'/>" placeholder="e.g. name@okhdfcbank">
                 </div>
-                <div class="form-group">
-                    <label>6.2 Bank Routing Info</label>
-                    <textarea name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, IFSC routing code"><c:out value="${investor.bankDetails}"/></textarea>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.2 Account Holder Name *</label>
+                        <input type="text" id="bankAccountHolder" name="bankAccountHolder" class="form-input" placeholder="Name as per Bank records">
+                    </div>
+                    <div class="form-group">
+                        <label>6.3 Bank Name *</label>
+                        <input type="text" id="bankName" name="bankName" class="form-input" placeholder="e.g. HDFC Bank, ICICI Bank, SBI">
+                    </div>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.4 Account Number *</label>
+                        <input type="text" id="bankAccountNumber" name="bankAccountNumber" class="form-input" placeholder="Enter bank account number" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>6.5 Re-enter Account Number *</label>
+                        <input type="text" id="confirmAccountNumber" class="form-input" placeholder="Confirm bank account number" maxlength="20">
+                        <small id="accMismatchMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                            <i class="bi bi-exclamation-circle-fill"></i> Account numbers do not match
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.6 IFSC Code *</label>
+                        <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" placeholder="e.g. HDFC0001234" maxlength="11" style="text-transform: uppercase;">
+                        <small id="ifscFormatMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                            <i class="bi bi-exclamation-circle-fill"></i> Invalid IFSC format (e.g. SBIN0001234)
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>6.7 Branch Name</label>
+                        <input type="text" id="bankBranch" name="bankBranch" class="form-input" placeholder="e.g. MG Road Branch">
+                    </div>
+                </div>
+
+                <!-- Hidden serialized field for DB compatibility -->
+                <input type="hidden" id="bankDetails" name="bankDetails" value="<c:out value='${investor.bankDetails}'/>">
             </div>
 
             <div class="bottom-actions">
@@ -607,13 +686,166 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function previewSelectedPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('profilePhotoPreview');
+                    const fallback = document.getElementById('profilePhotoFallback');
+                    const btnClear = document.getElementById('btnClearPhoto');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (fallback) fallback.style.display = 'none';
+                    if (btnClear) btnClear.style.display = 'inline-block';
+                    if (typeof updateCompletionPct === 'function') updateCompletionPct();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function clearSelectedPhoto() {
+            const input = document.getElementById('profilePhotoInput');
+            const preview = document.getElementById('profilePhotoPreview');
+            const fallback = document.getElementById('profilePhotoFallback');
+            const btnClear = document.getElementById('btnClearPhoto');
+            if (input) input.value = '';
+            if (btnClear) btnClear.style.display = 'none';
+            if ("${investor.profilePhoto}" !== "") {
+                if (preview) {
+                    preview.src = "${pageContext.request.contextPath}${investor.profilePhoto}";
+                    preview.style.display = 'block';
+                }
+            } else {
+                if (preview) preview.style.display = 'none';
+                if (fallback) fallback.style.display = 'flex';
+            }
+            if (typeof updateCompletionPct === 'function') updateCompletionPct();
+        }
+
+        // Bank Subfields Synchronization & Validation
+        function parseExistingBankDetails() {
+            const raw = (document.getElementById('bankDetails')?.value || '').trim();
+            if (!raw) return;
+
+            if (raw.includes('|')) {
+                const parts = raw.split('|').map(s => s.trim());
+                parts.forEach(part => {
+                    const lower = part.toLowerCase();
+                    if (lower.startsWith('account holder:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountHolder');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('bank:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankName');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('a/c:') || lower.startsWith('account:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountNumber');
+                        const cel = document.getElementById('confirmAccountNumber');
+                        if (el && !el.value) el.value = val;
+                        if (cel && !cel.value) cel.value = val;
+                    } else if (lower.startsWith('ifsc:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankIfsc');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('branch:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankBranch');
+                        if (el && !el.value) el.value = val;
+                    }
+                });
+            } else {
+                const holder = document.getElementById('bankAccountHolder');
+                if (holder && !holder.value) holder.value = raw;
+            }
+        }
+
+        function syncBankDetails() {
+            const holder = document.getElementById('bankAccountHolder')?.value.trim() || '';
+            const bName = document.getElementById('bankName')?.value.trim() || '';
+            const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+            const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+            const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+            const branch = document.getElementById('bankBranch')?.value.trim() || '';
+
+            // Uppercase IFSC
+            const ifscInput = document.getElementById('bankIfsc');
+            if (ifscInput && ifscInput.value !== ifsc) ifscInput.value = ifsc;
+
+            // Mismatch check
+            const mismatchEl = document.getElementById('accMismatchMsg');
+            if (mismatchEl) {
+                if (acc && confirmAcc && acc !== confirmAcc) {
+                    mismatchEl.style.display = 'block';
+                } else {
+                    mismatchEl.style.display = 'none';
+                }
+            }
+
+            // IFSC format check
+            const ifscMsg = document.getElementById('ifscFormatMsg');
+            if (ifscMsg) {
+                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    ifscMsg.style.display = 'block';
+                } else {
+                    ifscMsg.style.display = 'none';
+                }
+            }
+
+            // Serialize into hidden field
+            const hidden = document.getElementById('bankDetails');
+            if (hidden) {
+                if (acc || holder || bName) {
+                    hidden.value = "Account Holder: " + holder + " | Bank: " + bName + " | A/C: " + acc + " | IFSC: " + ifsc + " | Branch: " + branch;
+                }
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             const form = document.getElementById("profileForm");
             if (!form) return;
 
-            function updateCompletionPct() {
+            parseExistingBankDetails();
+
+            ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'confirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', syncBankDetails);
+                    el.addEventListener('blur', syncBankDetails);
+                }
+            });
+
+            form.addEventListener('submit', function(e) {
+                syncBankDetails();
+                const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+                const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+                const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+
+                if (acc && confirmAcc && acc !== confirmAcc) {
+                    e.preventDefault();
+                    alert('Bank account numbers do not match. Please verify and correct.');
+                    document.getElementById('confirmAccountNumber')?.focus();
+                    return;
+                }
+
+                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    e.preventDefault();
+                    alert('Please enter a valid 11-character IFSC code (e.g. HDFC0001234).');
+                    document.getElementById('bankIfsc')?.focus();
+                    return;
+                }
+            });
+
+            window.updateCompletionPct = function() {
                 let filledCount = 0;
-                const totalRequired = 16;
+                const totalRequired = 17; // includes photo
+
+                // Photo check
+                const hasPhoto = "${investor.profilePhoto}" !== "" || (document.getElementById('profilePhotoInput')?.files?.length > 0);
+                if (hasPhoto) filledCount++;
 
                 // 1. Full name
                 if (form.querySelector("[name='fullName']")?.value.trim()) filledCount++;
@@ -652,7 +884,7 @@
                 const stage = form.querySelector("[name='ticketMode']")?.value;
                 if (stage && !isNaN(cheque) && cheque > 0) filledCount++;
 
-                const pct = Math.round((filledCount / totalRequired) * 100);
+                const pct = Math.min(100, Math.round((filledCount / totalRequired) * 100));
 
                 const pctText = document.getElementById("pctText");
                 const progressFill = document.querySelector(".progress-bar-fill");
@@ -668,7 +900,7 @@
                         verificationBtn.disabled = true;
                     }
                 }
-            }
+            };
 
             form.querySelectorAll("input, select, textarea").forEach(input => {
                 input.addEventListener("input", updateCompletionPct);

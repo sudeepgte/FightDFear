@@ -408,6 +408,9 @@ public class UserController {
             user.setEmail(normEmail);
             user.setPhoneNumber(phone);
             user.setCity(city);
+            if (user.getHomeAddress() == null || user.getHomeAddress().isBlank()) {
+                user.setHomeAddress(city);
+            }
             user.setPassword(passwordService.encode(password));
             user.setVerificationStatus(VerificationStatus.VERIFIED);
             user.setIdentityDocument("web-member|lang:English");
@@ -555,42 +558,128 @@ public class UserController {
         return "user-profile";
     }
 
-    private int calculateCompletionPercentage(User user) {
-        // Shared web/mobile-compatible fields for member profile completeness.
-        int totalFields = 8;
-        int filledFields = 0;
-
-        if (user.getFullName() != null && !user.getFullName().isBlank()) filledFields++;
-        if (user.getEmail() != null && !user.getEmail().isBlank()) filledFields++;
-        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) filledFields++;
-        if (user.getHomeAddress() != null && !user.getHomeAddress().isBlank()) filledFields++;
-        if (user.getDob() != null && !user.getDob().isBlank()) filledFields++;
-        if (user.getGender() != null) filledFields++;
-        if (user.getProfilePhoto() != null && !user.getProfilePhoto().isBlank()) filledFields++;
+    @PostMapping({"/profile/upload-photo", "/upload-photo", "/profile/photo"})
+    @ResponseBody
+    public Map<String, Object> uploadProfilePhoto(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        User currentUser = (User) session.getAttribute("user");
+        if (currentUser == null) {
+            result.put("success", false);
+            result.put("error", "Not logged in");
+            return result;
+        }
+        if (file == null || file.isEmpty()) {
+            result.put("success", false);
+            result.put("error", "Please select a valid image file.");
+            return result;
+        }
         try {
-            if (user.getEmergencyContacts() != null && !user.getEmergencyContacts().isEmpty()) filledFields++;
-        } catch (Exception ignored) {
-            // Lazy collection may be unavailable outside transaction
+            String url = fileUploadService.saveFile(file);
+            currentUser.setProfilePhoto(url);
+            userRepository.save(currentUser);
+            User fresh = userRepository.findById(currentUser.getId()).orElse(currentUser);
+            session.setAttribute("user", fresh);
+            result.put("success", true);
+            result.put("url", url);
+            result.put("completionPercentage", calculateCompletionPercentage(fresh));
+            result.put("missingItems", missingProfileItems(fresh));
+        } catch (IOException e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        return result;
+    }
+
+    private int calculateCompletionPercentage(User user) {
+        if (user == null) return 0;
+
+        int score = 0;
+
+        // 1. Full name (10%)
+        if (user.getFullName() != null && !user.getFullName().isBlank()) {
+            score += 10;
         }
 
-        return (filledFields * 100) / totalFields;
+        // 2. Email (10%)
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            score += 10;
+        }
+
+        // 3. Phone number (10%)
+        if (user.getPhoneNumber() != null && !user.getPhoneNumber().isBlank()) {
+            score += 10;
+        }
+
+        // 4. Address or City (15%)
+        boolean hasLocation = (user.getHomeAddress() != null && !user.getHomeAddress().isBlank())
+                || (user.getCity() != null && !user.getCity().isBlank());
+        if (hasLocation) {
+            score += 15;
+        }
+
+        // 5. Date of Birth or Age (10%)
+        if ((user.getDob() != null && !user.getDob().isBlank()) || user.getAge() != null) {
+            score += 10;
+        }
+
+        // 6. Gender (10%)
+        if (user.getGender() != null) {
+            score += 10;
+        }
+
+        // 7. Emergency Contacts (20%) - Essential for safety
+        boolean hasEmergencyContact = false;
+        try {
+            if (user.getEmergencyContacts() != null && !user.getEmergencyContacts().isEmpty()) {
+                hasEmergencyContact = true;
+            }
+        } catch (Exception ignored) {
+            // Lazy collection handling
+        }
+        if (hasEmergencyContact) {
+            score += 20;
+        }
+
+        // 8. Profile Photo (15%) - REQUIRED TO REACH 100%
+        boolean hasPhoto = user.getProfilePhoto() != null && !user.getProfilePhoto().isBlank();
+        if (hasPhoto) {
+            score += 15;
+        }
+
+        // Strict requirement: Profile can NEVER be 100% without a profile photo
+        if (!hasPhoto && score >= 100) {
+            score = 85;
+        }
+
+        return Math.min(100, Math.max(0, score));
     }
 
     private java.util.List<String> missingProfileItems(User user) {
         java.util.List<String> missing = new java.util.ArrayList<>();
+        if (user == null) return missing;
+
         if (user.getFullName() == null || user.getFullName().isBlank()) missing.add("Full name");
         if (user.getEmail() == null || user.getEmail().isBlank()) missing.add("Email");
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) missing.add("Phone number");
-        if (user.getHomeAddress() == null || user.getHomeAddress().isBlank()) missing.add("Location / address");
-        if (user.getDob() == null || user.getDob().isBlank()) missing.add("Date of birth");
+        if ((user.getHomeAddress() == null || user.getHomeAddress().isBlank())
+                && (user.getCity() == null || user.getCity().isBlank())) {
+            missing.add("Location / address");
+        }
+        if ((user.getDob() == null || user.getDob().isBlank()) && user.getAge() == null) {
+            missing.add("Date of birth");
+        }
         if (user.getGender() == null) missing.add("Gender");
-        if (user.getProfilePhoto() == null || user.getProfilePhoto().isBlank()) missing.add("Profile photo");
         try {
             if (user.getEmergencyContacts() == null || user.getEmergencyContacts().isEmpty()) {
                 missing.add("Emergency contact");
             }
         } catch (Exception ignored) {
             missing.add("Emergency contact");
+        }
+        if (user.getProfilePhoto() == null || user.getProfilePhoto().isBlank()) {
+            missing.add("Profile photo");
         }
         return missing;
     }

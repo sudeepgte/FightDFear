@@ -359,6 +359,21 @@
           color: #991b1b;
         }
 
+        .badge-PENDING {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
+        .badge-APPROVED {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        .badge-REJECTED {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
         .btn-fdf-action {
           padding: 10px 20px;
           border-radius: 12px;
@@ -855,9 +870,32 @@
                                 <button type="submit" style="border:none; background:#fdf2f8; color:#9d174d; font-weight:800; border-radius:8px; padding:4px 8px; cursor:pointer;">Save</button>
                               </form>
                             </td>
-                            <td><span
-                                class="fdf-badge badge-${p.stock > 0 && p.active ? 'INSTOCK' : 'OUTOFSTOCK'}">${p.stock
-                                > 0 && p.active ? 'Operational' : 'Depleted'}</span></td>
+                            <td>
+                              <div>
+                                <c:choose>
+                                  <c:when test="${p.approvalStatus == 'APPROVED'}">
+                                    <span class="fdf-badge badge-APPROVED"><i class="bi bi-check-circle me-1"></i>Approved</span>
+                                  </c:when>
+                                  <c:when test="${p.approvalStatus == 'REJECTED'}">
+                                    <span class="fdf-badge badge-REJECTED" title="<c:out value='${p.adminRemarks}'/>"><i class="bi bi-x-circle me-1"></i>Rejected</span>
+                                    <c:if test="${not empty p.adminRemarks}">
+                                      <div style="font-size:0.72rem; color:#b91c1c; margin-top:4px; max-width:160px; line-height:1.2;">
+                                        <i class="bi bi-info-circle"></i> <c:out value="${p.adminRemarks}"/>
+                                      </div>
+                                    </c:if>
+                                  </c:when>
+                                  <c:otherwise>
+                                    <span class="fdf-badge badge-PENDING"><i class="bi bi-clock me-1"></i>Under Review</span>
+                                    <div style="font-size:0.7rem; color:#b45309; margin-top:3px; font-weight:600;">Awaiting Admin</div>
+                                  </c:otherwise>
+                                </c:choose>
+                              </div>
+                              <div style="margin-top:6px;">
+                                <span class="fdf-badge badge-${p.stock > 0 && p.active ? 'INSTOCK' : 'OUTOFSTOCK'}" style="font-size:0.65rem; padding:3px 8px;">
+                                  ${p.stock > 0 && p.active ? 'Operational' : 'Depleted'}
+                                </span>
+                              </div>
+                            </td>
                             <td>
                               <div style="display:flex; gap:8px;">
                                 <button type="button" 
@@ -1504,6 +1542,8 @@
             <c:if test="${not empty seller.phone}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.email}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.address}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.city}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.category}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.serviceArea}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.description}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.qualification}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
@@ -1511,8 +1551,9 @@
             <c:if test="${not empty seller.availableDays}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.workingHoursFrom || not empty seller.workingHoursTo}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
             <c:if test="${not empty seller.languagesSpoken}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
+            <c:if test="${not empty seller.identityDocPath}"><c:set var="completedCount" value="${completedCount + 1}" /></c:if>
 
-            <fmt:formatNumber value="${completedCount * 100 / 13}" maxFractionDigits="0" var="profilePercent" />
+            <fmt:formatNumber value="${completedCount * 100 / 16}" maxFractionDigits="0" var="profilePercent" />
 
             <div class="fdf-section" style="margin-bottom: 24px; background: #FFF5F7; color: #2D142C; padding: 24px; border-radius: 20px; border: 1px solid #FFE4E8;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -1528,7 +1569,7 @@
                 <div style="width: ${profilePercent}%; background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%); height: 100%; border-radius: 6px; transition: width 0.5s ease;"></div>
               </div>
               <div style="font-size: 0.8rem; font-weight: 600; display: flex; gap: 15px; flex-wrap: wrap;">
-                <span style="color:#059669;"><i class="bi bi-check-circle-fill"></i> ${completedCount} of 13 fields completed</span>
+                <span style="color:#059669;"><i class="bi bi-check-circle-fill"></i> ${completedCount} of 16 fields completed</span>
                 <c:if test="${profilePercent < 100}">
                   <span style="color: #E11D48;"><i class="bi bi-exclamation-triangle-fill"></i> Complete remaining fields for 100% profile score</span>
                 </c:if>
@@ -1579,11 +1620,17 @@
                       <h2><i class="bi bi-person-badge-fill"></i> Profile Information</h2>
                     </div>
                     <div class="fdf-section-body">
-                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
                         <div>
                           <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Full Name</label>
                           <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.fullName}</div>
                         </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Role / Designation</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.designation ? seller.designation : 'N/A'}</div>
+                        </div>
+                      </div>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div>
                           <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Name</label>
                           <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.businessName}</div>
@@ -1596,25 +1643,43 @@
                     </div>
                   </div>
 
-                  <%-- 2. Contact Information --%>
+                  <%-- 2. Contact & Location Information --%>
                   <div class="fdf-section" style="margin-bottom: 20px;">
                     <div class="fdf-section-header">
-                      <h2><i class="bi bi-geo-alt-fill"></i> Contact Information</h2>
+                      <h2><i class="bi bi-geo-alt-fill"></i> Contact &amp; Location</h2>
                     </div>
                     <div class="fdf-section-body">
-                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div>
                           <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Phone Number</label>
                           <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.phone}</div>
                         </div>
                         <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">WhatsApp</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.whatsappNumber ? seller.whatsappNumber : 'N/A'}</div>
+                        </div>
+                        <div>
                           <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Email Address</label>
-                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${seller.email}</div>
+                          <div style="font-size: 0.95rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px; word-break: break-all;">${seller.email}</div>
                         </div>
                       </div>
                       <div style="margin-bottom: 15px;">
                         <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Address</label>
                         <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px; line-height: 1.5;">${seller.address}</div>
+                      </div>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">City</label>
+                          <div style="font-size: 0.95rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.city ? seller.city : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">State</label>
+                          <div style="font-size: 0.95rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.state ? seller.state : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Pincode</label>
+                          <div style="font-size: 0.95rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.pincode ? seller.pincode : 'N/A'}</div>
+                        </div>
                       </div>
                       <div>
                         <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Business Description</label>
@@ -1623,12 +1688,22 @@
                     </div>
                   </div>
 
-                  <%-- 3. Professional Information --%>
+                  <%-- 3. Categories, Brand & Store Details --%>
                   <div class="fdf-section" style="margin-bottom: 20px;">
                     <div class="fdf-section-header">
-                      <h2><i class="bi bi-award-fill"></i> Professional Information</h2>
+                      <h2><i class="bi bi-shop"></i> Store &amp; Offerings</h2>
                     </div>
                     <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Primary Category</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.category ? seller.category : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Brand / Listing Type</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.brandType ? seller.brandType : 'N/A'}</div>
+                        </div>
+                      </div>
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
                         <div>
                           <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Years of Experience</label>
@@ -1639,6 +1714,10 @@
                           <div style="font-size: 1rem; font-weight: 600; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.languagesSpoken ? seller.languagesSpoken : 'N/A'}</div>
                         </div>
                       </div>
+                      <div style="margin-bottom: 15px;">
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Shop Amenities / Facilities</label>
+                        <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.facilities ? seller.facilities : 'N/A'}</div>
+                      </div>
                       <div>
                         <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Qualification / Certification</label>
                         <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px; line-height: 1.5;">${not empty seller.qualification ? seller.qualification : 'N/A'}</div>
@@ -1647,9 +1726,9 @@
                   </div>
 
                   <%-- 4. Availability --%>
-                  <div class="fdf-section">
+                  <div class="fdf-section" style="margin-bottom: 20px;">
                     <div class="fdf-section-header">
-                      <h2><i class="bi bi-clock-history"></i> Availability & Working Hours</h2>
+                      <h2><i class="bi bi-clock-history"></i> Availability &amp; Working Hours</h2>
                     </div>
                     <div class="fdf-section-body">
                       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -1667,6 +1746,44 @@
                               <c:otherwise>N/A</c:otherwise>
                             </c:choose>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <%-- 5. Payout & Verification Documents --%>
+                  <div class="fdf-section">
+                    <div class="fdf-section-header">
+                      <h2><i class="bi bi-shield-check"></i> Payout &amp; Verification</h2>
+                    </div>
+                    <div class="fdf-section-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">UPI ID</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.upiId ? seller.upiId : 'N/A'}</div>
+                        </div>
+                        <div>
+                          <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">GSTIN</label>
+                          <div style="font-size: 1rem; font-weight: 700; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.gstin ? seller.gstin : 'N/A'}</div>
+                        </div>
+                      </div>
+                      <div style="margin-bottom: 15px;">
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Bank Account Details</label>
+                        <div style="font-size: 0.95rem; font-weight: 500; color: var(--brand-purple-dark); margin-top: 4px;">${not empty seller.bankDetails ? seller.bankDetails : 'N/A'}</div>
+                      </div>
+                      <div>
+                        <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--fdf-muted);">Identity Proof Document</label>
+                        <div style="margin-top: 6px;">
+                          <c:choose>
+                            <c:when test="${not empty seller.identityDocPath}">
+                              <a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #FFF5F7; border: 1px solid #FFE4E8; border-radius: 8px; color: var(--brand-pink); font-weight: 700; text-decoration: none; font-size: 0.85rem;">
+                                <i class="bi bi-file-earmark-check-fill"></i> View Submitted Identity Document
+                              </a>
+                            </c:when>
+                            <c:otherwise>
+                              <span style="color: var(--fdf-muted); font-size: 0.9rem;">No identity document uploaded.</span>
+                            </c:otherwise>
+                          </c:choose>
                         </div>
                       </div>
                     </div>
@@ -1828,36 +1945,79 @@
                 </div>
               </div>
 
-              <div class="fdf-form-group" style="margin-bottom:15px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Service Area</label>
-                <input type="text" name="serviceArea" class="form-ctrl" value="${seller.serviceArea}" placeholder="e.g. Hyderabad, Secunderabad">
-              </div>
-
-              <div class="fdf-form-group" style="margin-bottom:15px;">
-                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
-                <select name="experience" class="form-ctrl">
-                  <option value="">-- Select Experience --</option>
-                  <option value="Less than 1 year" ${seller.experience == 'Less than 1 year' ? 'selected' : ''}>Less than 1 year</option>
-                  <option value="1 year" ${seller.experience == '1 year' ? 'selected' : ''}>1 year</option>
-                  <option value="2 years" ${seller.experience == '2 years' ? 'selected' : ''}>2 years</option>
-                  <option value="3 years" ${seller.experience == '3 years' ? 'selected' : ''}>3 years</option>
-                  <option value="4 years" ${seller.experience == '4 years' ? 'selected' : ''}>4 years</option>
-                  <option value="5 years" ${seller.experience == '5 years' ? 'selected' : ''}>5 years</option>
-                  <option value="6 years" ${seller.experience == '6 years' ? 'selected' : ''}>6 years</option>
-                  <option value="7 years" ${seller.experience == '7 years' ? 'selected' : ''}>7 years</option>
-                  <option value="8 years" ${seller.experience == '8 years' ? 'selected' : ''}>8 years</option>
-                  <option value="9 years" ${seller.experience == '9 years' ? 'selected' : ''}>9 years</option>
-                  <option value="10 years" ${seller.experience == '10 years' ? 'selected' : ''}>10 years</option>
-                  <option value="11–15 years" ${seller.experience == '11–15 years' ? 'selected' : ''}>11–15 years</option>
-                  <option value="16–20 years" ${seller.experience == '16–20 years' ? 'selected' : ''}>16–20 years</option>
-                  <option value="20+ years" ${seller.experience == '20+ years' ? 'selected' : ''}>20+ years</option>
-                </select>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Role / Designation</label>
+                  <input type="text" name="designation" class="form-ctrl" value="${seller.designation}" maxlength="120" placeholder="e.g. Owner, Designer, Founder">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">WhatsApp Number</label>
+                  <input type="tel" name="whatsappNumber" class="form-ctrl" value="${seller.whatsappNumber}" maxlength="10" inputmode="numeric" placeholder="10-digit WhatsApp number" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
                 <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Business Address *</label>
                 <textarea name="address" id="profileAddress" class="form-ctrl" rows="2" required
                           minlength="10" maxlength="1000">${seller.address}</textarea>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:15px;">
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">City</label>
+                  <input type="text" name="city" class="form-ctrl" value="${seller.city}" maxlength="80" placeholder="City">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">State</label>
+                  <input type="text" name="state" class="form-ctrl" value="${seller.state}" maxlength="80" placeholder="State">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Pincode</label>
+                  <input type="text" name="pincode" class="form-ctrl" value="${seller.pincode}" maxlength="6" inputmode="numeric" placeholder="6-digit pincode" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Primary Category</label>
+                  <input type="text" name="category" class="form-ctrl" value="${seller.category}" maxlength="100" placeholder="e.g. Sarees, Jewelry, Cosmetics">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Brand / Listing Type</label>
+                  <input type="text" name="brandType" class="form-ctrl" value="${seller.brandType}" maxlength="120" placeholder="e.g. Handmade, Retail, Boutique">
+                </div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Service Area</label>
+                  <input type="text" name="serviceArea" class="form-ctrl" value="${seller.serviceArea}" placeholder="e.g. Hyderabad, Secunderabad">
+                </div>
+                <div>
+                  <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Years of Experience</label>
+                  <select name="experience" class="form-ctrl">
+                    <option value="">-- Select Experience --</option>
+                    <option value="Less than 1 year" ${seller.experience == 'Less than 1 year' ? 'selected' : ''}>Less than 1 year</option>
+                    <option value="1 year" ${seller.experience == '1 year' ? 'selected' : ''}>1 year</option>
+                    <option value="2 years" ${seller.experience == '2 years' ? 'selected' : ''}>2 years</option>
+                    <option value="3 years" ${seller.experience == '3 years' ? 'selected' : ''}>3 years</option>
+                    <option value="4 years" ${seller.experience == '4 years' ? 'selected' : ''}>4 years</option>
+                    <option value="5 years" ${seller.experience == '5 years' ? 'selected' : ''}>5 years</option>
+                    <option value="6 years" ${seller.experience == '6 years' ? 'selected' : ''}>6 years</option>
+                    <option value="7 years" ${seller.experience == '7 years' ? 'selected' : ''}>7 years</option>
+                    <option value="8 years" ${seller.experience == '8 years' ? 'selected' : ''}>8 years</option>
+                    <option value="9 years" ${seller.experience == '9 years' ? 'selected' : ''}>9 years</option>
+                    <option value="10 years" ${seller.experience == '10 years' ? 'selected' : ''}>10 years</option>
+                    <option value="11–15 years" ${seller.experience == '11–15 years' ? 'selected' : ''}>11–15 years</option>
+                    <option value="16–20 years" ${seller.experience == '16–20 years' ? 'selected' : ''}>16–20 years</option>
+                    <option value="20+ years" ${seller.experience == '20+ years' ? 'selected' : ''}>20+ years</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="fdf-form-group" style="margin-bottom: 15px;">
+                <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase;">Shop Amenities / Facilities</label>
+                <input type="text" name="facilities" class="form-ctrl" value="${seller.facilities}" maxlength="500" placeholder="e.g. Trial room, Parking, UPI/Card Accepted">
               </div>
 
               <div class="fdf-form-group" style="margin-bottom: 15px;">
@@ -1903,7 +2063,7 @@
               </div>
 
               <%-- Languages Spoken Multi-Select --%>
-              <div class="fdf-form-group" style="margin-bottom: 20px; background: #fafafa; padding: 15px; border-radius: 12px;">
+              <div class="fdf-form-group" style="margin-bottom: 15px; background: #fafafa; padding: 15px; border-radius: 12px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                   <label style="font-weight:700; font-size:0.85rem; text-transform:uppercase; margin:0;">Languages Spoken</label>
                   <div>
@@ -1919,6 +2079,45 @@
                     </label>
                   </c:forTokens>
                 </div>
+              </div>
+
+              <%-- Payout & Tax Details --%>
+              <div style="background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
+                <div style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px; color: var(--brand-pink);">
+                  <i class="bi bi-wallet2"></i> Payout &amp; Tax Information
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                  <div>
+                    <label style="font-weight:600; font-size:0.8rem; text-transform:uppercase;">UPI ID</label>
+                    <input type="text" name="upiId" class="form-ctrl" value="${seller.upiId}" placeholder="e.g. shop@upi">
+                  </div>
+                  <div>
+                    <label style="font-weight:600; font-size:0.8rem; text-transform:uppercase;">GSTIN (Optional)</label>
+                    <input type="text" name="gstin" class="form-ctrl" value="${seller.gstin}" placeholder="GST Number">
+                  </div>
+                </div>
+                <div>
+                  <label style="font-weight:600; font-size:0.8rem; text-transform:uppercase;">Bank Account Details</label>
+                  <input type="text" name="bankDetails" class="form-ctrl" value="${seller.bankDetails}" placeholder="Bank Name, Account Number, IFSC Code">
+                </div>
+              </div>
+
+              <%-- Verification Documents --%>
+              <div style="background: #fafafa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee;">
+                <div style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 10px; color: var(--brand-purple-dark);">
+                  <i class="bi bi-file-earmark-person"></i> Identity Document / Verification
+                </div>
+                <c:if test="${not empty seller.identityDocPath}">
+                  <div style="margin-bottom: 10px; font-size: 0.85rem;">
+                    <span style="color: var(--fdf-muted);">Current Document:</span>
+                    <a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank" style="color: var(--brand-pink); font-weight: 600; text-decoration: none; margin-left: 6px;">
+                      <i class="bi bi-eye"></i> View Current Document
+                    </a>
+                  </div>
+                </c:if>
+                <label style="font-weight:600; font-size:0.8rem; text-transform:uppercase; display:block; margin-bottom:5px;">Update Identity Document (Optional)</label>
+                <input type="file" name="identityDoc" accept=".pdf,image/*" class="form-ctrl">
+                <small style="color: #666; font-size: 0.75rem; margin-top: 4px; display: block;">Upload Aadhaar, PAN, GST, or Business Proof (PDF or Image)</small>
               </div>
 
               <button type="submit" class="btn-fdf-action" style="width:100%; padding: 15px; border-radius: 14px; font-weight:800;">Save Profile Changes</button>

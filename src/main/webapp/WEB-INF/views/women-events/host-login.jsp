@@ -254,8 +254,8 @@
 <body>
 
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/women-events" class="header-brand">
-            <i class="bi bi-shield-heart-fill"></i> Fight D Fear Event Studio
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
         </a>
         <div style="font-size: 0.88rem;">
             New Host? <a href="${pageContext.request.contextPath}/women-events/host/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register here</a>

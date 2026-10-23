@@ -472,10 +472,10 @@ public class MartialArtsCenterController {
         response.addCookie(cookie);
 
         // Smart routing: Check if profile needs completion (Mobile parity)
-        boolean needsCompletion = center.getCentreProfileStatus() == CentreProfileStatus.REGISTERED
+        boolean needsCompletion = (center.getCentreProfileStatus() == CentreProfileStatus.REGISTERED
                 || center.getCentreProfileStatus() == CentreProfileStatus.PROFILE_INCOMPLETE
-                || center.getCentreProfileStatus() == CentreProfileStatus.CHANGES_REQUESTED
-                || (center.getProfileCompletionPct() != null && center.getProfileCompletionPct() < 100 && !center.isApproved());
+                || center.getCentreProfileStatus() == CentreProfileStatus.CHANGES_REQUESTED)
+                && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL;
 
         if (needsCompletion) {
             return "redirect:/centres/profile-completion";
@@ -491,6 +491,14 @@ public class MartialArtsCenterController {
             return "redirect:/centres/login";
         }
         MartialArtsCenter center = centreRepository.findById(sessionCenter.getId()).orElse(sessionCenter);
+        if (center.getGalleryPhotos() != null) {
+            center.getGalleryPhotos().size();
+        }
+        if (center.getAvailableDays() != null) {
+            center.getAvailableDays().size();
+        }
+        center = centreProfileService.refreshCompletion(center);
+        session.setAttribute("loggedCentre", center);
         model.addAttribute("center", center);
         return "centreProfileCompletion";
     }
@@ -525,10 +533,16 @@ public class MartialArtsCenterController {
             @RequestParam(required = false) String howWeTeach,
             @RequestParam(required = false) List<String> offers,
             @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) String bankAccountHolder,
+            @RequestParam(required = false) String bankName,
+            @RequestParam(required = false) String bankAccountNumber,
+            @RequestParam(required = false) String bankIfsc,
+            @RequestParam(required = false) String bankBranch,
             @RequestParam(required = false) String bankDetails,
             @RequestParam(required = false) MultipartFile profilePhotoFile,
             @RequestParam(required = false) MultipartFile certificateFile,
             @RequestParam(required = false) MultipartFile[] galleryFiles,
+            @RequestParam(value = "submitVerificationAfterSave", required = false) Boolean submitVerificationAfterSave,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
@@ -562,7 +576,16 @@ public class MartialArtsCenterController {
         if (howWeTeach != null) body.put("howWeTeach", howWeTeach);
         if (offers != null) body.put("whatWeOffer", offers);
         if (upiId != null) body.put("upiId", upiId);
-        if (bankDetails != null) body.put("bankDetails", bankDetails);
+        if (bankDetails != null && !bankDetails.isBlank()) {
+            body.put("bankDetails", bankDetails.trim());
+        } else if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+            String serialized = "Account Holder: " + (bankAccountHolder != null ? bankAccountHolder.trim() : "")
+                    + " | Bank: " + (bankName != null ? bankName.trim() : "")
+                    + " | A/C: " + bankAccountNumber.trim()
+                    + " | IFSC: " + (bankIfsc != null ? bankIfsc.trim().toUpperCase() : "")
+                    + " | Branch: " + (bankBranch != null ? bankBranch.trim() : "");
+            body.put("bankDetails", serialized);
+        }
 
         try {
             if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
@@ -572,9 +595,15 @@ public class MartialArtsCenterController {
                 center.setTrainerCertificatePath(fileuploadService.saveFile(certificateFile));
             }
             if (galleryFiles != null) {
+                if (center.getGalleryPhotos() == null) {
+                    center.setGalleryPhotos(new ArrayList<>());
+                }
                 for (MultipartFile f : galleryFiles) {
                     if (f != null && !f.isEmpty()) {
-                        center.getGalleryPhotos().add(fileuploadService.saveFile(f));
+                        String saved = fileuploadService.saveFile(f);
+                        if (saved != null && !saved.isBlank()) {
+                            center.getGalleryPhotos().add(saved);
+                        }
                     }
                 }
             }
@@ -584,14 +613,23 @@ public class MartialArtsCenterController {
 
         centreProfileService.applyFields(center, body);
         center = centreProfileService.refreshCompletion(center);
-        session.setAttribute("loggedCentre", center);
 
+        if (Boolean.TRUE.equals(submitVerificationAfterSave)) {
+            center.setCentreProfileStatus(CentreProfileStatus.PENDING_ADMIN_APPROVAL);
+            center.setSubmittedForVerificationAt(LocalDateTime.now());
+            centreRepository.save(center);
+            session.setAttribute("loggedCentre", center);
+            redirectAttributes.addFlashAttribute("message", "Your centre profile has been submitted for Admin Verification! Our team will review your application shortly.");
+            return "redirect:/centres/dashboard";
+        }
+
+        session.setAttribute("loggedCentre", center);
         redirectAttributes.addFlashAttribute("message", "Profile details saved successfully! Current completion: " + (center.getProfileCompletionPct() != null ? center.getProfileCompletionPct() : 0) + "%");
         return "redirect:/centres/profile-completion";
     }
 
     // ---------- SUBMIT VERIFICATION HANDLER ----------
-    @PostMapping("/submitVerification")
+    @PostMapping(value = {"/submitVerification", "/submit-verification"})
     public String submitVerification(HttpSession session, RedirectAttributes redirectAttributes) {
         MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (sessionCenter == null) return "redirect:/centres/login";
@@ -605,7 +643,7 @@ public class MartialArtsCenterController {
         session.setAttribute("loggedCentre", center);
 
         redirectAttributes.addFlashAttribute("message", "Your centre profile has been submitted for Admin Verification! Our team will review your application shortly.");
-        return "redirect:/centres/profile-completion";
+        return "redirect:/centres/dashboard";
     }
 
     // ---------- LOGOUT ----------

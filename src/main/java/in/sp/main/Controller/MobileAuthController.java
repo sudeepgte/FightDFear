@@ -394,6 +394,10 @@ public class MobileAuthController {
             session.setAttribute("regSuccessName", fullName);
             session.setAttribute("regSuccessEmail", email);
             session.setAttribute("regSuccessPhone", phone);
+            session.setAttribute("regPrefillEmail", email);
+            if (password != null && !password.isBlank()) {
+                session.setAttribute("regPrefillPassword", password);
+            }
         }
 
         response.put("success", true);

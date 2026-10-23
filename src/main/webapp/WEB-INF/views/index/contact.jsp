@@ -230,6 +230,7 @@
                                 <div class="col-md-6">
                                     <label for="inquiryName" class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
                                     <input type="text" id="inquiryName" name="name" class="form-control p-3 rounded-4"
+                                           value="<c:out value='${not empty sessionScope.user ? sessionScope.user.fullName : \"\"}'/>"
                                            placeholder="Full Name" required minlength="2" maxlength="80"
                                            pattern="[A-Za-z]([A-Za-z .'-]*[A-Za-z])?"
                                            title="Letters only (spaces, apostrophes, hyphens allowed). No numbers.">
@@ -237,7 +238,9 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="inquiryEmail" class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
-                                    <input type="email" id="inquiryEmail" name="email" class="form-control p-3 rounded-4" placeholder="Email Address" required maxlength="255">
+                                    <input type="email" id="inquiryEmail" name="email" class="form-control p-3 rounded-4"
+                                           value="<c:out value='${not empty sessionScope.user ? sessionScope.user.email : \"\"}'/>"
+                                           placeholder="Email Address" required maxlength="255">
                                     <div class="invalid-feedback">Please enter a valid email address.</div>
                                 </div>
                                 <div class="col-12">
@@ -251,7 +254,6 @@
                                               placeholder="Message" required minlength="10" maxlength="2000"></textarea>
                                     <div class="invalid-feedback">Message must be 10–2000 characters.</div>
                                 </div>
-                                </div>
                                 <div class="col-12 mt-4">
                                     <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                     <button type="submit" id="btnSubmitMessage" class="btn-send-message">Send Message</button>
@@ -260,6 +262,63 @@
                         </form>
                     </div>
                 </div>
+
+                <c:if test="${not empty myMessages}">
+                    <div class="mt-5 pt-4 border-top">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h3 class="fw-bold mb-0" style="font-size: 22px; color: var(--fdf-text);">
+                                <i class="bi bi-clock-history me-2" style="color: var(--fdf-pink);"></i> Your Inquiries &amp; Admin Responses
+                            </h3>
+                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">${myMessages.size()} submitted</span>
+                        </div>
+                        <div class="row g-4">
+                            <c:forEach var="msg" items="${myMessages}">
+                                <div class="col-12">
+                                    <div class="p-4 rounded-4" style="background:#FFFFFF; border:1px solid #E2E8F0; box-shadow:0 4px 15px rgba(0,0,0,0.03);">
+                                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                            <div>
+                                                <h5 class="fw-bold mb-1" style="color:#0F172A; font-size:1.05rem;"><c:out value="${msg.subject}"/></h5>
+                                                <div class="small text-muted"><i class="bi bi-calendar3 me-1"></i> Sent: ${msg.submittedAt}</div>
+                                            </div>
+                                            <div>
+                                                <c:choose>
+                                                    <c:when test="${not empty msg.adminReply}">
+                                                        <span class="badge bg-success text-white px-3 py-2 rounded-pill" style="font-size:0.75rem;">
+                                                            <i class="bi bi-check2-circle me-1"></i> Responded
+                                                        </span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill" style="font-size:0.75rem;">
+                                                            <i class="bi bi-hourglass-split me-1"></i> Under Review
+                                                        </span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                        </div>
+                                        <div class="p-3 rounded-3 mb-3" style="background:#F8FAFC; color:#334155; font-size:0.92rem; line-height:1.5;">
+                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size:0.72rem;">Your Query:</div>
+                                            <c:out value="${msg.message}"/>
+                                        </div>
+
+                                        <c:if test="${not empty msg.adminReply}">
+                                            <div class="p-3 rounded-3" style="background:#F0FDF4; border:1px solid #BBF7D0;">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <div class="fw-bold" style="color:#15803D; font-size:0.88rem;">
+                                                        <i class="bi bi-shield-check me-1"></i> Admin Response:
+                                                    </div>
+                                                    <div class="small text-muted" style="font-size:0.75rem;">${msg.repliedAt}</div>
+                                                </div>
+                                                <div style="color:#166534; font-size:0.92rem; line-height:1.5;">
+                                                    <c:out value="${msg.adminReply}"/>
+                                                </div>
+                                            </div>
+                                        </c:if>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </div>
+                </c:if>
             </div>
         </div>
     </div>

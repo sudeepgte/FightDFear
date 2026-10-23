@@ -120,6 +120,69 @@
             .btn-dr { padding: 14px 20px; }
             .dr-step-dot { width: 32px; height: 32px; font-size: 0.8rem; }
         }
+
+        /* Terms Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            max-width: 580px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .modal-header .icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #FDF2F8;
+            color: var(--brand-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .btn-modal-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #F1F5F9;
+            border: 1px solid #CBD5E1;
+            border-radius: 10px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+        }
+        .btn-modal-confirm {
+            flex: 1.5;
+            padding: 12px;
+            background: var(--brand-purple);
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            color: #FFFFFF;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -161,7 +224,6 @@
                         <div class="fdf-row">
                             <div class="fdf-group">
                                 <label>First Name</label>
-
                                 <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya"
                                        value="${stylist.firstName}" maxlength="50" required>
                                 <div class="error-msg" id="err-firstName">Required (Min 2 chars, alphabets only).</div>
@@ -171,15 +233,6 @@
                                 <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma"
                                        value="${stylist.lastName}" maxlength="50" required>
                                 <div class="error-msg" id="err-lastName">Required (Min 2 chars, alphabets only).</div>
-
-                                <input type="text" name="firstName" id="firstName" class="fdf-input" placeholder="e.g. Priya" required>
-                                <div class="error-msg" id="err-firstName">Required (alphabets only).</div>
-                            </div>
-                            <div class="fdf-group">
-                                <label>Last Name</label>
-                                <input type="text" name="lastName" id="lastName" class="fdf-input" placeholder="e.g. Sharma" required>
-                                <div class="error-msg" id="err-lastName">Required (alphabets only).</div>
-
                             </div>
                         </div>
                         <div class="fdf-group">
@@ -230,9 +283,26 @@
                             <div class="error-msg" id="err-experience">Required (Range: 0-50 years).</div>
                         </div>
 
+                        <!-- Terms & Conditions Box with Modal Link -->
+                        <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:20px 0 10px;">
+                            <div style="display:flex; align-items:flex-start; gap:10px;">
+                                <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--brand-purple); cursor:pointer; margin-top:2px;">
+                                <label for="termsCheck" style="font-size:0.88rem; color:var(--brand-purple-darker); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                                    I have read and agree to the 
+                                    <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--brand-purple); font-weight:700; text-decoration:underline;">
+                                        Terms &amp; Conditions
+                                    </a>
+                                    and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--brand-purple); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                                </label>
+                            </div>
+                            <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:#059669; font-weight:700; margin-top:6px; padding-left:28px;">
+                                <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                            </div>
+                        </div>
+
                         <div style="display:flex; justify-content:space-between; gap:20px; margin-top:30px;">
                             <button type="button" class="btn-dr btn-dr-prev" onclick="showStep(1)">Back</button>
-                            <button type="submit" class="btn-dr btn-dr-next" id="btn-submit" style="margin-top:0;">Create Professional Profile</button>
+                            <button type="submit" class="btn-dr btn-dr-next" id="btn-submit" style="margin-top:0;" disabled>Create Professional Profile</button>
                         </div>
                     </div>
                 </form>
@@ -244,7 +314,78 @@
         </div>
     </div>
 
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid #E2E8F0; padding-bottom: 14px; margin-bottom: 14px;">
+                <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="termsModalTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:var(--brand-purple-darker);">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.82rem; color: var(--fdf-muted); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--fdf-muted); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--brand-purple-darker); background: #FFF; padding: 14px 18px; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">1. Purpose &amp; Women-Centric Safety</h4>
+                    <p style="margin-bottom:12px; color:var(--fdf-muted);">Fight D Fear connects women clients with verified, trusted beauty and styling professionals. By registering as a stylist, you commit to highest standards of hygiene, personal safety, punctuality, and respect.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">2. Professional Integrity &amp; Verification</h4>
+                    <p style="margin-bottom:12px; color:var(--fdf-muted);">All qualifications, experience levels, certifications, and work portfolios submitted must be authentic. Falsification will result in immediate disqualification and platform ban.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">3. Safe Service Delivery &amp; Code of Conduct</h4>
+                    <p style="margin-bottom:12px; color:var(--fdf-muted);">Stylists must adhere to verified safety protocols during salon or doorstep sessions. Any breach of client trust, misconduct, or harassment triggers zero-tolerance action.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">4. Privacy &amp; Data Security</h4>
+                    <p style="margin-bottom:0; color:var(--fdf-muted);">Client contact information provided for booking fulfillment must be treated with strict confidentiality and never shared with external parties.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">1. Information We Collect</h4>
+                    <p style="margin-bottom:12px; color:var(--fdf-muted);">We collect contact details, professional experience, portfolio images, and identity documents strictly for onboarding verification and platform service safety.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--brand-purple-darker); margin-bottom:4px;">2. Data Protection</h4>
+                    <p style="margin-bottom:0; color:var(--fdf-muted);">Your personal information is encrypted in transit and securely retained in compliance with our safety privacy guidelines.</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 14px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()">Close</button>
+                <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            const chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.checked = true;
+                syncTermsCheckBadge();
+                checkFormValidity();
+            }
+            closeTermsModal();
+        }
+
+        function syncTermsCheckBadge() {
+            const chk = document.getElementById('termsCheck');
+            const badge = document.getElementById('termsCheckBadge');
+            if (badge && chk) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
+        }
+
         function showStep(s) {
             document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
             document.getElementById('step' + s).classList.add('active');
@@ -296,11 +437,7 @@
                 isValid = false;
             } else {
                 if (fieldId === 'firstName' || fieldId === 'lastName') {
-
                     isValid = val.length >= 2 && /^[a-zA-Z][a-zA-Z .'-]*$/.test(val);
-
-                    isValid = val.length >= 1 && /^[a-zA-Z\s]+$/.test(val);
-
                 } else if (fieldId === 'email') {
                     isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
                 } else if (fieldId === 'contactNumber') {
@@ -356,10 +493,13 @@
                 return el && el.classList.contains('is-valid');
             });
 
+            const termsEl = document.getElementById('termsCheck');
+            const termsOk = termsEl ? termsEl.checked : true;
+
             const nextBtn = document.getElementById('btn-next-1');
             if (nextBtn) nextBtn.disabled = !(isStep1Valid && photoOk);
             const submitBtn = document.getElementById('btn-submit');
-            if (submitBtn) submitBtn.disabled = !isStep2Valid;
+            if (submitBtn) submitBtn.disabled = !(isStep2Valid && termsOk);
         }
 
         function nextStep(s) {
@@ -377,10 +517,23 @@
                 input.addEventListener('change', () => validateField(input));
             });
 
+            const termsEl = document.getElementById('termsCheck');
+            if (termsEl) {
+                termsEl.addEventListener('change', () => {
+                    syncTermsCheckBadge();
+                    checkFormValidity();
+                });
+            }
+
             document.getElementById('stylistRegForm').addEventListener('submit', function(e) {
                 const fields = document.querySelectorAll('.fdf-input');
                 let allValid = true;
                 fields.forEach(f => { if (!validateField(f)) allValid = false; });
+                const termsEl = document.getElementById('termsCheck');
+                if (termsEl && !termsEl.checked) {
+                    allValid = false;
+                    termsEl.focus();
+                }
                 if (!allValid) {
                     e.preventDefault();
                     if (!document.getElementById('step2').classList.contains('active')) showStep(1);

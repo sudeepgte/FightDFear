@@ -2134,6 +2134,12 @@
                     <a href="${pageContext.request.contextPath}/users/register" class="dropdown-item"><span>👭</span> Women's Community</a>
                 </div>
             </li>
+            <li class="nav-item">
+                <a href="${pageContext.request.contextPath}/index/contact" class="nav-link-direct">Contact</a>
+            </li>
+            <li class="nav-item mobile-only-item">
+                <a href="${pageContext.request.contextPath}/index/contact" class="nav-link-direct"><span>📬</span> Contact Us</a>
+            </li>
             <li class="nav-item mobile-only-item">
                 <a href="${pageContext.request.contextPath}/women-events" class="nav-link-direct"><span>🎉</span> Events</a>
             </li>
@@ -2968,6 +2974,7 @@
                         <li><a href="/users/register">Safety Tips</a></li>
                         <li><a href="/doctors/register">Health Resources</a></li>
                         <li><a href="/centres/registerCentre">Self Defense</a></li>
+                        <li><a href="${pageContext.request.contextPath}/index/contact">Contact Support</a></li>
                     </ul>
                 </div>
             </div>
@@ -2977,7 +2984,7 @@
                 <div class="footer-bottom-links">
                     <a href="/users/register">Privacy Policy</a>
                     <a href="/users/register">Terms of Service</a>
-                    <a href="/users/register">Contact Us</a>
+                    <a href="${pageContext.request.contextPath}/index/contact">Contact Us</a>
                 </div>
             </div>
         </div>

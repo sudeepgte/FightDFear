@@ -178,7 +178,11 @@ public class Investor {
     }
 
     public void setBudgetRange(String budgetRange) {
-        this.budgetRange = budgetRange;
+        if (budgetRange != null) {
+            this.budgetRange = budgetRange.replace("₹", "INR ").replace("\u20B9", "INR ");
+        } else {
+            this.budgetRange = null;
+        }
     }
 
     public String getPreferredLocations() {
@@ -308,7 +312,13 @@ public class Investor {
     public String getCredentialNumber() { return credentialNumber; }
     public void setCredentialNumber(String credentialNumber) { this.credentialNumber = credentialNumber; }
     public String getTicketMode() { return ticketMode; }
-    public void setTicketMode(String ticketMode) { this.ticketMode = ticketMode; }
+    public void setTicketMode(String ticketMode) {
+        if (ticketMode != null) {
+            this.ticketMode = ticketMode.replace("₹", "INR ").replace("\u20B9", "INR ");
+        } else {
+            this.ticketMode = null;
+        }
+    }
     public Integer getDurationMinutes() { return durationMinutes; }
     public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
     public Integer getBufferMinutes() { return bufferMinutes; }
@@ -331,4 +341,21 @@ public class Investor {
     public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    @PrePersist
+    @PreUpdate
+    public void sanitizeCharset() {
+        if (budgetRange != null) {
+            budgetRange = budgetRange.replace("₹", "INR ").replace("\u20B9", "INR ");
+        }
+        if (ticketMode != null) {
+            ticketMode = ticketMode.replace("₹", "INR ").replace("\u20B9", "INR ");
+        }
+        if (investmentInterests != null) {
+            investmentInterests = investmentInterests.replace("₹", "INR ").replace("\u20B9", "INR ");
+        }
+        if (bio != null) {
+            bio = bio.replace("₹", "INR ").replace("\u20B9", "INR ");
+        }
+    }
 }

@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface BroadcastMessageRepository extends JpaRepository<BroadcastMessage, Long> {
     List<BroadcastMessage> findAllByOrderBySentAtDesc();
+    List<BroadcastMessage> findTop5ByOrderBySentAtDesc();
 }

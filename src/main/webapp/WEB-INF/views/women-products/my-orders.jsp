@@ -550,7 +550,15 @@
                   <c:if test="${o.returnRequest.status == 'COMPLETED' && o.returnRequest.type == 'EXCHANGE'}">
                     <c:set var="arrival" value="<%= new java.util.Date(System.currentTimeMillis() + 259200000L) %>" />
                     <div style="font-size: 11px; color: #059669; font-weight: 700; margin-top: 6px; padding-left: 10px; display: flex; align-items: center; gap: 6px;">
-                      <i class="bi bi-truck"></i> Your replacement will arrive by <fmt:formatDate value="${arrival}" pattern="EEEE, dd MMM" />
+                      <i class="bi bi-truck"></i> Replacement delivered. If the replacement is also damaged or defective, you can request another exchange or refund:
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                      <div class="action-btn exchange-btn" onclick="openExchangeModal('${o.id}')" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; cursor:pointer;">
+                        <i class="bi bi-arrow-repeat"></i> Replacement Damaged? Exchange Again
+                      </div>
+                      <div class="action-btn refund-btn" onclick="openRefundModal('${o.id}')" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; cursor:pointer;">
+                        <i class="bi bi-currency-rupee"></i> Return &amp; Refund
+                      </div>
                     </div>
                   </c:if>
                 </c:if>

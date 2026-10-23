@@ -372,30 +372,50 @@
 
         <!-- Dynamic Profile Completion Progress Card -->
         <div class="profile-progress-card">
-            <div class="progress-header">
-                <span class="progress-title">Profile Completion: <span id="pctText">${not empty entrepreneur.profileCompletionPct ? entrepreneur.profileCompletionPct : 20}%</span></span>
-                <c:choose>
-                    <c:when test="${not empty entrepreneur and (entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED')}">
-                        <span class="status-badge badge-approved">Approved</span>
-                    </c:when>
-                    <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'CHANGES_REQUESTED'}">
-                        <span class="status-badge badge-changes">Changes Requested</span>
-                    </c:when>
-                    <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
-                        <span class="status-badge badge-pending">Under Review</span>
-                    </c:when>
-                    <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'REJECTED'}">
-                        <span class="status-badge badge-rejected">Rejected</span>
-                    </c:when>
-                    <c:otherwise>
-                        <span class="status-badge badge-registered">Registered</span>
-                    </c:otherwise>
-                </c:choose>
+            <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px;">
+                <div style="width:52px; height:52px; border-radius:50%; overflow:hidden; background:#FFF1F2; border:2px solid #FECDD3; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <c:choose>
+                        <c:when test="${not empty entrepreneur.profilePhoto}">
+                            <img id="topBarAvatar" src="${fn:startsWith(entrepreneur.profilePhoto, 'http') ? entrepreneur.profilePhoto : pageContext.request.contextPath.concat(entrepreneur.profilePhoto)}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">
+                            <span id="topBarAvatarFallback" style="font-size:1.4rem; color:var(--brand-pink); font-weight:800; display:none;">
+                                ${not empty entrepreneur.fullName ? fn:substring(entrepreneur.fullName, 0, 1).toUpperCase() : 'E'}
+                            </span>
+                        </c:when>
+                        <c:otherwise>
+                            <span id="topBarAvatarFallback" style="font-size:1.4rem; color:var(--brand-pink); font-weight:800;">
+                                ${not empty entrepreneur.fullName ? fn:substring(entrepreneur.fullName, 0, 1).toUpperCase() : 'E'}
+                            </span>
+                            <img id="topBarAvatar" src="" alt="Avatar" style="width:100%; height:100%; object-fit:cover; display:none;">
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <div class="progress-header" style="margin-bottom:6px;">
+                        <span class="progress-title">Profile Completion: <span id="pctText">${not empty entrepreneur.profileCompletionPct ? entrepreneur.profileCompletionPct : 20}%</span></span>
+                        <c:choose>
+                            <c:when test="${not empty entrepreneur and (entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED')}">
+                                <span class="status-badge badge-approved">Approved</span>
+                            </c:when>
+                            <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'CHANGES_REQUESTED'}">
+                                <span class="status-badge badge-changes">Changes Requested</span>
+                            </c:when>
+                            <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
+                                <span class="status-badge badge-pending">Under Review</span>
+                            </c:when>
+                            <c:when test="${not empty entrepreneur and entrepreneur.partnerProfileStatus == 'REJECTED'}">
+                                <span class="status-badge badge-rejected">Rejected</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="status-badge badge-registered">Registered</span>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: <c:out value='${not empty entrepreneur.profileCompletionPct ? entrepreneur.profileCompletionPct : 20}'/>%;"></div>
+                    </div>
+                </div>
             </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-fill" style="width: <c:out value='${not empty entrepreneur.profileCompletionPct ? entrepreneur.profileCompletionPct : 20}'/>%;"></div>
-            </div>
-            <p style="font-size: 0.8rem; color: var(--text-gray);">
+            <p style="font-size: 0.8rem; color: var(--text-gray); margin:0;">
                 Complete all required sections below. Once your profile reaches required completeness, you can submit for Admin verification.
             </p>
         </div>
@@ -448,7 +468,40 @@
             
             <!-- Section 1: Business & Identity -->
             <div class="section-card">
-                <div class="section-header">1. Business identity & basic info</div>
+                <div class="section-header">1. Business identity &amp; profile photo</div>
+
+                <!-- Profile Photo Card -->
+                <div class="profile-photo-card" style="display:flex; align-items:center; gap:20px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:16px; padding:18px 20px; margin-bottom:22px; flex-wrap:wrap;">
+                    <div class="photo-preview-circle" style="width:84px; height:84px; border-radius:50%; overflow:hidden; background:#FFF1F2; border:3px solid #FECDD3; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <c:choose>
+                            <c:when test="${not empty entrepreneur.profilePhoto}">
+                                <img id="entPhotoPreview" src="${fn:startsWith(entrepreneur.profilePhoto, 'http') ? entrepreneur.profilePhoto : pageContext.request.contextPath.concat(entrepreneur.profilePhoto)}" alt="Profile Photo" style="width:100%; height:100%; object-fit:cover;">
+                                <div id="entPhotoFallback" style="display:none; font-size:2rem; color:var(--brand-pink); font-weight:800;">
+                                    ${not empty entrepreneur.fullName ? fn:substring(entrepreneur.fullName, 0, 1).toUpperCase() : 'E'}
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div id="entPhotoFallback" style="font-size:2rem; color:var(--brand-pink); font-weight:800;">
+                                    ${not empty entrepreneur.fullName ? fn:substring(entrepreneur.fullName, 0, 1).toUpperCase() : 'E'}
+                                </div>
+                                <img id="entPhotoPreview" src="" alt="Profile Photo" style="width:100%; height:100%; object-fit:cover; display:none;">
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div style="flex:1; min-width:220px;">
+                        <label style="font-size:0.92rem; font-weight:700; color:var(--navy); margin-bottom:4px; display:block;">1.0 Profile Photo / Founder Headshot *</label>
+                        <p style="font-size:0.8rem; color:var(--text-gray); margin:0 0 10px; line-height:1.4;">Upload a clear founder portrait or business logo (JPG or PNG up to 5 MB). This establishes credibility with investors and customers.</p>
+                        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                            <label for="profilePhotoFileInput" class="btn-upload-photo" style="display:inline-flex; align-items:center; gap:6px; background:var(--brand-pink); color:#fff; font-size:0.85rem; font-weight:700; padding:8px 16px; border-radius:10px; cursor:pointer; transition:0.2s;">
+                                <i class="bi bi-camera-fill"></i> Upload Photo
+                            </label>
+                            <input type="file" id="profilePhotoFileInput" name="profilePhotoFile" accept="image/*" style="display:none;" data-has-file="${not empty entrepreneur.profilePhoto ? 'true' : 'false'}">
+                            <span id="entPhotoName" style="font-size:0.82rem; color:var(--text-gray); word-break:break-all;">
+                                ${not empty entrepreneur.profilePhoto ? '<i class=\"bi bi-check-circle-fill text-success\"></i> Photo on file' : 'No photo uploaded yet'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -484,13 +537,19 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>1.5 Mobile number *</label>
-                        <input type="tel" name="phone" class="form-input" value="<c:out value='${entrepreneur.phone}'/>" maxlength="10" required>
+                        <label>1.5 Email address *</label>
+                        <input type="email" id="email" name="email" class="form-input" value="<c:out value='${entrepreneur.email}'/>" placeholder="entrepreneur@example.com" required>
+                        <small style="color:var(--text-gray); font-size:0.75rem;">Account email used for communications and verification</small>
                     </div>
                     <div class="form-group">
-                        <label>1.6 WhatsApp number</label>
-                        <input type="tel" name="whatsappNumber" class="form-input" value="<c:out value='${entrepreneur.whatsappNumber}'/>" placeholder="10-digit WhatsApp number" maxlength="10">
+                        <label>1.6 Mobile number *</label>
+                        <input type="tel" name="phone" class="form-input" value="<c:out value='${entrepreneur.phone}'/>" maxlength="10" required pattern="[0-9]{10}">
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label>1.7 WhatsApp number</label>
+                    <input type="tel" name="whatsappNumber" class="form-input" value="<c:out value='${entrepreneur.whatsappNumber}'/>" placeholder="10-digit WhatsApp number" maxlength="10">
                 </div>
             </div>
 
@@ -555,16 +614,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>5.2 Entrepreneur Photo / Brand Logo</label>
-                    <input type="file" name="profilePhotoFile" class="form-input" accept="image/*"
-                           data-has-file="${not empty entrepreneur.profilePhoto ? 'true' : 'false'}">
-                    <c:if test="${not empty entrepreneur.profilePhoto}">
-                        <div class="text-success small mt-1"><i class="bi bi-check-circle-fill"></i> File already uploaded</div>
-                    </c:if>
-                </div>
-
-                <div class="form-group">
-                    <label>5.3 Pitch Deck Document (PDF / Image)</label>
+                    <label>5.2 Pitch Deck Document (PDF / Image)</label>
                     <input type="file" name="pitchDeckFile" class="form-input" accept=".pdf,image/*"
                            data-has-file="${not empty entrepreneur.documentsPath ? 'true' : 'false'}">
                     <c:if test="${not empty entrepreneur.documentsPath}">
@@ -573,7 +623,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>5.4 Business / Product Gallery Photos</label>
+                    <label>5.3 Business / Product Gallery Photos</label>
                     <input type="file" name="businessPhotosFiles" class="form-input" accept="image/*" multiple
                            data-has-file="${not empty entrepreneur.photosPath ? 'true' : 'false'}">
                     <c:if test="${not empty entrepreneur.photosPath}">
@@ -587,12 +637,48 @@
                 <div class="section-header">6. Payout & bank details</div>
                 <div class="form-group">
                     <label>6.1 UPI ID (for direct funding / payouts)</label>
-                    <input type="text" name="upiId" class="form-input" value="<c:out value='${entrepreneur.upiId}'/>" placeholder="name@upi">
+                    <input type="text" id="upiId" name="upiId" class="form-input" value="<c:out value='${entrepreneur.upiId}'/>" placeholder="name@okaxis / username@upi">
+                    <small style="color:var(--text-gray); font-size:0.75rem;">Instant UPI ID for payments & disbursements</small>
                 </div>
-                <div class="form-group">
-                    <label>6.2 Bank account details</label>
-                    <textarea name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, Bank, IFSC Code"><c:out value="${entrepreneur.bankDetails}"/></textarea>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.2 Account Holder Name</label>
+                        <input type="text" id="bankAccountHolder" name="bankAccountHolder" class="form-input" placeholder="Account Holder Name as per bank records">
+                    </div>
+                    <div class="form-group">
+                        <label>6.3 Bank Name</label>
+                        <input type="text" id="bankName" name="bankName" class="form-input" value="<c:out value='${entrepreneur.bankName}'/>" placeholder="e.g. State Bank of India, HDFC Bank">
+                    </div>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.4 Account Number</label>
+                        <input type="password" id="bankAccountNumber" name="bankAccountNumber" class="form-input" value="<c:out value='${entrepreneur.accountNumber}'/>" placeholder="9 to 18 digits" maxlength="18" autocomplete="new-password">
+                        <div id="accNumErr" style="display:none; color:#DC2626; font-size:0.75rem; font-weight:600; margin-top:4px;">Account number should be 9 to 18 digits.</div>
+                    </div>
+                    <div class="form-group">
+                        <label>6.5 Confirm Account Number</label>
+                        <input type="text" id="confirmAccountNumber" name="confirmAccountNumber" class="form-input" placeholder="Re-enter bank account number" maxlength="18" autocomplete="off">
+                        <div id="accMatchErr" style="display:none; color:#DC2626; font-size:0.75rem; font-weight:600; margin-top:4px;">Account numbers do not match.</div>
+                        <div id="accMatchOk" style="display:none; color:#16A34A; font-size:0.75rem; font-weight:600; margin-top:4px;"><i class="bi bi-check-circle-fill"></i> Account numbers match</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>6.6 IFSC Code</label>
+                        <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" value="<c:out value='${entrepreneur.ifscCode}'/>" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform:uppercase;">
+                        <div id="ifscErr" style="display:none; color:#DC2626; font-size:0.75rem; font-weight:600; margin-top:4px;">Enter a valid 11-character IFSC code (e.g. ABCD0123456).</div>
+                    </div>
+                    <div class="form-group">
+                        <label>6.7 Branch Name</label>
+                        <input type="text" id="bankBranch" name="bankBranch" class="form-input" placeholder="e.g. MG Road Branch">
+                    </div>
+                </div>
+
+                <input type="hidden" id="bankDetails" name="bankDetails" value="<c:out value='${entrepreneur.bankDetails}'/>">
             </div>
 
             <div class="bottom-actions">
@@ -607,9 +693,147 @@
             const form = document.querySelector("form[action*='profile-completion']");
             if (!form) return;
 
+            // Pre-parse existing bankDetails if present
+            const rawBankDetails = document.getElementById("bankDetails")?.value || "";
+            const holderInput = document.getElementById("bankAccountHolder");
+            const bankInput = document.getElementById("bankName");
+            const accInput = document.getElementById("bankAccountNumber");
+            const confirmInput = document.getElementById("confirmAccountNumber");
+            const ifscInput = document.getElementById("bankIfsc");
+            const branchInput = document.getElementById("bankBranch");
+
+            if (rawBankDetails && rawBankDetails.includes("|")) {
+                const parts = rawBankDetails.split("|").map(s => s.trim());
+                parts.forEach(p => {
+                    const colon = p.indexOf(":");
+                    if (colon > -1) {
+                        const key = p.substring(0, colon).trim().toLowerCase();
+                        const val = p.substring(colon + 1).trim();
+                        if (key.includes("holder") && holderInput && !holderInput.value) holderInput.value = val;
+                        if (key.includes("bank") && bankInput && !bankInput.value) bankInput.value = val;
+                        if ((key.includes("a/c") || key.includes("account")) && accInput && !accInput.value) {
+                            accInput.value = val;
+                            if (confirmInput) confirmInput.value = val;
+                        }
+                        if (key.includes("ifsc") && ifscInput && !ifscInput.value) ifscInput.value = val;
+                        if (key.includes("branch") && branchInput && !branchInput.value) branchInput.value = val;
+                    }
+                });
+            } else if (accInput && accInput.value && confirmInput && !confirmInput.value) {
+                confirmInput.value = accInput.value;
+            }
+
+            function syncBankDetails() {
+                const holder = holderInput?.value.trim() || "";
+                const bank = bankInput?.value.trim() || "";
+                const acc = accInput?.value.trim() || "";
+                const ifsc = ifscInput?.value.trim().toUpperCase() || "";
+                const branch = branchInput?.value.trim() || "";
+
+                if (ifscInput) ifscInput.value = ifsc;
+
+                if (acc || holder || bank || ifsc) {
+                    const serialized = "Account Holder: " + holder + " | Bank: " + bank + " | A/C: " + acc + " | IFSC: " + ifsc + " | Branch: " + branch;
+                    const hField = document.getElementById("bankDetails");
+                    if (hField) hField.value = serialized;
+                }
+            }
+
+            function validateBankFields() {
+                let ok = true;
+                const acc = accInput?.value.trim() || "";
+                const confirm = confirmInput?.value.trim() || "";
+                const ifsc = ifscInput?.value.trim().toUpperCase() || "";
+
+                const accNumErr = document.getElementById("accNumErr");
+                const accMatchErr = document.getElementById("accMatchErr");
+                const accMatchOk = document.getElementById("accMatchOk");
+                const ifscErr = document.getElementById("ifscErr");
+
+                if (acc && !/^\d{9,18}$/.test(acc)) {
+                    if (accNumErr) accNumErr.style.display = "block";
+                    ok = false;
+                } else {
+                    if (accNumErr) accNumErr.style.display = "none";
+                }
+
+                if (acc && confirm) {
+                    if (acc !== confirm) {
+                        if (accMatchErr) accMatchErr.style.display = "block";
+                        if (accMatchOk) accMatchOk.style.display = "none";
+                        ok = false;
+                    } else {
+                        if (accMatchErr) accMatchErr.style.display = "none";
+                        if (accMatchOk) accMatchOk.style.display = "block";
+                    }
+                } else {
+                    if (accMatchErr) accMatchErr.style.display = "none";
+                    if (accMatchOk) accMatchOk.style.display = "none";
+                }
+
+                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    if (ifscErr) ifscErr.style.display = "block";
+                    ok = false;
+                } else {
+                    if (ifscErr) ifscErr.style.display = "none";
+                }
+
+                syncBankDetails();
+                return ok;
+            }
+
+            [holderInput, bankInput, accInput, confirmInput, ifscInput, branchInput].forEach(inp => {
+                if (inp) {
+                    inp.addEventListener("input", validateBankFields);
+                    inp.addEventListener("blur", validateBankFields);
+                }
+            });
+
+            form.addEventListener("submit", function(e) {
+                if (!validateBankFields()) {
+                    e.preventDefault();
+                    alert("Please check your Bank Account details. Ensure the Account Number matches and IFSC code is valid.");
+                    return false;
+                }
+            });
+
+            const photoInput = document.getElementById("profilePhotoFileInput");
+            if (photoInput) {
+                photoInput.addEventListener("change", function() {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        const nameEl = document.getElementById("entPhotoName");
+                        if (nameEl) nameEl.textContent = file.name;
+
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewImg = document.getElementById("entPhotoPreview");
+                            const fallback = document.getElementById("entPhotoFallback");
+                            const topAvatar = document.getElementById("topBarAvatar");
+                            const topFallback = document.getElementById("topBarAvatarFallback");
+
+                            if (previewImg) {
+                                previewImg.src = e.target.result;
+                                previewImg.style.display = "block";
+                            }
+                            if (fallback) fallback.style.display = "none";
+
+                            if (topAvatar) {
+                                topAvatar.src = e.target.result;
+                                topAvatar.style.display = "block";
+                            }
+                            if (topFallback) topFallback.style.display = "none";
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                    updateCompletionPct();
+                });
+            }
+
             function updateCompletionPct() {
-                let pct = 5; // Start with 5% for the logged-in email
+                let pct = 0;
                 const fullName = form.querySelector("[name='fullName']")?.value.trim();
+                const email = form.querySelector("[name='email']")?.value.trim();
                 const phone = form.querySelector("[name='phone']")?.value.trim();
                 const businessName = form.querySelector("[name='businessName']")?.value.trim();
                 const businessCategory = form.querySelector("[name='businessCategory']")?.value.trim();
@@ -621,6 +845,7 @@
                 const aadhaarNumber = form.querySelector("[name='aadhaarNumber']")?.value.trim();
                 const businessDescription = form.querySelector("[name='businessDescription']")?.value.trim();
                 const upiId = form.querySelector("[name='upiId']")?.value.trim();
+                const bankAccountNumber = accInput?.value.trim();
                 const bankDetails = form.querySelector("[name='bankDetails']")?.value.trim();
                 
                 const profilePhoto = form.querySelector("[name='profilePhotoFile']");
@@ -628,6 +853,7 @@
                 const businessPhotos = form.querySelector("[name='businessPhotosFiles']");
 
                 if (fullName) pct += 5;
+                if (email && email.includes("@")) pct += 5;
                 if (phone) pct += 5;
 
                 if (businessName) pct += 5;
@@ -641,10 +867,10 @@
                 if (aadhaarNumber) pct += 10;
 
                 if (businessDescription) pct += 10;
-                if (upiId || bankDetails) pct += 5;
+                if (upiId || bankAccountNumber || bankDetails) pct += 10;
 
                 if ((profilePhoto && profilePhoto.files.length > 0) || (profilePhoto && profilePhoto.getAttribute("data-has-file") === "true")) pct += 10;
-                if ((pitchDeck && pitchDeck.files.length > 0) || (pitchDeck && pitchDeck.getAttribute("data-has-file") === "true")) pct += 10;
+                if ((pitchDeck && pitchDeck.files.length > 0) || (pitchDeck && pitchDeck.getAttribute("data-has-file") === "true")) pct += 5;
                 if ((businessPhotos && businessPhotos.files.length > 0) || (businessPhotos && businessPhotos.getAttribute("data-has-file") === "true")) pct += 10;
 
                 pct = Math.min(100, pct);
@@ -661,6 +887,7 @@
             });
 
             // Initial trigger
+            validateBankFields();
             updateCompletionPct();
         });
     </script>

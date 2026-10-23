@@ -135,9 +135,33 @@
                       <label class="wj-label">UPI ID for Payouts</label>
                       <input class="wj-input" type="text" name="upiId" placeholder="e.g. handle@bank" value="${workerApp.upiId}">
                     </div>
-                    <div style="grid-column: 1 / -1;">
-                      <label class="wj-label">Bank Account / IFSC Details</label>
-                      <textarea class="wj-textarea" name="bankDetails" rows="3" placeholder="Bank Name, A/C No, IFSC Code">${workerApp.bankDetails}</textarea>
+                    <input type="hidden" id="workerBankDetails" name="bankDetails" value="<c:out value='${workerApp.bankDetails}'/>">
+                    <div>
+                      <label class="wj-label">Account Holder Name</label>
+                      <input class="wj-input" type="text" id="bankAccountHolder" placeholder="Name as per passbook">
+                    </div>
+                    <div>
+                      <label class="wj-label">Bank Name</label>
+                      <input class="wj-input" type="text" id="bankName" placeholder="e.g. State Bank of India, HDFC">
+                    </div>
+                    <div>
+                      <label class="wj-label">Account Number</label>
+                      <input class="wj-input" type="password" id="bankAccountNumber" placeholder="Account Number" autocomplete="new-password">
+                    </div>
+                    <div>
+                      <label class="wj-label">Confirm Account Number</label>
+                      <input class="wj-input" type="text" id="confirmAccountNumber" placeholder="Re-enter Account Number">
+                      <small id="accMismatchError" style="display:none; color:#DC2626; font-size:0.75rem; font-weight:700; margin-top:2px;">Account numbers do not match</small>
+                      <small id="accMatchSuccess" style="display:none; color:#16A34A; font-size:0.75rem; font-weight:700; margin-top:2px;">Account numbers match <i class="bi bi-check-circle-fill"></i></small>
+                    </div>
+                    <div>
+                      <label class="wj-label">IFSC Code</label>
+                      <input class="wj-input" type="text" id="bankIfsc" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform:uppercase;">
+                      <small id="ifscError" style="display:none; color:#DC2626; font-size:0.75rem; font-weight:700; margin-top:2px;">Format: 4 letters, 0, 6 letters/digits</small>
+                    </div>
+                    <div>
+                      <label class="wj-label">Branch Name</label>
+                      <input class="wj-input" type="text" id="bankBranch" placeholder="e.g. MG Road, Bengaluru">
                     </div>
                   </div>
                   <div style="margin-top:20px;display:flex;gap:10px">
@@ -222,6 +246,110 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        var hiddenBank = document.getElementById('workerBankDetails');
+        var acHolderInput = document.getElementById('bankAccountHolder');
+        var bankNameInput = document.getElementById('bankName');
+        var acNumInput = document.getElementById('bankAccountNumber');
+        var confirmAcInput = document.getElementById('confirmAccountNumber');
+        var ifscInput = document.getElementById('bankIfsc');
+        var branchInput = document.getElementById('bankBranch');
+        var mismatchErr = document.getElementById('accMismatchError');
+        var matchOk = document.getElementById('accMatchSuccess');
+        var ifscErr = document.getElementById('ifscError');
+
+        if (hiddenBank && hiddenBank.value) {
+            var raw = hiddenBank.value.trim();
+            if (raw.indexOf('|') !== -1) {
+                var parts = raw.split('|');
+                parts.forEach(function(part) {
+                    var p = part.trim();
+                    if (p.toLowerCase().indexOf('account holder:') === 0) {
+                        if (acHolderInput) acHolderInput.value = p.substring(15).trim();
+                    } else if (p.toLowerCase().indexOf('bank:') === 0) {
+                        if (bankNameInput) bankNameInput.value = p.substring(5).trim();
+                    } else if (p.toLowerCase().indexOf('a/c:') === 0) {
+                        var ac = p.substring(4).trim();
+                        if (acNumInput) acNumInput.value = ac;
+                        if (confirmAcInput) confirmAcInput.value = ac;
+                    } else if (p.toLowerCase().indexOf('ifsc:') === 0) {
+                        if (ifscInput) ifscInput.value = p.substring(5).trim();
+                    } else if (p.toLowerCase().indexOf('branch:') === 0) {
+                        if (branchInput) branchInput.value = p.substring(7).trim();
+                    }
+                });
+            } else if (bankNameInput) {
+                bankNameInput.value = raw;
+            }
+        }
+
+        function syncBankDetails() {
+            var holder = acHolderInput ? acHolderInput.value.trim() : '';
+            var bName = bankNameInput ? bankNameInput.value.trim() : '';
+            var acNum = acNumInput ? acNumInput.value.trim() : '';
+            var ifsc = ifscInput ? ifscInput.value.trim().toUpperCase() : '';
+            var branch = branchInput ? branchInput.value.trim() : '';
+
+            if (ifscInput) ifscInput.value = ifsc;
+
+            if (holder || bName || acNum || ifsc || branch) {
+                var parts = [];
+                if (holder) parts.push('Account Holder: ' + holder);
+                if (bName) parts.push('Bank: ' + bName);
+                if (acNum) parts.push('A/C: ' + acNum);
+                if (ifsc) parts.push('IFSC: ' + ifsc);
+                if (branch) parts.push('Branch: ' + branch);
+                if (hiddenBank) hiddenBank.value = parts.join(' | ');
+            }
+        }
+
+        function validateAccountMatch() {
+            if (!acNumInput || !confirmAcInput) return true;
+            var a = acNumInput.value.trim();
+            var c = confirmAcInput.value.trim();
+            if (c.length > 0) {
+                if (a !== c) {
+                    if (mismatchErr) mismatchErr.style.display = 'block';
+                    if (matchOk) matchOk.style.display = 'none';
+                    return false;
+                } else {
+                    if (mismatchErr) mismatchErr.style.display = 'none';
+                    if (matchOk) matchOk.style.display = 'block';
+                    return true;
+                }
+            } else {
+                if (mismatchErr) mismatchErr.style.display = 'none';
+                if (matchOk) matchOk.style.display = 'none';
+                return true;
+            }
+        }
+
+        function validateIfsc() {
+            if (!ifscInput) return true;
+            var code = ifscInput.value.trim().toUpperCase();
+            if (!code) {
+                if (ifscErr) ifscErr.style.display = 'none';
+                return true;
+            }
+            var ok = /^[A-Z]{4}0[A-Z0-9]{6}$/.test(code);
+            if (ifscErr) ifscErr.style.display = ok ? 'none' : 'block';
+            return ok;
+        }
+
+        [acHolderInput, bankNameInput, acNumInput, confirmAcInput, ifscInput, branchInput].forEach(function(el) {
+            if (el) {
+                el.addEventListener('input', function() {
+                    syncBankDetails();
+                    if (el === acNumInput || el === confirmAcInput) validateAccountMatch();
+                    if (el === ifscInput) validateIfsc();
+                });
+                el.addEventListener('blur', function() {
+                    syncBankDetails();
+                    if (el === acNumInput || el === confirmAcInput) validateAccountMatch();
+                    if (el === ifscInput) validateIfsc();
+                });
+            }
+        });
+
         var earningsForm = document.getElementById('earningsUpdateForm');
         if (earningsForm) {
             earningsForm.addEventListener('submit', function(e) {
@@ -229,6 +357,18 @@
                 if (isNaN(rate) || rate <= 0) {
                     e.preventDefault();
                     alert('Hourly rate must be greater than zero.');
+                    return;
+                }
+                syncBankDetails();
+                if (!validateAccountMatch()) {
+                    e.preventDefault();
+                    if (confirmAcInput) confirmAcInput.focus();
+                    return;
+                }
+                if (!validateIfsc()) {
+                    e.preventDefault();
+                    if (ifscInput) ifscInput.focus();
+                    return;
                 }
             });
         }

@@ -112,7 +112,7 @@
             <div class="value"><c:out value="${regPhone}"/></div>
         </div>
 
-        <a class="btn" href="${pageContext.request.contextPath}/login">
+        <a class="btn" href="${pageContext.request.contextPath}/login?email=${not empty regEmail ? regEmail : ''}">
             Continue to Login <i class="bi bi-arrow-right"></i>
         </a>
         <p class="note">Your email (and password for this browser session) will be ready on the login form.</p>

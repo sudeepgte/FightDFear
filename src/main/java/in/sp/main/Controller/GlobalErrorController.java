@@ -26,7 +26,8 @@ public class GlobalErrorController implements ErrorController {
     @RequestMapping("/error")
     public Object handleError(HttpServletRequest request, HttpServletResponse response, Model model) {
         Integer statusCode = (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
-        if (statusCode == null) {
+        Throwable throwable = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+        if (statusCode == null || (statusCode == 200 && throwable != null)) {
             statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
         }
 
@@ -44,8 +45,7 @@ public class GlobalErrorController implements ErrorController {
             requestUri = request.getRequestURI();
         }
 
-        if (statusCode >= 500) {
-            Throwable throwable = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+        if (statusCode >= 500 || throwable != null) {
             log.error("Internal server error correlationId={} uri={} status={}: ",
                     correlationId, LogSanitizer.sanitize(requestUri), statusCode, throwable);
         } else if (statusCode == 404 || statusCode == 400) {

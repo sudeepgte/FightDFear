@@ -235,10 +235,14 @@ public class InvestorProfileService {
             Object raw = body.get("typicalPrice") != null ? body.get("typicalPrice") : body.get("typicalCheque");
             if (!str(raw).isBlank()) {
                 try {
-                    i.setTypicalCheque(Double.parseDouble(str(raw)));
-                    i.setBudgetRange("₹" + str(raw));
+                    String numStr = str(raw).replace("INR", "").replace("Rs", "").replace(",", "").trim();
+                    i.setTypicalCheque(Double.parseDouble(numStr));
+                    i.setBudgetRange("INR " + numStr);
                 } catch (Exception ignored) {}
             }
+        }
+        if (body.get("budgetRange") != null) {
+            i.setBudgetRange(blankToNull(str(body.get("budgetRange"))));
         }
         if (body.get("upiId") != null) i.setUpiId(blankToNull(str(body.get("upiId"))));
         if (body.get("bankDetails") != null) i.setBankDetails(blankToNull(str(body.get("bankDetails"))));
@@ -290,7 +294,10 @@ public class InvestorProfileService {
         return null;
     }
 
-    private static String str(Object v) { return v == null ? "" : String.valueOf(v).trim(); }
+    private static String str(Object v) {
+        if (v == null) return "";
+        return String.valueOf(v).replace("₹", "INR ").replace("\u20B9", "INR ").trim();
+    }
     private static String blankToNull(String v) { return v == null || v.isBlank() ? null : v.trim(); }
 
     private static String csv(Object v) {

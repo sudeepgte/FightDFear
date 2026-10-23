@@ -406,6 +406,13 @@
             align-items: center;
         }
 
+        .profile-avatar-wrap {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin-bottom: 12px;
+        }
+
         .profile-avatar {
             width: 140px;
             height: 140px;
@@ -413,7 +420,56 @@
             object-fit: cover;
             border: 5px solid var(--surface-primary);
             box-shadow: 0 10px 28px rgba(244, 63, 94, 0.2);
-            margin-bottom: 16px;
+            margin-bottom: 0;
+            display: block;
+        }
+
+        .profile-cam-btn {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #F43F5E;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4);
+            border: 3px solid #FFFFFF;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            z-index: 5;
+        }
+
+        .profile-cam-btn:hover {
+            background: #E11D48;
+            transform: scale(1.1);
+        }
+
+        .btn-change-photo-pill {
+            background: rgba(244, 63, 94, 0.08);
+            color: #F43F5E;
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            border-radius: 50px;
+            padding: 4px 14px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-change-photo-pill:hover {
+            background: #F43F5E;
+            color: #FFFFFF;
+            border-color: #F43F5E;
+            transform: translateY(-1px);
         }
 
         .profile-side-name {
@@ -730,23 +786,36 @@
         <div class="profile-fullscreen">
             <!-- 30% full-height side -->
             <aside class="profile-side">
-                <c:set var="userPUrl" value="${user.profilePhoto}" />
-                <c:choose>
-                    <c:when test="${not empty userPUrl}">
-                        <c:if test="${not fn:startsWith(userPUrl, 'http') and not fn:startsWith(userPUrl, '/')}">
-                            <c:set var="userPUrl" value="/uploads/${userPUrl}" />
-                        </c:if>
-                        <c:if test="${not fn:startsWith(userPUrl, 'http')}">
-                            <c:set var="userPUrl" value="${pageContext.request.contextPath}${userPUrl}" />
-                        </c:if>
-                        <img src="${userPUrl}"
-                             onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';"
-                             alt="Profile" class="profile-avatar">
-                    </c:when>
-                    <c:otherwise>
-                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="profile-avatar">
-                    </c:otherwise>
-                </c:choose>
+                <div class="profile-avatar-wrap">
+                    <c:set var="userPUrl" value="${user.profilePhoto}" />
+                    <c:choose>
+                        <c:when test="${not empty userPUrl}">
+                            <c:if test="${not fn:startsWith(userPUrl, 'http') and not fn:startsWith(userPUrl, '/')}">
+                                <c:set var="userPUrl" value="/uploads/${userPUrl}" />
+                            </c:if>
+                            <c:if test="${not fn:startsWith(userPUrl, 'http')}">
+                                <c:set var="userPUrl" value="${pageContext.request.contextPath}${userPUrl}" />
+                            </c:if>
+                            <img src="${userPUrl}"
+                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';"
+                                 alt="Profile" class="profile-avatar" id="userProfileAvatar">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="profile-avatar" id="userProfileAvatar">
+                        </c:otherwise>
+                    </c:choose>
+                    <c:if test="${isOwner}">
+                        <div class="profile-cam-btn" onclick="document.getElementById('userProfilePhotoInput').click()" title="Change Profile Photo">
+                            <i class="bi bi-camera-fill"></i>
+                        </div>
+                        <input type="file" id="userProfilePhotoInput" style="display:none;" accept="image/*" onchange="uploadUserProfilePhoto(this)">
+                    </c:if>
+                </div>
+                <c:if test="${isOwner}">
+                    <button type="button" class="btn-change-photo-pill" onclick="document.getElementById('userProfilePhotoInput').click()">
+                        <i class="bi bi-camera-fill"></i> <c:choose><c:when test="${not empty user.profilePhoto}">Change photo</c:when><c:otherwise>Add profile photo</c:otherwise></c:choose>
+                    </button>
+                </c:if>
                 <div class="profile-side-name">${user.fullName}</div>
                 <div class="profile-side-role">Member profile</div>
 
@@ -839,11 +908,16 @@
                     <div class="profile-progress-block">
                         <div class="profile-progress-top">
                             <strong>Profile completion</strong>
-                            <span>${completionPercentage != null ? completionPercentage : 0}%</span>
+                            <span id="completionPctText">${completionPercentage != null ? completionPercentage : 0}%</span>
                         </div>
                         <div class="profile-progress-track">
-                            <div class="profile-progress-fill" style="width:${completionPercentage != null ? completionPercentage : 0}%;"></div>
+                            <div class="profile-progress-fill" id="completionProgressBar" style="width:${completionPercentage != null ? completionPercentage : 0}%;"></div>
                         </div>
+                        <c:if test="${not empty missingItems}">
+                            <div id="missingItemsContainer" class="small mt-2" style="font-size:0.75rem; color:#E11D48;">
+                                <i class="bi bi-info-circle me-1"></i> Missing: <span id="missingItemsList"><c:forEach var="m" items="${missingItems}" varStatus="st">${m}<c:if test="${!st.last}">, </c:if></c:forEach></span>
+                            </div>
+                        </c:if>
                     </div>
 
                     <div class="profile-footer-actions">
@@ -885,6 +959,77 @@
 					  	<script src="${pageContext.request.contextPath}/beauty/js/main.js"></script>
 
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+<script>
+function uploadUserProfilePhoto(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    // Immediate preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById('userProfileAvatar');
+        if (img) img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    const fd = new FormData();
+    fd.append("file", file);
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const headers = {};
+    if (csrfToken && csrfHeader) {
+        headers[csrfHeader] = csrfToken;
+    }
+
+    fetch('${pageContext.request.contextPath}/users/profile/upload-photo', {
+        method: 'POST',
+        headers: headers,
+        body: fd
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (data.url) {
+                let finalUrl = data.url;
+                if (!finalUrl.startsWith('http') && !finalUrl.startsWith('/')) {
+                    finalUrl = '${pageContext.request.contextPath}/uploads/' + finalUrl;
+                } else if (!finalUrl.startsWith('http')) {
+                    finalUrl = '${pageContext.request.contextPath}' + finalUrl;
+                }
+                const img = document.getElementById('userProfileAvatar');
+                if (img) img.src = finalUrl;
+            }
+            if (data.completionPercentage !== undefined) {
+                const pctSpan = document.getElementById('completionPctText');
+                const pctBar = document.getElementById('completionProgressBar');
+                if (pctSpan) pctSpan.textContent = data.completionPercentage + '%';
+                if (pctBar) pctBar.style.width = data.completionPercentage + '%';
+            }
+            if (data.missingItems) {
+                const missingBox = document.getElementById('missingItemsContainer');
+                const missingSpan = document.getElementById('missingItemsList');
+                if (data.missingItems.length > 0 && missingSpan) {
+                    missingSpan.textContent = data.missingItems.join(', ');
+                    if (missingBox) missingBox.style.display = 'block';
+                } else if (missingBox) {
+                    missingBox.style.display = 'none';
+                }
+            }
+            const pillBtn = document.querySelector('.btn-change-photo-pill');
+            if (pillBtn) {
+                pillBtn.innerHTML = '<i class="bi bi-camera-fill"></i> Change photo';
+            }
+        } else {
+            alert('Failed to save profile photo: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error('Photo upload error:', err);
+        alert('Error uploading profile photo.');
+    });
+}
+</script>
 </body>
 					  </html>
 

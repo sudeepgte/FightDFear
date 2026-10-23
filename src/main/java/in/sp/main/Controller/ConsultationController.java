@@ -41,12 +41,6 @@ public class ConsultationController {
             return "redirect:/login";
         }
 
-        if (appt.getMeetingRoomId() == null) {
-            return "redirect:/";
-        }
-
-        model.addAttribute("appointment", appt);
-        model.addAttribute("roomName", appt.getMeetingRoomId());
-        return "doctor/video-call";
+        return "redirect:/doctors/video-call/" + appt.getDoctor().getId() + "?userId=" + appt.getUser().getId() + "&notify=true";
     }
 }

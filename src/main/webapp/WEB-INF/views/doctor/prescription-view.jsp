@@ -28,6 +28,12 @@
       #rxPrintArea{position:absolute;left:0;top:0;width:100%;padding:0}
       .rx-actions{display:none!important}
     }
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      #rxPrintArea { padding: 20px 14px; }
+      .rx-actions { justify-content: stretch; gap: 8px; }
+      .rx-actions .rx-btn { flex: 1 1 calc(50% - 8px); justify-content: center; font-size: 12px; padding: 9px 8px; }
+    }
   </style>
 </head>
 <body>

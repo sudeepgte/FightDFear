@@ -698,7 +698,7 @@
                                     <span class="featured-badge"><i class="bi bi-star-fill"></i> Featured</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="card-cat">${ev.category.displayName}</div>
+                                    <div class="card-cat">${not empty ev.category ? ev.category.displayName : 'Event'}</div>
                                     <div class="card-title">${ev.name}</div>
                                     <div class="card-meta">
                                         <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
@@ -741,7 +741,7 @@
                                     <span class="featured-badge" style="background: var(--brand-pink);"><i class="bi bi-stars text-warning"></i> Recommended</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="card-cat" style="color: var(--brand-pink);">${ev.category.displayName}</div>
+                                    <div class="card-cat" style="color: var(--brand-pink);">${not empty ev.category ? ev.category.displayName : 'Event'}</div>
                                     <div class="card-title">${ev.name}</div>
                                     <div class="card-meta">
                                         <span><i class="bi bi-calendar3"></i> ${ev.eventDate}</span>
@@ -873,7 +873,7 @@
                                                 </c:if>
                                             </div>
                                             <div class="card-body">
-                                                <div class="card-cat">${ev.category.displayName}</div>
+                                                <div class="card-cat">${not empty ev.category ? ev.category.displayName : 'Event'}</div>
                                                 <h4 class="card-title">${ev.name}</h4>
                                                 <div class="card-meta">
                                                     <span><i class="bi bi-calendar3"></i> ${not empty ev.eventDate ? ev.eventDate : 'Date not provided'}</span>
@@ -897,10 +897,10 @@
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="no-events text-center py-5 text-muted bg-white rounded-4 border">
-                            <span class="display-3 mb-3 d-block">🔍</span>
-                            <h4 class="fw-bold text-dark mb-1">No events found</h4>
-                            <p class="small mb-0">Try adjusting your filters or <a href="${pageContext.request.contextPath}/women-events" style="color:var(--brand-pink); font-weight:700;">browse all events</a>.</p>
+                        <div class="no-events text-center py-5 text-muted bg-white rounded-4 border shadow-sm">
+                            <span class="display-3 mb-3 d-block">🌸</span>
+                            <h4 class="fw-bold text-dark mb-2">No Events Added Yet</h4>
+                            <p class="small text-muted mb-0">Currently there are no events added by vendors or organizers. Please check back later or register to host an event!</p>
                         </div>
                     </c:otherwise>
                 </c:choose>

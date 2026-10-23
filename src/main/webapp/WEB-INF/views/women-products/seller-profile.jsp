@@ -357,10 +357,6 @@
                             <label>Languages spoken</label>
                             <input class="form-input" name="languagesSpoken" maxlength="255" value="${seller.languagesSpoken}" placeholder="e.g. English, Hindi">
                         </div>
-                        <div class="form-group">
-                            <label>Audience</label>
-                            <input class="form-input" name="audience" maxlength="255" value="${seller.audience}" placeholder="e.g. Women, Families">
-                        </div>
                     </div>
 
                     <div class="section-card">
@@ -410,34 +406,99 @@
                     </div>
 
                     <div class="section-card">
-                        <div class="section-header">9. Payout</div>
-                        <div class="form-group">
-                            <label>UPI ID</label>
-                            <input class="form-input" name="upiId" value="${seller.upiId}" placeholder="upi-handle@bank">
+                        <div class="section-header">9. Payout &amp; Bank Account Details</div>
+                        <p style="font-size:0.84rem; color:var(--text-gray); margin-bottom:14px;">
+                            <i class="bi bi-shield-lock-fill" style="color:var(--primary);"></i> Payout details are encrypted and securely used to disburse customer order payments.
+                        </p>
+                        <input type="hidden" id="bankDetails" name="bankDetails" value="<c:out value='${seller.bankDetails}'/>">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Holder Name</label>
+                                <input type="text" class="form-input" id="bankAccountHolder" placeholder="Name as per passbook">
+                            </div>
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input type="text" class="form-input" id="bankName" placeholder="e.g. State Bank of India, HDFC">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>GSTIN</label>
-                            <input class="form-input" name="gstin" value="${seller.gstin}" placeholder="GST number">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input type="password" class="form-input" id="bankAccountNumber" placeholder="Enter bank account number" autocomplete="new-password">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Account Number</label>
+                                <input type="text" class="form-input" id="confirmAccountNumber" placeholder="Re-enter account number">
+                                <small id="accMismatchError" style="display:none; color:var(--error); font-size:0.78rem; font-weight:700; margin-top:4px;">Account numbers do not match</small>
+                                <small id="accMatchSuccess" style="display:none; color:var(--success); font-size:0.78rem; font-weight:700; margin-top:4px;">Account numbers match <i class="bi bi-check-circle-fill"></i></small>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Bank details</label>
-                            <input class="form-input" name="bankDetails" value="${seller.bankDetails}" placeholder="Bank, A/C, IFSC">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>IFSC Code</label>
+                                <input type="text" class="form-input" id="bankIfsc" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform:uppercase;">
+                                <small id="ifscError" style="display:none; color:var(--error); font-size:0.78rem; font-weight:700; margin-top:4px;">Format: 4 letters, 0, 6 letters/digits (e.g. SBIN0001234)</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Branch Name</label>
+                                <input type="text" class="form-input" id="bankBranch" placeholder="e.g. Indiranagar, Bengaluru">
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="margin-top:6px;">
+                            <div class="form-group">
+                                <label>UPI ID (Instant Payouts)</label>
+                                <input class="form-input" name="upiId" id="upiId" value="${seller.upiId}" placeholder="handle@bank">
+                            </div>
+                            <div class="form-group">
+                                <label>GSTIN (Optional)</label>
+                                <input class="form-input" name="gstin" id="gstin" value="${seller.gstin}" placeholder="22AAAAA0000A1Z5">
+                            </div>
                         </div>
                     </div>
 
                     <div class="section-card">
-                        <div class="section-header">10. Documents (optional)</div>
-                        <div class="form-group">
-                            <label>Profile photo (optional update)</label>
-                            <input class="form-input" type="file" name="profilePhoto" accept="image/png,image/jpeg,image/jpg,image/webp">
+                        <div class="section-header">10. Profile Photo &amp; Documents</div>
+                        <div class="form-group" style="margin-bottom:20px;">
+                            <label style="font-weight:700; font-size:0.9rem; margin-bottom:10px; display:block;">Profile Photo</label>
+                            <div style="display:flex; align-items:center; gap:20px; background:#F8FAFC; border:1px solid var(--border-color); border-radius:16px; padding:16px 20px;">
+                                <div style="position:relative; width:80px; height:80px; border-radius:50%; overflow:hidden; border:3px solid #FECDD3; background:#FFE4E6; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <c:choose>
+                                        <c:when test="${not empty seller.profilePhotoPath}">
+                                            <img id="sellerPhotoPreview" src="${pageContext.request.contextPath}${seller.profilePhotoPath}" style="width:100%; height:100%; object-fit:cover;">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img id="sellerPhotoPreview" style="display:none; width:100%; height:100%; object-fit:cover;">
+                                            <span id="sellerPhotoFallback" style="font-size:1.8rem; font-weight:800; color:var(--primary);">${fn:substring(not empty seller.fullName ? seller.fullName : 'S', 0, 1)}</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <div style="flex:1;">
+                                    <p style="font-size:0.85rem; font-weight:700; color:var(--navy); margin-bottom:4px;">Upload Shop Avatar / Portrait</p>
+                                    <p style="font-size:0.78rem; color:var(--text-gray); margin-bottom:10px;">JPG, PNG or WEBP (Max 5MB). Professional photo recommended.</p>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <label for="profilePhotoInput" style="display:inline-flex; align-items:center; gap:6px; background:#FFF1F2; border:1px solid #FECDD3; color:var(--primary); padding:8px 16px; border-radius:10px; font-size:0.85rem; font-weight:700; cursor:pointer; margin:0;">
+                                            <i class="bi bi-camera-fill"></i> Choose Photo
+                                        </label>
+                                        <button type="button" id="clearPhotoBtn" style="display:none; background:#F1F5F9; border:1px solid #CBD5E1; color:#64748B; padding:8px 12px; border-radius:10px; font-size:0.82rem; font-weight:600; cursor:pointer;">
+                                            <i class="bi bi-x-circle"></i> Reset
+                                        </button>
+                                        <input class="form-input" type="file" id="profilePhotoInput" name="profilePhoto" accept="image/png,image/jpeg,image/jpg,image/webp" style="display:none;">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="form-group">
-                            <label>Identity document (optional update)</label>
+                            <label>Identity Document (ID Proof / Business Registration)</label>
                             <input class="form-input" type="file" name="identityDoc" accept="image/*,.pdf">
+                            <c:if test="${not empty seller.identityDocPath}">
+                                <p class="hint" style="margin-top:8px;"><a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank"><i class="bi bi-file-earmark-check-fill"></i> View current identity document</a></p>
+                            </c:if>
                         </div>
-                        <c:if test="${not empty seller.identityDocPath}">
-                            <p class="hint"><a href="${pageContext.request.contextPath}${seller.identityDocPath}" target="_blank">View current identity document</a></p>
-                        </c:if>
                     </div>
 
                     <div class="section-card">
@@ -461,8 +522,23 @@
                     <div class="live-preview-card">
                         <div class="preview-banner-header">Shop preview</div>
                         <div class="preview-body">
-                            <div class="preview-name"><c:out value="${not empty seller.fullName ? seller.fullName : 'Your name'}"/></div>
-                            <div class="preview-shop"><c:out value="${not empty seller.businessName ? seller.businessName : 'Shop name'}"/></div>
+                            <div style="display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+                                <div style="width:60px; height:60px; border-radius:50%; overflow:hidden; border:2px solid var(--primary); background:#FFE4E6; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    <c:choose>
+                                        <c:when test="${not empty seller.profilePhotoPath}">
+                                            <img id="liveCardPhoto" src="${pageContext.request.contextPath}{seller.profilePhotoPath}" style="width:100%; height:100%; object-fit:cover;">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img id="liveCardPhoto" style="display:none; width:100%; height:100%; object-fit:cover;">
+                                            <span id="liveCardInitial" style="font-size:1.4rem; font-weight:800; color:var(--primary);"></span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <div>
+                                    <div class="preview-name"><c:out value="${not empty seller.fullName ? seller.fullName : 'Your name'}"/></div>
+                                    <div class="preview-shop"><c:out value="${not empty seller.businessName ? seller.businessName : 'Shop name'}"/></div>
+                                </div>
+                            </div>
                             <div class="preview-meta"><i class="bi bi-envelope"></i> <c:out value="${seller.email}"/></div>
                             <div class="preview-meta"><i class="bi bi-telephone"></i> <c:out value="${not empty seller.phone ? seller.phone : 'Phone'}"/></div>
                             <div class="preview-meta"><i class="bi bi-geo-alt"></i>
@@ -514,8 +590,176 @@
         }
         return true;
     }
+    // Bank Details Pre-parsing & Auto-Serialization
+    var hiddenBank = document.getElementById('bankDetails');
+    var acHolderInput = document.getElementById('bankAccountHolder');
+    var bankNameInput = document.getElementById('bankName');
+    var acNumInput = document.getElementById('bankAccountNumber');
+    var confirmAcInput = document.getElementById('confirmAccountNumber');
+    var ifscInput = document.getElementById('bankIfsc');
+    var branchInput = document.getElementById('bankBranch');
+    var mismatchErr = document.getElementById('accMismatchError');
+    var matchOk = document.getElementById('accMatchSuccess');
+    var ifscErr = document.getElementById('ifscError');
+
+    if (hiddenBank && hiddenBank.value) {
+        var raw = hiddenBank.value.trim();
+        if (raw.indexOf('|') !== -1) {
+            var parts = raw.split('|');
+            parts.forEach(function(part) {
+                var p = part.trim();
+                if (p.toLowerCase().indexOf('account holder:') === 0) {
+                    acHolderInput.value = p.substring(15).trim();
+                } else if (p.toLowerCase().indexOf('bank:') === 0) {
+                    bankNameInput.value = p.substring(5).trim();
+                } else if (p.toLowerCase().indexOf('a/c:') === 0) {
+                    var ac = p.substring(4).trim();
+                    acNumInput.value = ac;
+                    confirmAcInput.value = ac;
+                } else if (p.toLowerCase().indexOf('ifsc:') === 0) {
+                    ifscInput.value = p.substring(5).trim();
+                } else if (p.toLowerCase().indexOf('branch:') === 0) {
+                    branchInput.value = p.substring(7).trim();
+                }
+            });
+        } else {
+            bankNameInput.value = raw;
+        }
+    }
+
+    function syncBankDetails() {
+        var holder = acHolderInput ? acHolderInput.value.trim() : '';
+        var bName = bankNameInput ? bankNameInput.value.trim() : '';
+        var acNum = acNumInput ? acNumInput.value.trim() : '';
+        var ifsc = ifscInput ? ifscInput.value.trim().toUpperCase() : '';
+        var branch = branchInput ? branchInput.value.trim() : '';
+
+        if (ifscInput) ifscInput.value = ifsc;
+
+        if (holder || bName || acNum || ifsc || branch) {
+            var parts = [];
+            if (holder) parts.push('Account Holder: ' + holder);
+            if (bName) parts.push('Bank: ' + bName);
+            if (acNum) parts.push('A/C: ' + acNum);
+            if (ifsc) parts.push('IFSC: ' + ifsc);
+            if (branch) parts.push('Branch: ' + branch);
+            if (hiddenBank) hiddenBank.value = parts.join(' | ');
+        }
+    }
+
+    function validateAccountMatch() {
+        if (!acNumInput || !confirmAcInput) return true;
+        var a = acNumInput.value.trim();
+        var c = confirmAcInput.value.trim();
+        if (c.length > 0) {
+            if (a !== c) {
+                mismatchErr.style.display = 'block';
+                matchOk.style.display = 'none';
+                return false;
+            } else {
+                mismatchErr.style.display = 'none';
+                matchOk.style.display = 'block';
+                return true;
+            }
+        } else {
+            mismatchErr.style.display = 'none';
+            matchOk.style.display = 'none';
+            return true;
+        }
+    }
+
+    function validateIfsc() {
+        if (!ifscInput) return true;
+        var code = ifscInput.value.trim().toUpperCase();
+        if (!code) {
+            ifscErr.style.display = 'none';
+            return true;
+        }
+        var ifscPattern = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        var ok = ifscPattern.test(code);
+        ifscErr.style.display = ok ? 'none' : 'block';
+        return ok;
+    }
+
+    [acHolderInput, bankNameInput, acNumInput, confirmAcInput, ifscInput, branchInput].forEach(function(el) {
+        if (el) {
+            el.addEventListener('input', function() {
+                syncBankDetails();
+                if (el === acNumInput || el === confirmAcInput) validateAccountMatch();
+                if (el === ifscInput) validateIfsc();
+            });
+            el.addEventListener('blur', function() {
+                syncBankDetails();
+                if (el === acNumInput || el === confirmAcInput) validateAccountMatch();
+                if (el === ifscInput) validateIfsc();
+            });
+        }
+    });
+
+    // Profile Photo Live Preview
+    var photoInput = document.getElementById('profilePhotoInput');
+    var photoPreview = document.getElementById('sellerPhotoPreview');
+    var photoFallback = document.getElementById('sellerPhotoFallback');
+    var liveCardPhoto = document.getElementById('liveCardPhoto');
+    var liveCardInitial = document.getElementById('liveCardInitial');
+    var clearPhotoBtn = document.getElementById('clearPhotoBtn');
+    var origPhotoSrc = photoPreview ? photoPreview.src : '';
+
+    if (photoInput) {
+        photoInput.addEventListener('change', function() {
+            var file = this.files && this.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    if (photoPreview) {
+                        photoPreview.src = e.target.result;
+                        photoPreview.style.display = 'block';
+                    }
+                    if (photoFallback) photoFallback.style.display = 'none';
+                    if (liveCardPhoto) {
+                        liveCardPhoto.src = e.target.result;
+                        liveCardPhoto.style.display = 'block';
+                    }
+                    if (liveCardInitial) liveCardInitial.style.display = 'none';
+                    if (clearPhotoBtn) clearPhotoBtn.style.display = 'inline-block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    if (clearPhotoBtn) {
+        clearPhotoBtn.addEventListener('click', function() {
+            if (photoInput) photoInput.value = '';
+            if (origPhotoSrc) {
+                if (photoPreview) photoPreview.src = origPhotoSrc;
+                if (liveCardPhoto) liveCardPhoto.src = origPhotoSrc;
+            } else {
+                if (photoPreview) photoPreview.style.display = 'none';
+                if (photoFallback) photoFallback.style.display = 'block';
+                if (liveCardPhoto) liveCardPhoto.style.display = 'none';
+                if (liveCardInitial) liveCardInitial.style.display = 'block';
+            }
+            clearPhotoBtn.style.display = 'none';
+        });
+    }
+
     form.addEventListener('submit', function (e) {
-        if (!validate()) e.preventDefault();
+        syncBankDetails();
+        if (!validate()) {
+            e.preventDefault();
+            return;
+        }
+        if (!validateAccountMatch()) {
+            e.preventDefault();
+            if (confirmAcInput) confirmAcInput.focus();
+            return;
+        }
+        if (!validateIfsc()) {
+            e.preventDefault();
+            if (ifscInput) ifscInput.focus();
+            return;
+        }
     });
 })();
 </script>

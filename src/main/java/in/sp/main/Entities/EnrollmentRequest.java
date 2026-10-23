@@ -2,8 +2,6 @@ package in.sp.main.Entities;
 
 import java.sql.Time;
 
-import lombok.Data;
-@Data
 public class EnrollmentRequest {
     private Long userId;
     private Long centerId;

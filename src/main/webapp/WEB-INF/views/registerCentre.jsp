@@ -586,11 +586,22 @@
                     </div>
                 </div>
 
-                <!-- Terms -->
-                <label class="terms-row">
-                    <input type="checkbox" id="termsCheck" required>
-                    <span>I accept the <strong>Terms & Privacy Policy</strong></span>
-                </label>
+                <!-- Terms & Conditions Box with Modal Link -->
+                <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
 
                 <!-- Submit Button -->
                 <button type="button" class="btn-submit" onclick="openConfirmationModal()">
@@ -822,7 +833,85 @@
         function submitRegistration() {
             document.getElementById('regForm').submit();
         }
+
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            const chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.checked = true;
+                syncTermsCheckBadge();
+            }
+            closeTermsModal();
+        }
+
+        function syncTermsCheckBadge() {
+            const chk = document.getElementById('termsCheck');
+            const badge = document.getElementById('termsCheckBadge');
+            if (badge && chk) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.addEventListener('change', syncTermsCheckBadge);
+                syncTermsCheckBadge();
+            }
+        });
     </script>
+
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; z-index:100; padding:16px;">
+        <div class="modal-card" style="max-width:580px; max-height:85vh; display:flex; flex-direction:column; background:#fff; border-radius:20px; padding:24px;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
+                <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="termsModalTitle" style="font-size: 1.15rem; font-weight: 800; color: var(--navy); margin: 0;">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Martial Arts &amp; Self Defense</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women's Safety Mission</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Martial arts academies, dojos, and self-defense centres registered on Fight D Fear are committed to equipping women and girls with authentic defense skills, confidence, and physical empowerment in a safe, respectful environment.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Instructor Credentials &amp; Verification</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Centres must deploy certified instructors with recognized martial arts black belts / coach licenses. Misleading belt rankings or unverified facilities will be removed promptly.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Trainee Safety &amp; Non-Violence</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Techniques taught must prioritize de-escalation, self-defense, and escape. Bullying, inappropriate physical touch, or unauthorized sparring will result in immediate permanent expulsion.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Zero-Tolerance Policy</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Any abusive behavior or harassment will be reported directly to law enforcement authorities.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact credentials, centre affiliation details, and settlement bank info strictly necessary for student batch registrations and fee payouts.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Data Protection</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Your financial and institutional records are encrypted in transit and securely preserved.</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 14px; display:flex; gap:10px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()" style="flex:1;">Close</button>
+                <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()" style="flex:1.2; background:var(--primary); color:#fff; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer;">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

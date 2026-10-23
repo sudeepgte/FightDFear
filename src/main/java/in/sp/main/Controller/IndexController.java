@@ -22,6 +22,9 @@ public class IndexController {
     @Autowired
     private TreatmentRepository treatmentRepository;
 
+    @Autowired
+    private in.sp.main.Service.ContactMessageService contactMessageService;
+
     // ✅ Home / Templates Page
     @GetMapping("/templates")
     public String showTemplatesPage(Model model) {
@@ -62,9 +65,12 @@ public class IndexController {
 
     // ✅ Contact Page
     @GetMapping("/contact")
-    public String contact(Model model) {
+    public String contact(Model model, jakarta.servlet.http.HttpSession session) {
         model.addAttribute("pageTitle", "Contact Us");
-       
+        Object u = session.getAttribute("user");
+        if (u instanceof in.sp.main.Entities.User user && user.getEmail() != null) {
+            model.addAttribute("myMessages", contactMessageService.findByEmail(user.getEmail()));
+        }
         return "index/contact";
     }
 

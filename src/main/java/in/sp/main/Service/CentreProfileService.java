@@ -92,12 +92,6 @@ public class CentreProfileService {
         if (blank(centre.getAbout())) missing.add("7.1 About the centre");
         if (blank(centre.getHowWeTeach())) missing.add("7.2 How we teach");
         if (blank(centre.getWhatWeOffer())) missing.add("7.3 What we offer");
-        List<MartialArtsBatch> batches = centre.getId() == null
-                ? List.of()
-                : batchRepository.findByCenterId(centre.getId());
-        if (batches == null || batches.isEmpty()) {
-            missing.add("8. First program / batch");
-        }
         return missing;
     }
 
@@ -108,6 +102,7 @@ public class CentreProfileService {
         if (!blank(centre.getCentreType())) filled++;
         if (!blank(centre.getContactPerson())) filled++;
         if (!blank(centre.getPhoneNumber())) filled++;
+        if (!blank(centre.getLocation()) || !blank(centre.getArea())) filled++;
         if (!blank(centre.getCity())) filled++;
         if (!blank(centre.getState())) filled++;
         if (!blank(centre.getPincode())) filled++;
@@ -119,10 +114,6 @@ public class CentreProfileService {
         if (!blank(centre.getAbout())) filled++;
         if (!blank(centre.getHowWeTeach())) filled++;
         if (!blank(centre.getWhatWeOffer())) filled++;
-        List<MartialArtsBatch> batches = centre.getId() == null
-                ? List.of()
-                : batchRepository.findByCenterId(centre.getId());
-        if (batches != null && !batches.isEmpty()) filled++;
         return (int) Math.round(100.0 * filled / total);
     }
 

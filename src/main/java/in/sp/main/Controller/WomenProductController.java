@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -401,6 +402,11 @@ public class WomenProductController {
                                      @RequestParam(required = false) String gstin,
                                      @RequestParam(required = false) String upiId,
                                      @RequestParam(required = false) String bankDetails,
+                                      @RequestParam(required = false) String bankAccountHolder,
+                                      @RequestParam(required = false) String bankName,
+                                      @RequestParam(required = false) String bankAccountNumber,
+                                      @RequestParam(required = false) String bankIfsc,
+                                      @RequestParam(required = false) String bankBranch,
                                      @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
                                      @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
                                      @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
@@ -458,26 +464,81 @@ public class WomenProductController {
                 existing.setBusinessName(cleanedBusinessName);
                 existing.setPhone(cleanedPhone);
                 existing.setAddress(cleanedAddress);
-                existing.setDescription(cleanedDescription.isEmpty() ? null : cleanedDescription);
-                existing.setCategory(category != null ? category.trim() : "");
-                existing.setServiceArea(serviceArea != null ? serviceArea.trim() : "");
-                existing.setQualification(qualification != null ? qualification.trim() : "");
-                existing.setExperience(experience != null ? experience.trim() : "");
-                existing.setAvailableDays(availableDays != null ? availableDays.trim() : "");
-                existing.setWorkingHoursFrom(workingHoursFrom != null ? workingHoursFrom.trim() : "");
-                existing.setWorkingHoursTo(workingHoursTo != null ? workingHoursTo.trim() : "");
-                existing.setLanguagesSpoken(languagesSpoken != null ? languagesSpoken.trim() : "");
-                existing.setDesignation(designation != null ? designation.trim() : "");
-                existing.setWhatsappNumber(whatsappNumber != null ? whatsappNumber.trim() : "");
-                existing.setCity(city != null ? city.trim() : "");
-                existing.setState(state != null ? state.trim() : "");
-                existing.setPincode(pincode != null ? pincode.trim() : "");
-                existing.setAudience(audience != null ? audience.trim() : "");
-                existing.setFacilities(facilities != null ? facilities.trim() : "");
-                existing.setBrandType(brandType != null ? brandType.trim() : "");
-                existing.setGstin(gstin != null ? gstin.trim() : "");
-                existing.setUpiId(upiId != null ? upiId.trim() : "");
-                existing.setBankDetails(bankDetails != null ? bankDetails.trim() : "");
+                if (description != null) {
+                    existing.setDescription(cleanedDescription.isEmpty() ? null : cleanedDescription);
+                }
+
+                if (category != null && !category.trim().isEmpty()) {
+                    existing.setCategory(category.trim());
+                } else if (category != null && (existing.getCategory() == null || existing.getCategory().isEmpty())) {
+                    existing.setCategory("");
+                }
+
+                if (serviceArea != null) existing.setServiceArea(serviceArea.trim());
+                if (qualification != null) existing.setQualification(qualification.trim());
+                if (experience != null) existing.setExperience(experience.trim());
+                if (availableDays != null) existing.setAvailableDays(availableDays.trim());
+                if (workingHoursFrom != null) existing.setWorkingHoursFrom(workingHoursFrom.trim());
+                if (workingHoursTo != null) existing.setWorkingHoursTo(workingHoursTo.trim());
+                if (languagesSpoken != null) existing.setLanguagesSpoken(languagesSpoken.trim());
+
+                if (designation != null && !designation.trim().isEmpty()) {
+                    existing.setDesignation(designation.trim());
+                } else if (designation != null && (existing.getDesignation() == null || existing.getDesignation().isEmpty())) {
+                    existing.setDesignation("");
+                }
+
+                if (whatsappNumber != null && !whatsappNumber.trim().isEmpty()) {
+                    existing.setWhatsappNumber(whatsappNumber.trim());
+                } else if (whatsappNumber != null && (existing.getWhatsappNumber() == null || existing.getWhatsappNumber().isEmpty())) {
+                    existing.setWhatsappNumber("");
+                }
+
+                if (city != null && !city.trim().isEmpty()) {
+                    existing.setCity(city.trim());
+                } else if (city != null && (existing.getCity() == null || existing.getCity().isEmpty())) {
+                    existing.setCity("");
+                }
+
+                if (state != null && !state.trim().isEmpty()) {
+                    existing.setState(state.trim());
+                } else if (state != null && (existing.getState() == null || existing.getState().isEmpty())) {
+                    existing.setState("");
+                }
+
+                if (pincode != null && !pincode.trim().isEmpty()) {
+                    existing.setPincode(pincode.trim());
+                } else if (pincode != null && (existing.getPincode() == null || existing.getPincode().isEmpty())) {
+                    existing.setPincode("");
+                }
+
+                if (facilities != null) existing.setFacilities(facilities.trim());
+
+                if (brandType != null && !brandType.trim().isEmpty()) {
+                    existing.setBrandType(brandType.trim());
+                } else if (brandType != null && (existing.getBrandType() == null || existing.getBrandType().isEmpty())) {
+                    existing.setBrandType("");
+                }
+
+                if (gstin != null) existing.setGstin(gstin.trim());
+                if (upiId != null) existing.setUpiId(upiId.trim());
+                if (bankDetails != null && !bankDetails.trim().isEmpty()) {
+                    existing.setBankDetails(bankDetails.trim());
+                } else if ((bankAccountHolder != null && !bankAccountHolder.trim().isEmpty())
+                        || (bankName != null && !bankName.trim().isEmpty())
+                        || (bankAccountNumber != null && !bankAccountNumber.trim().isEmpty())
+                        || (bankIfsc != null && !bankIfsc.trim().isEmpty())
+                        || (bankBranch != null && !bankBranch.trim().isEmpty())) {
+                    StringBuilder sb = new StringBuilder();
+                    if (bankAccountHolder != null && !bankAccountHolder.trim().isEmpty()) sb.append("Account Holder: ").append(bankAccountHolder.trim()).append(" | ");
+                    if (bankName != null && !bankName.trim().isEmpty()) sb.append("Bank: ").append(bankName.trim()).append(" | ");
+                    if (bankAccountNumber != null && !bankAccountNumber.trim().isEmpty()) sb.append("A/C: ").append(bankAccountNumber.trim()).append(" | ");
+                    if (bankIfsc != null && !bankIfsc.trim().isEmpty()) sb.append("IFSC: ").append(bankIfsc.trim().toUpperCase()).append(" | ");
+                    if (bankBranch != null && !bankBranch.trim().isEmpty()) sb.append("Branch: ").append(bankBranch.trim()).append(" | ");
+                    String sBank = sb.toString();
+                    if (sBank.endsWith(" | ")) sBank = sBank.substring(0, sBank.length() - 3);
+                    existing.setBankDetails(sBank);
+                }
 
                 
                 if (profilePhoto != null && !profilePhoto.isEmpty()) {
@@ -570,9 +631,11 @@ public class WomenProductController {
                 p.setOfferBadge(p.getDiscountPercent() + "% OFF");
             }
             p.setSeller(s);
+            p.setApprovalStatus("PENDING");
+            p.setAdminRemarks(null);
             applyProductImages(p, images, false);
             productRepo.save(p);
-            ra.addFlashAttribute("message", "Product added successfully!");
+            ra.addFlashAttribute("message", "Product submitted successfully! It is under admin review and will appear to buyers once approved.");
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Failed to upload image. Please try again with a valid JPG/PNG file.");
         } catch (Exception e) {
@@ -639,8 +702,10 @@ public class WomenProductController {
             ra.addFlashAttribute("error", "Failed to upload new image. Other product details were not saved.");
             return "redirect:/women-products/seller/dashboard?section=products";
         }
+        p.setApprovalStatus("PENDING");
+        p.setAdminRemarks(null);
         productRepo.save(p);
-        ra.addFlashAttribute("message", "Product updated successfully!");
+        ra.addFlashAttribute("message", "Product updated and submitted for admin review!");
         return "redirect:/women-products/seller/dashboard?section=products";
     }
     private static String trimToNull(String value) {
@@ -1621,6 +1686,11 @@ public class WomenProductController {
                                       @RequestParam String reason,
                                       @RequestParam(required = false) String comments,
                                       @RequestParam(required = false) String bankDetails,
+                                      @RequestParam(required = false) String bankAccountHolder,
+                                      @RequestParam(required = false) String bankName,
+                                      @RequestParam(required = false) String bankAccountNumber,
+                                      @RequestParam(required = false) String bankIfsc,
+                                      @RequestParam(required = false) String bankBranch,
                                       @RequestParam(required = false) String holderName,
                                       @RequestParam(required = false) String accountNumber,
                                       @RequestParam(required = false) String ifsc,
@@ -1641,9 +1711,14 @@ public class WomenProductController {
             ra.addFlashAttribute("error", "Refund/exchange is only available for delivered orders.");
             return "redirect:/women-products/my-orders";
         }
-        if (returnRepo.findByOrder(o).isPresent()) {
-            ra.addFlashAttribute("error", "A refund/exchange request already exists for this order.");
-            return "redirect:/women-products/my-orders";
+        WomenReturnRequest existingReq = returnRepo.findByOrder(o).orElse(null);
+        if (existingReq != null) {
+            boolean canReapply = "COMPLETED".equalsIgnoreCase(existingReq.getStatus())
+                    && "EXCHANGE".equalsIgnoreCase(existingReq.getType());
+            if (!canReapply) {
+                ra.addFlashAttribute("error", "A refund/exchange request already exists for this order.");
+                return "redirect:/women-products/my-orders";
+            }
         }
 
         String cleanedReason = reason == null ? "" : reason.trim().toLowerCase();
@@ -1676,12 +1751,14 @@ public class WomenProductController {
         }
 
         try {
-            WomenReturnRequest r = new WomenReturnRequest();
+            WomenReturnRequest r = existingReq != null ? existingReq : new WomenReturnRequest();
             r.setOrder(o);
             r.setSeller(o.getSeller());
             r.setType("RETURN".equals(cleanedType) ? "REFUND" : cleanedType);
             r.setReason(cleanedReason);
             r.setComments(cleanedComments.isEmpty() ? null : cleanedComments);
+            r.setRequestTime(LocalDateTime.now());
+            r.setStatus("PENDING");
 
             if ("REFUND".equals(r.getType())) {
                 String h = holderName.trim();
@@ -1691,9 +1768,10 @@ public class WomenProductController {
                 r.setBankDetails("Holder: " + h + ", A/C: " + a + ", IFSC: " + i + ", Branch: " + b);
             } else if (bankDetails != null && !bankDetails.isBlank()) {
                 r.setBankDetails(bankDetails.trim());
+            } else {
+                r.setBankDetails(null);
             }
 
-            r.setStatus("PENDING");
             if (image != null && !image.isEmpty()) {
                 String contentType = image.getContentType();
                 if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
@@ -1707,7 +1785,7 @@ public class WomenProductController {
                 r.setImagePath(fileUploadService.saveFile(image));
             }
             returnRepo.save(r);
-            ra.addFlashAttribute("message", r.getType() + " request submitted successfully!");
+            ra.addFlashAttribute("message", (existingReq != null ? "Follow-up " : "") + r.getType() + " request submitted successfully!");
         } catch (IOException e) {
             ra.addFlashAttribute("error", "Failed to upload image. Please try again.");
         }
