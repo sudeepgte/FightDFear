@@ -108,7 +108,7 @@ public class MobileEventHostAuthController {
             session.setAttribute("pendingHostLoginEmail", host.getEmail());
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Account created. Sign in to complete your host profile.");
+            res.put("message", "Account created successfully. Please sign in to complete your host profile.");
             res.put("hostId", host.getId());
             res.put("email", host.getEmail());
             res.put("loginPath", "/women-events/host/login");
@@ -289,14 +289,21 @@ public class MobileEventHostAuthController {
         if (host == null) return unauthorized();
         try {
             EventHost h = hostRepo.findById(host.getId()).orElse(host);
-            hostRegistrationService.submitForVerification(h);
+            h = hostRegistrationService.submitForVerification(h);
+            session.setAttribute("loggedHost", h);
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Submitted for admin verification");
             res.putAll(hostProfileService.profilePayload(h));
             return ResponseEntity.ok(res);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
-            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+            EventHost h = hostRepo.findById(host.getId()).orElse(host);
+            List<String> missing = hostProfileService.missingItems(h);
+            Map<String, Object> err = new LinkedHashMap<>();
+            err.put("success", false);
+            err.put("error", ex.getReason());
+            err.put("missingItems", missing);
+            return ResponseEntity.status(ex.getStatusCode()).body(err);
         }
     }
 

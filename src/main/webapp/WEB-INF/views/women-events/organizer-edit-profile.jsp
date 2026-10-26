@@ -12,7 +12,6 @@
     <!-- Google Fonts & Bootstrap Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/organizer-hub.css?v=2">
     <style>
         :root {
             --primary: #F43F5E;
@@ -31,7 +30,89 @@
             --rose-soft: #FFF1F2;
         }
 
-        body.org-hub { flex-direction: row; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-skip {
+            padding: 8px 16px;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            color: var(--navy);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-skip:hover { background: var(--bg-page); }
+
+        .btn-header-save {
+            padding: 8px 18px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-header-save:hover { background: var(--primary-hover); }
+
+        .main-container {
+            flex: 1;
+            max-width: 880px;
+            width: 100%;
+            margin: 24px auto 50px;
+            padding: 0 20px;
+        }
+
+        .profile-container-wrap {
+            width: 100%;
+        }
 
         .profile-progress-card {
             background: var(--card-bg);
@@ -304,6 +385,28 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+                .bank-subfields-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 8px;
+        }
+        .bank-subfields-card .form-row {
+            margin-bottom: 12px;
+        }
+        .bank-subfields-card .form-row:last-child {
+            margin-bottom: 0;
+        }
+        .bank-subfields-card .form-input {
+            background: #FFFFFF;
+        }
+        .hint-text {
+            font-size: 0.78rem;
+            color: var(--text-gray);
+            margin-top: 6px;
+        }
+
         .bottom-actions { margin-top: 24px; display: flex; gap: 12px; }
 
         .btn-bottom-save {
@@ -353,30 +456,24 @@
         }
     </style>
 </head>
-<body class="org-hub">
+<body>
 
-<%@ include file="../fragments/organizer-sidebar.jsp" %>
-
-<div class="org-main-wrapper">
-    <div class="org-topbar">
-        <div class="org-topbar-left">
-            <div class="org-topbar-header-wrap">
-                <button class="org-sidebar-toggle" onclick="document.body.classList.toggle('sidebar-open')">
-                    <i class="bi bi-list"></i>
-                </button>
-                <div>
-                    <h2>Complete Host Profile</h2>
-                    <p>Fill each section — save anytime, submit when ready for admin review.</p>
-                </div>
-            </div>
+    <header class="app-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:history.back()" style="color: var(--navy); font-size: 1.2rem; text-decoration: none;"><i class="bi bi-arrow-left"></i></a>
+            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="header-brand">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;">
+                <span>Fight D Fear Event Host Studio</span>
+            </a>
         </div>
-        <div class="org-topbar-right">
-            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="org-btn-secondary">Dashboard</a>
-            <button type="button" class="org-btn-primary" onclick="saveProfile()"><i class="bi bi-save"></i> Save Profile</button>
+        <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="btn-skip"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
+            <button type="button" class="btn-header-save" onclick="saveProfile()"><i class="bi bi-save me-1"></i> Save Profile</button>
         </div>
-    </div>
+    </header>
 
-    <div class="org-page-content org-page-content--narrow">
+    <main class="main-container">
+        <div class="profile-container-wrap">
 
         <c:set var="statusStr" value="${host.partnerProfileStatus != null ? host.partnerProfileStatus : 'PROFILE_INCOMPLETE'}"/>
 
@@ -470,17 +567,16 @@
         <div id="alertBox" class="alert-box alert-error" style="display: none;"></div>
 
         <div class="submit-bar">
-            <button type="button" id="btnSubmitVerification" class="btn-submit-verification" onclick="submitForVerification()"
-                    <c:if test="${statusStr eq 'PENDING_ADMIN_APPROVAL'}">disabled</c:if>>
+            <button type="button" id="btnSubmitVerification" class="btn-submit-verification" onclick="submitForVerification()">
                 <c:choose>
                     <c:when test="${statusStr eq 'PENDING_ADMIN_APPROVAL'}">
-                        <i class="bi bi-clock-history"></i> Profile Submitted — Pending Admin Review
+                        <i class="bi bi-clock-history"></i> Profile Submitted (Under Review) — Open Dashboard <i class="bi bi-arrow-right-short"></i>
                     </c:when>
                     <c:when test="${statusStr eq 'APPROVED'}">
                         <i class="bi bi-speedometer2"></i> Host Verified & Approved — Go to Dashboard <i class="bi bi-arrow-right-short"></i>
                     </c:when>
                     <c:otherwise>
-                        <i class="bi bi-send-check-fill"></i> Submit Host Profile for Verification
+                        <i class="bi bi-send-check-fill"></i> Submit Host Profile for Verification & Open Dashboard
                     </c:otherwise>
                 </c:choose>
             </button>
@@ -699,15 +795,60 @@
 
             <!-- Section 9: Payout Details -->
             <div class="section-card">
-                <div class="section-header">9. Payout & Financial Details</div>
-                <div class="form-group">
-                    <label>9.1 UPI ID (for ticket payouts)</label>
-                    <input type="text" id="upiId" name="upiId" class="form-input" value="<c:out value='${host.upiId}'/>" placeholder="org@upi" oninput="validateUpiId()" onblur="validateUpiId()">
-                    <div class="error-feedback" id="error-upiId"></div>
+                <div class="section-header">
+                    <i class="bi bi-wallet2" style="color:var(--primary);"></i> 9. Payout & Financial Details
                 </div>
                 <div class="form-group">
-                    <label>9.2 Bank account details</label>
-                    <textarea id="bankDetails" name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, IFSC"><c:out value="${host.bankDetails}"/></textarea>
+                    <label>9.1 UPI ID (for instant ticket payouts)</label>
+                    <input type="text" id="upiId" name="upiId" class="form-input" value="<c:out value='${host.upiId}'/>" placeholder="org@upi" maxlength="80" oninput="validateUpiId()" onblur="validateUpiId()">
+                    <div class="error-feedback" id="error-upiId"></div>
+                    <div class="hint-text">Instant UPI handle for fast event payouts.</div>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight:700;display:flex;align-items:center;gap:6px;">
+                        <i class="bi bi-bank" style="color:var(--primary);"></i> 9.2 Bank Account Details
+                    </label>
+                    <div class="bank-subfields-card">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Holder Name</label>
+                                <input type="text" name="bankAccountHolder" id="bankAccountHolder" class="form-input" placeholder="e.g. Organizer / Signatory Name" maxlength="100">
+                                <div class="error-feedback" id="error-bankAccountHolder"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Bank Name</label>
+                                <input type="text" name="bankName" id="bankName" class="form-input" placeholder="e.g. State Bank of India, HDFC Bank" maxlength="100">
+                                <div class="error-feedback" id="error-bankName"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Account Number</label>
+                                <input type="password" name="bankAccountNumber" id="bankAccountNumber" class="form-input" placeholder="Enter bank account number" maxlength="30" autocomplete="new-password" inputmode="numeric">
+                                <div class="error-feedback" id="error-bankAccountNumber"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm Account Number</label>
+                                <input type="text" id="bankConfirmAccountNumber" class="form-input" placeholder="Re-enter bank account number" maxlength="30" inputmode="numeric">
+                                <div class="error-feedback" id="error-bankConfirmAccountNumber"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>IFSC Code</label>
+                                <input type="text" name="bankIfsc" id="bankIfsc" class="form-input" placeholder="e.g. SBIN0001234" maxlength="20" style="text-transform:uppercase;">
+                                <div class="error-feedback" id="error-bankIfsc"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Branch Name</label>
+                                <input type="text" name="bankBranch" id="bankBranch" class="form-input" placeholder="e.g. Indiranagar, Bengaluru" maxlength="100">
+                                <div class="error-feedback" id="error-bankBranch"></div>
+                            </div>
+                        </div>
+                        <!-- Synchronized hidden bank details field -->
+                        <input type="hidden" name="bankDetails" id="bankDetails" value="<c:out value='${host.bankDetails}'/>">
+                    </div>
+                    <div class="hint-text" style="margin-top:8px;">Ticket proceeds and payouts stay securely protected until disbursed to your registered account.</div>
                 </div>
             </div>
 
@@ -731,13 +872,14 @@
                 </div>
             </div>
 
-            <div class="bottom-actions">
-                <button type="button" class="btn-bottom-save" onclick="saveProfile()">Save Host Profile</button>
+            <div class="bottom-actions" style="display:flex;gap:12px;margin-top:24px;">
+                <button type="button" class="btn-skip" style="flex:1;padding:14px;font-size:0.95rem;font-weight:700;justify-content:center;" onclick="saveProfile()"><i class="bi bi-save me-2"></i> Save Draft</button>
+                <button type="button" class="btn-bottom-save" style="flex:2;margin:0;" onclick="submitForVerification()"><i class="bi bi-send-check-fill me-2"></i> Submit for Verification & Open Dashboard</button>
             </div>
         </form>
 
-    </div>
-</div>
+        </div>
+    </main>
 
     <script>
         const contextPath = '${pageContext.request.contextPath}';
@@ -1054,11 +1196,118 @@
             return true;
         }
 
+                function serializeBankDetails() {
+            const holder = (document.getElementById('bankAccountHolder')?.value || '').trim();
+            const bank = (document.getElementById('bankName')?.value || '').trim();
+            const acct = (document.getElementById('bankAccountNumber')?.value || '').trim();
+            const ifsc = (document.getElementById('bankIfsc')?.value || '').trim().toUpperCase();
+            const branch = (document.getElementById('bankBranch')?.value || '').trim();
+            const hidden = document.getElementById('bankDetails');
+            if (!hidden) return;
+
+            if (!holder && !bank && !acct && !ifsc && !branch) {
+                hidden.value = '';
+                return;
+            }
+            const parts = [];
+            if (holder) parts.push('Account Holder: ' + holder);
+            if (bank) parts.push('Bank: ' + bank);
+            if (acct) parts.push('A/C: ' + acct);
+            if (ifsc) parts.push('IFSC: ' + ifsc);
+            if (branch) parts.push('Branch: ' + branch);
+            hidden.value = parts.join(' | ');
+        }
+
+        function parseExistingBankDetails() {
+            const raw = (document.getElementById('bankDetails')?.value || '').trim();
+            if (!raw) return;
+            const holderMatch = raw.match(/Account Holder:\s*([^|]+)/i);
+            const bankMatch = raw.match(/Bank:\s*([^|]+)/i);
+            const acctMatch = raw.match(/A\/C:\s*([^|]+)/i) || raw.match(/Account Number:\s*([^|]+)/i);
+            const ifscMatch = raw.match(/IFSC:\s*([^|]+)/i);
+            const branchMatch = raw.match(/Branch:\s*([^|]+)/i);
+
+            if (holderMatch && document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = holderMatch[1].trim();
+            if (bankMatch && document.getElementById('bankName')) document.getElementById('bankName').value = bankMatch[1].trim();
+            if (acctMatch && document.getElementById('bankAccountNumber')) {
+                const num = acctMatch[1].trim();
+                document.getElementById('bankAccountNumber').value = num;
+                if (document.getElementById('bankConfirmAccountNumber')) document.getElementById('bankConfirmAccountNumber').value = num;
+            }
+            if (ifscMatch && document.getElementById('bankIfsc')) document.getElementById('bankIfsc').value = ifscMatch[1].trim().toUpperCase();
+            if (branchMatch && document.getElementById('bankBranch')) document.getElementById('bankBranch').value = branchMatch[1].trim();
+
+            if (!holderMatch && !bankMatch && !acctMatch && !ifscMatch && !branchMatch) {
+                if (document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = raw;
+            }
+        }
+
+        function validateBankAccountNumber() {
+            const acctEl = document.getElementById('bankAccountNumber');
+            const confEl = document.getElementById('bankConfirmAccountNumber');
+            if (!acctEl) return true;
+            const acct = acctEl.value.trim();
+            const conf = confEl ? confEl.value.trim() : '';
+
+            if (acct) {
+                if (!/^\d{9,18}$/.test(acct)) {
+                    showError('bankAccountNumber', 'error-bankAccountNumber', 'Account number must be 9 to 18 digits.');
+                    return false;
+                }
+                showValid('bankAccountNumber', 'error-bankAccountNumber');
+                if (conf && acct !== conf) {
+                    showError('bankConfirmAccountNumber', 'error-bankConfirmAccountNumber', 'Account numbers do not match.');
+                    return false;
+                } else if (conf && acct === conf) {
+                    showValid('bankConfirmAccountNumber', 'error-bankConfirmAccountNumber');
+                }
+            } else {
+                showValid('bankAccountNumber', 'error-bankAccountNumber');
+            }
+            return true;
+        }
+
+        function validateBankConfirmAccountNumber() {
+            const acctEl = document.getElementById('bankAccountNumber');
+            const confEl = document.getElementById('bankConfirmAccountNumber');
+            if (!confEl) return true;
+            const acct = acctEl ? acctEl.value.trim() : '';
+            const conf = confEl.value.trim();
+
+            if (conf || acct) {
+                if (acct !== conf) {
+                    showError('bankConfirmAccountNumber', 'error-bankConfirmAccountNumber', 'Account numbers do not match.');
+                    return false;
+                }
+                showValid('bankConfirmAccountNumber', 'error-bankConfirmAccountNumber');
+            } else {
+                showValid('bankConfirmAccountNumber', 'error-bankConfirmAccountNumber');
+            }
+            return true;
+        }
+
+        function validateBankIfsc() {
+            const el = document.getElementById('bankIfsc');
+            if (!el) return true;
+            const val = el.value.trim().toUpperCase();
+            el.value = val;
+            if (val) {
+                if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(val)) {
+                    showError('bankIfsc', 'error-bankIfsc', 'Enter a valid 11-character IFSC code (e.g. SBIN0001234).');
+                    return false;
+                }
+                showValid('bankIfsc', 'error-bankIfsc');
+            } else {
+                showValid('bankIfsc', 'error-bankIfsc');
+            }
+            return true;
+        }
+
         function validateUpiId() {
             const el = document.getElementById('upiId');
             const val = el.value.trim();
-            if (val && !/@/.test(val)) {
-                showError('upiId', 'error-upiId', 'UPI ID must contain @ symbol (e.g. name@upi).');
+            if (val && !/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(val)) {
+                showError('upiId', 'error-upiId', 'Enter a valid UPI ID (e.g. name@upi).');
                 return false;
             }
             showValid('upiId', 'error-upiId');
@@ -1106,55 +1355,143 @@
             return true;
         }
 
-        async function saveProfile(e) {
-            if (e) e.preventDefault();
-            const alertBox = document.getElementById('alertBox');
-            alertBox.style.display = 'none';
+        function collectValidationErrors() {
+            const errors = [];
 
-            // Run all validations
-            const v1 = validateFullName();
-            const v2 = validateOrganizerType();
-            const v3 = validatePhone();
-            const v4 = validateOrganizerName();
-            const v5 = validateWhatsappNumber();
-            const v6 = validateCredentialNumber();
-            const v7 = validateYearsExperience();
-            const v8 = validateAddress();
-            const v9 = validateCity();
-            const v10 = validateState();
-            const v11 = validatePincode();
-            const v12 = validateMapsLocation();
-            const v13 = validateEventCategories();
-            const v14 = validateAudience();
-            const v15 = validateOpenDays();
-            const v16 = validateOperatingHours();
-            const v17 = validateHostBio();
-            const v18 = validateSessionMode();
-            const v19 = validateDurationMinutes();
-            const v20 = validateTypicalPrice();
-            const v21 = validateUpiId();
-            const v22 = validateLogoPath();
-            const v23 = validateGalleryPhotos();
-
-            if (!v1 || !v2 || !v3 || !v4 || !v5 || !v6 || !v7 || !v8 || !v9 || !v10 || !v11 || !v12 || !v13 || !v14 || !v15 || !v16 || !v17 || !v18 || !v19 || !v20 || !v21 || !v22 || !v23) {
-                alertBox.className = 'alert-box alert-error';
-                alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Please correct the errors in the form before saving.';
-                alertBox.style.display = 'flex';
-                
-                // Focus the first invalid element
-                const firstInvalid = document.querySelector('.is-invalid');
-                if (firstInvalid) {
-                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    firstInvalid.focus();
-                } else {
-                    const firstGroupError = document.querySelector('.error-feedback[style*="display: block"]');
-                    if (firstGroupError) {
-                        firstGroupError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }
-                return;
+            if (!validateFullName()) {
+                errors.push({ id: 'fullName', label: '1.1 Full Name (at least 2 characters)' });
+            }
+            if (!validateOrganizerType()) {
+                errors.push({ id: 'organizerType', label: '1.2 Organization Type' });
+            }
+            if (!validatePhone()) {
+                errors.push({ id: 'phone', label: '1.3 Official Phone (valid 10 digits)' });
+            }
+            if (!validateOrganizerName()) {
+                errors.push({ id: 'organizerName', label: '1.4 Organization Name' });
+            }
+            if (!validateWhatsappNumber()) {
+                errors.push({ id: 'whatsappNumber', label: '1.5 WhatsApp Contact (10 digits if provided)' });
+            }
+            if (!validateCredentialNumber()) {
+                errors.push({ id: 'credentialNumber', label: '1.6 Reg / GST / NGO Credential Number' });
+            }
+            if (!validateYearsExperience()) {
+                errors.push({ id: 'yearsExperience', label: '1.7 Years of Experience (0 to 50)' });
+            }
+            if (!validateAddress()) {
+                errors.push({ id: 'address', label: '2.1 Street Address / Venue Base' });
+            }
+            if (!validateCity()) {
+                errors.push({ id: 'city', label: '2.2 City' });
+            }
+            if (!validateState()) {
+                errors.push({ id: 'stateSelect', label: '2.3 State' });
+            }
+            if (!validatePincode()) {
+                errors.push({ id: 'pincode', label: '2.4 6-digit Pincode' });
+            }
+            if (!validateMapsLocation()) {
+                errors.push({ id: 'mapsLocation', label: '2.5 Google Maps URL (must start with http/https)' });
+            }
+            if (!validateEventCategories()) {
+                errors.push({ id: 'error-eventCategories', label: '3. Event Categories (select at least one)' });
+            }
+            if (!validateAudience()) {
+                errors.push({ id: 'error-audience', label: '4.1 Target Audience (select at least one)' });
+            }
+            if (!validateOpenDays()) {
+                errors.push({ id: 'error-openDays', label: '6.1 Open Days (select at least one day)' });
+            }
+            if (!validateOperatingHours()) {
+                errors.push({ id: 'openTime', label: '6.2 & 6.3 Operating Hours (Closing time must be after Opening time)' });
+            }
+            if (!validateHostBio()) {
+                errors.push({ id: 'hostBio', label: '7.1 Mission & Event Background Bio (minimum 10 characters)' });
+            }
+            if (!validateSessionMode()) {
+                errors.push({ id: 'sessionMode', label: '8.1 Session Mode' });
+            }
+            if (!validateDurationMinutes()) {
+                errors.push({ id: 'durationMinutes', label: '8.2 Duration (minimum 15 minutes)' });
+            }
+            if (!validateTypicalPrice()) {
+                errors.push({ id: 'typicalPrice', label: '8.3 Typical Ticket Price (0 or positive amount)' });
+            }
+            if (!validateUpiId()) {
+                errors.push({ id: 'upiId', label: '9.1 UPI ID (valid format e.g. name@upi)' });
+            }
+            if (!validateBankAccountNumber()) {
+                errors.push({ id: 'bankAccountNumber', label: '9.2 Bank Account Number (9 to 18 numeric digits)' });
+            }
+            if (!validateBankConfirmAccountNumber()) {
+                errors.push({ id: 'bankConfirmAccountNumber', label: '9.2 Confirm Account Number (must match account number)' });
+            }
+            if (!validateBankIfsc()) {
+                errors.push({ id: 'bankIfsc', label: '9.2 IFSC Code (valid 11-character code, e.g. SBIN0001234)' });
+            }
+            if (!validateLogoPath()) {
+                errors.push({ id: 'logoPath', label: '10.1 Logo or Profile Image URL (valid http/https)' });
+            }
+            if (!validateGalleryPhotos()) {
+                errors.push({ id: 'galleryPhotos', label: '11.1 Gallery Photos (valid comma-separated URLs)' });
             }
 
+            return errors;
+        }
+
+        function focusField(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (el.focus && el.tagName !== 'DIV') {
+                    el.focus();
+                }
+            }
+        }
+
+        function displayMissingErrors(errors, backendMissingList) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.className = 'alert-box alert-error';
+            alertBox.style.display = 'block';
+
+            let count = (errors && errors.length) || (backendMissingList && backendMissingList.length) || 0;
+            let html = '<div style="display:flex;align-items:flex-start;gap:12px;">';
+            html += '<i class="bi bi-exclamation-triangle-fill" style="font-size:1.4rem;color:#DC2626;margin-top:2px;"></i>';
+            html += '<div style="flex:1;">';
+            html += '<div style="font-weight:800;font-size:0.96rem;margin-bottom:8px;color:#991B1B;">';
+            html += 'Incomplete Profile — Please fill the following ' + count + ' required field' + (count === 1 ? '' : 's') + ' before submitting:';
+            html += '</div>';
+            html += '<ul style="margin:0;padding-left:22px;font-size:0.88rem;color:#7F1D1D;line-height:1.7;">';
+
+            if (errors && errors.length > 0) {
+                errors.forEach(function(err) {
+                    html += '<li style="cursor:pointer;text-decoration:underline;margin-bottom:4px;" onclick="focusField(\'' + err.id + '\')">' + err.label + '</li>';
+                });
+            } else if (backendMissingList && backendMissingList.length > 0) {
+                backendMissingList.forEach(function(m) {
+                    html += '<li style="margin-bottom:4px;">' + m + '</li>';
+                });
+            } else {
+                html += '<li>Please complete all required fields across the sections.</li>';
+            }
+
+            html += '</ul>';
+            html += '<div style="margin-top:10px;font-size:0.8rem;color:#991B1B;font-weight:600;">';
+            html += '<i class="bi bi-hand-index-thumb"></i> Click any item in the list above to jump directly to that section.';
+            html += '</div>';
+            html += '</div></div>';
+
+            alertBox.innerHTML = html;
+            alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            if (errors && errors.length > 0) {
+                focusField(errors[0].id);
+            }
+        }
+
+        async function performSaveProfile() {
+            serializeBankDetails();
             const payload = {
                 fullName: document.getElementById('fullName').value.trim(),
                 organizerType: document.getElementById('organizerType').value,
@@ -1181,33 +1518,62 @@
                 typicalPrice: document.getElementById('typicalPrice').value,
                 upiId: document.getElementById('upiId').value.trim(),
                 bankDetails: document.getElementById('bankDetails').value.trim(),
+                bankAccountHolder: (document.getElementById('bankAccountHolder')?.value || '').trim(),
+                bankName: (document.getElementById('bankName')?.value || '').trim(),
+                bankAccountNumber: (document.getElementById('bankAccountNumber')?.value || '').trim(),
+                bankIfsc: (document.getElementById('bankIfsc')?.value || '').trim().toUpperCase(),
+                bankBranch: (document.getElementById('bankBranch')?.value || '').trim(),
                 logoPath: document.getElementById('logoPath').value.trim(),
                 galleryPhotos: document.getElementById('galleryPhotos').value.trim()
             };
 
+            const res = await fetch(contextPath + '/api/women-events/host/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                const pct = data.profileCompletionPct || 0;
+                const pctText = document.getElementById('pctText');
+                if (pctText) pctText.innerText = pct + '%';
+                const bar = document.getElementById('progressBarFill');
+                if (bar) bar.style.width = pct + '%';
+            }
+            return data;
+        }
+
+        async function saveProfile(e) {
+            if (e) e.preventDefault();
+            const alertBox = document.getElementById('alertBox');
+            alertBox.style.display = 'none';
+
+            // Check if any errors exist
+            const errors = collectValidationErrors();
+            
             try {
-                const res = await fetch(contextPath + '/api/women-events/host/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
+                const data = await performSaveProfile();
                 if (data.success) {
                     const pct = data.profileCompletionPct || 0;
-                    document.getElementById('pctText').innerText = pct + '%';
-                    document.getElementById('progressBarFill').style.width = pct + '%';
-                    alertBox.className = 'alert-box alert-success';
-                    alertBox.innerHTML = '<i class="bi bi-check-circle-fill"></i> Profile saved successfully!';
-                    alertBox.style.display = 'flex';
+                    if (errors.length > 0) {
+                        displayMissingErrors(errors);
+                    } else {
+                        alertBox.className = 'alert-box alert-success';
+                        alertBox.innerHTML = '<i class="bi bi-check-circle-fill"></i> Profile saved as draft successfully! (' + pct + '% complete)';
+                        alertBox.style.display = 'flex';
+                        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 } else {
                     alertBox.className = 'alert-box alert-error';
                     alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + (data.error || 'Failed to save profile.');
                     alertBox.style.display = 'flex';
+                    alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             } catch (err) {
                 alertBox.className = 'alert-box alert-error';
                 alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Network error saving profile.';
                 alertBox.style.display = 'flex';
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -1216,28 +1582,63 @@
             alertBox.style.display = 'none';
 
             const statusStr = "${statusStr}";
-            if (statusStr === "APPROVED") {
+            if (statusStr === "APPROVED" || statusStr === "PENDING_ADMIN_APPROVAL") {
                 window.location.href = contextPath + '/women-events/organizer/dashboard';
                 return;
             }
 
+            // 1. Run all validations to show what is missed
+            const errors = collectValidationErrors();
+            if (errors.length > 0) {
+                displayMissingErrors(errors);
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitVerification');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting & Navigating to Dashboard...';
+            }
+
             try {
+                // 2. Save current form values to backend first
+                const saveData = await performSaveProfile();
+                if (!saveData.success) {
+                    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+                    alertBox.className = 'alert-box alert-error';
+                    alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + (saveData.error || 'Failed to save profile details.');
+                    alertBox.style.display = 'flex';
+                    alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                // 3. Submit profile for admin verification
                 const res = await fetch(contextPath + '/api/women-events/host/submit-verification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = contextPath + '/women-events/organizer/profile-completion?submitted=true';
+                    // Navigate directly to the dashboard!
+                    window.location.href = contextPath + '/women-events/organizer/dashboard?verified=submitted';
                 } else {
-                    alertBox.className = 'alert-box alert-error';
-                    alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + (data.error || 'Cannot submit for verification yet. Please complete all required fields.');
-                    alertBox.style.display = 'flex';
+                    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+                    if (data.missingItems && data.missingItems.length > 0) {
+                        displayMissingErrors([], data.missingItems);
+                    } else {
+                        alertBox.className = 'alert-box alert-error';
+                        alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + (data.error || 'Cannot submit for verification yet. Please complete all required fields.');
+                        alertBox.style.display = 'flex';
+                        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
             } catch (err) {
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
                 alertBox.className = 'alert-box alert-error';
-                alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Network error submitting profile.';
+                alertBox.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Network error submitting profile. Please try again.';
                 alertBox.style.display = 'flex';
+                alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -1268,6 +1669,25 @@
             set('pv-bio', previewVal('hostBio'));
         }
         document.addEventListener('DOMContentLoaded', function() {
+            ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'bankConfirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(function(id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', function() {
+                        serializeBankDetails();
+                        if (id === 'bankAccountNumber') validateBankAccountNumber();
+                        if (id === 'bankConfirmAccountNumber') validateBankConfirmAccountNumber();
+                        if (id === 'bankIfsc') validateBankIfsc();
+                    });
+                    el.addEventListener('blur', function() {
+                        serializeBankDetails();
+                        if (id === 'bankAccountNumber') validateBankAccountNumber();
+                        if (id === 'bankConfirmAccountNumber') validateBankConfirmAccountNumber();
+                        if (id === 'bankIfsc') validateBankIfsc();
+                    });
+                }
+            });
+            parseExistingBankDetails();
+
             refreshOrgPreview();
             const form = document.getElementById('hostProfileForm');
             if (form) form.addEventListener('input', refreshOrgPreview);

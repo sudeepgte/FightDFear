@@ -253,7 +253,24 @@ public class EventHostProfileService {
             try { h.setTypicalPrice(Double.parseDouble(str(body.get("typicalPrice")))); } catch (Exception ignored) {}
         }
         if (body.get("upiId") != null) h.setUpiId(blankToNull(str(body.get("upiId"))));
-        if (body.get("bankDetails") != null) h.setBankDetails(blankToNull(str(body.get("bankDetails"))));
+        String rawBank = str(body.get("bankDetails"));
+        String bHolder = str(body.get("bankAccountHolder"));
+        String bName = str(body.get("bankName"));
+        String bAcct = str(body.get("bankAccountNumber"));
+        String bIfsc = str(body.get("bankIfsc"));
+        String bBranch = str(body.get("bankBranch"));
+
+        if ((bHolder != null && !bHolder.isBlank()) || (bAcct != null && !bAcct.isBlank())) {
+            StringBuilder sb = new StringBuilder();
+            if (bHolder != null && !bHolder.isBlank()) sb.append("Account Holder: ").append(bHolder.trim());
+            if (bName != null && !bName.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Bank: ").append(bName.trim());
+            if (bAcct != null && !bAcct.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("A/C: ").append(bAcct.trim());
+            if (bIfsc != null && !bIfsc.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("IFSC: ").append(bIfsc.trim().toUpperCase(java.util.Locale.ROOT));
+            if (bBranch != null && !bBranch.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Branch: ").append(bBranch.trim());
+            h.setBankDetails(sb.toString());
+        } else if (body.get("bankDetails") != null) {
+            h.setBankDetails(blankToNull(rawBank));
+        }
         if (body.get("website") != null) h.setWebsite(blankToNull(str(body.get("website"))));
         if (body.get("instagram") != null) h.setInstagram(blankToNull(str(body.get("instagram"))));
         if (body.get("facebook") != null) h.setFacebook(blankToNull(str(body.get("facebook"))));

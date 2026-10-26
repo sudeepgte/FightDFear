@@ -102,106 +102,153 @@
 
         .main-container {
             flex: 1;
-            max-width: 1260px;
+            max-width: 880px;
             width: 100%;
-            margin: 24px auto 40px;
+            margin: 24px auto 50px;
             padding: 0 20px;
         }
 
-        .profile-layout-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 420px;
-            gap: 28px;
-            align-items: start;
+        .profile-container-wrap {
+            width: 100%;
         }
 
-        @media (max-width: 991px) {
-            .profile-layout-grid {
-                grid-template-columns: minmax(0, 1fr);
-            }
-            .preview-column {
-                order: 2;
-                margin-top: 10px;
-            }
-        }
-
-        /* Live Profile Preview Card Styling */
-        .preview-sticky-wrap {
-            position: sticky;
-            top: 80px;
-            z-index: 20;
-        }
-
-        .live-preview-card {
-            background: #FFFFFF;
-            border-radius: 20px;
-            border: 1px solid #FECDD3;
-            box-shadow: 0 10px 30px rgba(244, 63, 94, 0.08);
-            overflow: hidden;
-        }
-
-        .preview-banner-header {
-            background: linear-gradient(135deg, #FFE4E6 0%, #FFF1F2 100%);
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
+        /* Review Pop-up Modal Styling */
+        .review-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            display: none;
             align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .review-modal-dialog {
+            background: #FFFFFF;
+            width: 100%;
+            max-width: 820px;
+            max-height: 90vh;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #FECDD3;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .review-modal-header {
+            background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             border-bottom: 1px solid #FECDD3;
         }
 
-        .preview-badge-live {
-            background: var(--primary);
-            color: #FFFFFF;
-            font-size: 0.68rem;
+        .review-modal-header h3 {
+            font-size: 1.15rem;
             font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            display: inline-flex;
+            color: var(--navy);
+            display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
+            margin: 0;
         }
 
-        .preview-body {
-            padding: 24px 20px;
-        }
-
-        .preview-avatar-box {
-            position: relative;
-            width: 80px;
-            height: 80px;
-            margin-bottom: 12px;
-        }
-
-        .preview-avatar-img {
-            width: 80px;
-            height: 80px;
+        .btn-modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.8rem;
+            line-height: 1;
+            color: var(--text-gray);
+            cursor: pointer;
             border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #FECDD3;
-            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.12);
-        }
-
-        .preview-avatar-fallback {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--rose-soft);
-            color: var(--primary);
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            border: 3px solid #FECDD3;
+            transition: all 0.2s;
         }
 
-        .preview-chip {
+        .btn-modal-close:hover {
+            background: #FECDD3;
+            color: var(--navy);
+        }
+
+        .review-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .review-section-box {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 20px;
+        }
+
+        .review-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .review-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 20px;
+        }
+
+        @media (max-width: 640px) {
+            .review-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .review-item {
+            font-size: 0.88rem;
+        }
+
+        .review-item-label {
+            font-size: 0.74rem;
+            color: var(--text-gray);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .review-item-val {
+            font-weight: 600;
+            color: var(--navy);
+            word-break: break-word;
+        }
+
+        .review-chip-pill {
             display: inline-block;
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 600;
             padding: 4px 10px;
-            border-radius: 20px;
+            border-radius: 16px;
             background: #FFF1F2;
             color: #E11D48;
             border: 1px solid #FECDD3;
@@ -209,21 +256,68 @@
             margin-bottom: 4px;
         }
 
-        .preview-meta-row {
+        .review-modal-footer {
+            background: #FFFFFF;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 12px;
-            padding: 8px 12px;
-            background: #F8FAFC;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 8px;
-            font-size: 0.82rem;
+            flex-wrap: wrap;
         }
 
-        .preview-meta-row i {
-            color: var(--primary);
-            font-size: 1rem;
+        .btn-modal-back {
+            padding: 10px 18px;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            color: var(--navy);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-back:hover {
+            background: #F1F5F9;
+        }
+
+        .btn-modal-draft {
+            padding: 10px 18px;
+            border: 1px solid #CBD5E1;
+            background: #F8FAFC;
+            color: var(--navy);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal-draft:hover {
+            background: #E2E8F0;
+        }
+
+        .btn-modal-submit-final {
+            padding: 10px 22px;
+            border: none;
+            background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+            color: #FFFFFF;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-modal-submit-final:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
         }
 
 
@@ -500,17 +594,30 @@
             </a>
         </div>
         <div class="header-actions">
-            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">Skip</a>
-            <button type="button" class="btn-header-save" onclick="document.getElementById('trainerProfileForm').submit()">Save</button>
+            <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
+            <button type="button" class="btn-header-save" onclick="openReviewModal()"><i class="bi bi-eye me-1"></i> Review &amp; Submit</button>
         </div>
     </header>
 
 
 
     <main class="main-container">
-        <div class="profile-layout-grid">
-            <!-- LEFT: 11 Form Sections Column -->
-            <div class="form-column">
+        <div class="profile-container-wrap">
+            <c:if test="${not empty error}">
+                <div style="background:#FEF2F2; border:1px solid #FECACA; color:#DC2626; padding:12px 18px; border-radius:12px; margin-bottom:16px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <c:out value="${error}"/>
+                </div>
+            </c:if>
+            <c:if test="${not empty success}">
+                <div style="background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A; padding:12px 18px; border-radius:12px; margin-bottom:16px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <i class="bi bi-check-circle-fill"></i> <c:out value="${success}"/>
+                </div>
+            </c:if>
+            <c:if test="${not empty info}">
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#2563EB; padding:12px 18px; border-radius:12px; margin-bottom:16px; font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <i class="bi bi-info-circle-fill"></i> <c:out value="${info}"/>
+                </div>
+            </c:if>
                 <div class="profile-progress-card">
                     <div class="progress-header">
                         <span class="progress-title">Coach Profile Completion: <span>${trainer.profileCompletionPct != null ? trainer.profileCompletionPct : 0}%</span></span>
@@ -577,6 +684,7 @@
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                     </c:if>
                     <input type="hidden" name="id" value="${trainer.id}">
+                    <input type="hidden" name="intent" id="formIntent" value="submitVerification">
 
                     <!-- Section 1: Trainer Identity -->
                     <div class="section-card">
@@ -785,13 +893,22 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>9.4 Account Number *</label>
-                                <input type="text" id="bankAccountNumber" name="bankAccountNumber" class="form-input" placeholder="Enter bank account number" maxlength="20">
+                                <input type="text" id="bankAccountNumber" name="bankAccountNumber" class="form-input" placeholder="Enter 9 to 18 digit account number" maxlength="18" inputmode="numeric" oninput="validateAccountNumber()">
+                                <small id="accInvalidMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Account number must be 9 to 18 numeric digits
+                                </small>
+                                <small id="accValidMsg" style="color: #16A34A; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-check-circle-fill"></i> Valid account number
+                                </small>
                             </div>
                             <div class="form-group">
                                 <label>9.5 Re-enter Account Number *</label>
-                                <input type="text" id="confirmAccountNumber" class="form-input" placeholder="Confirm bank account number" maxlength="20">
+                                <input type="text" id="confirmAccountNumber" class="form-input" placeholder="Confirm bank account number" maxlength="18" inputmode="numeric" oninput="validateAccountNumber()">
                                 <small id="accMismatchMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
                                     <i class="bi bi-exclamation-circle-fill"></i> Account numbers do not match
+                                </small>
+                                <small id="accMatchSuccessMsg" style="color: #16A34A; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-check-circle-fill"></i> Account numbers match
                                 </small>
                             </div>
                         </div>
@@ -799,9 +916,12 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>9.6 IFSC Code *</label>
-                                <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" placeholder="e.g. HDFC0001234" maxlength="11" style="text-transform: uppercase;">
+                                <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" placeholder="e.g. HDFC0001234" maxlength="11" style="text-transform: uppercase;" oninput="validateIfscCode()">
                                 <small id="ifscFormatMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
                                     <i class="bi bi-exclamation-circle-fill"></i> Invalid IFSC format (e.g. SBIN0001234)
+                                </small>
+                                <small id="ifscValidMsg" style="color: #16A34A; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-check-circle-fill"></i> Valid IFSC format
                                 </small>
                             </div>
                             <div class="form-group">
@@ -837,322 +957,258 @@
                     </div>
 
                     <div class="bottom-actions">
-                        <button type="submit" class="btn-bottom-save">Save Coach Profile</button>
+                        <button type="button" class="btn-bottom-save" onclick="openReviewModal()">
+                            <i class="bi bi-eye-fill me-2"></i> Review Profile &amp; Submit
+                        </button>
                     </div>
                 </form>
-            </div>
-
-            <!-- RIGHT: Profile Live Preview Column -->
-            <div class="preview-column">
-                <div class="preview-sticky-wrap">
-                    <div class="live-preview-card">
-                        <div class="preview-banner-header">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="preview-badge-live"><i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i> LIVE PREVIEW</span>
-                            </div>
-                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--navy); opacity: 0.7;">STUDIO PROFILE</span>
-                        </div>
-                        <div class="preview-body">
-                            <!-- Avatar & Basic Details -->
-                            <div class="d-flex align-items-center gap-3 mb-3">
-                                <div class="preview-avatar-box">
-                                    <c:choose>
-                                        <c:when test="${not empty trainer.profilePhotoPath}">
-                                            <img id="previewPhoto" src="${trainer.profilePhotoPath}" class="preview-avatar-img" alt="Trainer Profile">
-                                            <div id="previewPhotoFallback" class="preview-avatar-fallback d-none" style="display:none;">
-                                                <i class="bi bi-person-fill"></i>
-                                            </div>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div id="previewPhotoFallback" class="preview-avatar-fallback">
-                                                <i class="bi bi-person-fill"></i>
-                                            </div>
-                                            <img id="previewPhoto" src="" class="preview-avatar-img d-none" alt="Trainer Profile" style="display:none;">
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                                <div style="flex: 1; min-width: 0;">
-                                    <div class="d-flex align-items-center gap-1">
-                                        <h5 id="previewFullName" class="fw-bold mb-0 text-truncate" style="color: var(--navy); font-size: 1.05rem;">
-                                            ${not empty trainer.fullName ? trainer.fullName : 'Trainer Name'}
-                                        </h5>
-                                        <i class="bi bi-patch-check-fill" style="color: #10B981; font-size: 1rem;" title="Verified Coach"></i>
-                                    </div>
-                                    <p id="previewDesignation" class="small mb-1 text-truncate" style="color: var(--primary); font-weight: 600;">
-                                        ${not empty trainer.designation ? trainer.designation : 'Certified Fitness Coach'}
-                                    </p>
-                                    <div id="previewMetaLocation" class="text-muted" style="font-size: 0.75rem;">
-                                        <i class="bi bi-geo-alt-fill me-1" style="color: var(--primary) !important;"></i>
-                                        <span id="previewCity">${not empty trainer.city ? trainer.city : 'City'}</span>, <span id="previewState">${not empty trainer.state ? trainer.state : 'State'}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Pricing & Experience Highlight -->
-                            <div class="preview-meta-row justify-content-between">
-                                <div>
-                                    <span class="text-muted small d-block">Session Fee</span>
-                                    <strong id="previewFee" style="color: var(--navy); font-size: 0.95rem;">₹${trainer.typicalPrice != null ? trainer.typicalPrice : (trainer.sessionFees != null ? trainer.sessionFees : 300)}</strong> <small class="text-muted">/ <span id="previewDuration">${trainer.durationMinutes != null ? trainer.durationMinutes : 60}</span>m</small>
-                                </div>
-                                <div class="text-end">
-                                    <span class="text-muted small d-block">Experience</span>
-                                    <strong id="previewExp" style="color: var(--navy); font-size: 0.95rem;">${trainer.experience != null ? trainer.experience : 1} Years</strong>
-                                </div>
-                            </div>
-
-                            <!-- Session Mode & Doorstep -->
-                            <div class="preview-meta-row">
-                                <i class="bi bi-broadcast"></i>
-                                <div>
-                                    <span class="text-muted d-block" style="font-size: 0.72rem;">Training Mode &amp; Delivery</span>
-                                    <span id="previewMode" class="fw-semibold" style="color: var(--navy);">${not empty trainer.sessionMode ? trainer.sessionMode : 'In-Person Studio'}</span>
-                                    <span id="previewDoorstepBadge" class="badge bg-light border text-dark ms-1" style="font-size: 0.68rem; ${trainer.doorService == true ? '' : 'display:none;'}">
-                                        <i class="bi bi-house-door-fill text-danger me-1" style="color: var(--primary) !important;"></i> Doorstep
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Specializations -->
-                            <div class="mb-3">
-                                <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Specializations</span>
-                                <div id="previewSpecsContainer" class="d-flex flex-wrap">
-                                    <c:choose>
-                                        <c:when test="${not empty trainer.specializations}">
-                                            <c:forEach var="spec" items="${trainer.specializations}">
-                                                <span class="preview-chip">${spec}</span>
-                                            </c:forEach>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="preview-chip">Weight Loss</span>
-                                            <span class="preview-chip">Strength Training</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                            </div>
-
-                            <!-- Target Audience -->
-                            <div class="mb-3">
-                                <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Target Audience</span>
-                                <div id="previewAudienceContainer" class="d-flex flex-wrap">
-                                    <c:choose>
-                                        <c:when test="${not empty trainer.audience}">
-                                            <c:forEach var="aud" items="${trainer.audience}">
-                                                <span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">${aud}</span>
-                                            </c:forEach>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">All Fitness Levels</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                            </div>
-
-                            <!-- About / Bio Snippet -->
-                            <div class="mb-3">
-                                <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">About Coach</span>
-                                <p id="previewBioText" class="small text-muted mb-0" style="line-height: 1.4; max-height: 80px; overflow-y: auto;">
-                                    ${not empty trainer.bio ? trainer.bio : 'Personalized coaching philosophy, nutrition guidance, and progressive workout regimens designed for guaranteed client transformation.'}
-                                </p>
-                            </div>
-
-                            <!-- Studio Facilities -->
-                            <div id="previewFacilitiesWrap" class="mb-2" style="${not empty trainer.facilities ? '' : 'display:none;'}">
-                                <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Studio Amenities</span>
-                                <div id="previewFacilitiesContainer" class="d-flex flex-wrap">
-                                    <c:forEach var="fac" items="${trainer.facilities}">
-                                        <span class="badge bg-white border text-secondary me-1 mb-1" style="font-size: 0.7rem;"><i class="bi bi-check-circle text-success me-1"></i>${fac}</span>
-                                    </c:forEach>
-                                </div>
-                            </div>
-
-                            <!-- Studio Gallery Preview Thumbnails -->
-                            <div id="previewGalleryWrap" class="mb-2" style="display:none;">
-                                <span class="d-block mb-1 text-muted" style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Gallery Thumbnails</span>
-                                <div id="previewGalleryContainer" class="d-flex flex-wrap gap-2"></div>
-                            </div>
-
-                            <div class="mt-3 pt-3 border-top text-center">
-                                <small class="text-muted"><i class="bi bi-shield-lock-fill text-success me-1"></i> Public client preview &bull; Updates live as you type</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
-    <!-- Real-time Profile Live-Sync Engine -->
+    <!-- ====================================================
+         PROFILE REVIEW POP-UP MODAL PAGE
+         ==================================================== -->
+    <div id="profileReviewModalBackdrop" class="review-modal-backdrop" onclick="handleReviewBackdropClick(event)">
+        <div class="review-modal-dialog">
+            <div class="review-modal-header">
+                <h3><i class="bi bi-clipboard-check-fill" style="color: var(--primary);"></i> Review Coach Profile</h3>
+                <button type="button" class="btn-modal-close" onclick="closeReviewModal()" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="review-modal-body">
+                <!-- Summary Header -->
+                <div style="background: linear-gradient(135deg, #FFF1F2 0%, #FFFFFF 100%); border: 1px solid #FECDD3; border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; gap: 16px;">
+                    <div style="width: 68px; height: 68px; border-radius: 50%; overflow: hidden; border: 2px solid #FECDD3; background: #FFE4E6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <img id="modalRevAvatarImg" src="${not empty trainer.profilePhotoPath ? trainer.profilePhotoPath : ''}" style="width: 100%; height: 100%; object-fit: cover; ${empty trainer.profilePhotoPath ? 'display:none;' : ''}">
+                        <div id="modalRevAvatarFallback" style="font-size: 1.8rem; color: var(--primary); ${not empty trainer.profilePhotoPath ? 'display:none;' : ''}">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 1.15rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+                            <span id="modalRevFullName">Coach Name</span>
+                            <i class="bi bi-patch-check-fill text-success" title="Verified Badge"></i>
+                        </div>
+                        <div id="modalRevDesignation" style="font-size: 0.88rem; font-weight: 700; color: var(--primary); margin-bottom: 2px;">Certified Fitness Coach</div>
+                        <div style="font-size: 0.8rem; color: var(--text-gray);">
+                            <span id="modalRevExp">1 Years Exp</span> &bull; <span id="modalRevCityState">City, State</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. Identity & Contact Details -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-person-badge"></i> 1. Identity &amp; Contact Details</div>
+                    <div class="review-grid-2">
+                        <div class="review-item"><div class="review-item-label">Full Name</div><div class="review-item-val" id="revValName">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Designation</div><div class="review-item-val" id="revValDesig">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Official Phone</div><div class="review-item-val" id="revValPhone">—</div></div>
+                        <div class="review-item"><div class="review-item-label">WhatsApp Number</div><div class="review-item-val" id="revValWhatsapp">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Experience</div><div class="review-item-val" id="revValExperience">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Credential / Cert Reg ID</div><div class="review-item-val" id="revValCredential">—</div></div>
+                    </div>
+                </div>
+
+                <!-- 2. Location & Address -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-geo-alt"></i> 2. Studio / Location</div>
+                    <div class="review-grid-2">
+                        <div class="review-item" style="grid-column: 1 / -1;"><div class="review-item-label">Address</div><div class="review-item-val" id="revValAddress">—</div></div>
+                        <div class="review-item"><div class="review-item-label">City &amp; State</div><div class="review-item-val" id="revValCityState">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Pincode</div><div class="review-item-val" id="revValPincode">—</div></div>
+                    </div>
+                </div>
+
+                <!-- 3. Specializations & Audience -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-stars"></i> 3. Specializations &amp; Audience</div>
+                    <div class="review-item" style="margin-bottom: 10px;">
+                        <div class="review-item-label">Categories Offered</div>
+                        <div id="revValSpecs" style="margin-top: 4px;">—</div>
+                    </div>
+                    <div class="review-grid-2">
+                        <div class="review-item"><div class="review-item-label">Target Audience</div><div id="revValAudience" style="margin-top: 4px;">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Doorstep / Home Sessions</div><div class="review-item-val" id="revValDoorstep">—</div></div>
+                    </div>
+                </div>
+
+                <!-- 4. Schedule & Amenities -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-clock-history"></i> 4. Working Hours &amp; Amenities</div>
+                    <div class="review-item" style="margin-bottom: 8px;">
+                        <div class="review-item-label">Available Days</div>
+                        <div id="revValDays" style="margin-top: 4px;">—</div>
+                    </div>
+                    <div class="review-grid-2" style="margin-bottom: 8px;">
+                        <div class="review-item"><div class="review-item-label">Hours of Operation</div><div class="review-item-val" id="revValHours">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Session Mode &amp; Duration</div><div class="review-item-val" id="revValSessionMode">—</div></div>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-item-label">Studio Amenities</div>
+                        <div id="revValFacilities" style="margin-top: 4px;">—</div>
+                    </div>
+                </div>
+
+                <!-- 5. Pricing & Bio -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-cash-stack"></i> 5. Fees &amp; Coaching Bio</div>
+                    <div class="review-item" style="margin-bottom: 10px;">
+                        <div class="review-item-label">Session Fee</div>
+                        <div class="review-item-val" id="revValFee" style="font-size: 1.05rem; color: #16A34A;">—</div>
+                    </div>
+                    <div class="review-item">
+                        <div class="review-item-label">About / Philosophy</div>
+                        <div class="review-item-val" id="revValBio" style="font-weight: 500; font-size: 0.85rem; line-height: 1.45;">—</div>
+                    </div>
+                </div>
+
+                <!-- 6. Payout & Bank Verification Details -->
+                <div class="review-section-box" style="border-left: 4px solid var(--primary);">
+                    <div class="review-section-title"><i class="bi bi-bank"></i> 6. Payout &amp; Bank Details</div>
+                    <div class="review-grid-2">
+                        <div class="review-item"><div class="review-item-label">UPI ID</div><div class="review-item-val" id="revValUpi">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Account Holder</div><div class="review-item-val" id="revValBankHolder">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Bank Name</div><div class="review-item-val" id="revValBankName">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Account Number</div><div class="review-item-val" id="revValBankAcc" style="letter-spacing: 1px; font-family: monospace; font-size: 0.95rem;">—</div></div>
+                        <div class="review-item"><div class="review-item-label">IFSC Code</div><div class="review-item-val" id="revValBankIfsc" style="letter-spacing: 0.8px; font-family: monospace;">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Branch</div><div class="review-item-val" id="revValBankBranch">—</div></div>
+                    </div>
+                </div>
+
+                <!-- 7. Media & Documents -->
+                <div class="review-section-box">
+                    <div class="review-section-title"><i class="bi bi-file-earmark-check"></i> 7. Uploaded Documents Status</div>
+                    <div class="review-grid-2">
+                        <div class="review-item"><div class="review-item-label">Profile Photo</div><div class="review-item-val" id="revValPhotoStatus">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Certificate Document</div><div class="review-item-val" id="revValCertStatus">—</div></div>
+                        <div class="review-item"><div class="review-item-label">Studio Gallery Photos</div><div class="review-item-val" id="revValGalleryStatus">—</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div class="review-modal-footer">
+                <button type="button" class="btn-modal-back" onclick="closeReviewModal()">
+                    <i class="bi bi-pencil-square me-1"></i> Edit Details
+                </button>
+                <button type="button" class="btn-modal-draft" onclick="submitProfileForm('saveDraft')">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Save as Draft
+                </button>
+                <button type="button" class="btn-modal-submit-final" onclick="submitProfileForm('submitVerification')">
+                    <i class="bi bi-send-check-fill me-1"></i> Confirm &amp; Submit to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Engine -->
     <script>
-        function bindLivePreview() {
-            const inputFullName = document.getElementById('inputFullName');
-            const inputDesignation = document.getElementById('inputDesignation');
-            const inputExperience = document.getElementById('inputExperience');
-            const inputCity = document.getElementById('inputCity');
-            const inputState = document.getElementById('inputState');
-            const inputBio = document.getElementById('inputBio');
-            const inputSessionMode = document.getElementById('inputSessionMode');
-            const inputSessionDuration = document.getElementById('inputSessionDuration');
-            const inputSessionFees = document.getElementById('inputSessionFees');
-            const inputDoorstep = document.getElementById('inputDoorstep');
-
-            if (inputFullName) {
-                inputFullName.addEventListener('input', function() {
-                    document.getElementById('previewFullName').textContent = this.value.trim() || 'Trainer Name';
-                });
-            }
-
-            if (inputDesignation) {
-                inputDesignation.addEventListener('change', function() {
-                    document.getElementById('previewDesignation').textContent = this.value || 'Certified Fitness Coach';
-                });
-            }
-
-            if (inputExperience) {
-                inputExperience.addEventListener('input', function() {
-                    document.getElementById('previewExp').textContent = (this.value || '1') + ' Years';
-                });
-            }
-
-            if (inputCity) {
-                inputCity.addEventListener('input', function() {
-                    document.getElementById('previewCity').textContent = this.value.trim() || 'City';
-                });
-            }
-
-            if (inputState) {
-                inputState.addEventListener('change', function() {
-                    document.getElementById('previewState').textContent = this.value || 'State';
-                });
-            }
-
-            if (inputBio) {
-                inputBio.addEventListener('input', function() {
-                    document.getElementById('previewBioText').textContent = this.value.trim() || 'Personalized coaching philosophy, nutrition guidance, and progressive workout regimens.';
-                });
-            }
-
-            if (inputSessionMode) {
-                inputSessionMode.addEventListener('change', function() {
-                    document.getElementById('previewMode').textContent = this.value || 'In-Person Studio';
-                });
-            }
-
-            if (inputSessionDuration) {
-                inputSessionDuration.addEventListener('change', function() {
-                    document.getElementById('previewDuration').textContent = this.value || '60';
-                });
-            }
-
-            if (inputSessionFees) {
-                inputSessionFees.addEventListener('input', function() {
-                    document.getElementById('previewFee').textContent = '₹' + (this.value || '0');
-                });
-            }
-
-            if (inputDoorstep) {
-                inputDoorstep.addEventListener('change', function() {
-                    document.getElementById('previewDoorstepBadge').style.display = this.checked ? 'inline-block' : 'none';
-                });
-            }
-
-            // Specialization Checkboxes
-            document.querySelectorAll('.spec-checkbox').forEach(function(cb) {
-                cb.addEventListener('change', function() {
-                    const container = document.getElementById('previewSpecsContainer');
-                    const checked = Array.from(document.querySelectorAll('.spec-checkbox:checked')).map(c => c.value);
-                    container.innerHTML = '';
-                    if (checked.length === 0) {
-                        container.innerHTML = '<span class="preview-chip">General Fitness</span>';
-                    } else {
-                        checked.forEach(function(val) {
-                            const span = document.createElement('span');
-                            span.className = 'preview-chip';
-                            span.textContent = val;
-                            container.appendChild(span);
-                        });
-                    }
-                });
-            });
-
-            // Target Audience Checkboxes
-            document.querySelectorAll('.aud-checkbox').forEach(function(cb) {
-                cb.addEventListener('change', function() {
-                    const container = document.getElementById('previewAudienceContainer');
-                    const checked = Array.from(document.querySelectorAll('.aud-checkbox:checked')).map(c => c.value);
-                    container.innerHTML = '';
-                    if (checked.length === 0) {
-                        container.innerHTML = '<span class="badge bg-light border text-dark me-1 mb-1" style="font-size: 0.72rem;">All Fitness Levels</span>';
-                    } else {
-                        checked.forEach(function(val) {
-                            const span = document.createElement('span');
-                            span.className = 'badge bg-light border text-dark me-1 mb-1';
-                            span.style.fontSize = '0.72rem';
-                            span.textContent = val;
-                            container.appendChild(span);
-                        });
-                    }
-                });
-            });
-
-            // Studio Facilities Checkboxes
-            document.querySelectorAll('.fac-checkbox').forEach(function(cb) {
-                cb.addEventListener('change', function() {
-                    const wrap = document.getElementById('previewFacilitiesWrap');
-                    const container = document.getElementById('previewFacilitiesContainer');
-                    const checked = Array.from(document.querySelectorAll('.fac-checkbox:checked')).map(c => c.value);
-                    container.innerHTML = '';
-                    if (checked.length === 0) {
-                        wrap.style.display = 'none';
-                    } else {
-                        wrap.style.display = 'block';
-                        checked.forEach(function(val) {
-                            const span = document.createElement('span');
-                            span.className = 'badge bg-white border text-secondary me-1 mb-1';
-                            span.style.fontSize = '0.7rem';
-                            span.innerHTML = '<i class="bi bi-check-circle text-success me-1"></i>' + val;
-                            container.appendChild(span);
-                        });
-                    }
-                });
-            });
-        }
+        let selectedPhotoDataUrl = null;
 
         function previewSelectedPhoto(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.getElementById('previewPhoto');
-                    const fallback = document.getElementById('previewPhotoFallback');
+                    selectedPhotoDataUrl = e.target.result;
+                    const img = document.getElementById('modalRevAvatarImg');
+                    const fallback = document.getElementById('modalRevAvatarFallback');
                     if (img) {
-                        img.src = e.target.result;
-                        img.classList.remove('d-none');
+                        img.src = selectedPhotoDataUrl;
                         img.style.display = 'block';
                     }
-                    if (fallback) {
-                        fallback.classList.add('d-none');
-                        fallback.style.display = 'none';
-                    }
+                    if (fallback) fallback.style.display = 'none';
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
         function previewSelectedGallery(input) {
-            const wrap = document.getElementById('previewGalleryWrap');
-            const container = document.getElementById('previewGalleryContainer');
-            if (input.files && input.files.length > 0) {
-                container.innerHTML = '';
-                wrap.style.display = 'block';
-                Array.from(input.files).slice(0, 4).forEach(function(file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.style.cssText = 'width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid #FECDD3;';
-                        container.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                });
+            // Handled when user selects gallery files
+        }
+
+        function validateAccountNumber() {
+            const accInput = document.getElementById('bankAccountNumber');
+            const confirmInput = document.getElementById('confirmAccountNumber');
+            const invalidMsg = document.getElementById('accInvalidMsg');
+            const validMsg = document.getElementById('accValidMsg');
+            const mismatchMsg = document.getElementById('accMismatchMsg');
+            const matchSuccessMsg = document.getElementById('accMatchSuccessMsg');
+
+            if (!accInput) return true;
+
+            // Only allow numbers
+            accInput.value = accInput.value.replace(/\D/g, '');
+            if (confirmInput) confirmInput.value = confirmInput.value.replace(/\D/g, '');
+
+            const acc = accInput.value.trim();
+            const conf = confirmInput ? confirmInput.value.trim() : '';
+
+            let isAccValid = true;
+            if (acc) {
+                if (!/^\d{9,18}$/.test(acc)) {
+                    invalidMsg.style.display = 'block';
+                    validMsg.style.display = 'none';
+                    accInput.style.borderColor = '#DC2626';
+                    isAccValid = false;
+                } else {
+                    invalidMsg.style.display = 'none';
+                    validMsg.style.display = 'block';
+                    accInput.style.borderColor = '#16A34A';
+                }
+            } else {
+                invalidMsg.style.display = 'none';
+                validMsg.style.display = 'none';
+                accInput.style.borderColor = '';
+            }
+
+            if (confirmInput && conf) {
+                if (acc !== conf) {
+                    mismatchMsg.style.display = 'block';
+                    matchSuccessMsg.style.display = 'none';
+                    confirmInput.style.borderColor = '#DC2626';
+                    isAccValid = false;
+                } else {
+                    mismatchMsg.style.display = 'none';
+                    matchSuccessMsg.style.display = 'block';
+                    confirmInput.style.borderColor = '#16A34A';
+                }
+            } else if (confirmInput) {
+                mismatchMsg.style.display = 'none';
+                matchSuccessMsg.style.display = 'none';
+                confirmInput.style.borderColor = '';
+                if (acc) isAccValid = false;
+            }
+
+            syncBankDetails();
+            return isAccValid;
+        }
+
+        function validateIfscCode() {
+            const ifscInput = document.getElementById('bankIfsc');
+            const formatMsg = document.getElementById('ifscFormatMsg');
+            const validMsg = document.getElementById('ifscValidMsg');
+            if (!ifscInput) return true;
+
+            ifscInput.value = ifscInput.value.toUpperCase();
+            const ifsc = ifscInput.value.trim();
+
+            if (ifsc) {
+                if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    formatMsg.style.display = 'block';
+                    if (validMsg) validMsg.style.display = 'none';
+                    ifscInput.style.borderColor = '#DC2626';
+                    return false;
+                } else {
+                    formatMsg.style.display = 'none';
+                    if (validMsg) validMsg.style.display = 'block';
+                    ifscInput.style.borderColor = '#16A34A';
+                    return true;
+                }
+            } else {
+                formatMsg.style.display = 'none';
+                if (validMsg) validMsg.style.display = 'none';
+                ifscInput.style.borderColor = '';
+                return true;
             }
         }
 
@@ -1193,36 +1249,16 @@
                 const holder = document.getElementById('bankAccountHolder');
                 if (holder && !holder.value) holder.value = raw;
             }
+            validateAccountNumber();
+            validateIfscCode();
         }
 
         function syncBankDetails() {
             const holder = document.getElementById('bankAccountHolder')?.value.trim() || '';
             const bName = document.getElementById('bankName')?.value.trim() || '';
             const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
-            const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
             const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
             const branch = document.getElementById('bankBranch')?.value.trim() || '';
-
-            const ifscInput = document.getElementById('bankIfsc');
-            if (ifscInput && ifscInput.value !== ifsc) ifscInput.value = ifsc;
-
-            const mismatchEl = document.getElementById('accMismatchMsg');
-            if (mismatchEl) {
-                if (acc && confirmAcc && acc !== confirmAcc) {
-                    mismatchEl.style.display = 'block';
-                } else {
-                    mismatchEl.style.display = 'none';
-                }
-            }
-
-            const ifscMsg = document.getElementById('ifscFormatMsg');
-            if (ifscMsg) {
-                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
-                    ifscMsg.style.display = 'block';
-                } else {
-                    ifscMsg.style.display = 'none';
-                }
-            }
 
             const hidden = document.getElementById('bankDetails');
             if (hidden) {
@@ -1232,8 +1268,215 @@
             }
         }
 
+        function populateReviewModal() {
+            const form = document.getElementById('trainerProfileForm');
+            if (!form) return;
+
+            const name = form.querySelector('input[name="fullName"]')?.value.trim() || '—';
+            const desig = form.querySelector('select[name="designation"]')?.value || '—';
+            const phone = form.querySelector('input[name="phone"]')?.value.trim() || '—';
+            const whatsapp = form.querySelector('input[name="whatsappNumber"]')?.value.trim() || 'Not provided';
+            const exp = (form.querySelector('input[name="experience"]')?.value || '1') + ' Years';
+            const cred = form.querySelector('input[name="credentialNumber"]')?.value.trim() || '—';
+            const address = form.querySelector('input[name="address"]')?.value.trim() || '—';
+            const city = form.querySelector('input[name="city"]')?.value.trim() || '—';
+            const state = form.querySelector('select[name="state"]')?.value || '—';
+            const pincode = form.querySelector('input[name="pincode"]')?.value.trim() || '—';
+
+            document.getElementById('modalRevFullName').textContent = name;
+            document.getElementById('modalRevDesignation').textContent = desig;
+            document.getElementById('modalRevExp').textContent = exp;
+            document.getElementById('modalRevCityState').textContent = city + ', ' + state;
+
+            document.getElementById('revValName').textContent = name;
+            document.getElementById('revValDesig').textContent = desig;
+            document.getElementById('revValPhone').textContent = phone;
+            document.getElementById('revValWhatsapp').textContent = whatsapp;
+            document.getElementById('revValExperience').textContent = exp;
+            document.getElementById('revValCredential').textContent = cred;
+
+            document.getElementById('revValAddress').textContent = address;
+            document.getElementById('revValCityState').textContent = city + ', ' + state;
+            document.getElementById('revValPincode').textContent = pincode;
+
+            // Specializations
+            const specs = Array.from(form.querySelectorAll('.spec-checkbox:checked')).map(cb => cb.value);
+            const specsContainer = document.getElementById('revValSpecs');
+            if (specs.length > 0) {
+                specsContainer.innerHTML = specs.map(s => '<span class="review-chip-pill">' + s + '</span>').join('');
+            } else {
+                specsContainer.textContent = 'None selected';
+            }
+
+            // Audience
+            const aud = Array.from(form.querySelectorAll('.aud-checkbox:checked')).map(cb => cb.value);
+            const audContainer = document.getElementById('revValAudience');
+            if (aud.length > 0) {
+                audContainer.innerHTML = aud.map(a => '<span class="badge bg-light border text-dark me-1">' + a + '</span>').join('');
+            } else {
+                audContainer.textContent = 'All Fitness Levels';
+            }
+
+            // Doorstep
+            const doorstep = form.querySelector('input[name="doorstepService"]')?.checked;
+            document.getElementById('revValDoorstep').textContent = doorstep ? 'Yes, Doorstep Available' : 'No';
+
+            // Available days
+            const days = Array.from(form.querySelectorAll('input[name="availableDays"]:checked')).map(cb => cb.value.substring(0, 3));
+            const daysContainer = document.getElementById('revValDays');
+            if (days.length > 0) {
+                daysContainer.innerHTML = days.map(d => '<span class="badge bg-white border text-dark me-1">' + d + '</span>').join('');
+            } else {
+                daysContainer.textContent = 'Mon - Sun';
+            }
+
+            // Hours & Amenities
+            const openTime = form.querySelector('input[name="openTime"]')?.value || '06:00';
+            const closeTime = form.querySelector('input[name="closeTime"]')?.value || '20:00';
+            document.getElementById('revValHours').textContent = openTime + ' - ' + closeTime;
+
+            const mode = form.querySelector('select[name="sessionMode"]')?.value || 'In-Person Studio';
+            const duration = form.querySelector('select[name="sessionDuration"]')?.value || '60';
+            document.getElementById('revValSessionMode').textContent = mode + ' (' + duration + ' mins)';
+
+            const facs = Array.from(form.querySelectorAll('.fac-checkbox:checked')).map(cb => cb.value);
+            const facContainer = document.getElementById('revValFacilities');
+            if (facs.length > 0) {
+                facContainer.innerHTML = facs.map(f => '<span class="badge bg-white border text-secondary me-1"><i class="bi bi-check-circle text-success me-1"></i>' + f + '</span>').join('');
+            } else {
+                facContainer.textContent = 'Standard studio facilities';
+            }
+
+            // Fees & Bio
+            const fees = form.querySelector('input[name="sessionFees"]')?.value || '0';
+            document.getElementById('revValFee').textContent = '₹' + fees + ' per session';
+            document.getElementById('revValBio').textContent = form.querySelector('textarea[name="bio"]')?.value.trim() || 'No bio provided.';
+
+            // Banking & Payout
+            const upi = form.querySelector('input[name="upiId"]')?.value.trim() || 'None';
+            const holder = document.getElementById('bankAccountHolder')?.value.trim() || '—';
+            const bankName = document.getElementById('bankName')?.value.trim() || '—';
+            const acc = document.getElementById('bankAccountNumber')?.value.trim() || '—';
+            const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '—').toUpperCase();
+            const branch = document.getElementById('bankBranch')?.value.trim() || '—';
+
+            document.getElementById('revValUpi').textContent = upi;
+            document.getElementById('revValBankHolder').textContent = holder;
+            document.getElementById('revValBankName').textContent = bankName;
+            document.getElementById('revValBankAcc').textContent = acc !== '—' ? acc : 'Not provided';
+            document.getElementById('revValBankIfsc').textContent = ifsc;
+            document.getElementById('revValBankBranch').textContent = branch;
+
+            // Uploaded Documents
+            const photoFile = form.querySelector('input[name="profilePhotoFile"]')?.files[0];
+            document.getElementById('revValPhotoStatus').textContent = photoFile ? ('New file: ' + photoFile.name) : ('<c:out value="${not empty trainer.profilePhotoPath ? "Profile photo on file" : "None"}"/>');
+
+            const certFile = form.querySelector('input[name="certificateFile"]')?.files[0];
+            document.getElementById('revValCertStatus').textContent = certFile ? ('New file: ' + certFile.name) : ('<c:out value="${not empty trainer.certificationsPath ? "Certification on file" : "Pending"}"/>');
+
+            const galleryFiles = form.querySelector('input[name="galleryFiles"]')?.files;
+            document.getElementById('revValGalleryStatus').textContent = (galleryFiles && galleryFiles.length > 0) ? (galleryFiles.length + ' photos selected') : ('<c:out value="${not empty trainer.galleryPhotos ? "Gallery photos on file" : "None"}"/>');
+        }
+
+        function openReviewModal() {
+            const form = document.getElementById('trainerProfileForm');
+            if (!form) return;
+
+            // Standard HTML5 validity
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Validate phone
+            const phone = form.querySelector('input[name="phone"]')?.value.trim();
+            if (phone && !/^\d{10}$/.test(phone)) {
+                alert('Official phone must be a valid 10-digit number.');
+                form.querySelector('input[name="phone"]')?.focus();
+                return;
+            }
+
+            // Validate pincode
+            const pincode = form.querySelector('input[name="pincode"]')?.value.trim();
+            if (pincode && !/^\d{6}$/.test(pincode)) {
+                alert('Pincode must be a valid 6-digit number.');
+                form.querySelector('input[name="pincode"]')?.focus();
+                return;
+            }
+
+            // Validate Specializations
+            const specs = form.querySelectorAll('.spec-checkbox:checked');
+            if (specs.length === 0) {
+                alert('Please select at least one Specialization category.');
+                document.querySelector('.spec-checkbox')?.focus();
+                return;
+            }
+
+            // Validate Target Audience
+            const aud = form.querySelectorAll('.aud-checkbox:checked');
+            if (aud.length === 0) {
+                alert('Please select at least one Target Audience category.');
+                document.querySelector('.aud-checkbox')?.focus();
+                return;
+            }
+
+            // Validate Bank Account Number
+            const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+            const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+            if (acc) {
+                if (!/^\d{9,18}$/.test(acc)) {
+                    alert('Bank Account Number must be between 9 and 18 numeric digits.');
+                    document.getElementById('bankAccountNumber')?.focus();
+                    return;
+                }
+                if (acc !== confirmAcc) {
+                    alert('Bank Account Numbers do not match. Please re-enter and confirm.');
+                    document.getElementById('confirmAccountNumber')?.focus();
+                    return;
+                }
+            }
+
+            // Validate IFSC Code
+            const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+            if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                alert('Please enter a valid 11-character IFSC code (e.g. SBIN0001234).');
+                document.getElementById('bankIfsc')?.focus();
+                return;
+            }
+
+            syncBankDetails();
+            populateReviewModal();
+
+            const backdrop = document.getElementById('profileReviewModalBackdrop');
+            if (backdrop) {
+                backdrop.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeReviewModal() {
+            const backdrop = document.getElementById('profileReviewModalBackdrop');
+            if (backdrop) {
+                backdrop.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function handleReviewBackdropClick(e) {
+            if (e.target.id === 'profileReviewModalBackdrop') {
+                closeReviewModal();
+            }
+        }
+
+        function submitProfileForm(intent) {
+            const form = document.getElementById('trainerProfileForm');
+            if (!form) return;
+            document.getElementById('formIntent').value = intent || 'submitVerification';
+            syncBankDetails();
+            form.submit();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            bindLivePreview();
             parseExistingBankDetails();
 
             ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'confirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(id => {
@@ -1243,30 +1486,6 @@
                     el.addEventListener('blur', syncBankDetails);
                 }
             });
-
-            const form = document.getElementById('trainerProfileForm');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    syncBankDetails();
-                    const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
-                    const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
-                    const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
-
-                    if (acc && confirmAcc && acc !== confirmAcc) {
-                        e.preventDefault();
-                        alert('Bank account numbers do not match. Please verify and correct.');
-                        document.getElementById('confirmAccountNumber')?.focus();
-                        return;
-                    }
-
-                    if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
-                        e.preventDefault();
-                        alert('Please enter a valid 11-character IFSC code (e.g. SBIN0001234).');
-                        document.getElementById('bankIfsc')?.focus();
-                        return;
-                    }
-                });
-            }
         });
     </script>
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>

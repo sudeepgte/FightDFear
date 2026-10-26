@@ -660,10 +660,28 @@ public class FitnessController {
             @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
             @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
             @RequestParam(value = "galleryFiles", required = false) List<MultipartFile> galleryFiles,
+            @RequestParam(value = "intent", required = false) String intent,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer sessionTrainer = getSessionTrainer(session);
         if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+
+        session.removeAttribute("postLoginOpenProfile");
+
+        if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+            String trimmedAcc = bankAccountNumber.trim();
+            if (!trimmedAcc.matches("\\d{9,18}")) {
+                redirectAttributes.addFlashAttribute("error", "Bank Account Number must be between 9 and 18 numeric digits.");
+                return "redirect:/fitness/trainer/profile-completion";
+            }
+        }
+        if (bankIfsc != null && !bankIfsc.isBlank()) {
+            String trimmedIfsc = bankIfsc.trim().toUpperCase();
+            if (!trimmedIfsc.matches("^[A-Z]{4}0[A-Z0-9]{6}$")) {
+                redirectAttributes.addFlashAttribute("error", "Invalid IFSC code format (e.g. SBIN0001234).");
+                return "redirect:/fitness/trainer/profile-completion";
+            }
+        }
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
 
@@ -729,16 +747,31 @@ public class FitnessController {
         trainerProfileService.refreshCompletion(trainer);
         trainer = fitnessTrainerRepository.save(trainer);
         session.setAttribute("loggedTrainer", trainer);
+        session.removeAttribute("postLoginOpenProfile");
 
         boolean ready = trainerProfileService.isReadyForVerification(trainer);
+        if ("submitVerification".equalsIgnoreCase(intent != null ? intent.trim() : "")) {
+            if (ready) {
+                try {
+                    trainer = trainerRegistrationService.submitForVerification(trainer);
+                    session.setAttribute("loggedTrainer", trainer);
+                    redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! Admin review is in progress.");
+                } catch (Exception e) {
+                    redirectAttributes.addFlashAttribute("success", "Profile saved successfully!");
+                }
+            } else {
+                List<String> missing = trainerProfileService.missingItems(trainer);
+                redirectAttributes.addFlashAttribute("info", "Profile saved. Remaining fields to complete for full admin verification: " + String.join(", ", missing));
+            }
+            return "redirect:/fitness/trainer/dashboard";
+        }
+
         if (ready) {
             redirectAttributes.addFlashAttribute("success", "Profile saved successfully! You can now submit your profile for admin verification.");
-            return "redirect:/fitness/trainer/dashboard";
         } else {
-            List<String> missing = trainerProfileService.missingItems(trainer);
-            redirectAttributes.addFlashAttribute("info", "Profile saved. Remaining fields to complete: " + String.join(", ", missing));
-            return "redirect:/fitness/trainer/profile-completion";
+            redirectAttributes.addFlashAttribute("success", "Profile details saved successfully!");
         }
+        return "redirect:/fitness/trainer/dashboard";
     }
 
     // TRAINER SUBMIT VERIFICATION POST
@@ -746,6 +779,7 @@ public class FitnessController {
     public String submitTrainerVerification(HttpSession session, RedirectAttributes redirectAttributes) {
         FitnessTrainer sessionTrainer = getSessionTrainer(session);
         if (sessionTrainer == null) return "redirect:/fitness/trainer/login";
+        session.removeAttribute("postLoginOpenProfile");
 
         FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
         try {

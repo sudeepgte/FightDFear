@@ -473,6 +473,7 @@ public class WomenEventController {
                                      @RequestParam String organizerType,
                                      @RequestParam String hostContact,
                                      @RequestParam String hostBio,
+                                     HttpSession session,
                                      Model model) {
         if (eventHostRepository.findByEmail(email.trim().toLowerCase()).isPresent()) {
             model.addAttribute("error", "Email already registered.");
@@ -496,7 +497,8 @@ public class WomenEventController {
         host.setProfileCompletionPct(10); // Initial quick reg percentage
 
         eventHostRepository.save(host);
-        return "redirect:/women-events/host/login?registered=true";
+        session.setAttribute("pendingHostLoginEmail", host.getEmail());
+        return "redirect:/women-events/host/login?registered=true&email=" + java.net.URLEncoder.encode(host.getEmail(), java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @GetMapping("/host/login")
@@ -791,6 +793,13 @@ public class WomenEventController {
                               @RequestParam(required = false) String instagram,
                               @RequestParam(required = false) String facebook,
                               @RequestParam(required = false) String linkedin,
+                              @RequestParam(required = false) String upiId,
+                              @RequestParam(required = false) String bankDetails,
+                              @RequestParam(required = false) String bankAccountHolder,
+                              @RequestParam(required = false) String bankName,
+                              @RequestParam(required = false) String bankAccountNumber,
+                              @RequestParam(required = false) String bankIfsc,
+                              @RequestParam(required = false) String bankBranch,
                               HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
@@ -805,6 +814,18 @@ public class WomenEventController {
         host.setInstagram(instagram);
         host.setFacebook(facebook);
         host.setLinkedin(linkedin);
+        if (upiId != null) host.setUpiId(upiId.trim());
+        if ((bankAccountHolder != null && !bankAccountHolder.isBlank()) || (bankAccountNumber != null && !bankAccountNumber.isBlank())) {
+            StringBuilder sb = new StringBuilder();
+            if (bankAccountHolder != null && !bankAccountHolder.isBlank()) sb.append("Account Holder: ").append(bankAccountHolder.trim());
+            if (bankName != null && !bankName.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Bank: ").append(bankName.trim());
+            if (bankAccountNumber != null && !bankAccountNumber.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("A/C: ").append(bankAccountNumber.trim());
+            if (bankIfsc != null && !bankIfsc.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("IFSC: ").append(bankIfsc.trim().toUpperCase(java.util.Locale.ROOT));
+            if (bankBranch != null && !bankBranch.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Branch: ").append(bankBranch.trim());
+            host.setBankDetails(sb.toString());
+        } else if (bankDetails != null) {
+            host.setBankDetails(bankDetails.trim());
+        }
         eventHostRepository.save(host);
         session.setAttribute("loggedHost", host);
         ra.addFlashAttribute("success", "Profile updated successfully!");
