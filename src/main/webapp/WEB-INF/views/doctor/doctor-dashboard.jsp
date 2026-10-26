@@ -415,9 +415,76 @@
     @media (max-width: 480px) {
       .dd-stats { grid-template-columns: 1fr !important; }
     }
+    .dd-locked-box {
+      background: #FFFFFF;
+      border: 1px dashed #CBD5E1;
+      border-radius: 16px;
+      padding: 48px 24px;
+      text-align: center;
+      margin: 16px 0;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.03);
+    }
+    .dd-locked-icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #FFF1F2;
+      color: #E11D48;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(225,29,72,0.12);
+    }
+    .dd-locked-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0F172A;
+      margin: 0 0 10px;
+    }
+    .dd-locked-desc {
+      font-size: 0.95rem;
+      color: #64748B;
+      max-width: 540px;
+      margin: 0 auto 24px;
+      line-height: 1.6;
+    }
+    .dd-locked-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #E11D48;
+      color: #FFFFFF !important;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .dd-locked-cta:hover {
+      background: #BE123C;
+    }
+    .dd-nav-item.is-locked {
+      opacity: 0.82;
+    }
+    .dd-nav-item.is-locked .lock-tag {
+      margin-left: auto;
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #94A3B8;
+      background: #F1F5F9;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body class="dd-page">
+<c:set var="isVerified" value="${doctor.doctorProfileStatus == 'APPROVED' || doctor.verificationStatus == 'VERIFIED'}" />
 <div class="dd-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
 <div class="dd-mobile-header">
@@ -444,35 +511,44 @@
   </div>
   <nav class="dd-sidebar-nav">
     <div class="dd-nav-label">Main</div>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-nav-item ${section == 'overview' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-nav-item ${section == 'overview' || empty section ? 'active' : ''}">
       <i class="bi bi-grid-1x2"></i> Dashboard
     </a>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" class="dd-nav-item ${section == 'appointments' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" class="dd-nav-item ${section == 'appointments' ? 'active' : ''} ${!isVerified ? 'is-locked' : ''}">
       <i class="bi bi-calendar-check"></i> Appointments
-      <c:if test="${pendingCount > 0}"><span class="badge-count" id="sidebar-appt-badge">${pendingCount}</span></c:if>
+      <c:choose>
+        <c:when test="${!isVerified}"><span class="lock-tag"><i class="bi bi-lock-fill"></i> Locked</span></c:when>
+        <c:when test="${pendingCount > 0}"><span class="badge-count" id="sidebar-appt-badge">${pendingCount}</span></c:when>
+      </c:choose>
     </a>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats" class="dd-nav-item ${section == 'chats' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats" class="dd-nav-item ${section == 'chats' ? 'active' : ''} ${!isVerified ? 'is-locked' : ''}">
       <i class="bi bi-chat-dots"></i> Chats
-      <c:if test="${unreadChatCount > 0}"><span class="badge-count">${unreadChatCount}</span></c:if>
+      <c:choose>
+        <c:when test="${!isVerified}"><span class="lock-tag"><i class="bi bi-lock-fill"></i> Locked</span></c:when>
+        <c:when test="${unreadChatCount > 0}"><span class="badge-count">${unreadChatCount}</span></c:when>
+      </c:choose>
     </a>
     <div class="dd-nav-label">Management</div>
     <a href="${pageContext.request.contextPath}/doctors/dashboard?section=profile" class="dd-nav-item ${section == 'profile' ? 'active' : ''}">
       <i class="bi bi-person"></i> My Profile
     </a>
-    <c:if test="${profileCompletion < 100 || (doctor.doctorProfileStatus != 'APPROVED' && doctor.verificationStatus != 'VERIFIED')}">
+    <c:if test="${profileCompletion < 100 || !isVerified}">
       <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-nav-item">
         <i class="bi bi-person-gear"></i> Complete Profile
         <c:if test="${profileCompletion < 100}"><span class="badge-count">${profileCompletion}%</span></c:if>
       </a>
     </c:if>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=earnings" class="dd-nav-item ${section == 'earnings' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=earnings" class="dd-nav-item ${section == 'earnings' ? 'active' : ''} ${!isVerified ? 'is-locked' : ''}">
       <i class="bi bi-wallet2"></i> Earnings
+      <c:if test="${!isVerified}"><span class="lock-tag"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
     </a>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=schedule" class="dd-nav-item ${section == 'schedule' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=schedule" class="dd-nav-item ${section == 'schedule' ? 'active' : ''} ${!isVerified ? 'is-locked' : ''}">
       <i class="bi bi-clock"></i> Schedule
+      <c:if test="${!isVerified}"><span class="lock-tag"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
     </a>
-    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=prescriptions" class="dd-nav-item ${section == 'prescriptions' ? 'active' : ''}">
+    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=prescriptions" class="dd-nav-item ${section == 'prescriptions' ? 'active' : ''} ${!isVerified ? 'is-locked' : ''}">
       <i class="bi bi-file-earmark-medical"></i> Prescriptions
+      <c:if test="${!isVerified}"><span class="lock-tag"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
     </a>
   </nav>
   <div class="dd-sidebar-footer">
@@ -579,29 +655,29 @@
 
     <%-- ══════ OVERVIEW SECTION ══════ --%>
     <c:if test="${section == 'overview'}">
-      <c:if test="${profileCompletion < 100 || (doctor.doctorProfileStatus != 'APPROVED' && doctor.verificationStatus != 'VERIFIED')}">
-        <div class="dd-complete-banner">
+      <c:if test="${profileCompletion < 100 || !isVerified}">
+        <div class="dd-complete-banner" style="border-left: 5px solid #F43F5E;">
           <div class="pct">${profileCompletion}%</div>
           <div class="body">
             <c:choose>
               <c:when test="${doctor.doctorProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
-                <h3>Verification in progress</h3>
-                <p>Your profile is with the admin for review. You can keep seeing patients once approved. Meanwhile, ensure all details stay accurate.</p>
+                <h3><i class="bi bi-hourglass-split" style="color:#F43F5E;"></i> Verification in Progress — Wait for Verification to Add Services</h3>
+                <p>Your profile and medical credentials have been submitted and are currently awaiting review by the admin team. Clinical services, appointments, chats, and schedule configuration will unlock once your account is verified.</p>
               </c:when>
               <c:when test="${doctor.doctorProfileStatus == 'REJECTED' || doctor.doctorProfileStatus == 'CHANGES_REQUESTED' || doctor.verificationStatus == 'REJECTED'}">
-                <h3>Changes required before verification</h3>
-                <p>Update the missing or flagged details, then resubmit for verification.</p>
+                <h3><i class="bi bi-exclamation-triangle-fill" style="color:#BE123C;"></i> Changes Required Before Verification</h3>
+                <p>Update the missing or flagged details, then resubmit for admin verification.</p>
                 <c:if test="${not empty doctor.rejectionReason}">
                   <p style="margin-top:8px;color:#BE123C;font-weight:600;">Reason: ${doctor.rejectionReason}</p>
                 </c:if>
               </c:when>
               <c:when test="${profileCompletion < 100}">
-                <h3>Complete your doctor profile</h3>
-                <p>Finish the remaining sections so patients can find you and book with confidence. Next: open Complete Profile and fill what is listed below.</p>
+                <h3><i class="bi bi-file-earmark-person"></i> Complete Profile — Verification Required</h3>
+                <p>Please complete your doctor profile and submit documents. You must be verified by admin before you can add services or accept patients.</p>
               </c:when>
               <c:otherwise>
-                <h3>Ready to submit for verification</h3>
-                <p>Your profile looks complete. Submit it for admin verification to appear in the public doctor directory.</p>
+                <h3><i class="bi bi-shield-lock"></i> Wait for Admin Verification to Add Services</h3>
+                <p>Your profile is complete and waiting for admin review. Clinical services and patient booking will be enabled after verification.</p>
               </c:otherwise>
             </c:choose>
             <c:if test="${not empty missingItems}">
@@ -610,7 +686,7 @@
               </div>
             </c:if>
             <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;">
-              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-empty-cta" style="margin-top:0;"><i class="bi bi-person-gear"></i> Complete Profile</a>
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-empty-cta" style="margin-top:0;"><i class="bi bi-person-gear"></i> Complete / Update Profile</a>
               <a href="${pageContext.request.contextPath}/doctors/dashboard?section=profile" class="dd-empty-cta secondary" style="margin-top:0;"><i class="bi bi-eye"></i> View Profile</a>
             </div>
           </div>
@@ -622,233 +698,154 @@
         <div class="dd-stat-card"><div class="dd-stat-icon gold"><i class="bi bi-hourglass-split"></i></div><div class="dd-stat-info"><h3>${pendingCount}</h3><p>Pending</p></div></div>
         <div class="dd-stat-card"><div class="dd-stat-icon teal"><i class="bi bi-check-circle"></i></div><div class="dd-stat-info"><h3>${confirmedCount}</h3><p>Confirmed</p></div></div>
         <div class="dd-stat-card"><div class="dd-stat-icon teal"><i class="bi bi-trophy"></i></div><div class="dd-stat-info"><h3>${completedCount}</h3><p>Completed</p></div></div>
-        <div class="dd-stat-card"><div class="dd-stat-icon coral"><i class="bi bi-currency-rupee"></i></div><div class="dd-stat-info"><h3>&#8377;${doctor.consultationFee != null ? doctor.consultationFee : 0}</h3><p>Consultation Fee</p></div></div>
-      </div>
-      <div class="dd-section">
-        <div class="dd-section-header"><h2><i class="bi bi-sun"></i> Today's Schedule</h2>
-          <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" style="font-size:0.82rem;font-weight:700;color:var(--primary);text-decoration:none;">View all</a>
-        </div>
-        <div class="dd-section-body" style="padding:16px;">
-          <c:set var="todayShown" value="false"/>
-          <c:forEach var="a" items="${appointments}">
-            <c:if test="${fn:startsWith(a.appointmentTime, todayIso)}">
-              <c:set var="todayShown" value="true"/>
-              <div class="doc-appt-card"
-                   role="button" tabindex="0"
-                   onclick="openPatientPreview(this)"
-                   onkeydown="if(event.key==='Enter')openPatientPreview(this)"
-                   data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
-                   data-email="${empty a.user.email ? '' : a.user.email}"
-                   data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
-                   data-age="${a.user.age != null ? a.user.age : ''}"
-                   data-gender="${a.user.gender != null ? a.user.gender : ''}"
-                   data-time="${a.appointmentTime}"
-                   data-reason="${empty a.reason ? '' : a.reason}"
-                   data-type="${a.consultationType}"
-                   data-status="${a.status}"
-                   data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
-                   data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
-                   data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
-                   data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
-                   data-rx="${not empty a.prescriptionText ? '1' : ''}"
-                   data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
-                   data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
-                   data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
-                   data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
-                   data-appt-id="${a.id}">
-                <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
-                <div class="doc-appt-body">
-                  <p class="doc-appt-name">${a.user.fullName}</p>
-                  <div class="doc-appt-meta">
-                    <span><i class="bi bi-clock"></i> ${a.appointmentTime}</span>
-                    <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason provided' : a.reason}</span>
-                  </div>
-                </div>
-                <div class="doc-appt-actions" onclick="event.stopPropagation()">
-                  <c:choose>
-                    <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
-                    <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
-                    <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
-                    <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
-                  </c:choose>
-                  <c:choose>
-                    <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
-                    <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
-                    <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
-                  </c:choose>
-                </div>
-              </div>
-            </c:if>
-          </c:forEach>
-          <c:if test="${!todayShown}">
-            <div class="dd-empty">
-              <i class="bi bi-calendar-heart"></i>
-              <p>No appointments today</p>
-              <span class="hint">New patient bookings for today will appear here.</span>
-            </div>
-          </c:if>
-        </div>
-      </div>
-      <div class="dd-section">
-        <div class="dd-section-header"><h2><i class="bi bi-calendar-check"></i> Recent Appointments</h2>
-          <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" style="font-size:0.82rem;font-weight:700;color:var(--primary);text-decoration:none;">View all</a>
-        </div>
-        <div class="dd-section-body" style="padding:16px;">
-          <c:if test="${empty appointments}">
-            <div class="dd-empty">
-              <i class="bi bi-calendar-x"></i>
-              <p>No appointments yet</p>
-              <span class="hint">New patient bookings will appear here once your profile is visible and patients book a slot.</span>
-              <a class="dd-empty-cta" href="${pageContext.request.contextPath}/doctors/profile-completion"><i class="bi bi-person-gear"></i> Finish profile to get booked</a>
-            </div>
-          </c:if>
-          <c:if test="${not empty appointments}">
-            <c:forEach var="a" items="${appointments}" begin="0" end="4">
-              <div class="doc-appt-card"
-                   role="button" tabindex="0"
-                   onclick="openPatientPreview(this)"
-                   onkeydown="if(event.key==='Enter')openPatientPreview(this)"
-                   data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
-                   data-email="${empty a.user.email ? '' : a.user.email}"
-                   data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
-                   data-age="${a.user.age != null ? a.user.age : ''}"
-                   data-gender="${a.user.gender != null ? a.user.gender : ''}"
-                   data-time="${a.appointmentTime}"
-                   data-reason="${empty a.reason ? '' : a.reason}"
-                   data-type="${a.consultationType}"
-                   data-status="${a.status}"
-                   data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
-                   data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
-                   data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
-                   data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
-                   data-rx="${not empty a.prescriptionText ? '1' : ''}"
-                   data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
-                   data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
-                   data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
-                   data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
-                   data-appt-id="${a.id}">
-                <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
-                <div class="doc-appt-body">
-                  <p class="doc-appt-name">${a.user.fullName}</p>
-                  <div class="doc-appt-meta">
-                    <span><i class="bi bi-calendar3"></i> ${a.appointmentTime}</span>
-                    <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason given' : a.reason}</span>
-                    <c:if test="${a.amountPaid != null}">
-                      <span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span>
-                    </c:if>
-                  </div>
-                </div>
-                <div class="doc-appt-actions" onclick="event.stopPropagation()">
-                  <c:choose>
-                    <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
-                    <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
-                    <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
-                    <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
-                  </c:choose>
-                  <c:choose>
-                    <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
-                    <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
-                    <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
-                  </c:choose>
-                  <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                    <select name="status">
-                      <option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option>
-                      <option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option>
-                      <option value="COMPLETED" ${a.status=='COMPLETED'?'selected':''}>Completed</option>
-                      <option value="CANCELLED" ${a.status=='CANCELLED'?'selected':''}>Cancelled</option>
-                    </select>
-                    <button type="submit"><i class="bi bi-check2"></i></button>
-                  </form>
-                </div>
-              </div>
-            </c:forEach>
-          </c:if>
-        </div>
+        <div class="dd-stat-card"><div class="dd-stat-icon coral"><i class="bi bi-currency-rupee"></i></div><div class="dd-stat-info"><h3><c:choose><c:when test="${doctor.consultationFee != null}">&#8377;${doctor.consultationFee}</c:when><c:otherwise>—</c:otherwise></c:choose></h3><p>Consultation Fee</p></div></div>
       </div>
 
-      <div class="dd-section" style="margin-top: 20px;">
-        <div class="dd-section-header"><h2><i class="bi bi-graph-up"></i> Patient Traffic</h2></div>
-        <div class="dd-section-body">
-          <c:choose>
-            <c:when test="${empty appointments}">
-              <div class="dd-empty">
-                <i class="bi bi-bar-chart"></i>
-                <p>No traffic data yet</p>
-                <span class="hint">Appointment volume by time of day will show once patients start booking.</span>
-              </div>
-            </c:when>
-            <c:otherwise>
-              <canvas id="appointmentsChart" height="100"></canvas>
-            </c:otherwise>
-          </c:choose>
+      <c:if test="${!isVerified}">
+        <div class="dd-locked-box">
+          <div class="dd-locked-icon-wrap"><i class="bi bi-shield-lock-fill"></i></div>
+          <h3 class="dd-locked-title">Clinical Features &amp; Bookings Locked</h3>
+          <p class="dd-locked-desc">
+            Your doctor account is not yet verified. Please wait for admin verification to add services, configure timings, accept patient bookings, consult via chat/video, or issue digital prescriptions.
+          </p>
+          <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+            <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+              <i class="bi bi-person-gear"></i> Complete / Update Profile
+            </a>
+            <a href="${pageContext.request.contextPath}/doctors/dashboard?section=profile" class="dd-empty-cta secondary" style="margin-top:0;">
+              <i class="bi bi-eye"></i> View Profile Details
+            </a>
+          </div>
         </div>
-      </div>
-    </c:if>
+      </c:if>
 
-    <%-- ══════ APPOINTMENTS SECTION ══════ --%>
-    <c:if test="${section == 'appointments'}">
-      <div class="dd-section">
-        <div class="dd-section-header"><h2><i class="bi bi-calendar-check"></i> All Appointments (${appointmentCount})</h2></div>
-        <div class="dd-section-body" style="padding:16px;">
-          <c:if test="${empty appointments}">
-            <div class="dd-empty">
-              <i class="bi bi-calendar-x"></i>
-              <p>No appointments yet</p>
-              <span class="hint">Patient bookings appear here after they schedule a consultation with you. Confirm pending requests from this list.</span>
-              <a class="dd-empty-cta" href="${pageContext.request.contextPath}/doctors/dashboard?section=schedule"><i class="bi bi-clock"></i> Check your schedule</a>
-            </div>
-          </c:if>
-          <c:if test="${not empty appointments}">
+      <c:if test="${isVerified}">
+        <div class="dd-section">
+          <div class="dd-section-header"><h2><i class="bi bi-sun"></i> Today's Schedule</h2>
+            <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" style="font-size:0.82rem;font-weight:700;color:var(--primary);text-decoration:none;">View all</a>
+          </div>
+          <div class="dd-section-body" style="padding:16px;">
+            <c:set var="todayShown" value="false"/>
             <c:forEach var="a" items="${appointments}">
-              <div class="doc-appt-card"
-                   role="button" tabindex="0"
-                   onclick="openPatientPreview(this)"
-                   onkeydown="if(event.key==='Enter')openPatientPreview(this)"
-                   data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
-                   data-email="${empty a.user.email ? '' : a.user.email}"
-                   data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
-                   data-age="${a.user.age != null ? a.user.age : ''}"
-                   data-gender="${a.user.gender != null ? a.user.gender : ''}"
-                   data-time="${a.appointmentTime}"
-                   data-reason="${empty a.reason ? '' : a.reason}"
-                   data-type="${a.consultationType}"
-                   data-status="${a.status}"
-                   data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
-                   data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
-                   data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
-                   data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
-                   data-rx="${not empty a.prescriptionText ? '1' : ''}"
-                   data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
-                   data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
-                   data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
-                   data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
-                   data-appt-id="${a.id}">
-                <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
-                <div class="doc-appt-body">
-                  <p class="doc-appt-name">${a.user.fullName}</p>
-                  <div class="doc-appt-meta">
-                    <span><i class="bi bi-calendar3"></i> ${a.appointmentTime}</span>
-                    <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason given' : a.reason}</span>
+              <c:if test="${fn:startsWith(a.appointmentTime, todayIso)}">
+                <c:set var="todayShown" value="true"/>
+                <div class="doc-appt-card"
+                     role="button" tabindex="0"
+                     onclick="openPatientPreview(this)"
+                     onkeydown="if(event.key==='Enter')openPatientPreview(this)"
+                     data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
+                     data-email="${empty a.user.email ? '' : a.user.email}"
+                     data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
+                     data-age="${a.user.age != null ? a.user.age : ''}"
+                     data-gender="${a.user.gender != null ? a.user.gender : ''}"
+                     data-time="${a.appointmentTime}"
+                     data-reason="${empty a.reason ? '' : a.reason}"
+                     data-type="${a.consultationType}"
+                     data-status="${a.status}"
+                     data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+                     data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+                     data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+                     data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
+                     data-rx="${not empty a.prescriptionText ? '1' : ''}"
+                     data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
+                     data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
+                     data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
+                     data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
+                     data-appt-id="${a.id}">
+                  <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
+                  <div class="doc-appt-body">
+                    <p class="doc-appt-name">${a.user.fullName}</p>
+                    <div class="doc-appt-meta">
+                      <span><i class="bi bi-clock"></i> ${a.appointmentTime}</span>
+                      <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason provided' : a.reason}</span>
+                    </div>
+                  </div>
+                  <div class="doc-appt-actions" onclick="event.stopPropagation()">
                     <c:choose>
-                      <c:when test="${a.amountPaid != null}"><span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span></c:when>
-                      <c:otherwise><span><i class="bi bi-wallet2"></i> Payment pending</span></c:otherwise>
+                      <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
+                      <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
+                      <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
+                      <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                      <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
+                      <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
+                      <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
                     </c:choose>
                   </div>
                 </div>
-                <div class="doc-appt-actions" onclick="event.stopPropagation()">
-                  <c:choose>
-                    <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
-                    <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
-                    <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
-                    <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
-                  </c:choose>
-                  <c:choose>
-                    <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
-                    <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
-                    <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
-                  </c:choose>
-                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              </c:if>
+            </c:forEach>
+            <c:if test="${!todayShown}">
+              <div class="dd-empty">
+                <i class="bi bi-calendar-heart"></i>
+                <p>No appointments today</p>
+                <span class="hint">New patient bookings for today will appear here.</span>
+              </div>
+            </c:if>
+          </div>
+        </div>
+        <div class="dd-section">
+          <div class="dd-section-header"><h2><i class="bi bi-calendar-check"></i> Recent Appointments</h2>
+            <a href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments" style="font-size:0.82rem;font-weight:700;color:var(--primary);text-decoration:none;">View all</a>
+          </div>
+          <div class="dd-section-body" style="padding:16px;">
+            <c:if test="${empty appointments}">
+              <div class="dd-empty">
+                <i class="bi bi-calendar-x"></i>
+                <p>No appointments yet</p>
+                <span class="hint">New patient bookings will appear here once your profile is visible and patients book a slot.</span>
+                <a class="dd-empty-cta" href="${pageContext.request.contextPath}/doctors/profile-completion"><i class="bi bi-person-gear"></i> Finish profile to get booked</a>
+              </div>
+            </c:if>
+            <c:if test="${not empty appointments}">
+              <c:forEach var="a" items="${appointments}" begin="0" end="4">
+                <div class="doc-appt-card"
+                     role="button" tabindex="0"
+                     onclick="openPatientPreview(this)"
+                     onkeydown="if(event.key==='Enter')openPatientPreview(this)"
+                     data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
+                     data-email="${empty a.user.email ? '' : a.user.email}"
+                     data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
+                     data-age="${a.user.age != null ? a.user.age : ''}"
+                     data-gender="${a.user.gender != null ? a.user.gender : ''}"
+                     data-time="${a.appointmentTime}"
+                     data-reason="${empty a.reason ? '' : a.reason}"
+                     data-type="${a.consultationType}"
+                     data-status="${a.status}"
+                     data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+                     data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+                     data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+                     data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
+                     data-rx="${not empty a.prescriptionText ? '1' : ''}"
+                     data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
+                     data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
+                     data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
+                     data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
+                     data-appt-id="${a.id}">
+                  <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
+                  <div class="doc-appt-body">
+                    <p class="doc-appt-name">${a.user.fullName}</p>
+                    <div class="doc-appt-meta">
+                      <span><i class="bi bi-calendar3"></i> ${a.appointmentTime}</span>
+                      <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason given' : a.reason}</span>
+                      <c:if test="${a.amountPaid != null}">
+                        <span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span>
+                      </c:if>
+                    </div>
+                  </div>
+                  <div class="doc-appt-actions" onclick="event.stopPropagation()">
+                    <c:choose>
+                      <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
+                      <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
+                      <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
+                      <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
+                    </c:choose>
+                    <c:choose>
+                      <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
+                      <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
+                      <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
+                    </c:choose>
                     <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form">
                       <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                       <select name="status">
@@ -859,176 +856,318 @@
                       </select>
                       <button type="submit"><i class="bi bi-check2"></i></button>
                     </form>
-                    <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#F43F5E" title="Chat"><i class="bi bi-chat-dots-fill"></i></a>
-                    <c:if test="${a.consultationType=='VIDEO' && a.status=='CONFIRMED'}">
-                      <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn"><i class="bi bi-camera-video-fill"></i> Join</a>
-                    </c:if>
                   </div>
                 </div>
-              </div>
-            </c:forEach>
-          </c:if>
+              </c:forEach>
+            </c:if>
+          </div>
         </div>
-      </div>
+
+        <div class="dd-section" style="margin-top: 20px;">
+          <div class="dd-section-header"><h2><i class="bi bi-graph-up"></i> Patient Traffic</h2></div>
+          <div class="dd-section-body">
+            <c:choose>
+              <c:when test="${empty appointments}">
+                <div class="dd-empty">
+                  <i class="bi bi-bar-chart"></i>
+                  <p>No traffic data yet</p>
+                  <span class="hint">Appointment volume by time of day will show once patients start booking.</span>
+                </div>
+              </c:when>
+              <c:otherwise>
+                <canvas id="appointmentsChart" height="100"></canvas>
+              </c:otherwise>
+            </c:choose>
+          </div>
+        </div>
+      </c:if>
+    </c:if>
+
+    <%-- ══════ APPOINTMENTS SECTION ══════ --%>
+    <c:if test="${section == 'appointments'}">
+      <c:choose>
+        <c:when test="${!isVerified}">
+          <div class="dd-locked-box">
+            <div class="dd-locked-icon-wrap"><i class="bi bi-calendar-x"></i></div>
+            <h3 class="dd-locked-title">Appointments Locked — Verification Required</h3>
+            <p class="dd-locked-desc">
+              Please wait for admin verification to add services and accept patient appointments. Once verified, patient bookings and consultation requests will appear here.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+                <i class="bi bi-shield-check"></i> Complete / Verify Profile
+              </a>
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-empty-cta secondary" style="margin-top:0;">
+                <i class="bi bi-grid-1x2"></i> Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <div class="dd-section">
+            <div class="dd-section-header"><h2><i class="bi bi-calendar-check"></i> All Appointments (${appointmentCount})</h2></div>
+            <div class="dd-section-body" style="padding:16px;">
+              <c:if test="${empty appointments}">
+                <div class="dd-empty">
+                  <i class="bi bi-calendar-x"></i>
+                  <p>No appointments yet</p>
+                  <span class="hint">Patient bookings appear here after they schedule a consultation with you. Confirm pending requests from this list.</span>
+                  <a class="dd-empty-cta" href="${pageContext.request.contextPath}/doctors/dashboard?section=schedule"><i class="bi bi-clock"></i> Check your schedule</a>
+                </div>
+              </c:if>
+              <c:if test="${not empty appointments}">
+                <c:forEach var="a" items="${appointments}">
+                  <div class="doc-appt-card"
+                       role="button" tabindex="0"
+                       onclick="openPatientPreview(this)"
+                       onkeydown="if(event.key==='Enter')openPatientPreview(this)"
+                       data-patient="${empty a.user.fullName ? 'Patient' : a.user.fullName}"
+                       data-email="${empty a.user.email ? '' : a.user.email}"
+                       data-phone="${empty a.user.phoneNumber ? '' : a.user.phoneNumber}"
+                       data-age="${a.user.age != null ? a.user.age : ''}"
+                       data-gender="${a.user.gender != null ? a.user.gender : ''}"
+                       data-time="${a.appointmentTime}"
+                       data-reason="${empty a.reason ? '' : a.reason}"
+                       data-type="${a.consultationType}"
+                       data-status="${a.status}"
+                       data-payment="${empty a.paymentStatus ? '' : a.paymentStatus}"
+                       data-amount="${a.amountPaid != null ? a.amountPaid : ''}"
+                       data-receipt="${empty a.receiptNumber ? '' : a.receiptNumber}"
+                       data-notes="${empty a.doctorNotes ? '' : a.doctorNotes}"
+                       data-rx="${not empty a.prescriptionText ? '1' : ''}"
+                       data-chat-url="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}"
+                       data-call-url="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${a.user.id}"
+                       data-video-url="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}"
+                       data-status-url="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status"
+                       data-appt-id="${a.id}">
+                    <div class="doc-appt-avatar">${a.user.fullName.charAt(0)}</div>
+                    <div class="doc-appt-body">
+                      <p class="doc-appt-name">${a.user.fullName}</p>
+                      <div class="doc-appt-meta">
+                        <span><i class="bi bi-calendar3"></i> ${a.appointmentTime}</span>
+                        <span><i class="bi bi-chat-text"></i> ${empty a.reason ? 'No reason given' : a.reason}</span>
+                        <c:choose>
+                          <c:when test="${a.amountPaid != null}"><span><i class="bi bi-currency-rupee"></i> &#8377;${a.amountPaid}</span></c:when>
+                          <c:otherwise><span><i class="bi bi-wallet2"></i> Payment pending</span></c:otherwise>
+                        </c:choose>
+                      </div>
+                    </div>
+                    <div class="doc-appt-actions" onclick="event.stopPropagation()">
+                      <c:choose>
+                        <c:when test="${a.status=='PENDING'}"><span class="doc-status pending">Pending</span></c:when>
+                        <c:when test="${a.status=='CONFIRMED'}"><span class="doc-status confirmed">Confirmed</span></c:when>
+                        <c:when test="${a.status=='COMPLETED'}"><span class="doc-status completed">Completed</span></c:when>
+                        <c:otherwise><span class="doc-status cancelled">Cancelled</span></c:otherwise>
+                      </c:choose>
+                      <c:choose>
+                        <c:when test="${a.consultationType=='VIDEO'}"><span class="doc-type-badge video"><i class="bi bi-camera-video"></i> Video</span></c:when>
+                        <c:when test="${a.consultationType=='CLINIC'}"><span class="doc-type-badge clinic"><i class="bi bi-hospital"></i> Clinic</span></c:when>
+                        <c:otherwise><span class="doc-type-badge"><i class="bi bi-chat-dots"></i> Consult</span></c:otherwise>
+                      </c:choose>
+                      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                        <form action="${pageContext.request.contextPath}/doctors/appointments/${a.id}/status" method="post" class="dd-status-form">
+                          <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                          <select name="status">
+                            <option value="PENDING" ${a.status=='PENDING'?'selected':''}>Pending</option>
+                            <option value="CONFIRMED" ${a.status=='CONFIRMED'?'selected':''}>Confirmed</option>
+                            <option value="COMPLETED" ${a.status=='COMPLETED'?'selected':''}>Completed</option>
+                            <option value="CANCELLED" ${a.status=='CANCELLED'?'selected':''}>Cancelled</option>
+                          </select>
+                          <button type="submit"><i class="bi bi-check2"></i></button>
+                        </form>
+                        <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn" style="background:#F43F5E" title="Chat"><i class="bi bi-chat-dots-fill"></i></a>
+                        <c:if test="${a.consultationType=='VIDEO' && a.status=='CONFIRMED'}">
+                          <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${a.user.id}" target="_blank" class="dd-video-btn"><i class="bi bi-camera-video-fill"></i> Join</a>
+                        </c:if>
+                      </div>
+                    </div>
+                  </div>
+                </c:forEach>
+              </c:if>
+            </div>
+          </div>
+        </c:otherwise>
+      </c:choose>
     </c:if>
 
     <%-- ══════ CHATS SECTION ══════ --%>
     <c:if test="${section == 'chats'}">
-      <div class="dd-section" style="background: transparent; border: none; padding: 0; box-shadow: none;">
-        <div class="dd-section-header" style="margin-bottom: 20px;"><h2><i class="bi bi-chat-dots"></i> My Chats</h2></div>
-        
-        <div class="dd-chat-wrapper" style="display: flex; gap: 20px; height: calc(100vh - 200px); min-height: 550px;">
-          
-          <!-- Users Sidebar -->
-          <div class="dd-chat-sidebar" style="width: 320px; background: #fff; border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.04);">
-            <div style="padding: 20px; border-bottom: 1px solid var(--dd-border); background: #F8FAFC;">
-              <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Patients</h3>
-              <p style="margin: 4px 0 0; font-size: 12px; color: var(--dd-muted);">Select a patient to chat</p>
-            </div>
-            
-            <div style="flex: 1; overflow-y: auto; padding: 10px;">
-              <c:if test="${empty chatUsers}">
-                <div class="dd-empty" style="padding: 36px 20px;">
-                  <i class="bi bi-chat-dots"></i>
-                  <p>No patient chats yet</p>
-                  <span class="hint">Chats unlock after a confirmed appointment relationship with a patient.</span>
-                  <a class="dd-empty-cta secondary" href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments"><i class="bi bi-calendar-check"></i> View appointments</a>
-                </div>
-              </c:if>
-              
-              <c:forEach var="u" items="${chatUsers}">
-                <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats&userId=${u.id}" 
-                   style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(244,63,94,0.12)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(244,63,94,0.32)' : 'transparent'};">
-                  <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #FFE4E6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F43F5E; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
-                  <div style="flex: 1; overflow: hidden;">
-                    <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? '#9f1239' : '#0F172A'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
-                    <div style="font-size: 12px; color: var(--dd-muted);">Patient</div>
-                  </div>
-                  <c:if test="${targetUserId == u.id}">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #F43F5E;"></div>
-                  </c:if>
-                </a>
-              </c:forEach>
+      <c:choose>
+        <c:when test="${!isVerified}">
+          <div class="dd-locked-box">
+            <div class="dd-locked-icon-wrap"><i class="bi bi-chat-dots"></i></div>
+            <h3 class="dd-locked-title">Patient Chats Locked — Verification Required</h3>
+            <p class="dd-locked-desc">
+              Patient consultations, messaging, and video/voice calls are disabled until your medical credentials and profile are approved by the administrator.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+                <i class="bi bi-shield-check"></i> Complete / Verify Profile
+              </a>
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-empty-cta secondary" style="margin-top:0;">
+                <i class="bi bi-grid-1x2"></i> Back to Dashboard
+              </a>
             </div>
           </div>
-          
-          <!-- Chat Window -->
-          <div class="dd-chat-main" style="flex: 1; background: #fff; border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.04);">
-            <c:choose>
+        </c:when>
+        <c:otherwise>
+          <div class="dd-section" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+            <div class="dd-section-header" style="margin-bottom: 20px;"><h2><i class="bi bi-chat-dots"></i> My Chats</h2></div>
+            
+            <div class="dd-chat-wrapper" style="display: flex; gap: 20px; height: calc(100vh - 200px); min-height: 550px;">
               
-              <c:when test="${not empty targetUserId}">
-                <!-- Chat Header -->
-                <div style="padding: 16px 24px; border-bottom: 1px solid var(--dd-border); display: flex; align-items: center; justify-content: space-between; background: #F8FAFC;">
-                  <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: #FFE4E6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F43F5E;">${targetUserName != null ? targetUserName.charAt(0) : 'U'}</div>
-                    <div>
-                      <h3 style="margin: 0; font-size: 16px; font-weight: 700;">${targetUserName}</h3>
-                      <p style="margin: 2px 0 0; font-size: 12px; color: var(--doc-success); display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--doc-success); display: inline-block;"></span> Online</p>
-                    </div>
-                  </div>
-                  <div style="display: flex; gap: 10px;">
-                    <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: var(--doc-success-bg); color: var(--doc-success); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-telephone-fill"></i></a>
-                    <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: var(--doc-primary-soft); color: #be123c; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-camera-video-fill"></i></a>
-                  </div>
+              <!-- Users Sidebar -->
+              <div class="dd-chat-sidebar" style="width: 320px; background: #fff; border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.04);">
+                <div style="padding: 20px; border-bottom: 1px solid var(--dd-border); background: #F8FAFC;">
+                  <h3 style="margin: 0; font-size: 16px; font-weight: 700;">Patients</h3>
+                  <p style="margin: 4px 0 0; font-size: 12px; color: var(--dd-muted);">Select a patient to chat</p>
                 </div>
                 
-                <!-- Chat Messages -->
-                <div id="chatMessages" style="flex: 1; padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F8FAFC;">
-                  <c:if test="${empty chatHistory}">
-                    <div style="margin: auto; text-align: center; color: var(--dd-muted);">
-                      <i class="bi bi-chat-dots" style="font-size: 40px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
-                      <p>Start conversation with ${targetUserName}</p>
+                <div style="flex: 1; overflow-y: auto; padding: 10px;">
+                  <c:if test="${empty chatUsers}">
+                    <div class="dd-empty" style="padding: 36px 20px;">
+                      <i class="bi bi-chat-dots"></i>
+                      <p>No patient chats yet</p>
+                      <span class="hint">Chats unlock after a confirmed appointment relationship with a patient.</span>
+                      <a class="dd-empty-cta secondary" href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments"><i class="bi bi-calendar-check"></i> View appointments</a>
                     </div>
                   </c:if>
-                  <c:forEach var="m" items="${chatHistory}">
-                    <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--doc-primary); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #fff; color: #0F172A; border: 1px solid var(--doc-border); border-bottom-left-radius: 4px;'}">
-                      ${m.message}
-                      <span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">${m.timestamp}</span>
-                    </div>
+                  
+                  <c:forEach var="u" items="${chatUsers}">
+                    <a href="${pageContext.request.contextPath}/doctors/dashboard?section=chats&userId=${u.id}" 
+                       style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; text-decoration: none; border-radius: 10px; margin-bottom: 5px; transition: all 0.2s; background: ${targetUserId == u.id ? 'rgba(244,63,94,0.12)' : 'transparent'}; border: 1px solid ${targetUserId == u.id ? 'rgba(244,63,94,0.32)' : 'transparent'};">
+                      <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: #FFE4E6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F43F5E; flex-shrink: 0;">${u.fullName.charAt(0)}</div>
+                      <div style="flex: 1; overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 14px; color: ${targetUserId == u.id ? '#9f1239' : '#0F172A'}; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${u.fullName}</div>
+                        <div style="font-size: 12px; color: var(--dd-muted);">Patient</div>
+                      </div>
+                      <c:if test="${targetUserId == u.id}">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #F43F5E;"></div>
+                      </c:if>
+                    </a>
                   </c:forEach>
                 </div>
-                
-                <!-- Chat Input -->
-                <div style="padding: 16px 24px; border-top: 1px solid var(--dd-border); display: flex; gap: 12px; align-items: center; background: #fff;">
-                  <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: #fff; color: #0F172A; font-family: inherit; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
-                  <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--doc-primary); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(244,63,94,0.25); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
-                </div>
-                
-                <!-- WebSocket Script -->
-                <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-                <script>
-                  const doctorId = ${doctor.id};
-                  const senderType = 'DOCTOR';
-                  const targetUserId = '${targetUserId}';
-                  const ctx = '${pageContext.request.contextPath}';
-                  const chatBox = document.getElementById('chatMessages');
-
-                  const socket = new SockJS(ctx + '/ws-chat');
-                  const stompClient = Stomp.over(socket);
-                  stompClient.debug = null; 
-                  stompClient.connect({}, function() {
-                    stompClient.subscribe('/topic/doctor-chat/' + doctorId, function(payload) {
-                      const msg = JSON.parse(payload.body);
-                      if (msg.userId && msg.userId != targetUserId) return;
-                      // Ignore echoes
-                      if (msg.senderType === senderType) return;
-                      appendMsg(msg.message, 'USER');
-                    });
-                  });
-
-                  function sendMsg() {
-                    const input = document.getElementById('msgInput');
-                    const text = input.value.trim();
-                    if (!text) return;
-                    input.value = '';
-
-                    const empty = chatBox.querySelector('.bi-chat-dots');
-                    if (empty) empty.parentNode.remove();
-
-                    // Immediately show in UI
-                    appendMsg(text, 'DOCTOR');
-
-                    fetch(ctx + '/doctors/chat/send', {
-                      method: 'POST',
-                      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                      body: 'doctorId=' + doctorId + '&message=' + encodeURIComponent(text) + '&senderType=' + senderType + '&userId=' + targetUserId
-                    });
-                  }
-
-                  function appendMsg(text, type) {
-                    const div = document.createElement('div');
-                    let styles = "max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ";
-                    if(type === 'DOCTOR') {
-                        styles += "align-self: flex-end; background: #F43F5E; color: #fff; border-bottom-right-radius: 4px;";
-                    } else {
-                        styles += "align-self: flex-start; background: #fff; color: #0F172A; border: 1px solid #E2E8F0; border-bottom-left-radius: 4px;";
-                    }
-                    div.style.cssText = styles;
-                    div.innerHTML = text + '<span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">Just now</span>';
-                    chatBox.appendChild(div);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                  }
-
-                  if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
-                </script>
-              </c:when>
+              </div>
               
-              <c:otherwise>
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--martial-muted, #64748b); padding: 24px;">
-                  <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--martial-rose-soft, #fff1f2); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
-                    <i class="bi bi-chat-square-dots" style="font-size: 32px; color: #F43F5E;"></i>
-                  </div>
-                  <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Select a Patient</h3>
-                  <p style="font-size: 14px; text-align: center; max-width: 300px; color: #64748b;">Choose a patient from the sidebar to view your conversation or start a new message.</p>
-                </div>
-              </c:otherwise>
+              <!-- Chat Window -->
+              <div class="dd-chat-main" style="flex: 1; background: #fff; border: 1px solid var(--dd-border); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 20px rgba(15,23,42,0.04);">
+                <c:choose>
+                  
+                  <c:when test="${not empty targetUserId}">
+                    <!-- Chat Header -->
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--dd-border); display: flex; align-items: center; justify-content: space-between; background: #F8FAFC;">
+                      <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="user-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: #FFE4E6; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #F43F5E;">${targetUserName != null ? targetUserName.charAt(0) : 'U'}</div>
+                        <div>
+                          <h3 style="margin: 0; font-size: 16px; font-weight: 700;">${targetUserName}</h3>
+                          <p style="margin: 2px 0 0; font-size: 12px; color: var(--doc-success); display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--doc-success); display: inline-block;"></span> Online</p>
+                        </div>
+                      </div>
+                      <div style="display: flex; gap: 10px;">
+                        <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: var(--doc-success-bg); color: var(--doc-success); display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-telephone-fill"></i></a>
+                        <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}?userId=${targetUserId}" target="_blank" style="width: 36px; height: 36px; border-radius: 10px; background: var(--doc-primary-soft); color: #be123c; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: 0.2s;"><i class="bi bi-camera-video-fill"></i></a>
+                      </div>
+                    </div>
+                    
+                    <!-- Chat Messages -->
+                    <div id="chatMessages" style="flex: 1; padding: 20px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F8FAFC;">
+                      <c:if test="${empty chatHistory}">
+                        <div style="margin: auto; text-align: center; color: var(--dd-muted);">
+                          <i class="bi bi-chat-dots" style="font-size: 40px; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                          <p>Start conversation with ${targetUserName}</p>
+                        </div>
+                      </c:if>
+                      <c:forEach var="m" items="${chatHistory}">
+                        <div style="max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ${m.senderType == 'DOCTOR' ? 'align-self: flex-end; background: var(--doc-primary); color: #fff; border-bottom-right-radius: 4px;' : 'align-self: flex-start; background: #fff; color: #0F172A; border: 1px solid var(--doc-border); border-bottom-left-radius: 4px;'}">
+                          ${m.message}
+                          <span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">${m.timestamp}</span>
+                        </div>
+                      </c:forEach>
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div style="padding: 16px 24px; border-top: 1px solid var(--dd-border); display: flex; gap: 12px; align-items: center; background: #fff;">
+                      <input type="text" id="msgInput" placeholder="Type your message..." style="flex: 1; padding: 14px 20px; border: 1px solid var(--dd-border); border-radius: 999px; background: #fff; color: #0F172A; font-family: inherit; font-size: 14px; outline: none; transition: 0.2s;" onkeypress="if(event.key==='Enter')sendMsg()" />
+                      <button onclick="sendMsg()" style="width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--doc-primary); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(244,63,94,0.25); transition: 0.2s;"><i class="bi bi-send-fill" style="margin-left: 2px;"></i></button>
+                    </div>
+                    
+                    <!-- WebSocket Script -->
+                    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+                    <script>
+                      const doctorId = ${doctor.id};
+                      const senderType = 'DOCTOR';
+                      const targetUserId = '${targetUserId}';
+                      const ctx = '${pageContext.request.contextPath}';
+                      const chatBox = document.getElementById('chatMessages');
+
+                      const socket = new SockJS(ctx + '/ws-chat');
+                      const stompClient = Stomp.over(socket);
+                      stompClient.debug = null; 
+                      stompClient.connect({}, function() {
+                        stompClient.subscribe('/topic/doctor-chat/' + doctorId, function(payload) {
+                          const msg = JSON.parse(payload.body);
+                          if (msg.userId && msg.userId != targetUserId) return;
+                          // Ignore echoes
+                          if (msg.senderType === senderType) return;
+                          appendMsg(msg.message, 'USER');
+                        });
+                      });
+
+                      function sendMsg() {
+                        const input = document.getElementById('msgInput');
+                        const text = input.value.trim();
+                        if (!text) return;
+                        input.value = '';
+
+                        const empty = chatBox.querySelector('.bi-chat-dots');
+                        if (empty) empty.parentNode.remove();
+
+                        // Immediately show in UI
+                        appendMsg(text, 'DOCTOR');
+
+                        fetch(ctx + '/doctors/chat/send', {
+                          method: 'POST',
+                          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                          body: 'doctorId=' + doctorId + '&message=' + encodeURIComponent(text) + '&senderType=' + senderType + '&userId=' + targetUserId
+                        });
+                      }
+
+                      function appendMsg(text, type) {
+                        const div = document.createElement('div');
+                        let styles = "max-width: 75%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; ";
+                        if(type === 'DOCTOR') {
+                            styles += "align-self: flex-end; background: #F43F5E; color: #fff; border-bottom-right-radius: 4px;";
+                        } else {
+                            styles += "align-self: flex-start; background: #fff; color: #0F172A; border: 1px solid #E2E8F0; border-bottom-left-radius: 4px;";
+                        }
+                        div.style.cssText = styles;
+                        div.innerHTML = text + '<span style="display: block; font-size: 9px; opacity: 0.6; margin-top: 4px; text-align: right;">Just now</span>';
+                        chatBox.appendChild(div);
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                      }
+
+                      if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+                    </script>
+                  </c:when>
+                  
+                  <c:otherwise>
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--martial-muted, #64748b); padding: 24px;">
+                      <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--martial-rose-soft, #fff1f2); display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <i class="bi bi-chat-square-dots" style="font-size: 32px; color: #F43F5E;"></i>
+                      </div>
+                      <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Select a Patient</h3>
+                      <p style="font-size: 14px; text-align: center; max-width: 300px; color: #64748b;">Choose a patient from the sidebar to view your conversation or start a new message.</p>
+                    </div>
+                  </c:otherwise>
+                  
+                </c:choose>
+              </div>
               
-            </c:choose>
+            </div>
           </div>
-          
-        </div>
-      </div>
+        </c:otherwise>
+      </c:choose>
     </c:if>
 
     <%-- ══════ PROFILE SECTION ══════ --%>
@@ -1206,79 +1345,118 @@
 
     <%-- ══════ SCHEDULE SECTION ══════ --%>
     <c:if test="${section == 'schedule'}">
-      <!-- VIEW MODE -->
-      <div class="dd-section" id="scheduleView">
-        <div class="dd-section-header">
-          <h2><i class="bi bi-clock"></i> Schedule & Availability</h2>
-          <button onclick="document.getElementById('scheduleView').style.display='none';document.getElementById('scheduleEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit</button>
-        </div>
-        <div class="dd-section-body padded">
-          <div class="dd-profile-grid">
-            <div class="dd-profile-item"><span class="label">Available Days</span><span class="value">${doctor.availableDays != null ? doctor.availableDays : 'Not set'}</span></div>
-            <div class="dd-profile-item"><span class="label">Timing</span><span class="value">${doctor.startTime != null ? doctor.startTime : '—'} — ${doctor.endTime != null ? doctor.endTime : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">Emergency</span><span class="value">${doctor.emergencyAvailable != null && doctor.emergencyAvailable ? 'Available' : 'Not available'}</span></div>
-            <div class="dd-profile-item"><span class="label">Clinic Address</span><span class="value">${doctor.clinicAddress != null ? doctor.clinicAddress : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">City</span><span class="value">${doctor.city != null ? doctor.city : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">State</span><span class="value">${doctor.state != null ? doctor.state : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">Pincode</span><span class="value">${doctor.pincode != null ? doctor.pincode : '—'}</span></div>
-            <div class="dd-profile-item"><span class="label">Google Map</span><span class="value">${doctor.googleMapLocation != null ? doctor.googleMapLocation : '—'}</span></div>
+      <c:choose>
+        <c:when test="${!isVerified}">
+          <div class="dd-locked-box">
+            <div class="dd-locked-icon-wrap"><i class="bi bi-clock-history"></i></div>
+            <h3 class="dd-locked-title">Schedule Settings Locked — Verification Required</h3>
+            <p class="dd-locked-desc">
+              Setting available days, clinic consultation hours, emergency response, and location details will be available after your medical credentials are approved by the admin.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+                <i class="bi bi-shield-check"></i> Complete / Verify Profile
+              </a>
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-empty-cta secondary" style="margin-top:0;">
+                <i class="bi bi-grid-1x2"></i> Back to Dashboard
+              </a>
+            </div>
           </div>
-        </div>
-      </div>
+        </c:when>
+        <c:otherwise>
+          <!-- VIEW MODE -->
+          <div class="dd-section" id="scheduleView">
+            <div class="dd-section-header">
+              <h2><i class="bi bi-clock"></i> Schedule & Availability</h2>
+              <button onclick="document.getElementById('scheduleView').style.display='none';document.getElementById('scheduleEdit').style.display='block';" class="dd-btn-edit"><i class="bi bi-pencil-square"></i> Edit</button>
+            </div>
+            <div class="dd-section-body padded">
+              <div class="dd-profile-grid">
+                <div class="dd-profile-item"><span class="label">Available Days</span><span class="value">${doctor.availableDays != null ? doctor.availableDays : 'Not set'}</span></div>
+                <div class="dd-profile-item"><span class="label">Timing</span><span class="value">${doctor.startTime != null ? doctor.startTime : '—'} — ${doctor.endTime != null ? doctor.endTime : '—'}</span></div>
+                <div class="dd-profile-item"><span class="label">Emergency</span><span class="value">${doctor.emergencyAvailable != null && doctor.emergencyAvailable ? 'Available' : 'Not available'}</span></div>
+                <div class="dd-profile-item"><span class="label">Clinic Address</span><span class="value">${doctor.clinicAddress != null ? doctor.clinicAddress : '—'}</span></div>
+                <div class="dd-profile-item"><span class="label">City</span><span class="value">${doctor.city != null ? doctor.city : '—'}</span></div>
+                <div class="dd-profile-item"><span class="label">State</span><span class="value">${doctor.state != null ? doctor.state : '—'}</span></div>
+                <div class="dd-profile-item"><span class="label">Pincode</span><span class="value">${doctor.pincode != null ? doctor.pincode : '—'}</span></div>
+                <div class="dd-profile-item"><span class="label">Google Map</span><span class="value">${doctor.googleMapLocation != null ? doctor.googleMapLocation : '—'}</span></div>
+              </div>
+            </div>
+          </div>
 
-      <!-- EDIT MODE -->
-      <div class="dd-section" id="scheduleEdit" style="display:none">
-        <div class="dd-section-header">
-          <h2><i class="bi bi-pencil-square"></i> Edit Schedule</h2>
-          <button onclick="document.getElementById('scheduleEdit').style.display='none';document.getElementById('scheduleView').style.display='block';" class="dd-btn-edit"><i class="bi bi-x-lg"></i> Cancel</button>
-        </div>
-        <div class="dd-section-body padded">
-          <form action="${pageContext.request.contextPath}/doctors/update-schedule" method="post">
-            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-            <div class="dd-edit-grid">
-              <div class="dd-edit-field full">
-                <label>Available Days</label>
-                <div class="dd-day-toggles">
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="MONDAY" ${doctor.availableDays != null && doctor.availableDays.contains('MONDAY') ? 'checked' : ''}><span>Mon</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="TUESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('TUESDAY') ? 'checked' : ''}><span>Tue</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="WEDNESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('WEDNESDAY') ? 'checked' : ''}><span>Wed</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="THURSDAY" ${doctor.availableDays != null && doctor.availableDays.contains('THURSDAY') ? 'checked' : ''}><span>Thu</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="FRIDAY" ${doctor.availableDays != null && doctor.availableDays.contains('FRIDAY') ? 'checked' : ''}><span>Fri</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="SATURDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SATURDAY') ? 'checked' : ''}><span>Sat</span></label>
-                  <label class="dd-day"><input type="checkbox" name="availableDays" value="SUNDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SUNDAY') ? 'checked' : ''}><span>Sun</span></label>
+          <!-- EDIT MODE -->
+          <div class="dd-section" id="scheduleEdit" style="display:none">
+            <div class="dd-section-header">
+              <h2><i class="bi bi-pencil-square"></i> Edit Schedule</h2>
+              <button onclick="document.getElementById('scheduleEdit').style.display='none';document.getElementById('scheduleView').style.display='block';" class="dd-btn-edit"><i class="bi bi-x-lg"></i> Cancel</button>
+            </div>
+            <div class="dd-section-body padded">
+              <form action="${pageContext.request.contextPath}/doctors/update-schedule" method="post">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                <div class="dd-edit-grid">
+                  <div class="dd-edit-field full">
+                    <label>Available Days</label>
+                    <div class="dd-day-toggles">
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="MONDAY" ${doctor.availableDays != null && doctor.availableDays.contains('MONDAY') ? 'checked' : ''}><span>Mon</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="TUESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('TUESDAY') ? 'checked' : ''}><span>Tue</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="WEDNESDAY" ${doctor.availableDays != null && doctor.availableDays.contains('WEDNESDAY') ? 'checked' : ''}><span>Wed</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="THURSDAY" ${doctor.availableDays != null && doctor.availableDays.contains('THURSDAY') ? 'checked' : ''}><span>Thu</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="FRIDAY" ${doctor.availableDays != null && doctor.availableDays.contains('FRIDAY') ? 'checked' : ''}><span>Fri</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="SATURDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SATURDAY') ? 'checked' : ''}><span>Sat</span></label>
+                      <label class="dd-day"><input type="checkbox" name="availableDays" value="SUNDAY" ${doctor.availableDays != null && doctor.availableDays.contains('SUNDAY') ? 'checked' : ''}><span>Sun</span></label>
+                    </div>
+                  </div>
+                  <div class="dd-edit-field"><label>Start Time</label><input type="time" name="startTime" value="${doctor.startTime != null ? doctor.startTime : '09:00'}"></div>
+                  <div class="dd-edit-field"><label>End Time</label><input type="time" name="endTime" value="${doctor.endTime != null ? doctor.endTime : '18:00'}"></div>
+                  <div class="dd-edit-field full">
+                    <label>Emergency Availability</label>
+                    <label class="dd-switch-label"><input type="checkbox" name="emergencyAvailable" value="yes" ${doctor.emergencyAvailable != null && doctor.emergencyAvailable ? 'checked' : ''}><span class="dd-switch-track"><span class="dd-switch-thumb"></span></span> Available for emergencies</label>
+                  </div>
+                  <div class="dd-edit-field full"><label>Clinic Address</label><textarea name="clinicAddress" rows="2">${doctor.clinicAddress != null ? doctor.clinicAddress : ''}</textarea></div>
+                  <div class="dd-edit-field"><label>City</label><input type="text" name="city" value="${doctor.city != null ? doctor.city : ''}"></div>
+                  <div class="dd-edit-field"><label>State</label><input type="text" name="state" value="${doctor.state != null ? doctor.state : ''}"></div>
+                  <div class="dd-edit-field"><label>Pincode</label><input type="text" name="pincode" value="${doctor.pincode != null ? doctor.pincode : ''}" maxlength="6"></div>
+                  <div class="dd-edit-field"><label>Google Map Link</label><input type="url" name="googleMapLocation" value="${doctor.googleMapLocation != null ? doctor.googleMapLocation : ''}"></div>
                 </div>
-              </div>
-              <div class="dd-edit-field"><label>Start Time</label><input type="time" name="startTime" value="${doctor.startTime != null ? doctor.startTime : '09:00'}"></div>
-              <div class="dd-edit-field"><label>End Time</label><input type="time" name="endTime" value="${doctor.endTime != null ? doctor.endTime : '18:00'}"></div>
-              <div class="dd-edit-field full">
-                <label>Emergency Availability</label>
-                <label class="dd-switch-label"><input type="checkbox" name="emergencyAvailable" value="yes" ${doctor.emergencyAvailable != null && doctor.emergencyAvailable ? 'checked' : ''}><span class="dd-switch-track"><span class="dd-switch-thumb"></span></span> Available for emergencies</label>
-              </div>
-              <div class="dd-edit-field full"><label>Clinic Address</label><textarea name="clinicAddress" rows="2">${doctor.clinicAddress != null ? doctor.clinicAddress : ''}</textarea></div>
-              <div class="dd-edit-field"><label>City</label><input type="text" name="city" value="${doctor.city != null ? doctor.city : ''}"></div>
-              <div class="dd-edit-field"><label>State</label><input type="text" name="state" value="${doctor.state != null ? doctor.state : ''}"></div>
-              <div class="dd-edit-field"><label>Pincode</label><input type="text" name="pincode" value="${doctor.pincode != null ? doctor.pincode : ''}" maxlength="6"></div>
-              <div class="dd-edit-field"><label>Google Map Link</label><input type="url" name="googleMapLocation" value="${doctor.googleMapLocation != null ? doctor.googleMapLocation : ''}"></div>
+                <div style="margin-top:20px;display:flex;gap:10px">
+                  <button type="submit" class="dd-btn-save"><i class="bi bi-check-circle"></i> Save Changes</button>
+                  <button type="button" onclick="document.getElementById('scheduleEdit').style.display='none';document.getElementById('scheduleView').style.display='block';" class="dd-btn-cancel">Cancel</button>
+                </div>
+              </form>
             </div>
-            <div style="margin-top:20px;display:flex;gap:10px">
-              <button type="submit" class="dd-btn-save"><i class="bi bi-check-circle"></i> Save Changes</button>
-              <button type="button" onclick="document.getElementById('scheduleEdit').style.display='none';document.getElementById('scheduleView').style.display='block';" class="dd-btn-cancel">Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
+          </div>
+        </c:otherwise>
+      </c:choose>
     </c:if>
 
     <%-- ══════ EARNINGS SECTION ══════ --%>
     <c:if test="${section == 'earnings'}">
-
-      <!-- Earnings Summary Stats -->
-      <div class="dd-stats">
-        <div class="dd-stat-card"><div class="dd-stat-icon teal"><i class="bi bi-currency-rupee"></i></div><div class="dd-stat-info"><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
-        <div class="dd-stat-card"><div class="dd-stat-icon purple"><i class="bi bi-receipt-cutoff"></i></div><div class="dd-stat-info"><h3>${paidCount}</h3><p>Paid Bookings</p></div></div>
-        <div class="dd-stat-card"><div class="dd-stat-icon gold"><i class="bi bi-cash-stack"></i></div><div class="dd-stat-info"><h3>&#8377;${doctor.consultationFee != null ? doctor.consultationFee : 0}</h3><p>Consultation Fee</p></div></div>
-        <div class="dd-stat-card"><div class="dd-stat-icon coral"><i class="bi bi-hourglass-split"></i></div><div class="dd-stat-info"><h3>${pendingCount}</h3><p>Pending</p></div></div>
-      </div>
+      <c:choose>
+        <c:when test="${!isVerified}">
+          <div class="dd-locked-box">
+            <div class="dd-locked-icon-wrap"><i class="bi bi-wallet2"></i></div>
+            <h3 class="dd-locked-title">Earnings &amp; Fees Locked — Verification Required</h3>
+            <p class="dd-locked-desc">
+              Consultation fees, payout channels, and earnings summaries will be accessible once your doctor profile has been verified by the administrator.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+                <i class="bi bi-shield-check"></i> Complete / Verify Profile
+              </a>
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-empty-cta secondary" style="margin-top:0;">
+                <i class="bi bi-grid-1x2"></i> Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <!-- Earnings Summary Stats -->
+          <div class="dd-stats">
+            <div class="dd-stat-card"><div class="dd-stat-icon teal"><i class="bi bi-currency-rupee"></i></div><div class="dd-stat-info"><h3>&#8377;${totalEarnings}</h3><p>Total Earnings</p></div></div>
+            <div class="dd-stat-card"><div class="dd-stat-icon purple"><i class="bi bi-receipt-cutoff"></i></div><div class="dd-stat-info"><h3>${paidCount}</h3><p>Paid Bookings</p></div></div>
+            <div class="dd-stat-card"><div class="dd-stat-icon gold"><i class="bi bi-cash-stack"></i></div><div class="dd-stat-info"><h3><c:choose><c:when test="${doctor.consultationFee != null}">&#8377;${doctor.consultationFee}</c:when><c:otherwise>—</c:otherwise></c:choose></h3><p>Consultation Fee</p></div></div>
+            <div class="dd-stat-card"><div class="dd-stat-icon coral"><i class="bi bi-hourglass-split"></i></div><div class="dd-stat-info"><h3>${pendingCount}</h3><p>Pending</p></div></div>
+          </div>
 
       <!-- Fee Breakdown -->
       <div class="dd-section" id="feesView">
@@ -1330,8 +1508,36 @@
                 <input type="text" name="upiId" maxlength="100" placeholder="doctor@upi" value="${doctor.upiId != null ? doctor.upiId : ''}">
               </div>
               <div class="dd-edit-field" style="grid-column: 1 / -1;">
-                <label>Bank Details</label>
-                <textarea name="bankDetails" rows="3" maxlength="500" placeholder="Account name, number, IFSC, bank name">${doctor.bankDetails != null ? doctor.bankDetails : ''}</textarea>
+                <label style="font-weight:700;display:flex;align-items:center;gap:6px;"><i class="bi bi-bank" style="color:var(--primary);"></i> Bank Account Details</label>
+                <div style="background:#F8FAFC;border:1px solid var(--martial-border);border-radius:12px;padding:16px;margin-top:6px;">
+                  <div class="dd-edit-grid" style="gap:12px;margin-bottom:0;">
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">Account Holder Name</label>
+                      <input type="text" id="dashBankAccountHolder" placeholder="e.g. Dr. Jane Doe" maxlength="100">
+                    </div>
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">Bank Name</label>
+                      <input type="text" id="dashBankName" placeholder="e.g. State Bank of India, HDFC Bank" maxlength="100">
+                    </div>
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">Account Number</label>
+                      <input type="password" id="dashBankAccountNumber" placeholder="Enter bank account number" maxlength="30" autocomplete="new-password">
+                    </div>
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">Confirm Account Number</label>
+                      <input type="text" id="dashBankConfirmAccountNumber" placeholder="Re-enter bank account number" maxlength="30">
+                    </div>
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">IFSC Code</label>
+                      <input type="text" id="dashBankIfsc" placeholder="e.g. SBIN0001234" maxlength="20" style="text-transform:uppercase;">
+                    </div>
+                    <div>
+                      <label style="font-size:12px;font-weight:600;color:var(--martial-muted);display:block;margin-bottom:4px;">Branch Name</label>
+                      <input type="text" id="dashBankBranch" placeholder="e.g. Indiranagar, Bengaluru" maxlength="100">
+                    </div>
+                  </div>
+                  <input type="hidden" name="bankDetails" id="dashBankDetails" value="${doctor.bankDetails != null ? doctor.bankDetails : ''}">
+                </div>
               </div>
             </div>
             <div style="margin-top:20px;display:flex;gap:10px">
@@ -1453,18 +1659,39 @@
           </c:if>
         </div>
       </div>
+        </c:otherwise>
+      </c:choose>
     </c:if>
 
     <%-- ══════ PRESCRIPTIONS SECTION ══════ --%>
     <c:if test="${section == 'prescriptions'}">
-      <div class="dd-section">
-        <div class="dd-section-header"><h2><i class="bi bi-file-earmark-medical"></i> Patient Prescriptions</h2></div>
-        <div class="dd-section-body">
-          <c:if test="${completedCount == 0}">
-            <div class="dd-empty">
-              <i class="bi bi-file-earmark-medical"></i>
-              <p>No prescriptions to write yet</p>
-              <span class="hint">After you mark an appointment as Completed, you can write or edit that patient's prescription here.</span>
+      <c:choose>
+        <c:when test="${!isVerified}">
+          <div class="dd-locked-box">
+            <div class="dd-locked-icon-wrap"><i class="bi bi-file-earmark-medical"></i></div>
+            <h3 class="dd-locked-title">Prescriptions Locked — Verification Required</h3>
+            <p class="dd-locked-desc">
+              Issuing digital prescriptions and viewing patient medical records will be enabled once your medical license is verified by the administrator.
+            </p>
+            <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;">
+              <a href="${pageContext.request.contextPath}/doctors/profile-completion" class="dd-locked-cta">
+                <i class="bi bi-shield-check"></i> Complete / Verify Profile
+              </a>
+              <a href="${pageContext.request.contextPath}/doctors/dashboard?section=overview" class="dd-empty-cta secondary" style="margin-top:0;">
+                <i class="bi bi-grid-1x2"></i> Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <div class="dd-section">
+            <div class="dd-section-header"><h2><i class="bi bi-file-earmark-medical"></i> Patient Prescriptions</h2></div>
+            <div class="dd-section-body">
+              <c:if test="${completedCount == 0}">
+                <div class="dd-empty">
+                  <i class="bi bi-file-earmark-medical"></i>
+                  <p>No prescriptions to write yet</p>
+                  <span class="hint">After you mark an appointment as Completed, you can write or edit that patient's prescription here.</span>
               <a class="dd-empty-cta" href="${pageContext.request.contextPath}/doctors/dashboard?section=appointments"><i class="bi bi-calendar-check"></i> Go to appointments</a>
             </div>
           </c:if>
@@ -1585,6 +1812,8 @@
           }
       });
       </script>
+        </c:otherwise>
+      </c:choose>
     </c:if>
 
   </div>
@@ -1845,9 +2074,247 @@ document.addEventListener('keydown', function(e) {
   </div>
 </div>
 
+<!-- Doctor Incoming Call Modal -->
+<audio id="docRingtoneAudio" loop preload="none">
+  <source src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" type="audio/mpeg">
+</audio>
+
+<div id="docIncomingCallModal" class="doc-call-modal-overlay" style="display:none;">
+  <div class="doc-call-modal-card">
+    <div class="doc-call-pulse-ring">
+      <i class="bi bi-camera-video-fill" id="docCallModalIcon"></i>
+    </div>
+    <h3 id="docCallModalCaller" style="margin:16px 0 4px;font-size:1.25rem;font-weight:800;color:#0F172A;">Incoming Call...</h3>
+    <p id="docCallModalType" style="margin:0 0 20px;font-size:0.88rem;color:#64748B;font-weight:600;">Consultation</p>
+    <div style="display:flex;gap:12px;justify-content:center;width:100%;">
+      <button type="button" id="docCallDeclineBtn" class="doc-call-btn decline">
+        <i class="bi bi-telephone-x-fill"></i> Decline
+      </button>
+      <button type="button" id="docCallAcceptBtn" class="doc-call-btn accept">
+        <i class="bi bi-telephone-fill"></i> Accept
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+.doc-call-modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.doc-call-modal-card {
+  background: #fff; border-radius: 24px; padding: 32px 28px; width: 100%; max-width: 380px;
+  text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.3); animation: popIn 0.25s ease-out;
+  border: 1px solid #E2E8F0;
+}
+.doc-call-pulse-ring {
+  width: 76px; height: 76px; border-radius: 50%; background: #FFF1F2; color: #F43F5E;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 32px;
+  animation: docPulse 1.8s infinite;
+}
+@keyframes docPulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+  70% { box-shadow: 0 0 0 20px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+.doc-call-btn {
+  flex: 1; padding: 12px 18px; border-radius: 14px; font-weight: 700; font-size: 0.92rem;
+  border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; transition: all 0.2s;
+}
+.doc-call-btn.decline { background: #F1F5F9; color: #475569; }
+.doc-call-btn.decline:hover { background: #E2E8F0; color: #0F172A; }
+.doc-call-btn.accept { background: #10B981; color: #fff; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
+.doc-call-btn.accept:hover { background: #059669; transform: translateY(-1px); }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 <script>
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('overlay');
+  if (sb) sb.classList.toggle('open');
+  if (ov) ov.classList.toggle('show');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Mobile nav item click close sidebar
+  document.querySelectorAll('.dd-sidebar-nav .dd-nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (window.innerWidth <= 900) {
+        var sb = document.getElementById('sidebar');
+        var ov = document.getElementById('overlay');
+        if (sb) sb.classList.remove('open');
+        if (ov) ov.classList.remove('show');
+      }
+    });
+  });
+
+  // Bank subfields serialization & parsing
+  function serializeDashBank() {
+    var holder = (document.getElementById('dashBankAccountHolder')?.value || '').trim();
+    var bank = (document.getElementById('dashBankName')?.value || '').trim();
+    var acct = (document.getElementById('dashBankAccountNumber')?.value || '').trim();
+    var ifsc = (document.getElementById('dashBankIfsc')?.value || '').trim();
+    var branch = (document.getElementById('dashBankBranch')?.value || '').trim();
+    var hidden = document.getElementById('dashBankDetails');
+    if (!hidden) return;
+    if (!holder && !bank && !acct && !ifsc && !branch) return;
+    var parts = [];
+    if (holder) parts.push('Account Holder: ' + holder);
+    if (bank) parts.push('Bank: ' + bank);
+    if (acct) parts.push('A/C: ' + acct);
+    if (ifsc) parts.push('IFSC: ' + ifsc.toUpperCase());
+    if (branch) parts.push('Branch: ' + branch);
+    hidden.value = parts.join(' | ');
+  }
+
+  function parseDashBank() {
+    var hidden = document.getElementById('dashBankDetails');
+    if (!hidden || !hidden.value) return;
+    var raw = hidden.value.trim();
+    var holderMatch = raw.match(/Account Holder:\s*([^|]+)/i);
+    var bankMatch = raw.match(/Bank:\s*([^|]+)/i);
+    var acctMatch = raw.match(/A\/C:\s*([^|]+)/i) || raw.match(/Account Number:\s*([^|]+)/i);
+    var ifscMatch = raw.match(/IFSC:\s*([^|]+)/i);
+    var branchMatch = raw.match(/Branch:\s*([^|]+)/i);
+
+    if (holderMatch && document.getElementById('dashBankAccountHolder')) document.getElementById('dashBankAccountHolder').value = holderMatch[1].trim();
+    if (bankMatch && document.getElementById('dashBankName')) document.getElementById('dashBankName').value = bankMatch[1].trim();
+    if (acctMatch && document.getElementById('dashBankAccountNumber')) {
+      var num = acctMatch[1].trim();
+      document.getElementById('dashBankAccountNumber').value = num;
+      if (document.getElementById('dashBankConfirmAccountNumber')) document.getElementById('dashBankConfirmAccountNumber').value = num;
+    }
+    if (ifscMatch && document.getElementById('dashBankIfsc')) document.getElementById('dashBankIfsc').value = ifscMatch[1].trim();
+    if (branchMatch && document.getElementById('dashBankBranch')) document.getElementById('dashBankBranch').value = branchMatch[1].trim();
+    if (!holderMatch && !bankMatch && !acctMatch && !ifscMatch && !branchMatch) {
+      if (document.getElementById('dashBankAccountHolder')) document.getElementById('dashBankAccountHolder').value = raw;
+    }
+  }
+
+  parseDashBank();
+  ['dashBankAccountHolder','dashBankName','dashBankAccountNumber','dashBankConfirmAccountNumber','dashBankIfsc','dashBankBranch'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', serializeDashBank);
+      el.addEventListener('blur', serializeDashBank);
+    }
+  });
+
+  var feesForm = document.querySelector('#feesEdit form');
+  if (feesForm) {
+    feesForm.addEventListener('submit', function(e) {
+      var acct = (document.getElementById('dashBankAccountNumber')?.value || '').trim();
+      var conf = (document.getElementById('dashBankConfirmAccountNumber')?.value || '').trim();
+      if (acct && conf && acct !== conf) {
+        e.preventDefault();
+        alert('Bank account numbers do not match! Please check again.');
+        document.getElementById('dashBankConfirmAccountNumber')?.focus();
+        return false;
+      }
+      serializeDashBank();
+    });
+  }
+
+  // Doctor incoming call notification
+  var docId = '${doctor.id}';
+  var ctx = '${pageContext.request.contextPath}';
+  var docStompClient = null;
+  var currentDocCallInfo = null;
+  var ringtone = document.getElementById('docRingtoneAudio');
+
+  function connectDocWS() {
+    if (!docId) return;
+    var socket = new SockJS(ctx + '/ws-chat');
+    docStompClient = Stomp.over(socket);
+    docStompClient.debug = null;
+
+    docStompClient.connect({}, function() {
+      docStompClient.subscribe('/topic/calls/' + docId, function(payload) {
+        try {
+          var info = JSON.parse(payload.body);
+          if (info.type === 'INCOMING_CALL') {
+            handleDoctorIncomingCall(info);
+          } else if (info.type === 'HANGUP' || info.type === 'DECLINED') {
+            stopDocRingtone();
+            var modal = document.getElementById('docIncomingCallModal');
+            if (modal) modal.style.display = 'none';
+          }
+        } catch (e) {
+          console.error('Call info parse error:', e);
+        }
+      });
+    }, function() {
+      setTimeout(connectDocWS, 5000);
+    });
+  }
+
+  function handleDoctorIncomingCall(info) {
+    currentDocCallInfo = info;
+    document.getElementById('docCallModalCaller').textContent = (info.fromName || 'Patient') + ' is calling...';
+    document.getElementById('docCallModalType').textContent = info.audioOnly ? 'Voice Call Consultation' : 'Video Call Consultation';
+    var icon = document.getElementById('docCallModalIcon');
+    if (icon) {
+      icon.className = info.audioOnly ? 'bi bi-telephone-inbound-fill text-success' : 'bi bi-camera-video-fill text-primary';
+    }
+    playDocRingtone();
+    var modal = document.getElementById('docIncomingCallModal');
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function playDocRingtone() {
+    if (ringtone) {
+      ringtone.currentTime = 0;
+      ringtone.play().catch(function(e) { console.log('Audio autoplay blocked'); });
+    }
+  }
+
+  function stopDocRingtone() {
+    if (ringtone) {
+      ringtone.pause();
+      ringtone.currentTime = 0;
+    }
+  }
+
+  var acceptBtn = document.getElementById('docCallAcceptBtn');
+  if (acceptBtn) {
+    acceptBtn.onclick = function() {
+      if (currentDocCallInfo) {
+        stopDocRingtone();
+        var callUrl = currentDocCallInfo.callUrl ?
+          (currentDocCallInfo.callUrl.startsWith('http') || currentDocCallInfo.callUrl.startsWith(ctx) ?
+            currentDocCallInfo.callUrl : ctx + currentDocCallInfo.callUrl) :
+          (ctx + (currentDocCallInfo.audioOnly ? '/doctors/voice-call/' : '/doctors/video-call/') + docId + '?userId=' + currentDocCallInfo.fromId);
+        window.open(callUrl, '_blank', 'width=1200,height=800');
+        var modal = document.getElementById('docIncomingCallModal');
+        if (modal) modal.style.display = 'none';
+      }
+    };
+  }
+
+  var declineBtn = document.getElementById('docCallDeclineBtn');
+  if (declineBtn) {
+    declineBtn.onclick = function() {
+      if (currentDocCallInfo && docStompClient) {
+        stopDocRingtone();
+        docStompClient.send('/app/webrtc.signal', {}, JSON.stringify({
+          type: 'DECLINED',
+          senderId: docId,
+          receiverId: currentDocCallInfo.fromId
+        }));
+      }
+      var modal = document.getElementById('docIncomingCallModal');
+      if (modal) modal.style.display = 'none';
+    };
+  }
+
+  connectDocWS();
+
+  // Status form ajax submission
   document.querySelectorAll('.dd-status-form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
       e.preventDefault();

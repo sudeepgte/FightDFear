@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -23,12 +23,6 @@
     --ap-accent-surface: #FFF5F6;
     --ap-accent-border: #FECDD3;
     --ap-accent-text: #BE123C;
-=======
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="_csrf" content="${_csrf.token}"/>
-    <meta name="_csrf_header" content="${_csrf.headerName}"/>
-    <title><c:out value="${entrepreneur.fullName}"/> — Entrepreneur Profile Review | Fight D Fear Admin</title>
 
     /* 60% PRIMARY SURFACE */
     --ap-bg: #F8FAFC;
@@ -558,14 +552,6 @@
         </div>
 
 
-                <!-- ADMIN ACTION BUTTONS -->
-        <div class="action-buttons-container">
-            <!-- Approve -->
-            <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
-            <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
-                <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
-                    <i class="bi bi-check-circle-fill me-1"></i> Approve Entrepreneur
-
         <!-- STICKY ACTION DOCK -->
         <div class="action-dock">
             <div>
@@ -574,30 +560,25 @@
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- Approve -->
-                <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                    <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
-                        <i class="bi bi-check-lg me-1"></i> Approve Entrepreneur
-                    </button>
-                </form>
+                <c:if test="${entrepreneur.partnerProfileStatus != 'APPROVED'}">
+                    <form action="${pageContext.request.contextPath}/admin/entrepreneurs/${entrepreneur.id}/approve" method="post" class="m-0">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this entrepreneur for platform access?');">
+                            <i class="bi bi-check-circle-fill me-1"></i> Approve Entrepreneur
+                        </button>
+                    </form>
+                </c:if>
 
-                <!-- Request Changes Modal Trigger -->
+                <!-- Request Changes Trigger -->
                 <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#requestChangesModal">
-                    <i class="bi bi-pencil me-1"></i> Request Changes
-
+                    <i class="bi bi-pencil-square me-1"></i> Request Changes
                 </button>
-            </form>
-            </c:if>
 
-            <!-- Request Changes -->
-            <button type="button" class="btn-action-changes" data-bs-toggle="modal" data-bs-target="#requestChangesModal">
-                <i class="bi bi-pencil-square me-1"></i> Request Changes
-            </button>
-
-            <!-- Reject -->
-            <button type="button" class="btn-action-reject" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="bi bi-x-circle-fill me-1"></i> Reject Application
-            </button>
+                <!-- Reject Trigger -->
+                <button type="button" class="btn-action-reject" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle-fill me-1"></i> Reject Application
+                </button>
+            </div>
         </div>
 
     </div>

@@ -39,8 +39,12 @@ public class ContactController {
     private String adminEmail;
 
     @GetMapping("/contact")
-    public String showContactPage(org.springframework.ui.Model model) {
+    public String showContactPage(org.springframework.ui.Model model, jakarta.servlet.http.HttpSession session) {
         model.addAttribute("pageTitle", "Contact Us");
+        Object u = session.getAttribute("user");
+        if (u instanceof in.sp.main.Entities.User user && user.getEmail() != null) {
+            model.addAttribute("myMessages", contactMessageService.findByEmail(user.getEmail()));
+        }
         return "index/contact";
     }
 

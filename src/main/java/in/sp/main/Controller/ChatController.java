@@ -50,7 +50,10 @@ public class ChatController {
     @Autowired
     private in.sp.main.Repository.ChatMessageRepository chatMessageRepo;
 
-    // WebRTC Signaling — sender from authenticated principal only
+    @Autowired
+    private in.sp.main.Repository.DoctorRepository doctorRepo;
+
+    // WebRTC Signaling — sender from authenticated principal only (User or Doctor)
     @MessageMapping("/webrtc.signal")
     public void handleWebRTCSignal(@Payload Map<String, Object> signal,
                                    org.springframework.messaging.simp.stomp.StompHeaderAccessor accessor) {
@@ -58,16 +61,30 @@ public class ChatController {
             return;
         }
         String email = accessor.getUser().getName();
+        Long senderId = null;
+        String senderName = null;
+
         User sender = userRepo.findByEmail(email).orElse(null);
-        if (sender == null) {
+        if (sender != null) {
+            senderId = sender.getId();
+            senderName = sender.getFullName();
+        } else if (doctorRepo != null) {
+            in.sp.main.Entities.Doctor doc = doctorRepo.findByEmail(email).orElse(null);
+            if (doc != null) {
+                senderId = doc.getId();
+                senderName = "Dr. " + doc.getFullName();
+            }
+        }
+
+        if (senderId == null) {
             return;
         }
         Object receiverId = signal.get("receiverId");
         if (receiverId == null) {
             return;
         }
-        signal.put("fromId", sender.getId());
-        signal.put("fromName", sender.getFullName());
+        signal.put("fromId", senderId);
+        signal.put("fromName", senderName);
         messagingTemplate.convertAndSend("/topic/calls/" + receiverId, signal);
     }
 

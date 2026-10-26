@@ -38,3 +38,8 @@ uploads/
 !.env.example
 **/application-local.properties
 **/application-local.yml
+
+### Build Artifacts & Temporary Files ###
+*.apk
+*.bak
+*.tmp

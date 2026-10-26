@@ -338,6 +338,20 @@
 
     </a>
 
+    <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-products') ? 'active' : ''}"
+       href="${pageContext.request.contextPath}/admin/pending-products">
+
+        <i class="fas fa-tags"></i>
+        Product Approvals
+
+        <c:if test="${side_pendingProducts > 0}">
+            <span class="badge rounded-pill bg-danger ms-auto">
+                ${side_pendingProducts}
+            </span>
+        </c:if>
+
+    </a>
+
     <a class="navlink ${fn:contains(pageContext.request.requestURI,'pending-delivery-partners') ? 'active' : ''}"
        href="${pageContext.request.contextPath}/admin/pending-delivery-partners">
         <i class="fas fa-motorcycle"></i>

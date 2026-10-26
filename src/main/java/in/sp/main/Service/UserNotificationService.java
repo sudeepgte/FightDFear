@@ -32,6 +32,8 @@ public class UserNotificationService {
     private CreatorNotificationRepository creatorNotificationRepo;
     @Autowired
     private UserRepository userRepo;
+    @Autowired
+    private in.sp.main.Repository.ContactMessageRepository contactMessageRepo;
 
     @Transactional(readOnly = true)
     public Map<String, Object> buildForUser(User user) {
@@ -117,6 +119,28 @@ public class UserNotificationService {
             } catch (Exception ignored) {
                 // Creator notifications optional
             }
+
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                try {
+                    List<in.sp.main.Entities.ContactMessage> contactReplies =
+                            contactMessageRepo.findByEmailIgnoreCaseAndAdminReplyIsNotNullOrderByRepliedAtDesc(user.getEmail().trim());
+                    for (in.sp.main.Entities.ContactMessage cm : contactReplies) {
+                        if (items.size() >= 50) break;
+                        boolean unread = !cm.isReplyReadByUser();
+                        items.add(0, notificationItem(
+                                "contact-reply-" + cm.getId(),
+                                "SUPPORT",
+                                "INFO",
+                                "Admin Response: " + (cm.getSubject() != null ? cm.getSubject() : "Your inquiry"),
+                                cm.getAdminReply(),
+                                cm.getRepliedAt(),
+                                "/index/contact",
+                                unread));
+                    }
+                } catch (Exception ignored) {
+                    // Contact message replies optional
+                }
+            }
         }
 
         int unreadCount = 0;
@@ -156,6 +180,25 @@ public class UserNotificationService {
             }
         } catch (Exception ignored) {
             // Non-fatal
+        }
+
+        if (fresh.getEmail() != null && !fresh.getEmail().isBlank()) {
+            try {
+                List<in.sp.main.Entities.ContactMessage> contactReplies =
+                        contactMessageRepo.findByEmailIgnoreCaseAndAdminReplyIsNotNullOrderByRepliedAtDesc(fresh.getEmail().trim());
+                boolean changed = false;
+                for (in.sp.main.Entities.ContactMessage cm : contactReplies) {
+                    if (!cm.isReplyReadByUser()) {
+                        cm.setReplyReadByUser(true);
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    contactMessageRepo.saveAll(contactReplies);
+                }
+            } catch (Exception ignored) {
+                // Non-fatal
+            }
         }
     }
 

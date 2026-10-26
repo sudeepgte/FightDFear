@@ -375,7 +375,12 @@ public class LawyerController {
                                       @RequestParam(required = false) String consultationMode,
                                       @RequestParam(required = false) Double consultationFee,
                                       @RequestParam(required = false) String upiId,
-                                      @RequestParam(required = false) String bankDetails,
+                                      @RequestParam(required = false) String bankAccountHolder,
+                                       @RequestParam(required = false) String bankName,
+                                       @RequestParam(required = false) String bankAccountNumber,
+                                       @RequestParam(required = false) String bankIfsc,
+                                       @RequestParam(required = false) String bankBranch,
+                                       @RequestParam(required = false) String bankDetails,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile profilePhoto,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile chamberPhoto,
                                       HttpSession session, RedirectAttributes ra) {
@@ -414,7 +419,18 @@ public class LawyerController {
             existing.setConsultationMode(consultationMode != null ? consultationMode.trim() : "");
             if (consultationFee != null) existing.setConsultationFee(consultationFee);
             existing.setUpiId(upiId != null ? upiId.trim() : "");
-            existing.setBankDetails(bankDetails != null ? bankDetails.trim() : "");
+            if (bankDetails != null && !bankDetails.isBlank()) {
+                existing.setBankDetails(bankDetails.trim());
+            } else if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+                String serialized = "Account Holder: " + (bankAccountHolder != null ? bankAccountHolder.trim() : "")
+                        + " | Bank: " + (bankName != null ? bankName.trim() : "")
+                        + " | A/C: " + bankAccountNumber.trim()
+                        + " | IFSC: " + (bankIfsc != null ? bankIfsc.trim().toUpperCase() : "")
+                        + " | Branch: " + (bankBranch != null ? bankBranch.trim() : "");
+                existing.setBankDetails(serialized);
+            } else {
+                existing.setBankDetails("");
+            }
             
             existing.setLocationText(city != null ? city.trim() : "");
             

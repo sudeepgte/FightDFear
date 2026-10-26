@@ -291,8 +291,15 @@
                                                 <tr class="${cm.readByAdmin ? '' : 'unread'}">
                                                     <td>
                                                         <c:choose>
-                                                            <c:when test="${cm.readByAdmin}"><span class="badge-read">Read</span></c:when>
-                                                            <c:otherwise><span class="badge-new">New</span></c:otherwise>
+                                                            <c:when test="${not empty cm.adminReply}">
+                                                                <span class="badge bg-success text-white" style="font-size:0.75rem; padding:4px 8px; border-radius:6px;">Replied</span>
+                                                            </c:when>
+                                                            <c:when test="${cm.readByAdmin}">
+                                                                <span class="badge-read">Read</span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="badge-new">New</span>
+                                                            </c:otherwise>
                                                         </c:choose>
                                                     </td>
                                                     <td>
@@ -302,9 +309,19 @@
                                                     <td>
                                                         <div style="font-weight:600;"><c:out value="${cm.subject}"/></div>
                                                         <div class="msg-preview"><c:out value="${cm.message}"/></div>
+                                                        <c:if test="${not empty cm.adminReply}">
+                                                            <div style="margin-top:8px; padding:8px 12px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; font-size:0.82rem;">
+                                                                <div style="font-weight:700; color:#15803D;"><i class="fas fa-reply me-1"></i> Admin Response (${cm.repliedAt}):</div>
+                                                                <div style="color:#166534; margin-top:2px;"><c:out value="${cm.adminReply}"/></div>
+                                                            </div>
+                                                        </c:if>
                                                     </td>
                                                     <td style="white-space:nowrap; font-size:0.85rem;">${cm.submittedAt}</td>
                                                     <td style="white-space:nowrap;">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary me-1" style="border-radius:6px; padding:3px 8px; font-size:0.8rem; font-weight:600;"
+                                                                onclick="openReplyModal('${cm.id}', '<c:out value="${cm.name}"/>', '<c:out value="${cm.subject}"/>', '<c:out value="${cm.adminReply}"/>')">
+                                                            <i class="fas fa-reply me-1"></i> <c:choose><c:when test="${not empty cm.adminReply}">Edit Reply</c:when><c:otherwise>Reply</c:otherwise></c:choose>
+                                                        </button>
                                                         <c:if test="${!cm.readByAdmin}">
                                                             <form action="${pageContext.request.contextPath}/admin/contact-messages/${cm.id}/read" method="post" class="d-inline">
                                                                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
@@ -335,6 +352,42 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Admin Reply Modal -->
+    <div class="modal fade" id="replyModal" tabindex="-1" aria-labelledby="replyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header" style="background:#FFF1F2; border-bottom: 1px solid #FFE4E6;">
+                    <h5 class="modal-title fw-bold" id="replyModalLabel" style="color:#0F172A;">
+                        <i class="fas fa-reply me-2" style="color:#F43F5E;"></i> Respond to User Inquiry
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="replyForm" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">RECIPIENT &amp; SUBJECT</label>
+                            <div class="p-2 rounded bg-light" id="replyModalInfo" style="font-size:0.9rem; font-weight:600; color:#0F172A;"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminReplyText" class="form-label text-muted small fw-bold">ADMIN RESPONSE *</label>
+                            <textarea name="reply" id="adminReplyText" class="form-control" rows="5" required
+                                      placeholder="Type your response to the user here. They will receive this response directly in their notifications and on the Contact page..."
+                                      style="border-radius: 10px; font-size:0.9rem;"></textarea>
+                            <div class="form-text text-muted">This response will be instantly sent to the user's notification bell and email.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn text-white fw-bold" style="background:#F43F5E; border-radius:10px; padding:8px 20px;">
+                            <i class="fas fa-paper-plane me-1"></i> Send Response
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -370,6 +423,15 @@
                 }
             });
         });
+
+        function openReplyModal(id, name, subject, existingReply) {
+            const form = document.getElementById('replyForm');
+            form.action = '${pageContext.request.contextPath}/admin/contact-messages/' + id + '/reply';
+            document.getElementById('replyModalInfo').textContent = name + ' — ' + subject;
+            document.getElementById('adminReplyText').value = (existingReply && existingReply !== 'null') ? existingReply : '';
+            const modal = new bootstrap.Modal(document.getElementById('replyModal'));
+            modal.show();
+        }
     </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

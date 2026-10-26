@@ -146,6 +146,7 @@ public class SecurityConfig {
             "/users/register",
             "/users/register/**",
             "/admin/loginAdmin",
+            "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
             "/doctors/logout",
@@ -186,6 +187,7 @@ public class SecurityConfig {
             "/investor/register/**",
             "/women-events",
             "/women-events/*",
+            "/women-events/**",
             "/women-events/host/**",
             "/host/login",
             "/host/login/**",
@@ -219,7 +221,7 @@ public class SecurityConfig {
         http
             .securityMatcher("/**")
             .authorizeHttpRequests(auth -> auth
-                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
+                .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR, DispatcherType.INCLUDE, DispatcherType.ASYNC).permitAll()
                 .requestMatchers("/actuator/prometheus", "/actuator/prometheus/**")
                     .access((authentication, context) -> allowLocalhostOnly(context))
                 .requestMatchers(PUBLIC_URLS).permitAll()

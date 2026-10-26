@@ -43,9 +43,9 @@ public class LoginController {
     @Autowired
     private in.sp.main.Service.SecurityAuditLogger securityAuditLogger;
 
-    // Show login page
     @GetMapping
     public String showLoginPage(@RequestParam(value = "redirect", required = false) String redirect,
+                                @RequestParam(value = "email", required = false) String emailParam,
                                 HttpSession session,
                                 Model model) {
         if (redirect != null && !redirect.isEmpty()) {
@@ -56,10 +56,14 @@ public class LoginController {
             }
         }
         // One-time post-registration prefill (email always; password only if still in session).
-        Object prefillEmail = session.getAttribute("regPrefillEmail");
-        if (prefillEmail != null) {
-            model.addAttribute("prefillEmail", prefillEmail.toString());
-            session.removeAttribute("regPrefillEmail");
+        if (emailParam != null && !emailParam.isBlank()) {
+            model.addAttribute("prefillEmail", emailParam.trim());
+        } else {
+            Object prefillEmail = session.getAttribute("regPrefillEmail");
+            if (prefillEmail != null) {
+                model.addAttribute("prefillEmail", prefillEmail.toString());
+                session.removeAttribute("regPrefillEmail");
+            }
         }
         Object prefillPassword = session.getAttribute("regPrefillPassword");
         if (prefillPassword != null) {

@@ -299,7 +299,8 @@
   <div class="container-fluid container-xl d-flex align-items-center">
     <!-- Removed redundant Left Side Top Sidebar Toggle -->
     
-    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : '/users/dashboard')}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
+    <c:set var="headerUser" value="${not empty user ? user : (not empty currentUser ? currentUser : (not empty sessionScope.user ? sessionScope.user : null))}" />
+    <a href="${pageContext.request.contextPath}${not empty sessionScope.loggedTrainer ? '/fitness/trainer/dashboard' : (not empty sessionScope.loggedDoctor ? '/doctors/dashboard' : (not empty headerUser ? '/users/dashboard' : '/'))}" class="logo me-auto d-flex align-items-center gap-2" style="text-decoration: none;">
         <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Logo" style="height: 30px; object-fit: contain; margin-right: 8px;"><h1 style="margin:0; font-size:22px !important; color:#F43F5E !important;">Fight D Fear</h1>
     </a>
     <nav id="navmenu" class="navmenu">
@@ -340,12 +341,13 @@
                 </li>
                 <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">${sessionScope.loggedHost.fullName} (Host)</a></li>
             </c:when>
-            <c:otherwise>
+            <c:when test="${not empty headerUser}">
                 <li><a href="${pageContext.request.contextPath}/">Home</a></li>
                 <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
                 <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
+                <li><a href="${pageContext.request.contextPath}/index/contact">Contact</a></li>
                 
-                <!-- Notification Bell for Broadcasts -->
+                <!-- Notification Bell for Broadcasts & Support -->
                 <li>
                     <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
                         <div style="position: relative; display: inline-block;">
@@ -360,7 +362,14 @@
                     </a>
                 </li>
                 
-                <li><a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}">${not empty user ? user.fullName : sessionScope.user.fullName}</a></li>
+                <li><a href="${pageContext.request.contextPath}/users/profile/${headerUser.id}"><c:out value="${not empty headerUser.fullName ? headerUser.fullName : 'Profile'}"/></a></li>
+            </c:when>
+            <c:otherwise>
+                <li><a href="${pageContext.request.contextPath}/">Home</a></li>
+                <li><a href="${pageContext.request.contextPath}/women-events">Events</a></li>
+                <li><a href="${pageContext.request.contextPath}/index/contact">Contact</a></li>
+                <li><a href="${pageContext.request.contextPath}/login">Login</a></li>
+                <li><a href="${pageContext.request.contextPath}/users/register" class="btn-getstarted">Register</a></li>
             </c:otherwise>
         </c:choose>
       </ul>
@@ -370,34 +379,34 @@
             <c:when test="${not empty sessionScope.loggedTrainer}">
                 <!-- Profile Image Removed -->
             </c:when>
-        <c:when test="${not empty sessionScope.loggedHost}">
-            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ms-3">
-                <c:choose>
-                    <c:when test="${not empty sessionScope.loggedHost.logoPath}">
-                        <img src="${pageContext.request.contextPath}${sessionScope.loggedHost.logoPath}" alt="Profile" class="header-profile-img">
-                    </c:when>
-                    <c:otherwise>
-                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
-                    </c:otherwise>
-                </c:choose>
-            </a>
-        </c:when>
-        <c:otherwise>
-            <a href="${pageContext.request.contextPath}/users/profile/${not empty user ? user.id : sessionScope.user.id}" class="ms-3">
-                <c:choose>
-                    <c:when test="${not empty user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
-                    </c:when>
-                    <c:when test="${not empty sessionScope.user.profilePhoto}">
-                        <img src="${pageContext.request.contextPath}${sessionScope.user.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
-                    </c:when>
-                    <c:otherwise>
-                        <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
-                    </c:otherwise>
-                </c:choose>
-            </a>
-        </c:otherwise>
-    </c:choose>
+            <c:when test="${not empty sessionScope.loggedHost}">
+                <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ms-3">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.loggedHost.logoPath}">
+                            <img src="${pageContext.request.contextPath}${sessionScope.loggedHost.logoPath}" alt="Profile" class="header-profile-img">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
+                        </c:otherwise>
+                    </c:choose>
+                </a>
+            </c:when>
+            <c:when test="${not empty headerUser}">
+                <a href="${pageContext.request.contextPath}/users/profile/${headerUser.id}" class="ms-3">
+                    <c:choose>
+                        <c:when test="${not empty headerUser.profilePhoto}">
+                            <img src="${pageContext.request.contextPath}${headerUser.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" alt="Profile" class="header-profile-img">
+                        </c:when>
+                        <c:otherwise>
+                            <img src="${pageContext.request.contextPath}/assets/img/default-profile.png" alt="Profile" class="header-profile-img">
+                        </c:otherwise>
+                    </c:choose>
+                </a>
+            </c:when>
+            <c:otherwise>
+                <a href="${pageContext.request.contextPath}/login" class="btn-getstarted ms-3 d-none d-sm-inline-block">Sign In</a>
+            </c:otherwise>
+        </c:choose>
   </div>
 </header>
 
@@ -412,11 +421,48 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <c:if test="${not empty userContactReplies}">
+          <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold" style="font-size: 0.8rem; color: #F43F5E; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="bi bi-chat-left-dots-fill me-1"></i> Admin Support Responses
+              </span>
+              <a href="${pageContext.request.contextPath}/index/contact" style="font-size: 0.75rem; color: #64748B; text-decoration: none;">
+                Contact page &rarr;
+              </a>
+            </div>
+            <c:forEach var="cr" items="${userContactReplies}">
+              <div class="mb-2 p-3 rounded-3" style="background:#FFF1F2; border:1px solid #FFE4E6;">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="fw-bold" style="color:#0F172A; font-size:0.88rem;">
+                    Re: <c:out value="${cr.subject}"/>
+                  </div>
+                  <c:if test="${!cr.replyReadByUser}">
+                    <span class="badge bg-danger rounded-pill" style="font-size:0.65rem;">NEW</span>
+                  </c:if>
+                </div>
+                <div class="mt-1" style="font-size:0.85rem; color:#334155; line-height:1.4;">
+                  <c:out value="${cr.adminReply}"/>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2" style="font-size:0.75rem; color:#94A3B8;">
+                  <span>${cr.repliedAt}</span>
+                  <a href="${pageContext.request.contextPath}/index/contact" class="fw-bold" style="color:#F43F5E; text-decoration:none;">
+                    Open Conversation &rarr;
+                  </a>
+                </div>
+              </div>
+            </c:forEach>
+          </div>
+        </c:if>
+
         <c:choose>
-          <c:when test="${empty recentBroadcasts}">
-            <p class="text-muted text-center py-4 mb-0">No alerts right now.</p>
+          <c:when test="${empty recentBroadcasts && empty userContactReplies}">
+            <p class="text-muted text-center py-4 mb-0">No alerts or responses right now.</p>
           </c:when>
-          <c:otherwise>
+          <c:when test="${not empty recentBroadcasts}">
+            <div class="fw-bold mb-2 mt-2" style="font-size: 0.8rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
+              <i class="bi bi-megaphone me-1"></i> Platform Announcements
+            </div>
             <c:forEach var="b" items="${recentBroadcasts}">
               <div class="mb-3 pb-3 border-bottom">
                 <div class="fw-semibold" style="color:#0F172A;"><c:out value="${b.title != null ? b.title : 'Announcement'}"/></div>
@@ -426,7 +472,7 @@
                 </c:if>
               </div>
             </c:forEach>
-          </c:otherwise>
+          </c:when>
         </c:choose>
       </div>
     </div>
@@ -528,7 +574,8 @@ function markBroadcastsAsRead() {
 
             function handleGlobalIncomingCall(callInfo) {
                 // Don't show modal if we're already on a call page (optional, but good for UX)
-                if (window.location.pathname.includes('/chat/call/') || window.location.pathname.includes('/chat/video-call/')) {
+                if (window.location.pathname.includes('/chat/call/') || window.location.pathname.includes('/chat/video-call/') ||
+                    window.location.pathname.includes('/doctors/voice-call/') || window.location.pathname.includes('/doctors/video-call/')) {
                     return;
                 }
 
@@ -562,9 +609,15 @@ function markBroadcastsAsRead() {
             document.getElementById('globalAcceptCallBtn').addEventListener('click', function() {
                 if (currentGlobalCallInfo) {
                     stopGlobalRingtone();
-                    const callUrl = currentGlobalCallInfo.audioOnly ? 
-                        ctx + '/chat/call/' + currentGlobalCallInfo.fromId :
-                        ctx + '/chat/video-call/' + currentGlobalCallInfo.fromId;
+                    let callUrl;
+                    if (currentGlobalCallInfo.callUrl) {
+                        callUrl = currentGlobalCallInfo.callUrl.startsWith('http') || currentGlobalCallInfo.callUrl.startsWith(ctx) ?
+                            currentGlobalCallInfo.callUrl : ctx + currentGlobalCallInfo.callUrl;
+                    } else {
+                        callUrl = currentGlobalCallInfo.audioOnly ? 
+                            ctx + '/chat/call/' + currentGlobalCallInfo.fromId :
+                            ctx + '/chat/video-call/' + currentGlobalCallInfo.fromId;
+                    }
                     
                     window.open(callUrl, '_blank', 'width=1200,height=800');
                     

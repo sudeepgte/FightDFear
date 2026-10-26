@@ -2,12 +2,13 @@ package in.sp.main.Entities;
 
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
-import lombok.Data;
 
 @Entity
 @Table(name = "volunteer_sos_response")
-@Data
 public class VolunteerSOSResponse {
+
+    public VolunteerSOSResponse() {
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

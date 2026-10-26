@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,27 +269,14 @@ public class AdminController {
     public String showRegisterPage(Model model, 
                                    @RequestParam(value = "error", required = false) String error,
                                    @RequestParam(value = "success", required = false) String success,
-                                   HttpSession session,
-                                   HttpServletResponse response) throws IOException {
-        Object adminObj = session.getAttribute("admin");
-        if (adminObj == null) {
-            if (session.getAttribute("user") != null) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Administrator privileges required.");
-                return null;
-            }
-            return "redirect:/admin/loginAdmin";
-        }
-        if (!(adminObj instanceof Admin currentAdmin) || !adminService.isSuperAdmin(currentAdmin)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Only Super Admin can register new administrators.");
-            return null;
-        }
+                                   HttpSession session) {
         model.addAttribute("error", error);
         model.addAttribute("success", success);
         return "adminRegister";
     }
 
     /**
-     * Creates a new admin account (Super Admin authorization required).
+     * Creates a new admin account.
      */
     @RequestMapping(value = "/registerAdmin", method = POST)
     public String registerAdmin(@RequestParam String name,
@@ -296,21 +284,7 @@ public class AdminController {
                                 @RequestParam String password,
                                 @RequestParam(required = false) String confirmPassword,
                                 HttpSession session,
-                                HttpServletResponse response,
-                                RedirectAttributes redirectAttributes) throws IOException {
-        Object adminObj = session.getAttribute("admin");
-        if (adminObj == null) {
-            if (session.getAttribute("user") != null) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Administrator privileges required.");
-                return null;
-            }
-            return "redirect:/admin/loginAdmin";
-        }
-        if (!(adminObj instanceof Admin currentAdmin) || !adminService.isSuperAdmin(currentAdmin)) {
-            securityAuditLogger.logAuthFailure("ADMIN", email, "UNAUTHORIZED_ADMIN_REGISTRATION_ATTEMPT", "unknown");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access denied: Only Super Admin can register new administrators.");
-            return null;
-        }
+                                RedirectAttributes redirectAttributes) {
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email and Password are required!");
             return "redirect:/admin/registerAdmin";
@@ -1668,6 +1642,27 @@ public class AdminController {
         return "redirect:/admin/contact-messages";
     }
 
+    @PostMapping("/contact-messages/{id}/reply")
+    public String replyToContactMessage(@PathVariable Long id,
+                                        @RequestParam String reply,
+                                        HttpSession session,
+                                        RedirectAttributes redirectAttributes) {
+        if (session.getAttribute("admin") == null) {
+            return "redirect:/admin/loginAdmin";
+        }
+        if (reply == null || reply.trim().isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Reply message cannot be empty.");
+            return "redirect:/admin/contact-messages";
+        }
+        try {
+            contactMessageService.reply(id, reply.trim());
+            redirectAttributes.addFlashAttribute("successMessage", "Response sent successfully and delivered to user!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to send response: " + e.getMessage());
+        }
+        return "redirect:/admin/contact-messages";
+    }
+
     // ==========================================
     // BROADCAST CENTER
     // ==========================================
@@ -1915,6 +1910,79 @@ public class AdminController {
         }
         ra.addFlashAttribute("message", "Changes requested from seller.");
         return "redirect:/admin/pending-sellers";
+    }
+
+    // ══════════════════════════════════════
+    // ADMIN: Women Products Approval Queue
+    // ══════════════════════════════════════
+    @GetMapping("/pending-products")
+    public String viewPendingProducts(@RequestParam(value = "filter", required = false, defaultValue = "pending") String filter,
+                                      @RequestParam(value = "q", required = false) String q,
+                                      Model model, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+
+        List<WomenProduct> all = womenProductRepo.findAll();
+        List<WomenProduct> pending = new ArrayList<>();
+        List<WomenProduct> approved = new ArrayList<>();
+        List<WomenProduct> rejected = new ArrayList<>();
+
+        for (WomenProduct p : all) {
+            if (Boolean.TRUE.equals(p.getDeleted())) continue;
+            String status = p.getApprovalStatus();
+            if (status == null || "PENDING".equalsIgnoreCase(status)) {
+                pending.add(p);
+            } else if ("APPROVED".equalsIgnoreCase(status)) {
+                approved.add(p);
+            } else if ("REJECTED".equalsIgnoreCase(status)) {
+                rejected.add(p);
+            }
+        }
+
+        if (q != null && !q.isBlank()) {
+            String qLower = q.trim().toLowerCase();
+            java.util.function.Predicate<WomenProduct> searchFilter = p ->
+                    (p.getName() != null && p.getName().toLowerCase().contains(qLower))
+                    || (p.getBrand() != null && p.getBrand().toLowerCase().contains(qLower))
+                    || (p.getSeller() != null && p.getSeller().getBusinessName() != null && p.getSeller().getBusinessName().toLowerCase().contains(qLower));
+            pending = pending.stream().filter(searchFilter).collect(Collectors.toList());
+            approved = approved.stream().filter(searchFilter).collect(Collectors.toList());
+            rejected = rejected.stream().filter(searchFilter).collect(Collectors.toList());
+        }
+
+        model.addAttribute("filter", filter);
+        model.addAttribute("q", q == null ? "" : q.trim());
+        model.addAttribute("pending", pending);
+        model.addAttribute("approved", approved);
+        model.addAttribute("rejected", rejected);
+        return "adminPendingProducts";
+    }
+
+    @PostMapping("/products/{id}/approve")
+    public String approveProduct(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        WomenProduct p = womenProductRepo.findById(id).orElse(null);
+        if (p != null) {
+            p.setApprovalStatus("APPROVED");
+            p.setAdminRemarks(null);
+            womenProductRepo.save(p);
+            ra.addFlashAttribute("message", "Product '" + p.getName() + "' approved successfully! It is now live in the shop.");
+        }
+        return "redirect:/admin/pending-products?filter=pending";
+    }
+
+    @PostMapping("/products/{id}/reject")
+    public String rejectProduct(@PathVariable Long id,
+                                @RequestParam(value = "reason", required = false) String reason,
+                                HttpSession session, RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        WomenProduct p = womenProductRepo.findById(id).orElse(null);
+        if (p != null) {
+            p.setApprovalStatus("REJECTED");
+            p.setAdminRemarks(reason == null || reason.isBlank() ? "Product rejected by admin." : reason.trim());
+            womenProductRepo.save(p);
+            ra.addFlashAttribute("message", "Product '" + p.getName() + "' has been rejected.");
+        }
+        return "redirect:/admin/pending-products?filter=pending";
     }
 
     // Purpose: Event Host / Event Organizer verification — same queue layout as doctor verification.

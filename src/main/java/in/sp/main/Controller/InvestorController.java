@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
@@ -57,6 +58,9 @@ public class InvestorController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private in.sp.main.Service.FileUploadService fileUploadService;
 
     // --- Authentication ---
 
@@ -151,7 +155,7 @@ public class InvestorController {
                 response.addCookie(cookie);
 
                 session.setAttribute("loggedInvestor", inv);
-                return "redirect:/investor/dashboard";
+                return "redirect:/investor/complete-profile";
             }
         }
         model.addAttribute("error", "Invalid credentials.");
@@ -175,6 +179,7 @@ public class InvestorController {
     public String saveProfileCompletion(
             @RequestParam(value = "fullName", required = false) String fullName,
             @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
             @RequestParam(value = "designation", required = false) String designation,
             @RequestParam(value = "companyName", required = false) String companyName,
             @RequestParam(value = "credentialNumber", required = false) String credentialNumber,
@@ -190,8 +195,15 @@ public class InvestorController {
             @RequestParam(value = "bio", required = false) String bio,
             @RequestParam(value = "ticketMode", required = false) String ticketMode,
             @RequestParam(value = "typicalPrice", required = false) Double typicalPrice,
+            @RequestParam(value = "budgetRange", required = false) String budgetRange,
             @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+            @RequestParam(value = "bankName", required = false) String bankName,
+            @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+            @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+            @RequestParam(value = "bankBranch", required = false) String bankBranch,
             @RequestParam(value = "bankDetails", required = false) String bankDetails,
+            @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
@@ -204,6 +216,7 @@ public class InvestorController {
             java.util.Map<String, Object> body = new java.util.HashMap<>();
             if (fullName != null) body.put("fullName", fullName);
             if (phone != null) body.put("phone", phone);
+            if (whatsappNumber != null) body.put("whatsappNumber", whatsappNumber);
             if (designation != null) body.put("designation", designation);
             if (companyName != null) body.put("companyName", companyName);
             if (credentialNumber != null) body.put("credentialNumber", credentialNumber);
@@ -219,8 +232,23 @@ public class InvestorController {
             if (bio != null) body.put("bio", bio);
             if (ticketMode != null) body.put("ticketMode", ticketMode);
             if (typicalPrice != null) body.put("typicalPrice", typicalPrice);
+            if (budgetRange != null) body.put("budgetRange", budgetRange);
             if (upiId != null) body.put("upiId", upiId);
-            if (bankDetails != null) body.put("bankDetails", bankDetails);
+
+            if (bankDetails != null && !bankDetails.isBlank()) {
+                body.put("bankDetails", bankDetails);
+            } else if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+                String serialized = "Account Holder: " + (bankAccountHolder != null ? bankAccountHolder.trim() : "")
+                        + " | Bank: " + (bankName != null ? bankName.trim() : "")
+                        + " | A/C: " + bankAccountNumber.trim()
+                        + " | IFSC: " + (bankIfsc != null ? bankIfsc.trim().toUpperCase() : "")
+                        + " | Branch: " + (bankBranch != null ? bankBranch.trim() : "");
+                body.put("bankDetails", serialized);
+            }
+
+            if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
+                refreshed.setProfilePhoto(fileUploadService.saveFile(profilePhotoFile));
+            }
 
             investorProfileService.applyExtraFields(refreshed, body);
             investorProfileService.refreshCompletion(refreshed);

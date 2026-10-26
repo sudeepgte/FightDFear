@@ -210,6 +210,7 @@ public class EntrepreneurController {
     @PostMapping("/profile-completion")
     public String saveProfileCompletion(
             @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "email", required = false) String email,
             @RequestParam(value = "phone", required = false) String phone,
             @RequestParam(value = "dob", required = false) String dob,
             @RequestParam(value = "gender", required = false) String gender,
@@ -233,6 +234,11 @@ public class EntrepreneurController {
             @RequestParam(value = "pitchDeckFile", required = false) MultipartFile pitchDeckFile,
             @RequestParam(value = "businessPhotosFiles", required = false) MultipartFile[] businessPhotosFiles,
             @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+            @RequestParam(value = "bankName", required = false) String bankName,
+            @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+            @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+            @RequestParam(value = "bankBranch", required = false) String bankBranch,
             @RequestParam(value = "bankDetails", required = false) String bankDetails,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
@@ -246,6 +252,8 @@ public class EntrepreneurController {
 
             if (fullName != null)
                 refreshed.setFullName(fullName);
+            if (email != null && !email.isBlank())
+                refreshed.setEmail(email.trim().toLowerCase());
             if (phone != null)
                 refreshed.setPhone(phone);
             if (dob != null)
@@ -284,9 +292,24 @@ public class EntrepreneurController {
                 refreshed.setExpectedMonthlyIncome(expectedMonthlyIncome);
 
             if (upiId != null)
-                refreshed.setUpiId(upiId);
-            if (bankDetails != null)
-                refreshed.setBankDetails(bankDetails);
+                refreshed.setUpiId(upiId.trim());
+            if (bankName != null && !bankName.isBlank())
+                refreshed.setBankName(bankName.trim());
+            if (bankAccountNumber != null && !bankAccountNumber.isBlank())
+                refreshed.setAccountNumber(bankAccountNumber.trim());
+            if (bankIfsc != null && !bankIfsc.isBlank())
+                refreshed.setIfscCode(bankIfsc.trim().toUpperCase());
+
+            if (bankDetails != null && !bankDetails.isBlank()) {
+                refreshed.setBankDetails(bankDetails.trim());
+            } else if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+                String serialized = "Account Holder: " + (bankAccountHolder != null ? bankAccountHolder.trim() : "")
+                        + " | Bank: " + (bankName != null ? bankName.trim() : "")
+                        + " | A/C: " + bankAccountNumber.trim()
+                        + " | IFSC: " + (bankIfsc != null ? bankIfsc.trim().toUpperCase() : "")
+                        + " | Branch: " + (bankBranch != null ? bankBranch.trim() : "");
+                refreshed.setBankDetails(serialized);
+            }
 
             // Handle file uploads
             if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
@@ -331,7 +354,8 @@ public class EntrepreneurController {
 
         if (e.getBusinessName() != null && !e.getBusinessName().isBlank() && !e.getBusinessName().equals("Pending Profile Completion")) pct += 5;
         if (e.getBusinessCategory() != null && !e.getBusinessCategory().isBlank()) pct += 5;
-        if (e.getBusinessLocation() != null && !e.getBusinessLocation().isBlank() && !e.getBusinessLocation().equals("Pending")) pct += 5;
+        if ((e.getBusinessLocation() != null && !e.getBusinessLocation().isBlank() && !e.getBusinessLocation().equals("Pending"))
+                || (e.getCity() != null && !e.getCity().isBlank())) pct += 5;
 
         if (e.getInvestmentNeeded() != null && e.getInvestmentNeeded() > 0) pct += 5;
         if (e.getExpectedMonthlyIncome() != null && e.getExpectedMonthlyIncome() > 0) pct += 5;
@@ -342,10 +366,11 @@ public class EntrepreneurController {
         if (e.getBusinessDescription() != null && !e.getBusinessDescription().isBlank() && !e.getBusinessDescription().equals("Profile pending completion by entrepreneur.")) pct += 10;
 
         if ((e.getUpiId() != null && !e.getUpiId().isBlank())
-                || (e.getBankDetails() != null && !e.getBankDetails().isBlank())) pct += 5;
+                || (e.getBankDetails() != null && !e.getBankDetails().isBlank())
+                || (e.getAccountNumber() != null && !e.getAccountNumber().isBlank())) pct += 10;
 
         if (e.getProfilePhoto() != null && !e.getProfilePhoto().isBlank()) pct += 10;
-        if (e.getDocumentsPath() != null && !e.getDocumentsPath().isBlank()) pct += 10;
+        if (e.getDocumentsPath() != null && !e.getDocumentsPath().isBlank()) pct += 5;
         if (e.getPhotosPath() != null && !e.getPhotosPath().isBlank()) pct += 10;
 
         return Math.min(100, pct);

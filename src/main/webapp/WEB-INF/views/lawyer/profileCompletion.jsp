@@ -183,13 +183,38 @@
                         <label class="form-label">Languages Spoken</label>
                         <input type="text" name="languages" class="form-input" value="${lawyer.languages}" placeholder="English, Hindi, Marathi">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Profile Photo</label>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <input type="file" name="profilePhoto" class="form-file" accept="image/*" style="flex:1;">
-                            <c:if test="${not empty lawyer.profilePhoto}">
-                                <span style="font-size:0.75rem; color:var(--success-text); white-space:nowrap;"><i class="bi bi-check-circle-fill"></i> Uploaded</span>
-                            </c:if>
+                    <div class="form-group full" style="border: 1px solid #FECDD3; background: #FFF5F7; border-radius: 12px; padding: 14px; margin-top: 6px;">
+                        <label class="form-label" style="color: var(--primary); font-weight: 700;">
+                            <i class="bi bi-camera-fill me-1"></i> Advocate Profile Photo
+                        </label>
+                        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                            <div style="position:relative; width:70px; height:70px; flex-shrink:0;">
+                                <c:choose>
+                                    <c:when test="${not empty lawyer.profilePhoto}">
+                                        <img id="lawyerPhotoPreview" src="${pageContext.request.contextPath}${lawyer.profilePhoto}" 
+                                             alt="Profile Photo" style="width:70px; height:70px; border-radius:14px; object-fit:cover; border:2px solid var(--primary);">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img id="lawyerPhotoPreview" src="" alt="Profile Photo" 
+                                             style="display:none; width:70px; height:70px; border-radius:14px; object-fit:cover; border:2px solid var(--primary);">
+                                        <div id="lawyerPhotoFallback" style="width:70px; height:70px; border-radius:14px; background:#FFE4E6; color:var(--primary); font-size:1.8rem; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                                            ${empty lawyer.fullName ? 'L' : lawyer.fullName.substring(0,1).toUpperCase()}
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                            <div style="flex:1; min-width:200px;">
+                                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    <label for="lawyerPhotoInput" style="background:var(--primary); color:white; padding:6px 14px; border-radius:8px; font-size:0.82rem; font-weight:700; cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:6px;">
+                                        <i class="bi bi-upload"></i> Upload Photo
+                                    </label>
+                                    <input type="file" id="lawyerPhotoInput" name="profilePhoto" accept="image/*" style="display:none;" onchange="previewLawyerPhoto(this)">
+                                    <button type="button" id="btnClearLawyerPhoto" onclick="clearLawyerPhoto()" style="display:none; background:white; border:1px solid var(--border); color:var(--secondary); padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">
+                                        <i class="bi bi-x"></i> Clear
+                                    </button>
+                                </div>
+                                <small style="display:block; margin-top:6px; font-size:0.75rem; color:var(--secondary);">JPG, PNG or WebP. A professional headshot builds client confidence.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -279,12 +304,44 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">UPI ID</label>
-                        <input type="text" name="upiId" class="form-input" value="${lawyer.upiId}" placeholder="yourname@upi">
+                        <input type="text" name="upiId" id="inputUpiId" class="form-input" value="${lawyer.upiId}" placeholder="yourname@upi">
                     </div>
-                    <div class="form-group full">
-                        <label class="form-label">Bank Details</label>
-                        <textarea name="bankDetails" class="form-input" rows="4" placeholder="Bank Name, Account Number, IFSC Code">${lawyer.bankDetails}</textarea>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Holder Name *</label>
+                        <input type="text" id="bankAccountHolder" name="bankAccountHolder" class="form-input" placeholder="Name as in Bank passbook">
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Bank Name *</label>
+                        <input type="text" id="bankName" name="bankName" class="form-input" placeholder="e.g. State Bank of India, HDFC Bank">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Number *</label>
+                        <input type="text" id="bankAccountNumber" name="bankAccountNumber" class="form-input" placeholder="Enter bank account number" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Re-enter Account Number *</label>
+                        <input type="text" id="confirmAccountNumber" class="form-input" placeholder="Confirm bank account number" maxlength="20">
+                        <small id="accMismatchMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                            <i class="bi bi-exclamation-circle-fill"></i> Account numbers do not match
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">IFSC Code *</label>
+                        <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" placeholder="e.g. SBIN0001234" maxlength="11" style="text-transform: uppercase;">
+                        <small id="ifscFormatMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                            <i class="bi bi-exclamation-circle-fill"></i> Invalid IFSC format (e.g. SBIN0001234)
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Branch Name</label>
+                        <input type="text" id="bankBranch" name="bankBranch" class="form-input" placeholder="e.g. High Court Branch">
+                    </div>
+
+                    <!-- Hidden serialized bankDetails for DB compatibility -->
+                    <input type="hidden" id="bankDetails" name="bankDetails" value="${lawyer.bankDetails}">
                 </div>
             </div>
 
@@ -337,6 +394,131 @@
     </form>
 
     <script>
+        function previewLawyerPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('lawyerPhotoPreview');
+                    const fallback = document.getElementById('lawyerPhotoFallback');
+                    const btnClear = document.getElementById('btnClearLawyerPhoto');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (fallback) fallback.style.display = 'none';
+                    if (btnClear) btnClear.style.display = 'inline-block';
+
+                    // Update live preview avatar on the right side
+                    const prevAvatar = document.querySelector('.prev-avatar');
+                    if (prevAvatar) {
+                        prevAvatar.innerHTML = '<img src="' + e.target.result + '" style="width:70px; height:70px; border-radius:16px; object-fit:cover;">';
+                    }
+                    if (typeof calculateCompletion === 'function') calculateCompletion();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function clearLawyerPhoto() {
+            const input = document.getElementById('lawyerPhotoInput');
+            const preview = document.getElementById('lawyerPhotoPreview');
+            const fallback = document.getElementById('lawyerPhotoFallback');
+            const btnClear = document.getElementById('btnClearLawyerPhoto');
+            if (input) input.value = '';
+            if (btnClear) btnClear.style.display = 'none';
+
+            if ("${lawyer.profilePhoto}" !== "") {
+                if (preview) {
+                    preview.src = "${pageContext.request.contextPath}${lawyer.profilePhoto}";
+                    preview.style.display = 'block';
+                }
+            } else {
+                if (preview) preview.style.display = 'none';
+                if (fallback) fallback.style.display = 'flex';
+                const prevAvatar = document.querySelector('.prev-avatar');
+                if (prevAvatar) {
+                    const initial = "${empty lawyer.fullName ? 'L' : lawyer.fullName.substring(0,1)}";
+                    prevAvatar.innerHTML = '<span id="prevInitials">' + initial + '</span>';
+                }
+            }
+            if (typeof calculateCompletion === 'function') calculateCompletion();
+        }
+
+        function parseExistingBankDetails() {
+            const raw = (document.getElementById('bankDetails')?.value || '').trim();
+            if (!raw) return;
+
+            if (raw.includes('|')) {
+                const parts = raw.split('|').map(s => s.trim());
+                parts.forEach(part => {
+                    const lower = part.toLowerCase();
+                    if (lower.startsWith('account holder:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountHolder');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('bank:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankName');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('a/c:') || lower.startsWith('account:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountNumber');
+                        const cel = document.getElementById('confirmAccountNumber');
+                        if (el && !el.value) el.value = val;
+                        if (cel && !cel.value) cel.value = val;
+                    } else if (lower.startsWith('ifsc:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankIfsc');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('branch:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankBranch');
+                        if (el && !el.value) el.value = val;
+                    }
+                });
+            } else {
+                const holder = document.getElementById('bankAccountHolder');
+                if (holder && !holder.value) holder.value = raw;
+            }
+        }
+
+        function syncBankDetails() {
+            const holder = document.getElementById('bankAccountHolder')?.value.trim() || '';
+            const bName = document.getElementById('bankName')?.value.trim() || '';
+            const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+            const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+            const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+            const branch = document.getElementById('bankBranch')?.value.trim() || '';
+
+            const ifscInput = document.getElementById('bankIfsc');
+            if (ifscInput && ifscInput.value !== ifsc) ifscInput.value = ifsc;
+
+            const mismatchEl = document.getElementById('accMismatchMsg');
+            if (mismatchEl) {
+                if (acc && confirmAcc && acc !== confirmAcc) {
+                    mismatchEl.style.display = 'block';
+                } else {
+                    mismatchEl.style.display = 'none';
+                }
+            }
+
+            const ifscMsg = document.getElementById('ifscFormatMsg');
+            if (ifscMsg) {
+                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    ifscMsg.style.display = 'block';
+                } else {
+                    ifscMsg.style.display = 'none';
+                }
+            }
+
+            const hidden = document.getElementById('bankDetails');
+            if (hidden) {
+                if (acc || holder || bName) {
+                    hidden.value = "Account Holder: " + holder + " | Bank: " + bName + " | A/C: " + acc + " | IFSC: " + ifsc + " | Branch: " + branch;
+                }
+            }
+        }
+
         function calculateCompletion() {
             const fields = document.querySelectorAll('#profileForm .form-input, #profileForm .form-select');
             let filled = 0;
@@ -344,7 +526,13 @@
             fields.forEach(f => {
                 if(f.value && f.value.trim() !== '') filled++;
             });
-            let pct = Math.round((filled / total) * 100);
+
+            // Include photo
+            const hasPhoto = "${lawyer.profilePhoto}" !== "" || (document.getElementById('lawyerPhotoInput')?.files?.length > 0);
+            if (hasPhoto) filled++;
+            total++;
+
+            let pct = Math.min(100, Math.round((filled / total) * 100));
             document.getElementById('progress-text-h2').textContent = 'Profile Completion: ' + pct + '%';
             document.getElementById('progress-bar-fill').style.width = pct + '%';
 
@@ -355,18 +543,51 @@
             if(pct >= 100) {
                 descText.textContent = "Profile 100% complete. You can now submit it for admin verification.";
                 if(submitBtn) submitBtn.style.display = 'flex';
-                // Only change badge if it's not already submitted/approved
-                if(badge.textContent.trim() === 'INCOMPLETE' || badge.textContent.trim() === 'REGISTERED') {
+                if(badge && (badge.textContent.trim() === 'INCOMPLETE' || badge.textContent.trim() === 'REGISTERED')) {
                     badge.textContent = 'READY TO SUBMIT';
                 }
             } else {
                 descText.textContent = "Update your profile to 100% to submit for verification.";
                 if(submitBtn) submitBtn.style.display = 'none';
-                badge.textContent = 'INCOMPLETE';
+                if(badge) badge.textContent = 'INCOMPLETE';
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            parseExistingBankDetails();
+
+            ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'confirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', syncBankDetails);
+                    el.addEventListener('blur', syncBankDetails);
+                }
+            });
+
+            const form = document.getElementById('profileForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    syncBankDetails();
+                    const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+                    const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+                    const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+
+                    if (acc && confirmAcc && acc !== confirmAcc) {
+                        e.preventDefault();
+                        alert('Bank account numbers do not match. Please verify and correct.');
+                        document.getElementById('confirmAccountNumber')?.focus();
+                        return;
+                    }
+
+                    if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                        e.preventDefault();
+                        alert('Please enter a valid 11-character IFSC code (e.g. SBIN0001234).');
+                        document.getElementById('bankIfsc')?.focus();
+                        return;
+                    }
+                });
+            }
+
             document.querySelectorAll('#profileForm input, #profileForm textarea, #profileForm select').forEach(f => {
                 f.addEventListener('input', calculateCompletion);
                 f.addEventListener('change', calculateCompletion);
@@ -377,7 +598,8 @@
         function updatePreview(id, value) {
             document.getElementById(id).textContent = value || (id === 'prevName' ? 'Advocate Name' : (id === 'prevRole' ? 'Advocate' : (id === 'prevCity' ? 'City' : '')));
             if(id === 'prevName' && value.length > 0) {
-                document.getElementById('prevInitials').textContent = value.charAt(0).toUpperCase();
+                const initials = document.getElementById('prevInitials');
+                if (initials) initials.textContent = value.charAt(0).toUpperCase();
             }
         }
         function updateTagsPreview(id, value) {

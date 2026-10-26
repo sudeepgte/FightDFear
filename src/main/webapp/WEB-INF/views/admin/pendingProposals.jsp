@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
@@ -240,7 +240,7 @@
                         <span class="ap-clip" title="<c:out value='${p.fullName}'/>"><c:out value="${p.fullName}"/></span>
                       </td>
                       <td><c:out value="${not empty p.city ? p.city : (not empty p.state ? p.state : '-')}"/></td>
-                      <td><c:out value="${p.investmentNeeded > 0 ? 'â‚¹'.concat(p.investmentNeeded) : 'N/A'}"/></td>
+                      <td><c:out value="${p.investmentNeeded > 0 ? '₹'.concat(p.investmentNeeded) : 'N/A'}"/></td>
                       <td>
                         <c:choose>
                           <c:when test="${stKey == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">VERIFIED</span></c:when>
@@ -307,31 +307,19 @@
                         </c:choose>
                       </td>
                       <td>
-
-                                                  <div class="dv-actions">
-                            <c:if test="${prop.status != 'VERIFIED'}">
+                        <div class="dv-actions">
+                          <c:if test="${prop.status != 'VERIFIED'}">
                             <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/approve" style="display:inline;">
-                               <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                              <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
                             </form>
                             <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/reject" style="display:inline;">
-                               <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
+                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                              <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
                             </form>
-                            </c:if>
-                            <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/proposals/about/${prop.id}"><i class="fas fa-eye"></i> View</a>
-                          </div>
-=======
-                        <div class="dv-actions">
-                          <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/approve" style="display:inline;">
-                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                             <button type="submit" class="ap-btn-view" style="color: green;">Approve</button>
-                          </form>
-                          <form method="post" action="${pageContext.request.contextPath}/admin/proposals/${prop.id}/reject" style="display:inline;">
-                             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                             <button type="submit" class="ap-btn-view" style="color: red;">Reject</button>
-                          </form>
-                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/entrepreneurs/about/${prop.entrepreneur.id}"><i class="fas fa-eye"></i> View Profile</a>
+                          </c:if>
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/proposals/about/${prop.id}"><i class="fas fa-eye"></i> View</a>
                         </div>
-
                       </td>
                     </tr>
                   </c:forEach>

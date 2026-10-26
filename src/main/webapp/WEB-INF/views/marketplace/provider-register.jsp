@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -110,6 +110,69 @@
           .main-container { padding: 0 16px; margin: 20px auto; width: 100%; }
           .form-card { padding: 24px 16px; width: 100%; }
       }
+
+      /* Terms Modal Styles */
+      .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(4px);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 16px;
+      }
+      .modal-card {
+          background: #FFFFFF;
+          border-radius: 20px;
+          max-width: 580px;
+          width: 100%;
+          padding: 24px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      }
+      .modal-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+      }
+      .modal-header .icon-wrap {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          background: #FDF2F8;
+          color: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.3rem;
+      }
+      .modal-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 18px;
+      }
+      .btn-modal-cancel {
+          flex: 1;
+          padding: 12px;
+          background: #F1F5F9;
+          border: 1px solid #CBD5E1;
+          border-radius: 10px;
+          font-weight: 700;
+          color: #475569;
+          cursor: pointer;
+      }
+      .btn-modal-confirm {
+          flex: 1.5;
+          padding: 12px;
+          background: var(--primary);
+          border: none;
+          border-radius: 10px;
+          font-weight: 700;
+          color: #FFFFFF;
+          cursor: pointer;
+      }
   </style>
 </head>
 <body>
@@ -125,27 +188,6 @@
           </a>
       </div>
   </header>
-
-                <h2>Provider Partner</h2>
-                <p style="color:var(--fdf-muted); margin-bottom:25px;">Register your services to Join the platform</p>
-                <c:if test="${not empty error}"><div class="alert alert-danger" style="border-radius:12px; padding:12px; font-size:0.9rem; margin-bottom:20px;">${error}</div></c:if>
-                
-                <form action="${pageContext.request.contextPath}/marketplace/provider/register" method="post" enctype="multipart/form-data" id="providerForm">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                    <!-- Step 1: Account Information -->
-                    <div class="dr-step-panel active" id="step1">
-                        <h3 style="margin-bottom:20px; color:var(--brand-purple-darker);">Account Details</h3>
-                        <div class="fdf-row">
-                            <div class="fdf-group"><label>Full Name</label><input class="fdf-input" name="fullName" placeholder="Priya Sharma" required></div>
-                            <div class="fdf-group"><label>Email</label><input class="fdf-input" type="email" name="email" placeholder="priya@example.com" required></div>
-                        </div>
-                        <div class="fdf-row">
-                            <div class="fdf-group"><label>Phone</label><input class="fdf-input" type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required></div>
-                            <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="Min. 8 characters" minlength="8" required></div>
-                        </div>
-                        <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Professional Details</button>
-                    </div>
-
 
   <main class="main-container">
       <div class="form-card">
@@ -234,6 +276,23 @@
                   <div class="fdf-group"><label>Profile Bio / Description</label><textarea class="fdf-input" name="description" rows="3" maxlength="300" placeholder="Tell us about your services..." required></textarea></div>
                   <div class="fdf-group"><label>Gov ID Identification (PDF/IMG)</label><input class="fdf-input" type="file" name="identityDoc" style="padding:10px;" required></div>
                   
+                  <!-- Terms & Conditions Box with Modal Link -->
+                  <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:20px 0 10px;">
+                      <div style="display:flex; align-items:flex-start; gap:10px;">
+                          <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                          <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                              I have read and agree to the 
+                              <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                  Terms &amp; Conditions
+                              </a>
+                              and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                          </label>
+                      </div>
+                      <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:#16A34A; font-weight:700; margin-top:6px; padding-left:28px;">
+                          <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                      </div>
+                  </div>
+
                   <div style="display:flex; justify-content:space-between; gap:15px; margin-top:20px;">
                       <button type="button" class="btn-dr btn-dr-prev w-50" onclick="showStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
                       <button type="submit" class="btn-dr btn-dr-next w-50" style="margin-top:0;">Register</button>
@@ -247,7 +306,77 @@
       </div>
   </main>
 
+  <!-- Terms & Conditions Modal -->
+  <div id="termsModal" class="modal-overlay">
+      <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
+              <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+              <div style="flex: 1;">
+                  <h3 id="termsModalTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:var(--navy);">Terms &amp; Conditions</h3>
+                  <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+              </div>
+              <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+          </div>
+          <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
+              <div id="termsTextSection">
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Services</h4>
+                  <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear provides an empowerment, personal safety, and trusted freelance service network. By registering as a provider, you commit to professional excellence, safety, and mutual respect.</p>
+
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Professional Integrity &amp; Verification</h4>
+                  <p style="margin-bottom:12px; color:var(--text-gray);">All certifications, portfolio work, skills, and identification documents must be authentic. Providing falsified information results in account revocation.</p>
+
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Service Safety &amp; Code of Conduct</h4>
+                  <p style="margin-bottom:12px; color:var(--text-gray);">Service providers must strictly adhere to personal safety guidelines when interacting with clients. Misconduct or violation of client safety triggers zero-tolerance termination.</p>
+
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Privacy &amp; Data Security</h4>
+                  <p style="margin-bottom:0; color:var(--text-gray);">All user contact information and transaction details are encrypted and maintained with highest safety standards.</p>
+              </div>
+              <div id="privacyTextSection" style="display:none;">
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
+                  <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact data, service specialties, identity verification documents, and payout records strictly for platform operation and safety checks.</p>
+
+                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Security &amp; Data Protection</h4>
+                  <p style="margin-bottom:0; color:var(--text-gray);">We use industry-standard encryption protocols to safeguard your personal credentials and government ID records.</p>
+              </div>
+          </div>
+          <div class="modal-actions" style="margin-top: 14px;">
+              <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()">Close</button>
+              <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()">
+                  I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+              </button>
+          </div>
+      </div>
+  </div>
+
   <script>
+      function openTermsModal(title, isPrivacy) {
+          document.getElementById('termsModalTitle').textContent = title;
+          document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+          document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+          document.getElementById('termsModal').style.display = 'flex';
+      }
+
+      function closeTermsModal() {
+          document.getElementById('termsModal').style.display = 'none';
+      }
+
+      function acceptTermsAndClose() {
+          var chk = document.getElementById('termsCheck');
+          if (chk) {
+              chk.checked = true;
+              syncTermsCheckBadge();
+          }
+          closeTermsModal();
+      }
+
+      function syncTermsCheckBadge() {
+          var chk = document.getElementById('termsCheck');
+          var badge = document.getElementById('termsCheckBadge');
+          if (badge && chk) {
+              badge.style.display = chk.checked ? 'block' : 'none';
+          }
+      }
+
       function showStep(s) {
           document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
           document.getElementById('step' + s).classList.add('active');
@@ -258,6 +387,7 @@
               else if (step < s) d.classList.add('completed');
           });
       }
+
       function nextStep(s) {
           const panel = document.getElementById('step' + s);
           const req = panel.querySelectorAll('[required]');
@@ -265,27 +395,25 @@
           req.forEach(el => { if (!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = ''; } });
           if (valid) showStep(s + 1);
       }
-  </script>
 
-    <script>
-        function showStep(s) {
-            document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('step' + s).classList.add('active');
-            document.querySelectorAll('.dr-step-dot').forEach(d => {
-                const step = parseInt(d.dataset.step);
-                d.classList.remove('active', 'completed');
-                if (step === s) d.classList.add('active');
-                else if (step < s) d.classList.add('completed');
-            });
-        }
-        function nextStep(s) {
-            const panel = document.getElementById('step' + s);
-            const req = panel.querySelectorAll('[required]');
-            let valid = true;
-            req.forEach(el => { if (!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = ''; } });
-            if (valid) showStep(s + 1);
-        }
-    </script>
+      document.addEventListener('DOMContentLoaded', function() {
+          var chk = document.getElementById('termsCheck');
+          if (chk) {
+              chk.addEventListener('change', syncTermsCheckBadge);
+          }
+          var form = document.getElementById('providerForm');
+          if (form) {
+              form.addEventListener('submit', function(e) {
+                  var terms = document.getElementById('termsCheck');
+                  if (terms && !terms.checked) {
+                      e.preventDefault();
+                      terms.focus();
+                      alert('Please agree to the Terms & Conditions and Privacy Policy to register.');
+                  }
+              });
+          }
+      });
+  </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 
 </body>

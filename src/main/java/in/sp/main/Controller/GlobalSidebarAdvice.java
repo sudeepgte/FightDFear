@@ -63,6 +63,9 @@ public class GlobalSidebarAdvice {
     @Autowired
     private WomenEventRepository womenEventRepository;
 
+    @Autowired
+    private WomenProductRepository womenProductRepository;
+
     @ModelAttribute
     public void addSidebarCounts(Model model, HttpSession session) {
         if (session.getAttribute("admin") != null) {
@@ -131,6 +134,13 @@ public class GlobalSidebarAdvice {
                     pendingEducators = 0;
                 }
 
+                long pendingProducts = 0;
+                try {
+                    pendingProducts = womenProductRepository.countByApprovalStatusAndDeletedFalse("PENDING");
+                } catch (Exception ignored) {
+                    pendingProducts = 0;
+                }
+
                 model.addAttribute("side_pendingUsers", pendingUsers);
                 model.addAttribute("side_pendingCentres", pendingCentres);
                 model.addAttribute("side_pendingDoctors", pendingDoctors);
@@ -147,6 +157,7 @@ public class GlobalSidebarAdvice {
                 model.addAttribute("side_pendingDeliveryPartners", pendingDeliveryPartners);
                 model.addAttribute("side_pendingCreators", pendingCreators);
                 model.addAttribute("side_pendingEducators", pendingEducators);
+                model.addAttribute("side_pendingProducts", pendingProducts);
             } catch (Exception e) {
                 // Fail gracefully
             }

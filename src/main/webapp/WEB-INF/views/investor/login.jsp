@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,10 +36,44 @@
             background: var(--bg-scaffold);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            flex-direction: column;
+            padding: 0;
             margin: 0;
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-light);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .header-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .header-links a:hover {
+            color: var(--primary-rose);
         }
 
         .login-container {
@@ -51,6 +85,7 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border-light);
             position: relative;
+            margin: 36px auto 50px;
         }
 
         .back-link-top {
@@ -223,6 +258,15 @@
 </style>
 </head>
 <body>
+
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+        </a>
+        <div class="header-links">
+            <a href="${pageContext.request.contextPath}/investor/register">Register</a>
+        </div>
+    </header>
 
     <div class="login-container">
         

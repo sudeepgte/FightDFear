@@ -280,7 +280,127 @@
             .app-header { padding: 12px 14px; }
             .section-card, .form-card, .preview-card { padding: 16px 14px; }
             .actions .btn-primary, .actions .btn-ghost, .actions .btn-skip { min-width: 100%; }
+            .profile-photo-card { flex-direction: column; align-items: center; text-align: center; }
+            .photo-btn-row { justify-content: center; }
         }
+
+        /* Profile Photo section styling */
+        .profile-photo-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+        .photo-preview-circle {
+            width: 86px;
+            height: 86px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: var(--rose-light);
+            border: 3px solid #fff;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.15);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .photo-preview-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-fallback {
+            font-size: 34px;
+            color: var(--primary);
+        }
+        .photo-upload-meta {
+            flex: 1;
+            min-width: 0;
+        }
+        .photo-btn-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+        .btn-choose-photo {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-choose-photo:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .photo-file-name {
+            font-size: 0.82rem;
+            color: var(--navy);
+            font-weight: 600;
+        }
+
+        /* Structured Bank Subfields */
+        .bank-subfields-card {
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px 18px;
+            margin-top: 6px;
+        }
+        .bank-subfields-card .grid {
+            margin-bottom: 0;
+        }
+
+        /* Document upload status & preview styling */
+        .doc-status-wrap {
+            margin-top: 8px; padding: 10px 14px; border-radius: 10px;
+            background: #F8FAFC; border: 1px solid #E2E8F0;
+        }
+        .doc-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.78rem; font-weight: 700; padding: 3px 10px;
+            border-radius: 999px; margin-bottom: 6px;
+        }
+        .doc-badge.uploaded {
+            background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0;
+        }
+        .doc-badge.selected {
+            background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE;
+        }
+        .doc-badge.not-uploaded {
+            background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1;
+        }
+        .doc-preview-box { margin-top: 4px; }
+        .doc-thumb-row {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .doc-thumb-img {
+            width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
+            border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .doc-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.82rem; font-weight: 600; color: var(--primary);
+            text-decoration: none;
+        }
+        .doc-link:hover { text-decoration: underline; color: var(--navy); }
+        .doc-pdf-row, .doc-generic-row {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.82rem; font-weight: 600; color: #334155;
+        }
+        .doc-file-info { font-size: 0.82rem; color: #0F172A; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -331,7 +451,38 @@
                         </c:if>
                         <!-- 1. Professional Information -->
                         <div class="section-card">
-                            <div class="section-title"><span class="num">1</span> Professional Information</div>
+                            <div class="section-title"><span class="num">1</span> Professional Information &amp; Photo</div>
+                            
+                            <!-- Profile Photo Card -->
+                            <div class="profile-photo-card">
+                                <div class="photo-preview-circle">
+                                    <c:set var="docPhoto" value="${not empty doctor.profilePhotoPath ? doctor.profilePhotoPath : profile.profilePhotoPath}" />
+                                    <c:choose>
+                                        <c:when test="${not empty docPhoto}">
+                                            <img id="mainPhotoPreview" src="${pageContext.request.contextPath}${docPhoto}" alt="Profile Photo">
+                                            <div id="mainPhotoFallback" class="photo-fallback" style="display:none;"><i class="bi bi-person-fill"></i></div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div id="mainPhotoFallback" class="photo-fallback"><i class="bi bi-person-bounding-box"></i></div>
+                                            <img id="mainPhotoPreview" src="" alt="Profile Photo" style="display:none;">
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                                <div class="photo-upload-meta">
+                                    <div class="photo-btn-row">
+                                        <label for="profilePhoto" class="btn-choose-photo">
+                                            <i class="bi bi-camera-fill"></i> Upload Profile Photo
+                                        </label>
+                                        <input type="file" name="profilePhoto" id="profilePhoto" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="profilePhoto" style="display:none;">
+                                        <span id="photoFileName" class="photo-file-name">
+                                            ${not empty docPhoto ? 'Photo currently on file' : 'No photo uploaded yet'}
+                                        </span>
+                                    </div>
+                                    <p class="hint">Upload a professional photo (JPG or PNG up to 5 MB). This photo appears on your doctor card and patient appointment booking.</p>
+                                    <div class="error-msg" id="err-profilePhoto">Use JPG, PNG or PDF up to 5 MB.</div>
+                                </div>
+                            </div>
+
                             <div class="grid">
                                 <div class="field">
                                     <label>Doctor name <span class="req">*</span></label>
@@ -540,7 +691,7 @@
                             <div class="grid">
                                 <div class="field">
                                     <label>Consultation fee (₹) <span class="req">*</span></label>
-                                    <input type="number" name="consultationFee" id="consultationFee" min="0" step="1" value="${doctor.consultationFee != null ? doctor.consultationFee : ''}">
+                                    <input type="number" name="consultationFee" id="consultationFee" min="0" step="1" value="${doctor.consultationFee != null ? doctor.consultationFee : ''}" placeholder="Enter consultation fee">
                                     <div class="error-msg" id="err-consultationFee">Enter a consultation fee of 0 or greater.</div>
                                 </div>
                                 <div class="field">
@@ -573,53 +724,170 @@
                             </div>
                         </div>
 
-                        <!-- 9. Payout -->
+                        <!-- 9. Payout & Bank Details -->
                         <div class="section-card">
-                            <div class="section-title"><span class="num">9</span> Payout</div>
+                            <div class="section-title"><span class="num">9</span> Payout &amp; Bank Details</div>
                             <div class="grid">
-                                <div class="field">
+                                <div class="field full">
                                     <label>UPI ID</label>
                                     <input type="text" name="upiId" id="upiId" value="${doctor.upiId != null ? doctor.upiId : ''}" placeholder="name@upi" maxlength="80">
                                     <div class="error-msg" id="err-upiId">Enter a valid UPI ID (e.g. name@upi).</div>
-                                </div>
-                                <div class="field">
-                                    <label>Bank details</label>
-                                    <input type="text" name="bankDetails" id="bankDetails" value="${doctor.bankDetails != null ? doctor.bankDetails : ''}" placeholder="Account name, number, IFSC">
+                                    <div class="hint">Instant UPI handle for fast consultation payouts.</div>
                                 </div>
                                 <div class="field full">
-                                    <div class="hint">Earnings stay in your wallet until you request a withdraw from the dashboard.</div>
+                                    <label style="font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                                        <i class="bi bi-bank" style="color:var(--primary);"></i> Bank Account Details
+                                    </label>
+                                    <div class="bank-subfields-card">
+                                        <div class="grid">
+                                            <div class="field">
+                                                <label>Account Holder Name</label>
+                                                <input type="text" name="bankAccountHolder" id="bankAccountHolder" placeholder="e.g. Dr. Jane Doe" maxlength="100">
+                                            </div>
+                                            <div class="field">
+                                                <label>Bank Name</label>
+                                                <input type="text" name="bankName" id="bankName" placeholder="e.g. State Bank of India, HDFC Bank" maxlength="100">
+                                            </div>
+                                            <div class="field">
+                                                <label>Account Number</label>
+                                                <input type="password" name="bankAccountNumber" id="bankAccountNumber" placeholder="Enter bank account number" maxlength="30" autocomplete="new-password">
+                                                <div class="error-msg" id="err-bankAccountNumber">Account number is required if bank details are provided.</div>
+                                            </div>
+                                            <div class="field">
+                                                <label>Confirm Account Number</label>
+                                                <input type="text" id="bankConfirmAccountNumber" placeholder="Re-enter bank account number" maxlength="30">
+                                                <div class="error-msg" id="err-bankConfirmAccountNumber">Account numbers do not match.</div>
+                                            </div>
+                                            <div class="field">
+                                                <label>IFSC Code</label>
+                                                <input type="text" name="bankIfsc" id="bankIfsc" placeholder="e.g. SBIN0001234" maxlength="20" style="text-transform:uppercase;">
+                                                <div class="error-msg" id="err-bankIfsc">Enter a valid 11-character IFSC code.</div>
+                                            </div>
+                                            <div class="field">
+                                                <label>Branch Name</label>
+                                                <input type="text" name="bankBranch" id="bankBranch" placeholder="e.g. Indiranagar, Bengaluru" maxlength="100">
+                                            </div>
+                                        </div>
+                                        <!-- Synchronized hidden bank details field -->
+                                        <input type="hidden" name="bankDetails" id="bankDetails" value="${doctor.bankDetails != null ? doctor.bankDetails : ''}">
+                                    </div>
+                                    <div class="hint" style="margin-top:8px;">Earnings stay securely in your wallet until you request a payout from the dashboard.</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 10. Documents -->
                         <div class="section-card">
-                            <div class="section-title"><span class="num">10</span> Documents (optional)</div>
+                            <div class="section-title"><span class="num">10</span> Verification Documents (optional)</div>
                             <p class="hint" style="margin-bottom:14px;">JPG, PNG or PDF up to 5 MB. Existing uploads are kept if you do not replace them.</p>
                             <div class="grid">
-                                <div class="field">
-                                    <label>Profile photo</label>
-                                    <input type="file" name="profilePhoto" id="profilePhoto" accept="image/jpeg,image/png,application/pdf">
-                                    <div class="error-msg" id="err-profilePhoto">Use JPG, PNG or PDF up to 5 MB.</div>
-                                    <div class="hint"><c:choose><c:when test="${not empty doctor.profilePhotoPath}">On file</c:when><c:otherwise>Not uploaded</c:otherwise></c:choose></div>
-                                </div>
+
+                                <!-- Government ID -->
                                 <div class="field">
                                     <label>Government ID</label>
-                                    <input type="file" name="idProof" id="idProof" accept="image/jpeg,image/png,application/pdf">
+                                    <input type="file" name="idProof" id="idProof" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="idProof">
                                     <div class="error-msg" id="err-idProof">Use JPG, PNG or PDF up to 5 MB.</div>
-                                    <div class="hint"><c:choose><c:when test="${not empty doctor.idProofPath || not empty doctor.identityDocumentPath}">On file</c:when><c:otherwise>Not uploaded</c:otherwise></c:choose></div>
+                                    <c:set var="docId" value="${not empty doctor.idProofPath ? doctor.idProofPath : (not empty doctor.identityDocumentPath ? doctor.identityDocumentPath : profile.idProofPath)}" />
+                                    <div class="doc-status-wrap" id="docWrap-idProof">
+                                        <c:choose>
+                                            <c:when test="${not empty docId}">
+                                                <div class="doc-badge uploaded" id="badge-idProof"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                                <div class="doc-preview-box" id="preview-idProof">
+                                                    <c:choose>
+                                                        <c:when test="${fn:endsWith(fn:toLowerCase(docId), '.pdf')}">
+                                                            <a href="${pageContext.request.contextPath}${docId}" target="_blank" class="doc-link">
+                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="doc-thumb-row">
+                                                                <img src="${pageContext.request.contextPath}${docId}" alt="Government ID" class="doc-thumb-img">
+                                                                <a href="${pageContext.request.contextPath}${docId}" target="_blank" class="doc-link">
+                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
+                                                                </a>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="doc-badge not-uploaded" id="badge-idProof"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                                <div class="doc-preview-box" id="preview-idProof" style="display:none;"></div>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </div>
+
+                                <!-- Medical Registration Certificate -->
                                 <div class="field">
                                     <label>Medical registration certificate</label>
-                                    <input type="file" name="degreeCertificate" id="degreeCertificate" accept="image/jpeg,image/png,application/pdf">
+                                    <input type="file" name="degreeCertificate" id="degreeCertificate" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="degreeCertificate">
                                     <div class="error-msg" id="err-degreeCertificate">Use JPG, PNG or PDF up to 5 MB.</div>
-                                    <div class="hint"><c:choose><c:when test="${not empty doctor.degreeCertificatePath}">On file</c:when><c:otherwise>Not uploaded</c:otherwise></c:choose></div>
+                                    <c:set var="docDegree" value="${not empty doctor.degreeCertificatePath ? doctor.degreeCertificatePath : profile.degreeCertificatePath}" />
+                                    <div class="doc-status-wrap" id="docWrap-degreeCertificate">
+                                        <c:choose>
+                                            <c:when test="${not empty docDegree}">
+                                                <div class="doc-badge uploaded" id="badge-degreeCertificate"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                                <div class="doc-preview-box" id="preview-degreeCertificate">
+                                                    <c:choose>
+                                                        <c:when test="${fn:endsWith(fn:toLowerCase(docDegree), '.pdf')}">
+                                                            <a href="${pageContext.request.contextPath}${docDegree}" target="_blank" class="doc-link">
+                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="doc-thumb-row">
+                                                                <img src="${pageContext.request.contextPath}${docDegree}" alt="Medical Registration" class="doc-thumb-img">
+                                                                <a href="${pageContext.request.contextPath}${docDegree}" target="_blank" class="doc-link">
+                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
+                                                                </a>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="doc-badge not-uploaded" id="badge-degreeCertificate"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                                <div class="doc-preview-box" id="preview-degreeCertificate" style="display:none;"></div>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </div>
+
+                                <!-- Medical License -->
                                 <div class="field">
                                     <label>Medical license</label>
-                                    <input type="file" name="medicalLicense" id="medicalLicense" accept="image/jpeg,image/png,application/pdf">
+                                    <input type="file" name="medicalLicense" id="medicalLicense" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="medicalLicense">
                                     <div class="error-msg" id="err-medicalLicense">Use JPG, PNG or PDF up to 5 MB.</div>
-                                    <div class="hint"><c:choose><c:when test="${not empty doctor.medicalLicensePath}">On file</c:when><c:otherwise>Not uploaded</c:otherwise></c:choose></div>
+                                    <c:set var="docLicense" value="${not empty doctor.medicalLicensePath ? doctor.medicalLicensePath : profile.medicalLicensePath}" />
+                                    <div class="doc-status-wrap" id="docWrap-medicalLicense">
+                                        <c:choose>
+                                            <c:when test="${not empty docLicense}">
+                                                <div class="doc-badge uploaded" id="badge-medicalLicense"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                                <div class="doc-preview-box" id="preview-medicalLicense">
+                                                    <c:choose>
+                                                        <c:when test="${fn:endsWith(fn:toLowerCase(docLicense), '.pdf')}">
+                                                            <a href="${pageContext.request.contextPath}${docLicense}" target="_blank" class="doc-link">
+                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="doc-thumb-row">
+                                                                <img src="${pageContext.request.contextPath}${docLicense}" alt="Medical License" class="doc-thumb-img">
+                                                                <a href="${pageContext.request.contextPath}${docLicense}" target="_blank" class="doc-link">
+                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
+                                                                </a>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="doc-badge not-uploaded" id="badge-medicalLicense"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                                <div class="doc-preview-box" id="preview-medicalLicense" style="display:none;"></div>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -725,11 +993,22 @@
                             <span class="preview-badge-live">Live</span>
                         </div>
                         <div class="preview-body">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border-color);">
+                                <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--rose-light);border:2px solid var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                    <c:set var="docPhotoPreview" value="${not empty doctor.profilePhotoPath ? doctor.profilePhotoPath : profile.profilePhotoPath}" />
+                                    <img id="lpAvatarImg" src="${not empty docPhotoPreview ? pageContext.request.contextPath.concat(docPhotoPreview) : ''}" style="width:100%;height:100%;object-fit:cover;${empty docPhotoPreview ? 'display:none;' : ''}" alt="Doctor Photo">
+                                    <span id="lpAvatarFallback" style="font-size:20px;color:var(--primary);font-weight:800;${not empty docPhotoPreview ? 'display:none;' : ''}">${not empty doctor.fullName ? doctor.fullName.substring(0, 1) : 'D'}</span>
+                                </div>
+                                <div style="min-width:0;">
+                                    <div style="font-weight:800;color:var(--navy);font-size:0.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="lpNameTop">${doctor.fullName}</div>
+                                    <div style="font-size:0.78rem;color:var(--text-gray);" id="lpSpecTop">${doctor.specialization != null ? doctor.specialization : 'Doctor'}</div>
+                                </div>
+                            </div>
                             <div class="preview-meta-row"><i class="bi bi-person-badge"></i> <span id="lpName">${doctor.fullName}</span></div>
                             <div class="preview-meta-row"><i class="bi bi-stethoscope"></i> <span id="lpSpec">${doctor.specialization != null ? doctor.specialization : 'Specialization'}</span></div>
                             <div class="preview-meta-row"><i class="bi bi-geo-alt"></i> <span id="lpCity">${doctor.city != null ? doctor.city : 'City'}</span></div>
                             <div class="preview-meta-row"><i class="bi bi-currency-rupee"></i> <span id="lpFee"><c:choose><c:when test="${doctor.consultationFee != null}">₹${doctor.consultationFee}</c:when><c:otherwise>Fee</c:otherwise></c:choose></span></div>
-                            <div class="preview-row" style="margin-top:8px;"><span class="k">Completion</span><span class="v">${profileCompletionPct}%</span></div>
+                            <div class="preview-row" style="margin-top:8px;"><span class="k">Completion</span><span class="v" id="lpCompletion">${profileCompletionPct}%</span></div>
                             <div class="preview-row"><span class="k">Status</span><span class="v">${statusLabel}</span></div>
                             <div class="preview-row"><span class="k">Modes</span><span class="v" id="lpModes">—</span></div>
                         </div>
@@ -758,10 +1037,62 @@
             function checkedValues(name) {
                 return Array.from(document.querySelectorAll('input[name="' + name + '"]:checked')).map(e => e.value);
             }
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
             function fileLabel(inputName, existingLabel) {
                 const input = form.querySelector('input[name="' + inputName + '"]');
-                if (input && input.files && input.files.length > 0) return 'New file selected';
+                if (input && input.files && input.files.length > 0) return 'Selected: ' + input.files[0].name;
                 return existingLabel;
+            }
+
+            function initDocUploadListeners() {
+                ['profilePhoto', 'idProof', 'degreeCertificate', 'medicalLicense'].forEach(function(docId) {
+                    const input = document.getElementById(docId);
+                    if (!input) return;
+                    input.addEventListener('change', function() {
+                        const badge = document.getElementById('badge-' + docId);
+                        const preview = document.getElementById('preview-' + docId);
+                        if (!badge || !preview) return;
+
+                        if (input.files && input.files[0]) {
+                            const file = input.files[0];
+                            const isImg = file.type && file.type.startsWith('image/');
+                            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+                            const sizeKb = (file.size / 1024).toFixed(1);
+
+                            badge.className = 'doc-badge selected';
+                            badge.innerHTML = '<i class="bi bi-file-earmark-check-fill"></i> Selected: <strong>' + escapeHtml(file.name) + '</strong> (' + sizeKb + ' KB) — Ready to save';
+
+                            preview.style.display = 'block';
+                            if (isImg) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    preview.innerHTML =
+                                        '<div class="doc-thumb-row">' +
+                                          '<img src="' + e.target.result + '" alt="Preview" class="doc-thumb-img">' +
+                                          '<span class="doc-file-info"><i class="bi bi-image text-success me-1"></i> Image preview (' + escapeHtml(file.name) + ')</span>' +
+                                        '</div>';
+                                };
+                                reader.readAsDataURL(file);
+                            } else if (isPdf) {
+                                preview.innerHTML =
+                                    '<div class="doc-pdf-row">' +
+                                      '<i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>' +
+                                      '<span class="doc-file-info">PDF selected (' + escapeHtml(file.name) + ')</span>' +
+                                    '</div>';
+                            } else {
+                                preview.innerHTML =
+                                    '<div class="doc-generic-row">' +
+                                      '<i class="bi bi-file-earmark text-primary fs-4"></i>' +
+                                      '<span class="doc-file-info">' + escapeHtml(file.name) + '</span>' +
+                                    '</div>';
+                            }
+                        }
+                    });
+                });
             }
             function setInvalid(id, invalid, msg) {
                 const el = document.getElementById(id);
@@ -966,23 +1297,159 @@
                 return state.ok;
             }
 
+            const hasExistingPhoto = ${not empty doctor.profilePhotoPath ? 'true' : 'false'};
+
+            function recalculateProgress() {
+                let filled = 0;
+                const total = 10;
+
+                // 1. Photo (file input selected or already on file)
+                const photoInput = document.getElementById('profilePhoto');
+                const hasPhoto = (photoInput && photoInput.files && photoInput.files.length > 0) || hasExistingPhoto;
+                if (hasPhoto) filled++;
+
+                // 2. Full Name
+                if (val('fullName')) filled++;
+                // 3. Phone
+                if (val('phone')) filled++;
+                // 4. Gender
+                if (val('gender')) filled++;
+                // 5. Specialization
+                if (val('specialization')) filled++;
+                // 6. Qualification
+                if (val('qualification')) filled++;
+                // 7. Medical Reg Number
+                if (val('medicalRegNumber')) filled++;
+                // 8. Experience Years
+                const exp = val('experienceYears');
+                if (exp !== '' && !Number.isNaN(Number(exp)) && Number(exp) >= 0) filled++;
+                // 9. Consultation Fee
+                const fee = val('consultationFee');
+                if (fee !== '' && !Number.isNaN(Number(fee)) && Number(fee) >= 0) filled++;
+                // 10. Hospital Name
+                if (val('hospitalName')) filled++;
+
+                const pct = Math.min(100, Math.round((100 * filled) / total));
+                document.querySelectorAll('.progress-pct').forEach(el => el.textContent = pct + '%');
+                document.querySelectorAll('.progress-bar-fill').forEach(el => el.style.width = pct + '%');
+
+                const lpCompletion = document.getElementById('lpCompletion');
+                if (lpCompletion) lpCompletion.textContent = pct + '%';
+            }
+
+            function serializeBankDetails() {
+                const holder = val('bankAccountHolder');
+                const bank = val('bankName');
+                const acct = val('bankAccountNumber');
+                const ifsc = val('bankIfsc');
+                const branch = val('bankBranch');
+                const hidden = document.getElementById('bankDetails');
+                if (!hidden) return;
+
+                if (!holder && !bank && !acct && !ifsc && !branch) {
+                    return;
+                }
+                const parts = [];
+                if (holder) parts.push('Account Holder: ' + holder);
+                if (bank) parts.push('Bank: ' + bank);
+                if (acct) parts.push('A/C: ' + acct);
+                if (ifsc) parts.push('IFSC: ' + ifsc.toUpperCase());
+                if (branch) parts.push('Branch: ' + branch);
+                hidden.value = parts.join(' | ');
+            }
+
+            function parseExistingBankDetails() {
+                const raw = (document.getElementById('bankDetails')?.value || '').trim();
+                if (!raw) return;
+                const holderMatch = raw.match(/Account Holder:\s*([^|]+)/i);
+                const bankMatch = raw.match(/Bank:\s*([^|]+)/i);
+                const acctMatch = raw.match(/A\/C:\s*([^|]+)/i) || raw.match(/Account Number:\s*([^|]+)/i);
+                const ifscMatch = raw.match(/IFSC:\s*([^|]+)/i);
+                const branchMatch = raw.match(/Branch:\s*([^|]+)/i);
+
+                if (holderMatch && document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = holderMatch[1].trim();
+                if (bankMatch && document.getElementById('bankName')) document.getElementById('bankName').value = bankMatch[1].trim();
+                if (acctMatch && document.getElementById('bankAccountNumber')) {
+                    const num = acctMatch[1].trim();
+                    document.getElementById('bankAccountNumber').value = num;
+                    if (document.getElementById('bankConfirmAccountNumber')) document.getElementById('bankConfirmAccountNumber').value = num;
+                }
+                if (ifscMatch && document.getElementById('bankIfsc')) document.getElementById('bankIfsc').value = ifscMatch[1].trim();
+                if (branchMatch && document.getElementById('bankBranch')) document.getElementById('bankBranch').value = branchMatch[1].trim();
+
+                if (!holderMatch && !bankMatch && !acctMatch && !ifscMatch && !branchMatch) {
+                    if (document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = raw;
+                }
+            }
+
+            // Photo upload live preview and file name sync
+            const photoInput = document.getElementById('profilePhoto');
+            if (photoInput) {
+                photoInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        const f = this.files[0];
+                        const nameEl = document.getElementById('photoFileName');
+                        if (nameEl) nameEl.textContent = f.name;
+
+                        if (f.type && f.type.startsWith('image/')) {
+                            const url = URL.createObjectURL(f);
+                            const mainImg = document.getElementById('mainPhotoPreview');
+                            const mainFallback = document.getElementById('mainPhotoFallback');
+                            if (mainImg) {
+                                mainImg.src = url;
+                                mainImg.style.display = 'block';
+                            }
+                            if (mainFallback) mainFallback.style.display = 'none';
+
+                            const lpImg = document.getElementById('lpAvatarImg');
+                            const lpFallback = document.getElementById('lpAvatarFallback');
+                            if (lpImg) {
+                                lpImg.src = url;
+                                lpImg.style.display = 'block';
+                            }
+                            if (lpFallback) lpFallback.style.display = 'none';
+                        }
+                    }
+                    recalculateProgress();
+                });
+            }
+
             function updateLivePreview() {
                 const setText = (id, text) => {
                     const el = document.getElementById(id);
                     if (el) el.textContent = text || '—';
                 };
-                setText('lpName', val('fullName') || 'Doctor name');
-                setText('lpSpec', val('specialization') || 'Specialization');
+                const name = val('fullName') || 'Doctor name';
+                const spec = val('specialization') || 'Specialization';
+                setText('lpName', name);
+                setText('lpNameTop', name);
+                setText('lpSpec', spec);
+                setText('lpSpecTop', spec);
                 setText('lpCity', [val('city'), val('state')].filter(Boolean).join(', ') || 'City');
                 const fee = val('consultationFee');
                 setText('lpFee', fee !== '' ? '₹' + fee : 'Fee');
                 setText('lpModes', checkedValues('consultationModes').join(', ') || '—');
+                recalculateProgress();
             }
 
-            ['fullName', 'specialization', 'city', 'state', 'consultationFee'].forEach(function (id) {
+            ['fullName', 'phone', 'gender', 'specialization', 'qualification', 'medicalRegNumber', 'experienceYears', 'hospitalName', 'city', 'state', 'consultationFee'].forEach(function (id) {
                 const el = document.getElementById(id);
-                if (el) el.addEventListener('input', updateLivePreview);
+                if (el) {
+                    el.addEventListener('input', updateLivePreview);
+                    el.addEventListener('change', updateLivePreview);
+                }
             });
+
+            ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'bankConfirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', serializeBankDetails);
+                    el.addEventListener('blur', serializeBankDetails);
+                }
+            });
+
+            parseExistingBankDetails();
+
             document.querySelectorAll('input[name="consultationModes"]').forEach(function (el) {
                 el.addEventListener('change', function () {
                     clearModeError();
@@ -1028,6 +1495,15 @@
                 const upi = val('upiId');
                 setInvalid('upiId', upi !== '' && !/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(upi), 'Enter a valid UPI ID (e.g. name@upi).');
             });
+            bindBlur('bankConfirmAccountNumber', function () {
+                const acct = val('bankAccountNumber');
+                const conf = val('bankConfirmAccountNumber');
+                setInvalid('bankConfirmAccountNumber', acct !== '' && conf !== '' && acct !== conf, 'Account numbers do not match.');
+            });
+            bindBlur('bankIfsc', function () {
+                const ifsc = val('bankIfsc');
+                setInvalid('bankIfsc', ifsc !== '' && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(ifsc), 'Enter a valid 11-character IFSC code (e.g. SBIN0001234).');
+            });
             ['chatFee', 'callFee', 'videoFee'].forEach(function (id) {
                 bindBlur(id, function () {
                     const v = val(id);
@@ -1039,6 +1515,16 @@
             });
 
             function showPreview() {
+                serializeBankDetails();
+                const acct = val('bankAccountNumber');
+                const conf = val('bankConfirmAccountNumber');
+                if (acct && conf && acct !== conf) {
+                    setInvalid('bankConfirmAccountNumber', true, 'Account numbers do not match.');
+                    const el = document.getElementById('bankConfirmAccountNumber');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
                 if (!validateKeyFields('draft')) return;
 
                 function checked(name) {
@@ -1177,6 +1663,7 @@
             });
 
             updateLivePreview();
+            initDocUploadListeners();
         })();
     </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>

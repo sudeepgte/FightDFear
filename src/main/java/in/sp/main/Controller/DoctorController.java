@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -178,7 +179,7 @@ public class DoctorController {
     public String loginPage(@RequestParam(value = "registered", required = false) String registered,
                             HttpSession session, Model model) {
         if (requireLoggedDoctor(session) != null) {
-            return "redirect:/doctors/dashboard";
+            return "redirect:/doctors/profile-completion";
         }
         consumeDoctorLoginPrefill(session, model);
         if ("1".equals(registered) || "true".equalsIgnoreCase(registered)) {
@@ -237,7 +238,7 @@ public class DoctorController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
 
-        return "redirect:/doctors/dashboard";
+        return "redirect:/doctors/profile-completion";
     }
 
 
@@ -302,6 +303,11 @@ public class DoctorController {
             @RequestParam(required = false) Double videoFee,
             @RequestParam(required = false) String upiId,
             @RequestParam(required = false) String bankDetails,
+            @RequestParam(required = false) String bankAccountHolder,
+            @RequestParam(required = false) String bankName,
+            @RequestParam(required = false) String bankAccountNumber,
+            @RequestParam(required = false) String bankIfsc,
+            @RequestParam(required = false) String bankBranch,
             @RequestParam(required = false) MultipartFile profilePhoto,
             @RequestParam(required = false) MultipartFile medicalLicense,
             @RequestParam(required = false) MultipartFile idProof,
@@ -339,6 +345,11 @@ public class DoctorController {
             if (videoFee != null) body.put("videoFee", videoFee);
             if (upiId != null) body.put("upiId", upiId);
             if (bankDetails != null) body.put("bankDetails", bankDetails);
+            if (bankAccountHolder != null) body.put("bankAccountHolder", bankAccountHolder);
+            if (bankName != null) body.put("bankName", bankName);
+            if (bankAccountNumber != null) body.put("bankAccountNumber", bankAccountNumber);
+            if (bankIfsc != null) body.put("bankIfsc", bankIfsc);
+            if (bankBranch != null) body.put("bankBranch", bankBranch);
             body.put("emergencyAvailable", "yes".equalsIgnoreCase(emergencyAvailable) || "true".equalsIgnoreCase(emergencyAvailable) || "on".equalsIgnoreCase(emergencyAvailable));
 
             if (consultationModes != null && !consultationModes.isEmpty()) {
@@ -1182,68 +1193,93 @@ public class DoctorController {
     }
 
     @GetMapping("/video-call/{doctorId}")
-    public String videoCallDoctor(@PathVariable Long doctorId, @RequestParam(required = false) Long userId, Model model, HttpSession session) {
-        User u = (User) session.getAttribute("user");
-        Doctor d = (Doctor) session.getAttribute("loggedDoctor");
-        Doctor target = doctorRepo.findById(doctorId).orElse(null);
-        if (target == null) return "redirect:/doctors/list";
-
-        String roomName = "safeher-doc-" + doctorId + "-" + System.currentTimeMillis();
-        boolean doctorOwner = d != null && d.getId().equals(doctorId);
-        if (doctorOwner) {
-            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
-                    userRepo.findById(userId).orElse(null))) {
-                return "redirect:/doctors/dashboard?section=chats";
-            }
-            model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-doc-" + doctorId + "-user-" + userId;
-        } else if (u != null) {
-            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
-                return "redirect:/doctors/view/" + doctorId;
-            }
-            model.addAttribute("displayName", u.getFullName());
-            roomName = "safeher-doc-" + doctorId + "-user-" + u.getId();
-        } else if (d != null) {
-            return "redirect:/doctors/dashboard";
-        } else {
-            return "redirect:/login";
-        }
-        model.addAttribute("doctor", target);
-        model.addAttribute("roomName", roomName);
-        model.addAttribute("audioOnly", false);
-        return "doctor/doctor-call";
+    public String videoCallDoctor(@PathVariable Long doctorId,
+                                  @RequestParam(required = false) Long userId,
+                                  @RequestParam(required = false, defaultValue = "false") boolean notify,
+                                  Model model, HttpSession session) {
+        return setupDoctorCall(doctorId, userId, notify, false, model, session);
     }
 
     @GetMapping("/voice-call/{doctorId}")
-    public String voiceCallDoctor(@PathVariable Long doctorId, @RequestParam(required = false) Long userId, Model model, HttpSession session) {
+    public String voiceCallDoctor(@PathVariable Long doctorId,
+                                  @RequestParam(required = false) Long userId,
+                                  @RequestParam(required = false, defaultValue = "false") boolean notify,
+                                  Model model, HttpSession session) {
+        return setupDoctorCall(doctorId, userId, notify, true, model, session);
+    }
+
+    private String setupDoctorCall(Long doctorId, Long userId, boolean notify, boolean audioOnly, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         Doctor target = doctorRepo.findById(doctorId).orElse(null);
         if (target == null) return "redirect:/doctors/list";
 
-        String roomName = "safeher-call-" + doctorId + "-" + System.currentTimeMillis();
         boolean doctorOwner = d != null && d.getId().equals(doctorId);
+        Long myId;
+        String myRole;
+        String displayName;
+        Long targetId;
+        String peerName;
+        String peerRole;
+
         if (doctorOwner) {
-            if (userId == null || !doctorAppointmentService.hasActiveRelationship(target,
-                    userRepo.findById(userId).orElse(null))) {
+            if (userId == null) {
                 return "redirect:/doctors/dashboard?section=chats";
             }
-            model.addAttribute("displayName", "Dr. " + d.getFullName());
-            roomName = "safeher-call-" + doctorId + "-user-" + userId;
-        } else if (u != null) {
-            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
-                return "redirect:/doctors/view/" + doctorId;
+            User patient = userRepo.findById(userId).orElse(null);
+            if (patient == null) {
+                return "redirect:/doctors/dashboard?section=chats";
             }
-            model.addAttribute("displayName", u.getFullName());
-            roomName = "safeher-call-" + doctorId + "-user-" + u.getId();
+            myId = d.getId();
+            myRole = "DOCTOR";
+            displayName = "Dr. " + d.getFullName();
+            targetId = patient.getId();
+            peerName = patient.getFullName();
+            peerRole = "Patient";
+        } else if (u != null) {
+            myId = u.getId();
+            myRole = "USER";
+            displayName = u.getFullName();
+            targetId = doctorId;
+            peerName = "Dr. " + target.getFullName();
+            peerRole = "Doctor";
         } else if (d != null) {
             return "redirect:/doctors/dashboard";
         } else {
             return "redirect:/login";
         }
+
+        Long actualUserId = doctorOwner ? targetId : myId;
+        String roomName = "fdf-doccall-" + doctorId + "-user-" + actualUserId;
+
+        if (notify) {
+            try {
+                Map<String, Object> callInfo = new HashMap<>();
+                callInfo.put("type", "INCOMING_CALL");
+                callInfo.put("fromId", myId);
+                callInfo.put("fromName", displayName);
+                callInfo.put("roomName", roomName);
+                callInfo.put("audioOnly", audioOnly);
+                String callUrl = "/doctors/" + (audioOnly ? "voice-call" : "video-call") + "/" + doctorId;
+                if (!doctorOwner) {
+                    callUrl += "?userId=" + u.getId();
+                }
+                callInfo.put("callUrl", callUrl);
+                messagingTemplate.convertAndSend("/topic/calls/" + targetId, callInfo);
+            } catch (Exception e) {
+                System.err.println("Failed to send incoming call notification: " + e.getMessage());
+            }
+        }
+
         model.addAttribute("doctor", target);
         model.addAttribute("roomName", roomName);
-        model.addAttribute("audioOnly", true);
+        model.addAttribute("audioOnly", audioOnly);
+        model.addAttribute("myId", myId);
+        model.addAttribute("myRole", myRole);
+        model.addAttribute("displayName", displayName);
+        model.addAttribute("targetId", targetId);
+        model.addAttribute("peerName", peerName);
+        model.addAttribute("peerRole", peerRole);
         return "doctor/doctor-call";
     }
 

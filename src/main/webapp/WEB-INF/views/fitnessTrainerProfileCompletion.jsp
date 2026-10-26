@@ -768,12 +768,50 @@
                         <div class="section-header">9. Payout details</div>
                         <div class="form-group">
                             <label>9.1 UPI ID (for receiving session payouts)</label>
-                            <input type="text" name="upiId" class="form-input" value="<c:out value='${trainer.upiId}'/>" placeholder="coach@upi">
+                            <input type="text" name="upiId" id="inputUpiId" class="form-input" value="<c:out value='${trainer.upiId}'/>" placeholder="coach@upi">
                         </div>
-                        <div class="form-group">
-                            <label>9.2 Bank details</label>
-                            <textarea name="bankDetails" class="form-textarea" rows="2" placeholder="Account Name, Number, IFSC"><c:out value="${trainer.bankDetails}"/></textarea>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>9.2 Account Holder Name *</label>
+                                <input type="text" id="bankAccountHolder" name="bankAccountHolder" class="form-input" placeholder="Name as per Bank records">
+                            </div>
+                            <div class="form-group">
+                                <label>9.3 Bank Name *</label>
+                                <input type="text" id="bankName" name="bankName" class="form-input" placeholder="e.g. HDFC Bank, ICICI Bank, SBI">
+                            </div>
                         </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>9.4 Account Number *</label>
+                                <input type="text" id="bankAccountNumber" name="bankAccountNumber" class="form-input" placeholder="Enter bank account number" maxlength="20">
+                            </div>
+                            <div class="form-group">
+                                <label>9.5 Re-enter Account Number *</label>
+                                <input type="text" id="confirmAccountNumber" class="form-input" placeholder="Confirm bank account number" maxlength="20">
+                                <small id="accMismatchMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Account numbers do not match
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>9.6 IFSC Code *</label>
+                                <input type="text" id="bankIfsc" name="bankIfsc" class="form-input" placeholder="e.g. HDFC0001234" maxlength="11" style="text-transform: uppercase;">
+                                <small id="ifscFormatMsg" style="color: #DC2626; font-size: 0.78rem; font-weight: 600; display: none; margin-top: 4px;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Invalid IFSC format (e.g. SBIN0001234)
+                                </small>
+                            </div>
+                            <div class="form-group">
+                                <label>9.7 Branch Name</label>
+                                <input type="text" id="bankBranch" name="bankBranch" class="form-input" placeholder="e.g. Indiranagar Branch">
+                            </div>
+                        </div>
+
+                        <!-- Hidden serialized field for DB compatibility -->
+                        <input type="hidden" id="bankDetails" name="bankDetails" value="<c:out value='${trainer.bankDetails}'/>">
                     </div>
 
                     <!-- Section 10: Documents -->
@@ -1118,7 +1156,118 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', bindLivePreview);
+        // Bank Details Pre-parsing & Synchronization
+        function parseExistingBankDetails() {
+            const raw = (document.getElementById('bankDetails')?.value || '').trim();
+            if (!raw) return;
+
+            if (raw.includes('|')) {
+                const parts = raw.split('|').map(s => s.trim());
+                parts.forEach(part => {
+                    const lower = part.toLowerCase();
+                    if (lower.startsWith('account holder:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountHolder');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('bank:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankName');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('a/c:') || lower.startsWith('account:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankAccountNumber');
+                        const cel = document.getElementById('confirmAccountNumber');
+                        if (el && !el.value) el.value = val;
+                        if (cel && !cel.value) cel.value = val;
+                    } else if (lower.startsWith('ifsc:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankIfsc');
+                        if (el && !el.value) el.value = val;
+                    } else if (lower.startsWith('branch:')) {
+                        const val = part.substring(part.indexOf(':') + 1).trim();
+                        const el = document.getElementById('bankBranch');
+                        if (el && !el.value) el.value = val;
+                    }
+                });
+            } else {
+                const holder = document.getElementById('bankAccountHolder');
+                if (holder && !holder.value) holder.value = raw;
+            }
+        }
+
+        function syncBankDetails() {
+            const holder = document.getElementById('bankAccountHolder')?.value.trim() || '';
+            const bName = document.getElementById('bankName')?.value.trim() || '';
+            const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+            const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+            const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+            const branch = document.getElementById('bankBranch')?.value.trim() || '';
+
+            const ifscInput = document.getElementById('bankIfsc');
+            if (ifscInput && ifscInput.value !== ifsc) ifscInput.value = ifsc;
+
+            const mismatchEl = document.getElementById('accMismatchMsg');
+            if (mismatchEl) {
+                if (acc && confirmAcc && acc !== confirmAcc) {
+                    mismatchEl.style.display = 'block';
+                } else {
+                    mismatchEl.style.display = 'none';
+                }
+            }
+
+            const ifscMsg = document.getElementById('ifscFormatMsg');
+            if (ifscMsg) {
+                if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                    ifscMsg.style.display = 'block';
+                } else {
+                    ifscMsg.style.display = 'none';
+                }
+            }
+
+            const hidden = document.getElementById('bankDetails');
+            if (hidden) {
+                if (acc || holder || bName) {
+                    hidden.value = "Account Holder: " + holder + " | Bank: " + bName + " | A/C: " + acc + " | IFSC: " + ifsc + " | Branch: " + branch;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            bindLivePreview();
+            parseExistingBankDetails();
+
+            ['bankAccountHolder', 'bankName', 'bankAccountNumber', 'confirmAccountNumber', 'bankIfsc', 'bankBranch'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', syncBankDetails);
+                    el.addEventListener('blur', syncBankDetails);
+                }
+            });
+
+            const form = document.getElementById('trainerProfileForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    syncBankDetails();
+                    const acc = document.getElementById('bankAccountNumber')?.value.trim() || '';
+                    const confirmAcc = document.getElementById('confirmAccountNumber')?.value.trim() || '';
+                    const ifsc = (document.getElementById('bankIfsc')?.value.trim() || '').toUpperCase();
+
+                    if (acc && confirmAcc && acc !== confirmAcc) {
+                        e.preventDefault();
+                        alert('Bank account numbers do not match. Please verify and correct.');
+                        document.getElementById('confirmAccountNumber')?.focus();
+                        return;
+                    }
+
+                    if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                        e.preventDefault();
+                        alert('Please enter a valid 11-character IFSC code (e.g. SBIN0001234).');
+                        document.getElementById('bankIfsc')?.focus();
+                        return;
+                    }
+                });
+            }
+        });
     </script>
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

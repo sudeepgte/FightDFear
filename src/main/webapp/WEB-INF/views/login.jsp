@@ -180,7 +180,9 @@
 <body>
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/">
-            <i class="bi bi-heart-fill"></i> Fight D Fear
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
+                 style="height:32px;width:32px;border-radius:8px;object-fit:cover;">
+            Fight D Fear
         </a>
     </header>
 
@@ -209,7 +211,7 @@
                         <i class="bi bi-envelope"></i>
                         <input type="email" id="email" name="email" class="form-input"
                                placeholder="Enter your email" required autocomplete="username"
-                               value="<c:out value='${prefillEmail}'/>">
+                               value="<c:out value='${not empty prefillEmail ? prefillEmail : (not empty param.email ? param.email : (not empty sessionScope.regPrefillEmail ? sessionScope.regPrefillEmail : \"\"))}'/>">
                     </div>
                 </div>
 

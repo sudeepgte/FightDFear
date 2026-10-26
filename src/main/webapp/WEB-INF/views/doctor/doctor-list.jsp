@@ -409,6 +409,22 @@
             .doctor-tags { padding: 10px 15px; }
             .doctor-actions { padding: 15px; }
         }
+        @media (max-width: 480px) {
+            .glow-header { margin: 8px 10px 0; padding: 24px 14px 18px; }
+            .glow-header h1 { font-size: 22px; }
+            .glow-header p { font-size: 13px; }
+            .top-bar { padding: 8px 4px; gap: 6px; }
+            .top-btn { padding: 6px 12px; font-size: 11px; }
+            .doctors-grid { padding: 16px 10px; gap: 14px; }
+            .doctor-card-top { padding: 12px; gap: 10px; }
+            .doctor-avatar { width: 52px; height: 52px; font-size: 20px; border-radius: 12px; }
+            .doctor-name { font-size: 0.98rem; }
+            .doctor-tags { padding: 8px 12px; gap: 4px; }
+            .doctor-tag { font-size: 10px; padding: 3px 8px; }
+            .doctor-actions { padding: 12px; gap: 6px; }
+            .btn-doc-media { font-size: 11px; padding: 7px 4px; gap: 4px; }
+            .btn-doc-book { font-size: 12px; padding: 9px; }
+        }
     </style>
 </head>
 <body>

@@ -133,6 +133,12 @@ public class WomenProduct {
     private Boolean trackInventory = true;
     private Boolean deleted = false;
 
+    @Column(length = 20)
+    private String approvalStatus = "PENDING"; // PENDING, APPROVED, REJECTED
+
+    @Column(length = 500)
+    private String adminRemarks;
+
     @ManyToOne
     @JoinColumn(name = "seller_id")
     private WomenProductSeller seller;
@@ -196,8 +202,18 @@ public class WomenProduct {
     public Boolean getDeleted() { return deleted != null && deleted; }
     public void setDeleted(Boolean deleted) { this.deleted = deleted; }
 
+    public String getApprovalStatus() { return approvalStatus != null ? approvalStatus : "PENDING"; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
+    public String getAdminRemarks() { return adminRemarks; }
+    public void setAdminRemarks(String adminRemarks) { this.adminRemarks = adminRemarks; }
+    public boolean isApproved() { return "APPROVED".equalsIgnoreCase(getApprovalStatus()); }
+
     public boolean isListedForShop() {
-        return Boolean.TRUE.equals(active) && !getDeleted() && seller != null && seller.isApprovedForCatalog();
+        return Boolean.TRUE.equals(active)
+                && !getDeleted()
+                && seller != null
+                && seller.isApprovedForCatalog()
+                && isApproved();
     }
 
     public boolean isOutOfStock() {

@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,10 +36,44 @@
             background: var(--bg-scaffold);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            flex-direction: column;
+            padding: 0;
             margin: 0;
+        }
+
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-light);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .header-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .header-links a:hover {
+            color: var(--primary-rose);
         }
 
         .register-container {
@@ -51,6 +85,7 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border-light);
             position: relative;
+            margin: 36px auto 50px;
         }
 
         .back-link-top {
@@ -425,6 +460,14 @@
 </style>
 </head>
 <body>
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+        </a>
+        <div class="header-links">
+            <a href="${pageContext.request.contextPath}/investor/login">Sign in</a>
+        </div>
+    </header>
 
     <div class="register-container">
         
@@ -521,12 +564,21 @@
                 <small class="form-text text-danger" id="passwordMatchError" style="display: none;">Passwords do not match</small>
             </div>
 
-            <!-- Terms and Privacy Checkbox -->
-            <div class="mb-4 form-check">
-                <input type="checkbox" class="form-check-input" id="acceptedTerms" name="acceptedTerms" required>
-                <label class="form-check-label" for="acceptedTerms">
-                    I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a>.
-                </label>
+            <!-- Terms & Conditions Box with Modal Link -->
+            <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <input type="checkbox" name="acceptedTerms" id="acceptedTerms" value="true" required style="width:18px; height:18px; accent-color:var(--primary-rose); cursor:pointer; margin-top:2px;">
+                    <label for="acceptedTerms" style="font-size:0.88rem; color:var(--text-primary); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                        I have read and agree to the 
+                        <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary-rose); font-weight:700; text-decoration:underline;">
+                            Terms &amp; Conditions
+                        </a>
+                        and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary-rose); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                    </label>
+                </div>
+                <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:#16a34a; font-weight:700; margin-top:6px; padding-left:28px;">
+                    <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                </div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-register">
@@ -853,7 +905,6 @@
             }
         }
     </script>
-<<<<<<< HEAD
 
     <!-- Confirm Details Preview Modal Card -->
     <div id="previewModalOverlay" class="preview-modal-overlay" onclick="if(event.target===this)closePreviewModal()">
@@ -891,6 +942,88 @@
             </div>
         </div>
     </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="preview-modal-overlay" style="display:none; align-items:center; justify-content:center; z-index:10000; padding:16px;">
+        <div class="preview-card-dialog" style="max-width:580px; max-height:85vh; display:flex; flex-direction:column; background:#fff; border-radius:16px; padding:20px; box-shadow:0 20px 40px rgba(0,0,0,0.15);">
+            <div style="display:flex; align-items:center; gap:12px; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:14px;">
+                <div style="width:40px; height:40px; border-radius:10px; background:#FFE4E6; color:var(--primary-rose); display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="bi bi-journal-check"></i></div>
+                <div style="flex:1;">
+                    <h4 id="termsModalTitle" style="margin:0; font-weight:800; color:var(--text-primary); font-size:1.1rem;">Terms &amp; Conditions</h4>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin:0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-secondary); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div id="termsModalContent" style="overflow-y:auto; max-height:48vh; font-size:0.88rem; line-height:1.6; color:var(--text-primary); background:#F8FAFC; padding:14px 18px; border:1px solid #E2E8F0; border-radius:12px;">
+                <div id="termsTextSection">
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">1. Purpose &amp; Women-Centric Investment</h5>
+                    <p style="margin-bottom:12px; color:var(--text-secondary);">Fight D Fear provides a secure ecosystem connecting women entrepreneurs with verified investors. By registering as an investor, you pledge to conduct due diligence ethically and respect community boundaries.</p>
+
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">2. Regulatory &amp; Identity Verification</h5>
+                    <p style="margin-bottom:12px; color:var(--text-secondary);">All SEBI / AIF / PAN identifiers and organizational credentials provided must be genuine and accurate. Misleading credentials will result in prompt account termination.</p>
+
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">3. Confidentiality of Proposals</h5>
+                    <p style="margin-bottom:12px; color:var(--text-secondary);">Pitch decks, financial reports, and proprietary business concepts shared by women founders must be treated as strictly confidential and not shared with third parties.</p>
+
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">4. Zero Tolerance for Misconduct</h5>
+                    <p style="margin-bottom:0; color:var(--text-secondary);">Any harassment, intimidation, or inappropriate interactions will result in permanent blacklisting and legal action.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">1. Information We Collect</h5>
+                    <p style="margin-bottom:12px; color:var(--text-secondary);">We collect contact credentials, accreditation details, and banking information strictly necessary to facilitate verification, startup investments, and payouts.</p>
+
+                    <h5 style="font-size:0.95rem; font-weight:800; color:var(--text-primary); margin-bottom:4px;">2. Security &amp; Encryption</h5>
+                    <p style="margin-bottom:12px; color:var(--text-secondary);">All investor account records and transactions are protected by industry-standard encryption standards. We never sell or distribute your private data.</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button type="button" class="btn-preview-back" onclick="closeTermsModal()" style="flex:1; height:42px; border-radius:10px;">Close</button>
+                <button type="button" class="btn-preview-confirm" onclick="acceptTermsAndClose()" style="flex:1.2; height:42px; border-radius:10px; background:var(--primary-rose); color:#fff; border:none; font-weight:700;">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            const m = document.getElementById('termsModal');
+            m.style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            const chk = document.getElementById('acceptedTerms');
+            if (chk) {
+                chk.checked = true;
+                syncTermsBadge();
+                if (typeof checkFormState === 'function') checkFormState();
+            }
+            closeTermsModal();
+        }
+
+        function syncTermsBadge() {
+            const chk = document.getElementById('acceptedTerms');
+            const badge = document.getElementById('termsCheckBadge');
+            if (badge && chk) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const chk = document.getElementById('acceptedTerms');
+            if (chk) {
+                chk.addEventListener('change', syncTermsBadge);
+                syncTermsBadge();
+            }
+        });
+    </script>
 
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 

@@ -651,6 +651,11 @@ public class FitnessController {
             @RequestParam(required = false) Integer sessionDuration,
             @RequestParam(required = false) Double sessionFees,
             @RequestParam(required = false) String upiId,
+            @RequestParam(required = false) String bankAccountHolder,
+            @RequestParam(required = false) String bankName,
+            @RequestParam(required = false) String bankAccountNumber,
+            @RequestParam(required = false) String bankIfsc,
+            @RequestParam(required = false) String bankBranch,
             @RequestParam(required = false) String bankDetails,
             @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
             @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
@@ -686,7 +691,16 @@ public class FitnessController {
         if (sessionDuration != null) fields.put("durationMinutes", sessionDuration);
         if (sessionFees != null) fields.put("typicalPrice", sessionFees);
         if (upiId != null) fields.put("upiId", upiId);
-        if (bankDetails != null) fields.put("bankDetails", bankDetails);
+        if (bankDetails != null && !bankDetails.isBlank()) {
+            fields.put("bankDetails", bankDetails.trim());
+        } else if (bankAccountNumber != null && !bankAccountNumber.isBlank()) {
+            String serialized = "Account Holder: " + (bankAccountHolder != null ? bankAccountHolder.trim() : "")
+                    + " | Bank: " + (bankName != null ? bankName.trim() : "")
+                    + " | A/C: " + bankAccountNumber.trim()
+                    + " | IFSC: " + (bankIfsc != null ? bankIfsc.trim().toUpperCase() : "")
+                    + " | Branch: " + (bankBranch != null ? bankBranch.trim() : "");
+            fields.put("bankDetails", serialized);
+        }
 
         trainerProfileService.applyExtraFields(trainer, fields);
 

@@ -470,6 +470,7 @@
         </div>
         <div class="col-md-auto mt-4 mt-md-0 d-flex flex-wrap align-items-center gap-3 justify-content-md-end">
           <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}" class="action-btn-circle hero-action bg-white text-danger" title="Chat" style="color:#F43F5E !important;"><i class="bi bi-chat-dots-fill"></i></a>
+          <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}" class="action-btn-circle hero-action bg-primary" title="Voice Call"><i class="bi bi-telephone-fill"></i></a>
           <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}" class="action-btn-circle hero-action bg-success" title="Video Call"><i class="bi bi-camera-video-fill"></i></a>
           <div class="hero-fee">
             <span class="text-white-50 d-block mb-1" style="font-size:0.75rem;">Consultation</span>
@@ -481,7 +482,7 @@
     </div>
   </div>
 
-  <div class="container-fluid px-4 px-lg-5 py-5">
+  <div class="container-fluid px-3 px-sm-4 px-lg-5 py-4 py-md-5">
     <div class="row mt-5 g-4">
       <div class="col-lg-8">
         <ul class="nav nav-pills nav-pills-custom mb-4" id="pills-tab" role="tablist">
@@ -499,7 +500,7 @@
         <div class="tab-content" id="pills-tabContent">
           <!-- Overview -->
           <div class="tab-pane fade show active" id="pills-overview">
-            <div class="bg-white rounded-4 p-5 border shadow-sm">
+            <div class="bg-white rounded-4 p-3 p-sm-4 p-md-5 border shadow-sm">
               <h4 class="fw-800 mb-4">Professional Background</h4>
               <p class="text-muted lh-lg mb-5">
                 Dr. ${doctor.fullName} is a dedicated specialist in ${doctor.specialization} with over ${doctor.experienceYears} years of experience. 
@@ -542,7 +543,7 @@
 
           <!-- Schedule -->
           <div class="tab-pane fade" id="pills-schedule">
-            <div class="bg-white rounded-4 p-5 border shadow-sm">
+            <div class="bg-white rounded-4 p-3 p-sm-4 p-md-5 border shadow-sm">
               <h4 class="fw-800 mb-4">Practice Hours & Location</h4>
               <div class="d-flex flex-wrap gap-2 mb-4">
                 <c:forEach var="day" items="${doctor.availableDays.split(',')}">
@@ -577,7 +578,7 @@
 
           <!-- Reviews -->
           <div class="tab-pane fade" id="pills-reviews">
-            <div class="bg-white rounded-4 p-5 border shadow-sm">
+            <div class="bg-white rounded-4 p-3 p-sm-4 p-md-5 border shadow-sm">
               <div class="d-flex justify-content-between align-items-center mb-5">
                 <h4 class="fw-800 m-0">Patient Reviews</h4>
                 <c:if test="${canReview}">

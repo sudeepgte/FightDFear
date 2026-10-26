@@ -336,10 +336,22 @@
                         <input class="form-input file-input" type="file" name="identityDoc" id="identityDoc" accept=".pdf,.jpg,.jpeg,.png" required>
                     </div>
                 </div>
-                <label class="terms-row">
-                    <input type="checkbox" name="acceptedTerms" value="true" required>
-                    <span>I accept the Terms and Privacy Policy for Women Products sellers.</span>
-                </label>
+                <!-- Terms & Conditions Box with Modal Link -->
+                <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 14px;">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
                 <button type="submit" class="btn-submit">Create seller account</button>
             </form>
             <p class="login-footer">Already registered? <a href="${pageContext.request.contextPath}/women-products/seller/login">Sign in</a></p>
@@ -368,7 +380,84 @@
             </div>
         </div>
     </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
+                <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Commerce</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear is an empowerment, health, business incubator, and personal safety ecosystem built for women. By registering as a seller, you commit to upholding the values of authentic merchandise, consumer safety, and integrity within our marketplace.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Product Authenticity &amp; Quality</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">All products listed must be authentic, accurately described, and compliant with safety guidelines. Counterfeit goods, unsafe ingredients, or fraudulent listings will result in immediate termination.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Identity &amp; Payout Protection</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Sellers must maintain verified business credentials and identity documentation. All banking and payout details provided are used solely for verified merchant remittances.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Zero-Tolerance Marketplace Rules</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Any abusive communication with buyers or deceptive trade practices triggers immediate account suspension and review.</p>
+                </div>
+                <div id="privacyTextSection" style="display:none;">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact information, store profile details, catalog data, and banking details strictly necessary to facilitate verification, transactions, and order fulfillment.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Security &amp; Data Encryption</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Your payment accounts and private records are encrypted both in transit and at rest. We never share or sell your merchant records.</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 14px;">
+                <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()">Close</button>
+                <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()">
+                    I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
     <script>
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
+            document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+
+        function acceptTermsAndClose() {
+            var chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.checked = true;
+                syncTermsCheckBadge();
+            }
+            closeTermsModal();
+        }
+
+        function syncTermsCheckBadge() {
+            var chk = document.getElementById('termsCheck');
+            var badge = document.getElementById('termsCheckBadge');
+            if (badge && chk) {
+                badge.style.display = chk.checked ? 'block' : 'none';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var chk = document.getElementById('termsCheck');
+            if (chk) {
+                chk.addEventListener('change', syncTermsCheckBadge);
+            }
+        });
+
         document.querySelectorAll('.password-toggle-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var input = document.getElementById(btn.getAttribute('data-target'));

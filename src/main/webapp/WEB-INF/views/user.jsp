@@ -242,6 +242,47 @@
             text-align: center;
             margin-top: 10px;
         }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+        }
+        .modal-card {
+            background: #FFFFFF; border-radius: 20px; max-width: 480px; width: 100%; padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .modal-header .icon-wrap {
+            width: 42px; height: 42px; border-radius: 12px; background: var(--rose-soft); color: var(--primary);
+            display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
+        }
+        .modal-header h3 { font-size: 1.2rem; font-weight: 800; color: var(--navy); margin: 0; }
+        .modal-body {
+            background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 20px;
+        }
+        .review-row {
+            display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color); font-size: 0.88rem;
+        }
+        .review-row:last-child { border-bottom: none; }
+        .review-row .label { color: var(--text-gray); font-weight: 500; }
+        .review-row .value { color: var(--navy); font-weight: 700; text-align: right; word-break: break-word; }
+        .modal-actions { display: flex; gap: 10px; }
+        .btn-modal-cancel {
+            flex: 1; padding: 12px; background: #FFFFFF; border: 1px solid var(--border-color);
+            color: var(--navy); border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .btn-modal-cancel:hover { background: #F1F5F9; }
+        .btn-modal-confirm {
+            flex: 1.5; padding: 12px; background: var(--primary); border: none; color: #FFFFFF;
+            border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .btn-modal-confirm:hover { background: var(--primary-hover); }
+
         @media (max-width: 600px) {
             .row-2 { grid-template-columns: 1fr; }
             .form-card { padding: 22px 16px; }
@@ -251,7 +292,9 @@
 <body>
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/">
-            <i class="bi bi-heart-fill"></i> Fight D Fear
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
+                 style="height:32px;width:32px;border-radius:8px;object-fit:cover;">
+            Fight D Fear
         </a>
         <div class="header-links">
             <a href="${pageContext.request.contextPath}/login">Sign in</a>
@@ -357,16 +400,92 @@
                     </div>
                 </div>
 
-                <label class="terms">
-                    <input type="checkbox" name="acceptedTerms" id="acceptedTerms" value="true" required>
-                    <span>I agree to the Terms &amp; Conditions and Privacy Policy *</span>
-                </label>
+                <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="acceptedTerms" id="acceptedTerms" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="acceptedTerms" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" id="btnOpenTermsModal" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" id="btnOpenPrivacyModal" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
 
                 <button type="submit" class="btn-primary" id="btnSubmit" disabled>Create account</button>
                 <p class="submit-hint" id="submitHint">Verify your email OTP to enable account creation.</p>
             </form>
 
             <p class="footer-link">Already have an account? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
+        </div>
+    </div>
+
+    <!-- Confirmation / Preview Modal -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap"><i class="bi bi-shield-check"></i></div>
+                <div>
+                    <h3>Confirm Details</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Please cross-check your credentials before creating account</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-row"><span class="label">Full Name:</span><span class="value" id="revFullName">—</span></div>
+                <div class="review-row"><span class="label">Email Address:</span><span class="value" id="revEmail">—</span></div>
+                <div class="review-row"><span class="label">Mobile Number:</span><span class="value" id="revPhone">—</span></div>
+                <div class="review-row"><span class="label">City / Location:</span><span class="value" id="revCity">—</span></div>
+                <div class="review-row"><span class="label">Date of Birth:</span><span class="value" id="revDob">—</span></div>
+                <div class="review-row"><span class="label">Gender:</span><span class="value" id="revGender">—</span></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" id="btnConfirmBack">Back / Edit</button>
+                <button type="button" class="btn-modal-confirm" id="btnConfirmRegister">
+                    Confirm &amp; Register <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms & Conditions Modal -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
+                <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
+                </div>
+                <button type="button" id="btnCloseTermsModal" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
+            </div>
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
+                <div id="termsTextSection">
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Community</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear is an empowerment, health, and personal safety ecosystem built for women. By registering, you commit to upholding the values of mutual respect, trust, empathy, and integrity within our community.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Emergency SOS &amp; Location Sharing</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">The emergency SOS features and real-time tracking are designed for crisis intervention and personal defense. Your coordinates are securely transmitted solely to designated emergency contacts, verified buddies, or responding emergency agencies during active SOS events.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Identity Verification &amp; Account Protection</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">Users must provide accurate information during registration. Authentication keys and one-time passwords (OTP) must not be transferred or shared. Any impersonation or fraudulent behavior results in immediate account suspension.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Privacy &amp; Data Security</h4>
+                    <p style="margin-bottom:12px; color:var(--text-gray);">We implement end-to-end industry-standard encryption to protect your personal details, wellness records, and contacts. Your data is never sold to third-party advertisers.</p>
+
+                    <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">5. Zero-Tolerance Safety Policy</h4>
+                    <p style="margin-bottom:0; color:var(--text-gray);">Any harassment, stalking, hate speech, or abuse targeted at any member or partner will result in permanent account termination and potential reporting to law enforcement authorities.</p>
+                </div>
+            </div>
+            <div class="modal-actions" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn-modal-cancel" id="btnDismissTerms">Close</button>
+                <button type="button" class="btn-modal-confirm" id="btnAcceptTermsModal" style="background:var(--success);">
+                    <i class="bi bi-check-lg"></i> I Read &amp; Agree (Accept)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -510,7 +629,53 @@
     loadPhoneOtpStatus();
     restoreEmailVerified();
 
-    document.getElementById('acceptedTerms').addEventListener('change', refreshSubmit);
+    var termsModal = document.getElementById('termsModal');
+    var btnOpenTerms = document.getElementById('btnOpenTermsModal');
+    var btnOpenPrivacy = document.getElementById('btnOpenPrivacyModal');
+    var btnCloseTerms = document.getElementById('btnCloseTermsModal');
+    var btnDismissTerms = document.getElementById('btnDismissTerms');
+    var btnAcceptTerms = document.getElementById('btnAcceptTermsModal');
+    var chkTerms = document.getElementById('acceptedTerms');
+    var badgeTerms = document.getElementById('termsCheckBadge');
+
+    function syncTermsBadge() {
+        if (chkTerms.checked) {
+            badgeTerms.style.display = 'block';
+        } else {
+            badgeTerms.style.display = 'none';
+        }
+        refreshSubmit();
+    }
+
+    if (btnOpenTerms) {
+        btnOpenTerms.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('termsModalTitle').textContent = 'Terms & Conditions';
+            termsModal.style.display = 'flex';
+        });
+    }
+    if (btnOpenPrivacy) {
+        btnOpenPrivacy.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('termsModalTitle').textContent = 'Privacy Policy & Data Security';
+            termsModal.style.display = 'flex';
+        });
+    }
+    function closeTermsModal() {
+        termsModal.style.display = 'none';
+    }
+    if (btnCloseTerms) btnCloseTerms.addEventListener('click', closeTermsModal);
+    if (btnDismissTerms) btnDismissTerms.addEventListener('click', closeTermsModal);
+
+    if (btnAcceptTerms) {
+        btnAcceptTerms.addEventListener('click', function () {
+            chkTerms.checked = true;
+            syncTermsBadge();
+            closeTermsModal();
+        });
+    }
+
+    chkTerms.addEventListener('change', syncTermsBadge);
     document.getElementById('email').addEventListener('input', function () {
         emailVerified = false;
         document.getElementById('emailOtpOk').classList.remove('show');
@@ -641,7 +806,17 @@
         if (msg) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    document.getElementById('userRegisterForm').addEventListener('submit', async function (e) {
+    var confirmModal = document.getElementById('confirmModal');
+    var btnConfirmBack = document.getElementById('btnConfirmBack');
+    var btnConfirmRegister = document.getElementById('btnConfirmRegister');
+
+    if (btnConfirmBack) {
+        btnConfirmBack.addEventListener('click', function () {
+            confirmModal.style.display = 'none';
+        });
+    }
+
+    document.getElementById('userRegisterForm').addEventListener('submit', function (e) {
         e.preventDefault();
         showFormError('');
 
@@ -674,43 +849,63 @@
             return;
         }
 
-        var btn = document.getElementById('btnSubmit');
-        btn.disabled = true;
-        btn.textContent = 'Creating account…';
+        // Populate Preview Card
+        document.getElementById('revFullName').textContent = document.getElementById('fullName').value.trim() || '—';
+        document.getElementById('revEmail').textContent = document.getElementById('email').value.trim().toLowerCase() || '—';
+        document.getElementById('revPhone').textContent = document.getElementById('phoneNumber').value.trim() || '—';
+        document.getElementById('revCity').textContent = document.getElementById('city').value.trim() || '—';
+        document.getElementById('revDob').textContent = document.getElementById('dob').value.trim() || '—';
+        document.getElementById('revGender').textContent = genderVal || '—';
 
-        var payload = {
-            fullName: document.getElementById('fullName').value.trim(),
-            email: document.getElementById('email').value.trim().toLowerCase(),
-            phoneNumber: document.getElementById('phoneNumber').value.trim(),
-            city: document.getElementById('city').value.trim(),
-            dob: document.getElementById('dob').value.trim(),
-            gender: document.getElementById('gender').value.trim(),
-            password: pass,
-            confirmPassword: confirm,
-            acceptedTerms: 'true',
-            emailOtp: document.getElementById('emailOtp').value.trim()
-        };
-
-        try {
-            var res = await fetch(ctx + '/api/auth/register-web', Object.assign({}, fetchOpts, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload)
-            }));
-            var data = await res.json();
-            if (data.success && data.redirectUrl) {
-                try { sessionStorage.removeItem('regEmailVerified'); } catch (err) { /* ignore */ }
-                window.location.href = data.redirectUrl;
-                return;
-            }
-            showFormError(data.error || 'Registration failed. Please try again.');
-        } catch (err) {
-            showFormError('Network error. Could not complete registration.');
-        } finally {
-            btn.textContent = 'Create account';
-            refreshSubmit();
-        }
+        // Show Preview Confirmation Modal
+        confirmModal.style.display = 'flex';
     });
+
+    if (btnConfirmRegister) {
+        btnConfirmRegister.addEventListener('click', async function () {
+            var pass = document.getElementById('password').value;
+            var confirm = document.getElementById('confirmPassword').value;
+
+            btnConfirmRegister.disabled = true;
+            btnConfirmRegister.innerHTML = 'Registering… <span class="spinner-border spinner-border-sm ms-1" role="status"></span>';
+
+            var payload = {
+                fullName: document.getElementById('fullName').value.trim(),
+                email: document.getElementById('email').value.trim().toLowerCase(),
+                phoneNumber: document.getElementById('phoneNumber').value.trim(),
+                city: document.getElementById('city').value.trim(),
+                dob: document.getElementById('dob').value.trim(),
+                gender: document.getElementById('gender').value.trim(),
+                password: pass,
+                confirmPassword: confirm,
+                acceptedTerms: 'true',
+                emailOtp: document.getElementById('emailOtp').value.trim()
+            };
+
+            try {
+                var res = await fetch(ctx + '/api/auth/register-web', Object.assign({}, fetchOpts, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(payload)
+                }));
+                var data = await res.json();
+                if (data.success && data.redirectUrl) {
+                    try { sessionStorage.removeItem('regEmailVerified'); } catch (err) { /* ignore */ }
+                    window.location.href = data.redirectUrl;
+                    return;
+                }
+                confirmModal.style.display = 'none';
+                showFormError(data.error || 'Registration failed. Please try again.');
+            } catch (err) {
+                confirmModal.style.display = 'none';
+                showFormError('Network error. Could not complete registration.');
+            } finally {
+                btnConfirmRegister.disabled = false;
+                btnConfirmRegister.innerHTML = 'Confirm &amp; Register <i class="bi bi-check2-circle"></i>';
+                refreshSubmit();
+            }
+        });
+    }
 
     document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {

@@ -193,8 +193,23 @@ public class DoctorProfileService {
         if (body.containsKey("upiId")) {
             doctor.setUpiId(blankToNull(asString(body.get("upiId"))));
         }
-        if (body.containsKey("bankDetails")) {
-            doctor.setBankDetails(blankToNull(asString(body.get("bankDetails"))));
+        String rawBank = asString(body.get("bankDetails"));
+        String bHolder = asString(body.get("bankAccountHolder"));
+        String bName = asString(body.get("bankName"));
+        String bAcct = asString(body.get("bankAccountNumber"));
+        String bIfsc = asString(body.get("bankIfsc"));
+        String bBranch = asString(body.get("bankBranch"));
+
+        if ((bHolder != null && !bHolder.isBlank()) || (bAcct != null && !bAcct.isBlank())) {
+            StringBuilder sb = new StringBuilder();
+            if (bHolder != null && !bHolder.isBlank()) sb.append("Account Holder: ").append(bHolder.trim());
+            if (bName != null && !bName.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Bank: ").append(bName.trim());
+            if (bAcct != null && !bAcct.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("A/C: ").append(bAcct.trim());
+            if (bIfsc != null && !bIfsc.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("IFSC: ").append(bIfsc.trim().toUpperCase(Locale.ROOT));
+            if (bBranch != null && !bBranch.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Branch: ").append(bBranch.trim());
+            doctor.setBankDetails(sb.toString());
+        } else if (body.containsKey("bankDetails")) {
+            doctor.setBankDetails(blankToNull(rawBank));
         }
         if (body.containsKey("clinicLat")) {
             doctor.setClinicLat(asDouble(body.get("clinicLat"), "Clinic latitude"));
@@ -301,8 +316,9 @@ public class DoctorProfileService {
             return 0;
         }
         int filled = 0;
-        int total = 9;
+        int total = 10;
 
+        if (isRealDocument(doctor.getProfilePhotoPath())) filled++;
         if (notBlank(doctor.getFullName())) filled++;
         if (notBlank(doctor.getPhone())) filled++;
         if (doctor.getGender() != null) filled++;
@@ -322,6 +338,7 @@ public class DoctorProfileService {
             missing.add("Doctor profile not found");
             return missing;
         }
+        if (!isRealDocument(doctor.getProfilePhotoPath())) missing.add("1.0 Profile photo");
         if (isBlank(doctor.getFullName())) missing.add("1.1 Doctor name");
         if (isBlank(doctor.getSpecialization())) missing.add("1.2 Specialization");
         if (isBlank(doctor.getQualification())) missing.add("1.3 Qualification");
